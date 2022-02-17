@@ -524,11 +524,7 @@ namespace CoreSystems
                 }
                 else if (code == Weapon.ShootManager.ShootCodes.ToggleClientOff)
                 {
-                    wComp.ShootManager.ClientToggleResponse(interval);
-                }
-                else if (wComp.ShootManager.RequestShootBurstId == stateId)
-                {
-                    wComp.ShootManager.RequestShootSync(0);
+                    wComp.ShootManager.ClientToggledOffByServer(interval);
                 }
                 else if (code == Weapon.ShootManager.ShootCodes.ServerResponse)
                 {
@@ -539,10 +535,21 @@ namespace CoreSystems
                         wComp.ShootManager.ProcessInput(PlayerId, true);
                     }
                 }
+                else if (code == Weapon.ShootManager.ShootCodes.ToggleServerOff)
+                {
+                    Log.Line($"server requested toggle off? - stateId:{stateId}({wComp.ShootManager.RequestShootBurstId}) - mode:{mode} - code:{code} - wait:{wComp.ShootManager.WaitingShootResponse} - freeze:{wComp.ShootManager.FreezeClientShoot} - CompletedCycles:{wComp.ShootManager.CompletedCycles}({interval}) - LastCycle:{wComp.ShootManager.LastCycle}", InputLog);
+                    wComp.ShootManager.ClientToggledOffByServer(interval);
+                }
+                else if (wComp.ShootManager.RequestShootBurstId == stateId)
+                {
+                    wComp.ShootManager.RequestShootSync(0);
+                }
                 else
                 {
-                    Log.Line($"failed to burst on client - stateId:{stateId}({wComp.ShootManager.RequestShootBurstId}) - mode:{mode} - code:{code} - WaitingBurstResponse:{wComp.ShootManager.WaitingShootResponse}", InputLog);
+                    Log.Line($"failed to burst on client - stateId:{stateId}({wComp.ShootManager.RequestShootBurstId}) - mode:{mode} - code:{code} - wait:{wComp.ShootManager.WaitingShootResponse} - freeze:{wComp.ShootManager.FreezeClientShoot} - CompletedCycles:{wComp.ShootManager.CompletedCycles}({interval}) - LastCycle:{wComp.ShootManager.LastCycle}", InputLog);
+                    wComp.ShootManager.RequestShootBurstId = stateId;
                 }
+
             }
 
             data.Report.PacketValid = true;

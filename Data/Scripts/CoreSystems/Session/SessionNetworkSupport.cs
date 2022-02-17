@@ -1222,7 +1222,7 @@ namespace CoreSystems
             else Log.Line("SendSetFloatRequest should never be called on Non-HandlesInput");
         }
 
-        internal void SendBurstRequest(CoreComponent comp, ulong newLong, PacketType type, Func<object, object> function, long requestingPlayerId)
+        internal void SendShootRequest(CoreComponent comp, ulong newLong, PacketType type, Func<object, object> function, long requestingPlayerId)
         {
             if (IsClient)
             {

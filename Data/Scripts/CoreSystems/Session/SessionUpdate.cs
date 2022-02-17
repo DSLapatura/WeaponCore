@@ -117,10 +117,17 @@ namespace CoreSystems
                         var azRaw = (IMyMotorStator)controller.AzimuthRotor;
                         var elRaw = (IMyMotorStator)controller.ElevationRotor;
 
-                        var az = azRaw != null ? StatorMaps[azRaw] : null;
-                        var el = elRaw != null ? StatorMaps[elRaw] : null;
-                        if (az == null || el == null)
+                        StatorMap az;
+                        StatorMap el;
+                        if (azRaw == null || elRaw == null || !StatorMaps.TryGetValue(azRaw, out az) || !StatorMaps.TryGetValue(elRaw, out el))
+                        {
+                            if (Tick - cComp.LastCrashTick > 1200 && azRaw != null && elRaw != null)
+                            {
+                                cComp.LastCrashTick = Tick;
+                                Log.Line($"CTC failed to find stator in StatorMaps - entId:{cComp.CoreEntity.EntityId} - StatorMapsContainsAz:{StatorMaps.ContainsKey(azRaw)} - StatorMapsContainsEl:{StatorMaps.ContainsKey(elRaw)}");
+                            }
                             continue;
+                        }
 
                         if (controller.IsUnderControl)
                         {
@@ -155,7 +162,9 @@ namespace CoreSystems
 
                         var root = controlPart.BaseMap;
 
-                        if (root.Stator.TopGrid == null)
+                        var topGrid = root.Stator.TopGrid as MyCubeGrid;
+
+                        if (topGrid == null)
                         {
                             controlPart.BaseHasTop = false;
                             if (cComp.RotorsMoving)
@@ -169,12 +178,12 @@ namespace CoreSystems
                         }
 
                         List<StatorMap> turretMap;
-                        if (!rootConstruct.LocalStatorMaps.TryGetValue((MyCubeGrid) root.Stator.TopGrid, out turretMap))
+                        if (!rootConstruct.LocalStatorMaps.TryGetValue(topGrid, out turretMap))
                         {
                             if (Tick - cComp.LastCrashTick > 1200)
                             {
                                 cComp.LastCrashTick = Tick;
-                                Log.Line($"CTC failed to find stator in LocalStatorMaps");
+                                Log.Line($"CTC failed to find stator in LocalStatorMaps - entId:{cComp.CoreEntity.EntityId}");
                             }
                             continue;
                         }
@@ -641,7 +650,7 @@ namespace CoreSystems
                                     w.ClientReload();
                             }
                         }
-                        else if (w.Loading && (IsServer && Tick >= w.ReloadEndTick || IsClient && w.Reload.EndId > w.ClientEndId))
+                        else if (w.Loading && (IsServer && Tick >= w.ReloadEndTick || IsClient && !w.Charging && w.Reload.EndId > w.ClientEndId))
                             w.Reloaded(1);
 
                         if (DedicatedServer && w.Reload.WaitForClient && !w.Loading && (wValues.State.PlayerId <= 0 || Tick - w.LastLoadedTick > 60))

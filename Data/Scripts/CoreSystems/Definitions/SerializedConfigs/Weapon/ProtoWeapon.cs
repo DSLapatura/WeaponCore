@@ -326,7 +326,8 @@ namespace CoreSystems
                 CountingDown = sync.CountingDown;
                 CriticalReaction = sync.CriticalReaction;
                 ShootSyncStateId = sync.ShootSyncStateId;
-
+                comp.ShootManager.RequestShootBurstId = ShootSyncStateId;
+                
                 for (int i = 0; i < sync.Weapons.Length; i++)
                     comp.Platform.Weapons[i].PartState.Sync(sync.Weapons[i]);
                 return true;

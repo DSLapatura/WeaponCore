@@ -127,7 +127,7 @@ namespace CoreSystems.Control
         internal static void AddDecoyControls<T>(Session session) where T : IMyTerminalBlock
         {
             Separator<T>(session, "WC_decoySep1", IsTrue);
-            AddComboboxNoAction<T>(session, "PickSubSystem", Localization.GetText("TerminalDecoyPickSubSystemTitle"), Localization.GetText("TerminalDecoyPickSubSystemTooltip"), BlockUi.GetDecoySubSystem, BlockUi.RequestDecoySubSystem, BlockUi.ListDecoySubSystems, IsTrue);
+            AddComboboxDecoyNoAction<T>(session, "PickSubSystem", Localization.GetText("TerminalDecoyPickSubSystemTitle"), Localization.GetText("TerminalDecoyPickSubSystemTooltip"), BlockUi.GetDecoySubSystem, BlockUi.RequestDecoySubSystem, BlockUi.ListDecoySubSystems, IsDecoy);
         }
 
         internal static void AddCameraControls<T>(Session session) where T : IMyTerminalBlock
@@ -297,6 +297,12 @@ namespace CoreSystems.Control
         {
             var comp = block?.Components?.Get<CoreComponent>();
             return comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready;
+        }
+
+
+        internal static bool IsDecoy(IMyTerminalBlock block)
+        {
+            return block is IMyDecoy;
         }
 
         internal static bool IsNotBomb(IMyTerminalBlock block)
@@ -806,6 +812,26 @@ namespace CoreSystems.Control
 
             return c;
         }
+
+        internal static IMyTerminalControlCombobox AddComboboxDecoyNoAction<T>(Session session, string name, string title, string tooltip, Func<IMyTerminalBlock, long> getter, Action<IMyTerminalBlock, long> setter, Action<List<MyTerminalControlComboBoxItem>> fillAction, Func<IMyTerminalBlock, bool> visibleGetter = null) where T : IMyTerminalBlock
+        {
+            var c = MyAPIGateway.TerminalControls.CreateControl<IMyTerminalControlCombobox, T>("WC_" + name);
+
+            c.Title = MyStringId.GetOrCompute(title);
+            c.Tooltip = MyStringId.GetOrCompute(tooltip);
+            c.ComboBoxContent = fillAction;
+            c.Getter = getter;
+            c.Setter = setter;
+
+            c.Visible = visibleGetter;
+            c.Enabled = IsDecoy;
+
+            MyAPIGateway.TerminalControls.AddControl<T>(c);
+            session.CustomControls.Add(c);
+
+            return c;
+        }
+
 
         internal static IMyTerminalControlButton AddButtonNoAction<T>(Session session, string name, string title, string tooltip, Action<IMyTerminalBlock> action, Func<IMyTerminalBlock, bool> enableGetter, Func<IMyTerminalBlock, bool> visibleGetter = null) where T : IMyTerminalBlock
         {

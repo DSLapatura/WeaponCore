@@ -476,7 +476,7 @@ namespace CoreSystems
             long playerId;
             if (wComp != null && code == Weapon.ShootManager.ShootCodes.ToggleServerOff)
             {
-                wComp.ShootManager.ServerToggleResponse(interval);
+                wComp.ShootManager.ServerToggleOffByClient(interval);
             }
             else if (wComp != null && wComp.ShootManager.RequestShootBurstId == stateId && SteamToPlayer.TryGetValue(packet.SenderId, out playerId))
             {

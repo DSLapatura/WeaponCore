@@ -314,8 +314,11 @@ namespace CoreSystems.Platform
                     return;
                 }
 
-                if (input == 4)
+                if (input == 4) {
+                    ProtoWeaponAmmo.CurrentCharge = MaxCharge;
+                    EstimatedCharge = MaxCharge;
                     return;
+                }
 
                 if (ActiveAmmoDef.AmmoDef.Const.MustCharge && !callBack && !earlyExit) {
 

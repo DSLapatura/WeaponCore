@@ -74,6 +74,7 @@ namespace CoreSystems.Platform
         internal uint ElevationTick;
         internal uint AzimuthTick;
         internal uint FastTargetResetTick;
+        internal uint LastNanTick;
         internal float HeatPerc;
         internal int BarrelRate;
         internal int ShotsFired;
