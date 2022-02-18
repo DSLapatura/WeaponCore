@@ -480,7 +480,6 @@ namespace CoreSystems
             }
             else if (wComp != null && wComp.ShootManager.RequestShootBurstId == stateId && SteamToPlayer.TryGetValue(packet.SenderId, out playerId))
             {
-                //Log.Line($"client requesting shoot: client:{interval} - server:{wComp.ShootManager.CompletedCycles}");
                 wComp.ShootManager.RequestShootSync(playerId);
 
                 if (wComp.ShootManager.RequestShootBurstId == stateId)
@@ -497,6 +496,10 @@ namespace CoreSystems
             else if (!SteamToPlayer.TryGetValue(packet.SenderId, out playerId))
             {
                 Log.Line($"server bursting playerId not found", InputLog);
+            }
+            else if (wComp != null)
+            {
+                Log.Line($"ServerShootSyncs failed: {wComp.ShootManager.RequestShootBurstId} - {wComp.Data.Repo.Values.State.ShootSyncStateId} - {stateId}", InputLog);
             }
 
             data.Report.PacketValid = true;

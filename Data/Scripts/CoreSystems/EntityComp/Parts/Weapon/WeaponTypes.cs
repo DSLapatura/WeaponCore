@@ -300,13 +300,11 @@ namespace CoreSystems.Platform
 
                     if (Comp.Session.MpActive && oldState != state.ShootSyncStateId)
                     {
-                        Log.Line($"sending new shootStateId: {state.ShootSyncStateId}");
                         Comp.Session.SendState(Comp);
                     }
                 }
                 else
                 {
-                    Log.Line($"client setting RequestShootBurstId:{RequestShootBurstId} to {Comp.Data.Repo.Values.State.ShootSyncStateId}");
                     RequestShootBurstId = Comp.Data.Repo.Values.State.ShootSyncStateId;
                 }
 
@@ -357,7 +355,6 @@ namespace CoreSystems.Platform
                     var code = Comp.Session.IsServer ? playerId == 0 ? ShootCodes.ServerRequest : ShootCodes.ServerRelay : ShootCodes.ClientRequest;
                     ulong packagedMessage;
                     Session.EncodeShootState(state.ShootSyncStateId, (uint)set.Overrides.ShootMode, CompletedCycles, (uint)code, out packagedMessage);
-
                     if (playerId > 0) // if this is the server responding to a request, rewrite the packet sent to the origin client with a special response code.
                         Comp.Session.SendShootRequest(Comp, packagedMessage, PacketType.ShootSync, RewriteShootSyncToServerResponse, playerId);
                     else
@@ -528,7 +525,7 @@ namespace CoreSystems.Platform
 
                 code = ShootCodes.ServerResponse;
                 ulong packagedMessage;
-                Session.EncodeShootState(stateId, (uint)mode, 0, (uint)code, out packagedMessage);
+                Session.EncodeShootState(stateId, (uint)mode, internval, (uint)code, out packagedMessage);
 
                 ulongPacket.Data = packagedMessage;
 

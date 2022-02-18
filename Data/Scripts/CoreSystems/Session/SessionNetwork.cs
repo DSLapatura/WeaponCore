@@ -415,9 +415,10 @@ namespace CoreSystems
                         var specialPlayer = sPlayerId == p.PlayerId;
                         var skipPlayer = hasSkipPlayer && specialPlayer;
 
-
-                        if (specialPlayer && hasRewritePlayer)
-                            bytes = MyAPIGateway.Utilities.SerializeToBinary((Packet)packetInfo.Function(packet));
+                        byte[] bytesRewrite = null;
+                        var rewrite = specialPlayer && hasRewritePlayer;
+                        if (rewrite)
+                            bytesRewrite = MyAPIGateway.Utilities.SerializeToBinary((Packet)packetInfo.Function(packet));
 
 
                         var sendPacket = notSender && packetInfo.Entity == null;
@@ -438,7 +439,7 @@ namespace CoreSystems
                         }
 
                         if (sendPacket)
-                            MyModAPIHelper.MyMultiplayer.Static.SendMessageTo(ClientPacketId, bytes, p.Player.SteamUserId, true);
+                            MyModAPIHelper.MyMultiplayer.Static.SendMessageTo(ClientPacketId, !rewrite ? bytes : bytesRewrite, p.Player.SteamUserId, true);
                     }
                 }
             }
