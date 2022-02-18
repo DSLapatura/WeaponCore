@@ -1056,6 +1056,26 @@ namespace CoreSystems
             Fats,
         }
 
+        internal void DeferredPlayerLocks()
+        {
+            foreach (var p in DeferredPlayerLock)
+            {
+                int retries;
+                if (DeferredPlayerLock.TryGetValue(p.Key, out retries) && retries > 1)
+                {
+                    if (!Ai.Constructs.UpdatePlayerLockState(this, p.Key))
+                        DeferredPlayerLock[p.Key] = retries - 1;
+                    else
+                        DeferredPlayerLock.TryRemove(p.Key, out retries);
+                }
+                else
+                {
+                    Log.Line($"failed to get PlayerMap");
+                    DeferredPlayerLock.TryRemove(p.Key, out retries);
+                }
+            }
+        }
+
         public static void GetCubesInRange(MyCubeGrid grid, MyCubeBlock rootBlock, int cubeDistance, HashSet<MyCube> resultSet, out Vector3I min, out Vector3I max, CubeTypes types = CubeTypes.All)
         {
             resultSet.Clear();

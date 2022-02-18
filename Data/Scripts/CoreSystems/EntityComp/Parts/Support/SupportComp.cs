@@ -17,7 +17,7 @@ namespace CoreSystems.Platform
             {
                 //Bellow order is important
                 Data = new SupportCompData(this);
-                Init(session, coreEntity, true, Data, ((MyCubeBlock)coreEntity).CubeGrid, id);
+                Init(session, coreEntity, true, Data, id);
                 Structure = (SupportStructure)Platform.Structure;
             }
 

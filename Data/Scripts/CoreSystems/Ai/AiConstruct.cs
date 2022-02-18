@@ -310,7 +310,7 @@ namespace CoreSystems.Support
                         foreach (var c in gridMap.PlayerControllers)
                         {
                             rootConstruct.ControllingPlayers[c.Key] = c.Value;
-                            UpdatePlayerLockState(rootAi, c.Key);
+                            UpdatePlayerLockState(rootAi.Session, c.Key);
                         }
                     }
                     else 
@@ -318,20 +318,28 @@ namespace CoreSystems.Support
                 }
             }
 
-            internal static void UpdatePlayerLockState(Ai ai, long playerId)
+            internal static bool UpdatePlayerLockState(Session s, long playerId)
             {
                 PlayerMap playerMap;
-                if (!ai.Session.Players.TryGetValue(playerId, out playerMap))
-                    Log.Line($"failed to get PlayerMap");
+                if (!s.Players.TryGetValue(playerId, out playerMap))
+                {
+                    if (s.IsClient && !s.DeferredPlayerLock.ContainsKey(playerId))
+                        s.DeferredPlayerLock[playerId] = 5;
+                }
                 else if (playerMap.Player.Character != null && playerMap.Player.Character.Components.TryGet(out playerMap.TargetFocus) && playerMap.Player.Character.Components.TryGet(out playerMap.TargetLock))
                 {
                     playerMap.TargetFocusDef.AngularToleranceFromCrosshair = 25;
                     //playerMap.TargetFocusDef.FocusSearchMaxDistance = !setDefault ? RootAi.Construct.MaxLockRange : 2000;
                     playerMap.TargetFocusDef.FocusSearchMaxDistance = 0; //temp
                     playerMap.TargetFocus.Init(playerMap.TargetFocusDef);
+                    return true;
                 }
-                else
-                    Log.Line($"failed to get and set player focus and lock");
+                else 
+                {
+                    if (s.IsClient && !s.DeferredPlayerLock.ContainsKey(playerId))
+                        s.DeferredPlayerLock[playerId] = 5;
+                }
+                return false;
             }
 
 
@@ -564,6 +572,8 @@ namespace CoreSystems.Support
                 AverageEffect = 0;
                 TotalEffect = 0;
                 PreviousTotalEffect = 0;
+                LastRefreshTick = 0;
+                TargetResetTick = 0;
                 RootAi = null;
                 LargestAi = null;
                 Counter.Clear();

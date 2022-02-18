@@ -571,6 +571,10 @@ namespace CoreSystems
                         if (isControllingPlayer)
                         {
                             TargetUi.LastTrackTick = Tick;
+                            
+                            if (cMode == ProtoWeaponOverrides.ControlModes.Manual)
+                                TargetUi.LastManualTick = Tick;
+
                             if (MpActive && wasTrack != track)
                                 wComp.Session.SendTrackReticleUpdate(wComp, track);
                             else if (IsServer)

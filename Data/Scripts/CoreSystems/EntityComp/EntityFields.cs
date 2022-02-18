@@ -153,7 +153,7 @@ namespace CoreSystems.Support
 
         internal bool FakeIsWorking => !IsBlock || IsWorking;
 
-        public void Init(Session session, MyEntity coreEntity, bool isBlock, CompData compData, MyEntity topEntity, MyDefinitionId id)
+        public void Init(Session session, MyEntity coreEntity, bool isBlock, CompData compData, MyDefinitionId id)
         {
             Session = session;
             CoreEntity = coreEntity;
@@ -161,7 +161,6 @@ namespace CoreSystems.Support
             Id = id;
             SubtypeName = id.SubtypeName;
             SubTypeId = id.SubtypeId;
-            TopEntity = topEntity;
             BaseData = compData;
             if (IsBlock) {
 
@@ -219,7 +218,7 @@ namespace CoreSystems.Support
             }
 
             LazyUpdate = Type == CompType.Support || Type == CompType.Upgrade;
-            InventoryEntity = TypeSpecific != CompTypeSpecific.Rifle ? CoreEntity : topEntity;
+            InventoryEntity = TypeSpecific != CompTypeSpecific.Rifle ? CoreEntity : CoreEntity.GetBaseEntity();
             CoreInventory = (MyInventory)InventoryEntity.GetInventoryBase();
             HasInventory = InventoryEntity.HasInventory;
             Platform = session.PlatFormPool.Get();

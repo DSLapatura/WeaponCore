@@ -22,6 +22,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
         internal uint MasterUpdateTick;
         internal uint LastTrackTick;
         internal uint LastSelectableTick;
+        internal uint LastManualTick;
         internal MyEntity LastSelectedEntity;
         internal MyEntity LastConfrimedEntity;
 

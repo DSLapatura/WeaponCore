@@ -25,7 +25,7 @@ namespace CoreSystems.Platform
             {
                 //Bellow order is important
                 Data = new ControlCompData(this);
-                Init(session, coreEntity, true, Data, ((MyCubeBlock)coreEntity).CubeGrid, id);
+                Init(session, coreEntity, true, Data, id);
                 Structure = (ControlStructure)Platform.Structure;
             }
 

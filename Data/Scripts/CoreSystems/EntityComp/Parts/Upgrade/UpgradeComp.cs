@@ -16,7 +16,7 @@ namespace CoreSystems.Platform
             {
                 //Bellow order is important
                 Data = new UpgradeCompData(this);
-                Init(session, coreEntity, true, Data, ((MyCubeBlock)coreEntity).CubeGrid, id);
+                Init(session, coreEntity, true, Data, id);
                 Structure = (UpgradeStructure)Platform.Structure;
             }
 

@@ -568,7 +568,6 @@ namespace CoreSystems
                 RemoteData = null;
                 TargetEntity = null;
                 Generating = false;
-                Log.Line("Clean");
             }
         }
 
@@ -974,6 +973,8 @@ namespace CoreSystems
         public GridGroupMap(Session s)
         {
             Session = s;
+            if (s.MpActive && s.IsClient)
+                LastControllerTick = s.Tick + 1;
         }
 
         public void OnGridAdded(IMyGridGroupData newGroup, IMyCubeGrid myCubeGrid, IMyGridGroupData oldGroup)

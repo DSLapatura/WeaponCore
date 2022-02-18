@@ -54,8 +54,6 @@ namespace CoreSystems.Platform
                 MyEntity topEntity;
                 if (cube != null) {
 
-                    topEntity = cube.CubeGrid;
-
                     var turret = coreEntity as IMyLargeTurretBase;
                     if (turret != null)
                     {
@@ -79,7 +77,7 @@ namespace CoreSystems.Platform
                 //Bellow order is important
                 Data = new WeaponCompData(this);
                 ShootManager = new ShootManager(this);
-                Init(session, coreEntity, cube != null, Data, topEntity, id);
+                Init(session, coreEntity, cube != null, Data, id);
                 Structure = (WeaponStructure)Platform.Structure;
                 Collection = TypeSpecific != CompTypeSpecific.Phantom ? Platform.Weapons : Platform.Phantoms;
                 TotalWeapons = Structure.HashToId.Count;

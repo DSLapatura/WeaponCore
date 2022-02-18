@@ -78,6 +78,8 @@ namespace CoreSystems
                     }
 
                     GridMap gridMap;
+                    if (comp.TopEntity == null)
+                        comp.TopEntity = comp.IsBlock ? comp.Cube.CubeGrid : comp.CoreEntity.GetTopMostParent();
                     if (comp.IsBlock && (!GridToInfoMap.TryGetValue(comp.TopEntity, out gridMap) || gridMap.GroupMap == null) || IsClient && Settings?.Enforcement == null)
                         continue;
 

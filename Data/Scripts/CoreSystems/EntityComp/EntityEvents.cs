@@ -82,7 +82,7 @@ namespace CoreSystems.Support
                         Cube.IsWorkingChanged -= IsWorkingChanged;
                     }
 
-                    if (CoreInventory == null) Log.Line("BlockInventory is null");
+                    if (CoreInventory == null && TypeSpecific != CompTypeSpecific.Control) Log.Line("BlockInventory is null");
                     else
                     {
                         CoreInventory.InventoryContentChanged -= OnContentsChanged;

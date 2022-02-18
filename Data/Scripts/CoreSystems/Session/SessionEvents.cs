@@ -573,7 +573,7 @@ namespace CoreSystems
 
                             if (gridMap.GroupMap != null)
                                 gridMap.GroupMap.LastControllerTick = Tick + 1;
-                            else 
+                            else if (IsServer)
                                 Log.Line($"OnPlayerController exit gridmap null");
 
                             Ai ai;
