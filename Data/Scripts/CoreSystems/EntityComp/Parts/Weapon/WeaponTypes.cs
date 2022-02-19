@@ -470,7 +470,7 @@ namespace CoreSystems.Platform
                 {
                     Log.Line($"server interval {interval} > client: {CompletedCycles} - frozen:{FreezeClientShoot} - wait:{WaitingShootResponse}", Session.InputLog);
                 }
-                else if (interval < CompletedCycles)
+                else if (interval < CompletedCycles) // look into adding a condition where the requesting client can cause the server to shoot for n burst to match client without exceeding reload, would need to freeze client.
                 {
                     Log.Line($"server interval {interval} < client:{CompletedCycles} - frozen:{FreezeClientShoot} - wait:{WaitingShootResponse}", Session.InputLog);
                 }

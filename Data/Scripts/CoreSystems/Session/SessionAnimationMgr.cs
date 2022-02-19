@@ -1016,13 +1016,14 @@ namespace CoreSystems
                 {
                     var dummyInfo = particleEvent.MyDummy.Info;
                     var ent = particleEvent.MyDummy.Entity;
-                    var pos = particleEvent.EmptyPos;
+                    var pos = dummyInfo.Position;
                     var matrix = dummyInfo.DummyMatrix;
                     matrix.Translation = dummyInfo.LocalPosition + particleEvent.Offset;
+                    var renderId = ent.Render.GetRenderObjectID();
 
                     if (particleEvent.Effect == null)
                     {
-                        if (ent == null || !MyParticlesManager.TryCreateParticleEffect(particleEvent.ParticleName, ref matrix, ref pos, ent.Render.GetRenderObjectID(), out particleEvent.Effect))
+                        if (ent == null || !MyParticlesManager.TryCreateParticleEffect(particleEvent.ParticleName, ref matrix, ref pos, renderId, out particleEvent.Effect))
                         {
                             Log.Line($"Failed to Create Particle! Particle: {particleEvent.ParticleName}");
                             particleEvent.Playing = false;
