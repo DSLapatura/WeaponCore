@@ -89,6 +89,7 @@ namespace CoreSystems.Projectiles
 
         internal enum DroneStatus
         {
+            Launch,
             Transit, //Movement from/to target area
             Approach, //Final transition between transit and orbit
             Orbit, //Orbit & shoot
@@ -196,7 +197,7 @@ namespace CoreSystems.Projectiles
             Info.PrevDistanceTraveled = 0;
             Info.DistanceTraveled = 0;
             PrevEndPointToCenterSqr = double.MaxValue;
-            DroneStat = DroneStatus.Transit;
+            DroneStat = DroneStatus.Launch;
             DroneMsn = DroneMission.Attack;
             var trajectory = ammoDef.Trajectory;
             var guidance = trajectory.Guidance;
@@ -482,16 +483,14 @@ namespace CoreSystems.Projectiles
         {
             var aConst = Info.AmmoDef.Const;
             var newVel = new Vector3D();
-
-            var startTrack = Info.Target.CoreParent == null || Info.Target.CoreParent.MarkedForClose;
-
-            if (!startTrack && Info.DistanceTraveled * Info.DistanceTraveled >= aConst.SmartsDelayDistSqr)
+            if (DroneStat==DroneStatus.Launch && Info.DistanceTraveled * Info.DistanceTraveled >= aConst.SmartsDelayDistSqr)
             {
                 var lineCheck = new LineD(Position, Position + (Info.Direction * 10000f), 10000f);
-                startTrack = !new MyOrientedBoundingBoxD(Info.Target.CoreParent.PositionComp.LocalAABB, Info.Target.CoreParent.PositionComp.WorldMatrixRef).Intersects(ref lineCheck).HasValue;
+                var startTrack = !new MyOrientedBoundingBoxD(Info.Target.CoreParent.PositionComp.LocalAABB, Info.Target.CoreParent.PositionComp.WorldMatrixRef).Intersects(ref lineCheck).HasValue;
+                if (startTrack) DroneStat = DroneStatus.Transit;
             }
 
-            if (startTrack)
+            if (DroneStat!=DroneStatus.Launch)
             {
 
                 var fragProx = Info.AmmoDef.Const.FragProximity;
@@ -579,6 +578,8 @@ namespace CoreSystems.Projectiles
                         {
                             DroneMsn = DroneMission.Defend;//Try to return to parent in defensive state
                             DroneStat = DroneStatus.Transit;
+                            orbitCtr = parentEnt.PositionComp.WorldAABB.Center;
+                            orbitRad = parentEnt.PositionComp.WorldVolume.Radius;
                         }
                     }
                     else if (DroneMsn == DroneMission.Rtb || DroneMsn == DroneMission.Defend)
@@ -818,7 +819,6 @@ namespace CoreSystems.Projectiles
                         var isZombie = aConst.CanZombie && hadTarget && !fake && !validTarget && ZombieLifeTime > 0 && (ZombieLifeTime + SmartSlot) % 30 == 0;
                         var seekNewTarget = timeSlot && hadTarget && !validEntity && !overMaxTargets;
                         var needsTarget = (PickTarget && timeSlot || seekNewTarget || gaveUpChase && validTarget || isZombie || seekFirstTarget);
-
                         if (needsTarget && NewTarget() || validTarget)
                         {
                             TrackSmartTarget(fake);
@@ -833,6 +833,7 @@ namespace CoreSystems.Projectiles
                         ComputeSmartVelocity(ref orbitSphere, ref orbitSphereClose, ref orbitSphereFar, ref targetSphere, ref parentPos, out newVel);
                     }
                 }
+
                 catch (Exception ex) { Log.Line($"Exception in RunDrones :(  : {ex}", null, true); }
                 UpdateSmartVelocity(newVel, tracking);
             }
@@ -844,6 +845,7 @@ namespace CoreSystems.Projectiles
                 if (VelocityLengthSqr > MaxSpeedSqr) newVel = Info.Direction * MaxSpeed;
                 Velocity = newVel;
             }
+
         }
 
         private void OffsetSmartVelocity(ref Vector3D commandedAccel)
@@ -870,13 +872,16 @@ namespace CoreSystems.Projectiles
         private void ComputeSmartVelocity(ref BoundingSphereD orbitSphere, ref BoundingSphereD orbitSphereClose, ref BoundingSphereD orbitSphereFar, ref BoundingSphereD targetSphere, ref Vector3D parentPos, out Vector3D newVel)
         {
             var smarts = Info.AmmoDef.Trajectory.Smarts;
-            var droneNavTarget = new Vector3D();
+            var droneNavTarget = Vector3D.Zero;
             var parentCubePos = Info.Target.CoreCube.PositionComp.GetPosition();
             var parentCubeOrientation = Info.Target.CoreCube.PositionComp.GetOrientation();
             var droneSize = Math.Max(Info.AmmoDef.Shape.Diameter,5);//Minimum drone "size" clamped to 5m for nav purposes, prevents chasing tiny points in space
-
             switch (DroneStat)
             {
+
+                case DroneStatus.Launch:
+                    droneNavTarget = Info.Direction*1.05f;
+                    break;
 
                 case DroneStatus.Transit:
                     droneNavTarget = Vector3D.Normalize(targetSphere.Center - Position);
@@ -900,12 +905,14 @@ namespace CoreSystems.Projectiles
                     var lineToCenter = new LineD(Position, orbitSphere.Center);
                     var distToCenter = lineToCenter.Length; 
                     var radius = orbitSphere.Radius * 0.99;//Multiplier to ensure drone doesn't get "stuck" on periphery
-                    var centerOffset = distToCenter - Math.Sqrt((distToCenter * distToCenter) - (radius * radius));
+                    var centerOffset = distToCenter - Math.Sqrt((distToCenter * distToCenter) - (radius * radius));//Chase down the boogey-NaN
                     var offsetDist = Math.Sqrt((radius * radius) - (centerOffset * centerOffset));
-                    var offsetPoint = new Vector3D(orbitSphere.Center + (centerOffset * -lineToCenter.Direction));//
+                    var offsetPoint = new Vector3D(orbitSphere.Center + (centerOffset * -lineToCenter.Direction));
                     var angleQuat = Vector3D.CalculatePerpendicularVector(lineToCenter.Direction); //placeholder for a possible rand-rotated quat.  Should be 90*, rand*, 0* 
                     var tangentPoint = new Vector3D(offsetPoint + offsetDist * angleQuat);
                     droneNavTarget = Vector3D.Normalize(tangentPoint - Position);
+                    //if (Double.IsNaN(droneNavTarget.X)) Log.Line($"NaN - Position:{Position} Drone Msn:{DroneMsn} Drone Stat:{DroneStat} OrbitSphereFar{orbitSphereFar} OrbitSphereClose{orbitSphereClose}");
+                    if (Double.IsNaN(droneNavTarget.X)) droneNavTarget = Info.Direction; //Error catch
                     break;
 
                 case DroneStatus.Orbit://Orbit & shoot behavior
@@ -979,14 +986,17 @@ namespace CoreSystems.Projectiles
                     }
                     break;
             }
-        
-            
+
             
             var missileToTarget = droneNavTarget;
             var relativeVelocity = PrevTargetVel - Velocity;
             var normalMissileAcceleration = (relativeVelocity - (relativeVelocity.Dot(missileToTarget) * missileToTarget)) * smarts.Aggressiveness;
+
             Vector3D commandedAccel;
-            if (Vector3D.IsZero(normalMissileAcceleration)) {commandedAccel = (missileToTarget * AccelInMetersPerSec);}
+            if (Vector3D.IsZero(normalMissileAcceleration)) 
+            {
+                commandedAccel = (missileToTarget * AccelInMetersPerSec);
+            }
             else
             {
                 var maxLateralThrust = AccelInMetersPerSec * Math.Min(1, Math.Max(0, Info.AmmoDef.Const.MaxLateralThrust));
@@ -997,7 +1007,6 @@ namespace CoreSystems.Projectiles
                 }
                 commandedAccel = Math.Sqrt(Math.Max(0, AccelInMetersPerSec * AccelInMetersPerSec - normalMissileAcceleration.LengthSquared())) * missileToTarget + normalMissileAcceleration;
             }
-
             if (smarts.OffsetTime > 0 && DroneStat != DroneStatus.Strafe && DroneStat!=DroneStatus.Return && DroneStat != DroneStatus.Dock && DroneStat !=DroneStatus.Kamikaze) // suppress offsets when strafing or docking
                 OffsetSmartVelocity(ref commandedAccel);
 
@@ -1005,7 +1014,6 @@ namespace CoreSystems.Projectiles
             var accelDir = commandedAccel / AccelInMetersPerSec;
 
             AccelDir = accelDir;
-
             Vector3D.Normalize(ref newVel, out Info.Direction);
         }
 
