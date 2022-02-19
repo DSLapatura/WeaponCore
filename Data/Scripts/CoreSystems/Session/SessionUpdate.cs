@@ -99,312 +99,95 @@ namespace CoreSystems
                             cComp.HealthCheck();
 
                         if (ai.DbUpdated || !cComp.UpdatedState)
-                        {
                             cComp.DetectStateChanges();
-                        }
 
-                        if (cComp.Platform.State != CorePlatform.PlatformState.Ready)
-                        {
-                            continue;
-                        }
-
-                        if (cComp.IsAsleep || !cComp.IsWorking || cComp.CoreEntity.MarkedForClose || cComp.IsDisabled)
-                        {
+                        if (cComp.Platform.State != CorePlatform.PlatformState.Ready || cComp.IsAsleep || !cComp.IsWorking || cComp.CoreEntity.MarkedForClose || cComp.IsDisabled) {
                             if (cComp.RotorsMoving)
                                 cComp.StopRotors();
                             continue;
                         }
 
-                        var controller = cComp.CoreEntity as IMyTurretControlBlock;
-
-                        var azRaw = (IMyMotorStator)controller.AzimuthRotor;
-                        var elRaw = (IMyMotorStator)controller.ElevationRotor;
+                        var azRaw = (IMyMotorStator)cComp.Controller.AzimuthRotor;
+                        var elRaw = (IMyMotorStator)cComp.Controller.ElevationRotor;
 
                         StatorMap az;
                         StatorMap el;
                         if (azRaw == null || elRaw == null || !StatorMaps.TryGetValue(azRaw, out az) || !StatorMaps.TryGetValue(elRaw, out el))
                         {
                             if (Tick - cComp.LastCrashTick > 1200 && azRaw != null && elRaw != null)
-                            {
-                                cComp.LastCrashTick = Tick;
-                                Log.Line($"CTC failed to find stator in StatorMaps - entId:{cComp.CoreEntity.EntityId} - StatorMapsContainsAz:{StatorMaps.ContainsKey(azRaw)} - StatorMapsContainsEl:{StatorMaps.ContainsKey(elRaw)}");
-                            }
+                                cComp.StatorMapCrashReport(azRaw, elRaw);
                             continue;
                         }
 
-                        if (controller.IsUnderControl)
-                        {
+                        if (cComp.Controller.IsUnderControl) {
                             cComp.RotorsMoving = true;
                             continue;
                         }
 
                         var controlPart = cComp.Platform.Control;
 
-                        if (az == null && el == null)
+                        if (controlPart.BaseMap == null || controlPart.BaseMap != null && controlPart.BaseMap != az && controlPart.BaseMap != el)
                         {
-                            if (cComp.RotorsMoving)
-                                cComp.StopRotors();
-                            continue;
-                        }
-
-                        var baseMap = controlPart.BaseMap;
-                        if (baseMap == null || baseMap != null && baseMap != az && baseMap != el)
-                        {
-                            Log.Line($"Setting base: elNull:{el == null} - azNull:{az == null} - azStatorNull:{az?.Stator == null} - elStatorNull{el?.Stator == null}");
-                            controlPart.BaseMap = el == null ? az : az == null ? el : az.Stator.TopGrid == el.Stator.CubeGrid ? az : el;
+                            Log.Line($"Setting base: azStatorNull:{az?.Stator == null} - elStatorNull{el?.Stator == null}");
+                            controlPart.BaseMap = az.Stator.TopGrid == el.Stator.CubeGrid ? az : el;
                             if (controlPart.BaseMap == null)
                                 continue;
                         }
 
-                        if (!cComp.Data.Repo.Values.Set.Overrides.AiEnabled)
+                        var topGrid = controlPart.BaseMap.Stator.TopGrid as MyCubeGrid;
+
+                        if (topGrid == null || !cComp.Data.Repo.Values.Set.Overrides.AiEnabled)
                         {
+                            if (topGrid == null)
+                                controlPart.BaseHasTop = false;
+
                             if (cComp.RotorsMoving)
                                 cComp.StopRotors();
                             continue;
                         }
 
-                        var root = controlPart.BaseMap;
-
-                        var topGrid = root.Stator.TopGrid as MyCubeGrid;
-
-                        if (topGrid == null)
-                        {
-                            controlPart.BaseHasTop = false;
-                            if (cComp.RotorsMoving)
-                                cComp.StopRotors();
-                            continue;
-                        }
-                        if (!controlPart.BaseHasTop)
-                        {
-                            controlPart.BaseHasTop = true;
-                        }
+                        controlPart.BaseHasTop = true;
 
                         List<StatorMap> turretMap;
-                        if (!rootConstruct.LocalStatorMaps.TryGetValue(topGrid, out turretMap))
+                        var gotMap = rootConstruct.LocalStatorMaps.TryGetValue(topGrid, out turretMap);
+                        if (!gotMap || turretMap.Count == 0)
                         {
-                            if (Tick - cComp.LastCrashTick > 1200)
-                            {
-                                cComp.LastCrashTick = Tick;
-                                Log.Line($"CTC failed to find stator in LocalStatorMaps - entId:{cComp.CoreEntity.EntityId}");
-                            }
-                            continue;
-                        }
+                            if (!gotMap) {
 
-                        if (turretMap.Count == 0)
-                        {
-                            if (cComp.RotorsMoving)
+                                if (Tick - cComp.LastCrashTick > 1200) {
+                                    cComp.LastCrashTick = Tick;
+                                    Log.Line($"CTC failed to find stator in LocalStatorMaps - entId:{cComp.CoreEntity.EntityId}");
+                                }
+                            }
+                            else if (cComp.RotorsMoving)
                                 cComp.StopRotors();
+
                             continue;
                         }
 
                         if (Tick120)
-                        {
-                            for (int j = 0; j < turretMap.Count; j++)
-                            {
-                                var map = turretMap[j];
-                                if (map.Stator.TopGrid == null || map.RotorMap.PrimaryWeapon != null)
-                                    continue;
+                            cComp.RefreshRotorMaps(turretMap);
 
-                                for (int k = 0; k < map.TopAi.WeaponComps.Count; k++)
-                                {
-                                    var wComp = map.TopAi.WeaponComps[k];
-                                    if (wComp.IsFunctional)
-                                    {
-                                        map.RotorMap.PrimaryWeapon = wComp.TrackingWeapon;
-                                        map.RotorMap.Scope = wComp.TrackingWeapon.GetScope;
-                                        Log.Line($"Set primary weapon and scope");
-                                        break;
-                                    }
+                        var trackInvalid = controlPart.TrackingWeapon?.Comp == null || !controlPart.TrackingWeapon.Comp.IsFunctional || !controlPart.TrackingWeapon.Comp.IsWorking || controlPart.TrackingWeapon.Comp.IsDisabled;
+                        if (trackInvalid && !cComp.GetTrackingComp(turretMap))
+                            continue;
 
-                                }
-                            }
-                        }
-                        var trackingComp = controlPart.TrackingWeapon?.Comp;
-                        if (trackingComp == null || !trackingComp.IsFunctional || !trackingComp.IsWorking || trackingComp.IsDisabled)
-                        {
-                            if (controlPart.NoValidWeapons && !Tick60)
-                            {
-                                if (cComp.RotorsMoving)
-                                    cComp.StopRotors();
-                                continue;
-                            }
+                        var desiredDirection = Vector3D.Zero;
+                        var noTarget = false;
 
-                            if (controlPart.TrackingWeapon != null)
-                            {
-                                controlPart.TrackingWeapon.MasterComp = null;
-                                controlPart.TrackingWeapon.RotorTurretTracking = false;
-                                controlPart.TrackingMap = null;
-                                controlPart.TrackingWeapon = null;
-                                controlPart.TrackingScope = null;
-                            }
+                        if (controlPart.TrackingWeapon.Target.TargetState != TargetStates.IsEntity)
+                            noTarget = true;
+                        else if(!ControlSys.TrajectoryEstimation(controlPart.TrackingWeapon, out desiredDirection))
+                            noTarget = true;
 
-                            var foundWeapon = false;
-                            for (int j = 0; j < turretMap.Count; j++)
-                            {
-                                if (foundWeapon)
-                                    break;
-
-                                var map = turretMap[j];
-                                if (map.TopAi.WeaponComps.Count == 0)
-                                    continue;
-
-                                for (int k = 0; k < map.TopAi.WeaponComps.Count; k++)
-                                {
-                                    var wComp = map.TopAi.WeaponComps[k];
-                                    if (wComp.IsFunctional && wComp.IsWorking && !wComp.IsDisabled)
-                                    {
-                                        controlPart.TrackingMap = map;
-                                        controlPart.TrackingWeapon = wComp.TrackingWeapon;
-                                        controlPart.TrackingScope = wComp.TrackingWeapon.GetScope;
-                                        controlPart.TrackingWeapon.MasterComp = cComp;
-                                        controlPart.TrackingWeapon.RotorTurretTracking = true;
-                                        controlPart.NoValidWeapons = false;
-
-                                        Log.Line("Set tracking weapon");
-                                        foundWeapon = true;
-                                        break;
-                                    }
-
-                                }
-                            }
-
-                            if (!foundWeapon)
-                            {
-                                controlPart.NoValidWeapons = true;
-
-                                if (cComp.RotorsMoving)
-                                    cComp.StopRotors();
-                                continue;
-                            }
-
-                        }
-
-                        var trackingWeapon = controlPart.TrackingWeapon;
-                        if (trackingWeapon?.Target == null)
-                        {
+                        if (noTarget) {
                             if (cComp.RotorsMoving)
                                 cComp.StopRotors();
                             continue;
                         }
-                        var target = trackingWeapon.Target;
 
-                        if (target.TargetState != cComp.OldState)
-                        {
-                            cComp.OldState = target.TargetState;
-                            Log.Line($"New target state: {target.TargetState}");
-                        }
-
-                        if (!target.HasTarget || target.TargetState == TargetStates.None)
-                        {
-                            if (cComp.RotorsMoving)
-                                cComp.StopRotors();
-
+                        if (!cComp.TrackTarget(turretMap, ref desiredDirection))
                             continue;
-                        }
-
-                        Vector3D desiredDirection;
-                        var targetDistSqr = 0d;
-
-                        if (target.TargetState == TargetStates.IsEntity)
-                        {
-                            var targetEnt = target.TargetEntity;
-                            if (targetEnt == null)
-                            {
-                                if (cComp.RotorsMoving)
-                                    cComp.StopRotors();
-                                continue;
-                            }
-
-                            targetDistSqr = Vector3D.DistanceSquared(root.Stator.PositionComp.WorldAABB.Center, targetEnt.PositionComp.WorldAABB.Center);
-
-                            if (!ControlSys.TrajectoryEstimation(trackingWeapon, targetEnt, out desiredDirection))
-                            {
-                                if (cComp.RotorsMoving)
-                                    cComp.StopRotors();
-                                continue;
-                            }
-                        }
-                        else
-                        {
-                            if (cComp.RotorsMoving)
-                                cComp.StopRotors();
-
-                            continue;
-                        }
-
-                        cComp.RotorsMoving = true;
-
-                        var epsilon = Tick120 ? 1E-06d : targetDistSqr <= 640000 ? 1E-03d : targetDistSqr <= 3240000 ? 1E-04d : 1E-05d;
-
-                        var currentDirection = controlPart.TrackingScope.Info.Direction;
-                        var axis = Vector3D.Cross(desiredDirection, currentDirection);
-                        var deviationRads = MathHelper.ToRadians(controller.AngleDeviation);
-
-                        //Root control
-                        var up = root.Stator.PositionComp.WorldMatrixRef.Up;
-                        var upZero = Vector3D.IsZero(up);
-                        var desiredFlat = upZero || Vector3D.IsZero(desiredDirection) ? Vector3D.Zero : desiredDirection - desiredDirection.Dot(up) * up;
-                        var currentFlat = upZero || Vector3D.IsZero(currentDirection) ? Vector3D.Zero : currentDirection - currentDirection.Dot(up) * up;
-                        var rootAngle = Vector3D.IsZero(desiredFlat) || Vector3D.IsZero(currentFlat) ? 0 : Math.Acos(MathHelper.Clamp(desiredFlat.Dot(currentFlat) / Math.Sqrt(desiredFlat.LengthSquared() * currentFlat.LengthSquared()), -1, 1));
-
-                        var rootOutsideLimits = false;
-                        if (MyUtils.IsZero(rootAngle, (float)epsilon))
-                        {
-                            if (IsServer)
-                                root.Stator.TargetVelocityRad = 0;
-                        }
-                        else
-                        {
-                            rootAngle *= Math.Sign(Vector3D.Dot(axis, up));
-
-                            var desiredAngle = root.Stator.Angle + rootAngle;
-                            rootOutsideLimits = desiredAngle < root.Stator.LowerLimitRad && desiredAngle + MathHelper.TwoPi > root.Stator.UpperLimitRad;
-
-                            if ((desiredAngle < root.Stator.LowerLimitRad && desiredAngle + MathHelper.TwoPi < root.Stator.UpperLimitRad) || (desiredAngle > root.Stator.UpperLimitRad && desiredAngle - MathHelper.TwoPi > root.Stator.LowerLimitRad))
-                                rootAngle = -Math.Sign(rootAngle) * (MathHelper.TwoPi - Math.Abs(rootAngle));
-
-                            if (IsServer)
-                                root.Stator.TargetVelocityRad = rootOutsideLimits ? 0 : Math.Abs(controller.VelocityMultiplierAzimuthRpm) * (float)rootAngle;
-                        }
-
-                        for (int j = 0; j < turretMap.Count; j++)
-                        {
-                            var map = turretMap[j];
-                            if (map.RotorMap.Scope == null)
-                                continue;
-
-                            currentDirection = map.RotorMap.Scope.Info.Direction;
-                            up = map.Stator.PositionComp.WorldMatrixRef.Up;
-                            upZero = Vector3D.IsZero(up);
-                            desiredFlat = upZero || Vector3D.IsZero(desiredDirection) ? Vector3D.Zero : desiredDirection - desiredDirection.Dot(up) * up;
-                            currentFlat = upZero || Vector3D.IsZero(currentDirection) ? Vector3D.Zero : currentDirection - currentDirection.Dot(up) * up;
-                            var subAngle = Vector3D.IsZero(desiredFlat) || Vector3D.IsZero(currentFlat) ? 0 : Math.Acos(MathHelper.Clamp(desiredFlat.Dot(currentFlat) / Math.Sqrt(desiredFlat.LengthSquared() * currentFlat.LengthSquared()), -1, 1));
-
-                            if (MyUtils.IsZero(subAngle, (float)epsilon) || !rootOutsideLimits && Math.Abs(rootAngle) > MathHelper.PiOver2)
-                            {
-                                //if (Tick60) Log.Line($"secondary isZero {MyUtils.IsZero(subAngle, (float)epsilon)} >2pi {Math.Abs(rootAngle) > MathHelper.PiOver2}");
-                                if (IsServer)
-                                    map.Stator.TargetVelocityRad = 0;
-                            }
-                            else
-                            {
-                                subAngle *= Math.Sign(Vector3D.Dot(axis, up));
-                                var desiredAngle = map.Stator.Angle + subAngle;
-                                var subOutsideLimits = desiredAngle < map.Stator.LowerLimitRad && desiredAngle + MathHelper.TwoPi > map.Stator.UpperLimitRad;
-
-                                if ((desiredAngle < map.Stator.LowerLimitRad && desiredAngle + MathHelper.TwoPi < map.Stator.UpperLimitRad) || (desiredAngle > map.Stator.UpperLimitRad && desiredAngle - MathHelper.TwoPi > map.Stator.LowerLimitRad))
-                                    subAngle = -Math.Sign(subAngle) * (MathHelper.TwoPi - Math.Abs(subAngle));
-
-                                if (IsServer)
-                                    map.Stator.TargetVelocityRad = subOutsideLimits ? 0 : Math.Abs(controller.VelocityMultiplierElevationRpm) * (float)subAngle;
-                            }
-
-                            if (rootAngle * rootAngle + subAngle * subAngle < deviationRads * deviationRads)
-                            {
-                                map.TopAi.RotorTurretAimed = true;
-                            }
-                        }
-
                     }
 
                 }

@@ -11,9 +11,10 @@ namespace CoreSystems.Platform
 {
     public partial class ControlSys : Part
     {
-        internal static bool TrajectoryEstimation(Weapon weapon, MyEntity target, out Vector3D targetDirection)
+        internal static bool TrajectoryEstimation(Weapon weapon, out Vector3D targetDirection)
         {
-            if (target.GetTopMostParent()?.Physics?.LinearVelocity == null)
+            var target = weapon.Target.TargetEntity;
+            if (target?.GetTopMostParent()?.Physics?.LinearVelocity == null)
             {
                 targetDirection = Vector3D.Zero;
                 return false;

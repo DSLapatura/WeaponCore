@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using CoreSystems.Support;
 using Sandbox.ModAPI;
+using SpaceEngineers.Game.ModAPI;
 using VRage.Game.ModAPI;
 using VRage.Utils;
 using VRageMath;
@@ -32,7 +33,6 @@ namespace CoreSystems.Platform
         {
             System = system;
             Comp = comp;
-
             Init(comp, system, partId);
             PartHash = Comp.Structure.PartHashes[partId];
         }
