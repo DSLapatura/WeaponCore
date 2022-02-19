@@ -40,17 +40,13 @@ namespace CoreSystems.Platform
 
                 if (validData && load.Version == Session.VersionControl)
                 {
-                    Log.Line("loading something");
                     Repo = load;
-
                     var p = Comp.Platform.Control;
-
                     p.PartState = Repo.Values.State.Control;
 
                 }
                 else
                 {
-                    Log.Line("creating something");
                     Repo = new ProtoControlRepo
                     {
                         Values = new ProtoControlComp
