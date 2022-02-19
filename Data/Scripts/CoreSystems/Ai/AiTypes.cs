@@ -255,7 +255,6 @@ namespace CoreSystems.Support
                         LastInfoTick = ai.Session.Tick;
                         if (Type != FakeType.Painted || ai.Targets.ContainsKey(ent))
                         {
-                            Log.Line($"setting vel");
                             FakeInfo.WorldPosition = Vector3D.Transform(LocalPosition, ent.PositionComp.WorldMatrixRef);
                             FakeInfo.LinearVelocity = ent.Physics.LinearVelocity;
                             FakeInfo.Acceleration = ent.Physics.LinearAcceleration;
@@ -272,7 +271,6 @@ namespace CoreSystems.Support
 
             internal void ClearMark(uint tick)
             {
-                Log.Line($"clear fakeWOrldTargetInfo");
                 EntityId = 0;
                 MissCount = 0;
                 LastInfoTick = 0;
