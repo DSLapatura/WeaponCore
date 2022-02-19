@@ -24,14 +24,11 @@ using VRage.Game.ModAPI;
 using VRage.Input;
 using VRage.Library.Threading;
 using VRage.ModAPI;
-using VRage.ObjectBuilders;
 using VRage.Utils;
 using VRage.Voxels;
 using VRageMath;
 using WeaponCore.Data.Scripts.CoreSystems.Ui;
 using static CoreSystems.Support.Ai;
-using static CoreSystems.Settings.CoreSettings.ServerSettings;
-using SpaceEngineers.Game.ModAPI;
 
 namespace CoreSystems
 {

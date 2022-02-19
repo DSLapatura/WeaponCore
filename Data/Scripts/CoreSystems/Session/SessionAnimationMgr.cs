@@ -1051,6 +1051,7 @@ namespace CoreSystems
                 }
                 else if (playedFull || particleEvent.Stop)
                 {
+
                     if (particleEvent.Effect != null)
                     {
                         particleEvent.Effect.Stop();

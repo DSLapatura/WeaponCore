@@ -75,25 +75,12 @@ namespace CoreSystems.Settings
             [ProtoMember(10)] public bool DisableLeads;
             [ProtoMember(11)] public double MinHudFocusDistance;
             [ProtoMember(12)] public double MaxHudFocusDistance = 10000;
-            [ProtoMember(13)]
-            public BlockModifer[] BlockModifers = { }; //legacy
-            [ProtoMember(14)]
-            public ShipSize[] ShipSizes = { }; //legacy
-            [ProtoMember(15)]
-            public Modifiers ServerModifiers = new Modifiers
-            {
-                Ammos = new[] { 
-                    new AmmoMod { AmmoName = "AmmoRound1", Variable = "BaseDamage", Value = "1" }, 
-                    new AmmoMod { AmmoName = "AmmoRound1", Variable = "EnergyAreaEffectDamage", Value = "false" }, 
-                    new AmmoMod { AmmoName = "AmmoRound2", Variable = "DesiredSpeed", Value = "750" } 
-                },
-                Weapons = new[]
-                {
-                    new WeaponMod {PartName = "PartName1", Variable = "MaxTargetDistance", Value = "1500"},
-                    new WeaponMod {PartName = "PartName2", Variable = "DeviateShotAngle", Value = "0.25"},
-                    new WeaponMod {PartName = "PartName2", Variable = "AimingTolerance", Value = "0.1"},
-                },
-            };
+            [ProtoMember(13)] public BlockModifer[] BlockModifers = { }; //legacy
+            [ProtoMember(14)] public ShipSize[] ShipSizes = { }; //legacy
+
+            [ProtoMember(15)] public Modifiers ServerModifiers = new Modifiers(); // legacy
+            [ProtoMember(16)] public bool DisableTargetCycle; 
+
         }
 
         [ProtoContract]
@@ -101,7 +88,7 @@ namespace CoreSystems.Settings
         {
             [ProtoMember(1)] public int Version = -1;
             [ProtoMember(2)] public bool ClientOptimizations = true;
-            [ProtoMember(3)] public int MaxProjectiles = 15000;
+            [ProtoMember(3)] public int MaxProjectiles = 20000;
             [ProtoMember(4)] public string MenuButton = MyMouseButtonsEnum.Middle.ToString();
             [ProtoMember(5)] public string ControlKey = MyKeys.R.ToString();
             [ProtoMember(6)] public bool ShowHudTargetSizes; // retired

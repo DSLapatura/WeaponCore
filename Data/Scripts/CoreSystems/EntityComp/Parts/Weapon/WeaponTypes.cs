@@ -153,7 +153,6 @@ namespace CoreSystems.Platform
             internal uint LockingTick;
             internal uint RequestShootBurstId;
             internal int WeaponsFired;
-            internal ShootModes LastShootMode;
 
             public enum ShootModes
             {
@@ -333,7 +332,7 @@ namespace CoreSystems.Platform
                 var state = values.State;
                 var set = values.Set;
 
-                if ((!Comp.Session.DedicatedServer && set.Overrides.ShootMode == ShootModes.AiShoot && (!ShootToggled || LastShootMode == set.Overrides.ShootMode)) || !ProcessInput(playerId) || !MakeReadyToShoot())
+                if (set.Overrides.ShootMode == ShootModes.AiShoot && !ShootToggled  || !ProcessInput(playerId) || !MakeReadyToShoot())
                     return;
 
                 if (Comp.IsBlock && Comp.Session.HandlesInput)
@@ -432,8 +431,6 @@ namespace CoreSystems.Platform
                     Log.Line($"QueueShot:{EarlyOff} - WaitingShootResponse:{WaitingShootResponse} - FreezeClientShoot:{FreezeClientShoot}", Session.InputLog);
                     return true;
                 }
-
-                LastShootMode = sMode;
 
                 return false;
             }

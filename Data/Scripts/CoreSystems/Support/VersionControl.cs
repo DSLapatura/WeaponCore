@@ -181,18 +181,22 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
             if (Core.Enforcement.ShieldDamageModifer < 0)
                 Core.Enforcement.ShieldDamageModifer = 1f;
 
-            if (Core.Enforcement.ShipSizes == null || Core.Enforcement.ShipSizes.Length != 7)
+            if (Core.Enforcement.ShipSizes == null)
             {
+                Core.Enforcement.ShipSizes = Array.Empty<CoreSettings.ServerSettings.ShipSize>();
+                /*
                 Core.Enforcement.ShipSizes = new[]
                 {
-                    new CoreSettings.ServerSettings.ShipSize {Name = "Scout", BlockCount = 0, LargeGrid = false},
-                    new CoreSettings.ServerSettings.ShipSize {Name = "Fighter", BlockCount = 2000, LargeGrid = false},
-                    new CoreSettings.ServerSettings.ShipSize {Name = "Frigate", BlockCount = 0, LargeGrid = true},
-                    new CoreSettings.ServerSettings.ShipSize {Name = "Destroyer", BlockCount = 3000, LargeGrid = true},
-                    new CoreSettings.ServerSettings.ShipSize {Name = "Cruiser", BlockCount = 6000, LargeGrid = true},
-                    new CoreSettings.ServerSettings.ShipSize {Name = "Battleship", BlockCount = 12000, LargeGrid = true},
-                    new CoreSettings.ServerSettings.ShipSize {Name = "Capital", BlockCount = 24000, LargeGrid = true},
+                    new CoreSettings.ServerSettings.ShipSize {Name = "Retired", BlockCount = 0, LargeGrid = false},
+                    //new CoreSettings.ServerSettings.ShipSize {Name = "Scout", BlockCount = 0, LargeGrid = false},
+                    //new CoreSettings.ServerSettings.ShipSize {Name = "Fighter", BlockCount = 2000, LargeGrid = false},
+                    //new CoreSettings.ServerSettings.ShipSize {Name = "Frigate", BlockCount = 0, LargeGrid = true},
+                    //new CoreSettings.ServerSettings.ShipSize {Name = "Destroyer", BlockCount = 3000, LargeGrid = true},
+                    //new CoreSettings.ServerSettings.ShipSize {Name = "Cruiser", BlockCount = 6000, LargeGrid = true},
+                    //new CoreSettings.ServerSettings.ShipSize {Name = "Battleship", BlockCount = 12000, LargeGrid = true},
+                    //new CoreSettings.ServerSettings.ShipSize {Name = "Capital", BlockCount = 24000, LargeGrid = true},
                 };
+                */
             }
 
             if (Core.Enforcement.BlockModifers == null)

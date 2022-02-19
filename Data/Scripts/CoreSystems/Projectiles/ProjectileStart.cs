@@ -59,7 +59,6 @@ namespace CoreSystems.Projectiles
                 info.BaseDamagePool = aConst.BaseDamage;
 
                 info.Random = new XorShiftRandomStruct((ulong)(w.TargetData.WeaponRandom.CurrentSeed + (w.Reload.EndId + w.ProjectileCounter++)));
-                //Log.Line($"{info.Id} - seed:{w.TargetData.WeaponRandom.CurrentSeed} - xSeed:{info.Random.GetSeedVaues().Item1} - ySeed:{info.Random.GetSeedVaues().Item2}");
                 info.LockOnFireState = (w.LockOnFireState || !aConst.OverrideTarget && wTarget.TargetState == Target.TargetStates.IsEntity);
                 info.ShooterVel = ai.GridVel;
 

@@ -250,7 +250,8 @@ namespace CoreSystems.Support
             ClosestFirst = values.Targeting.ClosestFirst;
             AlwaysFireFull = values.HardPoint.Loading.FireFull;
             Prediction = Values.HardPoint.AimLeadingPrediction;
-            LockOnFocus = Values.HardPoint.Ai.LockOnFocus && !Values.HardPoint.Ai.TrackTargets;
+            //LockOnFocus = Values.HardPoint.Ai.LockOnFocus && !Values.HardPoint.Ai.TrackTargets;
+            LockOnFocus = false;
 
             MaxReloads = Values.HardPoint.Loading.MaxReloads > 0 ? Values.HardPoint.Loading.MaxReloads : int.MaxValue;
             MaxActiveProjectiles = Values.HardPoint.Loading.MaxActiveProjectiles;

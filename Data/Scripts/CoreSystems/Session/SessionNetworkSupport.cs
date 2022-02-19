@@ -201,7 +201,6 @@ namespace CoreSystems
         {
             if (IsServer)
             {
-
                 PacketInfo oldInfo;
                 AiDataPacket iPacket;
                 if (PrunedPacketsToClient.TryGetValue(ai.Data.Repo, out oldInfo))
@@ -219,8 +218,6 @@ namespace CoreSystems
                     iPacket.PType = PacketType.AiData;
                     iPacket.Data = ai.Data.Repo;
                 }
-
-                ++ai.Data.Repo.Revision;
 
                 PrunedPacketsToClient[ai.Data.Repo] = new PacketInfo
                 {

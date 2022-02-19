@@ -47,9 +47,6 @@ namespace CoreSystems.Platform
 
                     p.PartState = Repo.Values.State.Control;
 
-                    if (Comp.Session.IsServer)
-                    {
-                    }
                 }
                 else
                 {

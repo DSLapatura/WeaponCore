@@ -171,7 +171,6 @@ namespace CoreSystems
                                 cComp.StopRotors();
                             continue;
                         }
-
                         if (!controlPart.BaseHasTop)
                         {
                             controlPart.BaseHasTop = true;
@@ -205,7 +204,7 @@ namespace CoreSystems
 
                                 for (int k = 0; k < map.TopAi.WeaponComps.Count; k++)
                                 {
-                                    var wComp = map.TopAi.WeaponComps[i];
+                                    var wComp = map.TopAi.WeaponComps[k];
                                     if (wComp.IsFunctional)
                                     {
                                         map.RotorMap.PrimaryWeapon = wComp.TrackingWeapon;
@@ -217,7 +216,6 @@ namespace CoreSystems
                                 }
                             }
                         }
-
                         var trackingComp = controlPart.TrackingWeapon?.Comp;
                         if (trackingComp == null || !trackingComp.IsFunctional || !trackingComp.IsWorking || trackingComp.IsDisabled)
                         {
@@ -237,15 +235,19 @@ namespace CoreSystems
                                 controlPart.TrackingScope = null;
                             }
 
+                            var foundWeapon = false;
                             for (int j = 0; j < turretMap.Count; j++)
                             {
+                                if (foundWeapon)
+                                    break;
+
                                 var map = turretMap[j];
                                 if (map.TopAi.WeaponComps.Count == 0)
                                     continue;
 
                                 for (int k = 0; k < map.TopAi.WeaponComps.Count; k++)
                                 {
-                                    var wComp = map.TopAi.WeaponComps[i];
+                                    var wComp = map.TopAi.WeaponComps[k];
                                     if (wComp.IsFunctional && wComp.IsWorking && !wComp.IsDisabled)
                                     {
                                         controlPart.TrackingMap = map;
@@ -256,19 +258,23 @@ namespace CoreSystems
                                         controlPart.NoValidWeapons = false;
 
                                         Log.Line("Set tracking weapon");
-                                        goto WeaponFound;
+                                        foundWeapon = true;
+                                        break;
                                     }
 
                                 }
                             }
-                            controlPart.NoValidWeapons = true;
 
-                            if (cComp.RotorsMoving)
-                                cComp.StopRotors();
-                            continue;
+                            if (!foundWeapon)
+                            {
+                                controlPart.NoValidWeapons = true;
+
+                                if (cComp.RotorsMoving)
+                                    cComp.StopRotors();
+                                continue;
+                            }
+
                         }
-
-                        WeaponFound: { };
 
                         var trackingWeapon = controlPart.TrackingWeapon;
                         if (trackingWeapon?.Target == null)

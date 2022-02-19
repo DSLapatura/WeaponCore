@@ -562,7 +562,6 @@ namespace CoreSystems
                 if (exitEntity != null && enterController?.ControllerInfo != null)
                 {
                     var cube = exitEntity as MyCubeBlock;
-
                     if (cube != null)
                     {
                         if (GridToInfoMap.TryGetValue(cube.CubeGrid, out gridMap))
@@ -580,30 +579,14 @@ namespace CoreSystems
                             if (EntityAIs.TryGetValue(cube.CubeGrid, out ai))
                             {
                                 CoreComponent comp;
-                                if (ai.CompBase.TryGetValue(cube, out comp) && comp is Weapon.WeaponComponent)
+                                if (ai.CompBase.TryGetValue(cube, out comp))
                                 {
-
-                                    if (IsServer)
-                                    {
-                                        var wComp = (Weapon.WeaponComponent)comp;
-
-                                        if (wComp.Data.Repo != null)
-                                        {
-
-                                            wComp.Data.Repo.Values.State.PlayerId = -1;
-                                            wComp.Data.Repo.Values.State.Control = ProtoWeaponState.ControlMode.None;
-
-                                            if (MpActive)
-                                                SendComp(wComp);
-                                        }
-                                        else
-                                            Log.Line($"OnPlayerController exit Repo null");
-                                    }
-
-                                    if (HandlesInput)
-                                    {
-                                        GunnerRelease(cube);
-                                    }
+                                    var wComp = comp as Weapon.WeaponComponent;
+                                    var cComp = comp as ControlSys.ControlComponent;
+                                    if (wComp != null)
+                                        wComp.ReleaseControl(playerId);
+                                    else if (cComp != null)
+                                        cComp.ReleaseControl(playerId);
                                 }
                             }
                         }
@@ -617,10 +600,8 @@ namespace CoreSystems
 
                     if (cube != null)
                     {
-
                         if (GridToInfoMap.TryGetValue(cube.CubeGrid, out gridMap))
                         {
-
                             var playerId = enterController.ControllerInfo.ControllingIdentityId;
 
                             gridMap.LastControllerTick = Tick + 1;
@@ -636,28 +617,14 @@ namespace CoreSystems
                             if (EntityAIs.TryGetValue(cube.CubeGrid, out ai))
                             {
                                 CoreComponent comp;
-                                if (IsServer && ai.CompBase.TryGetValue(cube, out comp) && comp is Weapon.WeaponComponent)
+                                if (IsServer && ai.CompBase.TryGetValue(cube, out comp))
                                 {
-
-                                    if (IsServer)
-                                    {
-                                        var wComp = (Weapon.WeaponComponent)comp;
-
-                                        if (wComp.Data.Repo != null)
-                                        {
-                                            wComp.Data.Repo.Values.State.PlayerId = playerId;
-                                            wComp.Data.Repo.Values.State.Control = ProtoWeaponState.ControlMode.Camera;
-
-                                            if (MpActive)
-                                                SendComp(wComp);
-                                        }
-                                        else
-                                            Log.Line($"OnPlayerController enter Repo null");
-
-                                    }
-
-                                    if (HandlesInput)
-                                        GunnerAcquire(cube);
+                                    var wComp = comp as Weapon.WeaponComponent;
+                                    var cComp = comp as ControlSys.ControlComponent;
+                                    if (wComp != null)
+                                        wComp.TookControl(playerId);
+                                    else if (cComp != null)
+                                        cComp.TookControl(playerId);
                                 }
                             }
                         }

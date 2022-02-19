@@ -35,11 +35,6 @@ namespace CoreSystems.Platform
 
             Init(comp, system, partId);
             PartHash = Comp.Structure.PartHashes[partId];
-
-            //_activeControls = GetControlCollection();
-
-            if (!BaseComp.Ai.BlockMonitoring)
-                BaseComp.Ai.DelayedEventRegistration(true);
         }
 
         public class RotorMap

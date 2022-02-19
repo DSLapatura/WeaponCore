@@ -6,21 +6,15 @@ namespace CoreSystems
     [ProtoContract]
     public class AiDataValues
     {
-        [ProtoMember(1)] public uint Revision;
-        [ProtoMember(2)] public int Version = Session.VersionControl;
+        //[ProtoMember(1)] public uint Revision;
+        //[ProtoMember(2)] public int Version = Session.VersionControl;
         [ProtoMember(3)] public long ActiveTerminal;
 
         public bool Sync(AiDataValues sync)
         {
-            if (sync.Revision > Revision)
-            {
-                Revision = sync.Revision;
-                ActiveTerminal = sync.ActiveTerminal;
+            ActiveTerminal = sync.ActiveTerminal;
 
-                return true;
-            }
-
-            return false;
+            return true;
         }
     }
 

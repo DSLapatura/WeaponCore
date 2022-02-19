@@ -6,6 +6,7 @@ namespace CoreSystems.Support
 {
     public partial class CoreComponent 
     {
+
         internal void TerminalRefresh(bool update = true)
         {
             if (Platform.State != CorePlatform.PlatformState.Ready || Status != Start.Started)

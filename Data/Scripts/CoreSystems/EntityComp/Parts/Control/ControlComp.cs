@@ -237,6 +237,52 @@ namespace CoreSystems.Platform
                     var part = comp.Platform.Upgrades[i];
                 }
             }
+
+            internal void TookControl(long playerId)
+            {
+                if (Session.IsServer)
+                {
+
+                    if (Data.Repo != null)
+                    {
+                        Data.Repo.Values.State.PlayerId = playerId;
+                        Data.Repo.Values.State.Mode = ProtoControlState.ControlMode.Camera;
+
+                        if (Session.MpActive)
+                            Session.SendComp(this);
+                    }
+                    else
+                        Log.Line($"OnPlayerController enter Repo null");
+
+                }
+
+                if (Session.HandlesInput)
+                    Session.GunnerAcquire(Cube);
+            }
+
+            internal void ReleaseControl(long playerId)
+            {
+                if (Session.IsServer)
+                {
+
+                    if (Data.Repo != null)
+                    {
+
+                        Data.Repo.Values.State.PlayerId = -1;
+                        Data.Repo.Values.State.Mode = ProtoControlState.ControlMode.Camera;
+
+                        if (Session.MpActive)
+                            Session.SendComp(this);
+                    }
+                    else
+                        Log.Line($"OnPlayerController exit Repo null");
+                }
+
+                if (Session.HandlesInput)
+                {
+                    Session.GunnerRelease(Cube);
+                }
+            }
         }
     }
 }

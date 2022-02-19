@@ -339,7 +339,7 @@ namespace CoreSystems.Support
             Offset = offset;
             Scale = scale;
             Distance = distance;
-            MaxPlayTime = maxPlayTime;
+            MaxPlayTime = maxPlayTime > 0 ? maxPlayTime : float.MaxValue;
             StartDelay = startDelay;
             LoopDelay = loopDelay;
             DoesLoop = loop;

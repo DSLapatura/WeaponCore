@@ -401,7 +401,6 @@ namespace CoreSystems.Support
             if (Session.IsClient)
                 Session.SendUpdateRequest(TopEntity.EntityId, PacketType.ClientAiRemove);
 
-            //Data.Repo.ControllingPlayers.Clear();
             Data.Repo.ActiveTerminal = 0;
             Charger.Clean();
 

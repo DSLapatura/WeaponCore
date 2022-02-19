@@ -69,7 +69,7 @@ namespace CoreSystems
             }
             else Log.Line("Storage didn't contain ConstructDataGuid");
 
-            if (validData && load.Version == Session.VersionControl)
+            if (validData)
                 Repo = load;
             else Repo = new ConstructDataValues();
 

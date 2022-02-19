@@ -123,7 +123,7 @@ namespace CoreSystems
             return false;
         }
 
-        private void GunnerAcquire(MyCubeBlock cube)
+        internal void GunnerAcquire(MyCubeBlock cube)
         {
             GunnerBlackList = true;
             ActiveControlBlock = cube;
@@ -135,7 +135,7 @@ namespace CoreSystems
             MyVisualScriptLogicProvider.SetPlayerInputBlacklistState(controlStringMenu, PlayerId);
         }
 
-        private void GunnerRelease(MyCubeBlock cube)
+        internal void GunnerRelease(MyCubeBlock cube)
         {
             GunnerBlackList = false;
             ActiveControlBlock = null;
@@ -378,7 +378,7 @@ namespace CoreSystems
                 TargetUi.SelectTarget(true, UiInput.MouseButtonRightNewPressed);
             else if (!UiInput.CameraBlockView)
             {
-                if (UiInput.CurrentWheel != UiInput.PreviousWheel)
+                if (UiInput.CurrentWheel != UiInput.PreviousWheel && !Settings.Enforcement.DisableTargetCycle)
                     TargetUi.SelectNext();
             }
         }

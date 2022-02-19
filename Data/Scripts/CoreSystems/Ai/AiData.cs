@@ -19,12 +19,6 @@ namespace CoreSystems
 
             StorageInit();
             Load();
-            /*
-            if (Ai.Session.IsServer)
-            {
-                Repo.ControllingPlayers.Clear();
-            }
-            */
         }
 
         public void Clean()
@@ -71,7 +65,7 @@ namespace CoreSystems
                 }
             }
 
-            if (validData && load.Version == VersionControl)
+            if (validData)
                 Repo = load;
             else 
                 Repo = new AiDataValues();

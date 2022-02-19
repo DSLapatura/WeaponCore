@@ -15,7 +15,10 @@ namespace CoreSystems
         internal static bool GetAiEnabledControl(IMyTerminalBlock block)
         {
             var comp = block?.Components?.Get<CoreComponent>() as ControlSys.ControlComponent;
-            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return false;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+            {
+                return false;
+            }
             return comp.Data.Repo.Values.Set.Overrides.AiEnabled;
         }
 
