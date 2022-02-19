@@ -353,6 +353,7 @@ namespace CoreSystems
                         else
                         {
                             rootAngle *= Math.Sign(Vector3D.Dot(axis, up));
+
                             var desiredAngle = root.Stator.Angle + rootAngle;
                             rootOutsideLimits = desiredAngle < root.Stator.LowerLimitRad && desiredAngle + MathHelper.TwoPi > root.Stator.UpperLimitRad;
 
