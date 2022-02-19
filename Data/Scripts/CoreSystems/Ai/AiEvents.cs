@@ -71,7 +71,6 @@ namespace CoreSystems.Support
             {
                 if (register && Registered)
                 {
-                    Log.Line($"block monitoring");
                     BlockMonitoring = true;
                     GridEntity.OnBlockAdded += OnBlockAdded;
                     GridEntity.OnBlockRemoved += OnBlockRemoved;

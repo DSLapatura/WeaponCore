@@ -740,21 +740,22 @@ namespace CoreSystems
             CounterKeenLogMessage(false);
         }
 
-        private void PracticalJokes()
+        private void PracticalJokes(ulong playerSteamUserId)
         {
-            var chance = MyUtils.GetRandomInt(0, 4);
-            if (chance == 2)
+            string[] jokeArray;
+            if (JokeCollection.TryGetValue(playerSteamUserId, out jokeArray))
             {
-                var messageIndex = MyUtils.GetRandomInt(0, JokeMessages.Length);
-                MyAPIGateway.Utilities.ShowNotification(JokeMessages[messageIndex], 10000, "Red");
+                var messageIndex = MyUtils.GetRandomInt(0, jokeArray.Length);
+                MyAPIGateway.Utilities.ShowNotification(jokeArray[messageIndex], 10000, "Red");
             }
         }
 
-        internal readonly string[] JokeMessages =
+        internal Dictionary<ulong, string[]> JokeCollection = new Dictionary<ulong, string[]>
         {
-            "FakeStar in the house, there can be only one!",
-            "Fake DarkStar is here, he loves to answer your shield questions!",
-            "FakeStar has now joined to solve all of your shield problems"
+            [76561198000167584] = new[]
+            {
+                "Streamer who doesn't like updates on friday nights detected... rapid update schedule activated",
+            }
         };
 
         internal void RemoveCoreToolbarWeapons(MyCubeGrid grid)

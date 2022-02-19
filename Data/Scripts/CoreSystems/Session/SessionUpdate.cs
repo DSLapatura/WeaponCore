@@ -102,8 +102,11 @@ namespace CoreSystems
                         {
                             cComp.DetectStateChanges();
                         }
+
                         if (cComp.Platform.State != CorePlatform.PlatformState.Ready)
+                        {
                             continue;
+                        }
 
                         if (cComp.IsAsleep || !cComp.IsWorking || cComp.CoreEntity.MarkedForClose || cComp.IsDisabled)
                         {
@@ -379,7 +382,7 @@ namespace CoreSystems
 
                             if (MyUtils.IsZero(subAngle, (float)epsilon) || !rootOutsideLimits && Math.Abs(rootAngle) > MathHelper.PiOver2)
                             {
-                                if (Tick60) Log.Line($"secondary isZero {MyUtils.IsZero(subAngle, (float)epsilon)} >2pi {Math.Abs(rootAngle) > MathHelper.PiOver2}");
+                                //if (Tick60) Log.Line($"secondary isZero {MyUtils.IsZero(subAngle, (float)epsilon)} >2pi {Math.Abs(rootAngle) > MathHelper.PiOver2}");
                                 if (IsServer)
                                     map.Stator.TargetVelocityRad = 0;
                             }
@@ -401,6 +404,7 @@ namespace CoreSystems
                                 map.TopAi.RotorTurretAimed = true;
                             }
                         }
+
                     }
 
                 }
@@ -476,7 +480,6 @@ namespace CoreSystems
                     }
                     if (pComp.Status != Started)
                         pComp.HealthCheck();
-                    var burstShots = (pComp.ShootManager.RequestShootBurstId != pComp.Data.Repo.Values.State.ShootSyncStateId);
                     if (pComp.Platform.State != CorePlatform.PlatformState.Ready || pComp.IsDisabled || pComp.IsAsleep || pComp.CoreEntity.MarkedForClose || pComp.LazyUpdate && !ai.DbUpdated && Tick > pComp.NextLazyUpdateStart)
                         continue;
 
@@ -510,7 +513,7 @@ namespace CoreSystems
 
                         var autoShot =  p.PartState.Action == TriggerOn || p.AiShooting && p.PartState.Action == TriggerOff;
 
-                        var anyShot = autoShot && !burstShots || p.ShootCount > 0;
+                        var anyShot = autoShot;
 
                         var delayedFire = p.System.DelayCeaseFire && !p.Target.IsAligned && Tick - p.CeaseFireDelayTick <= p.System.CeaseFireDelay;
                         var shoot = (anyShot || p.FinishShots || delayedFire);
@@ -563,7 +566,6 @@ namespace CoreSystems
                     var cMode = wValues.Set.Overrides.Control;
                     var sMode = wValues.Set.Overrides.ShootMode;
                     var shootModeDefault = sMode != Weapon.ShootManager.ShootModes.AiShoot;
-                    var shotModeActive = wComp.ShootManager.RequestShootBurstId != wValues.State.ShootSyncStateId;
 
                     if (HandlesInput) {
 
@@ -773,7 +775,7 @@ namespace CoreSystems
                         var manualShot = (compManualMode || w.PartState.Action == TriggerClick) && canManualShoot && wComp.InputState.MouseButtonLeft;
                         var normalShot = (manualShot || autoShot);
 
-                        var anyShot = (normalShot && !shotModeActive && !shootModeDefault) || ((w.ShootCount > 0 && w.ShootDelay == 0 || w.ShootDelay != 0 && w.ShootDelay-- == 0) && !wComp.ShootManager.FreezeClientShoot);
+                        var anyShot = (normalShot && !shootModeDefault) || ((w.ShootCount > 0 && w.ShootDelay == 0 || w.ShootDelay != 0 && w.ShootDelay-- == 0) && !wComp.ShootManager.FreezeClientShoot);
 
                         var delayedFire = w.System.DelayCeaseFire && !w.Target.IsAligned && Tick - w.CeaseFireDelayTick <= w.System.CeaseFireDelay;
                         var shootRequest = (anyShot || w.FinishShots || delayedFire);

@@ -537,8 +537,8 @@ namespace CoreSystems
                     SendPlayerConnectionUpdate(id, true);
                     SendServerStartup(player.SteamUserId);
                 }
-                else if (MpActive && MultiplayerId != player.SteamUserId && JokePlayerList.Contains(player.SteamUserId))
-                    PracticalJokes();
+                else if (MpActive && MultiplayerId == player.SteamUserId && JokePlayerList.Contains(player.SteamUserId))
+                    PracticalJokes(player.SteamUserId);
             }
             return false;
         }

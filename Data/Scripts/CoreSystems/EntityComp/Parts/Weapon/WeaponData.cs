@@ -127,9 +127,6 @@ namespace CoreSystems.Platform
                     Repo.Values.Set.Range = -1;
                 }
 
-                if (Comp.Session.IsClient)
-                    Comp.ShootManager.RequestShootBurstId = Repo.Values.State.ShootSyncStateId;
-                
                 ProtoRepoBase = Repo;
 
             }

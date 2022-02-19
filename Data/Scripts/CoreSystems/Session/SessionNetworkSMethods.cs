@@ -473,33 +473,27 @@ namespace CoreSystems
             Weapon.ShootManager.ShootCodes code;
             DecodeShootState(dPacket.Data, out stateId, out mode, out interval, out code);
 
-            long playerId;
-            if (wComp != null && code == Weapon.ShootManager.ShootCodes.ToggleServerOff)
+            if (wComp != null)
             {
-                wComp.ShootManager.ServerToggleOffByClient(interval);
-            }
-            else if (wComp != null && wComp.ShootManager.RequestShootBurstId == stateId && SteamToPlayer.TryGetValue(packet.SenderId, out playerId))
-            {
-                wComp.ShootManager.RequestShootSync(playerId);
-
-                if (wComp.ShootManager.RequestShootBurstId == stateId)
+                long playerId;
+                if (code == Weapon.ShootManager.ShootCodes.ToggleServerOff)
                 {
-                    wComp.ShootManager.ServerRejectResponse(packet.SenderId);
+                    wComp.ShootManager.ServerToggleOffByClient(interval);
                 }
-            }
-            else if (wComp != null && wComp.ShootManager.RequestShootBurstId != stateId)
-            {
-                Log.Line($"server bursting request mismatch: server:{wComp.ShootManager.RequestShootBurstId} - client:{stateId} - serverCycles:{wComp.ShootManager.CompletedCycles} - clientCycles:{interval}", InputLog);
-                wComp.ShootManager.ServerRejectResponse(packet.SenderId);
+                else if (SteamToPlayer.TryGetValue(packet.SenderId, out playerId))
+                {
+                    var readyToTrigger = !wComp.ShootManager.ShootActive;
+                    if (readyToTrigger)
+                        wComp.ShootManager.RequestShootSync(playerId);
 
-            }
-            else if (!SteamToPlayer.TryGetValue(packet.SenderId, out playerId))
-            {
-                Log.Line($"server bursting playerId not found", InputLog);
-            }
-            else if (wComp != null)
-            {
-                Log.Line($"ServerShootSyncs failed: {wComp.ShootManager.RequestShootBurstId} - {wComp.Data.Repo.Values.State.ShootSyncStateId} - {stateId}", InputLog);
+                    if (!readyToTrigger || !wComp.ShootManager.ShootActive)
+                        wComp.ShootManager.ServerRejectResponse(packet.SenderId);
+                }
+                else
+                {
+                    Log.Line($"ServerShootSyncs failed: - mode:{mode} - {stateId}", InputLog);
+
+                }
             }
 
             data.Report.PacketValid = true;

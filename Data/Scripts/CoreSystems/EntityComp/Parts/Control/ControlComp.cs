@@ -99,10 +99,10 @@ namespace CoreSystems.Platform
                 baseRotor.TargetVelocityRad = 0;
 
                 var rootConstruct = Ai.Construct.RootAi.Construct;
-                var mapList = rootConstruct.LocalStatorMaps[baseRotor.TopGrid as MyCubeGrid];
+                var mapList = rootConstruct.LocalStatorMaps[(MyCubeGrid)baseRotor.TopGrid];
 
                 foreach (var statorMap in mapList)
-                    if (statorMap?.Stator != null)
+                    if (statorMap.Stator != null)
                         statorMap.Stator.TargetVelocityRad = 0;
 
             }

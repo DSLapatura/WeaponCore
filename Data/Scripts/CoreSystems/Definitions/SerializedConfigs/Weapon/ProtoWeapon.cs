@@ -19,7 +19,6 @@ namespace CoreSystems
         public void ResetToFreshLoadState(Weapon.WeaponComponent comp)
         {
             Values.State.TrackingReticle = false;
-            Values.State.ShootSyncStateId = 0;
             Values.Set.Overrides.Control = ProtoWeaponOverrides.ControlModes.Auto;
             Values.Set.Overrides.ShootMode = Weapon.ShootManager.ShootModes.AiShoot;
             if (Values.State.Control == ProtoWeaponState.ControlMode.Ui)
@@ -312,7 +311,7 @@ namespace CoreSystems
         [ProtoMember(6)] public TriggerActions TerminalAction;
         [ProtoMember(7)] public bool CountingDown;
         [ProtoMember(8)] public bool CriticalReaction;
-        [ProtoMember(9)] public uint ShootSyncStateId;
+        //[ProtoMember(9)] public uint ShootSyncStateId;
 
         public bool Sync(Weapon.WeaponComponent comp, ProtoWeaponState sync, Caller caller)
         {
@@ -325,8 +324,6 @@ namespace CoreSystems
                 TerminalAction = sync.TerminalAction;
                 CountingDown = sync.CountingDown;
                 CriticalReaction = sync.CriticalReaction;
-                ShootSyncStateId = sync.ShootSyncStateId;
-                comp.ShootManager.RequestShootBurstId = ShootSyncStateId;
                 
                 for (int i = 0; i < sync.Weapons.Length; i++)
                     comp.Platform.Weapons[i].PartState.Sync(sync.Weapons[i]);

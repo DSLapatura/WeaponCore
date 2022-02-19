@@ -200,7 +200,6 @@ namespace CoreSystems.Support
 
         internal void Init(MyEntity topEntity, Session session, CoreComponent.CompTypeSpecific type)
         {
-            Log.Line($"init: {topEntity.EntityId}");
             try
             {
                 TopEntity = topEntity;

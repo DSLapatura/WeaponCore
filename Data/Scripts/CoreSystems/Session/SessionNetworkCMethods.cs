@@ -518,38 +518,33 @@ namespace CoreSystems
             var wComp = comp as Weapon.WeaponComponent;
             if (wComp != null)
             {
-                if (code == Weapon.ShootManager.ShootCodes.ClientRequestReject)
+                switch (code)
                 {
-                    wComp.ShootManager.ServerReject();
-                }
-                else if (code == Weapon.ShootManager.ShootCodes.ToggleClientOff)
-                {
-                    wComp.ShootManager.ClientToggledOffByServer(interval);
-                }
-                else if (code == Weapon.ShootManager.ShootCodes.ServerResponse)
-                {
-                    wComp.ShootManager.WaitingShootResponse = false;
-                    if (wComp.ShootManager.EarlyOff && wComp.ShootManager.ShootToggled)
+                    case Weapon.ShootManager.ShootCodes.ClientRequestReject:
+                        wComp.ShootManager.ServerReject();
+                        break;
+                    case Weapon.ShootManager.ShootCodes.ToggleClientOff:
+                        wComp.ShootManager.ClientToggledOffByServer(interval);
+                        break;
+                    case Weapon.ShootManager.ShootCodes.ServerResponse:
                     {
-                        Log.Line($"forcing QueuedToggle off -  frozen:{wComp.ShootManager.FreezeClientShoot}", InputLog);
-                        wComp.ShootManager.ProcessInput(PlayerId, true);
+                        wComp.ShootManager.WaitingShootResponse = false;
+                        if (wComp.ShootManager.EarlyOff && wComp.ShootManager.ShootToggled)
+                        {
+                            Log.Line($"forcing QueuedToggle off -  frozen:{wComp.ShootManager.FreezeClientShoot}", InputLog);
+                            wComp.ShootManager.ProcessInput(PlayerId, true);
+                        }
+                        break;
                     }
+                    case Weapon.ShootManager.ShootCodes.ToggleServerOff:
+                        wComp.ShootManager.ClientToggledOffByServer(interval, true);
+                        break;
+                    default:
+                        long playerId;
+                        SteamToPlayer.TryGetValue(packet.SenderId, out playerId);
+                        wComp.ShootManager.RequestShootSync(0);
+                        break;
                 }
-                else if (code == Weapon.ShootManager.ShootCodes.ToggleServerOff)
-                {
-                    Log.Line($"server requested toggle off? - stateId:{stateId}({wComp.ShootManager.RequestShootBurstId}) - mode:{mode} - code:{code} - wait:{wComp.ShootManager.WaitingShootResponse} - freeze:{wComp.ShootManager.FreezeClientShoot} - CompletedCycles:{wComp.ShootManager.CompletedCycles}({interval}) - LastCycle:{wComp.ShootManager.LastCycle}", InputLog);
-                    wComp.ShootManager.ClientToggledOffByServer(interval);
-                }
-                else if (wComp.ShootManager.RequestShootBurstId == stateId)
-                {
-                    wComp.ShootManager.RequestShootSync(0);
-                }
-                else
-                {
-                    Log.Line($"failed to burst on client - stateId:{stateId}({wComp.ShootManager.RequestShootBurstId}) - mode:{mode} - code:{code} - wait:{wComp.ShootManager.WaitingShootResponse} - freeze:{wComp.ShootManager.FreezeClientShoot} - CompletedCycles:{wComp.ShootManager.CompletedCycles}({interval}) - LastCycle:{wComp.ShootManager.LastCycle}", InputLog);
-                    wComp.ShootManager.RequestShootBurstId = stateId;
-                }
-
             }
 
             data.Report.PacketValid = true;
