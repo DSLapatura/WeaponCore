@@ -37,6 +37,7 @@ namespace CoreSystems
                     continue;
 
                 ai.Concealed = ((uint)ai.TopEntity.Flags & 4) > 0;
+
                 if (ai.Concealed)
                     continue;
 
@@ -342,8 +343,8 @@ namespace CoreSystems
                         var wasTrack = wValues.State.TrackingReticle;
 
                         var isControllingPlayer = wValues.State.PlayerId == PlayerId;
-
                         var track = (isControllingPlayer && (cMode != ProtoWeaponOverrides.ControlModes.Auto) && TargetUi.DrawReticle && !InMenu && rootConstruct.ControllingPlayers.ContainsKey(PlayerId) && (!UiInput.CameraBlockView || UiInput.CameraChannelId > 0 && UiInput.CameraChannelId == wComp.Data.Repo.Values.Set.Overrides.CameraChannel));
+
                         if (isControllingPlayer)
                         {
                             TargetUi.LastTrackTick = Tick;
@@ -401,6 +402,7 @@ namespace CoreSystems
                                 w.Target.Reset(Tick, States.WeaponNotReady);
                             continue;
                         }
+
                         if (w.AvCapable && Tick20) {
                             var avWasEnabled = w.PlayTurretAv;
                             double distSqr;
@@ -446,9 +448,6 @@ namespace CoreSystems
                             HudUi.TexturesToAdd++;
                             HudUi.WeaponsToDisplay.Add(w);
                         }
-
-                        //if (w.System.PartType != HardwareType.BlockWeapon)
-                            //continue;
 
                         if (w.CriticalReaction && !wComp.CloseCondition && (wValues.Set.Overrides.Armed || wValues.State.CountingDown || wValues.State.CriticalReaction))
                             w.CriticalMonitor();

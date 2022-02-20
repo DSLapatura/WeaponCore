@@ -425,7 +425,6 @@ namespace CoreSystems
         internal bool CheckTarget(Ai ai)
         {
             if (!ai.Construct.Focus.ClientIsFocused(ai)) return false;
-
             if (ai != TrackingAi)
             {
                 TrackingAi = null;

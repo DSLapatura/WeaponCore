@@ -397,12 +397,9 @@ namespace CoreSystems.Support
 
         internal static bool RotorTurretLookAt(ControlSys controlPart, ref Vector3D desiredDirection, double targetDistSqr)
         {
-            if (controlPart == null)
-                return false;
-
             var root = controlPart.BaseMap;
             var other = controlPart.OtherMap;
-            if (root == null || other == null)
+            if (root == null || other == null || controlPart.TrackingWeapon?.Scope == null)
                 return false;
 
             //var epsilon = targetDistSqr <= 640000 ? 1E-03d : targetDistSqr <= 3240000 ? 1E-04d : 1E-05d;

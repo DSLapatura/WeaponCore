@@ -35,7 +35,6 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                 }
             }
 
-
             var enableActivator = _3RdPersonDraw == ThirdPersonModes.Crosshair || _session.UiInput.FirstPersonView && _session.UiInput.AltPressed || _session.UiInput.CameraBlockView;
             if (enableActivator || !_session.UiInput.FirstPersonView && !_session.UiInput.CameraBlockView)
                 DrawSelector(enableActivator);

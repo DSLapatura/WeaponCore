@@ -27,7 +27,6 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             ActivateSelector();
             if (s.CheckTarget(s.TrackingAi) && GetTargetState(s))
             {
-
                 if (ActivateLeads())
                     DrawActiveLeads();
 
