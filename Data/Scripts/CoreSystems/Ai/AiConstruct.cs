@@ -98,7 +98,6 @@ namespace CoreSystems.Support
         {
             internal readonly HashSet<MyDefinitionId> RecentItems = new HashSet<MyDefinitionId>(MyDefinitionId.Comparer);
             internal readonly HashSet<Weapon> OutOfAmmoWeapons = new HashSet<Weapon>();
-            internal readonly List<Ai> RefreshedAis = new List<Ai>();
             internal readonly Dictionary<MyStringHash, int> Counter = new Dictionary<MyStringHash, int>(MyStringHash.Comparer);
             internal readonly Focus Focus = new Focus();
             internal readonly ConstructData Data = new ConstructData();
@@ -355,27 +354,15 @@ namespace CoreSystems.Support
 
             internal static void BuildAiListAndCounters(Ai cAi)
             {
-                cAi.Construct.RefreshedAis.Clear();
-                cAi.Construct.RefreshedAis.Add(cAi);
 
-                if (cAi.SubGridCache.Count > 1) {
-                    foreach (var sub in cAi.SubGridCache) {
-                        if (sub == null || sub == cAi.TopEntity)
-                            continue;
+                var ais = cAi.GridMap.GroupMap.Ais;
+                for (int i = 0; i < ais.Count; i++) {
 
-                        Ai subAi;
-                        if (cAi.Session.EntityAIs.TryGetValue(sub, out subAi))
-                            cAi.Construct.RefreshedAis.Add(subAi);
-                    }
-                }
-
-                for (int i = 0; i < cAi.Construct.RefreshedAis.Count; i++) {
-
-                    var checkAi = cAi.Construct.RefreshedAis[i];
+                    var checkAi = ais[i];
                     checkAi.Construct.Counter.Clear();
 
-                    for (int x = 0; x < cAi.Construct.RefreshedAis.Count; x++) {
-                        foreach (var wc in cAi.Construct.RefreshedAis[x].PartCounting)
+                    for (int x = 0; x < ais.Count; x++) {
+                        foreach (var wc in ais[x].PartCounting)
                             checkAi.Construct.AddWeaponCount(wc.Key, wc.Value.Current);
                     }
                 }
@@ -554,7 +541,6 @@ namespace CoreSystems.Support
                 RootAi = null;
                 LargestAi = null;
                 Counter.Clear();
-                RefreshedAis.Clear();
                 PreviousTargets.Clear();
                 ControllingPlayers.Clear();
             }

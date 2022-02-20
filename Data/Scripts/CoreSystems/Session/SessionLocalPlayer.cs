@@ -94,7 +94,7 @@ namespace CoreSystems
             if (Settings.Enforcement.DisableLeads)
                 return;
 
-            foreach (var ai in TrackingAi.Construct.RefreshedAis)
+            foreach (var ai in TrackingAi.GridMap.GroupMap.Ais)
             {
                 foreach (var comp in ai.WeaponComps)
                 {
@@ -354,7 +354,6 @@ namespace CoreSystems
         internal void TargetSelection()
         {
             if (!InGridAiBlock) return;
-
             if (UiInput.AltPressed && UiInput.ShiftReleased || TargetUi.DrawReticle && UiInput.ClientInputState.MouseButtonRight && PlayerDummyTargets[PlayerId].PaintedTarget.EntityId == 0)
                 TrackingAi.Construct.Focus.RequestReleaseActive(TrackingAi);
 

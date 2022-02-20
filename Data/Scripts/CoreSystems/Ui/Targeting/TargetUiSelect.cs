@@ -307,16 +307,18 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             for (int i = 0; i < _sortedMasterList.Count; i++)
                 if (focus.Target == _sortedMasterList[i].EntityId) _currentIdx = i;
             _endIdx = _sortedMasterList.Count - 1;
+
             return _endIdx >= 0;
         }
 
         internal void BuildMasterCollections(Ai ai)
         {
             _masterTargets.Clear();
-            for (int i = 0; i < ai.Construct.RefreshedAis.Count; i++)
+            var ais = ai.GridMap.GroupMap.Ais;
+            for (int i = 0; i < ais.Count; i++)
             {
 
-                var subTargets = ai.Construct.RefreshedAis[i].SortedTargets;
+                var subTargets = ais[i].SortedTargets;
                 for (int j = 0; j < subTargets.Count; j++)
                 {
                     var tInfo = subTargets[j];
