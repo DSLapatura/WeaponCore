@@ -31,6 +31,8 @@ namespace CoreSystems.Support
                         TerminalBlock.AppendingCustomInfo += AppendingCustomInfoSupport;
                     else if (TypeSpecific == CompTypeSpecific.Upgrade)
                         TerminalBlock.AppendingCustomInfo += AppendingCustomInfoUpgrade;
+                    else if (TypeSpecific == CompTypeSpecific.Control)
+                        TerminalBlock.AppendingCustomInfo += AppendingCustomInfoControl;
 
                     Cube.IsWorkingChanged += IsWorkingChanged;
                     IsWorkingChanged(Cube);
@@ -78,7 +80,8 @@ namespace CoreSystems.Support
                             TerminalBlock.AppendingCustomInfo -= AppendingCustomInfoSupport;
                         else if (TypeSpecific == CompTypeSpecific.Upgrade)
                             TerminalBlock.AppendingCustomInfo -= AppendingCustomInfoUpgrade;
-
+                        else if (TypeSpecific == CompTypeSpecific.Control)
+                            TerminalBlock.AppendingCustomInfo -= AppendingCustomInfoControl;
                         Cube.IsWorkingChanged -= IsWorkingChanged;
                     }
 
@@ -292,6 +295,40 @@ namespace CoreSystems.Support
                 }
             }
             catch (Exception ex) { Log.Line($"Exception in Weapon AppendingCustomInfo: {ex}", null, true); }
+        }
+
+        private void AppendingCustomInfoControl(IMyTerminalBlock block, StringBuilder stringBuilder)
+        {
+            try
+            {
+
+                stringBuilder.Append("\n==== ControlSys ====\n");
+
+                var ai = Platform.Control?.TrackingWeapon?.Comp?.Ai;
+                var initted = ai != null;
+
+                stringBuilder.Append($"Ai Detected:{initted && !Platform.Control.TrackingWeapon.Comp.Ai.MarkedForClose}\n\n");
+
+                if (initted)
+                {
+                    stringBuilder.Append($"Weapons: {ai.WeaponComps.Count}\nTools: {0}\n\n");
+                }
+                var weaponCnt = Platform.Support.Count;
+                for (int i = 0; i < weaponCnt; i++)
+                {
+                    var a = Platform.Support[i];
+                }
+
+                if (Debug)
+                {
+                    foreach (var support in Platform.Support)
+                    {
+                        stringBuilder.Append($"\n\nPart: {support.CoreSystem.PartName} - Enabled: {IsWorking}");
+                        stringBuilder.Append($"\nManual: {support.BaseComp.UserControlled}");
+                    }
+                }
+            }
+            catch (Exception ex) { Log.Line($"Exception in AppendingCustomInfoSupport: {ex}", null, true); }
         }
 
         private void AppendingCustomInfoSupport(IMyTerminalBlock block, StringBuilder stringBuilder)
