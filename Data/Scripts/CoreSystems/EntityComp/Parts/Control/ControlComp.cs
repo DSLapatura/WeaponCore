@@ -289,7 +289,7 @@ namespace CoreSystems.Platform
 
                 var epsilon = Session.Tick120 ? 1E-06d : targetDistSqr <= 640000 ? 1E-03d : targetDistSqr <= 3240000 ? 1E-04d : 1E-05d;
 
-                var currentDirection = trackingWeapon.Scope.Info.Direction;
+                var currentDirection = trackingWeapon.GetScope.Info.Direction;
                 var axis = Vector3D.Cross(desiredDirection, currentDirection);
                 var deviationRads = MathHelper.ToRadians(Controller.AngleDeviation);
 
@@ -322,12 +322,9 @@ namespace CoreSystems.Platform
 
                 var primaryWeapon = topAi.WeaponComps[0].Collection[0];
 
-                if (primaryWeapon.Scope == null)
-                    return false;
-
                 var other = Platform.Control.OtherMap;
 
-                currentDirection = primaryWeapon.Scope.Info.Direction;
+                currentDirection = primaryWeapon.GetScope.Info.Direction;
                 up = other.PositionComp.WorldMatrixRef.Up;
                 upZero = Vector3D.IsZero(up);
                 desiredFlat = upZero || Vector3D.IsZero(desiredDirection) ? Vector3D.Zero : desiredDirection - desiredDirection.Dot(up) * up;

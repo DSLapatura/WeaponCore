@@ -140,7 +140,7 @@ namespace CoreSystems.Platform
 
             if (ttiDiff < 0)
             {
-                targetDirection = weapon.Scope.CachedDir;
+                targetDirection = weapon.GetScope.CachedDir;
                 return false;
             }
 
@@ -153,7 +153,7 @@ namespace CoreSystems.Platform
 
             if (timeToIntercept < 0)
             {
-                targetDirection = weapon.Scope.CachedDir;
+                targetDirection = weapon.GetScope.CachedDir;
                 return false;
             }
 

@@ -87,7 +87,7 @@ namespace CoreSystems.Control
 
             Separator<T>(session, "WC_sep2", IsTrue);
 
-            AddWeaponCTCRangeSliderNoAction<T>(session, "Weapon Range", Localization.GetText("TerminalWeaponRangeTitle"), Localization.GetText("TerminalWeaponRangeTooltip"), BlockUi.GetRangeControl, BlockUi.RequestSetRangeControl, IsReady, BlockUi.GetMinRangeControl, BlockUi.GetMaxRangeControl, false, false);
+            AddWeaponCTCRangeSliderNoAction<T>(session, "Weapon Range", Localization.GetText("TerminalWeaponRangeTitle"), Localization.GetText("TerminalWeaponRangeTooltip"), BlockUi.GetRangeControl, BlockUi.RequestSetRangeControl, IsReady, BlockUi.GetMinRangeControl, BlockUi.GetMaxRangeControl, true, false);
 
             AddOnOffSwitchNoAction<T>(session, "ReportTarget", Localization.GetText("TerminalReportTargetTitle"), Localization.GetText("TerminalReportTargetTooltip"), BlockUi.GetReportTargetControl, BlockUi.RequestSetReportTargetControl, true, IsReady);
 

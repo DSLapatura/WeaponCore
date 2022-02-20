@@ -399,12 +399,12 @@ namespace CoreSystems.Support
         {
             var root = controlPart.BaseMap;
             var other = controlPart.OtherMap;
-            if (root == null || other == null || controlPart.TrackingWeapon?.Scope == null)
+            if (root == null || other == null)
                 return false;
 
             //var epsilon = targetDistSqr <= 640000 ? 1E-03d : targetDistSqr <= 3240000 ? 1E-04d : 1E-05d;
 
-            var currentDirection = controlPart.TrackingWeapon.Scope.Info.Direction;
+            var currentDirection = controlPart.TrackingWeapon.GetScope.Info.Direction;
             var axis = Vector3D.Cross(desiredDirection, currentDirection);
 
             Vector3D up = root.PositionComp.WorldMatrixRef.Up;
