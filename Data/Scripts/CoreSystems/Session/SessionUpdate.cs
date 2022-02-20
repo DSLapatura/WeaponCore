@@ -267,7 +267,6 @@ namespace CoreSystems
                             cComp.RotorsMoving = true;
                             continue;
                         }
-
                         if (!cComp.Data.Repo.Values.Set.Overrides.AiEnabled || topAi.RootWeaponComp?.TrackingWeapon == null || topAi.RootWeaponComp.TrackingWeapon.Comp.CoreEntity.MarkedForClose)
                         {
                             if (cComp.RotorsMoving)

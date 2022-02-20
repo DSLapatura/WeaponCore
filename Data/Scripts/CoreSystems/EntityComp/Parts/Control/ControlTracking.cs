@@ -80,23 +80,26 @@ namespace CoreSystems.Platform
             var ai = weapon.Comp.Ai;
             var session = ai.Session;
             var ammoDef = weapon.ActiveAmmoDef.AmmoDef;
-
             var target = weapon.Target.TargetEntity;
             if (target?.GetTopMostParent()?.Physics?.LinearVelocity == null)
             {
                 targetDirection = Vector3D.Zero;
                 return false;
             }
-            
+
+            var scopeInfo = weapon.GetScope.Info;
+            var shooterPos = scopeInfo.Position;
+
             var targetPos = target.PositionComp.WorldAABB.Center;
 
-            var shooter = weapon.Comp.FunctionalBlock;
             if (ammoDef.Const.IsBeamWeapon)
             {
-                targetDirection = Vector3D.Normalize(targetPos - shooter.PositionComp.WorldAABB.Center);
+                targetDirection = Vector3D.Normalize(targetPos - shooterPos);
                 return true;
             }
-            
+
+            var targetTopMost = target.GetTopMostParent();
+
             if (ai.VelocityUpdateTick != session.Tick)
             {
                 ai.TopEntityVolume.Center = ai.TopEntity.PositionComp.WorldVolume.Center;
@@ -113,16 +116,15 @@ namespace CoreSystems.Platform
             }
 
             var gravityMultiplier = ammoDef.Const.FeelsGravity && !MyUtils.IsZero(weapon.GravityPoint) ? ammoDef.Const.GravityMultiplier : 0f;
-            var targetMaxSpeed = weapon.Comp.Session.MaxEntitySpeed;
-            var shooterPos = weapon.MyPivotPos;
+            var targetMaxSpeed = session.MaxEntitySpeed;
 
-            var shooterVel = (Vector3D)weapon.Comp.Ai.GridVel;
+            var shooterVel = (Vector3D)ai.GridVel;
             var projectileMaxSpeed = ammoDef.Const.DesiredProjectileSpeed;
             var projectileInitSpeed = ammoDef.Trajectory.AccelPerSec * MyEngineConstants.UPDATE_STEP_SIZE_IN_SECONDS;
             var projectileAccMag = ammoDef.Trajectory.AccelPerSec;
             var gravity = weapon.GravityPoint;
             var basic = MyUtils.IsZero(weapon.GravityPoint);
-            var targetVel = (Vector3D)target.GetTopMostParent().Physics.LinearVelocity;
+            var targetVel = (Vector3D)targetTopMost.Physics.LinearVelocity;
             Vector3D deltaPos = targetPos - shooterPos;
             Vector3D deltaVel = targetVel - shooterVel;
             Vector3D deltaPosNorm;
@@ -140,7 +142,7 @@ namespace CoreSystems.Platform
 
             if (ttiDiff < 0)
             {
-                targetDirection = weapon.GetScope.CachedDir;
+                targetDirection = scopeInfo.Direction;
                 return false;
             }
 
@@ -153,7 +155,7 @@ namespace CoreSystems.Platform
 
             if (timeToIntercept < 0)
             {
-                targetDirection = weapon.GetScope.CachedDir;
+                targetDirection = scopeInfo.Direction;
                 return false;
             }
 
@@ -168,14 +170,15 @@ namespace CoreSystems.Platform
             Vector3D estimatedImpactPoint = targetPos + timeToIntercept * (targetVel - shooterVel * shooterVelScaleFactor);
             if (basic)
             {
-                targetDirection = Vector3D.Normalize(estimatedImpactPoint - shooter.PositionComp.WorldAABB.Center);
+                targetDirection = Vector3D.Normalize(estimatedImpactPoint - shooterPos);
                 return true;
             }
+
             Vector3D aimDirection = estimatedImpactPoint - shooterPos;
 
             Vector3D projectileVel = shooterVel;
             Vector3D projectilePos = shooterPos;
-            var targetAcc = (Vector3D)target.Physics.LinearAcceleration;
+            var targetAcc = (Vector3D)targetTopMost.Physics.LinearAcceleration;
 
             Vector3D aimDirectionNorm;
             if (projectileAccelerates)
@@ -191,7 +194,7 @@ namespace CoreSystems.Platform
 
                 if (targetAcc.LengthSquared() < 1 && !hasGravity)
                 {
-                    targetDirection = Vector3D.Normalize(estimatedImpactPoint - shooter.PositionComp.WorldAABB.Center);
+                    targetDirection = Vector3D.Normalize(estimatedImpactPoint - shooterPos);
                     return true;
                 }
 
@@ -249,7 +252,7 @@ namespace CoreSystems.Platform
             Vector3D perpendicularAimOffset = aimOffset - Vector3D.Dot(aimOffset, aimDirectionNorm) * aimDirectionNorm;
             Vector3D gravityOffset = hasGravity ? -0.5 * minTime * minTime * gravity : Vector3D.Zero;
 
-            targetDirection = Vector3D.Normalize((estimatedImpactPoint + perpendicularAimOffset + gravityOffset) - shooter.PositionComp.WorldAABB.Center);
+            targetDirection = Vector3D.Normalize((estimatedImpactPoint + perpendicularAimOffset + gravityOffset) - shooterPos);
 
             return true;
         }
