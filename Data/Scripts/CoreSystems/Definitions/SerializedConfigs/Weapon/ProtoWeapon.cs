@@ -262,7 +262,7 @@ namespace CoreSystems
         {
             ReportTarget = sync.ReportTarget;
             Range = sync.Range;
-            Weapon.WeaponComponent.SetRange(comp);
+            SetRange(comp);
 
             Overrides.Sync(sync.Overrides);
 
@@ -272,7 +272,7 @@ namespace CoreSystems
             {
                 Overload = sync.Overload;
                 RofModifier = sync.RofModifier;
-                if (rofChange) Weapon.WeaponComponent.SetRof(comp);
+                if (rofChange) SetRof(comp);
             }
         }
 
@@ -280,7 +280,6 @@ namespace CoreSystems
         {
             ReportTarget = sync.ReportTarget;
             Range = sync.Range;
-            ControlSys.ControlComponent.SetRange(comp);
 
             Overrides.Sync(sync.Overrides);
         }

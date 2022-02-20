@@ -91,6 +91,11 @@ namespace CoreSystems
                         BlockUi.RequestSetOverload(comp.CoreEntity as IMyTerminalBlock, ((BoolUpdatePacket)packet).Data);
                         break;
                     }
+                    case PacketType.RequestSetGravity:
+                    {
+                        BlockUi.RequestSetGravity(comp.CoreEntity as IMyTerminalBlock, ((FloatUpdatePacket)packet).Data);
+                        break;
+                    }
             }
 
             data.Report.PacketValid = true;

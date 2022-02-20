@@ -165,6 +165,7 @@ namespace CoreSystems.Support
         internal double ClosestStaticSqr = double.MaxValue;
         internal double ClosestPlanetSqr = double.MaxValue;
         internal double ClosestWeaponCompSqr = double.MaxValue;
+        internal Vector3D RotorTargetPosition = Vector3D.MaxValue;
         internal float GridMaxPower;
         internal float GridCurrentPower;
         internal float GridAvailablePower;

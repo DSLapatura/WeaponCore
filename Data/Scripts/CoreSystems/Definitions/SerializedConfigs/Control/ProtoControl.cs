@@ -39,6 +39,7 @@ namespace CoreSystems
         [ProtoMember(1)] public uint Revision;
         [ProtoMember(2)] public ProtoWeaponSettings Set;
         [ProtoMember(3)] public ProtoControlState State;
+        [ProtoMember(4)] public ProtoControlOtherSettings Other;
 
         public bool Sync(ControlSys.ControlComponent comp, ProtoControlComp sync)
         {
@@ -48,6 +49,7 @@ namespace CoreSystems
                 Revision = sync.Revision;
                 Set.Sync(comp, sync.Set);
                 State.Sync(comp, sync.State, ProtoControlState.Caller.CompData);
+                Other.Sync(comp, sync.Other);
                 return true;
             }
             return false;
@@ -145,6 +147,17 @@ namespace CoreSystems
                 comp.Session.SendState(comp);
         }
 
+    }
+
+    [ProtoContract]
+    public class ProtoControlOtherSettings
+    {
+        [ProtoMember(1)] public float GravityOffset; 
+
+        public void Sync(CoreComponent comp, ProtoControlOtherSettings sync)
+        {
+            GravityOffset = sync.GravityOffset;
+        }
     }
 
 }

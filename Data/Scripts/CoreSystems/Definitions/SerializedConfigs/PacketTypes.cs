@@ -26,6 +26,7 @@ namespace CoreSystems
         RequestSetDps,
         RequestSetReportTarget,
         RequestSetRof,
+        RequestSetGravity,
         RequestSetOverload,
         RequestSetRange,
         OverRidesUpdate,

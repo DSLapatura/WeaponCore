@@ -10,12 +10,8 @@ using static CoreSystems.Support.CoreComponent.Start;
 using static CoreSystems.Support.CoreComponent.TriggerActions;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.TrajectoryDef.GuidanceType;
 using static CoreSystems.ProtoWeaponState;
-
-using VRage.Game.Entity;
 using Sandbox.Game.Entities;
 using System;
-using VRage.Utils;
-using SpaceEngineers.Game.ModAPI;
 
 namespace CoreSystems
 {
@@ -244,9 +240,8 @@ namespace CoreSystems
                         controlPart.OtherMap = controlPart.BaseMap == az ? el : az;
                         var topGrid = controlPart.BaseMap.TopGrid as MyCubeGrid;
                         var otherGrid = controlPart.OtherMap.TopGrid as MyCubeGrid;
-
                         Ai topAi;
-                        if (controlPart.BaseMap == null || controlPart.OtherMap == null  || topGrid == null || otherGrid == null || !EntityAIs.TryGetValue(otherGrid, out topAi))
+                        if (controlPart.BaseMap == null || controlPart.OtherMap == null  || topGrid == null || otherGrid == null || cComp.Controller.Camera == null || !EntityAIs.TryGetValue(otherGrid, out topAi))
                         {
                             if (cComp.RotorsMoving)
                                 cComp.StopRotors();
@@ -282,11 +277,12 @@ namespace CoreSystems
 
                         if (controlPart.TrackingWeapon.Target.TargetState != TargetStates.IsEntity)
                             noTarget = true;
-                        else if (!ControlSys.TrajectoryEstimation(controlPart, out desiredDirection, false))
+                        else if (!ControlSys.TrajectoryEstimation(topAi, controlPart, out desiredDirection, false))
                             noTarget = true;
 
                         if (noTarget)
                         {
+                            topAi.RotorTargetPosition = Vector3D.MaxValue;;
                             if (cComp.RotorsMoving)
                                 cComp.StopRotors();
                             continue;
@@ -529,7 +525,8 @@ namespace CoreSystems
                         /// Determine if its time to shoot
                         ///
                         ///
-                        w.AiShooting = !wComp.UserControlled && !w.System.SuppressFire && (w.TargetLock || ai.RotorTurretAimed);
+
+                        w.AiShooting = !wComp.UserControlled && !w.System.SuppressFire && (w.TargetLock || ai.RotorTurretAimed && Vector3D.DistanceSquared(wComp.CoreEntity.PositionComp.WorldAABB.Center, ai.RotorTargetPosition) <= wComp.MaxDetectDistanceSqr);
 
                         var reloading = aConst.Reloadable && w.ClientMakeUpShots == 0 && (w.Loading || w.ProtoWeaponAmmo.CurrentAmmo == 0 || w.Reload.WaitForClient);
                         var canShoot = !w.PartState.Overheated && !reloading && !w.System.DesignatorWeapon;
@@ -587,8 +584,11 @@ namespace CoreSystems
                     ai.RemovedBlockPositions.Clear();
                 }
                 ai.DbUpdated = false;
+
                 ai.RotorTurretAimed = false;
                 ai.ClosestWeaponCompSqr = double.MaxValue;
+                ai.RotorTargetPosition = Vector3D.MaxValue;
+
                 if (activeTurret)
                     AimingAi.Add(ai);
 

@@ -447,7 +447,7 @@ namespace CoreSystems.Support
             MyProjectiles = 0;
             LastRootWeaponTick = 0;
             ClosestWeaponCompSqr = double.MaxValue;
-
+            RotorTargetPosition = Vector3D.MaxValue;
             PointDefense = false;
             FadeOut = false;
             SuppressMouseShoot = false;

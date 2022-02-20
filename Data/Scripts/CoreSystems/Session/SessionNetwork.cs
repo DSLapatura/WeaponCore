@@ -352,6 +352,7 @@ namespace CoreSystems
                 case PacketType.RequestSetOverload:
                 case PacketType.RequestSetRange:
                 case PacketType.RequestSetDps:
+                case PacketType.RequestSetGravity:
                 {
                     ServerUpdateSetting(packetObj);
                     break;

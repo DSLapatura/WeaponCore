@@ -87,7 +87,7 @@ namespace CoreSystems.Control
 
             Separator<T>(session, "WC_sep2", IsTrue);
 
-            AddWeaponCTCRangeSliderNoAction<T>(session, "Weapon Range2", Localization.GetText("TerminalWeaponRangeTitle"), Localization.GetText("TerminalWeaponRangeTooltip"), BlockUi.GetRangeControl, BlockUi.RequestSetRangeControl, IsReady, BlockUi.GetMinRangeControl, BlockUi.GetMaxRangeControl, true, false);
+            AddWeaponCTCRangeSliderNoAction<T>(session, "Weapon Range", Localization.GetText("TerminalWeaponRangeTitle"), Localization.GetText("TerminalWeaponRangeTooltip"), BlockUi.GetRangeControl, BlockUi.RequestSetRangeControl, IsReady, BlockUi.GetMinRangeControl, BlockUi.GetMaxRangeControl, true, false);
 
             AddOnOffSwitchNoAction<T>(session, "ReportTarget", Localization.GetText("TerminalReportTargetTitle"), Localization.GetText("TerminalReportTargetTooltip"), BlockUi.GetReportTargetControl, BlockUi.RequestSetReportTargetControl, true, IsReady);
 
@@ -120,6 +120,8 @@ namespace CoreSystems.Control
             //AddWeaponCameraSliderRange<T>(session, "Camera Channel", Localization.GetText("TerminalCameraChannelTitle"), Localization.GetText("TerminalCameraChannelTooltip"), BlockUi.GetWeaponCamera, BlockUi.RequestSetBlockCamera, HasTracking, BlockUi.GetMinCameraChannel, BlockUi.GetMaxCameraChannel, true);
 
             //AddLeadGroupSliderRange<T>(session, "Target Group", Localization.GetText("TerminalTargetGroupTitle"), Localization.GetText("TerminalTargetGroupTooltip"), BlockUi.GetLeadGroup, BlockUi.RequestSetLeadGroup, TargetLead, BlockUi.GetMinLeadGroup, BlockUi.GetMaxLeadGroup, true);
+
+            AddCtcGravitySliderRange<T>(session, "Gravity Offset", Localization.GetText("TerminalGravityTitle"), Localization.GetText("TerminalGravityTooltip"), BlockUi.GetGravity, BlockUi.RequestSetGravity, IsReady, BlockUi.GetMinGravity, BlockUi.GetMaxGravity, true);
 
             Separator<T>(session, "WC_sep4", IsTrue);
         }
@@ -465,6 +467,14 @@ namespace CoreSystems.Control
             }
         }
 
+        internal static void SliderGravityWriterRange(IMyTerminalBlock block, StringBuilder builder)
+        {
+
+            var value = Math.Round(BlockUi.GetGravity(block), 2);
+
+            builder.Append(value);
+        }
+
         internal static void SliderLeadGroupWriterRange(IMyTerminalBlock block, StringBuilder builder)
         {
 
@@ -615,6 +625,27 @@ namespace CoreSystems.Control
             c.Getter = getter;
             c.Setter = setter;
             c.Writer = SliderCriticalTimerWriterRange;
+
+            if (minGetter != null)
+                c.SetLimits(minGetter, maxGetter);
+
+            MyAPIGateway.TerminalControls.AddControl<T>(c);
+            session.CustomControls.Add(c);
+
+            return c;
+        }
+
+        internal static IMyTerminalControlSlider AddCtcGravitySliderRange<T>(Session session, string name, string title, string tooltip, Func<IMyTerminalBlock, float> getter, Action<IMyTerminalBlock, float> setter, Func<IMyTerminalBlock, bool> visibleGetter, Func<IMyTerminalBlock, float> minGetter = null, Func<IMyTerminalBlock, float> maxGetter = null, bool group = false) where T : IMyTerminalBlock
+        {
+            var c = MyAPIGateway.TerminalControls.CreateControl<IMyTerminalControlSlider, T>(name);
+
+            c.Title = MyStringId.GetOrCompute(title);
+            c.Tooltip = MyStringId.GetOrCompute(tooltip);
+            c.Enabled = IsReady;
+            c.Visible = visibleGetter;
+            c.Getter = getter;
+            c.Setter = setter;
+            c.Writer = SliderGravityWriterRange;
 
             if (minGetter != null)
                 c.SetLimits(minGetter, maxGetter);

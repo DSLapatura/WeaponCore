@@ -7,6 +7,7 @@ using Sandbox.ModAPI;
 using VRage.Game;
 using VRage.ModAPI;
 using VRage.Utils;
+using VRageMath;
 
 namespace CoreSystems
 {
@@ -35,7 +36,6 @@ namespace CoreSystems
         {
             var comp = block?.Components?.Get<CoreComponent>() as ControlSys.ControlComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return 100;
-            Log.Line($"get range:{comp.Data.Repo.Values.Set.Range}");
             return comp.Data.Repo.Values.Set.Range;
         }
 
@@ -49,7 +49,6 @@ namespace CoreSystems
 
                 if (comp.Session.IsServer)
                 {
-                    Log.Line($"set new range:{ newValue}");
                     comp.Data.Repo.Values.Set.Range = newValue;
                     //ControlSys.ControlComponent.SetRange(comp);
                     if (comp.Session.MpActive)
@@ -61,6 +60,44 @@ namespace CoreSystems
 
         }
 
+        internal static float GetGravity(IMyTerminalBlock block)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as ControlSys.ControlComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return 0;
+            return comp.Data.Repo.Values.Other.GravityOffset;
+        }
+
+        internal static void RequestSetGravity(IMyTerminalBlock block, float newValue)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as ControlSys.ControlComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
+
+            var value = MathHelper.Clamp(newValue, -0.5f, 0.5f);
+
+            if (!MyUtils.IsEqual(value, comp.Data.Repo.Values.Other.GravityOffset))
+            {
+
+                if (comp.Session.IsServer)
+                {
+                    comp.Data.Repo.Values.Other.GravityOffset = value;
+                    if (comp.Session.MpActive)
+                        comp.Session.SendComp(comp);
+                }
+                else
+                    comp.Session.SendSetCompFloatRequest(comp, value, PacketType.RequestSetGravity);
+            }
+        }
+
+        internal static float GetMinGravity(IMyTerminalBlock block)
+        {
+            return -0.5f;
+        }
+
+        internal static float GetMaxGravity(IMyTerminalBlock block)
+        {
+            return 0.5f;
+        }
+
         internal static float GetMinRangeControl(IMyTerminalBlock block)
         {
             return 0;
@@ -69,15 +106,10 @@ namespace CoreSystems
         internal static float GetMaxRangeControl(IMyTerminalBlock block)
         {
             var comp = block?.Components?.Get<CoreComponent>() as ControlSys.ControlComponent;
-            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready || comp.Platform.Control?.TrackingWeapon?.Comp?.Ai == null)
                 return 0;
 
-            var w = comp.Platform.Control.TrackingWeapon;
-            if (w == null)
-                return 0;
-
-            Log.Line($"max range:{w.Comp.Ai.MaxTargetingRange}");
-            return (float) w.Comp.Ai.MaxTargetingRange;
+            return (float) comp.Platform.Control.TrackingWeapon.Comp.Ai.MaxTargetingRange;
         }
 
         internal static void RequestSetReportTargetControl(IMyTerminalBlock block, bool newValue)

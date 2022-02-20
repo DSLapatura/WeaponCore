@@ -75,7 +75,7 @@ namespace CoreSystems.Platform
 
         }
 
-        internal static bool TrajectoryEstimation(ControlSys control, out Vector3D targetDirection, bool force = false)
+        internal static bool TrajectoryEstimation(Ai topAi, ControlSys control, out Vector3D targetDirection, bool force = false)
         {
             var weapon = control.TrackingWeapon;
             var ai = weapon.Comp.Ai;
@@ -85,9 +85,12 @@ namespace CoreSystems.Platform
             if (target?.GetTopMostParent()?.Physics?.LinearVelocity == null)
             {
                 targetDirection = Vector3D.Zero;
+                topAi.RotorTargetPosition = Vector3D.MaxValue;
                 return false;
             }
 
+            var cValues = control.Comp.Data.Repo.Values;
+            var maxRangeSqr = (cValues.Set.Range * cValues.Set.Range);
             var scopeInfo = weapon.GetScope.Info;
             var shooterPos = control.OtherMap.Top.PositionComp.WorldAABB.Center;
 
@@ -96,7 +99,8 @@ namespace CoreSystems.Platform
             if (ammoDef.Const.IsBeamWeapon)
             {
                 targetDirection = Vector3D.Normalize(targetPos - shooterPos);
-                return true;
+                topAi.RotorTargetPosition = targetPos;
+                return Vector3D.DistanceSquared(targetPos, shooterPos) < maxRangeSqr;
             }
 
             var targetTopMost = target.GetTopMostParent();
@@ -144,6 +148,7 @@ namespace CoreSystems.Platform
             if (ttiDiff < 0)
             {
                 targetDirection = scopeInfo.Direction;
+                topAi.RotorTargetPosition = Vector3D.MaxValue;
                 return false;
             }
 
@@ -157,6 +162,7 @@ namespace CoreSystems.Platform
             if (timeToIntercept < 0)
             {
                 targetDirection = scopeInfo.Direction;
+                topAi.RotorTargetPosition = Vector3D.MaxValue;
                 return false;
             }
 
@@ -172,7 +178,8 @@ namespace CoreSystems.Platform
             if (basic)
             {
                 targetDirection = Vector3D.Normalize(estimatedImpactPoint - shooterPos);
-                return true;
+                topAi.RotorTargetPosition = estimatedImpactPoint;
+                return Vector3D.DistanceSquared(estimatedImpactPoint, shooterPos) <= maxRangeSqr;
             }
 
             Vector3D aimDirection = estimatedImpactPoint - shooterPos;
@@ -196,7 +203,8 @@ namespace CoreSystems.Platform
                 if (targetAcc.LengthSquared() < 1 && !hasGravity)
                 {
                     targetDirection = Vector3D.Normalize(estimatedImpactPoint - shooterPos);
-                    return true;
+                    topAi.RotorTargetPosition = estimatedImpactPoint;
+                    return Vector3D.DistanceSquared(estimatedImpactPoint, shooterPos) <= maxRangeSqr;
                 }
 
                 if (Vector3D.IsZero(deltaPos)) aimDirectionNorm = Vector3D.Zero;
@@ -250,12 +258,16 @@ namespace CoreSystems.Platform
                 if (diffLenSq < projectileMaxSpeedSqr * dtSqr || Vector3D.Dot(diff, aimDirectionNorm) < 0)
                     break;
             }
+
+            var manualGravityOffset = control.Comp.Data.Repo.Values.Other.GravityOffset;
             Vector3D perpendicularAimOffset = aimOffset - Vector3D.Dot(aimOffset, aimDirectionNorm) * aimDirectionNorm;
-            Vector3D gravityOffset = hasGravity ? -0.5 * minTime * minTime * gravity : Vector3D.Zero;
+            Vector3D gravityOffset = hasGravity ? (-0.5 - manualGravityOffset) * minTime * minTime * gravity : Vector3D.Zero;
 
-            targetDirection = Vector3D.Normalize((estimatedImpactPoint + perpendicularAimOffset + gravityOffset) - shooterPos);
+            var simImpactPoint = (estimatedImpactPoint + perpendicularAimOffset + gravityOffset);
+            targetDirection = Vector3D.Normalize(simImpactPoint - shooterPos);
 
-            return true;
+            topAi.RotorTargetPosition = simImpactPoint;
+            return Vector3D.DistanceSquared(simImpactPoint, shooterPos) <= maxRangeSqr;
         }
 
     }
