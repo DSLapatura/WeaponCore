@@ -660,7 +660,6 @@ namespace CoreSystems.Support
         {
             var fd = ai.Construct.Data.Repo.FocusData;
 
-            Log.Line($"{fd.Target}");
             if (fd.Target > 0 && MyEntities.GetEntityById(fd.Target) != null) {
                 fd.HasFocus = true;
                 return true;
