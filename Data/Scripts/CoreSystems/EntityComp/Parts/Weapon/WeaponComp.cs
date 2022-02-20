@@ -125,6 +125,8 @@ namespace CoreSystems.Platform
                 for (int i = 0; i < Collection.Count; i++)
                 {
                     var w = Collection[i];
+                    w.MasterComp = null;
+                    w.RotorTurretTracking = false;
 
                     if (Session.IsServer)
                         w.ChangeActiveAmmoServer();
@@ -335,6 +337,18 @@ namespace CoreSystems.Platform
                     Ai.AwakeComps = 0;
                     Ai.DetectOtherSignals = false;
                 }
+
+                if (IsBlock)
+                {
+                    var distSqr = Vector3.DistanceSquared(Cube.PositionComp.LocalAABB.Center, Ai.TopEntity.PositionComp.LocalAABB.Center);
+                    if (distSqr < Ai.ClosestWeaponCompSqr)
+                    {
+                        Ai.LastRootWeaponTick = Session.Tick;
+                        Ai.ClosestWeaponCompSqr = distSqr;
+                        Ai.RootWeaponComp = this;
+                    }
+                }
+
 
                 UpdatedState = true;
 

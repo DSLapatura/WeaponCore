@@ -205,6 +205,15 @@ namespace CoreSystems.Support
                     }
                 }
 
+                if (Type == CompType.Control)
+                {
+                    var cComp = ((ControlSys.ControlComponent) this);
+                    if (cComp.Platform.Control.TrackingWeapon != null) {
+                        cComp.Platform.Control.TrackingWeapon.MasterComp = null;
+                        cComp.Platform.Control.TrackingWeapon.RotorTurretTracking = false;
+                    }
+                }
+
                 if (Type == CompType.Weapon)
                     ((Weapon.WeaponComponent)this).OnAddedToSceneWeaponTasks(firstRun);
 

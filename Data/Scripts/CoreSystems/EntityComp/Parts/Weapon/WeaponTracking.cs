@@ -44,7 +44,7 @@ namespace CoreSystems.Platform
             bool isTracking;
 
             if (weapon.RotorTurretTracking)
-                canTrack = validEstimate && MathFuncs.RotorTurretLookAt(weapon.MasterComp?.Platform.Control, ref targetDir, rangeToTarget);
+                canTrack = validEstimate && MathFuncs.RotorTurretLookAt(weapon.MasterComp.Platform.Control, ref targetDir, rangeToTarget);
             else if (weapon == trackingWeapon)
                 canTrack = validEstimate && MathFuncs.WeaponLookAt(weapon, ref targetDir, rangeToTarget, false, true, out isTracking);
             else
@@ -214,7 +214,7 @@ namespace CoreSystems.Platform
             {
                 var targetDir = targetPos - weapon.MyPivotPos;
                 if (weapon.RotorTurretTracking)
-                    canTrack = MathFuncs.RotorTurretLookAt(weapon.MasterComp?.Platform.Control, ref targetDir, rangeToTarget);
+                    canTrack = MathFuncs.RotorTurretLookAt(weapon.MasterComp.Platform.Control, ref targetDir, rangeToTarget);
                 else if (weapon == trackingWeapon)
                 {
                     double checkAzimuth;

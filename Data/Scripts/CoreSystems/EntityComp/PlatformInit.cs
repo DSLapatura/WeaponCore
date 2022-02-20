@@ -64,6 +64,7 @@ namespace CoreSystems.Platform
 
         internal void Clean()
         {
+
             Weapons.Clear();
             Support.Clear();
             Upgrades.Clear();
@@ -72,6 +73,12 @@ namespace CoreSystems.Platform
             Structure = null;
             State = PlatformState.Fresh;
             Comp = null;
+
+            if (Control != null) {
+                Control.TrackingWeapon.MasterComp = null;
+                Control.TrackingWeapon.RotorTurretTracking = false;
+            }
+
         }
 
         internal PlatformState Init()

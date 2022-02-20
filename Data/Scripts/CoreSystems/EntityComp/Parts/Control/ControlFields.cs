@@ -22,9 +22,6 @@ namespace CoreSystems.Platform
         internal IMyMotorStator BaseMap;
         internal IMyMotorStator OtherMap;
         internal Weapon TrackingWeapon;
-        internal Dummy TrackingScope;
-
-        internal bool NoValidWeapons;
 
         internal ProtoControlPartState PartState;
 
