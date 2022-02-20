@@ -35,6 +35,7 @@ namespace CoreSystems
         {
             var comp = block?.Components?.Get<CoreComponent>() as ControlSys.ControlComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return 100;
+            Log.Line($"get range:{comp.Data.Repo.Values.Set.Range}");
             return comp.Data.Repo.Values.Set.Range;
         }
 
@@ -48,8 +49,9 @@ namespace CoreSystems
 
                 if (comp.Session.IsServer)
                 {
+                    Log.Line($"set new range:{ newValue}");
                     comp.Data.Repo.Values.Set.Range = newValue;
-                    ControlSys.ControlComponent.SetRange(comp);
+                    //ControlSys.ControlComponent.SetRange(comp);
                     if (comp.Session.MpActive)
                         comp.Session.SendComp(comp);
                 }
@@ -74,44 +76,8 @@ namespace CoreSystems
             if (w == null)
                 return 0;
 
-            var maxRange = (float)w.GetMaxWeaponRange();
-            return maxRange;
-
-            //var maxTrajectory = 0f;
-            //var baseMap = comp.Platform.Control.BaseMap;
-            //if (baseMap?.Stator?.TopGrid == null)
-            //    return 0;
-
-            //var rootConstruct = comp.Ai.Construct.RootAi.Construct;
-            //var mapList = rootConstruct.LocalStatorMaps[baseMap.Stator.TopGrid as MyCubeGrid];
-
-            //if (mapList.Count == 0)
-            //    return 0;
-
-            //for (int h = 0; h < mapList.Count; h++)
-            //{
-            //    var ai = mapList[h].TopAi;
-            //    if (ai == null || ai.WeaponComps.Count == 0)
-            //    {
-            //        Log.Line($"GetMaxRangeControl() no ai/weapons");
-            //        continue;
-            //    }
-
-            //    for (int i = 0; i < ai.WeaponComps.Count; i++)
-            //    {
-            //        var wComp = ai.WeaponComps[i];
-            //        for (int j = 0; j < wComp.Collection.Count; j++)
-            //        {
-            //            var w = wComp.Collection[j];
-
-            //            var curMax = w.GetMaxWeaponRange();
-            //            Log.Line($"GetMaxRangeControl() curMax {curMax}");
-            //            if (curMax > maxTrajectory)
-            //                maxTrajectory = (float)curMax;
-            //        }
-            //    }
-            //}
-            //return maxTrajectory;
+            Log.Line($"max range:{w.Comp.Ai.MaxTargetingRange}");
+            return (float) w.Comp.Ai.MaxTargetingRange;
         }
 
         internal static void RequestSetReportTargetControl(IMyTerminalBlock block, bool newValue)

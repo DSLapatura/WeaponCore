@@ -75,8 +75,9 @@ namespace CoreSystems.Platform
 
         }
 
-        internal static bool TrajectoryEstimation(Weapon weapon, out Vector3D targetDirection, bool force = false)
+        internal static bool TrajectoryEstimation(ControlSys control, out Vector3D targetDirection, bool force = false)
         {
+            var weapon = control.TrackingWeapon;
             var ai = weapon.Comp.Ai;
             var session = ai.Session;
             var ammoDef = weapon.ActiveAmmoDef.AmmoDef;
@@ -88,7 +89,7 @@ namespace CoreSystems.Platform
             }
 
             var scopeInfo = weapon.GetScope.Info;
-            var shooterPos = scopeInfo.Position;
+            var shooterPos = control.OtherMap.Top.PositionComp.WorldAABB.Center;
 
             var targetPos = target.PositionComp.WorldAABB.Center;
 

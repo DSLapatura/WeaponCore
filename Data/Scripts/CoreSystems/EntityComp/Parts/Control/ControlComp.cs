@@ -48,6 +48,8 @@ namespace CoreSystems.Platform
 
                 UpdatedState = true;
 
+                if (Ai.Session.IsServer && Data.Repo.Values.Set.Range < 0 && Platform.Control.TrackingWeapon != null)
+                    BlockUi.RequestSetRangeControl(TerminalBlock, (float) Platform.Control.TrackingWeapon.Comp.Ai.MaxTargetingRange);
 
                 DetectOtherSignals = false;
                 if (DetectOtherSignals)
@@ -207,9 +209,9 @@ namespace CoreSystems.Platform
 
             internal static void SetRange(ControlComponent comp)
             {
-                var w = comp.Platform.Control.TrackingWeapon;
-                if (w == null) return;
-                w.UpdateWeaponRange();
+                //var w = comp.Platform.Control.TrackingWeapon;
+               // if (w == null) return;
+               // w.UpdateWeaponRange();
             }
 
             internal static void SetRof(ControlComponent comp)

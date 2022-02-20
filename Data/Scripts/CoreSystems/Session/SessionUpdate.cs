@@ -246,7 +246,7 @@ namespace CoreSystems
                         var otherGrid = controlPart.OtherMap.TopGrid as MyCubeGrid;
 
                         Ai topAi;
-                        if (controlPart.BaseMap == null || controlPart.OtherMap == null || (topGrid == null || !EntityAIs.TryGetValue(topGrid, out topAi)) && (otherGrid == null || !EntityAIs.TryGetValue(otherGrid, out topAi)))
+                        if (controlPart.BaseMap == null || controlPart.OtherMap == null  || topGrid == null || otherGrid == null || !EntityAIs.TryGetValue(otherGrid, out topAi))
                         {
                             if (cComp.RotorsMoving)
                                 cComp.StopRotors();
@@ -273,7 +273,6 @@ namespace CoreSystems
                                 cComp.StopRotors();
                             continue;
                         }
-
                         controlPart.TrackingWeapon = topAi.RootWeaponComp.TrackingWeapon;
                         controlPart.TrackingWeapon.MasterComp = cComp;
                         controlPart.TrackingWeapon.RotorTurretTracking = true;
@@ -283,7 +282,7 @@ namespace CoreSystems
 
                         if (controlPart.TrackingWeapon.Target.TargetState != TargetStates.IsEntity)
                             noTarget = true;
-                        else if (!ControlSys.TrajectoryEstimation(controlPart.TrackingWeapon, out desiredDirection, false))
+                        else if (!ControlSys.TrajectoryEstimation(controlPart, out desiredDirection, false))
                             noTarget = true;
 
                         if (noTarget)

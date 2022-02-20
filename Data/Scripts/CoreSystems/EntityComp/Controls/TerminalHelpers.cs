@@ -87,7 +87,7 @@ namespace CoreSystems.Control
 
             Separator<T>(session, "WC_sep2", IsTrue);
 
-            AddWeaponCTCRangeSliderNoAction<T>(session, "Weapon Range", Localization.GetText("TerminalWeaponRangeTitle"), Localization.GetText("TerminalWeaponRangeTooltip"), BlockUi.GetRangeControl, BlockUi.RequestSetRangeControl, IsReady, BlockUi.GetMinRangeControl, BlockUi.GetMaxRangeControl, true, false);
+            AddWeaponCTCRangeSliderNoAction<T>(session, "Weapon Range2", Localization.GetText("TerminalWeaponRangeTitle"), Localization.GetText("TerminalWeaponRangeTooltip"), BlockUi.GetRangeControl, BlockUi.RequestSetRangeControl, IsReady, BlockUi.GetMinRangeControl, BlockUi.GetMaxRangeControl, true, false);
 
             AddOnOffSwitchNoAction<T>(session, "ReportTarget", Localization.GetText("TerminalReportTargetTitle"), Localization.GetText("TerminalReportTargetTooltip"), BlockUi.GetReportTargetControl, BlockUi.RequestSetReportTargetControl, true, IsReady);
 
@@ -364,9 +364,9 @@ namespace CoreSystems.Control
             builder.Append(BlockUi.GetRange(block).ToString("N2"));
         }
 
-        internal static void SliderCTCWriterRange(IMyTerminalBlock block, StringBuilder builder)
+        internal static void SliderCtcWriterRange(IMyTerminalBlock block, StringBuilder builder)
         {
-            builder.Append(BlockUi.GetMaxRangeControl(block).ToString("N2"));
+            builder.Append(BlockUi.GetRangeControl(block).ToString("N0"));
         }
 
         internal static void SliderWriterRof(IMyTerminalBlock block, StringBuilder builder)
@@ -708,7 +708,7 @@ namespace CoreSystems.Control
             c.Visible = visibleGetter;
             c.Getter = getter;
             c.Setter = setter;
-            c.Writer = SliderCTCWriterRange;
+            c.Writer = SliderCtcWriterRange;
 
             if (minGetter != null)
                 c.SetLimits(minGetter, maxGetter);
