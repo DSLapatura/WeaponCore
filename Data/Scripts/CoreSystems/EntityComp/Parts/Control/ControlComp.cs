@@ -96,19 +96,11 @@ namespace CoreSystems.Platform
             internal void StopRotors()
             {
                 RotorsMoving = false;
-                var baseMap = Platform.Control.BaseMap;
-                var baseRotor = baseMap?.Stator;
-                if (baseRotor == null) return;
+                if (Platform.Control.BaseMap != null)
+                    Platform.Control.BaseMap.TargetVelocityRad = 0;
 
-                baseRotor.TargetVelocityRad = 0;
-
-                var rootConstruct = Ai.Construct.RootAi.Construct;
-                var mapList = rootConstruct.LocalStatorMaps[(MyCubeGrid)baseRotor.TopGrid];
-
-                foreach (var statorMap in mapList)
-                    if (statorMap.Stator != null)
-                        statorMap.Stator.TargetVelocityRad = 0;
-
+                if (Platform.Control.OtherMap != null)
+                    Platform.Control.OtherMap.TargetVelocityRad = 0;
             }
 
 
@@ -288,115 +280,12 @@ namespace CoreSystems.Platform
                 }
             }
 
-            internal void RefreshRotorMaps(List<StatorMap> statorMap)
-            {
-                for (int j = 0; j < statorMap.Count; j++)
-                {
-                    var map = statorMap[j];
-                    if (map.Stator.TopGrid == null || map.RotorMap.PrimaryWeapon != null)
-                        continue;
-
-                    for (int k = 0; k < map.TopAi.WeaponComps.Count; k++)
-                    {
-                        var wComp = map.TopAi.WeaponComps[k];
-                        if (wComp.IsFunctional)
-                        {
-                            map.RotorMap.PrimaryWeapon = wComp.TrackingWeapon;
-                            map.RotorMap.Scope = wComp.TrackingWeapon.GetScope;
-                            Log.Line($"Set primary weapon and scope");
-                            break;
-                        }
-                    }
-                }
-            }
-
-            internal void StatorMapCrashReport(IMyMotorStator azRaw, IMyMotorStator elRaw)
-            {
-                LastCrashTick = Session.Tick;
-                Log.Line($"CTC failed to find stator in StatorMaps - entId:{CoreEntity.EntityId} - StatorMapsContainsAz:{Session.StatorMaps.ContainsKey(azRaw)} - StatorMapsContainsEl:{Session.StatorMaps.ContainsKey(elRaw)}");
-            }
-
-            internal bool GetTrackingComp(List<StatorMap> statorMaps)
-            {
-                var controlPart = Platform.Control;
-
-                var trackingComp = controlPart.TrackingWeapon?.Comp;
-                if (trackingComp == null || !trackingComp.IsFunctional || !trackingComp.IsWorking || trackingComp.IsDisabled)
-                {
-                    if (controlPart.NoValidWeapons && !Session.Tick60)
-                    {
-                        if (RotorsMoving)
-                            StopRotors();
-                        return false;
-                    }
-
-                    if (controlPart.TrackingWeapon != null)
-                    {
-                        controlPart.TrackingWeapon.MasterComp = null;
-                        controlPart.TrackingWeapon.RotorTurretTracking = false;
-                        controlPart.TrackingMap = null;
-                        controlPart.TrackingWeapon = null;
-                        controlPart.TrackingScope = null;
-                    }
-
-                    var foundWeapon = false;
-                    for (int j = 0; j < statorMaps.Count; j++)
-                    {
-                        if (foundWeapon)
-                            break;
-
-                        var map = statorMaps[j];
-                        if (map.TopAi.WeaponComps.Count == 0)
-                            continue;
-
-                        for (int k = 0; k < map.TopAi.WeaponComps.Count; k++)
-                        {
-                            var wComp = map.TopAi.WeaponComps[k];
-                            if (wComp.IsFunctional && wComp.IsWorking && !wComp.IsDisabled)
-                            {
-                                controlPart.TrackingMap = map;
-                                controlPart.TrackingWeapon = wComp.TrackingWeapon;
-                                controlPart.TrackingScope = wComp.TrackingWeapon.GetScope;
-                                controlPart.TrackingWeapon.MasterComp = this;
-                                controlPart.TrackingWeapon.RotorTurretTracking = true;
-                                controlPart.NoValidWeapons = false;
-
-                                Log.Line("Set tracking weapon");
-                                foundWeapon = true;
-                                break;
-                            }
-
-                        }
-                    }
-
-                    if (!foundWeapon)
-                    {
-                        controlPart.NoValidWeapons = true;
-
-                        if (RotorsMoving)
-                            StopRotors();
-                        return false;
-                    }
-
-                }
-
-                var trackingWeapon = controlPart.TrackingWeapon;
-                if (trackingWeapon?.Target == null)
-                {
-                    if (RotorsMoving)
-                        StopRotors();
-                    return false;
-                }
-
-                return true;
-            }
-
-            internal bool TrackTarget(List<StatorMap> statorMaps, ref Vector3D desiredDirection)
+            internal bool TrackTarget(Ai topAi, ref Vector3D desiredDirection)
             {
                 var trackingWeapon = Platform.Control.TrackingWeapon;
                 var root = Platform.Control.BaseMap;
                 RotorsMoving = true;
-                var targetDistSqr = Vector3D.DistanceSquared(root.Stator.PositionComp.WorldAABB.Center, trackingWeapon.Target.TargetEntity.PositionComp.WorldAABB.Center);
+                var targetDistSqr = Vector3D.DistanceSquared(root.PositionComp.WorldAABB.Center, trackingWeapon.Target.TargetEntity.PositionComp.WorldAABB.Center);
 
                 var epsilon = Session.Tick120 ? 1E-06d : targetDistSqr <= 640000 ? 1E-03d : targetDistSqr <= 3240000 ? 1E-04d : 1E-05d;
 
@@ -405,7 +294,7 @@ namespace CoreSystems.Platform
                 var deviationRads = MathHelper.ToRadians(Controller.AngleDeviation);
 
                 //Root control
-                var up = root.Stator.PositionComp.WorldMatrixRef.Up;
+                var up = root.PositionComp.WorldMatrixRef.Up;
                 var upZero = Vector3D.IsZero(up);
                 var desiredFlat = upZero || Vector3D.IsZero(desiredDirection) ? Vector3D.Zero : desiredDirection - desiredDirection.Dot(up) * up;
                 var currentFlat = upZero || Vector3D.IsZero(currentDirection) ? Vector3D.Zero : currentDirection - currentDirection.Dot(up) * up;
@@ -415,58 +304,58 @@ namespace CoreSystems.Platform
                 if (MyUtils.IsZero((float) rootAngle, (float)epsilon))
                 {
                     if (Session.IsServer)
-                        root.Stator.TargetVelocityRad = 0;
+                        root.TargetVelocityRad = 0;
                 }
                 else
                 {
                     rootAngle *= Math.Sign(Vector3D.Dot(axis, up));
 
-                    var desiredAngle = root.Stator.Angle + rootAngle;
-                    rootOutsideLimits = desiredAngle < root.Stator.LowerLimitRad && desiredAngle + MathHelper.TwoPi > root.Stator.UpperLimitRad;
+                    var desiredAngle = root.Angle + rootAngle;
+                    rootOutsideLimits = desiredAngle < root.LowerLimitRad && desiredAngle + MathHelper.TwoPi > root.UpperLimitRad;
 
-                    if ((desiredAngle < root.Stator.LowerLimitRad && desiredAngle + MathHelper.TwoPi < root.Stator.UpperLimitRad) || (desiredAngle > root.Stator.UpperLimitRad && desiredAngle - MathHelper.TwoPi > root.Stator.LowerLimitRad))
+                    if ((desiredAngle < root.LowerLimitRad && desiredAngle + MathHelper.TwoPi < root.UpperLimitRad) || (desiredAngle > root.UpperLimitRad && desiredAngle - MathHelper.TwoPi > root.LowerLimitRad))
                         rootAngle = -Math.Sign(rootAngle) * (MathHelper.TwoPi - Math.Abs(rootAngle));
 
                     if (Session.IsServer)
-                        root.Stator.TargetVelocityRad = rootOutsideLimits ? 0 : Math.Abs(Controller.VelocityMultiplierAzimuthRpm) * (float)rootAngle;
+                        root.TargetVelocityRad = rootOutsideLimits ? 0 : Math.Abs(Controller.VelocityMultiplierAzimuthRpm) * (float)rootAngle;
                 }
 
-                for (int j = 0; j < statorMaps.Count; j++)
+                var primaryWeapon = topAi.WeaponComps[0].Collection[0];
+
+                if (primaryWeapon.Scope == null)
+                    return false;
+
+                var map = Platform.Control.OtherMap;
+
+                currentDirection = primaryWeapon.Scope.Info.Direction;
+                up = map.PositionComp.WorldMatrixRef.Up;
+                upZero = Vector3D.IsZero(up);
+                desiredFlat = upZero || Vector3D.IsZero(desiredDirection) ? Vector3D.Zero : desiredDirection - desiredDirection.Dot(up) * up;
+                currentFlat = upZero || Vector3D.IsZero(currentDirection) ? Vector3D.Zero : currentDirection - currentDirection.Dot(up) * up;
+                var subAngle = Vector3D.IsZero(desiredFlat) || Vector3D.IsZero(currentFlat) ? 0 : Math.Acos(MathHelper.Clamp(desiredFlat.Dot(currentFlat) / Math.Sqrt(desiredFlat.LengthSquared() * currentFlat.LengthSquared()), -1, 1));
+
+                if (MyUtils.IsZero((float) subAngle, (float)epsilon) || !rootOutsideLimits && Math.Abs(rootAngle) > MathHelper.PiOver2)
                 {
-                    var map = statorMaps[j];
-                    if (map.RotorMap.Scope == null)
-                        continue;
+                    //if (Tick60) Log.Line($"secondary isZero {MyUtils.IsZero(subAngle, (float)epsilon)} >2pi {Math.Abs(rootAngle) > MathHelper.PiOver2}");
+                    if (Session.IsServer)
+                        map.TargetVelocityRad = 0;
+                }
+                else
+                {
+                    subAngle *= Math.Sign(Vector3D.Dot(axis, up));
+                    var desiredAngle = map.Angle + subAngle;
+                    var subOutsideLimits = desiredAngle < map.LowerLimitRad && desiredAngle + MathHelper.TwoPi > map.UpperLimitRad;
 
-                    currentDirection = map.RotorMap.Scope.Info.Direction;
-                    up = map.Stator.PositionComp.WorldMatrixRef.Up;
-                    upZero = Vector3D.IsZero(up);
-                    desiredFlat = upZero || Vector3D.IsZero(desiredDirection) ? Vector3D.Zero : desiredDirection - desiredDirection.Dot(up) * up;
-                    currentFlat = upZero || Vector3D.IsZero(currentDirection) ? Vector3D.Zero : currentDirection - currentDirection.Dot(up) * up;
-                    var subAngle = Vector3D.IsZero(desiredFlat) || Vector3D.IsZero(currentFlat) ? 0 : Math.Acos(MathHelper.Clamp(desiredFlat.Dot(currentFlat) / Math.Sqrt(desiredFlat.LengthSquared() * currentFlat.LengthSquared()), -1, 1));
+                    if ((desiredAngle < map.LowerLimitRad && desiredAngle + MathHelper.TwoPi < map.UpperLimitRad) || (desiredAngle > map.UpperLimitRad && desiredAngle - MathHelper.TwoPi > map.LowerLimitRad))
+                        subAngle = -Math.Sign(subAngle) * (MathHelper.TwoPi - Math.Abs(subAngle));
 
-                    if (MyUtils.IsZero((float) subAngle, (float)epsilon) || !rootOutsideLimits && Math.Abs(rootAngle) > MathHelper.PiOver2)
-                    {
-                        //if (Tick60) Log.Line($"secondary isZero {MyUtils.IsZero(subAngle, (float)epsilon)} >2pi {Math.Abs(rootAngle) > MathHelper.PiOver2}");
-                        if (Session.IsServer)
-                            map.Stator.TargetVelocityRad = 0;
-                    }
-                    else
-                    {
-                        subAngle *= Math.Sign(Vector3D.Dot(axis, up));
-                        var desiredAngle = map.Stator.Angle + subAngle;
-                        var subOutsideLimits = desiredAngle < map.Stator.LowerLimitRad && desiredAngle + MathHelper.TwoPi > map.Stator.UpperLimitRad;
+                    if (Session.IsServer)
+                        map.TargetVelocityRad = subOutsideLimits ? 0 : Math.Abs(Controller.VelocityMultiplierElevationRpm) * (float)subAngle;
+                }
 
-                        if ((desiredAngle < map.Stator.LowerLimitRad && desiredAngle + MathHelper.TwoPi < map.Stator.UpperLimitRad) || (desiredAngle > map.Stator.UpperLimitRad && desiredAngle - MathHelper.TwoPi > map.Stator.LowerLimitRad))
-                            subAngle = -Math.Sign(subAngle) * (MathHelper.TwoPi - Math.Abs(subAngle));
-
-                        if (Session.IsServer)
-                            map.Stator.TargetVelocityRad = subOutsideLimits ? 0 : Math.Abs(Controller.VelocityMultiplierElevationRpm) * (float)subAngle;
-                    }
-
-                    if (rootAngle * rootAngle + subAngle * subAngle < deviationRads * deviationRads)
-                    {
-                        map.TopAi.RotorTurretAimed = true;
-                    }
+                if (rootAngle * rootAngle + subAngle * subAngle < deviationRads * deviationRads)
+                {
+                    topAi.RotorTurretAimed = true;
                 }
 
                 return true;

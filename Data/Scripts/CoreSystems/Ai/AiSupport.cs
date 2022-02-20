@@ -438,7 +438,6 @@ namespace CoreSystems.Support
             TestShields.Clear();
             NewEntities.Clear();
             SubGridsRegistered.Clear();
-            TopStators.Clear();
             SourceCount = 0;
             PartCount = 0;
             AiOwner = 0;
@@ -446,6 +445,8 @@ namespace CoreSystems.Support
             NearByEntities = 0;
             NearByEntitiesTmp = 0;
             MyProjectiles = 0;
+            LastRootWeaponTick = 0;
+            ClosestWeaponCompSqr = double.MaxValue;
 
             PointDefense = false;
             FadeOut = false;
@@ -458,6 +459,7 @@ namespace CoreSystems.Support
             ShieldFortified = false;
             Data.Clean();
 
+            RootWeaponComp = null;
             GridEntity = null;
             ImyGridEntity = null;
             MyShield = null;

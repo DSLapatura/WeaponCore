@@ -169,16 +169,6 @@ namespace CoreSystems
             GridToInfoMap.Clear();
             GridMapPool.Clean();
 
-            foreach (var sm in StatorMaps)
-                sm.Value.Clean();
-            StatorMaps.Clear();
-
-            foreach (var sm in StatorMapPool)
-                sm.Clean();
-            StatorMapPool.Clear();
-
-            StatorMapListPool.Clear();
-            
             DirtyGridsTmp.Clear();
 
             foreach (var wMap in WeaponValuesMap)

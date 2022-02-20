@@ -44,7 +44,6 @@ namespace CoreSystems.Support
         internal readonly Dictionary<MyStringHash, PartCounter> PartCounting = new Dictionary<MyStringHash, PartCounter>(MyStringHash.Comparer);
         internal readonly Dictionary<MyEntity, TargetInfo> Targets = new Dictionary<MyEntity, TargetInfo>(32);
         internal readonly Dictionary<long, PlayerControllerEntity> PlayerControl = new Dictionary<long, PlayerControllerEntity>();
-        internal readonly Dictionary<IMyMotorStator, StatorMap> TopStators = new Dictionary<IMyMotorStator, StatorMap>();
 
         internal readonly ConcurrentDictionary<MyEntity, MyInventory> InventoryMonitor = new ConcurrentDictionary<MyEntity, MyInventory>();
         internal readonly ConcurrentDictionary<MyEntity, uint> NoTargetLos = new ConcurrentDictionary<MyEntity, uint>();
@@ -88,6 +87,7 @@ namespace CoreSystems.Support
         internal GridMap GridMap;
         internal IMyCubeGrid ImyGridEntity;
         internal MyCubeBlock PowerBlock;
+        internal Weapon.WeaponComponent RootWeaponComp;
         internal MyCubeGrid.MyCubeGridHitInfo GridHitInfo = new MyCubeGrid.MyCubeGridHitInfo();
         internal uint CreatedTick;
         internal Vector3 GridVel;
@@ -147,6 +147,7 @@ namespace CoreSystems.Support
         internal uint ProjectileTicker;
         internal uint LastDetectEvent;
         internal uint LastBlockChangeTick;
+        internal uint LastRootWeaponTick;
         internal int SleepingComps;
         internal int AwakeComps;
         internal int SourceCount;
@@ -163,6 +164,7 @@ namespace CoreSystems.Support
         internal double DeadSphereRadius;
         internal double ClosestStaticSqr = double.MaxValue;
         internal double ClosestPlanetSqr = double.MaxValue;
+        internal double ClosestWeaponCompSqr = double.MaxValue;
         internal float GridMaxPower;
         internal float GridCurrentPower;
         internal float GridAvailablePower;

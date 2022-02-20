@@ -464,7 +464,7 @@ namespace CoreSystems.Platform
             internal void ClientToggledOffByServer(uint interval, bool server = false)
             {
                 if (server)
-                    Log.Line($"server requested toggle off? - wait:{WaitingShootResponse} - freeze:{FreezeClientShoot} - CompletedCycles:{CompletedCycles}({interval}) - LastCycle:{LastCycle}", Session.InputLog);
+                    Log.Line($"server requested toggle off? - wait:{WaitingShootResponse} - mode:{Comp.Data.Repo.Values.Set.Overrides.ShootMode} - Toggled:{Comp.ShootManager.ShootToggled} - Active:{Comp.ShootManager.ShootActive} - freeze:{FreezeClientShoot} - CompletedCycles:{CompletedCycles}({interval}) - LastCycle:{LastCycle}", Session.InputLog);
 
                 if (interval > CompletedCycles)
                 {

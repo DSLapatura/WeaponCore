@@ -83,19 +83,6 @@ namespace CoreSystems.Platform
                 TotalWeapons = Structure.HashToId.Count;
             }
 
-            internal MyEntity GetTopEntity()
-            {
-                var cube = CoreEntity as MyCubeBlock;
-
-                if (cube != null)
-                    return cube.CubeGrid; 
-
-                var gun = CoreEntity as IMyAutomaticRifleGun;
-                return gun != null ? Rifle.Owner : CoreEntity;
-            }
-
-
-
             internal void WeaponInit()
             {
 

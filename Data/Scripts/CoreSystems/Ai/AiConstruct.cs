@@ -39,12 +39,6 @@ namespace CoreSystems.Support
                     UnRegisterSubGrid(sub);
             }
 
-            foreach (var map in Construct.LocalStatorMaps) {
-                map.Value.Clear();
-                Session.StatorMapListPool.Push(map.Value);
-            }
-            
-            Construct.LocalStatorMaps.Clear();
             Construct.ControllingPlayers.Clear();
         }
 
@@ -111,7 +105,6 @@ namespace CoreSystems.Support
             internal readonly Dictionary<long, PlayerController> ControllingPlayers = new Dictionary<long, PlayerController>();
             internal readonly HashSet<MyEntity> PreviousTargets = new HashSet<MyEntity>();
             internal readonly RunningAverage DamageAverage = new RunningAverage(10);
-            internal readonly Dictionary<MyCubeGrid, List<StatorMap>> LocalStatorMaps = new Dictionary<MyCubeGrid, List<StatorMap>>();
             internal readonly Ai Ai;
             internal float OptimalDps;
             internal int BlockCount;
@@ -342,22 +335,6 @@ namespace CoreSystems.Support
                 return false;
             }
 
-
-            internal void UpdateStators()
-            {
-                foreach (var p in Ai.TopStators)
-                {
-                    var grid = (MyCubeGrid)p.Key.CubeGrid;
-                    if (!RootAi.Construct.LocalStatorMaps.ContainsKey(grid))
-                    {
-                        var list = RootAi.Session.StatorMapListPool.Count > 0 ? RootAi.Session.StatorMapListPool.Pop() : new List<StatorMap>();
-                        RootAi.Construct.LocalStatorMaps.Add(grid, list);
-                    }
-                    RootAi.Construct.LocalStatorMaps[grid].Add(p.Value);
-                }
-            }
-
-
             internal static void BuildAiListAndCounters(GridGroupMap map)
             {
                 var ais = map.Ais;
@@ -580,7 +557,6 @@ namespace CoreSystems.Support
                 RefreshedAis.Clear();
                 PreviousTargets.Clear();
                 ControllingPlayers.Clear();
-                LocalStatorMaps.Clear();
             }
         }
     }

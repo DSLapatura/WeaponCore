@@ -125,7 +125,6 @@ namespace CoreSystems.Support
 
                 var weaponType = (cube is MyConveyorSorter || cube is IMyUserControllableGun);
                 var isWeaponBase = weaponType && cube.BlockDefinition != null && (Session.ReplaceVanilla && Session.VanillaIds.ContainsKey(cube.BlockDefinition.Id) || Session.PartPlatforms.ContainsKey(cube.BlockDefinition.Id));
-                var stator = cube as IMyMotorStator;
 
                 if (!isWeaponBase && (cube is MyConveyor || cube is IMyConveyorTube || cube is MyConveyorSorter || cube is MyCargoContainer || cube is MyCockpit || cube is IMyAssembler || cube is IMyShipConnector) && cube.CubeGrid.IsSameConstructAs(GridEntity)) { 
                     
@@ -164,22 +163,6 @@ namespace CoreSystems.Support
                         }
                     }
                 }
-                else if (stator != null)
-                {
-                    StatorMap statorMap;
-                    if (!Session.StatorMaps.TryGetValue(stator, out statorMap))
-                    {
-                        statorMap = Session.StatorMapPool.Count > 0 ? Session.StatorMapPool.Pop() : new StatorMap();
-                        statorMap.Stator = stator;
-                        Session.StatorMaps[stator] = statorMap;
-                    }
-
-                    if (stator.TopGrid == TopEntity)
-                    {
-                        statorMap.TopAi = this;
-                        TopStators[stator] = statorMap;
-                    }
-                }
             }
             catch (Exception ex) { Log.Line($"Exception in Controller FatBlockAdded: {ex} - {cube?.BlockDefinition == null} - RootAiNull: {Construct.RootAi == null}", null, true); }
         }
@@ -188,14 +171,6 @@ namespace CoreSystems.Support
         {
             try
             {
-                var stator = cube as IMyMotorStator;
-                if (stator != null)
-                {
-                    TopStators.Remove(stator);
-                    return;
-                }
-
-
                 var weaponType = (cube is MyConveyorSorter || cube is IMyUserControllableGun);
                 var cubeDef = cube.BlockDefinition;
                 var isWeaponBase = weaponType && cubeDef != null && (Session.ReplaceVanilla && Session.VanillaIds.ContainsKey(cubeDef.Id) || Session.PartPlatforms.ContainsKey(cubeDef.Id));

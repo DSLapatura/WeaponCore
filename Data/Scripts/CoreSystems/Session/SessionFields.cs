@@ -96,13 +96,11 @@ namespace CoreSystems
         internal readonly MyConcurrentPool<MyConcurrentList<MyPhysicalInventoryItem>> PhysicalItemListPool = new MyConcurrentPool<MyConcurrentList<MyPhysicalInventoryItem>>(256, list => list.Clear());
         internal readonly MyConcurrentPool<MyConcurrentList<BetterInventoryItem>> BetterItemsListPool = new MyConcurrentPool<MyConcurrentList<BetterInventoryItem>>(256, list => list.Clear());
         internal readonly Stack<GridGroupMap> GridGroupMapPool = new Stack<GridGroupMap>(64);
-        internal readonly Stack<StatorMap> StatorMapPool = new Stack<StatorMap>(32);
 
         internal readonly Stack<Ai> AiPool = new Stack<Ai>(128);
         internal readonly Stack<MyEntity3DSoundEmitter> Emitters = new Stack<MyEntity3DSoundEmitter>(256);
         internal readonly Stack<VoxelCache> VoxelCachePool = new Stack<VoxelCache>(256);
         internal readonly Stack<ProtoWeaponProSync> ProtoWeaponProSyncPool = new Stack<ProtoWeaponProSync>(256);
-        internal readonly Stack<List<StatorMap>> StatorMapListPool = new Stack<List<StatorMap>> (64);
 
         internal readonly HashSet<MyCubeGrid> DirtyGridInfos = new HashSet<MyCubeGrid>();
 
@@ -168,7 +166,6 @@ namespace CoreSystems
         internal readonly Dictionary<WeaponDefinition, Dictionary<string, string>> WeaponValuesMap = new Dictionary<WeaponDefinition, Dictionary<string, string>>();
         internal readonly Dictionary<ulong, Projectile> MonitoredProjectiles = new Dictionary<ulong, Projectile>();
         internal readonly Dictionary<int, Dictionary<long, ProtoWeaponProSync>> WeaponProSyncs = new Dictionary<int, Dictionary<long, ProtoWeaponProSync>>();
-        internal readonly Dictionary<IMyMotorStator, StatorMap> StatorMaps = new Dictionary<IMyMotorStator, StatorMap>();
         internal readonly ConcurrentDictionary<long, int> DeferredPlayerLock = new ConcurrentDictionary<long, int>();
         internal readonly HashSet<MyDefinitionId> DefIdsComparer = new HashSet<MyDefinitionId>(MyDefinitionId.Comparer);
         internal readonly HashSet<string> VanillaSubpartNames = new HashSet<string>();

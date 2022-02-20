@@ -1,11 +1,24 @@
 ﻿using System;
 using CoreSystems.Platform;
+using Sandbox.Game.Entities;
+using Sandbox.ModAPI.Weapons;
+using VRage.Game.Entity;
 using VRage.Game.ObjectBuilders.Definitions;
 using static CoreSystems.Support.Ai;
 namespace CoreSystems.Support
 {
     public partial class CoreComponent 
     {
+        internal MyEntity GetTopEntity()
+        {
+            var cube = CoreEntity as MyCubeBlock;
+
+            if (cube != null)
+                return cube.CubeGrid;
+
+            var gun = CoreEntity as IMyAutomaticRifleGun;
+            return gun != null ? ((Weapon.WeaponComponent)this).Rifle.Owner : CoreEntity;
+        }
 
         internal void TerminalRefresh(bool update = true)
         {

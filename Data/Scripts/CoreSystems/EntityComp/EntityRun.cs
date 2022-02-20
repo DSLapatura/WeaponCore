@@ -116,7 +116,7 @@ namespace CoreSystems.Support
 
                     if (IsBlock)
                     {
-                        TopEntity = ((Weapon.WeaponComponent)this).GetTopEntity();
+                        TopEntity = GetTopEntity();
                         GridMap gridMap;
                         if (checkMap && (!Session.GridToInfoMap.TryGetValue(TopEntity, out gridMap) || gridMap.GroupMap == null)) {
                             

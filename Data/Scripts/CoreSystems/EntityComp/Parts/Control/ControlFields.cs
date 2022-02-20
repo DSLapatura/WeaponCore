@@ -19,12 +19,11 @@ namespace CoreSystems.Platform
         internal readonly ControlSystem System;
         internal readonly MyStringHash PartHash;
 
-        internal StatorMap BaseMap;
-        internal StatorMap TrackingMap;
+        internal IMyMotorStator BaseMap;
+        internal IMyMotorStator OtherMap;
         internal Weapon TrackingWeapon;
         internal Dummy TrackingScope;
 
-        internal bool BaseHasTop;
         internal bool NoValidWeapons;
 
         internal ProtoControlPartState PartState;
@@ -40,7 +39,6 @@ namespace CoreSystems.Platform
         public class RotorMap
         {
             internal Ai Ai;
-            internal Weapon PrimaryWeapon;
             internal Dummy Scope;
         }
     }

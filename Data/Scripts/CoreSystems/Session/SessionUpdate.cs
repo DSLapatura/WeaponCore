@@ -10,6 +10,7 @@ using static CoreSystems.Support.CoreComponent.Start;
 using static CoreSystems.Support.CoreComponent.TriggerActions;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.TrajectoryDef.GuidanceType;
 using static CoreSystems.ProtoWeaponState;
+
 using VRage.Game.Entity;
 using Sandbox.Game.Entities;
 using System;
@@ -84,116 +85,6 @@ namespace CoreSystems
                         rootConstruct.CheckForMissingAmmo();
                     else if (Tick60 && rootConstruct.RecentItems.Count > 0)
                         rootConstruct.CheckEmptyWeapons();
-                }
-
-
-                ///
-                /// Control update section
-                /// 
-                try
-                {
-                    for (int i = 0; i < ai.ControlComps.Count; i++)
-                    {
-                        var cComp = ai.ControlComps[i];
-                        if (cComp.Status != Started)
-                            cComp.HealthCheck();
-
-                        if (ai.DbUpdated || !cComp.UpdatedState)
-                            cComp.DetectStateChanges();
-
-                        if (cComp.Platform.State != CorePlatform.PlatformState.Ready || cComp.IsAsleep || !cComp.IsWorking || cComp.CoreEntity.MarkedForClose || cComp.IsDisabled) {
-                            if (cComp.RotorsMoving)
-                                cComp.StopRotors();
-                            continue;
-                        }
-
-                        var azRaw = (IMyMotorStator)cComp.Controller.AzimuthRotor;
-                        var elRaw = (IMyMotorStator)cComp.Controller.ElevationRotor;
-
-                        StatorMap az;
-                        StatorMap el;
-                        if (azRaw == null || elRaw == null || !StatorMaps.TryGetValue(azRaw, out az) || !StatorMaps.TryGetValue(elRaw, out el))
-                        {
-                            if (Tick - cComp.LastCrashTick > 1200 && azRaw != null && elRaw != null)
-                                cComp.StatorMapCrashReport(azRaw, elRaw);
-                            continue;
-                        }
-
-                        if (cComp.Controller.IsUnderControl) {
-                            cComp.RotorsMoving = true;
-                            continue;
-                        }
-
-                        var controlPart = cComp.Platform.Control;
-
-                        if (controlPart.BaseMap == null || controlPart.BaseMap != null && controlPart.BaseMap != az && controlPart.BaseMap != el)
-                        {
-                            Log.Line($"Setting base: azStatorNull:{az?.Stator == null} - elStatorNull{el?.Stator == null}");
-                            controlPart.BaseMap = az.Stator.TopGrid == el.Stator.CubeGrid ? az : el;
-                            if (controlPart.BaseMap == null)
-                                continue;
-                        }
-
-                        var topGrid = controlPart.BaseMap.Stator.TopGrid as MyCubeGrid;
-
-                        if (topGrid == null || !cComp.Data.Repo.Values.Set.Overrides.AiEnabled)
-                        {
-                            if (topGrid == null)
-                                controlPart.BaseHasTop = false;
-
-                            if (cComp.RotorsMoving)
-                                cComp.StopRotors();
-                            continue;
-                        }
-
-                        controlPart.BaseHasTop = true;
-
-                        List<StatorMap> turretMap;
-                        var gotMap = rootConstruct.LocalStatorMaps.TryGetValue(topGrid, out turretMap);
-                        if (!gotMap || turretMap.Count == 0)
-                        {
-                            if (!gotMap) {
-
-                                if (Tick - cComp.LastCrashTick > 1200) {
-                                    cComp.LastCrashTick = Tick;
-                                    Log.Line($"CTC failed to find stator in LocalStatorMaps - entId:{cComp.CoreEntity.EntityId}");
-                                }
-                            }
-                            else if (cComp.RotorsMoving)
-                                cComp.StopRotors();
-
-                            continue;
-                        }
-
-                        if (Tick120)
-                            cComp.RefreshRotorMaps(turretMap);
-
-                        var trackInvalid = controlPart.TrackingWeapon?.Comp == null || !controlPart.TrackingWeapon.Comp.IsFunctional || !controlPart.TrackingWeapon.Comp.IsWorking || controlPart.TrackingWeapon.Comp.IsDisabled;
-                        if (trackInvalid && !cComp.GetTrackingComp(turretMap))
-                            continue;
-
-                        var desiredDirection = Vector3D.Zero;
-                        var noTarget = false;
-
-                        if (controlPart.TrackingWeapon.Target.TargetState != TargetStates.IsEntity)
-                            noTarget = true;
-                        else if(!ControlSys.TrajectoryEstimation(controlPart.TrackingWeapon, out desiredDirection))
-                            noTarget = true;
-
-                        if (noTarget) {
-                            if (cComp.RotorsMoving)
-                                cComp.StopRotors();
-                            continue;
-                        }
-
-                        if (!cComp.TrackTarget(turretMap, ref desiredDirection))
-                            continue;
-                    }
-
-                }
-                catch (Exception ex)
-                {
-                    Log.Line($"Caught exception in Control loop: {ex}");
                 }
 
                 ///
@@ -345,6 +236,16 @@ namespace CoreSystems
 
                     if (wComp.Platform.State != CorePlatform.PlatformState.Ready || wComp.IsDisabled || wComp.IsAsleep || !wComp.IsWorking || wComp.CoreEntity.MarkedForClose || wComp.LazyUpdate && !ai.DbUpdated && Tick > wComp.NextLazyUpdateStart)
                         continue;
+
+                    if (wComp.IsBlock) {
+                        var distSqr = Vector3.DistanceSquared(wComp.Cube.PositionComp.LocalAABB.Center, wComp.Cube.CubeGrid.PositionComp.LocalAABB.Center);
+                        if (distSqr < ai.ClosestWeaponCompSqr)
+                        {
+                            ai.LastRootWeaponTick = Tick;
+                            ai.ClosestWeaponCompSqr = distSqr;
+                            ai.RootWeaponComp = wComp;
+                        }
+                    }
 
                     var cMode = wValues.Set.Overrides.Control;
                     var sMode = wValues.Set.Overrides.ShootMode;
@@ -599,7 +500,102 @@ namespace CoreSystems
                             WeaponDebug(w);
                     }
                 }
-                
+
+
+                ///
+                /// Control update section
+                /// 
+                try
+                {
+                    for (int i = 0; i < ai.ControlComps.Count; i++)
+                    {
+                        var cComp = ai.ControlComps[i];
+                        if (cComp.Status != Started)
+                            cComp.HealthCheck();
+
+                        if (ai.DbUpdated || !cComp.UpdatedState)
+                            cComp.DetectStateChanges();
+
+                        if (cComp.Platform.State != CorePlatform.PlatformState.Ready || cComp.IsDisabled || cComp.IsAsleep || !cComp.IsWorking || cComp.CoreEntity.MarkedForClose || cComp.LazyUpdate && !ai.DbUpdated && Tick > cComp.NextLazyUpdateStart)
+                        {
+                            if (cComp.RotorsMoving)
+                                cComp.StopRotors();
+                            continue;
+                        }
+
+                        var az = (IMyMotorStator)cComp.Controller.AzimuthRotor;
+                        var el = (IMyMotorStator)cComp.Controller.ElevationRotor;
+
+                        if (az == null || el == null)
+                            continue;
+
+                        var controlPart = cComp.Platform.Control;
+
+                        controlPart.BaseMap = az.TopGrid == el.CubeGrid ? az : el;
+                        controlPart.OtherMap = controlPart.BaseMap == az ? el : az;
+                        var topGrid = controlPart.BaseMap.TopGrid as MyCubeGrid;
+                        var otherGrid = controlPart.OtherMap.TopGrid as MyCubeGrid;
+
+                        Ai topAi;
+                        if (controlPart.BaseMap == null || controlPart.OtherMap == null || (topGrid == null || !EntityAIs.TryGetValue(topGrid, out topAi)) && (otherGrid == null || !EntityAIs.TryGetValue(otherGrid, out topAi)))
+                        {
+                            if (cComp.RotorsMoving)
+                                cComp.StopRotors();
+                            continue;
+                        }
+
+                        if (cComp.Controller.IsUnderControl)
+                        {
+                            Ai.PlayerController pControl;
+                            if (HandlesInput && rootConstruct.ControllingPlayers.TryGetValue(PlayerId, out pControl) && pControl.ControllBlock == cComp.CoreEntity && PlayerMouseStates.TryGetValue(cComp.Data.Repo.Values.State.PlayerId, out cComp.InputState) && cComp.InputState.MouseButtonLeft)
+                            {
+                                for (int j = 0; j < topAi.WeaponComps.Count; j++)
+                                {
+                                    var w = topAi.WeaponComps[j];
+                                    w.ShootManager.RequestShootSync(PlayerId);
+                                }
+                            }
+                            cComp.RotorsMoving = true;
+                            continue;
+                        }
+
+                        if (!cComp.Data.Repo.Values.Set.Overrides.AiEnabled || Tick - topAi.LastRootWeaponTick > 1)
+                        {
+                            if (cComp.RotorsMoving)
+                                cComp.StopRotors();
+                            continue;
+                        }
+
+                        controlPart.TrackingWeapon = topAi.RootWeaponComp.TrackingWeapon;
+                        controlPart.TrackingScope = topAi.RootWeaponComp.TrackingWeapon.GetScope;
+                        controlPart.TrackingWeapon.MasterComp = cComp;
+                        controlPart.TrackingWeapon.RotorTurretTracking = true;
+                        controlPart.NoValidWeapons = false;
+
+                        var desiredDirection = Vector3D.Zero;
+                        var noTarget = false;
+
+                        if (controlPart.TrackingWeapon.Target.TargetState != TargetStates.IsEntity)
+                            noTarget = true;
+                        else if (!ControlSys.TrajectoryEstimation(controlPart.TrackingWeapon, out desiredDirection))
+                            noTarget = true;
+
+                        if (noTarget)
+                        {
+                            if (cComp.RotorsMoving)
+                                cComp.StopRotors();
+                            continue;
+                        }
+
+                        if (!cComp.TrackTarget(topAi, ref desiredDirection))
+                            continue;
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    Log.Line($"Caught exception in Control loop: {ex}");
+                }
                 if (ai.AiType == Ai.AiTypes.Grid && Tick60 && ai.BlockChangeArea != BoundingBox.Invalid) {
                     ai.BlockChangeArea = BoundingBox.CreateInvalid();
                     ai.AddedBlockPositions.Clear();
@@ -607,6 +603,7 @@ namespace CoreSystems
                 }
                 ai.DbUpdated = false;
                 ai.RotorTurretAimed = false;
+                ai.ClosestWeaponCompSqr = double.MaxValue;
                 if (activeTurret)
                     AimingAi.Add(ai);
 
