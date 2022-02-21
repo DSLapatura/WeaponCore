@@ -148,6 +148,7 @@ namespace CoreSystems.Platform
         internal int ClientMakeUpShots;
         internal int ClientLastShotId;
         internal int ProjectileCounter;
+
         internal float HeatPShot;
         internal float HsRate;
         internal float CurrentAmmoVolume;
@@ -201,6 +202,7 @@ namespace CoreSystems.Platform
         internal bool PlayingHardPointSound;
         internal bool VanillaTracking;
         internal bool RotorTurretTracking;
+
         internal bool ShotReady
         {
             get

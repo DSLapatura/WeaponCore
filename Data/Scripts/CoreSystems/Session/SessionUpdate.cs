@@ -12,6 +12,7 @@ using static CoreSystems.Support.WeaponDefinition.AmmoDef.TrajectoryDef.Guidance
 using static CoreSystems.ProtoWeaponState;
 using Sandbox.Game.Entities;
 using System;
+using SpaceEngineers.Game.ModAPI;
 
 namespace CoreSystems
 {
@@ -221,8 +222,7 @@ namespace CoreSystems
                         if (ai.DbUpdated || !cComp.UpdatedState)
                             cComp.DetectStateChanges();
 
-                        if (cComp.Platform.State != CorePlatform.PlatformState.Ready || cComp.IsDisabled || cComp.IsAsleep || !cComp.IsWorking || cComp.CoreEntity.MarkedForClose || cComp.LazyUpdate && !ai.DbUpdated && Tick > cComp.NextLazyUpdateStart)
-                        {
+                        if (cComp.Platform.State != CorePlatform.PlatformState.Ready || cComp.IsDisabled || cComp.IsAsleep || !cComp.IsWorking || cComp.CoreEntity.MarkedForClose || cComp.LazyUpdate && !ai.DbUpdated && Tick > cComp.NextLazyUpdateStart) {
                             if (cComp.RotorsMoving)
                                 cComp.StopRotors();
                             continue;
@@ -240,38 +240,32 @@ namespace CoreSystems
                         controlPart.OtherMap = controlPart.BaseMap == az ? el : az;
                         var topGrid = controlPart.BaseMap.TopGrid as MyCubeGrid;
                         var otherGrid = controlPart.OtherMap.TopGrid as MyCubeGrid;
+
                         Ai topAi;
-                        if (controlPart.BaseMap == null || controlPart.OtherMap == null  || topGrid == null || otherGrid == null || cComp.Controller.Camera == null || !EntityAIs.TryGetValue(otherGrid, out topAi))
-                        {
+                        if (controlPart.BaseMap == null || controlPart.OtherMap == null  || topGrid == null || otherGrid == null || cComp.Controller.Camera == null || !EntityAIs.TryGetValue(otherGrid, out topAi)) {
                             if (cComp.RotorsMoving)
                                 cComp.StopRotors();
                             continue;
                         }
 
-                        if (cComp.Controller.IsUnderControl)
-                        {
-                            Ai.PlayerController pControl;
-                            if (HandlesInput && rootConstruct.ControllingPlayers.TryGetValue(PlayerId, out pControl) && pControl.ControllBlock == cComp.CoreEntity && PlayerMouseStates.TryGetValue(cComp.Data.Repo.Values.State.PlayerId, out cComp.InputState) && cComp.InputState.MouseButtonLeft)
-                            {
-                                for (int j = 0; j < topAi.WeaponComps.Count; j++)
-                                {
-                                    var w = topAi.WeaponComps[j];
-                                    w.ShootManager.RequestShootSync(PlayerId);
-                                }
-                            }
+                        Ai.PlayerController pControl;
+                        var hasControl = rootConstruct.ControllingPlayers.TryGetValue(PlayerId, out pControl) && pControl.ControlBlock == cComp.CoreEntity;
+                        topAi.RotorManualControlId = hasControl ? PlayerId : -1;
+
+                        if (cComp.Controller.IsUnderControl) {
                             cComp.RotorsMoving = true;
                             continue;
                         }
-                        if (!cComp.Data.Repo.Values.Set.Overrides.AiEnabled || topAi.RootWeaponComp?.TrackingWeapon == null || topAi.RootWeaponComp.TrackingWeapon.Comp.CoreEntity.MarkedForClose)
-                        {
+                        
+                        if (!cComp.Data.Repo.Values.Set.Overrides.AiEnabled || topAi.RootWeaponComp?.TrackingWeapon == null || topAi.RootWeaponComp.TrackingWeapon.Comp.CoreEntity.MarkedForClose) {
                             if (cComp.RotorsMoving)
                                 cComp.StopRotors();
                             continue;
                         }
+
                         controlPart.TrackingWeapon = topAi.RootWeaponComp.TrackingWeapon;
                         controlPart.TrackingWeapon.MasterComp = cComp;
                         controlPart.TrackingWeapon.RotorTurretTracking = true;
-
                         var desiredDirection = Vector3D.Zero;
                         var noTarget = false;
 
@@ -280,8 +274,7 @@ namespace CoreSystems
                         else if (!ControlSys.TrajectoryEstimation(topAi, controlPart, out desiredDirection, false))
                             noTarget = true;
 
-                        if (noTarget)
-                        {
+                        if (noTarget) {
                             topAi.RotorTargetPosition = Vector3D.MaxValue;;
                             if (cComp.RotorsMoving)
                                 cComp.StopRotors();
@@ -314,10 +307,11 @@ namespace CoreSystems
                     }
 
                     var wValues = wComp.Data.Repo.Values;
-
                     var focusTargets = wValues.Set.Overrides.FocusTargets;
-
-                    if (IsServer && wValues.State.PlayerId > 0 && !rootConstruct.ControllingPlayers.ContainsKey(wValues.State.PlayerId))
+                    
+                    Ai.PlayerController pControl;
+                    var playerControl = rootConstruct.ControllingPlayers.TryGetValue(wValues.State.PlayerId, out pControl);
+                    if (IsServer && wValues.State.PlayerId > 0 && !playerControl && !(pControl.ControlBlock is IMyTurretControlBlock))
                         wComp.ResetPlayerControl();
                     else if (IsClient && ai.GridMap.LastControllerTick ==  Tick && wComp.ShootManager.ShootToggled && wComp.Data.Repo.Values.State.PlayerId > 0)
                         wComp.ShootManager.RequestShootSync(PlayerId);
@@ -327,7 +321,6 @@ namespace CoreSystems
 
                     var cMode = wValues.Set.Overrides.Control;
                     var sMode = wValues.Set.Overrides.ShootMode;
-                    var shootModeDefault = sMode != Weapon.ShootManager.ShootModes.AiShoot;
 
                     if (HandlesInput) {
 
@@ -336,11 +329,22 @@ namespace CoreSystems
 
                         var wasTrack = wValues.State.TrackingReticle;
 
-                        var isControllingPlayer = wValues.State.PlayerId == PlayerId;
-                        var track = (isControllingPlayer && (cMode != ProtoWeaponOverrides.ControlModes.Auto) && TargetUi.DrawReticle && !InMenu && rootConstruct.ControllingPlayers.ContainsKey(PlayerId) && (!UiInput.CameraBlockView || UiInput.CameraChannelId > 0 && UiInput.CameraChannelId == wComp.Data.Repo.Values.Set.Overrides.CameraChannel));
+                        var isControllingPlayer = wValues.State.PlayerId == PlayerId || ai.RotorManualControlId == PlayerId;
+
+                        var step1 = (isControllingPlayer && TargetUi.DrawReticle && !InMenu && (PlayerId == wValues.State.PlayerId && playerControl || rootConstruct.ControllingPlayers.TryGetValue(PlayerId, out pControl)));
+                        var step2 = step1 && cMode != ProtoWeaponOverrides.ControlModes.Auto || pControl.ControlBlock is IMyTurretControlBlock;
+                        var track = step2 && !UiInput.CameraBlockView || pControl.ControlBlock is IMyTurretControlBlock || UiInput.CameraChannelId > 0 && UiInput.CameraChannelId == wComp.Data.Repo.Values.Set.Overrides.CameraChannel;
 
                         if (isControllingPlayer)
                         {
+                            if (ai.RotorManualControlId >= 0 && sMode == Weapon.ShootManager.ShootModes.AiShoot && pControl.ControlBlock is IMyTurretControlBlock)
+                            {
+                                BlockUi.RequestShootModes(wComp.TerminalBlock, 1);
+                                sMode = wValues.Set.Overrides.ShootMode;
+                            }
+                            else if ((ai.RotorTurretAimed || ai.RotorManualControlId < 0) && sMode != Weapon.ShootManager.ShootModes.AiShoot)
+                                BlockUi.RequestShootModes(wComp.TerminalBlock, 0);
+
                             TargetUi.LastTrackTick = Tick;
                             
                             if (cMode == ProtoWeaponOverrides.ControlModes.Manual)
@@ -358,6 +362,7 @@ namespace CoreSystems
                         }
                     }
 
+                    var shootModeDefault = sMode != Weapon.ShootManager.ShootModes.AiShoot;
                     wComp.ManualMode = wValues.State.TrackingReticle && cMode == ProtoWeaponOverrides.ControlModes.Manual;
 
                     Ai.FakeTargets fakeTargets = null;
@@ -586,6 +591,7 @@ namespace CoreSystems
                 ai.DbUpdated = false;
 
                 ai.RotorTurretAimed = false;
+                ai.RotorManualControlId = -1;
                 ai.ClosestWeaponCompSqr = double.MaxValue;
                 ai.RotorTargetPosition = Vector3D.MaxValue;
 

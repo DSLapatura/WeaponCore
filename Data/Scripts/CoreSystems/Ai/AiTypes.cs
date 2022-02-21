@@ -556,7 +556,7 @@ namespace CoreSystems.Support
             internal long Id;
             internal long EntityId;
             internal uint ChangeTick;
-            internal MyCubeBlock ControllBlock;
+            internal MyCubeBlock ControlBlock;
         }
 
         public struct PlayerControllerEntity

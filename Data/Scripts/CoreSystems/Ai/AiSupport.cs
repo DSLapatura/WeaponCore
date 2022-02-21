@@ -448,6 +448,8 @@ namespace CoreSystems.Support
             LastRootWeaponTick = 0;
             ClosestWeaponCompSqr = double.MaxValue;
             RotorTargetPosition = Vector3D.MaxValue;
+            RotorTurretAimed = false;
+            RotorManualControlId = -1;
             PointDefense = false;
             FadeOut = false;
             SuppressMouseShoot = false;

@@ -605,7 +605,7 @@ namespace CoreSystems
                             var playerId = enterController.ControllerInfo.ControllingIdentityId;
 
                             gridMap.LastControllerTick = Tick + 1;
-                            var pController = new PlayerController { ControllBlock = cube, Id = playerId, EntityId = cube.EntityId, ChangeTick = Tick };
+                            var pController = new PlayerController { ControlBlock = cube, Id = playerId, EntityId = cube.EntityId, ChangeTick = Tick };
                             gridMap.PlayerControllers[playerId] = pController;
 
                             if (gridMap.GroupMap != null)

@@ -311,12 +311,7 @@ namespace CoreSystems.Support
 
                 if (initted)
                 {
-                    stringBuilder.Append($"Weapons: {ai.WeaponComps.Count}\nTools: {0}\n\n");
-                }
-                var weaponCnt = Platform.Support.Count;
-                for (int i = 0; i < weaponCnt; i++)
-                {
-                    var a = Platform.Support[i];
+                    stringBuilder.Append($"Weapons: {ai.WeaponComps.Count}\nTools: {0}\nCameras: {0}\n");
                 }
 
                 if (Debug)
