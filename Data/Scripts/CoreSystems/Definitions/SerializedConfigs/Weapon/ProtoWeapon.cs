@@ -20,7 +20,7 @@ namespace CoreSystems
 
         public void ResetToFreshLoadState(Weapon.WeaponComponent comp)
         {
-            Values.State.Tasks.Clean();
+            //Values.State.Tasks.Clean();
             Values.State.TrackingReticle = false;
             Values.Set.Overrides.Control = ProtoWeaponOverrides.ControlModes.Auto;
             Values.Set.Overrides.ShootMode = Weapon.ShootManager.ShootModes.AiShoot;
@@ -327,7 +327,7 @@ namespace CoreSystems
                 TerminalAction = sync.TerminalAction;
                 CountingDown = sync.CountingDown;
                 CriticalReaction = sync.CriticalReaction;
-                Tasks.Sync(sync.Tasks);
+                //Tasks.Sync(sync.Tasks);
                 for (int i = 0; i < sync.Weapons.Length; i++)
                     comp.Platform.Weapons[i].PartState.Sync(sync.Weapons[i]);
                 return true;

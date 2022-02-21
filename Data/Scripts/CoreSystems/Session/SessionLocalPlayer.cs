@@ -25,6 +25,83 @@ namespace CoreSystems
 {
     public partial class Session
     {
+        internal void TargetSelection()
+        {
+            if (!InGridAiBlock) return;
+            if (UiInput.AltPressed && UiInput.ShiftReleased || TargetUi.DrawReticle && UiInput.ClientInputState.MouseButtonRight && PlayerDummyTargets[PlayerId].PaintedTarget.EntityId == 0 && !TargetUi.SelectTarget(true, true, true))
+                TrackingAi.Construct.Focus.RequestReleaseActive(TrackingAi);
+
+            if (UiInput.ActionKeyReleased && TrackingAi.Construct.Data.Repo.FocusData.HasFocus)
+                TrackingAi.Construct.Focus.RequestAddLock(TrackingAi);
+
+            if (!TrackingAi.IsGrid)
+            {
+                if (TrackingAi.WeaponComps.Count == 0) return;
+
+                if (UiInput.MouseButtonRightWasPressed && TrackingAi.SmartHandheld && !TrackingAi.WeaponComps[0].Rifle.GunBase.HasIronSightsActive)
+                    TrackingAi.Construct.Focus.RequestReleaseActive(TrackingAi);
+
+                if (UiInput.ActionKeyPressed || UiInput.ActionKeyReleased && UiInput.FirstPersonView && TrackingAi.SmartHandheld && TrackingAi.WeaponComps[0].Rifle.GunBase.HasIronSightsActive)
+                    TargetUi.SelectTarget(true, UiInput.ActionKeyPressed);
+
+                return;
+            }
+
+            if (UiInput.MouseButtonRightNewPressed || UiInput.MouseButtonRightReleased && (TargetUi.DrawReticle || UiInput.FirstPersonView))
+                TargetUi.SelectTarget(true, UiInput.MouseButtonRightNewPressed);
+            else if (!UiInput.CameraBlockView)
+            {
+                if (UiInput.CurrentWheel != UiInput.PreviousWheel && !Settings.Enforcement.DisableTargetCycle)
+                    TargetUi.SelectNext();
+            }
+        }
+
+
+        internal bool CheckTarget(Ai ai)
+        {
+            if (!ai.Construct.Focus.ClientIsFocused(ai)) return false;
+            if (ai != TrackingAi)
+            {
+                TrackingAi = null;
+                return false;
+            }
+
+            return ai.Construct.Data.Repo.FocusData.HasFocus;
+        }
+
+        internal void SetTarget(MyEntity entity, Ai ai, Dictionary<MyEntity, MyTuple<float, TargetUi.TargetControl>> masterTargets)
+        {
+
+            TrackingAi = ai;
+            ai.Construct.Focus.RequestAddFocus(entity, ai);
+
+            Ai gridAi;
+            TargetArmed = false;
+            var grid = entity as MyCubeGrid;
+            if (grid != null && EntityToMasterAi.TryGetValue(grid, out gridAi))
+            {
+                TargetArmed = true;
+            }
+            else
+            {
+
+                MyTuple<float, TargetUi.TargetControl> targetInfo;
+                if (!masterTargets.TryGetValue(entity, out targetInfo)) return;
+                ConcurrentDictionary<BlockTypes, ConcurrentCachingList<MyCubeBlock>> typeDict;
+
+                var tGrid = entity as MyCubeGrid;
+                if (tGrid != null && GridToBlockTypeMap.TryGetValue(tGrid, out typeDict))
+                {
+
+                    ConcurrentCachingList<MyCubeBlock> fatList;
+                    if (typeDict.TryGetValue(Offense, out fatList))
+                        TargetArmed = fatList.Count > 0;
+                    else TargetArmed = false;
+                }
+                else TargetArmed = false;
+            }
+        }
+
         internal bool UpdateLocalAiAndCockpit()
         {
             InGridAiBlock = false;
@@ -157,9 +234,6 @@ namespace CoreSystems
 
             if (entityChanged)
             {
-                //if (lastControlledEnt is MyCockpit || lastControlledEnt is MyRemoteControl)
-                //    PlayerControlAcquired(lastControlledEnt);
-
                 if (ControlledEntity is MyCockpit || ControlledEntity is MyRemoteControl)
                     PlayerControlNotify(ControlledEntity);
             }
@@ -359,121 +433,6 @@ namespace CoreSystems
                     }
                 }
 
-            }
-        }
-
-        internal void TargetSelection()
-        {
-            if (!InGridAiBlock) return;
-            if (UiInput.AltPressed && UiInput.ShiftReleased || TargetUi.DrawReticle && UiInput.ClientInputState.MouseButtonRight && PlayerDummyTargets[PlayerId].PaintedTarget.EntityId == 0)
-                TrackingAi.Construct.Focus.RequestReleaseActive(TrackingAi);
-
-            if (UiInput.ActionKeyReleased && TrackingAi.Construct.Data.Repo.FocusData.HasFocus)
-                TrackingAi.Construct.Focus.RequestAddLock(TrackingAi);
-
-            if (!TrackingAi.IsGrid)
-            {
-                if (TrackingAi.WeaponComps.Count == 0) return;
-
-                if (UiInput.MouseButtonRightWasPressed && TrackingAi.SmartHandheld && !TrackingAi.WeaponComps[0].Rifle.GunBase.HasIronSightsActive)
-                    TrackingAi.Construct.Focus.RequestReleaseActive(TrackingAi);
-
-                if (UiInput.ActionKeyPressed || UiInput.ActionKeyReleased && UiInput.FirstPersonView && TrackingAi.SmartHandheld && TrackingAi.WeaponComps[0].Rifle.GunBase.HasIronSightsActive)
-                    TargetUi.SelectTarget(true, UiInput.ActionKeyPressed);
-
-                return;
-            }
-
-            if (UiInput.MouseButtonRightNewPressed || UiInput.MouseButtonRightReleased && (TargetUi.DrawReticle || UiInput.FirstPersonView))
-                TargetUi.SelectTarget(true, UiInput.MouseButtonRightNewPressed);
-            else if (!UiInput.CameraBlockView)
-            {
-                if (UiInput.CurrentWheel != UiInput.PreviousWheel && !Settings.Enforcement.DisableTargetCycle)
-                    TargetUi.SelectNext();
-            }
-        }
-
-        internal void RemoveGps()
-        {
-            if (TargetGps != null)
-            {
-                if (TargetGps.ShowOnHud)
-                {
-                    MyAPIGateway.Session.GPS.RemoveLocalGps(TargetGps);
-                    TargetGps.ShowOnHud = false;
-                }
-
-            }
-        }
-
-        internal void AddGps(Color color = default(Color))
-        {
-            if (TargetGps != null)
-            {
-                if (!TargetGps.ShowOnHud)
-                {
-                    TargetGps.ShowOnHud = true;
-                    MyAPIGateway.Session.GPS.AddLocalGps(TargetGps);
-                    if (color != default(Color))
-                        MyVisualScriptLogicProvider.SetGPSColor(TargetGps?.Name, color);
-                }
-            }
-        }
-
-        internal void SetGpsInfo(Vector3D pos, string name, double dist = 0, Color color = default(Color))
-        {
-            if (TargetGps != null)
-            {
-                var newPos = dist > 0 ? pos + (Camera.WorldMatrix.Up * dist) : pos;
-                TargetGps.Coords = newPos;
-                TargetGps.Name = name;
-                if (color != default(Color))
-                    MyVisualScriptLogicProvider.SetGPSColor(TargetGps?.Name, color);
-            }
-        }
-
-        internal bool CheckTarget(Ai ai)
-        {
-            if (!ai.Construct.Focus.ClientIsFocused(ai)) return false;
-            if (ai != TrackingAi)
-            {
-                TrackingAi = null;
-                return false;
-            }
-
-            return ai.Construct.Data.Repo.FocusData.HasFocus;
-        }
-
-        internal void SetTarget(MyEntity entity, Ai ai, Dictionary<MyEntity, MyTuple<float, TargetUi.TargetControl>> masterTargets)
-        {
-
-            TrackingAi = ai;
-            ai.Construct.Focus.RequestAddFocus(entity, ai);
-
-            Ai gridAi;
-            TargetArmed = false;
-            var grid = entity as MyCubeGrid;
-            if (grid != null && EntityToMasterAi.TryGetValue(grid, out gridAi))
-            {
-                TargetArmed = true;
-            }
-            else
-            {
-
-                MyTuple<float, TargetUi.TargetControl> targetInfo;
-                if (!masterTargets.TryGetValue(entity, out targetInfo)) return;
-                ConcurrentDictionary<BlockTypes, ConcurrentCachingList<MyCubeBlock>> typeDict;
-
-                var tGrid = entity as MyCubeGrid;
-                if (tGrid != null && GridToBlockTypeMap.TryGetValue(tGrid, out typeDict))
-                {
-
-                    ConcurrentCachingList<MyCubeBlock> fatList;
-                    if (typeDict.TryGetValue(Offense, out fatList))
-                        TargetArmed = fatList.Count > 0;
-                    else TargetArmed = false;
-                }
-                else TargetArmed = false;
             }
         }
     }

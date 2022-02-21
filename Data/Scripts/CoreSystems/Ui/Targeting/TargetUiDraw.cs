@@ -101,11 +101,11 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                 }
 
                 if (_3RdPersonDraw == ThirdPersonModes.DotTarget)
-                    MyTransparentGeometry.AddBillboardOriented(_whiteDot, _reticleColor, offetPosition, s.CameraMatrix.Left, s.CameraMatrix.Up, (float)PointerAdjScale * 0.3f, BlendTypeEnum.PostPP);
+                    MyTransparentGeometry.AddBillboardOriented(_whiteDot, _reticleColor, offetPosition, s.CameraMatrix.Left, s.CameraMatrix.Up, (float)PointerAdjScale * 0.35f, BlendTypeEnum.PostPP);
             }
             else if (!enableActivator && _3RdPersonDraw != ThirdPersonModes.None)
             {
-                MyTransparentGeometry.AddBillboardOriented(_whiteDot, Color.White, offetPosition, s.CameraMatrix.Left, s.CameraMatrix.Up, (float)PointerAdjScale * 0.3f, BlendTypeEnum.PostPP);
+                MyTransparentGeometry.AddBillboardOriented(_whiteDot, _reticleColor, offetPosition, s.CameraMatrix.Left, s.CameraMatrix.Up, (float)PointerAdjScale * 0.35f, BlendTypeEnum.PostPP);
             }
 
             DrawReticle = true;

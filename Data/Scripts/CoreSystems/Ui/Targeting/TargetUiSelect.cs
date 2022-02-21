@@ -21,9 +21,6 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                 switch (_3RdPersonDraw)
                 {
                     case ThirdPersonModes.None:
-                        _3RdPersonDraw = ThirdPersonModes.DotNoTarget;
-                        break;
-                    case ThirdPersonModes.DotNoTarget:
                         _3RdPersonDraw = ThirdPersonModes.DotTarget;
                         break;
                     case ThirdPersonModes.DotTarget:
@@ -40,43 +37,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                 DrawSelector(enableActivator);
         }
 
-        internal bool ActivateDroneNotice()
-        {
-            return _session.TrackingAi.IsGrid && _session.TrackingAi.Construct.DroneAlert;
-        }
-
-        internal bool ActivateMarks()
-        {
-            return _session.TrackingAi.IsGrid && _session.ActiveMarks.Count > 0;
-        }
-
-        internal bool ActivateLeads()
-        {
-            return _session.LeadGroupActive;
-        }
-
-        internal void ResetCache()
-        {
-            _cachedPointerPos = false;
-            _cachedTargetPos = false;
-        }
-
-        private void InitPointerOffset(double adjust)
-        {
-            var position = new Vector3D(_pointerPosition.X, _pointerPosition.Y, 0);
-            var scale = 0.075 * _session.ScaleFov;
-
-            position.X *= scale * _session.AspectRatio;
-            position.Y *= scale;
-
-            PointerAdjScale = adjust * scale;
-
-            PointerOffset = new Vector3D(position.X, position.Y, -0.1);
-            _cachedPointerPos = true;
-        }
-
         private MyEntity _firstStageEnt;
-        internal void SelectTarget(bool manualSelect = true, bool firstStage = false)
+        internal bool SelectTarget(bool manualSelect = true, bool firstStage = false, bool checkOnly = false)
         {
             var s = _session;
             var ai = s.TrackingAi;
@@ -121,6 +83,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             }
 
             var foundTarget = false;
+            var possibleTarget = false;
             var rayOnlyHitSelf = false;
             var rayHitSelf = false;
             var manualTarget = ai.Session.PlayerDummyTargets[ai.Session.PlayerId].ManualTarget;
@@ -128,8 +91,6 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             var mark = s.UiInput.MouseButtonRightReleased;
             MyEntity closestEnt = null;
             _session.Physics.CastRay(AimPosition, end, _hitInfo);
-
-            var t1 = ai.Construct.Focus.PrevTarget;
 
             for (int i = 0; i < _hitInfo.Count; i++)
             {
@@ -151,43 +112,46 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                 if (manualSelect)
                 {
                     if (hitGrid == null || !_masterTargets.ContainsKey(hitGrid))
+                    {
                         continue;
+                    }
 
                     if (firstStage)
                     {
-                        LastConfrimedEntity = null;
-                        if (t1 == closestEnt.EntityId)
-                            LastConfrimedEntity = closestEnt;
-
                         _firstStageEnt = hitGrid;
-
+                        possibleTarget = true;
                     }
                     else
                     {
                         if (hitGrid == _firstStageEnt) {
 
-                            if (mark && LastConfrimedEntity == closestEnt && (t1 == closestEnt.EntityId)) {
+                            if (mark && !checkOnly && ai.Construct.Focus.EntityIsFocused(ai, closestEnt)) {
                                 paintTarget.Update(hit.Position, s.Tick, closestEnt);
                             }
 
-                            s.SetTarget(hitGrid, ai, _masterTargets);
+                            if (!checkOnly) 
+                                s.SetTarget(hitGrid, ai, _masterTargets);
+                            possibleTarget = true;
                         }
 
                         _firstStageEnt = null;
                     }
 
-                    return;
+                    return possibleTarget;
                 }
 
                 foundTarget = true;
-                manualTarget.Update(hit.Position, s.Tick, closestEnt);
+                if (!checkOnly)
+                    manualTarget.Update(hit.Position, s.Tick, closestEnt);
                 break;
             }
+
             if (rayHitSelf)
             {
                 ReticleOnSelfTick = s.Tick;
                 ReticleAgeOnSelf++;
-                if (rayOnlyHitSelf && !mark) manualTarget.Update(end, s.Tick);
+                if (rayOnlyHitSelf && !mark && !checkOnly) 
+                    manualTarget.Update(end, s.Tick);
             }
             else ReticleAgeOnSelf = 0;
 
@@ -202,15 +166,16 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                         _firstStageEnt = closestEnt;
                     else
                     {
-                        if (closestEnt == _firstStageEnt)
+                        if (!checkOnly && closestEnt == _firstStageEnt)
                             s.SetTarget(closestEnt, ai, _masterTargets);
 
                         _firstStageEnt = null;
                     }
 
-                    return;
+                    return true;
                 }
-                manualTarget.Update(hitPos, s.Tick, closestEnt);
+                if (!checkOnly)
+                    manualTarget.Update(hitPos, s.Tick, closestEnt);
             }
 
             if (!manualSelect)
@@ -225,7 +190,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                     LastSelectedEntity = closestEnt;
                 }
 
-                if (!foundTarget)
+                if (!foundTarget && !checkOnly)
                 {
                     if (mark)
                         paintTarget.Update(end, s.Tick);
@@ -233,6 +198,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                         manualTarget.Update(end, s.Tick);
                 }
             }
+
+            return foundTarget;
         }
 
         internal bool GetSelectableEntity(out Vector3D position)
@@ -262,6 +229,41 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
 
             position = Vector3D.Zero;
             return false;
+        }
+
+        internal bool ActivateDroneNotice()
+        {
+            return _session.TrackingAi.IsGrid && _session.TrackingAi.Construct.DroneAlert;
+        }
+
+        internal bool ActivateMarks()
+        {
+            return _session.TrackingAi.IsGrid && _session.ActiveMarks.Count > 0;
+        }
+
+        internal bool ActivateLeads()
+        {
+            return _session.LeadGroupActive;
+        }
+
+        internal void ResetCache()
+        {
+            _cachedPointerPos = false;
+            _cachedTargetPos = false;
+        }
+
+        private void InitPointerOffset(double adjust)
+        {
+            var position = new Vector3D(_pointerPosition.X, _pointerPosition.Y, 0);
+            var scale = 0.075 * _session.ScaleFov;
+
+            position.X *= scale * _session.AspectRatio;
+            position.Y *= scale;
+
+            PointerAdjScale = adjust * scale;
+
+            PointerOffset = new Vector3D(position.X, position.Y, -0.1);
+            _cachedPointerPos = true;
         }
 
         internal void SelectNext()

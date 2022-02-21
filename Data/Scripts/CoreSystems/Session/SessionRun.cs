@@ -253,7 +253,7 @@ namespace CoreSystems
                 if (WaterApiLoaded && (Tick3600 || WaterMap.IsEmpty))
                     UpdateWaters();
 
-                if (HandlesInput && Tick60)
+                if (HandlesInput && Tick30)
                     UpdatePlayerPainters();
 
                 if (DebugLos && Tick1800) {

@@ -17,14 +17,12 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
         internal double PointerAdjScale = 0.05f;
         internal double AdjScale;
         internal bool DrawReticle;
-        internal bool HandWeaponADS;
         internal uint ReticleOnSelfTick;
         internal uint MasterUpdateTick;
         internal uint LastTrackTick;
         internal uint LastSelectableTick;
         internal uint LastManualTick;
         internal MyEntity LastSelectedEntity;
-        internal MyEntity LastConfrimedEntity;
 
         internal int ReticleAgeOnSelf;
         internal readonly char FocusChar = "_"[0];
@@ -92,7 +90,6 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
 
         private enum ThirdPersonModes
         {
-            DotNoTarget,
             DotTarget,
             Crosshair,
             None

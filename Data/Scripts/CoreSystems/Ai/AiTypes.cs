@@ -239,7 +239,7 @@ namespace CoreSystems.Support
                     EntityId = packet.TargetId;
                     LocalPosition = packet.Pos;
                 }
-
+                Log.Line($"receive painted target");
                 LastInfoTick = 0;
                 MissCount = 0;
                 LastUpdateTick = ai.Session.Tick;
