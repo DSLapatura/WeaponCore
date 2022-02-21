@@ -1006,70 +1006,81 @@ namespace CoreSystems
 
         internal void ProcessParticles()
         {
-            for (int i = Av.ParticlesToProcess.Count - 1; i >= 0; i--)
+            try
             {
-                var particleEvent = Av.ParticlesToProcess[i];
-                var playedFull = Tick - particleEvent.PlayTick > particleEvent.MaxPlayTime;
-                var obb = particleEvent.MyDummy.Entity.PositionComp.WorldAABB;
-                var playable = Vector3D.DistanceSquared(CameraPos, obb.Center) <= particleEvent.Distance;
-                if (particleEvent.PlayTick <= Tick && !playedFull && !particleEvent.Stop && playable)
+                for (int i = Av.ParticlesToProcess.Count - 1; i >= 0; i--)
                 {
-                    var dummyInfo = particleEvent.MyDummy.Info;
-                    var ent = particleEvent.MyDummy.Entity;
-                    var pos = dummyInfo.Position;
-                    var matrix = dummyInfo.DummyMatrix;
-                    matrix.Translation = dummyInfo.LocalPosition + particleEvent.Offset;
-                    var renderId = ent.Render.GetRenderObjectID();
-
-                    if (particleEvent.Effect == null)
+                    var particleEvent = Av.ParticlesToProcess[i];
+                    var playedFull = Tick - particleEvent.PlayTick > particleEvent.MaxPlayTime;
+                    var obb = particleEvent.MyDummy.Entity.PositionComp.WorldAABB;
+                    var playable = Vector3D.DistanceSquared(CameraPos, obb.Center) <= particleEvent.Distance;
+                    if (particleEvent.PlayTick <= Tick && !playedFull && !particleEvent.Stop && playable)
                     {
-                        if (ent == null || !MyParticlesManager.TryCreateParticleEffect(particleEvent.ParticleName, ref matrix, ref pos, renderId, out particleEvent.Effect))
+                        var dummyInfo = particleEvent.MyDummy.Info;
+                        var ent = particleEvent.MyDummy.Entity;
+                        var pos = dummyInfo.Position;
+                        var matrix = dummyInfo.DummyMatrix;
+                        matrix.Translation = dummyInfo.LocalPosition + particleEvent.Offset;
+                        var renderId = ent.Render.GetRenderObjectID();
+
+                        if (particleEvent.Effect == null)
                         {
-                            Log.Line($"Failed to Create Particle! Particle: {particleEvent.ParticleName}");
-                            particleEvent.Playing = false;
-                            Av.ParticlesToProcess.RemoveAtFast(i);
-                            continue;
+                            if (ent == null || !MyParticlesManager.TryCreateParticleEffect(particleEvent.ParticleName,
+                                    ref matrix, ref pos, renderId, out particleEvent.Effect))
+                            {
+                                Log.Line($"Failed to Create Particle! Particle: {particleEvent.ParticleName}");
+                                particleEvent.Playing = false;
+                                Av.ParticlesToProcess.RemoveAtFast(i);
+                                continue;
+                            }
+
+                            particleEvent.Effect.WorldMatrix = matrix;
+                            particleEvent.Effect.UserScale = particleEvent.Scale;
+
                         }
-                        particleEvent.Effect.WorldMatrix = matrix;
-                        particleEvent.Effect.UserScale = particleEvent.Scale;
-
+                        else if (particleEvent.Effect.IsStopped)
+                        {
+                            particleEvent.Effect.StopEmitting();
+                            particleEvent.Effect.Play();
+                        }
                     }
-                    else if (particleEvent.Effect.IsStopped)
+                    else if (playedFull && particleEvent.DoesLoop && !particleEvent.Stop && playable)
                     {
-                        particleEvent.Effect.StopEmitting();
-                        particleEvent.Effect.Play();
-                    }
-                }
-                else if (playedFull && particleEvent.DoesLoop && !particleEvent.Stop && playable)
-                {
-                    particleEvent.PlayTick = Tick + particleEvent.LoopDelay;
+                        particleEvent.PlayTick = Tick + particleEvent.LoopDelay;
 
-                    if (particleEvent.LoopDelay > 0 && particleEvent.Effect != null && !particleEvent.Effect.IsStopped && particleEvent.ForceStop)
+                        if (particleEvent.LoopDelay > 0 && particleEvent.Effect != null &&
+                            !particleEvent.Effect.IsStopped && particleEvent.ForceStop)
+                        {
+                            particleEvent.Effect.Stop();
+                            particleEvent.Effect.StopEmitting();
+                        }
+                    }
+                    else if (playedFull || particleEvent.Stop)
+                    {
+
+                        if (particleEvent.Effect != null)
+                        {
+                            particleEvent.Effect.Stop();
+                            MyParticlesManager.RemoveParticleEffect(particleEvent.Effect);
+                        }
+
+                        particleEvent.Effect = null;
+                        particleEvent.Playing = false;
+                        particleEvent.Stop = false;
+                        Av.ParticlesToProcess.RemoveAtFast(i);
+                    }
+                    else if (!playable && particleEvent.Effect != null && !particleEvent.Effect.IsStopped)
                     {
                         particleEvent.Effect.Stop();
                         particleEvent.Effect.StopEmitting();
-                    }                    
-                }
-                else if (playedFull || particleEvent.Stop)
-                {
-
-                    if (particleEvent.Effect != null)
-                    {
-                        particleEvent.Effect.Stop();
-                        MyParticlesManager.RemoveParticleEffect(particleEvent.Effect);
                     }
 
-                    particleEvent.Effect = null;
-                    particleEvent.Playing = false;
-                    particleEvent.Stop = false;
-                    Av.ParticlesToProcess.RemoveAtFast(i);
                 }
-                else if (!playable && particleEvent.Effect != null && !particleEvent.Effect.IsStopped)
-                {
-                    particleEvent.Effect.Stop();
-                    particleEvent.Effect.StopEmitting();
-                }
-
+            }
+            catch (Exception ex)
+            {
+                Log.Line($"Exception in ProcessParticles: {ex}", null, true);
+                Av.ParticlesToProcess.Clear();
             }
         }
     }

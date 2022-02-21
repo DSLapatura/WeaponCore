@@ -3,7 +3,9 @@ using System.ComponentModel;
 using CoreSystems.Platform;
 using CoreSystems.Support;
 using ProtoBuf;
+using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
+using VRage.Game.Entity;
 using VRageMath;
 using static CoreSystems.Support.WeaponDefinition.TargetingDef;
 using static CoreSystems.Support.CoreComponent;
@@ -18,6 +20,7 @@ namespace CoreSystems
 
         public void ResetToFreshLoadState(Weapon.WeaponComponent comp)
         {
+            Values.State.Tasks.Clean();
             Values.State.TrackingReticle = false;
             Values.Set.Overrides.Control = ProtoWeaponOverrides.ControlModes.Auto;
             Values.Set.Overrides.ShootMode = Weapon.ShootManager.ShootModes.AiShoot;
@@ -311,6 +314,7 @@ namespace CoreSystems
         [ProtoMember(7)] public bool CountingDown;
         [ProtoMember(8)] public bool CriticalReaction;
         //[ProtoMember(9)] public uint ShootSyncStateId;
+        [ProtoMember(10)] public ProtoWeaponCompTasks Tasks;
 
         public bool Sync(Weapon.WeaponComponent comp, ProtoWeaponState sync, Caller caller)
         {
@@ -323,7 +327,7 @@ namespace CoreSystems
                 TerminalAction = sync.TerminalAction;
                 CountingDown = sync.CountingDown;
                 CriticalReaction = sync.CriticalReaction;
-                
+                Tasks.Sync(sync.Tasks);
                 for (int i = 0; i < sync.Weapons.Length; i++)
                     comp.Platform.Weapons[i].PartState.Sync(sync.Weapons[i]);
                 return true;
@@ -340,6 +344,64 @@ namespace CoreSystems
 
             if (comp.Session.MpActive && comp.Session.IsServer)
                 comp.Session.SendState(comp);
+        }
+    }
+
+    [ProtoContract]
+    public class ProtoWeaponCompTasks
+    {
+        public enum Tasks
+        {
+            None,
+            Defend,
+            Attack,
+            RoamAtPoint,
+            Follow,
+        }
+
+        [ProtoMember(1)] public int EnemyId;
+        [ProtoMember(2)] public int FriendId;
+        [ProtoMember(3)] public Vector3D Position;
+        [ProtoMember(4)] public Tasks Task;
+        public MyEntity Enemy;
+        public MyEntity Friend;
+
+        public void Sync(ProtoWeaponCompTasks sync)
+        {
+            EnemyId = sync.EnemyId;
+            FriendId = sync.FriendId;
+            Position = sync.Position;
+            Task = sync.Task;
+        }
+
+        public void Update()
+        {
+            if (EnemyId <= 0 || !MyEntities.TryGetEntityById(EnemyId, out Enemy))
+                Enemy = null;
+            if (FriendId <= 0 || !MyEntities.TryGetEntityById(FriendId, out Enemy))
+                Friend = null;
+        }
+
+        public bool GetFriend(out MyEntity friend)
+        {
+            friend = Friend;
+            return FriendId > 0 && friend != null && !friend.MarkedForClose;
+        }
+
+        public bool GetEnemy(out MyEntity enemy)
+        {
+            enemy = Friend;
+            return EnemyId > 0 && enemy != null && !enemy.MarkedForClose;
+        }
+
+        public void Clean()
+        {
+            Task = Tasks.None;
+            EnemyId = 0;
+            FriendId = 0;
+            Position = Vector3D.Zero;
+            Enemy = null;
+            Friend = null;
         }
     }
 

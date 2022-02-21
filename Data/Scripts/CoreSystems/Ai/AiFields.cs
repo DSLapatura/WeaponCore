@@ -140,6 +140,7 @@ namespace CoreSystems.Support
         internal bool SmartHandheld;
         internal bool ModOverride;
         internal bool RotorTurretAimed;
+        internal uint RotorCommandTick;
         internal uint TargetsUpdatedTick;
         internal uint VelocityUpdateTick;
         internal uint NewProjectileTick;

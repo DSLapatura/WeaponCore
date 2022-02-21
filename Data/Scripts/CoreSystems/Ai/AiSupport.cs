@@ -250,6 +250,14 @@ namespace CoreSystems.Support
             }
         }
 
+        internal void ResetControlRotorState()
+        {
+            RotorManualControlId = -1;
+            ClosestWeaponCompSqr = double.MaxValue;
+            RotorTargetPosition = Vector3D.MaxValue;
+            RotorCommandTick = 0;
+        }
+
         internal void UpdateGridPower()
         {
             try
@@ -450,6 +458,7 @@ namespace CoreSystems.Support
             RotorTargetPosition = Vector3D.MaxValue;
             RotorTurretAimed = false;
             RotorManualControlId = -1;
+            RotorCommandTick = 0;
             PointDefense = false;
             FadeOut = false;
             SuppressMouseShoot = false;

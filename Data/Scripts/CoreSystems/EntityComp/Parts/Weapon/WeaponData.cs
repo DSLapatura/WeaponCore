@@ -80,7 +80,7 @@ namespace CoreSystems.Platform
                     {
                         Values = new ProtoWeaponComp
                         {
-                            State = new ProtoWeaponState { Weapons = new ProtoWeaponPartState[collection.Count] },
+                            State = new ProtoWeaponState { Weapons = new ProtoWeaponPartState[collection.Count], Tasks = new ProtoWeaponCompTasks()},
                             Set = new ProtoWeaponSettings(),
                             Targets = new ProtoWeaponTransferTarget[collection.Count],
                             Reloads = new ProtoWeaponReload[collection.Count],

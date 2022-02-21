@@ -15,8 +15,7 @@ namespace CoreSystems.Support
         {
             get
             {
-                if (_entity?.Model == null) {
-                    if (_part.CoreSystem.Session.LocalVersion) Log.Line("reset parts");
+                if (_entity == null || _entity.MarkedForClose || _entity.Model == null) {
                     _part.BaseComp.Platform?.ResetParts();
                 }
 
@@ -56,6 +55,9 @@ namespace CoreSystems.Support
         private bool _failed = true;
         internal void UpdateModel()
         {
+            if (_entity == null || _entity.MarkedForClose)
+                return;
+
             _cachedModel = _entity.Model;
             _cachedSubpart = _entity;
             _cachedSubpartModel = _cachedSubpart?.Model;
@@ -90,6 +92,9 @@ namespace CoreSystems.Support
 
         internal void UpdatePhantom()
         {
+            if (_entity == null || _entity.MarkedForClose)
+                return;
+
             _cachedSubpart = _entity;
             _cachedDummyMatrix = MatrixD.Identity;
             _failed = false;
@@ -100,18 +105,20 @@ namespace CoreSystems.Support
         {
             get
             {
+
                 if (_part == null || _part.BaseComp.TypeSpecific != CoreComponent.CompTypeSpecific.Phantom) {
 
                     if (!(_cachedModel == _entity?.Model && _cachedSubpartModel == _cachedSubpart?.Model)) UpdateModel();
 
-                    if (_entity == null || _cachedSubpart == null) {
+                    if (_entity == null || _entity.MarkedForClose || _cachedSubpart == null)
+                    {
                         Log.Line("DummyInfo invalid");
                         return new DummyInfo();
                     }
+
                 }
                 else
                     UpdatePhantom();
-
 
                 var dummyMatrix = _cachedDummyMatrix ?? MatrixD.Identity;
                 var localPos = dummyMatrix.Translation;

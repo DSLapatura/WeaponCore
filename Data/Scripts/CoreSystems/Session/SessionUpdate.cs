@@ -248,6 +248,7 @@ namespace CoreSystems
                             continue;
                         }
 
+                        topAi.RotorCommandTick = Tick;
                         Ai.PlayerController pControl;
                         var hasControl = rootConstruct.ControllingPlayers.TryGetValue(PlayerId, out pControl) && pControl.ControlBlock == cComp.CoreEntity;
                         topAi.RotorManualControlId = hasControl ? PlayerId : -1;
@@ -311,9 +312,10 @@ namespace CoreSystems
                     
                     Ai.PlayerController pControl;
                     var playerControl = rootConstruct.ControllingPlayers.TryGetValue(wValues.State.PlayerId, out pControl);
+
                     if (IsServer && wValues.State.PlayerId > 0 && !playerControl && !(pControl.ControlBlock is IMyTurretControlBlock))
                         wComp.ResetPlayerControl();
-                    else if (IsClient && ai.GridMap.LastControllerTick ==  Tick && wComp.ShootManager.ShootToggled && wComp.Data.Repo.Values.State.PlayerId > 0)
+                    else if (IsClient && ai.GridMap.LastControllerTick == Tick && wComp.ShootManager.ShootToggled && wComp.Data.Repo.Values.State.PlayerId > 0)
                         wComp.ShootManager.RequestShootSync(PlayerId);
 
                     if (wComp.Platform.State != CorePlatform.PlatformState.Ready || wComp.IsDisabled || wComp.IsAsleep || !wComp.IsWorking || wComp.CoreEntity.MarkedForClose || wComp.LazyUpdate && !ai.DbUpdated && Tick > wComp.NextLazyUpdateStart)
@@ -342,7 +344,7 @@ namespace CoreSystems
                                 BlockUi.RequestShootModes(wComp.TerminalBlock, 1);
                                 sMode = wValues.Set.Overrides.ShootMode;
                             }
-                            else if ((ai.RotorTurretAimed || ai.RotorManualControlId < 0) && sMode != Weapon.ShootManager.ShootModes.AiShoot)
+                            else if ((ai.RotorTurretAimed || ai.RotorManualControlId < 0 && ai.RotorCommandTick > 0) && sMode != Weapon.ShootManager.ShootModes.AiShoot)
                                 BlockUi.RequestShootModes(wComp.TerminalBlock, 0);
 
                             TargetUi.LastTrackTick = Tick;
@@ -591,9 +593,9 @@ namespace CoreSystems
                 ai.DbUpdated = false;
 
                 ai.RotorTurretAimed = false;
-                ai.RotorManualControlId = -1;
-                ai.ClosestWeaponCompSqr = double.MaxValue;
-                ai.RotorTargetPosition = Vector3D.MaxValue;
+                if (ai.RotorCommandTick > 0 && Tick - ai.RotorCommandTick > 1)
+                    ai.ResetControlRotorState();
+
 
                 if (activeTurret)
                     AimingAi.Add(ai);

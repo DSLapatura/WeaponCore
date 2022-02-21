@@ -10,6 +10,7 @@ using Sandbox.ModAPI.Weapons;
 using SpaceEngineers.Game.ModAPI;
 using VRage;
 using VRage.Collections;
+using VRage.Game;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRage.Input;
@@ -283,12 +284,21 @@ namespace CoreSystems
             {
                 var hit = MyCubeBuilder.Static.HitInfo.Value as IHitInfo;
                 var grid = hit.HitEntity as MyCubeGrid;
-                Ai ai;
-                if (grid != null && EntityToMasterAi.TryGetValue(grid, out ai))
+
+                if (grid != null && MyCubeBuilder.Static.CurrentBlockDefinition != null)
                 {
-                    if (MyCubeBuilder.Static.CurrentBlockDefinition != null)
+
+                    var blockId = MyCubeBuilder.Static.CurrentBlockDefinition.Id;
+                    var subtypeIdHash = blockId.SubtypeId;
+                    if (!ReplaceVanilla && (LastVanillaWarnTick == 0 || Tick - LastVanillaWarnTick > 600) && VanillaIds.ContainsKey(blockId))
                     {
-                        var subtypeIdHash = MyCubeBuilder.Static.CurrentBlockDefinition.Id.SubtypeId;
+                        ShowLocalNotify("You have not installed a Vanilla Weapon Replacer mod and without one these weapons will not work. You can find one one the steam workshop.", 600 * MyEngineConstants.UPDATE_STEP_SIZE_IN_MILLISECONDS, "Red");
+                        LastVanillaWarnTick = Tick;
+                    }
+
+                    Ai ai;
+                    if (EntityToMasterAi.TryGetValue(grid, out ai))
+                    {
                         PartCounter partCounter;
                         if (ai.PartCounting.TryGetValue(subtypeIdHash, out partCounter))
                         {
@@ -348,6 +358,7 @@ namespace CoreSystems
                         }
                     }
                 }
+
             }
         }
 

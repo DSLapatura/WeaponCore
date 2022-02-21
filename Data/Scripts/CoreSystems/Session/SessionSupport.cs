@@ -925,14 +925,6 @@ namespace CoreSystems
                 DirtyPowerGrids.TryAdd(grid, map);
         }
 
-        internal void MatchPlayersToGrids()
-        {
-            foreach (var playerInfo in Players)
-            {
-                //var controlCube = playerInfo.Value.Controller?. as MyCubeBlock;
-            }
-        }
-
         internal void NewThreat(Weapon w)
         {
             try
@@ -1255,21 +1247,88 @@ namespace CoreSystems
             var largeGatId = new MyDefinitionId(typeof(MyObjectBuilder_LargeGatlingTurret), null);
             var largeMissileId = new MyDefinitionId(typeof(MyObjectBuilder_LargeMissileTurret), null);
 
-            var smallMissileHash = MyStringHash.GetOrCompute("SmallMissileLauncher");
-            var smallGatHash = MyStringHash.GetOrCompute("SmallGatlingGun");
-            var largeGatHash = MyStringHash.GetOrCompute("LargeGatlingTurret");
-            var smallGatTurretHash = MyStringHash.GetOrCompute("SmallGatlingTurret");
-            var largeMissileHash = MyStringHash.GetOrCompute("LargeMissileTurret");
+            var smallMissile = MyStringHash.GetOrCompute("SmallMissileLauncher");
+            VanillaIds[smallMissileId] = smallMissile;
+            VanillaCoreIds[smallMissile] = smallMissileId;
 
-            VanillaIds[smallMissileId] = smallMissileHash;
-            VanillaIds[smallGatId] = smallGatHash;
-            VanillaIds[largeGatId] = largeGatHash;
-            VanillaIds[largeMissileId] = largeMissileHash;
+            var smallGat = MyStringHash.GetOrCompute("SmallGatlingGun");
+            VanillaIds[smallGatId] = smallGat;
+            VanillaCoreIds[smallGat] = smallGatId;
 
-            VanillaCoreIds[smallMissileHash] = smallMissileId;
-            VanillaCoreIds[smallGatHash] = smallGatId;
-            VanillaCoreIds[largeGatHash] = largeGatId;
-            VanillaCoreIds[largeMissileHash] = largeMissileId;
+            var largeGat = MyStringHash.GetOrCompute("LargeGatlingTurret");
+            VanillaIds[largeGatId] = largeGat;
+            VanillaCoreIds[largeGat] = largeGatId;
+
+            var largeMissile = MyStringHash.GetOrCompute("LargeMissileTurret");
+            VanillaIds[largeMissileId] = largeMissile;
+            VanillaCoreIds[largeMissile] = largeMissileId;
+
+            ///
+            ///
+            /// 
+            
+            var intTurret = MyStringHash.GetOrCompute("LargeInteriorTurret");
+            var intTurretId = new MyDefinitionId(typeof(MyObjectBuilder_InteriorTurret), "LargeInteriorTurret");
+            VanillaIds[intTurretId] = intTurret;
+            VanillaCoreIds[intTurret] = intTurretId;
+
+            var largeMissileMedCal = MyStringHash.GetOrCompute("LargeBlockMediumCalibreTurret");
+            var largeMissileMedCalId = new MyDefinitionId(typeof(MyObjectBuilder_LargeMissileTurret), "LargeBlockMediumCalibreTurret");
+            VanillaIds[largeMissileMedCalId] = largeMissileMedCal;
+            VanillaCoreIds[largeMissileMedCal] = largeMissileMedCalId;
+
+
+            var smallLargeMissile = MyStringHash.GetOrCompute("LargeMissileLauncher");
+            var smallLargeMissileId = new MyDefinitionId(typeof(MyObjectBuilder_SmallMissileLauncher), "LargeMissileLauncher");
+            VanillaIds[smallLargeMissileId] = smallLargeMissile;
+            VanillaCoreIds[smallLargeMissile] = smallLargeMissileId;
+
+
+            var smallLargeMissileReload = MyStringHash.GetOrCompute("LargeRailgun");
+            var smallLargeMissileReloadId = new MyDefinitionId(typeof(MyObjectBuilder_SmallMissileLauncherReload), "LargeRailgun");
+            VanillaIds[smallLargeMissileReloadId] = smallLargeMissileReload;
+            VanillaCoreIds[smallLargeMissileReload] = smallLargeMissileReloadId;
+
+            var smallLargeMissileLargeCal = MyStringHash.GetOrCompute("LargeBlockLargeCalibreGun");
+            var smallLargeMissileLargeCalId = new MyDefinitionId(typeof(MyObjectBuilder_SmallMissileLauncher), "LargeBlockLargeCalibreGun");
+            VanillaIds[smallLargeMissileLargeCalId] = smallLargeMissileLargeCal;
+            VanillaCoreIds[smallLargeMissileLargeCal] = smallLargeMissileLargeCalId;
+
+            var largeCalTurret = MyStringHash.GetOrCompute("LargeCalibreTurret");
+            var largeCalTurretId = new MyDefinitionId(typeof(MyObjectBuilder_LargeMissileTurret), "LargeCalibreTurret");
+            VanillaIds[largeCalTurretId] = largeCalTurret;
+            VanillaCoreIds[largeCalTurret] = largeCalTurretId;
+
+            var smallLargeMissile2 = MyStringHash.GetOrCompute("SmallMissileLauncherWarfare2");
+            var smallLargeMissile2Id = new MyDefinitionId(typeof(MyObjectBuilder_SmallMissileLauncher), "SmallMissileLauncherWarfare2");
+            VanillaIds[smallLargeMissile2Id] = smallLargeMissile2;
+            VanillaCoreIds[smallLargeMissile2] = smallLargeMissile2Id;
+
+            var smallAutoTurret = MyStringHash.GetOrCompute("AutoCannonTurret");
+            var smallAutoTurretId = new MyDefinitionId(typeof(MyObjectBuilder_LargeGatlingTurret), "AutoCannonTurret");
+            VanillaIds[smallAutoTurretId] = smallAutoTurret;
+            VanillaCoreIds[smallAutoTurret] = smallAutoTurretId;
+
+            var smallMedCalGun = MyStringHash.GetOrCompute("SmallBlockMediumCalibreGun");
+            var smallMedCalGunId = new MyDefinitionId(typeof(MyObjectBuilder_SmallMissileLauncherReload), "SmallBlockMediumCalibreGun");
+            VanillaIds[smallMedCalGunId] = smallMedCalGun;
+            VanillaCoreIds[smallMedCalGun] = smallMedCalGunId;
+
+            var smallGatAuto = MyStringHash.GetOrCompute("SmallBlockAutocannon");
+            var smallGatAutoId = new MyDefinitionId(typeof(MyObjectBuilder_SmallGatlingGun), "SmallBlockAutocannon");
+            VanillaIds[smallGatAutoId] = smallGatAuto;
+            VanillaCoreIds[smallGatAuto] = smallGatAutoId;
+
+            var smallRocketReload = MyStringHash.GetOrCompute("SmallRocketLauncherReload");
+            var smallRocketReloadId = new MyDefinitionId(typeof(MyObjectBuilder_SmallMissileLauncherReload), "SmallRocketLauncherReload");
+            VanillaIds[smallRocketReloadId] = smallRocketReload;
+            VanillaCoreIds[smallRocketReload] = smallRocketReloadId;
+
+            var smallGat2 = MyStringHash.GetOrCompute("SmallGatlingGunWarfare2");
+            var smallGat2Id = new MyDefinitionId(typeof(MyObjectBuilder_SmallGatlingGun), "SmallGatlingGunWarfare2");
+            VanillaIds[smallGat2Id] = smallGat2;
+            VanillaCoreIds[smallGat2] = smallGat2Id;
+
 
             VanillaSubpartNames.Add("InteriorTurretBase1");
             VanillaSubpartNames.Add("InteriorTurretBase2");
