@@ -87,7 +87,7 @@ namespace CoreSystems.Support
         internal GridMap GridMap;
         internal IMyCubeGrid ImyGridEntity;
         internal MyCubeBlock PowerBlock;
-        internal Weapon.WeaponComponent RootWeaponComp;
+        internal Weapon.WeaponComponent RootFixedWeaponComp;
         internal MyCubeGrid.MyCubeGridHitInfo GridHitInfo = new MyCubeGrid.MyCubeGridHitInfo();
         internal uint CreatedTick;
         internal Vector3 GridVel;
@@ -165,7 +165,7 @@ namespace CoreSystems.Support
         internal double DeadSphereRadius;
         internal double ClosestStaticSqr = double.MaxValue;
         internal double ClosestPlanetSqr = double.MaxValue;
-        internal double ClosestWeaponCompSqr = double.MaxValue;
+        internal double ClosestFixedWeaponCompSqr = double.MaxValue;
         internal Vector3D RotorTargetPosition = Vector3D.MaxValue;
         internal float GridMaxPower;
         internal float GridCurrentPower;

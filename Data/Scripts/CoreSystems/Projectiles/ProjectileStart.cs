@@ -24,7 +24,7 @@ namespace CoreSystems.Projectiles
                 var aConst = a.Const;
                 var t = gen.Type;
                 var virts = gen.NewVirts;
-                var aimed = repo.Values.State.PlayerId == Session.PlayerId || comp.TypeSpecific == CoreComponent.CompTypeSpecific.Phantom;
+                var aimed = repo.Values.State.PlayerId == Session.PlayerId && comp.ActivePlayer || comp.TypeSpecific == CoreComponent.CompTypeSpecific.Phantom;
 
                 var patternCycle = gen.PatternCycle;
                 var targetable = weaponAmmoDef.Const.Health > 0 && !weaponAmmoDef.Const.IsBeamWeapon;
@@ -38,7 +38,7 @@ namespace CoreSystems.Projectiles
                 info.Ai = comp.Ai;
                 info.AimedShot = aimed;
                 info.AmmoDef = a;
-                info.DoDamage = Session.IsServer && (!aConst.ClientPredictedAmmo || t == Kind.Client || repo.Values.State.PlayerId < 0); // shrapnel do not run this loop, but do inherit DoDamage from parent.
+                info.DoDamage = Session.IsServer && (!aConst.ClientPredictedAmmo || t == Kind.Client || !comp.ActivePlayer ); // shrapnel do not run this loop, but do inherit DoDamage from parent.
 
                 target.CoreCube = comp.Cube;
                 target.CoreEntity = comp.CoreEntity;

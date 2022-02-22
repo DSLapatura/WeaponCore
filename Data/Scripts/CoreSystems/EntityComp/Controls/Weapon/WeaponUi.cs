@@ -314,7 +314,7 @@ namespace CoreSystems
 
             var value = newValue ? CoreComponent.TriggerActions.TriggerOn : CoreComponent.TriggerActions.TriggerOff;
             
-            comp.RequestShootUpdate(value, comp.Session.MpServer ? comp.Session.PlayerId : -1);
+            comp.RequestShootUpdate(value, comp.Session.PlayerId);
         }
 
         internal static long GetAmmos(IMyTerminalBlock block)

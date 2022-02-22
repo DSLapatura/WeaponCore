@@ -253,7 +253,7 @@ namespace CoreSystems.Support
         internal void ResetControlRotorState()
         {
             RotorManualControlId = -1;
-            ClosestWeaponCompSqr = double.MaxValue;
+            ClosestFixedWeaponCompSqr = double.MaxValue;
             RotorTargetPosition = Vector3D.MaxValue;
             RotorCommandTick = 0;
         }
@@ -453,8 +453,7 @@ namespace CoreSystems.Support
             NearByEntities = 0;
             NearByEntitiesTmp = 0;
             MyProjectiles = 0;
-            LastRootWeaponTick = 0;
-            ClosestWeaponCompSqr = double.MaxValue;
+            ClosestFixedWeaponCompSqr = double.MaxValue;
             RotorTargetPosition = Vector3D.MaxValue;
             RotorTurretAimed = false;
             RotorManualControlId = -1;
@@ -470,7 +469,7 @@ namespace CoreSystems.Support
             ShieldFortified = false;
             Data.Clean();
 
-            RootWeaponComp = null;
+            RootFixedWeaponComp = null;
             GridEntity = null;
             ImyGridEntity = null;
             MyShield = null;

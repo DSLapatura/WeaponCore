@@ -29,7 +29,6 @@ namespace CoreSystems.Platform
         internal bool Charging;
         internal bool StayCharged;
 
-
         internal void Init(CoreComponent comp, CoreSystem system, int partId)
         {
             CoreSystem = system;

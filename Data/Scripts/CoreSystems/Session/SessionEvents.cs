@@ -454,7 +454,7 @@ namespace CoreSystems
                 CoreComponent comp;
                 if (ai.CompBase.TryGetValue(lastEnt, out comp)) {
                     if (comp.Type == CoreComponent.CompType.Weapon)
-                        ((Weapon.WeaponComponent)comp).RequestShootUpdate(CoreComponent.TriggerActions.TriggerOff, comp.Session.MpServer ? comp.Session.PlayerId : -1);
+                        ((Weapon.WeaponComponent)comp).RequestShootUpdate(CoreComponent.TriggerActions.TriggerOff,comp.Session.PlayerId);
                 }
             }
         }
@@ -547,8 +547,10 @@ namespace CoreSystems
         {
             MyTargetFocusComponent targetFocus = null;
             MyTargetLockingComponent targetLock = null;
-            if (!(player.Character != null && player.Character.Components.TryGet(out targetFocus) && player.Character.Components.TryGet(out targetLock)))
-                Log.Line($"failed to get player: {player.Character == null}, focus:{targetFocus == null} or lock:{targetLock == null} - PlayerId:{PlayerId} - PlayerCount:{Players.Count}");
+            if (player.Character != null) {
+                player.Character.Components.TryGet(out targetFocus);
+                player.Character.Components.TryGet(out targetLock);
+            }
 
             Players[id] = new PlayerMap { Player = player, PlayerId = id, TargetFocus = targetFocus, TargetLock = targetLock };
         }
@@ -610,8 +612,6 @@ namespace CoreSystems
 
                             if (gridMap.GroupMap != null)
                                 gridMap.GroupMap.LastControllerTick = Tick + 1;
-                            else
-                                Log.Line($"OnPlayerController enter gridmap null");
 
                             Ai ai;
                             if (EntityAIs.TryGetValue(cube.CubeGrid, out ai))

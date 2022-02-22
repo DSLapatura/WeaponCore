@@ -110,6 +110,7 @@ namespace CoreSystems.Support
         internal bool HasAim;
         internal bool InReInit;
         internal string CustomIcon;
+        internal bool ActivePlayer;
 
         internal MyDefinitionId GId = MyResourceDistributorComponent.ElectricityId;
 

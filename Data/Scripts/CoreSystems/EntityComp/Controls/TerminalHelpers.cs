@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Text;
 using CoreSystems.Platform;
 using CoreSystems.Support;
 using Sandbox.ModAPI;
 using Sandbox.ModAPI.Interfaces.Terminal;
 using SpaceEngineers.Game.ModAPI;
-using VRage.Game.ObjectBuilders.Definitions;
 using VRage.ModAPI;
 using VRage.Utils;
 
@@ -69,7 +67,7 @@ namespace CoreSystems.Control
             Separator<T>(session, "WC_sep3", IsTrue);
 
             AddWeaponBurstCountSliderRange<T>(session, "Burst Count", Localization.GetText("TerminalBurstShotsTitle"), Localization.GetText("TerminalBurstShotsTooltip"), BlockUi.GetBurstCount, BlockUi.RequestSetBurstCount, CanBurst, BlockUi.GetMinBurstCount, BlockUi.GetMaxBurstCount, true);
-            AddWeaponBurstDelaySliderRange<T>(session, "Burst Delay", Localization.GetText("TerminalBurstDelayTitle"), Localization.GetText("TerminalBurstDelayTooltip"), BlockUi.GetBurstDelay, BlockUi.RequestSetBurstDelay, CanDelay, BlockUi.GetMinBurstDelay, BlockUi.GetMaxBurstDelay, true);
+            AddWeaponBurstDelaySliderRange<T>(session, "Burst Delay", Localization.GetText("TerminalBurstDelayTitle"), Localization.GetText("TerminalBurstDelayTooltip"), BlockUi.GetBurstDelay, BlockUi.RequestSetBurstDelay, IsReady, BlockUi.GetMinBurstDelay, BlockUi.GetMaxBurstDelay, true);
             AddWeaponSequenceIdSliderRange<T>(session, "Sequence Id", Localization.GetText("TerminalSequenceIdTitle"), Localization.GetText("TerminalSequenceIdTooltip"), BlockUi.GetSequenceId, BlockUi.RequestSetSequenceId, IsReady, BlockUi.GetMinSequenceId, BlockUi.GetMaxSequenceId, true);
             AddWeaponGroupIdIdSliderRange<T>(session, "Weapon Group Id", Localization.GetText("TerminalWeaponGroupIdTitle"), Localization.GetText("TerminalWeaponGroupIdTooltip"), BlockUi.GetWeaponGroupId, BlockUi.RequestSetWeaponGroupId, IsReady, BlockUi.GetMinWeaponGroupId, BlockUi.GetMaxWeaponGroupId, true);
 
@@ -152,37 +150,9 @@ namespace CoreSystems.Control
             AddOnOffSwitchNoAction<T>(session, "Show Enhanced Area", "Area Influence", "Show On/Off", BlockUi.GetShowArea, BlockUi.RequestSetShowArea, true, SupportIsReady);
         }
 
-        internal static bool IsTrue(IMyTerminalBlock block)
-        {
-            return true;
-        }
-
         internal static bool IsCamera(IMyTerminalBlock block)
         {
             return block is IMyCameraBlock;
-        }
-
-
-        internal static bool ShootBurstWeapon(IMyTerminalBlock block)
-        {
-            var comp = block.Components.Get<CoreComponent>();
-
-            return comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Type == CoreComponent.CompType.Weapon;
-        }
-
-
-        internal static bool WeaponIsReady(IMyTerminalBlock block)
-        {
-
-            var comp = block?.Components?.Get<CoreComponent>();
-            return comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Type == CoreComponent.CompType.Weapon;
-        }
-
-        internal static bool WeaponIsReadyAndSorter(IMyTerminalBlock block)
-        {
-
-            var comp = block?.Components?.Get<CoreComponent>();
-            return comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Type == CoreComponent.CompType.Weapon && comp.TypeSpecific == CoreComponent.CompTypeSpecific.SorterWeapon;
         }
 
         internal static bool SupportIsReady(IMyTerminalBlock block)
@@ -190,6 +160,18 @@ namespace CoreSystems.Control
 
             var comp = block?.Components?.Get<CoreComponent>();
             return comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.TypeSpecific == CoreComponent.CompTypeSpecific.Support;
+        }
+
+        internal static bool IsDecoy(IMyTerminalBlock block)
+        {
+            return block is IMyDecoy;
+        }
+
+        internal static bool ShootBurstWeapon(IMyTerminalBlock block)
+        {
+            var comp = block.Components.Get<CoreComponent>();
+
+            return comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Type == CoreComponent.CompType.Weapon;
         }
 
         internal static bool UiRofSlider(IMyTerminalBlock block)
@@ -243,91 +225,170 @@ namespace CoreSystems.Control
 
         internal static bool AmmoSelection(IMyTerminalBlock block)
         {
-            var comp = block?.Components?.Get<CoreComponent>();
-            return comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.ConsumableSelectionPartIds.Count > 0 && comp.Type == CoreComponent.CompType.Weapon;
-        }
-
-        internal static bool HasTracking(IMyTerminalBlock block)
-        {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-            return comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && (comp.HasTracking || comp.HasGuidance);
+
+            var valid = comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Type == CoreComponent.CompType.Weapon && comp.Data?.Repo != null;
+            if (!valid || comp.Session.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
+                return false;
+
+            return comp.ConsumableSelectionPartIds.Count > 0;
         }
 
         internal static bool CanBurst(IMyTerminalBlock block)
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-            return comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && !comp.HasDisabledBurst;
-        }
 
-        internal static bool NoBurst(IMyTerminalBlock block)
-        {
-            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-            return comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.HasDisabledBurst;
-        }
+            var valid = comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Data?.Repo != null;
+            if (!valid || comp.Session.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
+                return false;
 
-        internal static bool CanDelay(IMyTerminalBlock block)
-        {
-            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-            return comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready;
+            return !comp.HasDisabledBurst;
         }
 
         internal static bool CanBeArmed(IMyTerminalBlock block)
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-            return comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.HasArming;
+
+            var valid = comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Data?.Repo != null;
+            if (!valid || comp.Session.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
+                return false;
+
+            return comp.HasArming;
         }
 
         internal static bool IsCounting(IMyTerminalBlock block)
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-            return comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Data.Repo.Values.State.CountingDown;
+
+            var valid = comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Data?.Repo != null;
+            if (!valid || comp.Session.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
+                return false;
+
+            return comp.Data.Repo.Values.State.CountingDown;
         }
 
         internal static bool NotCounting(IMyTerminalBlock block)
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-            return comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && !comp.Data.Repo.Values.State.CountingDown;
+
+            var valid = comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Data?.Repo != null;
+            if (!valid || comp.Session.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
+                return false;
+
+            return !comp.Data.Repo.Values.State.CountingDown;
         }
+
+        internal static bool HasTurret(IMyTerminalBlock block)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+
+            var valid = comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Type == CoreComponent.CompType.Weapon && comp.Data?.Repo != null;
+            if (!valid || comp.Session.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
+                return false;
+
+            return comp.HasTurret;
+        }
+
+        internal static bool NoTurret(IMyTerminalBlock block)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+
+
+            var valid = comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Type == CoreComponent.CompType.Weapon && comp.Data?.Repo != null;
+            if (!valid || comp.Session.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
+                return false;
+
+            return !comp.HasTurret;
+        }
+
+
+        internal static bool IsTrue(IMyTerminalBlock block)
+        {
+            return true;
+        }
+
+        internal static bool WeaponIsReadyAndSorter(IMyTerminalBlock block)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            var valid = comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Type == CoreComponent.CompType.Weapon && comp.TypeSpecific == CoreComponent.CompTypeSpecific.SorterWeapon && comp.Data?.Repo != null;
+            if (!valid || comp.Session.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
+                return false;
+
+            return true;
+        }
+
+
+        internal static bool IsReady(IMyTerminalBlock block)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            var valid = comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Data?.Repo != null;
+            if (!valid || comp.Session.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
+                return false;
+
+            return true;
+        }
+
+
+        internal static bool HasTracking(IMyTerminalBlock block)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+
+            var valid = comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Data?.Repo != null;
+
+            if (!valid || comp.Session.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
+                return false;
+
+            return (comp.HasTracking || comp.HasGuidance);
+        }
+
 
         internal static bool IsArmed(IMyTerminalBlock block)
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-            return comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Data.Repo.Values.Set.Overrides.Armed;
+
+            var valid = comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Data?.Repo != null;
+            if (!valid || comp.Session.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
+                return false;
+
+            return comp.Data.Repo.Values.Set.Overrides.Armed;
         }
 
-        internal static bool IsReady(IMyTerminalBlock block)
+
+        internal static bool GuidedAmmo(IMyTerminalBlock block, bool checkFixed = false)
         {
-            var comp = block?.Components?.Get<CoreComponent>();
-            return comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready;
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            var valid = comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Data?.Repo != null;
+            if (!valid || comp.Session.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
+                return false;
+
+            return comp.TrackingWeapon.System.HasGuidedAmmo && (!checkFixed || comp.TrackingWeapon.System.TurretMovement != WeaponSystem.TurretType.Fixed);
         }
 
 
-        internal static bool IsDecoy(IMyTerminalBlock block)
+        internal static bool OverrideTarget(IMyTerminalBlock block)
         {
-            return block is IMyDecoy;
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+
+            var valid = comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Data?.Repo != null;
+            if (!valid || comp.Session.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
+                return false;
+
+            return comp.HasRequireTarget;
         }
 
         internal static bool IsNotBomb(IMyTerminalBlock block)
         {
-            var comp = block?.Components?.Get<CoreComponent>();
-            return comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && !comp.IsBomb;
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            var valid = comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Data?.Repo != null;
+            if (!valid || comp.Session.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
+                return false;
+
+            return !comp.IsBomb;
         }
         internal static bool HasSupport(IMyTerminalBlock block)
         {
             var comp = block?.Components?.Get<CoreComponent>();
             return comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Type == CoreComponent.CompType.Support;
-        }
-
-        internal static bool HasTurret(IMyTerminalBlock block)
-        {
-            var comp = block?.Components?.Get<CoreComponent>();
-            return comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.HasTurret && comp.Type == CoreComponent.CompType.Weapon; 
-        }
-
-        internal static bool NoTurret(IMyTerminalBlock block)
-        {
-            var comp = block?.Components?.Get<CoreComponent>();
-            return comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && !comp.HasTurret && comp.Type == CoreComponent.CompType.Weapon;
         }
 
         internal static bool TargetLead(IMyTerminalBlock block)
@@ -336,11 +397,6 @@ namespace CoreSystems.Control
             return comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Type == CoreComponent.CompType.Weapon && !comp.IsBomb && (!comp.HasTurret && !comp.OverrideLeads || comp.HasTurret && comp.OverrideLeads);
         }
 
-        internal static bool GuidedAmmo(IMyTerminalBlock block, bool checkFixed = false)
-        {
-            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-            return comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.TrackingWeapon.System.HasGuidedAmmo && (!checkFixed || comp.TrackingWeapon.System.TurretMovement != WeaponSystem.TurretType.Fixed);
-        }
         internal static bool TurretOrGuidedAmmo(IMyTerminalBlock block)
         {
             return HasTurret(block) || GuidedAmmo(block, true);
@@ -352,14 +408,9 @@ namespace CoreSystems.Control
         }
         internal static bool GuidedAmmoNoTurret(IMyTerminalBlock block)
         {
-            return GuidedAmmo(block) && NoTurret(block);
+            return NoTurret(block) && GuidedAmmo(block);
         }
 
-        internal static bool OverrideTarget(IMyTerminalBlock block)
-        {
-            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-            return comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.HasRequireTarget;
-        }
 
         internal static void SliderWriterRange(IMyTerminalBlock block, StringBuilder builder)
         {
@@ -577,7 +628,7 @@ namespace CoreSystems.Control
 
             c.Title = MyStringId.GetOrCompute(title);
             c.Tooltip = MyStringId.GetOrCompute(tooltip);
-            c.Enabled = IsTrue;
+            c.Enabled = IsReady;
             c.Visible = visibleGetter;
             c.Getter = getter;
             c.Setter = setter;
@@ -714,7 +765,7 @@ namespace CoreSystems.Control
 
             c.Title = MyStringId.GetOrCompute(title);
             c.Tooltip = MyStringId.GetOrCompute(tooltip);
-            c.Enabled = IsTrue;
+            c.Enabled = IsReady;
             c.Visible = visibleGetter;
             c.Getter = getter;
             c.Setter = setter;

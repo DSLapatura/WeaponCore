@@ -279,7 +279,7 @@ namespace CoreSystems
                                 oldAction(blk);
                             return;
                         }
-                        comp.RequestShootUpdate(comp.Data.Repo.Values.State.TerminalAction == TriggerOn ? TriggerOff : TriggerOn, comp.Session.MpServer ? comp.Session.PlayerId : -1);
+                        comp.RequestShootUpdate(comp.Data.Repo.Values.State.TerminalAction == TriggerOn ? TriggerOff : TriggerOn, comp.Session.PlayerId);
                     };
 
                     var oldWriter = a.Writer;
@@ -312,7 +312,7 @@ namespace CoreSystems
                             return;
                         }
                         if (comp.Data.Repo.Values.State.TerminalAction != TriggerOn)
-                            comp.RequestShootUpdate(TriggerOn, comp.Session.MpServer ? comp.Session.PlayerId : -1);
+                            comp.RequestShootUpdate(TriggerOn, comp.Session.PlayerId);
                     };
 
                     var oldWriter = a.Writer;
@@ -346,7 +346,7 @@ namespace CoreSystems
                             return;
                         }
                         if (comp.Data.Repo.Values.State.TerminalAction != TriggerOff)
-                            comp.RequestShootUpdate(TriggerOff, comp.Session.MpServer ? comp.Session.PlayerId : -1);
+                            comp.RequestShootUpdate(TriggerOff, comp.Session.PlayerId);
                     };
 
                     var oldWriter = a.Writer;

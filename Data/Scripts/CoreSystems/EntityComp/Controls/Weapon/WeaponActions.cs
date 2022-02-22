@@ -20,7 +20,7 @@ namespace CoreSystems.Control
             var mode = comp.Data.Repo.Values.State.TerminalAction;
             var newMode = mode != TriggerOn ? TriggerOn : TriggerOff;
 
-            comp.RequestShootUpdate(newMode, comp.Session.MpServer ? comp.Session.PlayerId : -1);
+            comp.RequestShootUpdate(newMode, comp.Session.PlayerId);
         }
 
         internal static void TerminalActionShootOn(IMyTerminalBlock blk)
@@ -29,7 +29,7 @@ namespace CoreSystems.Control
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
                 return;
 
-            comp.RequestShootUpdate(TriggerOn, comp.Session.MpServer ? comp.Session.PlayerId : -1);
+            comp.RequestShootUpdate(TriggerOn, comp.Session.PlayerId);
         }
 
         internal static void TerminalActionShootOff(IMyTerminalBlock blk)
@@ -38,7 +38,7 @@ namespace CoreSystems.Control
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
                 return;
 
-            comp.RequestShootUpdate(TriggerOff, comp.Session.MpServer ? comp.Session.PlayerId : -1);
+            comp.RequestShootUpdate(TriggerOff, comp.Session.PlayerId);
         }
 
         internal static void TerminalActionKeyShoot(IMyTerminalBlock blk)

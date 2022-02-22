@@ -639,6 +639,9 @@ namespace CoreSystems
                 if (HandlesInput)
                 {
                     if (Session?.Player == null) return false;
+                    if (PlayerId == -1)
+                        PlayerId = Session.Player.IdentityId;
+
                     MultiplayerId = MyAPIGateway.Multiplayer.MyId;
 
 
@@ -650,7 +653,6 @@ namespace CoreSystems
                         SuppressWc = true;
                     }
 
-                    PlayerId = Session.Player.IdentityId;
 
                     PlayerMouseStates[PlayerId] = UiInput.ClientInputState;
 

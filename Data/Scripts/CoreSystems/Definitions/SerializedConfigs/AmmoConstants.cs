@@ -461,8 +461,8 @@ namespace CoreSystems.Support
 
             ClientPredictedAmmo = predictionEligible && FixedFireAmmo && !ammo.IsShrapnel && RealShotsPerMin <= 120 && !clientPredictedAmmoDisabled;
 
-            if (ClientPredictedAmmo)
-                Log.Line($"{ammo.AmmoDef.AmmoRound} is enabled for client prediction: {FragmentId}");
+            if (!ClientPredictedAmmo)
+                Log.Line($"{ammo.AmmoDef.AmmoRound} is NOT enabled for client prediction");
 
             SlowFireFixedWeapon = system.TurretMovement == WeaponSystem.TurretType.Fixed && (RealShotsPerMin <= 120 || Reloadable && system.WConst.ReloadTime >= 120);
 

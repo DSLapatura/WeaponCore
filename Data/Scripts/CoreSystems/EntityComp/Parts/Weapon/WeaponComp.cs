@@ -28,7 +28,7 @@ namespace CoreSystems.Platform
             internal int DefaultReloads;
             internal int MaxAmmoCount;
 
-
+            internal uint LastOwnerRequestTick;
             internal uint LastRayCastTick;
             internal float EffectiveDps;
             internal float PerfectDps;
@@ -291,9 +291,7 @@ namespace CoreSystems.Platform
                     Data.Repo.Values.State.Control = ProtoWeaponState.ControlMode.None;
 
                 playerId = Session.HandlesInput && playerId == -1 ? Session.PlayerId : playerId;
-                var noReset = !Data.Repo.Values.State.TrackingReticle;
-                var newId = action == TriggerActions.TriggerOff && noReset ? -1 : playerId;
-                Data.Repo.Values.State.PlayerId = newId;
+                Data.Repo.Values.State.PlayerId = playerId;
             }
 
             internal void RequestShootUpdate(TriggerActions action, long playerId)
@@ -338,17 +336,17 @@ namespace CoreSystems.Platform
                     Ai.DetectOtherSignals = false;
                 }
 
-                if (IsBlock)
+                if (IsBlock && !HasAim)
                 {
                     var distSqr = Vector3.DistanceSquared(Cube.PositionComp.LocalAABB.Center, Ai.TopEntity.PositionComp.LocalAABB.Center);
-                    if (distSqr < Ai.ClosestWeaponCompSqr)
+                    if (distSqr < Ai.ClosestFixedWeaponCompSqr)
                     {
-                        Ai.LastRootWeaponTick = Session.Tick;
-                        Ai.ClosestWeaponCompSqr = distSqr;
-                        Ai.RootWeaponComp = this;
+                        Ai.ClosestFixedWeaponCompSqr = distSqr;
+                        Ai.RootFixedWeaponComp = this;
                     }
                 }
 
+                ActivePlayer = Ai.Construct.RootAi.Construct.ControllingPlayers.ContainsKey(Data.Repo.Values.State.PlayerId);
 
                 UpdatedState = true;
 
@@ -397,7 +395,7 @@ namespace CoreSystems.Platform
 
                     Data.Repo.Values.Set.Overrides.ShootMode = ShootManager.ShootModes.AiShoot;
                 }
-                Data.Repo.Values.State.PlayerId = -1;
+                //Data.Repo.Values.State.PlayerId = -1;
 
                 Data.Repo.Values.State.TrackingReticle = false;
                 
@@ -612,6 +610,25 @@ namespace CoreSystems.Platform
                 }
             }
 
+            internal bool TakeOwnerShip()
+            {
+                if (LastOwnerRequestTick > 0 && Session.Tick - LastOwnerRequestTick < 120)
+                    return true;
+
+                LastOwnerRequestTick = Session.Tick;
+                if (Session.IsClient)
+                {
+                    Session.SendPlayerControlRequest(this, Session.PlayerId, ProtoWeaponState.ControlMode.Ui);
+                    return true;
+                }
+                Data.Repo.Values.State.PlayerId = Session.PlayerId;
+                
+                if (Session.MpActive)
+                    Session.SendState(this);
+
+                return true;
+            }
+
             public enum AmmoStates
             {
                 Empty,
@@ -755,7 +772,7 @@ namespace CoreSystems.Platform
                     if (Data.Repo != null)
                     {
 
-                        Data.Repo.Values.State.PlayerId = -1;
+                        //Data.Repo.Values.State.PlayerId = -1;
                         Data.Repo.Values.State.Control = ProtoWeaponState.ControlMode.None;
 
                         if (Session.MpActive)

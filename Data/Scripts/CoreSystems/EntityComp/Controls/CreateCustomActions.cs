@@ -8,20 +8,7 @@ namespace CoreSystems.Control
 {
     public static class CreateCustomActions<T>
     {
-        /*
-        internal static void CreateShootClick(Session session)
-        {
-            var action = MyAPIGateway.TerminalControls.CreateAction<T>("WC_Shoot_Click");
-            action.Icon = @"Textures\GUI\Icons\Actions\Toggle.dds";
-            action.Name = new StringBuilder(Localization.GetText("ActionWC_Shoot_Click"));
-            action.Action = CustomActions.TerminalActionShootClick;
-            action.Writer = CustomActions.ClickShootWriter;
-            action.Enabled = TerminalHelpers.WeaponIsReady;
-            action.ValidForGroups = true;
-            MyAPIGateway.TerminalControls.AddAction<T>(action);
-            session.CustomActions.Add(action);
-        }
-        */
+
         internal static void CreateShootMode(Session session)
         {
             var action = MyAPIGateway.TerminalControls.CreateAction<T>("WCShootMode");
@@ -577,20 +564,6 @@ namespace CoreSystems.Control
             action.Name = new StringBuilder(Localization.GetText("ActionSubSystems"));
             action.Action = CustomActions.TerminActionCycleSubSystemControl;
             action.Writer = CustomActions.SubSystemWriterControl;
-            action.Enabled = TerminalHelpers.IsReady;
-            action.ValidForGroups = true;
-
-            MyAPIGateway.TerminalControls.AddAction<T>(action);
-            session.CustomActions.Add(action);
-        }
-
-        public static void CreateControlModesControl(Session session)
-        {
-            var action = MyAPIGateway.TerminalControls.CreateAction<T>("ControlModes");
-            action.Icon = @"Textures\GUI\Icons\Actions\Toggle.dds";
-            action.Name = new StringBuilder(Localization.GetText("ActionControlModes"));
-            action.Action = CustomActions.TerminalActionControlModeControl;
-            action.Writer = CustomActions.ControlStateWriterControl;
             action.Enabled = TerminalHelpers.IsReady;
             action.ValidForGroups = true;
 

@@ -137,9 +137,9 @@ namespace CoreSystems.Platform
 
             ResetShotState();
 
-            var resetBlock = System.Session.IsServer && Comp.IsBlock && (!Comp.Cube.IsWorking || !Comp.Ai.HasPower) && Comp.Data.Repo.Values.State.TerminalAction != CoreComponent.TriggerActions.TriggerOff;
-            if (resetBlock)
-                Comp.ResetPlayerControl(false);
+            //var resetBlock = System.Session.IsServer && Comp.IsBlock && (!Comp.Cube.IsWorking || !Comp.Ai.HasPower) && Comp.Data.Repo.Values.State.TerminalAction != CoreComponent.TriggerActions.TriggerOff;
+            //if (resetBlock)
+            //    Comp.ResetPlayerControl(false);
         }
 
         private void ResetShotState()
