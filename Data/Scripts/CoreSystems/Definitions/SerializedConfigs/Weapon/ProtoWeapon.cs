@@ -385,16 +385,31 @@ namespace CoreSystems
             UpdatedTick = weaponComponent.Session.Tick;
         }
 
-        public bool GetFriend(out MyEntity friend)
+        public bool GetFriend(Session s, out MyEntity friend, out Ai ai)
         {
             friend = Friend;
-            return FriendId > 0 && friend != null && !friend.MarkedForClose;
+            var valid = FriendId > 0 && friend != null && !friend.MarkedForClose;
+            if (valid && s.EntityAIs.TryGetValue(friend, out ai))
+            {
+                return true;
+            }
+
+            ai = null;
+            return valid;
         }
 
-        public bool GetEnemy(out MyEntity enemy)
+        public bool GetEnemy(Session s, out MyEntity enemy, out Ai ai)
         {
             enemy = Friend;
-            return EnemyId > 0 && enemy != null && !enemy.MarkedForClose;
+            var valid = EnemyId > 0 && enemy != null && !enemy.MarkedForClose;
+
+            if (valid && s.EntityAIs.TryGetValue(enemy, out ai))
+            {
+                return true;
+            }
+
+            ai = null;
+            return valid;
         }
 
         public void Clean()

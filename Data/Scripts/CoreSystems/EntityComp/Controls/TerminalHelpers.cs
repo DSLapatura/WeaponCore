@@ -361,7 +361,7 @@ namespace CoreSystems.Control
             if (!valid || comp.Session.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
                 return false;
 
-            return comp.TrackingWeapon.System.HasGuidedAmmo && (!checkFixed || comp.TrackingWeapon.System.TurretMovement != WeaponSystem.TurretType.Fixed);
+            return comp.HasGuidance && (!checkFixed || comp.TrackingWeapon.System.TurretMovement != WeaponSystem.TurretType.Fixed);
         }
 
 

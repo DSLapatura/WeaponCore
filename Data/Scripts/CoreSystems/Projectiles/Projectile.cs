@@ -364,7 +364,7 @@ namespace CoreSystems.Projectiles
             {
                 var originDir = !Info.IsFragment ? AccelDir : Info.Direction;
                 Info.AvShot = session.Av.AvShotPool.Get();
-                Info.AvShot.Init(Info, aConst.IsSmart, AccelInMetersPerSec * StepConst, MaxSpeed, ref originDir);
+                Info.AvShot.Init(Info, aConst.IsSmart || aConst.IsDrone, AccelInMetersPerSec * StepConst, MaxSpeed, ref originDir);
                 Info.AvShot.SetupSounds(DistanceFromCameraSqr); //Pool initted sounds per Projectile type... this is expensive
                 if (aConst.HitParticle && !aConst.IsBeamWeapon || aConst.EndOfLifeAoe && !ammoDef.AreaOfDamage.EndOfLife.NoVisuals)
                 {

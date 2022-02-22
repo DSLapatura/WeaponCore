@@ -422,7 +422,7 @@ namespace CoreSystems.Platform
             if (session.IsServer && baseData.Set.Overrides.Repel && ai.DetectionInfo.DroneInRange && target.IsDrone && (session.AwakeCount == w.Acquire.SlotId || ai.Construct.RootAi.Construct.LastDroneTick == session.Tick) && Ai.SwitchToDrone(w))
                 return true;
 
-            var rayCheckTest = !w.Comp.Session.IsClient && targetLock && (baseData.State.Control == ProtoWeaponState.ControlMode.None || baseData.State.Control == ProtoWeaponState.ControlMode.Ui) && w.ActiveAmmoDef.AmmoDef.Trajectory.Guidance != GuidanceType.Smart && (!w.Casting && session.Tick - w.Comp.LastRayCastTick > 29 || w.System.Values.HardPoint.Other.MuzzleCheck && session.Tick - w.LastMuzzleCheck > 29);
+            var rayCheckTest = !w.Comp.Session.IsClient && targetLock && (baseData.State.Control == ProtoWeaponState.ControlMode.None || baseData.State.Control == ProtoWeaponState.ControlMode.Ui) && (w.ActiveAmmoDef.AmmoDef.Trajectory.Guidance != GuidanceType.Smart && w.ActiveAmmoDef.AmmoDef.Trajectory.Guidance != GuidanceType.DroneAdvanced) && (!w.Casting && session.Tick - w.Comp.LastRayCastTick > 29 || w.System.Values.HardPoint.Other.MuzzleCheck && session.Tick - w.LastMuzzleCheck > 29);
 
             if (rayCheckTest && !w.RayCheckTest())
                 return false;
