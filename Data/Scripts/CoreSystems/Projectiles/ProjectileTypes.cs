@@ -18,6 +18,7 @@ namespace CoreSystems.Support
     public class ProInfo
     {
         internal readonly Target Target = new Target(null, true);
+        internal readonly SmartStorage Storage = new SmartStorage();
         internal readonly List<HitEntity> HitList = new List<HitEntity>(4);
 
         internal AvShot AvShot;
@@ -101,7 +102,7 @@ namespace CoreSystems.Support
             ShotFade = shotFade;
         }
 
-        internal void Clean()
+        internal void Clean(bool usesStorage = false)
         {
             if (Weapon.Monitors?.Count > 0) {
                 for (int i = 0; i < Weapon.Monitors.Count; i++)
@@ -141,6 +142,9 @@ namespace CoreSystems.Support
                 AmmoDef.Const.PatternShuffleArray.Push(PatternShuffle);
                 PatternShuffle = null;
             }
+
+            if (usesStorage)
+                Storage.Clean();
 
             AvShot = null;
             Ai = null;
@@ -183,6 +187,15 @@ namespace CoreSystems.Support
             ShooterVel = Vector3D.Zero;
             TriggerMatrix = MatrixD.Identity;
             PrevTargetPos = Vector3D.Zero;
+        }
+    }
+
+    internal class SmartStorage
+    {
+
+        internal void Clean()
+        {
+
         }
     }
 
