@@ -30,6 +30,7 @@ namespace CoreSystems.Control
             AddButtonNoAction<T>(session, "Trigger", Localization.GetText("TerminalTriggerTitle"), Localization.GetText("TerminalTriggerTooltip"), BlockUi.TriggerCriticalReaction, IsArmed, CanBeArmed);
         }
 
+
         internal static void AddTurretOrTrackingControls<T>(Session session) where T : IMyTerminalBlock
         {
             AddComboboxNoAction<T>(session, "ControlModes", Localization.GetText("TerminalControlModesTitle"), Localization.GetText("TerminalControlModesTooltip"), BlockUi.GetControlMode, BlockUi.RequestControlMode, BlockUi.ListControlModes, TurretOrGuidedAmmo);
@@ -75,8 +76,18 @@ namespace CoreSystems.Control
 
             AddLeadGroupSliderRange<T>(session, "Target Group", Localization.GetText("TerminalTargetGroupTitle"), Localization.GetText("TerminalTargetGroupTooltip"), BlockUi.GetLeadGroup, BlockUi.RequestSetLeadGroup, TargetLead, BlockUi.GetMinLeadGroup, BlockUi.GetMaxLeadGroup, true);
             AddWeaponCameraSliderRange<T>(session, "Camera Channel", Localization.GetText("TerminalCameraChannelTitle"), Localization.GetText("TerminalCameraChannelTooltip"), BlockUi.GetWeaponCamera, BlockUi.RequestSetBlockCamera, HasTracking, BlockUi.GetMinCameraChannel, BlockUi.GetMaxCameraChannel, true);
-
+            AddListBoxNoAction<T>(session, "Friend", "Friend", "Friend list", Fill, Select, IsReady, 5, true, true);
             Separator<T>(session, "WC_sep5", HasTracking);
+        }
+
+        internal static void Fill(IMyTerminalBlock block, List<MyTerminalControlListBoxItem> arg1, List<MyTerminalControlListBoxItem> arg2)
+        {
+            arg1.Add(new MyTerminalControlListBoxItem(MyStringId.GetOrCompute("test"), MyStringId.GetOrCompute("test tip"), new object()));
+        }
+
+        internal static void Select(IMyTerminalBlock block, List<MyTerminalControlListBoxItem> arg1)
+        {
+            Log.Line($"{arg1[0] != null}");
         }
 
         internal static void AddTurretControlBlockControls<T>(Session session) where T : IMyTerminalBlock
@@ -354,14 +365,14 @@ namespace CoreSystems.Control
         }
 
 
-        internal static bool GuidedAmmo(IMyTerminalBlock block, bool checkFixed = false)
+        internal static bool GuidedAmmo(IMyTerminalBlock block)
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             var valid = comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Data?.Repo != null;
             if (!valid || comp.Session.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
                 return false;
 
-            return comp.HasGuidance && (!checkFixed || comp.TrackingWeapon.System.TurretMovement != WeaponSystem.TurretType.Fixed);
+            return comp.HasGuidance;
         }
 
 
@@ -399,12 +410,12 @@ namespace CoreSystems.Control
 
         internal static bool TurretOrGuidedAmmo(IMyTerminalBlock block)
         {
-            return HasTurret(block) || GuidedAmmo(block, true);
+            return HasTurret(block) || GuidedAmmo(block);
         }
 
         internal static bool TurretOrGuidedAmmoAny(IMyTerminalBlock block)
         {
-            return HasTurret(block) || GuidedAmmo(block, false);
+            return HasTurret(block) || GuidedAmmo(block);
         }
         internal static bool GuidedAmmoNoTurret(IMyTerminalBlock block)
         {
@@ -894,6 +905,27 @@ namespace CoreSystems.Control
 
             return c;
         }
+
+        internal static IMyTerminalControlListbox AddListBoxNoAction<T>(Session session, string name, string title, string tooltip, Action<IMyTerminalBlock, List<MyTerminalControlListBoxItem>, List<MyTerminalControlListBoxItem>> fillAction, Action<IMyTerminalBlock, List<MyTerminalControlListBoxItem>> selectAction, Func<IMyTerminalBlock, bool> visibleGetter = null, int visibleRowCount = 5, bool multiSelect = false, bool groups = false) where T : IMyTerminalBlock
+        {
+            var c = MyAPIGateway.TerminalControls.CreateControl<IMyTerminalControlListbox, T>("WC_" + name);
+
+            c.Title = MyStringId.GetOrCompute(title);
+            c.Tooltip = MyStringId.GetOrCompute(tooltip);
+            c.ListContent = fillAction;
+            c.ItemSelected = selectAction;
+            c.Multiselect = multiSelect;
+            c.VisibleRowsCount = visibleRowCount;
+            c.SupportsMultipleBlocks = groups;
+            c.Visible = visibleGetter;
+            c.Enabled = IsReady;
+
+            MyAPIGateway.TerminalControls.AddControl<T>(c);
+            session.CustomControls.Add(c);
+
+            return c;
+        }
+
 
         internal static IMyTerminalControlCombobox AddComboboxDecoyNoAction<T>(Session session, string name, string title, string tooltip, Func<IMyTerminalBlock, long> getter, Action<IMyTerminalBlock, long> setter, Action<List<MyTerminalControlComboBoxItem>> fillAction, Func<IMyTerminalBlock, bool> visibleGetter = null) where T : IMyTerminalBlock
         {
