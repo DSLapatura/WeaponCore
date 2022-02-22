@@ -189,12 +189,41 @@ namespace CoreSystems.Support
             PrevTargetPos = Vector3D.Zero;
         }
     }
-
+    internal enum DroneStatus
+    {
+        Launch,
+        Transit, //Movement from/to target area
+        Approach, //Final transition between transit and orbit
+        Orbit, //Orbit & shoot
+        Strafe, //Nose at target movement, for PointType = direct and PointAtTarget = false
+        Escape, //Move away from imminent collision
+        Kamikaze,
+        Return, //Return to "base"
+        Dock,
+    }
+    internal enum DroneMission
+    {
+        Attack,
+        Defend,
+        Rtb,
+    }
     internal class SmartStorage
     {
+        internal DroneStatus DroneStat;
+        internal DroneMission DroneMsn;
+        internal Vector3D TaskPosition;
+        internal MyEntity TaskTargetEnt;
+        internal BoundingSphereD TargetBound;
+        internal bool IsFriend;
 
         internal void Clean()
         {
+            DroneStat = DroneStatus.Launch;
+            DroneMsn = DroneMission.Attack;
+            TaskPosition = Vector3D.Zero;
+            TaskTargetEnt = null;
+            TargetBound = new BoundingSphereD(Vector3D.Zero,0);
+            IsFriend = false;
 
         }
     }
