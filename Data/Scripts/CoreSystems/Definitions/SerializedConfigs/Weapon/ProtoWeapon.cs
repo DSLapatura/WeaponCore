@@ -327,7 +327,7 @@ namespace CoreSystems
                 TerminalAction = sync.TerminalAction;
                 CountingDown = sync.CountingDown;
                 CriticalReaction = sync.CriticalReaction;
-                Tasks.Sync(sync.Tasks);
+                Tasks.Sync(comp, sync.Tasks);
                 for (int i = 0; i < sync.Weapons.Length; i++)
                     comp.Platform.Weapons[i].PartState.Sync(sync.Weapons[i]);
                 return true;
@@ -365,21 +365,24 @@ namespace CoreSystems
         [ProtoMember(4)] public Tasks Task;
         public MyEntity Enemy;
         public MyEntity Friend;
-
-        public void Sync(ProtoWeaponCompTasks sync)
+        public uint UpdatedTick;
+        public void Sync(Weapon.WeaponComponent weaponComponent, ProtoWeaponCompTasks sync)
         {
             EnemyId = sync.EnemyId;
             FriendId = sync.FriendId;
             Position = sync.Position;
             Task = sync.Task;
+            Update(weaponComponent);
         }
 
-        public void Update()
+        public void Update(Weapon.WeaponComponent weaponComponent)
         {
             if (EnemyId <= 0 || !MyEntities.TryGetEntityById(EnemyId, out Enemy))
                 Enemy = null;
             if (FriendId <= 0 || !MyEntities.TryGetEntityById(FriendId, out Enemy))
                 Friend = null;
+
+            UpdatedTick = weaponComponent.Session.Tick;
         }
 
         public bool GetFriend(out MyEntity friend)
@@ -396,6 +399,7 @@ namespace CoreSystems
 
         public void Clean()
         {
+            UpdatedTick = 0;
             Task = Tasks.None;
             EnemyId = 0;
             FriendId = 0;
