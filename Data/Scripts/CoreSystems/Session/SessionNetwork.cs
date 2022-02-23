@@ -340,7 +340,7 @@ namespace CoreSystems
                     break;
                 }
                 case PacketType.RequestShootUpdate: {
-                    ServerRequestShootUpdate(packetObj);
+                    //ServerRequestShootUpdate(packetObj);
                     break;
                 }
                 case PacketType.FixedWeaponHitEvent: {

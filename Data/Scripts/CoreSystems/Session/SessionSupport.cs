@@ -22,7 +22,7 @@ using VRage.ObjectBuilders;
 using VRage.Utils;
 using VRageMath;
 using static CoreSystems.Support.CoreComponent;
-using static CoreSystems.Support.CoreComponent.TriggerActions;
+using static CoreSystems.Support.CoreComponent.Trigger;
 namespace CoreSystems
 {
     public partial class Session
@@ -143,18 +143,18 @@ namespace CoreSystems
             LosDebugList.Add(debug);
         }
 
-        internal static void DecodeShootState(ulong id, out uint stateId, out Weapon.ShootManager.ShootModes shootState, out uint interval, out Weapon.ShootManager.ShootCodes code)
+        internal static void DecodeShootState(ulong id, out Weapon.ShootManager.RequestType type, out Weapon.ShootManager.ShootModes shootState, out uint interval, out Weapon.ShootManager.ShootCodes code)
         {
-            stateId = (uint)(id >> 48);
+            type = (Weapon.ShootManager.RequestType)(id >> 48);
 
             shootState = (Weapon.ShootManager.ShootModes)((id << 16) >> 48);
             interval = (uint)((id << 32) >> 48);
             code = (Weapon.ShootManager.ShootCodes)((id << 48) >> 48);
         }
 
-        internal static void EncodeShootState(uint stateId, uint shootState, uint interval, uint code, out ulong id)
+        internal static void EncodeShootState(uint type, uint shootState, uint interval, uint code, out ulong id)
         {
-            id = ((ulong)(stateId << 16 | shootState) << 32) | (interval << 16 | code);
+            id = ((ulong)(type << 16 | shootState) << 32) | (interval << 16 | code);
         }
 
         internal void LosDebuging()
@@ -956,7 +956,7 @@ namespace CoreSystems
             catch (Exception ex) { Log.Line($"NewThreatLogging in SessionDraw: {ex}", null, true); }
         }
 
-        internal MyEntity CreatePhantomEntity(string phantomType, uint maxAge = 0, bool closeWhenOutOfAmmo = false, long defaultReloads = int.MaxValue, string ammoName = null, TriggerActions trigger = TriggerOff, float? modelScale = null, MyEntity parent = null, bool addToPrunning = false, bool shadows = false, long identity = 0, bool sync = false)
+        internal MyEntity CreatePhantomEntity(string phantomType, uint maxAge = 0, bool closeWhenOutOfAmmo = false, long defaultReloads = int.MaxValue, string ammoName = null, Trigger trigger = Off, float? modelScale = null, MyEntity parent = null, bool addToPrunning = false, bool shadows = false, long identity = 0, bool sync = false)
         {
             if (!Inited) lock (InitObj) Init();
 
@@ -1019,9 +1019,9 @@ namespace CoreSystems
 
             comp.DefaultReloads = (int)defaultReloads;
 
-            if (trigger == TriggerOnce) {
-                comp.ShootManager.RequestShootSync(identity);
-                trigger = TriggerOff;
+            if (trigger == Once) {
+                comp.ShootManager.RequestShootSync(identity, Weapon.ShootManager.RequestType.Once);
+                trigger = Off;
             }
 
             comp.DefaultTrigger = trigger;

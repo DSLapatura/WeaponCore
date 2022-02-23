@@ -290,7 +290,7 @@ namespace CoreSystems
 
             if (comp?.Ai == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return Error(data, Msg("BaseComp", comp != null), Msg("Ai", comp?.Ai != null), Msg("Ai", comp?.Platform.State == CorePlatform.PlatformState.Ready));
 
-            comp.RequestShootUpdate(shootStatePacket.Action, shootStatePacket.PlayerId);
+            //comp.RequestShootUpdate(shootStatePacket.Action, shootStatePacket.PlayerId);
             data.Report.PacketValid = true;
 
             return true;
@@ -472,11 +472,12 @@ namespace CoreSystems
             if (comp?.Ai == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return Error(data, Msg($"CompId: {packet.EntityId}", comp != null), Msg("Ai", comp?.Ai != null), Msg("Ai", comp?.Platform.State == CorePlatform.PlatformState.Ready));
             var wComp = comp as Weapon.WeaponComponent;
 
-            uint stateId;
-            uint interval;
+            Weapon.ShootManager.RequestType type;
             Weapon.ShootManager.ShootModes mode;
             Weapon.ShootManager.ShootCodes code;
-            DecodeShootState(dPacket.Data, out stateId, out mode, out interval, out code);
+            uint interval;
+
+            DecodeShootState(dPacket.Data, out type, out mode, out interval, out code);
 
             if (wComp != null)
             {
@@ -487,16 +488,15 @@ namespace CoreSystems
                 }
                 else if (SteamToPlayer.TryGetValue(packet.SenderId, out playerId))
                 {
-                    var readyToTrigger = !wComp.ShootManager.ShootActive;
-                    if (readyToTrigger)
-                        wComp.ShootManager.RequestShootSync(playerId);
+                    if (wComp.Data.Repo.Values.State.Trigger != CoreComponent.Trigger.On && type != Weapon.ShootManager.RequestType.Off)
+                        wComp.ShootManager.RequestShootSync(playerId, type);
 
-                    if (!readyToTrigger || !wComp.ShootManager.ShootActive)
+                    if (wComp.Data.Repo.Values.State.Trigger == CoreComponent.Trigger.Off)
                         wComp.ShootManager.ServerRejectResponse(packet.SenderId);
                 }
                 else
                 {
-                    Log.Line($"ServerShootSyncs failed: - mode:{mode} - {stateId}", InputLog);
+                    Log.Line($"ServerShootSyncs failed: - mode:{mode} - {type}", InputLog);
 
                 }
             }

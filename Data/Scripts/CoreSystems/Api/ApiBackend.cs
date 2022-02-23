@@ -12,7 +12,7 @@ using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRage.ModAPI;
 using VRageMath;
-using static CoreSystems.Support.CoreComponent.TriggerActions;
+using static CoreSystems.Support.CoreComponent.Trigger;
 using static CoreSystems.Platform.CorePlatform.PlatformState;
 using IMyProgrammableBlock = Sandbox.ModAPI.Ingame.IMyProgrammableBlock;
 using IMyTerminalBlock = Sandbox.ModAPI.Ingame.IMyTerminalBlock;
@@ -676,7 +676,7 @@ namespace CoreSystems.Api
             var comp = weaponBlock.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp?.Platform != null && comp.Platform.State == Ready && comp.Platform.Weapons.Count > weaponId)
             {
-                comp.ShootManager.RequestShootSync(comp.Session.PlayerId);
+                comp.ShootManager.RequestShootSync(comp.Session.PlayerId, Weapon.ShootManager.RequestType.Once);
             }
         }
 
@@ -685,22 +685,7 @@ namespace CoreSystems.Api
             var comp = weaponBlock.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp?.Platform != null && comp.Platform.State == Ready && comp.Platform.Weapons.Count > weaponId)
             {
-                for (int i = 0; i < comp.Platform.Weapons.Count; i++)
-                {
-                    if (!allWeapons && i != weaponId || !comp.Session.IsServer) continue;
-
-                    var w = comp.Platform.Weapons[i];
-
-                    if (!on && w.PartState.Action == TriggerOn)
-                    {
-                        w.PartState.WeaponMode(comp, TriggerOff);
-                        w.StopShooting();
-                    }
-                    else if (on && w.PartState.Action != TriggerOff)
-                        w.PartState.WeaponMode(comp, TriggerOn);
-                    else if (on)
-                        w.PartState.WeaponMode(comp, TriggerOn);
-                }
+                comp.ShootManager.RequestShootSync(0, Weapon.ShootManager.RequestType.Toggle);
             }
         }
 
@@ -1126,7 +1111,7 @@ namespace CoreSystems.Api
         }
         private MyEntity SpawnPhantom(string phantomType, uint maxAge, bool closeWhenOutOfAmmo, long defaultReloads, string ammoOverideName, int trigger, float? modelScale, MyEntity parnet, bool addToPrunning, bool shadows, long identityId = 0, bool sync = false)
         {
-            var ent = _session.CreatePhantomEntity(phantomType, maxAge, closeWhenOutOfAmmo, defaultReloads, ammoOverideName, (CoreComponent.TriggerActions)trigger, modelScale, parnet, addToPrunning, shadows, identityId, sync);
+            var ent = _session.CreatePhantomEntity(phantomType, maxAge, closeWhenOutOfAmmo, defaultReloads, ammoOverideName, (CoreComponent.Trigger)trigger, modelScale, parnet, addToPrunning, shadows, identityId, sync);
             return ent;
         }
 
@@ -1186,10 +1171,10 @@ namespace CoreSystems.Api
             if (_session.IsServer && _session.EntityAIs.TryGetValue(phantom, out ai) && ai.CompBase.TryGetValue(phantom, out comp) && comp is Weapon.WeaponComponent)
             {
                 var wComp = (Weapon.WeaponComponent)comp;
-                wComp.ResetShootState((CoreComponent.TriggerActions) trigger, ai.AiOwner);
+                wComp.ResetShootState((CoreComponent.Trigger) trigger, ai.AiOwner);
             }
             else 
-                Log.Line($"failed to set phantom trigger: {(CoreComponent.TriggerActions)trigger} - isServer:{_session.IsServer}");
+                Log.Line($"failed to set phantom trigger: {(CoreComponent.Trigger)trigger} - isServer:{_session.IsServer}");
         }
 
         private void GetPhantomInfo(string phantomSubtypeId, ICollection<MyTuple<MyEntity, long, int, float, uint, long>> collection)

@@ -159,7 +159,7 @@ namespace CoreSystems.Support
         internal int NearByEntities;
         internal int NearByEntitiesTmp;
         internal int WeaponsTracking;
-        internal long RotorManualControlId = -1;
+        internal long RotorManualControlId = -2;
         internal double MaxTargetingRange;
         internal double MaxTargetingRangeSqr;
         internal double DeadSphereRadius;

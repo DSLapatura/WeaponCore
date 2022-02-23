@@ -7,7 +7,7 @@ using VRage.Game.ModAPI;
 using VRageMath;
 using static CoreSystems.Support.Target;
 using static CoreSystems.Support.CoreComponent.Start;
-using static CoreSystems.Support.CoreComponent.TriggerActions;
+using static CoreSystems.Support.CoreComponent.Trigger;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.TrajectoryDef.GuidanceType;
 using static CoreSystems.ProtoWeaponState;
 using Sandbox.Game.Entities;
@@ -183,7 +183,7 @@ namespace CoreSystems
                         var reloading = p.ActiveAmmoDef.AmmoDef.Const.Reloadable && p.ClientMakeUpShots == 0 && (p.Loading || p.ProtoWeaponAmmo.CurrentAmmo == 0);
                         var canShoot = !p.PartState.Overheated && !reloading && !p.System.DesignatorWeapon;
 
-                        var autoShot =  p.PartState.Action == TriggerOn || p.AiShooting && p.PartState.Action == TriggerOff;
+                        var autoShot =  pComp.Data.Repo.Values.State.Trigger == On || p.AiShooting && pComp.Data.Repo.Values.State.Trigger == Off;
 
                         var anyShot = autoShot;
 
@@ -251,7 +251,7 @@ namespace CoreSystems
                         topAi.RotorCommandTick = Tick;
                         Ai.PlayerController pControl;
                         var hasControl = rootConstruct.ControllingPlayers.TryGetValue(PlayerId, out pControl) && pControl.ControlBlock == cComp.CoreEntity;
-                        topAi.RotorManualControlId = hasControl ? PlayerId : -1;
+                        topAi.RotorManualControlId = hasControl ? PlayerId : topAi.RotorManualControlId != -2 ? -1 : -2;
 
                         if (cComp.Controller.IsUnderControl) {
                             cComp.RotorsMoving = true;
@@ -310,19 +310,22 @@ namespace CoreSystems
                     var wValues = wComp.Data.Repo.Values;
                     var focusTargets = wValues.Set.Overrides.FocusTargets;
 
-                    if (IsClient && ai.GridMap.LastControllerTick == Tick && wComp.ShootManager.ShootToggled && wComp.Data.Repo.Values.State.PlayerId > 0)
-                        wComp.ShootManager.RequestShootSync(PlayerId);
+                    if (IsClient && ai.GridMap.LastControllerTick == Tick && (wComp.ShootManager.ClientToggleCount > wValues.State.ToggleCount || wValues.State.Trigger == On) && wComp.Data.Repo.Values.State.PlayerId > 0)
+                        wComp.ShootManager.RequestShootSync(PlayerId, Weapon.ShootManager.RequestType.Off);
 
                     if (wComp.Platform.State != CorePlatform.PlatformState.Ready || wComp.IsDisabled || wComp.IsAsleep || !wComp.IsWorking || wComp.CoreEntity.MarkedForClose || wComp.LazyUpdate && !ai.DbUpdated && Tick > wComp.NextLazyUpdateStart)
                         continue;
 
                     var cMode = wValues.Set.Overrides.Control;
                     var sMode = wValues.Set.Overrides.ShootMode;
+                    var shootModeDefault = sMode != Weapon.ShootManager.ShootModes.AiShoot;
+
+                    var active = wComp.ShootManager.ClientToggleCount > wValues.State.ToggleCount || wValues.State.Trigger == On;
 
                     if (HandlesInput) {
 
                         if (wComp.TypeSpecific == CoreComponent.CompTypeSpecific.Rifle && wValues.State.Control != ControlMode.Ui)
-                            wComp.RequestShootUpdate(TriggerClick, PlayerId);
+                            wComp.ShootManager.RequestShootSync(PlayerId, Weapon.ShootManager.RequestType.Once);
 
                         var wasTrack = wValues.State.TrackingReticle;
                         var isControllingPlayer = wValues.State.PlayerId == PlayerId || !wComp.HasAim && ai.RotorManualControlId == PlayerId;
@@ -342,8 +345,10 @@ namespace CoreSystems
                                 BlockUi.RequestShootModes(wComp.TerminalBlock, 1);
                                 sMode = wValues.Set.Overrides.ShootMode;
                             }
-                            else if (!wComp.HasAim && (ai.RotorTurretAimed || ai.RotorManualControlId < 0 && ai.RotorCommandTick > 0) && sMode != Weapon.ShootManager.ShootModes.AiShoot)
+                            else if (!wComp.HasAim && (ai.RotorTurretAimed || ai.RotorManualControlId == -1 && ai.RotorCommandTick > 0) && sMode != Weapon.ShootManager.ShootModes.AiShoot)
+                            {
                                 BlockUi.RequestShootModes(wComp.TerminalBlock, 0);
+                            }
 
                             TargetUi.LastTrackTick = Tick;
                             
@@ -355,14 +360,15 @@ namespace CoreSystems
                             else if (IsServer)
                                 wValues.State.TrackingReticle = track;
 
-                            if (sMode == Weapon.ShootManager.ShootModes.MouseControl && (!wComp.ShootManager.ShootToggled && UiInput.MouseButtonLeftNewPressed || wComp.ShootManager.ShootToggled && UiInput.MouseButtonLeftReleased))
+                            var turnOn = !active && UiInput.MouseButtonLeftNewPressed;
+                            var turnOff = active && UiInput.MouseButtonLeftReleased;
+                            if (sMode == Weapon.ShootManager.ShootModes.MouseControl && (turnOn || turnOff))
                             {
-                                wComp.ShootManager.RequestShootSync(PlayerId);
+                                wComp.ShootManager.RequestShootSync(PlayerId, turnOn ? Weapon.ShootManager.RequestType.On : Weapon.ShootManager.RequestType.Off);
                             }
                         }
                     }
 
-                    var shootModeDefault = sMode != Weapon.ShootManager.ShootModes.AiShoot;
                     wComp.ManualMode = wValues.State.TrackingReticle && cMode == ProtoWeaponOverrides.ControlModes.Manual;
 
                     Ai.FakeTargets fakeTargets = null;
@@ -380,6 +386,25 @@ namespace CoreSystems
 
                     var compManualMode = wValues.State.Control == ControlMode.Camera || wComp.ManualMode;
                     var canManualShoot = !ai.SuppressMouseShoot && !wComp.InputState.InMenu;
+                    var manualShot = compManualMode && canManualShoot;
+
+                    if (HandlesInput && sMode == Weapon.ShootManager.ShootModes.AiShoot) {
+
+                        if (manualShot)
+                        {
+                            var turnOn = !active && UiInput.MouseButtonLeftNewPressed;
+                            var turnOff = active && UiInput.MouseButtonLeftReleased;
+                            if (turnOn || turnOff) {
+                                wComp.WasManual = true;
+                                wComp.ShootManager.RequestShootSync(PlayerId, turnOn ? Weapon.ShootManager.RequestType.On : Weapon.ShootManager.RequestType.Off);
+                            }
+                        }
+
+                        if (active && wComp.WasManual && !compManualMode) {
+                            wComp.WasManual = false;
+                            wComp.ShootManager.RequestShootSync(PlayerId, Weapon.ShootManager.RequestType.Off);
+                        }
+                    }
 
                     if (Tick60) {
                         var add = wComp.TotalEffect - wComp.PreviousTotalEffect;
@@ -508,7 +533,7 @@ namespace CoreSystems
                         /// 
                         
 
-                        var seek = wComp.FakeMode && w.Target.TargetState != TargetStates.IsFake || (aConst.RequiresTarget || w.RotorTurretTracking) & !w.Target.HasTarget && !noAmmo && (wComp.DetectOtherSignals && ai.DetectionInfo.OtherInRange || ai.DetectionInfo.PriorityInRange) && (!wComp.UserControlled && !enforcement.DisableAi || w.PartState.Action == TriggerClick);
+                        var seek = wComp.FakeMode && w.Target.TargetState != TargetStates.IsFake || (aConst.RequiresTarget || w.RotorTurretTracking) & !w.Target.HasTarget && !noAmmo && (wComp.DetectOtherSignals && ai.DetectionInfo.OtherInRange || ai.DetectionInfo.PriorityInRange) && (!wComp.UserControlled && !enforcement.DisableAi || wValues.State.Trigger == On);
                         
                         if (!IsClient && (seek || (aConst.RequiresTarget || w.RotorTurretTracking) && rootConstruct.TargetResetTick == Tick && !wComp.UserControlled && !enforcement.DisableAi) && !w.AcquiringTarget && wValues.State.Control != ControlMode.Camera)
                         {
@@ -523,7 +548,7 @@ namespace CoreSystems
                         /// Check weapon's turret to see if its time to go home
                         ///
 
-                        if (w.TurretController && !w.IsHome && !w.ReturingHome && !w.Target.HasTarget && Tick - w.Target.ResetTick > 239 && !wComp.UserControlled && w.PartState.Action == TriggerOff)
+                        if (w.TurretController && !w.IsHome && !w.ReturingHome && !w.Target.HasTarget && Tick - w.Target.ResetTick > 239 && !wComp.UserControlled && wValues.State.Trigger == Off)
                             w.ScheduleWeaponHome();
 
                         ///
@@ -537,24 +562,20 @@ namespace CoreSystems
                         var canShoot = !w.PartState.Overheated && !reloading && !w.System.DesignatorWeapon;
                         var paintedTarget = wComp.PainterMode && w.Target.TargetState == TargetStates.IsFake && w.Target.IsAligned;
                         
-                        var autoShot = paintedTarget || w.PartState.Action == TriggerOn || w.AiShooting && w.PartState.Action == TriggerOff;
-                        var manualShot = (compManualMode || w.PartState.Action == TriggerClick) && canManualShoot && wComp.InputState.MouseButtonLeft;
-                        var normalShot = (manualShot || autoShot);
+                        var autoShot = paintedTarget || wValues.State.Trigger == On || w.AiShooting && wValues.State.Trigger == Off;
+                        var anyShot = (autoShot && !shootModeDefault) || ((w.ShootCount > 0 && w.ShootDelay == 0 || w.ShootDelay != 0 && w.ShootDelay-- == 0) && !wComp.ShootManager.FreezeClientShoot);
 
-                        var anyShot = (normalShot && !shootModeDefault) || ((w.ShootCount > 0 && w.ShootDelay == 0 || w.ShootDelay != 0 && w.ShootDelay-- == 0) && !wComp.ShootManager.FreezeClientShoot);
 
                         var delayedFire = w.System.DelayCeaseFire && !w.Target.IsAligned && Tick - w.CeaseFireDelayTick <= w.System.CeaseFireDelay;
                         var shootRequest = (anyShot || w.FinishShots || delayedFire);
 
                         w.LockOnFireState = shootRequest && (w.System.LockOnFocus && !w.Comp.ModOverride) && construct.Data.Repo.FocusData.HasFocus && focus.FocusInRange(w);
                         var shotReady = canShoot && (shootRequest && (!w.System.LockOnFocus || w.Comp.ModOverride) || w.LockOnFireState);
-                        var shoot = shotReady && ai.CanShoot && (!aConst.RequiresTarget || w.Target.HasTarget || wValues.Set.Overrides.Override || compManualMode);
+                        var shoot = shotReady && ai.CanShoot && (!aConst.RequiresTarget || w.Target.HasTarget || wValues.Set.Overrides.Override || wComp.WasManual);
+
                         if (shoot) {
 
-                            if (MpActive && HandlesInput && !ManualShot)
-                                ManualShot = !autoShot && !w.FinishShots && !delayedFire;
-
-                            if (w.System.DelayCeaseFire && (autoShot || manualShot || w.FinishShots))
+                            if (w.System.DelayCeaseFire && (autoShot || w.FinishShots))
                                 w.CeaseFireDelayTick = Tick;
 
                             ShootingWeapons.Add(w);

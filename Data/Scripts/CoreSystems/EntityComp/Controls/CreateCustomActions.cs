@@ -37,14 +37,14 @@ namespace CoreSystems.Control
             session.CustomActions.Add(action);
         }
 
-        public static void CreateShootTrigger(Session session)
+        public static void CreateKeyShoot(Session session)
         {
             var action = MyAPIGateway.TerminalControls.CreateAction<T>("ActionFire");
             action.Icon = @"Textures\GUI\Icons\Actions\SwitchOn.dds";
             action.Name = new StringBuilder(Localization.GetText("ActionFire"));
             action.Action = CustomActions.TerminalActionKeyShoot;
             action.Writer = TerminalHelpers.EmptyStringBuilder;
-            action.Enabled = TerminalHelpers.ShootBurstWeapon;
+            action.Enabled = TerminalHelpers.KeyShootWeapon;
             action.ValidForGroups = true;
 
             MyAPIGateway.TerminalControls.AddAction<T>(action);
@@ -550,7 +550,7 @@ namespace CoreSystems.Control
             action.Name = new StringBuilder(Localization.GetText("ActionWCAiEnabled"));
             action.Action = CustomActions.TerminalActionToggleAiEnabledControl;
             action.Writer = CustomActions.AiEnabledWriterControl;
-            action.Enabled = TerminalHelpers.IsReady;
+            action.Enabled = TerminalHelpers.CtcIsReady;
             action.ValidForGroups = true;
 
             MyAPIGateway.TerminalControls.AddAction<T>(action);
@@ -564,7 +564,7 @@ namespace CoreSystems.Control
             action.Name = new StringBuilder(Localization.GetText("ActionSubSystems"));
             action.Action = CustomActions.TerminActionCycleSubSystemControl;
             action.Writer = CustomActions.SubSystemWriterControl;
-            action.Enabled = TerminalHelpers.IsReady;
+            action.Enabled = TerminalHelpers.CtcIsReady;
             action.ValidForGroups = true;
 
             MyAPIGateway.TerminalControls.AddAction<T>(action);
@@ -578,7 +578,7 @@ namespace CoreSystems.Control
             action.Name = new StringBuilder(Localization.GetText("ActionNeutrals"));
             action.Action = CustomActions.TerminalActionToggleNeutralsControl;
             action.Writer = CustomActions.NeutralWriterControl;
-            action.Enabled = TerminalHelpers.IsReady;
+            action.Enabled = TerminalHelpers.CtcIsReady;
             action.ValidForGroups = true;
 
             MyAPIGateway.TerminalControls.AddAction<T>(action);
@@ -592,7 +592,7 @@ namespace CoreSystems.Control
             action.Name = new StringBuilder(Localization.GetText("ActionProjectiles"));
             action.Action = CustomActions.TerminalActionToggleProjectilesControl;
             action.Writer = CustomActions.ProjectilesWriterControl;
-            action.Enabled = TerminalHelpers.IsReady;
+            action.Enabled = TerminalHelpers.CtcIsReady;
             action.ValidForGroups = true;
 
             MyAPIGateway.TerminalControls.AddAction<T>(action);
@@ -606,7 +606,7 @@ namespace CoreSystems.Control
             action.Name = new StringBuilder(Localization.GetText("ActionBiologicals"));
             action.Action = CustomActions.TerminalActionToggleBiologicalsControl;
             action.Writer = CustomActions.BiologicalsWriterControl;
-            action.Enabled = TerminalHelpers.IsReady;
+            action.Enabled = TerminalHelpers.CtcIsReady;
             action.ValidForGroups = true;
 
             MyAPIGateway.TerminalControls.AddAction<T>(action);
@@ -620,7 +620,7 @@ namespace CoreSystems.Control
             action.Name = new StringBuilder(Localization.GetText("ActionMeteors"));
             action.Action = CustomActions.TerminalActionToggleMeteorsControl;
             action.Writer = CustomActions.MeteorsWriterControl;
-            action.Enabled = TerminalHelpers.IsReady;
+            action.Enabled = TerminalHelpers.CtcIsReady;
             action.ValidForGroups = true;
 
             MyAPIGateway.TerminalControls.AddAction<T>(action);
@@ -634,7 +634,7 @@ namespace CoreSystems.Control
             action.Name = new StringBuilder(Localization.GetText("ActionGrids"));
             action.Action = CustomActions.TerminalActionToggleGridsControl;
             action.Writer = CustomActions.GridsWriterControl;
-            action.Enabled = TerminalHelpers.IsReady;
+            action.Enabled = TerminalHelpers.CtcIsReady;
             action.ValidForGroups = true;
 
             MyAPIGateway.TerminalControls.AddAction<T>(action);
@@ -648,7 +648,7 @@ namespace CoreSystems.Control
             action.Name = new StringBuilder(Localization.GetText("ActionFriendly"));
             action.Action = CustomActions.TerminalActionToggleFriendlyControl;
             action.Writer = CustomActions.FriendlyWriterControl;
-            action.Enabled = TerminalHelpers.IsReady;
+            action.Enabled = TerminalHelpers.CtcIsReady;
             action.ValidForGroups = true;
 
             MyAPIGateway.TerminalControls.AddAction<T>(action);
@@ -662,7 +662,7 @@ namespace CoreSystems.Control
             action.Name = new StringBuilder(Localization.GetText("ActionUnowned"));
             action.Action = CustomActions.TerminalActionToggleUnownedControl;
             action.Writer = CustomActions.UnownedWriterControl;
-            action.Enabled = TerminalHelpers.IsReady;
+            action.Enabled = TerminalHelpers.CtcIsReady;
             action.ValidForGroups = true;
 
             MyAPIGateway.TerminalControls.AddAction<T>(action);
@@ -676,7 +676,7 @@ namespace CoreSystems.Control
             action.Name = new StringBuilder(Localization.GetText("ActionFocusTargets"));
             action.Action = CustomActions.TerminalActionToggleFocusTargetsControl;
             action.Writer = CustomActions.FocusTargetsWriterControl;
-            action.Enabled = TerminalHelpers.IsReady;
+            action.Enabled = TerminalHelpers.CtcIsReady;
             action.ValidForGroups = true;
 
             MyAPIGateway.TerminalControls.AddAction<T>(action);
@@ -690,7 +690,7 @@ namespace CoreSystems.Control
             action.Name = new StringBuilder(Localization.GetText("ActionFocusSubSystem"));
             action.Action = CustomActions.TerminalActionToggleFocusSubSystemControl;
             action.Writer = CustomActions.FocusSubSystemWriterControl;
-            action.Enabled = TerminalHelpers.IsReady;
+            action.Enabled = TerminalHelpers.CtcIsReady;
             action.ValidForGroups = true;
 
             MyAPIGateway.TerminalControls.AddAction<T>(action);
@@ -704,7 +704,7 @@ namespace CoreSystems.Control
             action0.Name = new StringBuilder(Localization.GetText("ActionMaxSizeIncrease"));
             action0.Action = CustomActions.TerminalActionMaxSizeIncreaseControl;
             action0.Writer = CustomActions.MaxSizeWriterControl;
-            action0.Enabled = TerminalHelpers.IsReady;
+            action0.Enabled = TerminalHelpers.CtcIsReady;
             action0.ValidForGroups = true;
 
             MyAPIGateway.TerminalControls.AddAction<T>(action0);
@@ -715,7 +715,7 @@ namespace CoreSystems.Control
             action1.Name = new StringBuilder(Localization.GetText("ActionMaxSizeDecrease"));
             action1.Action = CustomActions.TerminalActionMaxSizeDecreaseControl;
             action1.Writer = CustomActions.MaxSizeWriterControl;
-            action1.Enabled = TerminalHelpers.IsReady;
+            action1.Enabled = TerminalHelpers.CtcIsReady;
             action1.ValidForGroups = true;
 
             MyAPIGateway.TerminalControls.AddAction<T>(action1);
@@ -729,7 +729,7 @@ namespace CoreSystems.Control
             action0.Name = new StringBuilder(Localization.GetText("ActionMinSizeIncrease"));
             action0.Action = CustomActions.TerminalActionMinSizeIncreaseControl;
             action0.Writer = CustomActions.MinSizeWriterControl;
-            action0.Enabled = TerminalHelpers.IsReady;
+            action0.Enabled = TerminalHelpers.CtcIsReady;
             action0.ValidForGroups = true;
 
             MyAPIGateway.TerminalControls.AddAction<T>(action0);
@@ -740,7 +740,7 @@ namespace CoreSystems.Control
             action1.Name = new StringBuilder(Localization.GetText("ActionMinSizeDecrease"));
             action1.Action = CustomActions.TerminalActionMinSizeDecreaseControl;
             action1.Writer = CustomActions.MinSizeWriterControl;
-            action1.Enabled = TerminalHelpers.IsReady;
+            action1.Enabled = TerminalHelpers.CtcIsReady;
             action1.ValidForGroups = true;
 
             MyAPIGateway.TerminalControls.AddAction<T>(action1);
@@ -754,7 +754,7 @@ namespace CoreSystems.Control
             action.Name = new StringBuilder(Localization.GetText("ActionTrackingMode"));
             action.Action = CustomActions.TerminalActionMovementModeControl;
             action.Writer = CustomActions.MovementModeWriterControl;
-            action.Enabled = TerminalHelpers.IsReady;
+            action.Enabled = TerminalHelpers.CtcIsReady;
             action.ValidForGroups = true;
 
             MyAPIGateway.TerminalControls.AddAction<T>(action);
@@ -768,7 +768,7 @@ namespace CoreSystems.Control
             action.Name = new StringBuilder(Localization.GetText("ActionWC_RepelMode"));
             action.Action = CustomActions.TerminalActionToggleRepelModeControl;
             action.Writer = CustomActions.RepelWriterControl;
-            action.Enabled = TerminalHelpers.IsReady;
+            action.Enabled = TerminalHelpers.CtcIsReady;
             action.ValidForGroups = true;
 
             MyAPIGateway.TerminalControls.AddAction<T>(action);

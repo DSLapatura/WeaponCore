@@ -10,7 +10,7 @@ using Sandbox.ModAPI.Interfaces.Terminal;
 using SpaceEngineers.Game.ModAPI;
 using VRage.Game.Entity;
 using VRage.Utils;
-using static CoreSystems.Support.CoreComponent.TriggerActions;
+using static CoreSystems.Support.CoreComponent.Trigger;
 using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetDef;
 namespace CoreSystems
 {
@@ -143,7 +143,7 @@ namespace CoreSystems
             CreateCustomActions<T>.CreateShootOn(session);
             CreateCustomActions<T>.CreateShootOff(session);
 
-            CreateCustomActions<T>.CreateShootTrigger(session);
+            CreateCustomActions<T>.CreateKeyShoot(session);
 
             CreateCustomActions<T>.CreateShootMode(session);
             CreateCustomActions<T>.CreateMouseToggle(session);
@@ -224,7 +224,6 @@ namespace CoreSystems
         }
 
         private const string ShootModeStr = "Shoot";
-        private const string LegacyStr = " (Legacy)";
 
         private const string ShootOnceModeStr = "ShootOnce";
 
@@ -279,7 +278,7 @@ namespace CoreSystems
                                 oldAction(blk);
                             return;
                         }
-                        comp.RequestShootUpdate(comp.Data.Repo.Values.State.TerminalAction == TriggerOn ? TriggerOff : TriggerOn, comp.Session.PlayerId);
+                        comp.ShootManager.RequestShootSync(comp.Session.PlayerId, Weapon.ShootManager.RequestType.Toggle);
                     };
 
                     var oldWriter = a.Writer;
@@ -290,15 +289,11 @@ namespace CoreSystems
                             oldWriter(blk, sb);
                             return;
                         }
-                        if (comp.Data.Repo.Values.State.TerminalAction == TriggerOn)
+                        if (comp.Data.Repo.Values.State.Trigger == On)
                             sb.Append("On");
                         else
                             sb.Append("Off");
                     };
-                    if (!a.Name.ToString().Contains(LegacyStr))
-                    {
-                        a.Name.Append(LegacyStr);
-                    }
                     session.AlteredActions.Add(a);
                 }
                 else if (a.Id.Equals("Shoot_On")) {
@@ -311,8 +306,8 @@ namespace CoreSystems
                             if (comp == null) oldAction(blk);
                             return;
                         }
-                        if (comp.Data.Repo.Values.State.TerminalAction != TriggerOn)
-                            comp.RequestShootUpdate(TriggerOn, comp.Session.PlayerId);
+                        if (comp.Data.Repo.Values.State.Trigger != On)
+                            comp.ShootManager.RequestShootSync(comp.Session.PlayerId, Weapon.ShootManager.RequestType.On);
                     };
 
                     var oldWriter = a.Writer;
@@ -324,15 +319,11 @@ namespace CoreSystems
                             oldWriter(blk, sb);
                             return;
                         }
-                        if (comp.Data.Repo.Values.State.TerminalAction == TriggerOn)
+                        if (comp.Data.Repo.Values.State.Trigger == On)
                             sb.Append("On");
                         else
                             sb.Append("Off");
                     };
-                    if (!a.Name.ToString().Contains(LegacyStr))
-                    {
-                        a.Name.Append(LegacyStr);
-                    }
                     session.AlteredActions.Add(a);
                 }
                 else if (a.Id.Equals("Shoot_Off")) {
@@ -345,8 +336,8 @@ namespace CoreSystems
                             if (comp == null)  oldAction(blk);
                             return;
                         }
-                        if (comp.Data.Repo.Values.State.TerminalAction != TriggerOff)
-                            comp.RequestShootUpdate(TriggerOff, comp.Session.PlayerId);
+                        if (comp.Data.Repo.Values.State.Trigger != Off)
+                            comp.ShootManager.RequestShootSync(comp.Session.PlayerId, Weapon.ShootManager.RequestType.Off);
                     };
 
                     var oldWriter = a.Writer;
@@ -357,15 +348,11 @@ namespace CoreSystems
                             oldWriter(blk, sb);
                             return;
                         }
-                        if (comp.Data.Repo.Values.State.TerminalAction == TriggerOn)
+                        if (comp.Data.Repo.Values.State.Trigger == On)
                             sb.Append("On");
                         else
                             sb.Append("Off");
                     };
-                    if (!a.Name.ToString().Contains(LegacyStr))
-                    {
-                        a.Name.Append(LegacyStr);
-                    }
                     session.AlteredActions.Add(a);
                 }
             }

@@ -109,7 +109,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
                     var shootButtonActive = ClientInputState.MouseButtonLeft || ClientInputState.MouseButtonRight;
 
                     MouseShootWasOn = MouseShootOn;
-                    if ((_session.ManualShot || s.Tick - _lastInputUpdate >= 29) && shootButtonActive && !MouseShootOn)
+                    if (( s.Tick - _lastInputUpdate >= 29) && shootButtonActive && !MouseShootOn)
                     {
                         _lastInputUpdate = s.Tick;
                         MouseShootOn = true;
@@ -118,7 +118,6 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
                         MouseShootOn = false;
 
                     InputChanged = MouseShootOn != MouseShootWasOn || WasInMenu != ClientInputState.InMenu;
-                    _session.ManualShot = false;
                 }
 
                 ShiftReleased = MyAPIGateway.Input.IsNewKeyReleased(MyKeys.LeftShift);

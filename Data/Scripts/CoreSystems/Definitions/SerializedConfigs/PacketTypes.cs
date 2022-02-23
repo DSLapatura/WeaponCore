@@ -639,13 +639,13 @@ namespace CoreSystems
     [ProtoContract]
     public class ShootStatePacket : Packet
     {
-        [ProtoMember(1)] internal TriggerActions Action = TriggerActions.TriggerOff;
+        [ProtoMember(1)] internal Trigger Action = Trigger.Off;
         [ProtoMember(2), DefaultValue(-1)] internal long PlayerId = -1;
 
         public override void CleanUp()
         {
             base.CleanUp();
-            Action = TriggerActions.TriggerOff;
+            Action = Trigger.Off;
             PlayerId = -1;
         }
     }

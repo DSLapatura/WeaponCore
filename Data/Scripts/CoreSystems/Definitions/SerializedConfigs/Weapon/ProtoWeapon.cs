@@ -22,13 +22,15 @@ namespace CoreSystems
         {
             Values.State.Tasks.Clean();
             Values.State.TrackingReticle = false;
+            Values.State.ToggleCount = 0;
+            Values.State.Trigger = Trigger.Off;
             Values.Set.Overrides.Control = ProtoWeaponOverrides.ControlModes.Auto;
             Values.Set.Overrides.ShootMode = Weapon.ShootManager.ShootModes.AiShoot;
             if (Values.State.Control == ProtoWeaponState.ControlMode.Ui)
                 Values.State.Control = ProtoWeaponState.ControlMode.None;
 
-            if (comp.DefaultTrigger != TriggerActions.TriggerOff)
-                Values.State.TerminalAction = comp.DefaultTrigger;
+            if (comp.DefaultTrigger != Trigger.Off)
+                Values.State.Trigger = comp.DefaultTrigger;
 
             if (Values.Set.Overrides.BurstCount <= 0)
                 Values.Set.Overrides.BurstCount = 1;
@@ -47,10 +49,6 @@ namespace CoreSystems
                 ws.Heat = 0;
                 ws.Overheated = false;
 
-                if (comp.DefaultTrigger != TriggerActions.TriggerOff)
-                {
-                    ws.Action = comp.DefaultTrigger;
-                }
 
                 if (wr.AmmoTypeId >= we.System.AmmoTypes.Length)
                     wr.AmmoTypeId = 0;
@@ -64,7 +62,6 @@ namespace CoreSystems
         public void ResetCompBaseRevisions()
         {
             Values.Revision = 0;
-            Values.State.Revision = 0;
             for (int i = 0; i < Ammos.Length; i++)
             {
                 Values.Targets[i].Revision = 0;
@@ -143,7 +140,7 @@ namespace CoreSystems
             {
                 Revision = sync.Revision;
                 Set.Sync(comp, sync.Set);
-                State.Sync(comp, sync.State, ProtoWeaponState.Caller.CompData);
+                State.Sync(comp, sync.State);
 
                 for (int i = 0; i < Targets.Length; i++)
                 {
@@ -160,7 +157,6 @@ namespace CoreSystems
         public void UpdateCompPacketInfo(Weapon.WeaponComponent comp, bool clean = false, bool resetRnd = false)
         {
             ++Revision;
-            ++State.Revision;
             Session.PacketInfo info;
             if (clean && comp.Session.PrunedPacketsToClient.TryGetValue(comp.Data.Repo.Values.State, out info))
             {
@@ -305,45 +301,33 @@ namespace CoreSystems
             Camera
         }
 
-        [ProtoMember(1)] public uint Revision;
+        //[ProtoMember(1)] public uint Revision;
         [ProtoMember(2)] public ProtoWeaponPartState[] Weapons;
         [ProtoMember(3)] public bool TrackingReticle; //don't save
         [ProtoMember(4), DefaultValue(-1)] public long PlayerId = -1;
         [ProtoMember(5), DefaultValue(ControlMode.None)] public ControlMode Control = ControlMode.None;
-        [ProtoMember(6)] public TriggerActions TerminalAction;
+        [ProtoMember(6)] public Trigger Trigger;
         [ProtoMember(7)] public bool CountingDown;
         [ProtoMember(8)] public bool CriticalReaction;
-        //[ProtoMember(9)] public uint ShootSyncStateId;
+        [ProtoMember(9)] public uint ToggleCount;
         [ProtoMember(10)] public ProtoWeaponCompTasks Tasks;
 
-        public bool Sync(Weapon.WeaponComponent comp, ProtoWeaponState sync, Caller caller)
+        public void Sync(Weapon.WeaponComponent comp, ProtoWeaponState sync)
         {
-            if (sync.Revision > Revision || caller == Caller.CompData)
-            {
-                Revision = sync.Revision;
-                TrackingReticle = sync.TrackingReticle;
-                PlayerId = sync.PlayerId;
-                Control = sync.Control;
-                TerminalAction = sync.TerminalAction;
-                CountingDown = sync.CountingDown;
-                CriticalReaction = sync.CriticalReaction;
-                Tasks.Sync(comp, sync.Tasks);
-                for (int i = 0; i < sync.Weapons.Length; i++)
-                    comp.Platform.Weapons[i].PartState.Sync(sync.Weapons[i]);
-                return true;
-            }
-            return false;
-        }
+            TrackingReticle = sync.TrackingReticle;
+            PlayerId = sync.PlayerId;
+            Control = sync.Control;
+            Trigger = sync.Trigger;
+            CountingDown = sync.CountingDown;
+            CriticalReaction = sync.CriticalReaction;
+            ToggleCount = sync.ToggleCount;
 
-        public void TerminalActionSetter(Weapon.WeaponComponent comp, TriggerActions action)
-        {
-            TerminalAction = action;
+            if (ToggleCount > comp.ShootManager.ClientToggleCount) 
+                comp.ShootManager.ClientToggleCount = ToggleCount;
 
-            for (int i = 0; i < Weapons.Length; i++)
-                Weapons[i].Action = action;
-
-            if (comp.Session.MpActive && comp.Session.IsServer)
-                comp.Session.SendState(comp);
+            Tasks.Sync(comp, sync.Tasks);
+            for (int i = 0; i < sync.Weapons.Length; i++)
+                comp.Platform.Weapons[i].PartState.Sync(sync.Weapons[i]);
         }
     }
 
@@ -429,21 +413,21 @@ namespace CoreSystems
     {
         [ProtoMember(1)] public float Heat; // don't save
         [ProtoMember(2)] public bool Overheated; //don't save
-        [ProtoMember(3), DefaultValue(TriggerActions.TriggerOff)] public TriggerActions Action = TriggerActions.TriggerOff; // save
+        //[ProtoMember(3), DefaultValue(Trigger.Off)] public Trigger Action = Trigger.Off; // save
 
         public void Sync(ProtoWeaponPartState sync)
         {
             Heat = sync.Heat;
             Overheated = sync.Overheated;
-            Action = sync.Action;
+            //Action = sync.Action;
         }
 
-        public void WeaponMode(Weapon.WeaponComponent comp, TriggerActions action, bool resetTerminalAction = true, bool syncCompState = true)
+        public void WeaponMode(Weapon.WeaponComponent comp, Trigger action, bool resetTerminalAction = true, bool syncCompState = true)
         {
             if (resetTerminalAction)
-                comp.Data.Repo.Values.State.TerminalAction = TriggerActions.TriggerOff;
+                comp.Data.Repo.Values.State.Trigger = Trigger.Off;
 
-            Action = action;
+            //Action = action;
             if (comp.Session.MpActive && comp.Session.IsServer && syncCompState)
                 comp.Session.SendState(comp);
         }

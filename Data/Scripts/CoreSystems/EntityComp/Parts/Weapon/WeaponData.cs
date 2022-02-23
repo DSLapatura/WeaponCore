@@ -125,6 +125,9 @@ namespace CoreSystems.Platform
                     }
 
                     Repo.Values.Set.Range = -1;
+
+                    if (Comp.Session.IsClient)
+                        Comp.ShootManager.ClientToggleCount = Repo.Values.State.ToggleCount;
                 }
 
                 ProtoRepoBase = Repo;

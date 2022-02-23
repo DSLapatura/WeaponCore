@@ -63,7 +63,7 @@ namespace CoreSystems.Platform
 
                 if (Comp.CoreEntity.MarkedForClose || Comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
-                if (PartState.Action != TriggerActions.TriggerOff || Comp.UserControlled || Target.HasTarget || !ReturingHome) {
+                if (Comp.Data.Repo.Values.State.Trigger != Trigger.Off || Comp.UserControlled || Target.HasTarget || !ReturingHome) {
                     ReturingHome = false;
                     return;
                 }

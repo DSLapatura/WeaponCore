@@ -88,6 +88,7 @@ namespace CoreSystems.Support
         internal bool IsBomb;
         internal bool OverrideLeads;
         internal bool WasControlled;
+        internal bool WasManual;
         internal bool UpdatedState;
         internal bool UserControlled;
         internal bool Debug;
@@ -144,12 +145,11 @@ namespace CoreSystems.Support
             Control
         }
 
-        public enum TriggerActions
+        public enum Trigger
         {
-            TriggerOff,
-            TriggerOn,
-            TriggerOnce,
-            TriggerClick,
+            Off,
+            On,
+            Once,
         }
 
         internal bool FakeIsWorking => !IsBlock || IsWorking;

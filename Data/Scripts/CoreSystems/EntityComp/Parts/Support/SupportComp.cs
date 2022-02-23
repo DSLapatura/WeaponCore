@@ -52,7 +52,7 @@ namespace CoreSystems.Platform
                 var priorityRangeSqr = Ai.DetectionInfo.PriorityRangeSqr;
                 var somethingInRange = DetectOtherSignals ? otherRangeSqr <= MaxDetectDistanceSqr && otherRangeSqr >= MinDetectDistanceSqr || priorityRangeSqr <= MaxDetectDistanceSqr && priorityRangeSqr >= MinDetectDistanceSqr : priorityRangeSqr <= MaxDetectDistanceSqr && priorityRangeSqr >= MinDetectDistanceSqr;
 
-                if (Ai.Session.Settings.Enforcement.ServerSleepSupport && !somethingInRange && PartTracking == 0 && Ai.Construct.RootAi.Construct.ControllingPlayers.Count <= 0 && Session.TerminalMon.Comp != this && Data.Repo.Values.State.TerminalAction == TriggerActions.TriggerOff)
+                if (Ai.Session.Settings.Enforcement.ServerSleepSupport && !somethingInRange && PartTracking == 0 && Ai.Construct.RootAi.Construct.ControllingPlayers.Count <= 0 && Session.TerminalMon.Comp != this && Data.Repo.Values.State.Terminal == Trigger.Off)
                 {
 
                     IsAsleep = true;
@@ -65,20 +65,6 @@ namespace CoreSystems.Platform
                 }
                 else
                     Ai.AwakeComps++;
-            }
-
-
-            internal void ResetPlayerControl()
-            {
-                Data.Repo.Values.State.PlayerId = -1;
-                Data.Repo.Values.State.Control = ProtoSupportState.ControlMode.None;
-                Data.Repo.Values.Set.Overrides.Control = ProtoSupportOverrides.ControlModes.Auto;
-
-                var tAction = Data.Repo.Values.State.TerminalAction;
-                if (tAction == TriggerActions.TriggerClick)
-                    Data.Repo.Values.State.TerminalActionSetter(this, TriggerActions.TriggerOff, Session.MpActive);
-                if (Session.MpActive)
-                    Session.SendComp(this);
             }
 
 
@@ -172,7 +158,7 @@ namespace CoreSystems.Platform
                     comp.Data.Repo.Values.State.PlayerId = playerId;
                     comp.Data.Repo.Values.State.Control = ProtoSupportState.ControlMode.Ui;
                     if (settings != null) settings["ControlModes"] = (int)o.Control;
-                    comp.Data.Repo.Values.State.TerminalActionSetter(comp, TriggerActions.TriggerOff);
+                    comp.Data.Repo.Values.State.TerminalActionSetter(comp, Trigger.Off);
                 }
                 else
                 {

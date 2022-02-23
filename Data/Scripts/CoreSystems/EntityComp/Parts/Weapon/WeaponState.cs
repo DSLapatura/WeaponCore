@@ -231,7 +231,7 @@ namespace CoreSystems.Platform
             if ((force || Comp.Data.Repo.Values.Set.Overrides.Armed) && !Comp.CloseCondition)
             {
                 Comp.CloseCondition = true;
-                Comp.Session.CreatePhantomEntity(Comp.SubtypeName, 3600, true, 1, System.Values.HardPoint.HardWare.CriticalReaction.AmmoRound, CoreComponent.TriggerActions.TriggerOnce, null, Comp.CoreEntity, false, false, Comp.Ai.AiOwner);
+                Comp.Session.CreatePhantomEntity(Comp.SubtypeName, 3600, true, 1, System.Values.HardPoint.HardWare.CriticalReaction.AmmoRound, CoreComponent.Trigger.Once, null, Comp.CoreEntity, false, false, Comp.Ai.AiOwner);
             }
         }
     }

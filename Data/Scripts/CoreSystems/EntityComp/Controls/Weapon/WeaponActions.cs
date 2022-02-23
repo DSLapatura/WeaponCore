@@ -4,7 +4,7 @@ using CoreSystems.Platform;
 using CoreSystems.Support;
 using Sandbox.ModAPI;
 using VRageMath;
-using static CoreSystems.Support.CoreComponent.TriggerActions;
+using static CoreSystems.Support.CoreComponent.Trigger;
 
 namespace CoreSystems.Control
 {
@@ -17,10 +17,7 @@ namespace CoreSystems.Control
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
                 return;
 
-            var mode = comp.Data.Repo.Values.State.TerminalAction;
-            var newMode = mode != TriggerOn ? TriggerOn : TriggerOff;
-
-            comp.RequestShootUpdate(newMode, comp.Session.PlayerId);
+            comp.ShootManager.RequestShootSync(comp.Session.PlayerId, Weapon.ShootManager.RequestType.Toggle);
         }
 
         internal static void TerminalActionShootOn(IMyTerminalBlock blk)
@@ -29,7 +26,13 @@ namespace CoreSystems.Control
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
                 return;
 
-            comp.RequestShootUpdate(TriggerOn, comp.Session.PlayerId);
+            var state = comp.Data.Repo.Values.State;
+            var mgr = comp.ShootManager;
+
+            if (mgr.ClientToggleCount > state.ToggleCount || state.Trigger == On)
+                return;
+
+            comp.ShootManager.RequestShootSync(comp.Session.PlayerId, Weapon.ShootManager.RequestType.On);
         }
 
         internal static void TerminalActionShootOff(IMyTerminalBlock blk)
@@ -38,7 +41,13 @@ namespace CoreSystems.Control
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
                 return;
 
-            comp.RequestShootUpdate(TriggerOff, comp.Session.PlayerId);
+            var state = comp.Data.Repo.Values.State;
+            var mgr = comp.ShootManager;
+
+            if (mgr.ClientToggleCount <= state.ToggleCount && state.Trigger != On)
+                return;
+
+            comp.ShootManager.RequestShootSync(comp.Session.PlayerId, Weapon.ShootManager.RequestType.Off);
         }
 
         internal static void TerminalActionKeyShoot(IMyTerminalBlock blk)
@@ -48,7 +57,7 @@ namespace CoreSystems.Control
 
             var mode = comp.Data.Repo.Values.Set.Overrides.ShootMode;
             if (mode == Weapon.ShootManager.ShootModes.KeyToggle || mode == Weapon.ShootManager.ShootModes.KeyFire)
-                comp.ShootManager.RequestShootSync(comp.Session.PlayerId);
+                comp.ShootManager.RequestShootSync(comp.Session.PlayerId, Weapon.ShootManager.RequestType.Once);
         }
 
         internal static void TerminalActionControlMode(IMyTerminalBlock blk)
@@ -394,23 +403,12 @@ namespace CoreSystems.Control
         #endregion
 
         #region Writters
-        internal static void ClickShootWriter(IMyTerminalBlock blk, StringBuilder sb)
-        {
-            var comp = blk.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
-
-            var on = comp != null && comp.Data.Repo?.Values.State.TerminalAction == TriggerClick;
-
-            if (on)
-                sb.Append(Localization.GetText("ActionStateOn"));
-            else
-                sb.Append(Localization.GetText("ActionStateOff"));
-        }
 
         internal static void ShootStateWriter(IMyTerminalBlock blk, StringBuilder sb)
         {
             var comp = blk.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
-            if (comp.Data.Repo.Values.State.TerminalAction == TriggerOn)
+            if (comp.Data.Repo.Values.State.Trigger == On)
                 sb.Append(Localization.GetText("ActionStateOn"));
             else
                 sb.Append(Localization.GetText("ActionStateOff"));

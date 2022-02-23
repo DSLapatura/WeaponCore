@@ -132,7 +132,7 @@ namespace CoreSystems
         [ProtoMember(3)] public bool TrackingReticle; //don't save
         [ProtoMember(4), DefaultValue(-1)] public long PlayerId = -1;
         [ProtoMember(5), DefaultValue(ControlMode.None)] public ControlMode Control = ControlMode.None;
-        [ProtoMember(6)] public TriggerActions TerminalAction;
+        [ProtoMember(6)] public Trigger Terminal;
 
         public bool Sync(CoreComponent comp, ProtoSupportState sync, Caller caller)
         {
@@ -142,7 +142,7 @@ namespace CoreSystems
                 TrackingReticle = sync.TrackingReticle;
                 PlayerId = sync.PlayerId;
                 Control = sync.Control;
-                TerminalAction = sync.TerminalAction;
+                Terminal = sync.Terminal;
                 for (int i = 0; i < sync.Support.Length; i++)
                     comp.Platform.Support[i].PartState.Sync(sync.Support[i]);
 
@@ -151,9 +151,9 @@ namespace CoreSystems
             return false;
         }
 
-        public void TerminalActionSetter(SupportSys.SupportComponent comp, TriggerActions action, bool syncWeapons = false, bool updateWeapons = true)
+        public void TerminalActionSetter(SupportSys.SupportComponent comp, Trigger action, bool syncWeapons = false, bool updateWeapons = true)
         {
-            TerminalAction = action;
+            Terminal = action;
 
             if (updateWeapons)
             {
@@ -171,7 +171,7 @@ namespace CoreSystems
     {
         [ProtoMember(1)] public float Heat; // don't save
         [ProtoMember(2)] public bool Overheated; //don't save
-        [ProtoMember(3), DefaultValue(TriggerActions.TriggerOff)] public TriggerActions Action = TriggerActions.TriggerOff; // save
+        [ProtoMember(3), DefaultValue(Trigger.Off)] public Trigger Action = Trigger.Off; // save
 
         public void Sync(ProtoSupportPartState sync)
         {
@@ -180,10 +180,10 @@ namespace CoreSystems
             Action = sync.Action;
         }
 
-        public void WeaponMode(SupportSys.SupportComponent comp, TriggerActions action, bool resetTerminalAction = true, bool syncCompState = true)
+        public void WeaponMode(SupportSys.SupportComponent comp, Trigger action, bool resetTerminalAction = true, bool syncCompState = true)
         {
             if (resetTerminalAction)
-                comp.Data.Repo.Values.State.TerminalAction = TriggerActions.TriggerOff;
+                comp.Data.Repo.Values.State.Terminal = Trigger.Off;
 
             Action = action;
             if (comp.Session.MpActive && comp.Session.IsServer && syncCompState)

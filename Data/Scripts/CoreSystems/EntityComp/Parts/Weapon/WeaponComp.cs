@@ -17,7 +17,7 @@ namespace CoreSystems.Platform
             internal readonly IMyAutomaticRifleGun Rifle;
             internal readonly IMyHandheldGunObject<MyGunBase> GunBase;
             internal readonly IMyLargeTurretBase VanillaTurretBase;
-            internal TriggerActions DefaultTrigger;
+            internal Trigger DefaultTrigger;
             internal readonly ShootManager ShootManager;
             internal readonly WeaponCompData Data;
             internal readonly WeaponStructure Structure;
@@ -51,7 +51,6 @@ namespace CoreSystems.Platform
             {
                 var cube = coreEntity as MyCubeBlock;
 
-                MyEntity topEntity;
                 if (cube != null) {
 
                     var turret = coreEntity as IMyLargeTurretBase;
@@ -68,10 +67,8 @@ namespace CoreSystems.Platform
                     if (gun != null) {
                         Rifle = gun;
                         GunBase = gun;
-                        topEntity = Rifle.Owner;
+                        TopEntity = Rifle.Owner;
                     }
-                    else
-                        topEntity = coreEntity;
                 }
 
                 //Bellow order is important
@@ -252,7 +249,7 @@ namespace CoreSystems.Platform
                 }
             }
 
-            internal static void SetRof(Weapon.WeaponComponent comp)
+            internal static void SetRof(WeaponComponent comp)
             {
                 for (int i = 0; i < comp.Collection.Count; i++)
                 {
@@ -264,7 +261,7 @@ namespace CoreSystems.Platform
                 SetDps(comp);
             }
 
-            internal static void SetDps(Weapon.WeaponComponent comp, bool change = false)
+            internal static void SetDps(WeaponComponent comp, bool change = false)
             {
                 if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
@@ -275,52 +272,17 @@ namespace CoreSystems.Platform
                 }
             }
 
-            internal void ResetShootState(TriggerActions action, long playerId)
+            internal void ResetShootState(Trigger action, long playerId)
             {
-                var cycleShootClick = Data.Repo.Values.State.TerminalAction == TriggerActions.TriggerClick && action == TriggerActions.TriggerClick;
-                var cycleShootOn = Data.Repo.Values.State.TerminalAction == TriggerActions.TriggerOn && action == TriggerActions.TriggerOn;
-                var cycleSomething = cycleShootOn || cycleShootClick;
 
-                Data.Repo.Values.Set.Overrides.Control = ProtoWeaponOverrides.ControlModes.Auto;
+                Data.Repo.Values.State.Control = action == Trigger.On ? ProtoWeaponState.ControlMode.Ui : ProtoWeaponState.ControlMode.None;
 
-                Data.Repo.Values.State.TerminalActionSetter(this, cycleSomething ? TriggerActions.TriggerOff : action);
-
-                if (action == TriggerActions.TriggerClick || action == TriggerActions.TriggerOn)
-                    Data.Repo.Values.State.Control = ProtoWeaponState.ControlMode.Ui;
-                else
-                    Data.Repo.Values.State.Control = ProtoWeaponState.ControlMode.None;
-
-                playerId = Session.HandlesInput && playerId == -1 ? Session.PlayerId : playerId;
+                var cycleShootOn = Data.Repo.Values.State.Trigger == Trigger.On && action == Trigger.On;
+                Data.Repo.Values.State.Trigger = cycleShootOn ? Trigger.Off : action;
                 Data.Repo.Values.State.PlayerId = playerId;
-            }
 
-            internal void RequestShootUpdate(TriggerActions action, long playerId)
-            {
-                if (IsDisabled) return;
-
-
-                if (IsBlock && Session.HandlesInput)
-                    Session.TerminalMon.HandleInputUpdate(this);
-
-                if (Session.IsServer)
-                {
-                    ResetShootState(action, playerId);
-
-                    if (Session.MpActive)
-                    {
-                        Session.SendComp(this);
-                        if (action == TriggerActions.TriggerClick || action == TriggerActions.TriggerOn)
-                        {
-                            foreach (var w in Collection)
-                            {
-                                //Session.SendWeaponAmmoData(w);
-                                Session.SendWeaponReload(w);
-                            }
-                        }
-                    }
-
-                }
-                else Session.SendActionShootUpdate(this, action);
+                if (Session.MpActive && Session.IsServer)
+                    Session.SendState(this);
             }
 
             internal void DetectStateChanges()
@@ -369,7 +331,7 @@ namespace CoreSystems.Platform
                 var otherRangeSqr = Ai.DetectionInfo.OtherRangeSqr;
                 var threatRangeSqr = Ai.DetectionInfo.PriorityRangeSqr;
                 var targetInrange = DetectOtherSignals ? otherRangeSqr <= MaxDetectDistanceSqr && otherRangeSqr >= MinDetectDistanceSqr || threatRangeSqr <= MaxDetectDistanceSqr && threatRangeSqr >= MinDetectDistanceSqr : threatRangeSqr <= MaxDetectDistanceSqr && threatRangeSqr >= MinDetectDistanceSqr;
-                if (Ai.Session.Settings.Enforcement.ServerSleepSupport && !targetInrange && PartTracking == 0 && Ai.Construct.RootAi.Construct.ControllingPlayers.Count <= 0 && Session.TerminalMon.Comp != this && Data.Repo.Values.State.TerminalAction == TriggerActions.TriggerOff)
+                if (Ai.Session.Settings.Enforcement.ServerSleepSupport && !targetInrange && PartTracking == 0 && Ai.Construct.RootAi.Construct.ControllingPlayers.Count <= 0 && Session.TerminalMon.Comp != this && Data.Repo.Values.State.Trigger == Trigger.Off)
                 {
 
                     IsAsleep = true;
@@ -382,28 +344,6 @@ namespace CoreSystems.Platform
                 }
                 else
                     Ai.AwakeComps++;
-            }
-
-            internal void ResetPlayerControl(bool toggleShootOff = false)
-            {
-                Data.Repo.Values.State.Control = ProtoWeaponState.ControlMode.None;
-                Data.Repo.Values.Set.Overrides.Control = ProtoWeaponOverrides.ControlModes.Auto;
-                if (Data.Repo.Values.Set.Overrides.ShootMode == ShootManager.ShootModes.MouseControl)
-                {
-                    if (toggleShootOff && ShootManager.ShootToggled)
-                        ShootManager.RequestShootSync(Data.Repo.Values.State.PlayerId);
-
-                    Data.Repo.Values.Set.Overrides.ShootMode = ShootManager.ShootModes.AiShoot;
-                }
-                //Data.Repo.Values.State.PlayerId = -1;
-
-                Data.Repo.Values.State.TrackingReticle = false;
-                
-                var tAction = Data.Repo.Values.State.TerminalAction;
-                if (tAction == TriggerActions.TriggerClick)
-                    Data.Repo.Values.State.TerminalActionSetter(this, TriggerActions.TriggerOff);
-                if (Session.MpActive)
-                    Session.SendComp(this);
             }
 
             internal static void RequestCountDown(WeaponComponent comp, bool value)
@@ -539,31 +479,26 @@ namespace CoreSystems.Platform
                 ResetCompState(comp, playerId, clearTargets, resetState);
 
                 if (comp.Session.MpActive)
+                {
+                    comp.Data.Repo.Values.State.PlayerId = playerId;
                     comp.Session.SendComp(comp);
+                }
             }
 
             internal static void ResetCompState(WeaponComponent comp, long playerId, bool resetTarget, bool resetState, Dictionary<string, int> settings = null)
             {
                 var o = comp.Data.Repo.Values.Set.Overrides;
                 var userControl = o.Control != ProtoWeaponOverrides.ControlModes.Auto;
-                
-                //comp.RequestShootBurstId = comp.Data.Repo.Values.State.ShootSyncStateId;
-                //comp.WeaponsFired = 0;
 
                 if (userControl)
                 {
-                    comp.Data.Repo.Values.State.PlayerId = playerId;
                     comp.Data.Repo.Values.State.Control = ProtoWeaponState.ControlMode.Ui;
+                    comp.Data.Repo.Values.State.Trigger = Trigger.Off;
                     if (settings != null) settings["ControlModes"] = (int)o.Control;
-                    comp.Data.Repo.Values.State.TerminalActionSetter(comp, TriggerActions.TriggerOff);
                 }
                 else if (resetState)
                 {
                     comp.Data.Repo.Values.State.Control = ProtoWeaponState.ControlMode.None;
-                }
-                else if (o.ShootMode != ShootManager.ShootModes.AiShoot)
-                {
-                    comp.Data.Repo.Values.State.PlayerId = playerId;
                 }
 
                 if (resetTarget)

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using CoreSystems.Support;
 using Sandbox.Game.Entities;
 using VRage.Game.Entity;
@@ -144,15 +145,25 @@ namespace CoreSystems.Platform
         {
             public readonly WeaponComponent Comp;
             internal bool ShootActive;
-            internal bool ShootToggled;
             internal bool EarlyOff;
             internal bool WaitingShootResponse;
             internal bool FreezeClientShoot;
             internal uint CompletedCycles;
             internal uint LastCycle;
             internal uint LastShootTick;
-            internal uint LockingTick;
+            internal uint WaitingTick;
+            internal uint FreezeTick;
+
+            internal uint ClientToggleCount;
             internal int WeaponsFired;
+
+            public enum RequestType
+            {
+                On,
+                Off,
+                Once,
+                Toggle,
+            }
 
             public enum ShootModes
             {
@@ -205,10 +216,19 @@ namespace CoreSystems.Platform
 
                 if (--w.ShootCount == 0 && ++WeaponsFired >= Comp.TotalWeapons)
                 {
-                    w.ShootDelay = w.Comp.Data.Comp.Data.Repo.Values.Set.Overrides.BurstDelay;
+                    var set = w.Comp.Data.Comp.Data.Repo.Values.Set;
+                    var state = w.Comp.Data.Comp.Data.Repo.Values.State;
 
-                    if (++CompletedCycles >= LastCycle)
+                    w.ShootDelay = set.Overrides.BurstDelay;
+
+                    var notToggled = w.Comp.ShootManager.ClientToggleCount <= state.ToggleCount && state.Trigger != CoreComponent.Trigger.On;
+                    if (++CompletedCycles >= LastCycle || notToggled)
                     {
+                        Log.Line($"lastCycle:{LastCycle} - notToggled:{notToggled}");
+
+                        if (LastCycle == uint.MaxValue && notToggled)
+                            Log.Line($"UpdateShootSync ended due to notToggle, LastCycle not set!", Session.InputLog);
+
                         EndShootMode();
                     }
                     else
@@ -290,7 +310,6 @@ namespace CoreSystems.Platform
                 LastCycle = 0;
 
                 ShootActive = false;
-                ShootToggled = false;
 
                 EarlyOff = false;
 
@@ -300,7 +319,7 @@ namespace CoreSystems.Platform
 
             internal void FailSafe()
             {
-                Log.Line($"ShootMode failsafe triggered: Toggled:{ShootToggled} - LastCycle:{LastCycle} - CompletedCycles:{CompletedCycles} - WeaponsFired:{WeaponsFired} - wait:{WaitingShootResponse} - freeze:{FreezeClientShoot}", Session.InputLog);
+                Log.Line($"ShootMode failsafe triggered: LastCycle:{LastCycle} - CompletedCycles:{CompletedCycles} - WeaponsFired:{WeaponsFired} - wait:{WaitingShootResponse} - freeze:{FreezeClientShoot}", Session.InputLog);
                 EndShootMode();
             }
 
@@ -308,117 +327,139 @@ namespace CoreSystems.Platform
 
             #region InputManager
 
-            internal void RequestShootSync(long playerId) // this shoot method mixes client initiation with server delayed server confirmation in order to maintain sync while avoiding authoritative delays in the common case. 
+            internal void RequestShootSync(long playerId, RequestType request) // this shoot method mixes client initiation with server delayed server confirmation in order to maintain sync while avoiding authoritative delays in the common case. 
             {
+                Log.Line($"RequestShootSync: {request}");
                 var values = Comp.Data.Repo.Values;
                 var state = values.State;
                 var set = values.Set;
+                var isRequestor = !Comp.Session.IsClient || playerId == Comp.Session.PlayerId;
 
-                if (set.Overrides.ShootMode == ShootModes.AiShoot && !ShootToggled  || !ProcessInput(playerId) || !MakeReadyToShoot())
+                if (isRequestor && !ProcessInput(playerId, request) || !MakeReadyToShoot()) {
+                    ChangeState(request, playerId, false);
                     return;
+                }
 
                 ShootActive = true;
                 if (Comp.IsBlock && Comp.Session.HandlesInput)
                     Comp.Session.TerminalMon.HandleInputUpdate(Comp);
 
-                state.PlayerId = playerId;
-
                 var sendRequest = !Comp.Session.IsClient || playerId == Comp.Session.PlayerId; // this method is used both by initiators and by receives. 
                 
-                LastCycle = ShootToggled ? uint.MaxValue : 1;
                 
                 if (Comp.Session.MpActive && sendRequest)
                 {
+
                     WaitingShootResponse = Comp.Session.IsClient; // this will be set false on the client once the server responds to this packet
-                    LockingTick = Comp.Session.Tick;
+                    
+                    if (WaitingShootResponse)
+                        ClientToggleCount = state.ToggleCount + 1;
+
+                    WaitingTick = Comp.Session.Tick;
 
                     var code = Comp.Session.IsServer ? playerId == 0 ? ShootCodes.ServerRequest : ShootCodes.ServerRelay : ShootCodes.ClientRequest;
                     ulong packagedMessage;
-                    Session.EncodeShootState(0, (uint)set.Overrides.ShootMode, CompletedCycles, (uint)code, out packagedMessage);
+                    Session.EncodeShootState((uint)request, (uint)set.Overrides.ShootMode, CompletedCycles, (uint)code, out packagedMessage);
                     if (playerId > 0) // if this is the server responding to a request, rewrite the packet sent to the origin client with a special response code.
                         Comp.Session.SendShootRequest(Comp, packagedMessage, PacketType.ShootSync, RewriteShootSyncToServerResponse, playerId);
                     else
                         Comp.Session.SendShootRequest(Comp, packagedMessage, PacketType.ShootSync, null, playerId);
                 }
+
+                ChangeState(request, playerId, true);
+
             }
 
 
-            internal bool ProcessInput(long playerId, bool skipUpdateInputState = false)
+            internal bool ProcessInput(long playerId, RequestType requestType, bool skipUpdateInputState = false)
             {
-                if (!skipUpdateInputState && ShootRequestPending())
+                if (!skipUpdateInputState && ShootRequestPending(requestType))
                     return false;
 
-                var sendRequest = !Comp.Session.IsClient || playerId == Comp.Session.PlayerId; // this method is used both by initiators and by receives. 
                 var set = Comp.Data.Repo.Values.Set;
-                var wasToggled = ShootToggled;
-                var toggleChange = false;
-                if (sendRequest)
+                var state = Comp.Data.Repo.Values.State;
+                var wasToggled = ClientToggleCount > state.ToggleCount || state.Trigger == CoreComponent.Trigger.On;
+                if (wasToggled && (requestType == RequestType.Off || requestType == RequestType.Toggle))
                 {
-                    if (EarlyOff) {
-                        Log.Line($"early off: wasSet:{ShootToggled}", Session.InputLog);
-                        ShootToggled = false;
-                        EarlyOff = false;
+                    // toggle off
+
+                    if (Comp.Session.MpActive)
+                    {
+                        FreezeClientShoot = Comp.Session.IsClient; //if the initiators is a client pause future cycles until the server returns which cycle state to terminate on.
+                        FreezeTick = Comp.Session.Tick;
+
+                        ulong packagedMessage;
+                        Session.EncodeShootState((uint)requestType, (uint)set.Overrides.ShootMode, CompletedCycles, (uint)ShootCodes.ToggleServerOff, out packagedMessage);
+                        Comp.Session.SendShootRequest(Comp, packagedMessage, PacketType.ShootSync, RewriteShootSyncToServerResponse, playerId);
                     }
-                    else if (set.Overrides.ShootMode == ShootModes.KeyToggle || set.Overrides.ShootMode == ShootModes.MouseControl)
-                        ShootToggled = !ShootToggled;
-                    else
-                        ShootToggled = false;
 
-                    toggleChange = wasToggled && !ShootToggled;
-
-                    if (toggleChange)
-                    { // only run on initiators when this call is toggling off 
-
+                    if (Comp.Session.IsServer)
+                    {
+                        EndShootMode();
                         if (Comp.Session.MpActive)
-                        {
-                            FreezeClientShoot = Comp.Session.IsClient; //if the initiators is a client pause future cycles until the server returns which cycle state to terminate on.
-                            LockingTick = Comp.Session.Tick;
-
-                            ulong packagedMessage;
-                            Session.EncodeShootState(0, 0, CompletedCycles, (uint)ShootCodes.ToggleServerOff, out packagedMessage);
-                            Comp.Session.SendShootRequest(Comp, packagedMessage, PacketType.ShootSync, RewriteShootSyncToServerResponse, playerId);
-                        }
-
-                        if (Comp.Session.IsServer)
-                        {
-                            EndShootMode();
-                            if (Comp.Session.MpActive)
-                                Log.Line($"server toggled shoot off, calling EndShoot", Session.InputLog);
-                        }
+                            Log.Line($"server toggled shoot off, calling EndShoot", Session.InputLog);
                     }
                 }
-                else
-                {
-                    if (set.Overrides.ShootMode == ShootModes.KeyToggle || set.Overrides.ShootMode == ShootModes.MouseControl)
-                        ShootToggled = !ShootToggled;
-                    else
-                        ShootToggled = false;
-                }
 
-                var pendingRequest = ShootActive || Comp.IsDisabled || wasToggled || Comp.IsBlock && !Comp.Cube.IsWorking;
-                var deadEnd = pendingRequest && !toggleChange;
-                if (deadEnd)
-                    Log.Line($"ProcessInput hit deadend: wasToggled:{wasToggled} - blockNotWorking:{Comp.IsBlock && !Comp.Cube.IsWorking}", Session.InputLog);
+                var pendingRequest = Comp.IsDisabled || wasToggled || Comp.IsBlock && !Comp.Cube.IsWorking;
 
                 return !pendingRequest;
             }
 
 
-            private bool ShootRequestPending()
+            private bool ShootRequestPending(RequestType requestType)
             {
                 var set = Comp.Data.Repo.Values.Set;
+                var state = Comp.Data.Repo.Values.State;
 
                 if (WaitingShootResponse || FreezeClientShoot)
                 {
-                    if (set.Overrides.ShootMode == ShootModes.KeyToggle || set.Overrides.ShootMode == ShootModes.MouseControl)
+                    if (ClientToggleCount > state.ToggleCount || state.Trigger == CoreComponent.Trigger.On)
                     {
-                        EarlyOff = !EarlyOff && ShootToggled;
+                        EarlyOff = !EarlyOff && (ClientToggleCount > state.ToggleCount || state.Trigger == CoreComponent.Trigger.On);
                     }
-                    Log.Line($"QueueShot:{EarlyOff} - WaitingShootResponse:{WaitingShootResponse} - FreezeClientShoot:{FreezeClientShoot}", Session.InputLog);
+                    Log.Line($"QueueShot:{EarlyOff} - request:{requestType} - WaitingShootResponse:{WaitingShootResponse} - FreezeClientShoot:{FreezeClientShoot}", Session.InputLog);
                     return true;
                 }
 
                 return false;
+            }
+
+            private void ChangeState(RequestType request, long playerId, bool activated)
+            {
+
+                var state = Comp.Data.Repo.Values.State;
+                state.PlayerId = playerId;
+
+                if (Comp.Session.IsServer)
+                {
+
+                    switch (request)
+                    {
+                        case RequestType.Off:
+                            state.Trigger = CoreComponent.Trigger.Off;
+                            break;
+                        case RequestType.On:
+                            state.Trigger = CoreComponent.Trigger.On;
+                            break;
+                        case RequestType.Once:
+                            state.Trigger = CoreComponent.Trigger.Once;
+                            break;
+
+                        case RequestType.Toggle:
+                            state.Trigger = state.Trigger != CoreComponent.Trigger.On ? CoreComponent.Trigger.On : CoreComponent.Trigger.Off;
+                            break;
+                    }
+
+                    if (activated)
+                    {
+                        ++state.ToggleCount;
+                        LastCycle = ClientToggleCount > state.ToggleCount || state.Trigger == CoreComponent.Trigger.On ? uint.MaxValue : 1;
+                    }
+
+                    if (Comp.Session.MpActive)
+                        Comp.Session.SendState(Comp);
+                }
             }
 
             #endregion
@@ -464,7 +505,7 @@ namespace CoreSystems.Platform
             internal void ClientToggledOffByServer(uint interval, bool server = false)
             {
                 if (server)
-                    Log.Line($"server requested toggle off? - wait:{WaitingShootResponse} - mode:{Comp.Data.Repo.Values.Set.Overrides.ShootMode} - Toggled:{Comp.ShootManager.ShootToggled} - Active:{Comp.ShootManager.ShootActive} - freeze:{FreezeClientShoot} - CompletedCycles:{CompletedCycles}({interval}) - LastCycle:{LastCycle}", Session.InputLog);
+                    Log.Line($"server requested toggle off? - wait:{WaitingShootResponse} - mode:{Comp.Data.Repo.Values.Set.Overrides.ShootMode} - freeze:{FreezeClientShoot} - CompletedCycles:{CompletedCycles}({interval}) - LastCycle:{LastCycle}", Session.InputLog);
 
                 if (interval > CompletedCycles)
                 {
@@ -502,16 +543,16 @@ namespace CoreSystems.Platform
             {
                 var ulongPacket = (ULongUpdatePacket)o;
 
-                uint stateId;
+                RequestType type;
                 ShootModes mode;
                 ShootCodes code;
                 uint internval;
 
-                Session.DecodeShootState(ulongPacket.Data, out stateId, out mode, out internval, out code);
+                Session.DecodeShootState(ulongPacket.Data, out type, out mode, out internval, out code);
 
                 code = ShootCodes.ServerResponse;
                 ulong packagedMessage;
-                Session.EncodeShootState(stateId, (uint)mode, internval, (uint)code, out packagedMessage);
+                Session.EncodeShootState((uint)type, (uint)mode, internval, (uint)code, out packagedMessage);
 
                 ulongPacket.Data = packagedMessage;
 

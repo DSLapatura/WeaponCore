@@ -136,8 +136,7 @@ namespace CoreSystems
             var comp = ent?.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp?.Ai == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return Error(data, Msg($"CompId: {packet.EntityId}", comp != null), Msg("Ai", comp?.Ai != null), Msg("Ai", comp?.Platform.State == CorePlatform.PlatformState.Ready));
 
-            if (!comp.Data.Repo.Values.State.Sync(comp, compStatePacket.Data, ProtoWeaponState.Caller.Direct))
-                Log.Line($"ClientWeaponState: version fail - senderId:{packet.SenderId} - version:{comp.Data.Repo.Values.Revision}({compStatePacket.Data.Revision})");
+            comp.Data.Repo.Values.State.Sync(comp, compStatePacket.Data);
 
             if (comp.IsBomb) comp.Cube.UpdateTerminal();
             data.Report.PacketValid = true;
@@ -509,11 +508,12 @@ namespace CoreSystems
 
             if (comp?.Ai == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return Error(data, Msg($"CompId: {packet.EntityId}", comp != null), Msg("Ai", comp?.Ai != null), Msg("Ai", comp?.Platform.State == CorePlatform.PlatformState.Ready));
 
-            uint stateId;
+            Weapon.ShootManager.RequestType type;
             Weapon.ShootManager.ShootModes mode;
-            uint interval;
             Weapon.ShootManager.ShootCodes code;
-            DecodeShootState(dPacket.Data, out stateId, out mode, out interval, out code);
+            uint interval;
+
+            DecodeShootState(dPacket.Data, out type, out mode, out interval, out code);
 
             var wComp = comp as Weapon.WeaponComponent;
             if (wComp != null)
@@ -529,10 +529,11 @@ namespace CoreSystems
                     case Weapon.ShootManager.ShootCodes.ServerResponse:
                     {
                         wComp.ShootManager.WaitingShootResponse = false;
-                        if (wComp.ShootManager.EarlyOff && wComp.ShootManager.ShootToggled)
+                        var state = wComp.Data.Repo.Values.State;
+                        if (wComp.ShootManager.EarlyOff && (wComp.ShootManager.ClientToggleCount > state.ToggleCount || state.Trigger == CoreComponent.Trigger.On))
                         {
                             Log.Line($"forcing QueuedToggle off -  frozen:{wComp.ShootManager.FreezeClientShoot}", InputLog);
-                            wComp.ShootManager.ProcessInput(PlayerId, true);
+                            wComp.ShootManager.ProcessInput(PlayerId, Weapon.ShootManager.RequestType.Off);
                         }
                         break;
                     }
@@ -542,7 +543,7 @@ namespace CoreSystems
                     default:
                         long playerId;
                         SteamToPlayer.TryGetValue(packet.SenderId, out playerId);
-                        wComp.ShootManager.RequestShootSync(0);
+                        wComp.ShootManager.RequestShootSync(0, type);
                         break;
                 }
             }

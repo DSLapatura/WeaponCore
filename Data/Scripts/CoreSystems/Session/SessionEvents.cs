@@ -445,19 +445,6 @@ namespace CoreSystems
             catch (Exception ex) { Log.Line($"Exception in MenuClosed: {ex}", null, true); }
         }
 
-        private void PlayerControlAcquired(MyEntity lastEnt)
-        {
-            var topMost = lastEnt.GetTopMostParent();
-            Ai ai;
-            if (topMost != null && EntityAIs.TryGetValue(topMost, out ai)) {
-
-                CoreComponent comp;
-                if (ai.CompBase.TryGetValue(lastEnt, out comp)) {
-                    if (comp.Type == CoreComponent.CompType.Weapon)
-                        ((Weapon.WeaponComponent)comp).RequestShootUpdate(CoreComponent.TriggerActions.TriggerOff,comp.Session.PlayerId);
-                }
-            }
-        }
 
         private void PlayerControlNotify(MyEntity entity)
         {

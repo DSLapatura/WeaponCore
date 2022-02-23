@@ -4,7 +4,7 @@ using CoreSystems.Platform;
 using CoreSystems.Support;
 using Sandbox.ModAPI;
 using VRageMath;
-using static CoreSystems.Support.CoreComponent.TriggerActions;
+using static CoreSystems.Support.CoreComponent.Trigger;
 
 namespace CoreSystems.Control
 {

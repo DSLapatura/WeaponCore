@@ -926,7 +926,7 @@ namespace CoreSystems
             else Log.Line("SendActiveControlUpdate should never be called on Dedicated");
         }
 
-        internal void SendActionShootUpdate(CoreComponent comp, TriggerActions action)
+        internal void SendActionShootUpdate(CoreComponent comp, Trigger action)
         {
             if (IsClient)
             {

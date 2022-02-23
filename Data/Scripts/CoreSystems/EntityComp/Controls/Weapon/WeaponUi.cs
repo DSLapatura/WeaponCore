@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using CoreSystems.Control;
 using CoreSystems.Platform;
 using CoreSystems.Support;
 using Sandbox.ModAPI;
@@ -304,7 +305,7 @@ namespace CoreSystems
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return false;
-            return comp.Data.Repo.Values.State.TerminalAction == CoreComponent.TriggerActions.TriggerOn;
+            return comp.Data.Repo.Values.State.Trigger == CoreComponent.Trigger.On;
         }
 
         internal static void RequestSetShoot(IMyTerminalBlock block, bool newValue)
@@ -312,9 +313,12 @@ namespace CoreSystems
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
-            var value = newValue ? CoreComponent.TriggerActions.TriggerOn : CoreComponent.TriggerActions.TriggerOff;
             
-            comp.RequestShootUpdate(value, comp.Session.PlayerId);
+            if (newValue)
+                CustomActions.TerminalActionShootOn(block);
+            else
+                CustomActions.TerminalActionShootOff(block);
+
         }
 
         internal static long GetAmmos(IMyTerminalBlock block)
@@ -376,7 +380,6 @@ namespace CoreSystems
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready || !ShootModeChangeReady(comp)) return;
-
             Weapon.WeaponComponent.RequestSetValue(comp, "ShootMode", (int)newValue, comp.Session.PlayerId);
         }
 
@@ -620,17 +623,22 @@ namespace CoreSystems
         internal static bool ShootModeChangeReady(Weapon.WeaponComponent comp)
         {
             var values = comp.Data.Repo.Values;
-            var ready =  !comp.ShootManager.WaitingShootResponse && !comp.ShootManager.FreezeClientShoot && (!comp.ShootManager.ShootActive);
+            var higherClientCount = comp.ShootManager.ClientToggleCount > values.State.ToggleCount;
+            var ready =  !comp.ShootManager.WaitingShootResponse && !comp.ShootManager.FreezeClientShoot && !higherClientCount;
 
             if (!ready)
             {
                 var ammoState = comp.AmmoStatus();
-                Log.Line($"Shoot failed: wait:{comp.ShootManager.WaitingShootResponse} - freeze:{comp.ShootManager.FreezeClientShoot} - toggled:{comp.ShootManager.ShootToggled}- lockTime:{comp.Session.Tick - comp.ShootManager.LockingTick} - shootTime:{comp.Session.Tick - comp.ShootManager.LastShootTick} - cycles:{comp.ShootManager.CompletedCycles} - ammoState:{ammoState} - EarlyOff:{comp.ShootManager.EarlyOff}", Session.InputLog);
-                var overLockTime = comp.ShootManager.LockingTick > 0 && comp.Session.Tick - comp.ShootManager.LockingTick > 180;
-                var locked = comp.ShootManager.FreezeClientShoot || comp.ShootManager.WaitingShootResponse || comp.ShootManager.ShootActive && (ammoState == Weapon.WeaponComponent.AmmoStates.Empty || ammoState == Weapon.WeaponComponent.AmmoStates.Makeup);
+                Log.Line($"Shoot failed: wait:{comp.ShootManager.WaitingShootResponse} - freeze:{comp.ShootManager.FreezeClientShoot} - lockTime:{comp.Session.Tick - comp.ShootManager.WaitingTick} - shootTime:{comp.Session.Tick - comp.ShootManager.LastShootTick} - cycles:{comp.ShootManager.CompletedCycles} - ammoState:{ammoState} - EarlyOff:{comp.ShootManager.EarlyOff}", Session.InputLog);
+                var overWaitTime = comp.ShootManager.WaitingTick > 0 && comp.Session.Tick - comp.ShootManager.WaitingTick > 180;
+                var overFreezeTime = comp.ShootManager.FreezeTick > 0 && comp.Session.Tick - comp.ShootManager.FreezeTick > 180;
 
-                if (locked && overLockTime)
+                var freezeOver = comp.ShootManager.FreezeClientShoot && overFreezeTime;
+                var waitOver = (comp.ShootManager.WaitingShootResponse || higherClientCount) && overWaitTime;
+
+                if (freezeOver || waitOver)
                 {
+                    Log.Line($"freezeOver:{freezeOver} - waitOver:{waitOver} - higherClientCount:{higherClientCount}", Session.InputLog);
                     comp.ShootManager.FailSafe();
                 }
             }
