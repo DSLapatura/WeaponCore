@@ -685,7 +685,7 @@ namespace CoreSystems.Projectiles
                                 parentPos = Info.Target.CoreEntity.PositionComp.WorldAABB.Center;
                                 if (parentPos != Vector3D.Zero && s.DroneStat!= DroneStatus.Return)
                                 {
-                                    var rtbFlightTime = Vector3D.Distance(Position, parentPos) / MaxSpeed * 60 * 1.05d;//add a multiplier to ensure final docking time?
+                                    var rtbFlightTime = Vector3D.Distance(Position, parentPos) / MaxSpeed * 60 * 1.05d;//added multiplier to ensure final docking time?
                                     if ((maxLife > 0 && maxLife - Info.Age <= rtbFlightTime) || (Info.Frags >= aConst.MaxFrags))
                                     {
                                         var rayTestPath = new RayD(Position, Vector3D.Normalize(parentPos - Position));//Check for clear LOS home
@@ -737,16 +737,24 @@ namespace CoreSystems.Projectiles
                             }
 
                             parentPos = Info.Target.CoreEntity.PositionComp.WorldAABB.Center;
-                            if (parentPos != Vector3D.Zero && s.DroneStat!= DroneStatus.Return)
+                            if (parentPos != Vector3D.Zero && s.DroneStat!= DroneStatus.Return && !hasKamikaze)//TODO kamikaze return suppressed to prevent damaging parent, until docking mechanism developed
                             {
-                                var rtbFlightTime = Vector3D.Distance(Position, parentPos) / MaxSpeed * 60 * 1.05d;//add a multiplier to ensure final docking time?
+                                var rtbFlightTime = Vector3D.Distance(Position, parentPos) / MaxSpeed * 60 * 1.05d;//added multiplier to ensure final docking time
                                 if ((maxLife > 0 && maxLife - Info.Age <= rtbFlightTime) || (Info.Frags >= Info.AmmoDef.Fragment.TimedSpawns.MaxSpawns))
                                 {
-                                    var rayTestPath = new RayD(Position, Vector3D.Normalize(parentPos - Position));//Check for clear LOS home
-                                    if (rayTestPath.Intersects(orbitSphereClose) == null)
+                                    if (s.TaskTargetEnt != parentEnt)
+                                    {
+                                        var rayTestPath = new RayD(Position, Vector3D.Normalize(parentPos - Position));//Check for clear LOS home
+                                        if (rayTestPath.Intersects(orbitSphereClose) == null)
+                                        {
+                                            s.DroneMsn = DroneMission.Rtb;
+                                            s.DroneStat = DroneStatus.Transit;
+                                        }
+                                    }
+                                    else//already orbiting parent, head in to dock
                                     {
                                         s.DroneMsn = DroneMission.Rtb;
-                                        s.DroneStat= DroneStatus.Transit;
+                                        s.DroneStat = DroneStatus.Transit;
                                     }
                                 }
                             }
