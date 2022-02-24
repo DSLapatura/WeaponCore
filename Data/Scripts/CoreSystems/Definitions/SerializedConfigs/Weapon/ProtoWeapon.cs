@@ -354,8 +354,8 @@ namespace CoreSystems
             Follow,
         }
 
-        [ProtoMember(1)] public int EnemyId;
-        [ProtoMember(2)] public int FriendId;
+        [ProtoMember(5)] public long EnemyId;
+        [ProtoMember(6)] public long FriendId;
         [ProtoMember(3)] public Vector3D Position;
         [ProtoMember(4)] public Tasks Task;
         public MyEntity Enemy;
@@ -373,9 +373,16 @@ namespace CoreSystems
         public void Update(Weapon.WeaponComponent weaponComponent)
         {
             if (EnemyId <= 0 || !MyEntities.TryGetEntityById(EnemyId, out Enemy))
+            {
                 Enemy = null;
+                EnemyId = 0;
+            }
+
             if (FriendId <= 0 || !MyEntities.TryGetEntityById(FriendId, out Enemy))
+            {
                 Friend = null;
+                FriendId = 0;
+            }
 
             UpdatedTick = weaponComponent.Session.Tick;
         }

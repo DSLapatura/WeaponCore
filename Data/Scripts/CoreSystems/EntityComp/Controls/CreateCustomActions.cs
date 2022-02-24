@@ -51,12 +51,54 @@ namespace CoreSystems.Control
             session.CustomActions.Add(action);
         }
 
+        public static void CreateSelectFriend(Session session)
+        {
+            var action = MyAPIGateway.TerminalControls.CreateAction<T>("ActionFriend");
+            action.Icon = @"Textures\GUI\Icons\Actions\SwitchOn.dds";
+            action.Name = new StringBuilder(Localization.GetText("ActionFriend"));
+            action.Action = CustomActions.TerminalActionFriend;
+            action.Writer = TerminalHelpers.EmptyStringBuilder;
+            action.Enabled = TerminalHelpers.IsReady;
+            action.ValidForGroups = true;
+
+            MyAPIGateway.TerminalControls.AddAction<T>(action);
+            session.CustomActions.Add(action);
+        }
+
+        public static void CreateSelectEnemy(Session session)
+        {
+            var action = MyAPIGateway.TerminalControls.CreateAction<T>("ActionEnemy");
+            action.Icon = @"Textures\GUI\Icons\Actions\SwitchOn.dds";
+            action.Name = new StringBuilder(Localization.GetText("ActionEnemy"));
+            action.Action = CustomActions.TerminalActionEnemy;
+            action.Writer = TerminalHelpers.EmptyStringBuilder;
+            action.Enabled = TerminalHelpers.IsReady;
+            action.ValidForGroups = true;
+
+            MyAPIGateway.TerminalControls.AddAction<T>(action);
+            session.CustomActions.Add(action);
+        }
+
+        public static void CreateSelectPosition(Session session)
+        {
+            var action = MyAPIGateway.TerminalControls.CreateAction<T>("ActionPosition");
+            action.Icon = @"Textures\GUI\Icons\Actions\SwitchOn.dds";
+            action.Name = new StringBuilder(Localization.GetText("ActionPosition"));
+            action.Action = CustomActions.TerminalActionPosition;
+            action.Writer = TerminalHelpers.EmptyStringBuilder;
+            action.Enabled = TerminalHelpers.IsReady;
+            action.ValidForGroups = true;
+
+            MyAPIGateway.TerminalControls.AddAction<T>(action);
+            session.CustomActions.Add(action);
+        }
+
         public static void CreateShootToggle(Session session)
         {
             var action = MyAPIGateway.TerminalControls.CreateAction<T>("ShootToggle");
             action.Icon = @"Textures\GUI\Icons\Actions\Toggle.dds";
             action.Name = new StringBuilder(Localization.GetText("ActionShoot"));
-            action.Action = CustomActions.TerminActionToggleShoot;
+            action.Action = CustomActions.TerminalActionToggleShoot;
             action.Writer = CustomActions.ShootStateWriter;
             action.Enabled = TerminalHelpers.WeaponIsReadyAndSorter;
             action.ValidForGroups = true;

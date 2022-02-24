@@ -202,7 +202,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             return foundTarget;
         }
 
-        internal bool GetSelectableEntity(out Vector3D position)
+        internal bool GetSelectableEntity(out Vector3D position, out MyEntity selected)
         {
 
             if (_session.Tick - LastSelectableTick < 60)
@@ -223,11 +223,13 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                 if (LastSelectedEntity != null && !skip && _session.CameraFrustrum.Contains(LastSelectedEntity.PositionComp.WorldVolume) != ContainmentType.Disjoint)
                 {
                     position = LastSelectedEntity.PositionComp.WorldAABB.Center;
+                    selected = LastSelectedEntity;
                     return true;
                 }
             }
 
             position = Vector3D.Zero;
+            selected = null;
             return false;
         }
 

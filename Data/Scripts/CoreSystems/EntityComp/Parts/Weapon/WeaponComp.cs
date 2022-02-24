@@ -22,6 +22,10 @@ namespace CoreSystems.Platform
             internal readonly WeaponCompData Data;
             internal readonly WeaponStructure Structure;
             internal readonly List<Weapon> Collection;
+            internal readonly List<MyEntity> Friends = new List<MyEntity>();
+            internal readonly List<MyEntity> Enemies = new List<MyEntity>();
+            internal readonly Dictionary<string, Vector3D> Positions = new Dictionary<string, Vector3D>();
+
             internal readonly int TotalWeapons;
             internal Weapon TrackingWeapon;
             internal int DefaultAmmoId;
@@ -566,6 +570,95 @@ namespace CoreSystems.Platform
                     Session.SendState(this);
 
                 return true;
+            }
+
+            internal void RequestFriend()
+            {
+                var rootAi = Ai.Construct.RootAi;
+                if (Session.TargetUi.SelectedEntity != null || rootAi.Construct.Focus.GetPriorityTarget(rootAi, out Session.TargetUi.SelectedEntity))
+                {
+                    AssignFriend(Session.TargetUi.SelectedEntity);
+                }
+                else 
+                    Log.Line($"no target");
+            }
+
+            internal void RequestEnemy()
+            {
+                var rootAi = Ai.Construct.RootAi;
+                if (Session.TargetUi.SelectedEntity != null || rootAi.Construct.Focus.GetPriorityTarget(rootAi, out Session.TargetUi.SelectedEntity))
+                {
+                    AssignEnemy(Session.TargetUi.SelectedEntity);
+                }
+                else
+                    Log.Line($"no target");
+            }
+
+            internal void RequestPoint()
+            {
+
+            }
+
+
+            internal void AssignFriend(MyEntity entity)
+            {
+                if (Ai.Targets.ContainsKey(entity))
+                    return;
+                var tasks = Data.Repo.Values.State.Tasks;
+                tasks.FriendId = entity.EntityId;
+                tasks.Task = ProtoWeaponCompTasks.Tasks.Defend;
+                tasks.Update(this);
+
+                Friends.Clear();
+                Friends.Add(entity);
+
+            }
+
+            internal void ClearFriend()
+            {
+                var tasks = Data.Repo.Values.State.Tasks;
+                tasks.FriendId = 0;
+                tasks.Task = ProtoWeaponCompTasks.Tasks.None;
+
+                Friends.Clear();
+            }
+
+
+            internal void AssignEnemy(MyEntity entity)
+            {
+                if (!Ai.Targets.ContainsKey(entity))
+                    return;
+
+                var tasks = Data.Repo.Values.State.Tasks;
+                tasks.FriendId = entity.EntityId;
+                tasks.Task = ProtoWeaponCompTasks.Tasks.Attack;
+                tasks.Update(this);
+
+                Enemies.Clear();
+                Enemies.Add(entity);
+            }
+
+            internal void ClearEnemy()
+            {
+
+                var tasks = Data.Repo.Values.State.Tasks;
+                tasks.EnemyId = 0;
+                tasks.Task = ProtoWeaponCompTasks.Tasks.None;
+
+                Enemies.Clear();
+
+            }
+
+
+
+            internal void AddPoint(string name, Vector3D position)
+            {
+                Positions[name] = position;
+            }
+
+            internal void RemovePoint(string name)
+            {
+                Positions.Remove(name);
             }
 
             public enum AmmoStates

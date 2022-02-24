@@ -19,6 +19,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
         {
             var s = _session;
 
+            SelectedEntity = null;
             DrawReticle = false;
             if (!s.InGridAiBlock && !s.UpdateLocalAiAndCockpit()) return;
             if (ActivateMarks()) DrawActiveMarks();
@@ -87,7 +88,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
 
 
             Vector3D targetCenter;
-            if (GetSelectableEntity(out targetCenter))
+            if (GetSelectableEntity(out targetCenter, out SelectedEntity))
             {
                 if (Vector3D.Transform(targetCenter, s.Camera.ViewMatrix).Z < 0 && _reticleColor != Color.White)
                 {

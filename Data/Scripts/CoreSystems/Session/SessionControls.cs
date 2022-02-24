@@ -142,9 +142,7 @@ namespace CoreSystems
             CreateCustomActions<T>.CreateShootToggle(session);
             CreateCustomActions<T>.CreateShootOn(session);
             CreateCustomActions<T>.CreateShootOff(session);
-
             CreateCustomActions<T>.CreateKeyShoot(session);
-
             CreateCustomActions<T>.CreateShootMode(session);
             CreateCustomActions<T>.CreateMouseToggle(session);
             CreateCustomActions<T>.CreateSubSystems(session);
@@ -153,7 +151,6 @@ namespace CoreSystems
             CreateCustomActions<T>.CreateCycleAmmo(session);
             CreateCustomActions<T>.CreateFocusTargets(session);
             CreateCustomActions<T>.CreateFocusSubSystem(session);
-
             CreateCustomActions<T>.CreateGrids(session);
             CreateCustomActions<T>.CreateNeutrals(session);
             CreateCustomActions<T>.CreateFriendly(session);
@@ -166,6 +163,10 @@ namespace CoreSystems
             CreateCustomActions<T>.CreateRepelMode(session);
             CreateCustomActions<T>.CreateMaxSize(session);
             CreateCustomActions<T>.CreateMinSize(session);
+            CreateCustomActions<T>.CreateSelectFriend(session);
+            CreateCustomActions<T>.CreateSelectEnemy(session);
+            CreateCustomActions<T>.CreateSelectPosition(session);
+
         }
 
         internal static void CreateTurretControllerActions<T>(Session session) where T : IMyTerminalBlock

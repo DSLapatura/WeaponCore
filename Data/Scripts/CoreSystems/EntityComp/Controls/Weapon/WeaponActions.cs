@@ -11,13 +11,41 @@ namespace CoreSystems.Control
     public static partial class CustomActions
     {
         #region Call Actions
-        internal static void TerminActionToggleShoot(IMyTerminalBlock blk)
+        internal static void TerminalActionToggleShoot(IMyTerminalBlock blk)
         {
             var comp = blk?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
                 return;
 
             comp.ShootManager.RequestShootSync(comp.Session.PlayerId, Weapon.ShootManager.RequestType.Toggle);
+        }
+
+        internal static void TerminalActionFriend(IMyTerminalBlock blk)
+        {
+
+            var comp = blk?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready || comp.Session.DedicatedServer)
+                return;
+
+            comp.RequestFriend();
+        }
+
+        internal static void TerminalActionEnemy(IMyTerminalBlock blk)
+        {
+            var comp = blk?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready || comp.Session.DedicatedServer)
+                return;
+
+            comp.RequestEnemy();
+        }
+
+        internal static void TerminalActionPosition(IMyTerminalBlock blk)
+        {
+            var comp = blk?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready || comp.Session.DedicatedServer)
+                return;
+
+            comp.RequestPoint();
         }
 
         internal static void TerminalActionShootOn(IMyTerminalBlock blk)
