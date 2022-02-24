@@ -487,19 +487,23 @@ namespace CoreSystems.Platform
 
             internal static void ResetCompState(WeaponComponent comp, long playerId, bool resetTarget, bool resetState, Dictionary<string, int> settings = null)
             {
-                var o = comp.Data.Repo.Values.Set.Overrides;
+                var wValues = comp.Data.Repo.Values;
+
+                var o = wValues.Set.Overrides;
                 var userControl = o.Control != ProtoWeaponOverrides.ControlModes.Auto;
 
                 if (userControl)
                 {
-                    comp.Data.Repo.Values.State.Control = ProtoWeaponState.ControlMode.Ui;
-                    comp.Data.Repo.Values.State.Trigger = Trigger.Off;
+                    wValues.State.Control = ProtoWeaponState.ControlMode.Ui;
+                    wValues.State.Trigger = Trigger.Off;
                     if (settings != null) settings["ControlModes"] = (int)o.Control;
                 }
                 else if (resetState)
                 {
-                    comp.Data.Repo.Values.State.Control = ProtoWeaponState.ControlMode.None;
+                    wValues.State.Control = ProtoWeaponState.ControlMode.None;
                 }
+
+                comp.ManualMode = wValues.State.TrackingReticle && wValues.Set.Overrides.Control == ProtoWeaponOverrides.ControlModes.Manual; // needs to be set everywhere dedicated and non-tracking clients receive TrackingReticle or Control updates.
 
                 if (resetTarget)
                     ClearTargets(comp);

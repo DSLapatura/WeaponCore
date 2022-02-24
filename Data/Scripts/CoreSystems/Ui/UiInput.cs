@@ -102,8 +102,6 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
                     ClientInputState.MouseButtonRight = false;
                 }
 
-                _session.PlayerMouseStates[_session.PlayerId] = ClientInputState;
-
                 if (_session.MpActive)
                 {
                     var shootButtonActive = ClientInputState.MouseButtonLeft || ClientInputState.MouseButtonRight;

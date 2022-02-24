@@ -862,36 +862,6 @@ namespace CoreSystems
         }
         #endregion
 
-
-        internal void SendMouseUpdate(Ai ai, MyEntity entity)
-        {
-            if (IsClient)
-            {
-                PacketsToServer.Add(new InputPacket
-                {
-                    EntityId = entity.EntityId,
-                    SenderId = MultiplayerId,
-                    PType = PacketType.ClientMouseEvent,
-                    Data = UiInput.ClientInputState
-                });
-            }
-            else if (HandlesInput)
-            {
-                PacketsToClient.Add(new PacketInfo
-                {
-                    Entity = entity,
-                    Packet = new InputPacket
-                    {
-                        EntityId = entity.EntityId,
-                        SenderId = MultiplayerId,
-                        PType = PacketType.ClientMouseEvent,
-                        Data = UiInput.ClientInputState
-                    }
-                });
-            }
-            else Log.Line("SendMouseUpdate should never be called on Dedicated");
-        }
-
         internal void SendClientReady(Weapon w)
         {
             if (IsClient)
@@ -1281,7 +1251,7 @@ namespace CoreSystems
             else Log.Line("SendSetFloatRequest should never be called on Non-HandlesInput");
         }
 
-        internal void SendTrackReticleUpdate(Weapon.WeaponComponent comp, bool track)
+        internal void TrackReticleUpdate(Weapon.WeaponComponent comp, bool track)
         {
             if (IsClient)
             {
@@ -1295,8 +1265,14 @@ namespace CoreSystems
             }
             else if (HandlesInput)
             {
+
                 comp.Data.Repo.Values.State.TrackingReticle = track;
-                SendComp(comp);
+                var wValues = comp.Data.Repo.Values;
+
+                comp.ManualMode = wValues.State.TrackingReticle && wValues.Set.Overrides.Control == ProtoWeaponOverrides.ControlModes.Manual; // needs to be set everywhere dedicated and non-tracking clients receive TrackingReticle or Control updates.
+
+                if (comp.Session.MpActive)
+                    SendComp(comp);
             }
         }
 

@@ -110,11 +110,6 @@ namespace CoreSystems
                         ClientServerData(packetObj);
                         break;
                     }
-                    case PacketType.ClientMouseEvent: 
-                    {
-                        ClientClientMouseEvent(packetObj);
-                        break;
-                    }
                     case PacketType.Construct:
                     {
                         ClientConstruct(packetObj);
@@ -183,11 +178,6 @@ namespace CoreSystems
                     case PacketType.TargetChange:
                     {
                         ClientTargetUpdate(packetObj);
-                        break;
-                    }
-                    case PacketType.FullMouseUpdate: 
-                    {
-                        ClientFullMouseUpdate(packetObj);
                         break;
                     }
                     case PacketType.ProblemReport: 
@@ -281,10 +271,6 @@ namespace CoreSystems
                     ServerShootSyncs(packetObj);
                     break;
                 }
-                case PacketType.ClientMouseEvent: {
-                    ServerClientMouseEvent(packetObj);
-                    break;
-                }
                 case PacketType.ActiveControlUpdate: {
                     ServerActiveControlUpdate(packetObj);
                     break;
@@ -328,10 +314,6 @@ namespace CoreSystems
                 }
                 case PacketType.OverRidesUpdate: {
                     ServerOverRidesUpdate(packetObj);
-                    break;
-                }
-                case PacketType.RequestMouseStates: {
-                    ServerRequestMouseStates(packetObj);
                     break;
                 }
                 case PacketType.ClientReady:

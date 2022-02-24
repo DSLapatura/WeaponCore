@@ -149,7 +149,6 @@ namespace CoreSystems
         internal readonly Dictionary<MyDefinitionId, MyStringHash> VanillaIds = new Dictionary<MyDefinitionId, MyStringHash>(MyDefinitionId.Comparer);
         internal readonly Dictionary<MyStringHash, MyDefinitionId> VanillaCoreIds = new Dictionary<MyStringHash, MyDefinitionId>(MyStringHash.Comparer);
         internal readonly Dictionary<MyStringHash, AreaRestriction> AreaRestrictions = new Dictionary<MyStringHash, AreaRestriction>(MyStringHash.Comparer);
-        internal readonly Dictionary<long, InputStateData> PlayerMouseStates = new Dictionary<long, InputStateData> { [-1] = new InputStateData() };
         internal readonly Dictionary<long, FakeTargets> PlayerDummyTargets = new Dictionary<long, FakeTargets> { [-1] = new FakeTargets() };
         internal readonly Dictionary<ulong, HashSet<long>> PlayerEntityIdInRange = new Dictionary<ulong, HashSet<long>>();
         internal readonly Dictionary<long, ulong> ConnectedAuthors = new Dictionary<long, ulong>();

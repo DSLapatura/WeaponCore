@@ -57,7 +57,7 @@ namespace CoreSystems.Control
 
             var mode = comp.Data.Repo.Values.Set.Overrides.ShootMode;
             if (mode == Weapon.ShootManager.ShootModes.KeyToggle || mode == Weapon.ShootManager.ShootModes.KeyFire)
-                comp.ShootManager.RequestShootSync(comp.Session.PlayerId, Weapon.ShootManager.RequestType.Once);
+                comp.ShootManager.RequestShootSync(comp.Session.PlayerId, mode == Weapon.ShootManager.ShootModes.KeyToggle ? Weapon.ShootManager.RequestType.Toggle : Weapon.ShootManager.RequestType.Once);
         }
 
         internal static void TerminalActionControlMode(IMyTerminalBlock blk)

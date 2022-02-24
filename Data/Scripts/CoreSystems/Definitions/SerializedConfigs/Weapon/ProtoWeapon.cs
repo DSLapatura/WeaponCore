@@ -273,6 +273,10 @@ namespace CoreSystems
                 RofModifier = sync.RofModifier;
                 if (rofChange) SetRof(comp);
             }
+
+            var wValues = comp.Data.Repo.Values;
+            comp.ManualMode = wValues.State.TrackingReticle && wValues.Set.Overrides.Control == ProtoWeaponOverrides.ControlModes.Manual; // needs to be set everywhere dedicated and non-tracking clients receive TrackingReticle or Control updates.
+
         }
 
         public void Sync(ControlSys.ControlComponent comp, ProtoWeaponSettings sync)
@@ -281,6 +285,9 @@ namespace CoreSystems
             Range = sync.Range;
 
             Overrides.Sync(sync.Overrides);
+
+            var wValues = comp.Data.Repo.Values;
+            comp.ManualMode = wValues.State.TrackingReticle && wValues.Set.Overrides.Control == ProtoWeaponOverrides.ControlModes.Manual; // needs to be set everywhere dedicated and non-tracking clients receive TrackingReticle or Control updates.
         }
 
     }
@@ -322,12 +329,16 @@ namespace CoreSystems
             CriticalReaction = sync.CriticalReaction;
             ToggleCount = sync.ToggleCount;
 
+            var wValues = comp.Data.Repo.Values;
+
             if (ToggleCount > comp.ShootManager.ClientToggleCount) 
                 comp.ShootManager.ClientToggleCount = ToggleCount;
 
             Tasks.Sync(comp, sync.Tasks);
             for (int i = 0; i < sync.Weapons.Length; i++)
                 comp.Platform.Weapons[i].PartState.Sync(sync.Weapons[i]);
+
+            comp.ManualMode = wValues.State.TrackingReticle && wValues.Set.Overrides.Control == ProtoWeaponOverrides.ControlModes.Manual; // needs to be set everywhere dedicated and non-tracking clients receive TrackingReticle or Control updates.
         }
     }
 
@@ -583,6 +594,8 @@ namespace CoreSystems
             ShootMode = syncFrom.ShootMode;
             WeaponGroupId = syncFrom.WeaponGroupId;
             AiEnabled = syncFrom.AiEnabled;
+
+
         }
     }
 }

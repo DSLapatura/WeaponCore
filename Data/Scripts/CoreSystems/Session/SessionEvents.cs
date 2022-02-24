@@ -481,7 +481,6 @@ namespace CoreSystems
 
                     SteamToPlayer.TryRemove(removedPlayer.Player.SteamUserId, out playerId);
                     PlayerEntityIdInRange.Remove(removedPlayer.Player.SteamUserId);
-                    PlayerMouseStates.Remove(playerId);
                     PlayerDummyTargets.Remove(playerId);
                     if (PlayerControllerMonitor.Remove(removedPlayer.Player))
                         removedPlayer.Player.Controller.ControlledEntityChanged -= OnPlayerController;
@@ -504,7 +503,6 @@ namespace CoreSystems
                     BuildPlayerMap(player, id);
 
                 SteamToPlayer[player.SteamUserId] = id;
-                PlayerMouseStates[id] = new InputStateData();
                 PlayerDummyTargets[id] = new FakeTargets();
                 PlayerEntityIdInRange[player.SteamUserId] = new HashSet<long>();
 

@@ -44,7 +44,6 @@ namespace CoreSystems.Support
         internal MyInventory CoreInventory;
         internal CompData BaseData;
 
-        internal InputStateData InputState;
         internal Ai Ai;
         internal CorePlatform Platform;
         internal MyEntity TopEntity;
@@ -87,8 +86,6 @@ namespace CoreSystems.Support
         internal bool HasArming;
         internal bool IsBomb;
         internal bool OverrideLeads;
-        internal bool WasControlled;
-        internal bool WasManual;
         internal bool UpdatedState;
         internal bool UserControlled;
         internal bool Debug;

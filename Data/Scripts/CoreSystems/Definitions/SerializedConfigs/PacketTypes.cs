@@ -32,7 +32,6 @@ namespace CoreSystems
         OverRidesUpdate,
         AimTargetUpdate,
         PaintedTargetUpdate,
-        ClientMouseEvent,
         ActiveControlUpdate,
         PlayerIdUpdate,
         FocusUpdate,
@@ -42,8 +41,6 @@ namespace CoreSystems
         CriticalReactionUpdate,
         ClientAiAdd,
         ClientAiRemove,
-        RequestMouseStates,
-        FullMouseUpdate,
         RequestShootUpdate,
         ReleaseActiveUpdate,
         AmmoCycleRequest,
@@ -63,12 +60,12 @@ namespace CoreSystems
 
     #region packets
     [ProtoContract]
-    [ProtoInclude(5, typeof(InputPacket))]
+    //[ProtoInclude(5, typeof(InputPacket))]
     [ProtoInclude(6, typeof(BoolUpdatePacket))]
     [ProtoInclude(7, typeof(FakeTargetPacket))]
     [ProtoInclude(8, typeof(FocusPacket))]
     [ProtoInclude(9, typeof(WeaponIdPacket))]
-    [ProtoInclude(10, typeof(MouseInputSyncPacket))]
+    //[ProtoInclude(10, typeof(MouseInputSyncPacket))]
     [ProtoInclude(11, typeof(AiDataPacket))]
     [ProtoInclude(12, typeof(FixedWeaponHitPacket))]
     [ProtoInclude(13, typeof(ProblemReportPacket))]
@@ -407,18 +404,6 @@ namespace CoreSystems
     }
 
     [ProtoContract]
-    public class InputPacket : Packet
-    {
-        [ProtoMember(1)] internal InputStateData Data;
-
-        public override void CleanUp()
-        {
-            base.CleanUp();
-            Data = null;
-        }
-    }
-
-    [ProtoContract]
     public class BoolUpdatePacket : Packet
     {
         [ProtoMember(1)] internal bool Data;
@@ -551,19 +536,6 @@ namespace CoreSystems
         {
             base.CleanUp();
             WeaponId = 0;
-        }
-    }
-
-
-    [ProtoContract]
-    public class MouseInputSyncPacket : Packet
-    {
-        [ProtoMember(1)] internal PlayerMouseData[] Data = Array.Empty<PlayerMouseData>();
-
-        public override void CleanUp()
-        {
-            base.CleanUp();
-            Data = Array.Empty<PlayerMouseData>();
         }
     }
 

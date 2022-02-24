@@ -357,28 +357,6 @@ namespace CoreSystems
         }
         // no storge sync
 
-        private bool ClientClientMouseEvent(PacketObj data)
-        {
-            var packet = data.Packet;
-            var mousePacket = (InputPacket)packet;
-            if (mousePacket.Data == null) return Error(data, Msg("Data"));
-            var cube = MyEntities.GetEntityByIdOrDefault(packet.EntityId) as MyCubeBlock;
-            if (cube == null) return Error(data, Msg($"CubeId: {packet.EntityId}"));
-
-            Ai ai;
-            long playerId;
-            if (EntityToMasterAi.TryGetValue(cube.CubeGrid, out ai) && SteamToPlayer.TryGetValue(packet.SenderId, out playerId))
-            {
-
-                PlayerMouseStates[playerId] = mousePacket.Data;
-
-                data.Report.PacketValid = true;
-            }
-            else
-                return Error(data, Msg($"No PlayerId Found: {EntityToMasterAi.ContainsKey(cube.CubeGrid)} - {SteamToPlayer.ContainsKey(packet.SenderId)}"));
-
-            return true;
-        }
 
         private bool ClientPlayerIdUpdate(PacketObj data)
         {
@@ -406,23 +384,6 @@ namespace CoreSystems
 
             UpdateEnforcement();
 
-            return true;
-        }
-
-        private bool ClientFullMouseUpdate(PacketObj data)
-        {
-            var packet = data.Packet;
-            var mouseUpdatePacket = (MouseInputSyncPacket)packet;
-
-            if (mouseUpdatePacket.Data == null) return Error(data, Msg("BaseData"));
-
-            for (int i = 0; i < mouseUpdatePacket.Data.Length; i++)  {
-                var playerMousePackets = mouseUpdatePacket.Data[i];
-                if (playerMousePackets.PlayerId != PlayerId)
-                    PlayerMouseStates[playerMousePackets.PlayerId] = playerMousePackets.MouseStateData;
-            }
-
-            data.Report.PacketValid = true;
             return true;
         }
 
@@ -509,11 +470,11 @@ namespace CoreSystems
             if (comp?.Ai == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return Error(data, Msg($"CompId: {packet.EntityId}", comp != null), Msg("Ai", comp?.Ai != null), Msg("Ai", comp?.Platform.State == CorePlatform.PlatformState.Ready));
 
             Weapon.ShootManager.RequestType type;
-            Weapon.ShootManager.ShootModes mode;
+            Weapon.ShootManager.Signals signal;
             Weapon.ShootManager.ShootCodes code;
             uint interval;
 
-            DecodeShootState(dPacket.Data, out type, out mode, out interval, out code);
+            Weapon.ShootManager.DecodeShootState(dPacket.Data, out type, out signal, out interval, out code);
 
             var wComp = comp as Weapon.WeaponComponent;
             if (wComp != null)
@@ -533,7 +494,7 @@ namespace CoreSystems
                         if (wComp.ShootManager.EarlyOff && (wComp.ShootManager.ClientToggleCount > state.ToggleCount || state.Trigger == CoreComponent.Trigger.On))
                         {
                             Log.Line($"forcing QueuedToggle off -  frozen:{wComp.ShootManager.FreezeClientShoot}", InputLog);
-                            wComp.ShootManager.ProcessInput(PlayerId, Weapon.ShootManager.RequestType.Off);
+                            wComp.ShootManager.ProcessInput(PlayerId, Weapon.ShootManager.RequestType.Off, signal);
                         }
                         break;
                     }
@@ -541,6 +502,7 @@ namespace CoreSystems
                         wComp.ShootManager.ClientToggledOffByServer(interval, true);
                         break;
                     default:
+                        Log.Line($"default server response");
                         long playerId;
                         SteamToPlayer.TryGetValue(packet.SenderId, out playerId);
                         wComp.ShootManager.RequestShootSync(0, type);

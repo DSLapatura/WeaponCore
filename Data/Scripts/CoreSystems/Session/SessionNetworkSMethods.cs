@@ -9,33 +9,6 @@ namespace CoreSystems
 {
     public partial class Session
     {
-        private bool ServerClientMouseEvent(PacketObj data)
-        {
-            var packet = data.Packet;
-            var inputPacket = (InputPacket)packet;
-            var ent = MyEntities.GetEntityByIdOrDefault(packet.EntityId);
-
-            if (ent == null) return Error(data, Msg("Entity"));
-            if (inputPacket.Data == null) return Error(data, Msg("BaseData"));
-
-            long playerId;
-            if (SteamToPlayer.TryGetValue(packet.SenderId, out playerId))
-            {
-                if (PlayerMouseStates.ContainsKey(playerId))
-                    PlayerMouseStates[playerId].Sync(inputPacket.Data);
-                else
-                    PlayerMouseStates[playerId] = new InputStateData(inputPacket.Data);
-
-                PacketsToClient.Add(new PacketInfo { Entity = ent, Packet = inputPacket });
-
-                data.Report.PacketValid = true;
-            }
-            else
-                return Error(data, Msg($"No PlayerId Found: entId:{ent.EntityId} - senderId: {packet.SenderId} - found: {SteamToPlayer.ContainsKey(packet.SenderId)}"));
-
-            return true;
-        }
-
         private bool ServerActiveControlUpdate(PacketObj data)
         {
             var packet = data.Packet;
@@ -198,7 +171,10 @@ namespace CoreSystems
 
             if (comp?.Ai == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return Error(data, Msg("BaseComp", comp != null), Msg("Ai", comp?.Ai != null), Msg("Ai", comp?.Platform.State == CorePlatform.PlatformState.Ready));
 
-            comp.Data.Repo.Values.State.TrackingReticle = reticlePacket.Data;
+            var wValues = comp.Data.Repo.Values;
+            wValues.State.TrackingReticle = reticlePacket.Data;
+            comp.ManualMode = wValues.State.TrackingReticle && wValues.Set.Overrides.Control == ProtoWeaponOverrides.ControlModes.Manual;
+
             SendState(comp);
 
             data.Report.PacketValid = true;
@@ -390,40 +366,6 @@ namespace CoreSystems
             return true;
         }
 
-        private bool ServerRequestMouseStates(PacketObj data)
-        {
-            var packet = data.Packet;
-            var mouseUpdatePacket = new MouseInputSyncPacket
-            {
-                EntityId = -1,
-                SenderId = packet.SenderId,
-                PType = PacketType.FullMouseUpdate,
-                Data = new PlayerMouseData[PlayerMouseStates.Count],
-            };
-
-            var c = 0;
-            foreach (var playerMouse in PlayerMouseStates)
-            {
-                mouseUpdatePacket.Data[c] = new PlayerMouseData
-                {
-                    PlayerId = playerMouse.Key,
-                    MouseStateData = playerMouse.Value
-                };
-            }
-
-            if (PlayerMouseStates.Count > 0)
-                PacketsToClient.Add(new PacketInfo
-                {
-                    Entity = null,
-                    Packet = mouseUpdatePacket,
-                    SingleClient = true,
-                });
-
-            data.Report.PacketValid = true;
-
-            return true;
-        }
-
         private bool ServerClientReady(PacketObj data)
         {
             var packet = data.Packet;
@@ -473,11 +415,11 @@ namespace CoreSystems
             var wComp = comp as Weapon.WeaponComponent;
 
             Weapon.ShootManager.RequestType type;
-            Weapon.ShootManager.ShootModes mode;
+            Weapon.ShootManager.Signals signal;
             Weapon.ShootManager.ShootCodes code;
             uint interval;
 
-            DecodeShootState(dPacket.Data, out type, out mode, out interval, out code);
+            Weapon.ShootManager.DecodeShootState(dPacket.Data, out type, out signal, out interval, out code);
 
             if (wComp != null)
             {
@@ -489,14 +431,14 @@ namespace CoreSystems
                 else if (SteamToPlayer.TryGetValue(packet.SenderId, out playerId))
                 {
                     if (wComp.Data.Repo.Values.State.Trigger != CoreComponent.Trigger.On && type != Weapon.ShootManager.RequestType.Off)
-                        wComp.ShootManager.RequestShootSync(playerId, type);
+                        wComp.ShootManager.RequestShootSync(playerId, type, signal);
 
                     if (wComp.Data.Repo.Values.State.Trigger == CoreComponent.Trigger.Off)
                         wComp.ShootManager.ServerRejectResponse(packet.SenderId);
                 }
                 else
                 {
-                    Log.Line($"ServerShootSyncs failed: - mode:{mode} - {type}", InputLog);
+                    Log.Line($"ServerShootSyncs failed: - mode:{signal} - {type}", InputLog);
 
                 }
             }

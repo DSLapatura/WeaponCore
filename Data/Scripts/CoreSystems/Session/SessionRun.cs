@@ -320,15 +320,10 @@ namespace CoreSystems
                 UiInput.UpdateInputState();
                 if (MpActive)  {
 
-                    if (UiInput.InputChanged && ActiveControlBlock != null)
-                    {
-                        SendMouseUpdate(TrackingAi, ActiveControlBlock);
-                    }
-
                     Ai.FakeTargets fakeTargets;
                     if (TrackingAi != null && PlayerDummyTargets.TryGetValue(PlayerId, out fakeTargets)) {
 
-                        if (fakeTargets.ManualTarget.LastUpdateTick == Tick && Tick - TargetUi.LastTrackTick <= 1 && Tick - TargetUi.LastManualTick <= 1)
+                        if (fakeTargets.ManualTarget.LastUpdateTick == Tick && Tick - TargetUi.LastManualTick <= 1)
                             SendAimTargetUpdate(TrackingAi, fakeTargets.ManualTarget);
 
                         if (fakeTargets.PaintedTarget.LastUpdateTick == Tick)

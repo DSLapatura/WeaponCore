@@ -143,20 +143,6 @@ namespace CoreSystems
             LosDebugList.Add(debug);
         }
 
-        internal static void DecodeShootState(ulong id, out Weapon.ShootManager.RequestType type, out Weapon.ShootManager.ShootModes shootState, out uint interval, out Weapon.ShootManager.ShootCodes code)
-        {
-            type = (Weapon.ShootManager.RequestType)(id >> 48);
-
-            shootState = (Weapon.ShootManager.ShootModes)((id << 16) >> 48);
-            interval = (uint)((id << 32) >> 48);
-            code = (Weapon.ShootManager.ShootCodes)((id << 48) >> 48);
-        }
-
-        internal static void EncodeShootState(uint type, uint shootState, uint interval, uint code, out ulong id)
-        {
-            id = ((ulong)(type << 16 | shootState) << 32) | (interval << 16 | code);
-        }
-
         internal void LosDebuging()
         {
             for (var i = LosDebugList.Count - 1; i >= 0; i--)
@@ -654,16 +640,11 @@ namespace CoreSystems
                     }
 
 
-                    PlayerMouseStates[PlayerId] = UiInput.ClientInputState;
-
                     List<IMyPlayer> players = new List<IMyPlayer>();
                     MyAPIGateway.Multiplayer.Players.GetPlayers(players);
 
                     for (int i = 0; i < players.Count; i++)
                         PlayerConnected(players[i].IdentityId);
-
-                    if (IsClient)
-                        SendUpdateRequest(-1, PacketType.RequestMouseStates);
                 }
 
                 return true;
