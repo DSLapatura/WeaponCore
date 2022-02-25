@@ -378,7 +378,7 @@ namespace CoreSystems
                 EnemyId = 0;
             }
 
-            if (FriendId <= 0 || !MyEntities.TryGetEntityById(FriendId, out Enemy))
+            if (FriendId <= 0 || !MyEntities.TryGetEntityById(FriendId, out Friend))
             {
                 Friend = null;
                 FriendId = 0;
