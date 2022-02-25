@@ -17,7 +17,8 @@ namespace CoreSystems.Control
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
                 return;
 
-            comp.ShootManager.RequestShootSync(comp.Session.PlayerId, Weapon.ShootManager.RequestType.Toggle);
+            var on = comp.Data.Repo.Values.State.Trigger == On;
+            comp.ShootManager.RequestShootSync(comp.Session.PlayerId, on ? Weapon.ShootManager.RequestType.On : Weapon.ShootManager.RequestType.Off, Weapon.ShootManager.Signals.On);
         }
 
         internal static void TerminalActionFriend(IMyTerminalBlock blk)
@@ -60,7 +61,7 @@ namespace CoreSystems.Control
             if (mgr.ClientToggleCount > state.ToggleCount || state.Trigger == On)
                 return;
 
-            comp.ShootManager.RequestShootSync(comp.Session.PlayerId, Weapon.ShootManager.RequestType.On);
+            comp.ShootManager.RequestShootSync(comp.Session.PlayerId, Weapon.ShootManager.RequestType.On, Weapon.ShootManager.Signals.On);
         }
 
         internal static void TerminalActionShootOff(IMyTerminalBlock blk)
@@ -85,7 +86,13 @@ namespace CoreSystems.Control
 
             var mode = comp.Data.Repo.Values.Set.Overrides.ShootMode;
             if (mode == Weapon.ShootManager.ShootModes.KeyToggle || mode == Weapon.ShootManager.ShootModes.KeyFire)
-                comp.ShootManager.RequestShootSync(comp.Session.PlayerId, mode == Weapon.ShootManager.ShootModes.KeyToggle ? Weapon.ShootManager.RequestType.Toggle : Weapon.ShootManager.RequestType.Once);
+            {
+                var keyToggle = mode == Weapon.ShootManager.ShootModes.KeyToggle;
+                var signal = keyToggle ? Weapon.ShootManager.Signals.KeyToggle : Weapon.ShootManager.Signals.Once;
+                var on = comp.Data.Repo.Values.State.Trigger == On;
+                var onOff = on ? Weapon.ShootManager.RequestType.On : Weapon.ShootManager.RequestType.Off;
+                comp.ShootManager.RequestShootSync(comp.Session.PlayerId, keyToggle ? onOff : Weapon.ShootManager.RequestType.Once, signal);
+            }
         }
 
         internal static void TerminalActionControlMode(IMyTerminalBlock blk)

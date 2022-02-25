@@ -316,19 +316,22 @@ namespace CoreSystems
                     if (HandlesInput) {
 
                         if (wComp.TypeSpecific == CoreComponent.CompTypeSpecific.Rifle && wValues.State.Control != ControlMode.Ui)
-                            wComp.ShootManager.RequestShootSync(PlayerId, Weapon.ShootManager.RequestType.Once);
+                            wComp.ShootManager.RequestShootSync(PlayerId, Weapon.ShootManager.RequestType.Once, Weapon.ShootManager.Signals.Once);
 
                         var isControllingPlayer = wValues.State.PlayerId == PlayerId || !wComp.HasAim && ai.RotorManualControlId == PlayerId;
-                        
-                        Ai.PlayerController pControl;
-                        pControl.ControlBlock = null;
-                        var playerControl = isControllingPlayer && !InMenu && rootConstruct.ControllingPlayers.TryGetValue(wValues.State.PlayerId, out pControl);
-
-                        var step1 = (isControllingPlayer && !InMenu && (PlayerId == wValues.State.PlayerId && playerControl || rootConstruct.ControllingPlayers.TryGetValue(PlayerId, out pControl)));
-                        var step2 = step1 && cMode != ProtoWeaponOverrides.ControlModes.Auto || pControl.ControlBlock is IMyTurretControlBlock;
-                        var track = step2 && !UiInput.CameraBlockView || pControl.ControlBlock is IMyTurretControlBlock || UiInput.CameraChannelId > 0 && UiInput.CameraChannelId == wValues.Set.Overrides.CameraChannel;
 
                         if (isControllingPlayer) {
+
+                            Ai.PlayerController pControl;
+                            pControl.ControlBlock = null;
+                            var playerControl = isControllingPlayer && !InMenu && rootConstruct.ControllingPlayers.TryGetValue(wValues.State.PlayerId, out pControl);
+                            
+                            var step1 = (isControllingPlayer && !InMenu && (PlayerId == wValues.State.PlayerId && playerControl || rootConstruct.ControllingPlayers.TryGetValue(PlayerId, out pControl)));
+                            if (!step1 && wComp.ShootManager.Signal == Weapon.ShootManager.Signals.MouseControl)
+                                wComp.ShootManager.RequestShootSync(PlayerId, Weapon.ShootManager.RequestType.Off);
+
+                            var step2 = step1 && cMode != ProtoWeaponOverrides.ControlModes.Auto || pControl.ControlBlock is IMyTurretControlBlock;
+                            var track = step2 && !UiInput.CameraBlockView || pControl.ControlBlock is IMyTurretControlBlock || UiInput.CameraChannelId > 0 && UiInput.CameraChannelId == wValues.Set.Overrides.CameraChannel;
 
                             if (!wComp.HasAim && ai.RotorManualControlId >= 0 && sMode == Weapon.ShootManager.ShootModes.AiShoot && pControl.ControlBlock is IMyTurretControlBlock) {
                                 BlockUi.RequestShootModes(wComp.TerminalBlock, 1);
@@ -359,7 +362,7 @@ namespace CoreSystems
                                 }
                             }
                             else if (sMode == Weapon.ShootManager.ShootModes.MouseControl && (turnOn || turnOff)) {
-                                wComp.ShootManager.RequestShootSync(PlayerId, turnOn ? Weapon.ShootManager.RequestType.On : Weapon.ShootManager.RequestType.Off);
+                                wComp.ShootManager.RequestShootSync(PlayerId, turnOn ? Weapon.ShootManager.RequestType.On : Weapon.ShootManager.RequestType.Off, Weapon.ShootManager.Signals.MouseControl);
                             }
                         }
                     }
@@ -521,16 +524,16 @@ namespace CoreSystems
                         var reloading = aConst.Reloadable && w.ClientMakeUpShots == 0 && (w.Loading || w.ProtoWeaponAmmo.CurrentAmmo == 0 || w.Reload.WaitForClient);
                         var canShoot = !w.PartState.Overheated && !reloading && !w.System.DesignatorWeapon;
                         var paintedTarget = wComp.PainterMode && w.Target.TargetState == TargetStates.IsFake && w.Target.IsAligned;
-
-                        var autoShot = paintedTarget || wValues.State.Trigger == On || w.AiShooting && wValues.State.Trigger == Off;
-                        var anyShot = (autoShot && sMode == Weapon.ShootManager.ShootModes.AiShoot) || ((w.ShootCount > 0 && w.ShootDelay == 0 || w.ShootDelay != 0 && w.ShootDelay-- == 0) && !wComp.ShootManager.FreezeClientShoot);
+                        var onConfrimed = wValues.State.Trigger == On && !wComp.ShootManager.FreezeClientShoot && !wComp.ShootManager.WaitingShootResponse;
+                        var autoShot = paintedTarget || w.AiShooting && wValues.State.Trigger == Off;
+                        var anyShot = ((w.ShootCount > 0 && w.ShootDelay == 0 || w.ShootDelay != 0 && w.ShootDelay-- == 0) && !wComp.ShootManager.FreezeClientShoot) || onConfrimed || (autoShot && sMode == Weapon.ShootManager.ShootModes.AiShoot);
 
                         var delayedFire = w.System.DelayCeaseFire && !w.Target.IsAligned && Tick - w.CeaseFireDelayTick <= w.System.CeaseFireDelay;
                         var shootRequest = (anyShot || w.FinishShots || delayedFire);
 
                         w.LockOnFireState = shootRequest && (w.System.LockOnFocus && !w.Comp.ModOverride) && construct.Data.Repo.FocusData.HasFocus && focus.FocusInRange(w);
                         var shotReady = canShoot && (shootRequest && (!w.System.LockOnFocus || w.Comp.ModOverride) || w.LockOnFireState);
-                        var shoot = shotReady && ai.CanShoot && (!aConst.RequiresTarget || w.Target.HasTarget || wValues.Set.Overrides.Override || wComp.ShootManager.Signal == Weapon.ShootManager.Signals.Manual); // need to fix this!
+                        var shoot = shotReady && ai.CanShoot && (!aConst.RequiresTarget || w.Target.HasTarget || wValues.Set.Overrides.Override || wComp.ShootManager.Signal == Weapon.ShootManager.Signals.Manual); 
 
                         if (shoot) {
                             

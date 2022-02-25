@@ -431,15 +431,24 @@ namespace CoreSystems.Projectiles
 
                     if (hitEntity != null)
                     {
-                        p.FinalizeIntersection = true;
-                        hitEntity.Info = info;
-                        hitEntity.Entity = hitEntity.EventType != Shield ? ent : (MyEntity)shieldInfo.Value.Item1;
-                        hitEntity.Intersection = p.Beam;
-                        hitEntity.SphereCheck = !lineCheck;
-                        hitEntity.PruneSphere = p.PruneSphere;
-                        hitEntity.SelfHit = entIsSelf;
-                        hitEntity.DamageOverTime = aConst.EwarType == Dot;
-                        info.HitList.Add(hitEntity);
+                        var hitEnt = hitEntity.EventType != Shield ? ent : (MyEntity) shieldInfo.Value.Item1;
+                        if (hitEnt != null)
+                        {
+                            p.FinalizeIntersection = true;
+                            hitEntity.Info = info;
+                            hitEntity.Entity = hitEnt;
+                            hitEntity.Intersection = p.Beam;
+                            hitEntity.SphereCheck = !lineCheck;
+                            hitEntity.PruneSphere = p.PruneSphere;
+                            hitEntity.SelfHit = entIsSelf;
+                            hitEntity.DamageOverTime = aConst.EwarType == Dot;
+                            info.HitList.Add(hitEntity);
+                        }
+                        else
+                        {
+                            Log.Line($"hitEntity was null: {hitEntity.EventType}");
+                            HitEntityPool.Return(hitEntity);
+                        }
                     }
                 }
 
@@ -798,7 +807,7 @@ namespace CoreSystems.Projectiles
                 var grid = ent as MyCubeGrid;
                 var voxel = ent as MyVoxelBase;
 
-                if (triggerEvent && (info.Ai.Targets.ContainsKey(ent) || shield != null))
+                if (triggerEvent && ent != null && (info.Ai.Targets.ContainsKey(ent) || shield != null))
                     hitEnt.PulseTrigger = true;
                 else if (hitEnt.Projectile != null)
                     dist = hitEnt.HitDist.Value;

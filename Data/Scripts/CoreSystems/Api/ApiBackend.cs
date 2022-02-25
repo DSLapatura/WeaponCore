@@ -676,7 +676,7 @@ namespace CoreSystems.Api
             var comp = weaponBlock.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp?.Platform != null && comp.Platform.State == Ready && comp.Platform.Weapons.Count > weaponId)
             {
-                comp.ShootManager.RequestShootSync(comp.Session.PlayerId, Weapon.ShootManager.RequestType.Once);
+                comp.ShootManager.RequestShootSync(comp.Session.PlayerId, Weapon.ShootManager.RequestType.Once, Weapon.ShootManager.Signals.Once);
             }
         }
 
@@ -685,7 +685,8 @@ namespace CoreSystems.Api
             var comp = weaponBlock.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp?.Platform != null && comp.Platform.State == Ready && comp.Platform.Weapons.Count > weaponId)
             {
-                comp.ShootManager.RequestShootSync(0, Weapon.ShootManager.RequestType.Toggle);
+
+                comp.ShootManager.RequestShootSync(0, on ? Weapon.ShootManager.RequestType.On : Weapon.ShootManager.RequestType.Off, Weapon.ShootManager.Signals.On);
             }
         }
 
