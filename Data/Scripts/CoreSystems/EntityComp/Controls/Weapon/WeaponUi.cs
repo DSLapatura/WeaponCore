@@ -156,7 +156,7 @@ namespace CoreSystems
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
             var value = newValue ? 1 : 0;
-            Weapon.WeaponComponent.RequestSetOverride(comp, "Neutrals", value, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "Neutrals", value, comp.Session.PlayerId);
         }
 
         internal static bool GetDebug(IMyTerminalBlock block)
@@ -172,7 +172,7 @@ namespace CoreSystems
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
             var value = newValue ? 1 : 0;
-            Weapon.WeaponComponent.RequestSetOverride(comp, "Debug", value, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "Debug", value, comp.Session.PlayerId);
         }
 
         internal static bool GetOverride(IMyTerminalBlock block)
@@ -188,7 +188,7 @@ namespace CoreSystems
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
             var value = newValue ? 1 : 0;
-            Weapon.WeaponComponent.RequestSetOverride(comp, "Override", value, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "Override", value, comp.Session.PlayerId);
         }
 
         internal static bool GetUnowned(IMyTerminalBlock block)
@@ -204,7 +204,7 @@ namespace CoreSystems
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
             var value = newValue ? 1 : 0;
-            Weapon.WeaponComponent.RequestSetOverride(comp, "Unowned", value, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "Unowned", value, comp.Session.PlayerId);
         }
 
         internal static bool GetFocusFire(IMyTerminalBlock block)
@@ -219,7 +219,7 @@ namespace CoreSystems
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
             var value = newValue ? 1 : 0;
-            Weapon.WeaponComponent.RequestSetOverride(comp, "FocusTargets", value, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "FocusTargets", value, comp.Session.PlayerId);
         }
 
         internal static bool GetSubSystems(IMyTerminalBlock block)
@@ -235,7 +235,7 @@ namespace CoreSystems
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
             var value = newValue ? 1 : 0;
 
-            Weapon.WeaponComponent.RequestSetOverride(comp, "FocusSubSystem", value, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "FocusSubSystem", value, comp.Session.PlayerId);
         }
 
         internal static bool GetBiologicals(IMyTerminalBlock block)
@@ -250,7 +250,7 @@ namespace CoreSystems
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
             var value = newValue ? 1 : 0;
-            Weapon.WeaponComponent.RequestSetOverride(comp, "Biologicals", value, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "Biologicals", value, comp.Session.PlayerId);
         }
 
         internal static bool GetProjectiles(IMyTerminalBlock block)
@@ -266,7 +266,7 @@ namespace CoreSystems
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
             var value = newValue ? 1 : 0;
-            Weapon.WeaponComponent.RequestSetOverride(comp, "Projectiles", value, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "Projectiles", value, comp.Session.PlayerId);
         }
 
         internal static bool GetMeteors(IMyTerminalBlock block)
@@ -282,7 +282,7 @@ namespace CoreSystems
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
             var value = newValue ? 1 : 0;
-            Weapon.WeaponComponent.RequestSetOverride(comp, "Meteors", value, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "Meteors", value, comp.Session.PlayerId);
         }
 
         internal static bool GetGrids(IMyTerminalBlock block)
@@ -298,7 +298,7 @@ namespace CoreSystems
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
             var value = newValue ? 1 : 0;
-            Weapon.WeaponComponent.RequestSetOverride(comp, "Grids", value, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "Grids", value, comp.Session.PlayerId);
         }
 
         internal static bool GetShoot(IMyTerminalBlock block)
@@ -380,7 +380,7 @@ namespace CoreSystems
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready || !ShootModeChangeReady(comp)) return;
-            Weapon.WeaponComponent.RequestSetOverride(comp, "ShootMode", (int)newValue, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "ShootMode", (int)newValue, comp.Session.PlayerId);
         }
 
         internal static void ListShootModes(List<MyTerminalControlComboBoxItem> shootModeList)
@@ -423,7 +423,7 @@ namespace CoreSystems
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
-            Weapon.WeaponComponent.RequestSetOverride(comp, "SubSystems", (int) newValue, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "SubSystems", (int) newValue, comp.Session.PlayerId);
         }
 
         internal static void ListSubSystems(List<MyTerminalControlComboBoxItem> subSystemList)
@@ -455,7 +455,7 @@ namespace CoreSystems
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
-            Weapon.WeaponComponent.RequestSetOverride(comp, "MovementModes", (int)newValue, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "MovementModes", (int)newValue, comp.Session.PlayerId);
         }
 
         internal static void ListMovementModes(List<MyTerminalControlComboBoxItem> moveList)
@@ -483,7 +483,7 @@ namespace CoreSystems
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
-            Weapon.WeaponComponent.RequestSetOverride(comp, "ControlModes", (int)newValue, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "ControlModes", (int)newValue, comp.Session.PlayerId);
         }
         internal static long GetDecoySubSystem(IMyTerminalBlock block)
         {
@@ -532,7 +532,7 @@ namespace CoreSystems
             var value = (int)Math.Round(newValue);
             if (value != comp.Data.Repo.Values.Set.Overrides.CameraChannel)
             {
-                Weapon.WeaponComponent.RequestSetOverride(comp, "CameraChannel", value, comp.Session.PlayerId);
+                Weapon.WeaponComponent.RequestSetValue(comp, "CameraChannel", value, comp.Session.PlayerId);
             }
         }
 
@@ -553,7 +553,7 @@ namespace CoreSystems
 
             if (roundedInt != values.Set.Overrides.BurstCount)
             {
-                Weapon.WeaponComponent.RequestSetOverride(comp, "BurstCount", roundedInt, comp.Session.PlayerId);
+                Weapon.WeaponComponent.RequestSetValue(comp, "BurstCount", roundedInt, comp.Session.PlayerId);
             }
         }
 
@@ -574,7 +574,7 @@ namespace CoreSystems
 
             if (roundedInt != values.Set.Overrides.BurstDelay)
             {
-                Weapon.WeaponComponent.RequestSetOverride(comp, "BurstDelay", roundedInt, comp.Session.PlayerId);
+                Weapon.WeaponComponent.RequestSetValue(comp, "BurstDelay", roundedInt, comp.Session.PlayerId);
             }
         }
 
@@ -595,7 +595,7 @@ namespace CoreSystems
 
             if (roundedInt != values.Set.Overrides.SequenceId)
             {
-                Weapon.WeaponComponent.RequestSetOverride(comp, "SequenceId", roundedInt, comp.Session.PlayerId);
+                Weapon.WeaponComponent.RequestSetValue(comp, "SequenceId", roundedInt, comp.Session.PlayerId);
             }
         }
 
@@ -616,7 +616,7 @@ namespace CoreSystems
 
             if (roundedInt != values.Set.Overrides.WeaponGroupId)
             {
-                Weapon.WeaponComponent.RequestSetOverride(comp, "WeaponGroupId", roundedInt, comp.Session.PlayerId);
+                Weapon.WeaponComponent.RequestSetValue(comp, "WeaponGroupId", roundedInt, comp.Session.PlayerId);
             }
         }
 
@@ -674,7 +674,7 @@ namespace CoreSystems
                 if (comp.Session.HandlesInput)
                     comp.Session.LeadGroupsDirty = true;
 
-                Weapon.WeaponComponent.RequestSetOverride(comp, "LeadGroup", value, comp.Session.PlayerId);
+                Weapon.WeaponComponent.RequestSetValue(comp, "LeadGroup", value, comp.Session.PlayerId);
             }
         }
 
@@ -694,7 +694,7 @@ namespace CoreSystems
             var value = (int)Math.Round(newValue, 0);
             if (value != comp.Data.Repo.Values.Set.Overrides.ArmedTimer)
             {
-                Weapon.WeaponComponent.RequestSetOverride(comp, "ArmedTimer", value, comp.Session.PlayerId);
+                Weapon.WeaponComponent.RequestSetValue(comp, "ArmedTimer", value, comp.Session.PlayerId);
             }
         }
 
@@ -711,7 +711,7 @@ namespace CoreSystems
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
             var value = newValue ? 1 : 0;
-            Weapon.WeaponComponent.RequestSetOverride(comp, "Armed", value, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "Armed", value, comp.Session.PlayerId);
             if (comp.Session.IsServer) comp.Cube.UpdateTerminal();
         }
 
@@ -838,7 +838,7 @@ namespace CoreSystems
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
             var value = newValue ? 1 : 0;
-            Weapon.WeaponComponent.RequestSetOverride(comp, "Repel", value, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "Repel", value, comp.Session.PlayerId);
         }
 
         internal static void ListControlModes(List<MyTerminalControlComboBoxItem> controlList)
