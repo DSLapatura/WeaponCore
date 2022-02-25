@@ -728,6 +728,7 @@ namespace CoreSystems.Platform
             w.Comp.HasGuidance = w.Comp.HasGuidance || w.System.HasGuidedAmmo;
             //w.BaseComp.HasStrengthSlider = w.BaseComp.HasStrengthSlider || ui.DamageModifier; // this has exploits
             w.Comp.HasRofSlider = w.Comp.HasRofSlider || ui.RateOfFire;
+            w.Comp.HasDrone = w.Comp.HasDrone || w.System.HasDrone;
             w.BaseComp.CanOverload = w.BaseComp.CanOverload || ui.EnableOverload;
             w.BaseComp.HasTurret = w.BaseComp.HasTurret || w.TurretAttached;
             w.Comp.TurretController = w.BaseComp.TurretController || w.TurretController;

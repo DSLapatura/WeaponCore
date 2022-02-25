@@ -51,6 +51,20 @@ namespace CoreSystems.Control
             session.CustomActions.Add(action);
         }
 
+        public static void CreateSelectTarget(Session session)
+        {
+            var action = MyAPIGateway.TerminalControls.CreateAction<T>("ActionTarget");
+            action.Icon = @"Textures\GUI\Icons\Actions\SwitchOn.dds";
+            action.Name = new StringBuilder(Localization.GetText("ActionTarget"));
+            action.Action = CustomActions.TerminalActionFriend;
+            action.Writer = TerminalHelpers.EmptyStringBuilder;
+            action.Enabled = TerminalHelpers.IsDrone;
+            action.ValidForGroups = true;
+
+            MyAPIGateway.TerminalControls.AddAction<T>(action);
+            session.CustomActions.Add(action);
+        }
+
         public static void CreateSelectFriend(Session session)
         {
             var action = MyAPIGateway.TerminalControls.CreateAction<T>("ActionFriend");

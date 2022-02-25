@@ -49,6 +49,7 @@ namespace CoreSystems.Platform
             internal bool ShootSubmerged;
             internal bool HasTracking;
             internal bool HasRequireTarget;
+            internal bool HasDrone;
 
 
             internal WeaponComponent(Session session, MyEntity coreEntity, MyDefinitionId id)
@@ -574,13 +575,12 @@ namespace CoreSystems.Platform
 
             internal void RequestFriend()
             {
-                var rootAi = Ai.Construct.RootAi;
-                if (Session.TargetUi.SelectedEntity != null || rootAi.Construct.Focus.GetPriorityTarget(rootAi, out Session.TargetUi.SelectedEntity))
+                if (Session.TargetUi.SelectedEntity != null)
                 {
                     AssignFriend(Session.TargetUi.SelectedEntity);
                 }
                 else 
-                    Log.Line($"no target");
+                    ClearFriend();
             }
 
             internal void RequestEnemy()
@@ -591,7 +591,7 @@ namespace CoreSystems.Platform
                     AssignEnemy(Session.TargetUi.SelectedEntity);
                 }
                 else
-                    Log.Line($"no target");
+                    ClearEnemy();
             }
 
             internal void RequestPoint()
@@ -612,6 +612,7 @@ namespace CoreSystems.Platform
                 Friends.Clear();
                 Friends.Add(entity);
 
+                SendTargetNotice($"Friend {entity.DisplayName} assigned to {Collection[0].System.ShortName}");
             }
 
             internal void ClearFriend()
@@ -619,6 +620,9 @@ namespace CoreSystems.Platform
                 var tasks = Data.Repo.Values.State.Tasks;
                 tasks.FriendId = 0;
                 tasks.Task = ProtoWeaponCompTasks.Tasks.None;
+
+                if (Friends.Count > 0)
+                    SendTargetNotice($"Friend {Friends[0].DisplayName} unassigned from {Collection[0].System.ShortName}");
 
                 Friends.Clear();
             }
@@ -636,6 +640,9 @@ namespace CoreSystems.Platform
 
                 Enemies.Clear();
                 Enemies.Add(entity);
+
+                SendTargetNotice($"Enemy {entity.DisplayName} assigned to {Collection[0].System.ShortName}");
+
             }
 
             internal void ClearEnemy()
@@ -645,11 +652,12 @@ namespace CoreSystems.Platform
                 tasks.EnemyId = 0;
                 tasks.Task = ProtoWeaponCompTasks.Tasks.None;
 
+                if (Enemies.Count > 0)
+                    SendTargetNotice($"Friend {Enemies[0].DisplayName} unassigned from {Collection[0].System.ShortName}");
+
                 Enemies.Clear();
 
             }
-
-
 
             internal void AddPoint(string name, Vector3D position)
             {
@@ -659,6 +667,12 @@ namespace CoreSystems.Platform
             internal void RemovePoint(string name)
             {
                 Positions.Remove(name);
+            }
+
+            private void SendTargetNotice(string message)
+            {
+                if (Session.TargetUi.LastTargetNoticeTick != Session.Tick)
+                    Session.ShowLocalNotify(message, 2000, "Red");
             }
 
             public enum AmmoStates

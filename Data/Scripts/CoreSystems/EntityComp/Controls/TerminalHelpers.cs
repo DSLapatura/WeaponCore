@@ -79,11 +79,9 @@ namespace CoreSystems.Control
             AddLeadGroupSliderRange<T>(session, "Target Group", Localization.GetText("TerminalTargetGroupTitle"), Localization.GetText("TerminalTargetGroupTooltip"), BlockUi.GetLeadGroup, BlockUi.RequestSetLeadGroup, TargetLead, BlockUi.GetMinLeadGroup, BlockUi.GetMaxLeadGroup, true);
             AddWeaponCameraSliderRange<T>(session, "Camera Channel", Localization.GetText("TerminalCameraChannelTitle"), Localization.GetText("TerminalCameraChannelTooltip"), BlockUi.GetWeaponCamera, BlockUi.RequestSetBlockCamera, HasTracking, BlockUi.GetMinCameraChannel, BlockUi.GetMaxCameraChannel, true);
             
-            AddListBoxNoAction<T>(session, "Friend", "Friend", "Friend list", FriendFill, FriendSelect, IsReady, 1, true, true);
-
-            AddListBoxNoAction<T>(session, "Enemy", "Enemy", "Enemy list", EnemyFill, EnemySelect, IsReady, 1, true, true);
-
-            AddListBoxNoAction<T>(session, "Position", "Position", "Position list", PositionFill, PositionSelect, IsReady, 1, true, true);
+            AddListBoxNoAction<T>(session, "Friend", "Friend", "Friend list", FriendFill, FriendSelect, IsDrone, 1, true, true);
+            AddListBoxNoAction<T>(session, "Enemy", "Enemy", "Enemy list", EnemyFill, EnemySelect, IsDrone, 1, true, true);
+            AddListBoxNoAction<T>(session, "Position", "Position", "Position list", PositionFill, PositionSelect, IsDrone, 1, true, true);
 
 
             Separator<T>(session, "WC_sep5", HasTracking);
@@ -425,6 +423,16 @@ namespace CoreSystems.Control
             return true;
         }
 
+
+        internal static bool IsDrone(IMyTerminalBlock block)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            var valid = comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Data?.Repo != null;
+            if (!valid || comp.Session.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
+                return false;
+
+            return comp.HasDrone;
+        }
 
         internal static bool CtcIsReady(IMyTerminalBlock block)
         {

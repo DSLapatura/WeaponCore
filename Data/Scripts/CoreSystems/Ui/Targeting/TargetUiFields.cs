@@ -21,6 +21,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
         internal uint MasterUpdateTick;
         internal uint LastSelectableTick;
         internal uint LastManualTick;
+        internal uint LastTargetNoticeTick;
         internal MyEntity LastSelectedEntity;
         internal MyEntity SelectedEntity;
         internal int ReticleAgeOnSelf;

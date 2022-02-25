@@ -166,6 +166,7 @@ namespace CoreSystems.Support
         public readonly bool TrackNeutrals;
         public readonly bool TrackTargets;
         public readonly bool HasRequiresTarget;
+        public readonly bool HasDrone;
         public readonly bool DesignatorWeapon;
         public readonly bool DelayCeaseFire;
         public readonly bool AlwaysFireFull;
@@ -300,6 +301,9 @@ namespace CoreSystems.Support
 
                 if (aConst.AntiSmartDetected)
                     HasAntiSmart = true;
+
+                if (aConst.IsDrone)
+                    HasDrone = true;
 
                 if (aConst.IsTurretSelectable)
                 {
@@ -729,6 +733,7 @@ namespace CoreSystems.Support
         internal bool DebugMode;
         internal bool HasServerOverrides;
         internal bool FireSoundNoBurst;
+        internal bool HasDrone;
 
         internal WeaponConstants(Session session, WeaponDefinition values)
         {

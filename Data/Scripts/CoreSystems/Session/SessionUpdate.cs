@@ -23,7 +23,6 @@ namespace CoreSystems
 
             foreach (var ai in EntityAIs.Values)
             {
-
                 ///
                 /// GridAi update section
                 ///
@@ -64,8 +63,7 @@ namespace CoreSystems
                 if (ai.AiType == Ai.AiTypes.Grid && (ai.GridMap.GroupMap.LastControllerTick == Tick || ai.GridMap.LastControllerTick == Tick))
                     Ai.Constructs.UpdatePlayerStates(ai.GridMap.GroupMap);
 
-                if (Tick60 && ai.AiType == Ai.AiTypes.Grid && ai.BlockChangeArea != BoundingBox.Invalid)
-                {
+                if (Tick60 && ai.AiType == Ai.AiTypes.Grid && ai.BlockChangeArea != BoundingBox.Invalid) {
                     ai.BlockChangeArea.Min *= ai.GridEntity.GridSize;
                     ai.BlockChangeArea.Max *= ai.GridEntity.GridSize;
                 }
@@ -77,8 +75,7 @@ namespace CoreSystems
                 if (Tick60 && Tick != rootConstruct.LastEffectUpdateTick && rootConstruct.TotalEffect > rootConstruct.PreviousTotalEffect)
                     rootConstruct.UpdateEffect(Tick);
 
-                if (IsServer) 
-                {
+                if (IsServer) {
                     if (rootConstruct.NewInventoryDetected)
                         rootConstruct.CheckForMissingAmmo();
                     else if (Tick60 && rootConstruct.RecentItems.Count > 0)
@@ -302,10 +299,8 @@ namespace CoreSystems
                     if (wComp.Status != Started)
                         wComp.HealthCheck();
 
-                    if (ai.DbUpdated || !wComp.UpdatedState) {
-
+                    if (ai.DbUpdated || !wComp.UpdatedState) 
                         wComp.DetectStateChanges();
-                    }
 
                     if (wComp.Platform.State != CorePlatform.PlatformState.Ready || wComp.IsDisabled || wComp.IsAsleep || !wComp.IsWorking || wComp.CoreEntity.MarkedForClose || wComp.LazyUpdate && !ai.DbUpdated && Tick > wComp.NextLazyUpdateStart)
                         continue;
@@ -333,8 +328,8 @@ namespace CoreSystems
                         var step2 = step1 && cMode != ProtoWeaponOverrides.ControlModes.Auto || pControl.ControlBlock is IMyTurretControlBlock;
                         var track = step2 && !UiInput.CameraBlockView || pControl.ControlBlock is IMyTurretControlBlock || UiInput.CameraChannelId > 0 && UiInput.CameraChannelId == wValues.Set.Overrides.CameraChannel;
 
-                        if (isControllingPlayer)
-                        {
+                        if (isControllingPlayer) {
+
                             if (!wComp.HasAim && ai.RotorManualControlId >= 0 && sMode == Weapon.ShootManager.ShootModes.AiShoot && pControl.ControlBlock is IMyTurretControlBlock) {
                                 BlockUi.RequestShootModes(wComp.TerminalBlock, 1);
                                 sMode = wValues.Set.Overrides.ShootMode;
@@ -352,22 +347,18 @@ namespace CoreSystems
                             var turnOn = !active && UiInput.MouseButtonLeftNewPressed;
                             var turnOff = active && UiInput.MouseButtonLeftReleased;
 
-                            if (sMode == Weapon.ShootManager.ShootModes.AiShoot)
-                            {
-                                if (!ai.SuppressMouseShoot && (wValues.State.Control == ControlMode.Camera || wComp.ManualMode))
-                                {
-                                    if (turnOn || turnOff)
-                                    {
+                            if (sMode == Weapon.ShootManager.ShootModes.AiShoot) {
+
+                                if (!ai.SuppressMouseShoot && (wValues.State.Control == ControlMode.Camera || wComp.ManualMode)) {
+                                    if (turnOn || turnOff) {
                                         wComp.ShootManager.RequestShootSync(PlayerId, turnOn ? Weapon.ShootManager.RequestType.On : Weapon.ShootManager.RequestType.Off, turnOn ? Weapon.ShootManager.Signals.Manual : Weapon.ShootManager.Signals.None);
                                     }
                                 }
-                                else if (wComp.ShootManager.Signal == Weapon.ShootManager.Signals.Manual && active)
-                                {
+                                else if (wComp.ShootManager.Signal == Weapon.ShootManager.Signals.Manual && active) {
                                     wComp.ShootManager.RequestShootSync(PlayerId, Weapon.ShootManager.RequestType.Off);
                                 }
                             }
-                            else if (sMode == Weapon.ShootManager.ShootModes.MouseControl && (turnOn || turnOff))
-                            {
+                            else if (sMode == Weapon.ShootManager.ShootModes.MouseControl && (turnOn || turnOff)) {
                                 wComp.ShootManager.RequestShootSync(PlayerId, turnOn ? Weapon.ShootManager.RequestType.On : Weapon.ShootManager.RequestType.Off);
                             }
                         }
@@ -414,7 +405,6 @@ namespace CoreSystems
                         ///
                         ///Check Reload
                         ///                        
-
                         var aConst = w.ActiveAmmoDef.AmmoDef.Const;
                         if (aConst.Reloadable && !w.System.DesignatorWeapon && !w.Loading) { // does this need StayCharged?
 
@@ -440,7 +430,6 @@ namespace CoreSystems
                         ///
                         /// Update Weapon Hud Info
                         /// 
-
                         var addWeaponToHud = HandlesInput && (w.HeatPerc >= 0.01 || (w.ShowReload && (w.Loading || w.Reload.WaitForClient)) || (w.System.LockOnFocus && !w.Comp.ModOverride && construct.Data.Repo.FocusData.Locked != FocusData.LockModes.Locked) || (aConst.CanReportTargetStatus && wValues .Set.ReportTarget && !w.Target.HasTarget && wValues.Set.Overrides.Grids && (wComp.DetectOtherSignals && ai.DetectionInfo.OtherInRange || ai.DetectionInfo.PriorityInRange) && ai.DetectionInfo.TargetInRange(w)));
 
                         if (addWeaponToHud && !Session.Config.MinimalHud && ActiveControlBlock != null && ai.SubGridCache.Contains(ActiveControlBlock.CubeGrid)) {
@@ -506,8 +495,6 @@ namespace CoreSystems
                         ///
                         /// Queue for target acquire or set to tracking weapon.
                         /// 
-                        
-
                         var seek = wComp.FakeMode && w.Target.TargetState != TargetStates.IsFake || (aConst.RequiresTarget || w.RotorTurretTracking) & !w.Target.HasTarget && !noAmmo && (wComp.DetectOtherSignals && ai.DetectionInfo.OtherInRange || ai.DetectionInfo.PriorityInRange) && (!wComp.UserControlled && !enforcement.DisableAi || wValues.State.Trigger == On);
                         
                         if (!IsClient && (seek || (aConst.RequiresTarget || w.RotorTurretTracking) && rootConstruct.TargetResetTick == Tick && !wComp.UserControlled && !enforcement.DisableAi) && !w.AcquiringTarget && wValues.State.Control != ControlMode.Camera)
@@ -522,7 +509,6 @@ namespace CoreSystems
                         ///
                         /// Check weapon's turret to see if its time to go home
                         ///
-
                         if (w.TurretController && !w.IsHome && !w.ReturingHome && !w.Target.HasTarget && Tick - w.Target.ResetTick > 239 && !wComp.UserControlled && wValues.State.Trigger == Off)
                             w.ScheduleWeaponHome();
 
@@ -530,7 +516,6 @@ namespace CoreSystems
                         /// Determine if its time to shoot
                         ///
                         ///
-
                         w.AiShooting = !wComp.UserControlled && !w.System.SuppressFire && (w.TargetLock || ai.RotorTurretAimed && Vector3D.DistanceSquared(wComp.CoreEntity.PositionComp.WorldAABB.Center, ai.RotorTargetPosition) <= wComp.MaxDetectDistanceSqr);
 
                         var reloading = aConst.Reloadable && w.ClientMakeUpShots == 0 && (w.Loading || w.ProtoWeaponAmmo.CurrentAmmo == 0 || w.Reload.WaitForClient);
