@@ -351,7 +351,8 @@ namespace CoreSystems
             Defend,
             Attack,
             RoamAtPoint,
-            Follow,
+            Screen,
+            Recall,
         }
 
         [ProtoMember(5)] public long EnemyId;
@@ -404,7 +405,6 @@ namespace CoreSystems
         {
             enemy = Enemy;
             var valid = EnemyId > 0 && enemy != null && !enemy.MarkedForClose;
-
             if (valid && s.EntityAIs.TryGetValue(enemy, out ai))
             {
                 return true;
