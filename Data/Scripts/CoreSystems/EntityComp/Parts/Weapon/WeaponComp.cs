@@ -634,7 +634,7 @@ namespace CoreSystems.Platform
                     return;
 
                 var tasks = Data.Repo.Values.State.Tasks;
-                tasks.FriendId = entity.EntityId;
+                tasks.EnemyId = entity.EntityId;
                 tasks.Task = ProtoWeaponCompTasks.Tasks.Attack;
                 tasks.Update(this);
 
