@@ -79,100 +79,14 @@ namespace CoreSystems.Control
             AddLeadGroupSliderRange<T>(session, "Target Group", Localization.GetText("TerminalTargetGroupTitle"), Localization.GetText("TerminalTargetGroupTooltip"), BlockUi.GetLeadGroup, BlockUi.RequestSetLeadGroup, TargetLead, BlockUi.GetMinLeadGroup, BlockUi.GetMaxLeadGroup, true);
             AddWeaponCameraSliderRange<T>(session, "Camera Channel", Localization.GetText("TerminalCameraChannelTitle"), Localization.GetText("TerminalCameraChannelTooltip"), BlockUi.GetWeaponCamera, BlockUi.RequestSetBlockCamera, HasTracking, BlockUi.GetMinCameraChannel, BlockUi.GetMaxCameraChannel, true);
             
-            AddListBoxNoAction<T>(session, "Friend", "Friend", "Friend list", FriendFill, FriendSelect, IsDrone, 1, true, true);
-            AddListBoxNoAction<T>(session, "Enemy", "Enemy", "Enemy list", EnemyFill, EnemySelect, IsDrone, 1, true, true);
-            AddListBoxNoAction<T>(session, "Position", "Position", "Position list", PositionFill, PositionSelect, IsDrone, 1, true, true);
+            AddListBoxNoAction<T>(session, "Friend", "Friend", "Friend list", BlockUi.FriendFill, BlockUi.FriendSelect, IsDrone, 1, true, true);
+            AddListBoxNoAction<T>(session, "Enemy", "Enemy", "Enemy list", BlockUi.EnemyFill, BlockUi.EnemySelect, IsDrone, 1, true, true);
+            AddListBoxNoAction<T>(session, "Position", "Position", "Position list", BlockUi.PositionFill, BlockUi.PositionSelect, IsDrone, 1, true, true);
 
 
             Separator<T>(session, "WC_sep5", HasTracking);
         }
 
-        internal static void FriendFill(IMyTerminalBlock block, List<MyTerminalControlListBoxItem> arg1, List<MyTerminalControlListBoxItem> arg2)
-        {
-
-            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
-                return;
-
-            foreach (var f in comp.Friends)
-            {
-                arg1.Add(new MyTerminalControlListBoxItem(MyStringId.GetOrCompute(f.DisplayName), MyStringId.NullOrEmpty, f));
-            }
-
-        }
-
-        internal static void FriendSelect(IMyTerminalBlock block, List<MyTerminalControlListBoxItem> list)
-        {
-            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
-                return;
-
-            foreach (var item in list)
-            {
-                var data = item.UserData as MyEntity;
-
-                if (data != null)
-                {
-                    Log.Line($"{item.Text} - {data.DisplayName}");
-                }
-            }
-            comp.ClearFriend();
-        }
-
-        internal static void EnemyFill(IMyTerminalBlock block, List<MyTerminalControlListBoxItem> arg1, List<MyTerminalControlListBoxItem> arg2)
-        {
-
-            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
-                return;
-
-            foreach (var f in comp.Enemies)
-            {
-                arg1.Add(new MyTerminalControlListBoxItem(MyStringId.GetOrCompute(f.DisplayName), MyStringId.NullOrEmpty, f));
-            }
-        }
-
-        internal static void EnemySelect(IMyTerminalBlock block, List<MyTerminalControlListBoxItem> list)
-        {
-            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
-                return;
-
-            foreach (var item in list)
-            {
-                var data = item.UserData as MyEntity;
-
-                if (data != null)
-                {
-                    Log.Line($"{item.Text} - {data.DisplayName}");
-                }
-            }
-            comp.ClearEnemy();
-        }
-
-        internal static void PositionFill(IMyTerminalBlock block, List<MyTerminalControlListBoxItem> arg1, List<MyTerminalControlListBoxItem> arg2)
-        {
-
-            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
-                return;
-
-            foreach (var f in comp.Positions)
-            {
-                arg1.Add(new MyTerminalControlListBoxItem(MyStringId.GetOrCompute(f.Key), MyStringId.NullOrEmpty, f.Value));
-            }
-        }
-
-        internal static void PositionSelect(IMyTerminalBlock block, List<MyTerminalControlListBoxItem> list)
-        {
-            foreach (var item in list)
-            {
-                var data = item.UserData as Vector3D? ?? new Vector3D();
-
-                Log.Line($"{item.Text} - {data}");
-            }
-
-        }
 
         internal static void AddTurretControlBlockControls<T>(Session session) where T : IMyTerminalBlock
         {

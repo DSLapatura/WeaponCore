@@ -72,7 +72,7 @@ namespace CoreSystems.Control
             action.Name = new StringBuilder(Localization.GetText("ActionFriend"));
             action.Action = CustomActions.TerminalActionFriend;
             action.Writer = TerminalHelpers.EmptyStringBuilder;
-            action.Enabled = TerminalHelpers.IsReady;
+            action.Enabled = TerminalHelpers.IsDrone;
             action.ValidForGroups = true;
 
             MyAPIGateway.TerminalControls.AddAction<T>(action);
@@ -86,7 +86,7 @@ namespace CoreSystems.Control
             action.Name = new StringBuilder(Localization.GetText("ActionEnemy"));
             action.Action = CustomActions.TerminalActionEnemy;
             action.Writer = TerminalHelpers.EmptyStringBuilder;
-            action.Enabled = TerminalHelpers.IsReady;
+            action.Enabled = TerminalHelpers.IsDrone;
             action.ValidForGroups = true;
 
             MyAPIGateway.TerminalControls.AddAction<T>(action);
@@ -100,7 +100,7 @@ namespace CoreSystems.Control
             action.Name = new StringBuilder(Localization.GetText("ActionPosition"));
             action.Action = CustomActions.TerminalActionPosition;
             action.Writer = TerminalHelpers.EmptyStringBuilder;
-            action.Enabled = TerminalHelpers.IsReady;
+            action.Enabled = TerminalHelpers.IsDrone;
             action.ValidForGroups = true;
 
             MyAPIGateway.TerminalControls.AddAction<T>(action);

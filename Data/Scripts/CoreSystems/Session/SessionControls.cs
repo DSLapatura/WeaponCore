@@ -166,7 +166,6 @@ namespace CoreSystems
             CreateCustomActions<T>.CreateSelectFriend(session);
             CreateCustomActions<T>.CreateSelectEnemy(session);
             CreateCustomActions<T>.CreateSelectPosition(session);
-
         }
 
         internal static void CreateTurretControllerActions<T>(Session session) where T : IMyTerminalBlock

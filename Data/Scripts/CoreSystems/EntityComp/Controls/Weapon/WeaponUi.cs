@@ -5,8 +5,10 @@ using CoreSystems.Platform;
 using CoreSystems.Support;
 using Sandbox.ModAPI;
 using VRage.Game;
+using VRage.Game.Entity;
 using VRage.ModAPI;
 using VRage.Utils;
+using VRageMath;
 
 namespace CoreSystems
 {
@@ -49,6 +51,93 @@ namespace CoreSystems
                 }
                 else
                     comp.Session.SendSetCompFloatRequest(comp, newValue, PacketType.RequestSetRange);
+            }
+
+        }
+
+        internal static void FriendFill(IMyTerminalBlock block, List<MyTerminalControlListBoxItem> arg1, List<MyTerminalControlListBoxItem> arg2)
+        {
+
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+                return;
+
+            foreach (var f in comp.Friends)
+            {
+                arg1.Add(new MyTerminalControlListBoxItem(MyStringId.GetOrCompute(f.DisplayName), MyStringId.NullOrEmpty, f));
+            }
+
+        }
+
+        internal static void FriendSelect(IMyTerminalBlock block, List<MyTerminalControlListBoxItem> list)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+                return;
+
+            foreach (var item in list)
+            {
+                var data = item.UserData as MyEntity;
+
+                if (data != null)
+                {
+                    Log.Line($"{item.Text} - {data.DisplayName}");
+                }
+            }
+            comp.ClearFriend();
+        }
+
+        internal static void EnemyFill(IMyTerminalBlock block, List<MyTerminalControlListBoxItem> arg1, List<MyTerminalControlListBoxItem> arg2)
+        {
+
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+                return;
+
+            foreach (var f in comp.Enemies)
+            {
+                arg1.Add(new MyTerminalControlListBoxItem(MyStringId.GetOrCompute(f.DisplayName), MyStringId.NullOrEmpty, f));
+            }
+        }
+
+        internal static void EnemySelect(IMyTerminalBlock block, List<MyTerminalControlListBoxItem> list)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+                return;
+
+            foreach (var item in list)
+            {
+                var data = item.UserData as MyEntity;
+
+                if (data != null)
+                {
+                    Log.Line($"{item.Text} - {data.DisplayName}");
+                }
+            }
+            comp.ClearEnemy();
+        }
+
+        internal static void PositionFill(IMyTerminalBlock block, List<MyTerminalControlListBoxItem> arg1, List<MyTerminalControlListBoxItem> arg2)
+        {
+
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+                return;
+
+            foreach (var f in comp.Positions)
+            {
+                arg1.Add(new MyTerminalControlListBoxItem(MyStringId.GetOrCompute(f.Key), MyStringId.NullOrEmpty, f.Value));
+            }
+        }
+
+        internal static void PositionSelect(IMyTerminalBlock block, List<MyTerminalControlListBoxItem> list)
+        {
+            foreach (var item in list)
+            {
+                var data = item.UserData as Vector3D? ?? new Vector3D();
+
+                Log.Line($"{item.Text} - {data}");
             }
 
         }
