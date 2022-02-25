@@ -278,7 +278,9 @@ namespace CoreSystems
                                 oldAction(blk);
                             return;
                         }
-                        comp.ShootManager.RequestShootSync(comp.Session.PlayerId, Weapon.ShootManager.RequestType.Toggle);
+
+                        var on = comp.Data.Repo.Values.State.Trigger == On;
+                        comp.ShootManager.RequestShootSync(comp.Session.PlayerId, on ? Weapon.ShootManager.RequestType.On : Weapon.ShootManager.RequestType.Off, Weapon.ShootManager.Signals.On);
                     };
 
                     var oldWriter = a.Writer;
@@ -307,7 +309,7 @@ namespace CoreSystems
                             return;
                         }
                         if (comp.Data.Repo.Values.State.Trigger != On)
-                            comp.ShootManager.RequestShootSync(comp.Session.PlayerId, Weapon.ShootManager.RequestType.On);
+                            comp.ShootManager.RequestShootSync(comp.Session.PlayerId, Weapon.ShootManager.RequestType.On, Weapon.ShootManager.Signals.On);
                     };
 
                     var oldWriter = a.Writer;

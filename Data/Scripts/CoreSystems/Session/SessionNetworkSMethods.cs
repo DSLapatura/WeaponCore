@@ -430,7 +430,7 @@ namespace CoreSystems
                 }
                 else if (SteamToPlayer.TryGetValue(packet.SenderId, out playerId))
                 {
-                    if (wComp.Data.Repo.Values.State.Trigger != CoreComponent.Trigger.On && type != Weapon.ShootManager.RequestType.Off)
+                    if (wComp.Data.Repo.Values.State.Trigger == CoreComponent.Trigger.Off && type != Weapon.ShootManager.RequestType.Off)
                         wComp.ShootManager.RequestShootSync(playerId, type, signal);
 
                     if (wComp.Data.Repo.Values.State.Trigger == CoreComponent.Trigger.Off)

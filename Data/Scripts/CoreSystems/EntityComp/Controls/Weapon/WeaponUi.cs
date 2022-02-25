@@ -718,7 +718,7 @@ namespace CoreSystems
             if (!ready)
             {
                 var ammoState = comp.AmmoStatus();
-                Log.Line($"Shoot failed: wait:{comp.ShootManager.WaitingShootResponse} - freeze:{comp.ShootManager.FreezeClientShoot} - lockTime:{comp.Session.Tick - comp.ShootManager.WaitingTick} - shootTime:{comp.Session.Tick - comp.ShootManager.LastShootTick} - cycles:{comp.ShootManager.CompletedCycles} - ammoState:{ammoState} - EarlyOff:{comp.ShootManager.EarlyOff}", Session.InputLog);
+                Log.Line($"Shoot failed: wait:{comp.ShootManager.WaitingShootResponse} - freeze:{comp.ShootManager.FreezeClientShoot} - lockTime:{comp.Session.Tick - comp.ShootManager.WaitingTick} - shootTime:{comp.Session.Tick - comp.ShootManager.LastShootTick} - cycles:{comp.ShootManager.CompletedCycles} - ammoState:{ammoState} ", Session.InputLog);
                 var overWaitTime = comp.ShootManager.WaitingTick > 0 && comp.Session.Tick - comp.ShootManager.WaitingTick > 180;
                 var overFreezeTime = comp.ShootManager.FreezeTick > 0 && comp.Session.Tick - comp.ShootManager.FreezeTick > 180;
 

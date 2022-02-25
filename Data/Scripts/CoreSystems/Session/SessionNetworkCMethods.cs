@@ -488,16 +488,8 @@ namespace CoreSystems
                         wComp.ShootManager.ClientToggledOffByServer(interval);
                         break;
                     case Weapon.ShootManager.ShootCodes.ServerResponse:
-                    {
                         wComp.ShootManager.WaitingShootResponse = false;
-                        var state = wComp.Data.Repo.Values.State;
-                        if (wComp.ShootManager.EarlyOff && (wComp.ShootManager.ClientToggleCount > state.ToggleCount || state.Trigger == CoreComponent.Trigger.On))
-                        {
-                            Log.Line($"forcing QueuedToggle off -  frozen:{wComp.ShootManager.FreezeClientShoot}", InputLog);
-                            wComp.ShootManager.ProcessInput(PlayerId, Weapon.ShootManager.RequestType.Off, signal);
-                        }
                         break;
-                    }
                     case Weapon.ShootManager.ShootCodes.ToggleServerOff:
                         wComp.ShootManager.ClientToggledOffByServer(interval, true);
                         break;
@@ -505,7 +497,7 @@ namespace CoreSystems
                         Log.Line($"default server response");
                         long playerId;
                         SteamToPlayer.TryGetValue(packet.SenderId, out playerId);
-                        wComp.ShootManager.RequestShootSync(0, type);
+                        wComp.ShootManager.RequestShootSync(0, type, signal);
                         break;
                 }
             }

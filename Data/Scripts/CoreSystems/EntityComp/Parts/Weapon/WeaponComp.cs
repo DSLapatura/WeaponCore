@@ -647,7 +647,6 @@ namespace CoreSystems.Platform
 
             internal void ClearEnemy()
             {
-
                 var tasks = Data.Repo.Values.State.Tasks;
                 tasks.EnemyId = 0;
                 tasks.Task = ProtoWeaponCompTasks.Tasks.None;

@@ -145,7 +145,6 @@ namespace CoreSystems.Platform
         {
             public readonly WeaponComponent Comp;
             internal bool ShootActive;
-            internal bool EarlyOff;
             internal bool WaitingShootResponse;
             internal bool FreezeClientShoot;
             internal Signals Signal;
@@ -163,13 +162,16 @@ namespace CoreSystems.Platform
                 On,
                 Off,
                 Once,
-                Toggle,
             }
 
             public enum Signals
             {
                 None,
                 Manual,
+                MouseControl,
+                On,
+                Once,
+                KeyToggle,
             }
 
             public enum ShootModes
@@ -297,32 +299,33 @@ namespace CoreSystems.Platform
                 WeaponsFired = 0;
             }
 
-            internal void EndShootMode()
+            internal void EndShootMode(bool hardReset = true)
             {
                 var wValues = Comp.Data.Repo.Values;
-                for (int i = 0; i < Comp.TotalWeapons; i++)
+                if (hardReset)
                 {
-                    var w = Comp.Collection[i];
-                    if (Comp.Session.MpActive) Log.Line($"[clear] ammo:{w.ProtoWeaponAmmo.CurrentAmmo} - CompletedCycles:{CompletedCycles} - WeaponsFired:{WeaponsFired} - Signal:{Signal} - Trigger:{wValues.State.Trigger} - ClientToggleCount:{ClientToggleCount} - toggleCount:{wValues.State.ToggleCount}", Session.InputLog);
+                    for (int i = 0; i < Comp.TotalWeapons; i++)
+                    {
+                        var w = Comp.Collection[i];
+                        if (Comp.Session.MpActive) Log.Line($"[clear] ammo:{w.ProtoWeaponAmmo.CurrentAmmo} - CompletedCycles:{CompletedCycles} - WeaponsFired:{WeaponsFired} - Signal:{Signal} - Trigger:{wValues.State.Trigger} - ClientToggleCount:{ClientToggleCount} - toggleCount:{wValues.State.ToggleCount}", Session.InputLog);
 
-                    w.ShootCount = 0;
-                    w.ShootDelay = 0;
+                        w.ShootCount = 0;
+                        w.ShootDelay = 0;
+                    }
+
+                    CompletedCycles = 0;
+                    WeaponsFired = 0;
+                    LastCycle = 0;
+                    ShootActive = false;
+
                 }
 
-                CompletedCycles = 0;
-                WeaponsFired = 0;
-                LastCycle = 0;
                 ClientToggleCount = 0;
-
-                ShootActive = false;
-
-                EarlyOff = false;
-                
                 FreezeClientShoot = false;
                 WaitingShootResponse = false;
                 Signal = Signals.None;
 
-                if (Comp.Session.DedicatedServer)
+                if (Comp.Session.MpActive && Comp.Session.IsServer)
                 {
                     wValues.State.Trigger = CoreComponent.Trigger.Off;
                     Comp.Session.SendState(Comp);
@@ -346,7 +349,9 @@ namespace CoreSystems.Platform
                 var isRequestor = !Comp.Session.IsClient || playerId == Comp.Session.PlayerId;
                 
                 Signal = signal;
-                
+                if (request == RequestType.Off)
+                    Signal = Signals.None;
+
                 if (isRequestor && !ProcessInput(playerId, request, signal) || !MakeReadyToShoot()) {
                     ChangeState(request, playerId, false);
                     return;
@@ -389,7 +394,7 @@ namespace CoreSystems.Platform
 
                 var state = Comp.Data.Repo.Values.State;
                 var wasToggled = ClientToggleCount > state.ToggleCount || state.Trigger == CoreComponent.Trigger.On;
-                if (wasToggled && (requestType == RequestType.Off || requestType == RequestType.Toggle))
+                if (wasToggled && requestType == RequestType.Off )
                 {
                     // toggle off
 
@@ -419,18 +424,11 @@ namespace CoreSystems.Platform
 
             private bool ShootRequestPending(RequestType requestType)
             {
-                var state = Comp.Data.Repo.Values.State;
-
-                if (WaitingShootResponse || FreezeClientShoot)
+                if (FreezeClientShoot || WaitingShootResponse && (requestType == RequestType.On || requestType == RequestType.Once))
                 {
-                    if (ClientToggleCount > state.ToggleCount || state.Trigger == CoreComponent.Trigger.On)
-                    {
-                        EarlyOff = !EarlyOff && (ClientToggleCount > state.ToggleCount || state.Trigger == CoreComponent.Trigger.On);
-                    }
-                    Log.Line($"QueueShot:{EarlyOff} - request:{requestType} - WaitingShootResponse:{WaitingShootResponse} - FreezeClientShoot:{FreezeClientShoot}", Session.InputLog);
+                    Log.Line($"[ShootRequestPending Reject] request:{requestType} - WaitingShootResponse:{WaitingShootResponse} - FreezeClientShoot:{FreezeClientShoot} - CompletedCycles:{CompletedCycles}", Session.InputLog);
                     return true;
                 }
-
                 return false;
             }
 
@@ -442,7 +440,6 @@ namespace CoreSystems.Platform
 
                 if (Comp.Session.IsServer)
                 {
-                    var was = state.Trigger;
                     switch (request)
                     {
                         case RequestType.Off:
@@ -453,9 +450,6 @@ namespace CoreSystems.Platform
                             break;
                         case RequestType.Once:
                             state.Trigger = CoreComponent.Trigger.Once;
-                            break;
-                        case RequestType.Toggle:
-                            state.Trigger = state.Trigger != CoreComponent.Trigger.On ? CoreComponent.Trigger.On : CoreComponent.Trigger.Off;
                             break;
                     }
 
@@ -477,11 +471,11 @@ namespace CoreSystems.Platform
             {
                 if (interval > CompletedCycles)
                 {
-                    Log.Line($"client had a higher interval than server: client: {interval} > server:{CompletedCycles} - LastCycle:{LastCycle}", Session.InputLog);
+                    Log.Line($"[ServerToggleOffByClient] client had a higher interval than server: client: {interval} > server:{CompletedCycles} - LastCycle:{LastCycle}", Session.InputLog);
                 }
                 else if (interval < CompletedCycles)
                 {
-                    Log.Line($"client had a lower interval than server: client: {interval} < server:{CompletedCycles} - LastCycle:{LastCycle}", Session.InputLog);
+                    Log.Line($"[ServerToggleOffByClient] client had a lower interval than server: client: {interval} < server:{CompletedCycles} - LastCycle:{LastCycle}", Session.InputLog);
                 }
 
                 var clientMakeupRequest = interval > CompletedCycles && LastCycle == uint.MaxValue;
@@ -492,11 +486,15 @@ namespace CoreSystems.Platform
                 Comp.Session.SendShootRequest(Comp, packagedMessage, PacketType.ShootSync, null, 0);
 
                 if (!clientMakeupRequest)
+                {
+                    Log.Line($"[SERVER_END] cleint:{interval} - server:{CompletedCycles} - end:{endCycle}({LastCycle})");
                     EndShootMode();
+                }
                 else
                 {
                     Log.Line($"server catching up to client -- from:{CompletedCycles} to:{interval}", Session.InputLog);
                     LastCycle = endCycle;
+                    EndShootMode(false);
                 }
             }
 
@@ -517,20 +515,20 @@ namespace CoreSystems.Platform
 
                 if (interval > CompletedCycles)
                 {
-                    Log.Line($"server interval {interval} > client: {CompletedCycles} - frozen:{FreezeClientShoot} - wait:{WaitingShootResponse}", Session.InputLog);
+                    Log.Line($"[ClientToggledOffByServer] server interval {interval} > client: {CompletedCycles} - frozen:{FreezeClientShoot} - wait:{WaitingShootResponse}", Session.InputLog);
                 }
                 else if (interval < CompletedCycles) // look into adding a condition where the requesting client can cause the server to shoot for n burst to match client without exceeding reload, would need to freeze client.
                 {
-                    Log.Line($"server interval {interval} < client:{CompletedCycles} - frozen:{FreezeClientShoot} - wait:{WaitingShootResponse}", Session.InputLog);
+                    Log.Line($"[ClientToggledOffByServer] server interval {interval} < client:{CompletedCycles} - frozen:{FreezeClientShoot} - wait:{WaitingShootResponse}", Session.InputLog);
                 }
 
                 if (interval <= CompletedCycles)
                 {
                     EndShootMode();
                 }
-                else if (LastCycle == uint.MaxValue)
+                else if (interval > CompletedCycles)
                 {
-                    Log.Line($"ClientToggleResponse makeup attempt: Current: {CompletedCycles} freeze:{FreezeClientShoot} - target:{interval} - LastCycle:{LastCycle}", Session.InputLog);
+                    Log.Line($"[ClientToggleResponse] makeup attempt: Current: {CompletedCycles} freeze:{FreezeClientShoot} - target:{interval} - LastCycle:{LastCycle}", Session.InputLog);
                     
                     LastCycle = interval;
                 }
