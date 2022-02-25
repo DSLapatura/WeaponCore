@@ -402,7 +402,7 @@ namespace CoreSystems
 
         public bool GetEnemy(Session s, out MyEntity enemy, out Ai ai)
         {
-            enemy = Friend;
+            enemy = Enemy;
             var valid = EnemyId > 0 && enemy != null && !enemy.MarkedForClose;
 
             if (valid && s.EntityAIs.TryGetValue(enemy, out ai))
