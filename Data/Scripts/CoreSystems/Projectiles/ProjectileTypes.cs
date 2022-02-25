@@ -212,8 +212,9 @@ namespace CoreSystems.Support
         internal DroneStatus DroneStat;
         internal DroneMission DroneMsn;
         internal Vector3D TaskPosition;
-        internal MyEntity TaskTargetEnt;
-        internal BoundingSphereD TargetBound;
+        internal MyEntity NavTargetEnt;
+        internal Target ShootTarget;
+        internal BoundingSphereD NavTargetBound;
         internal bool IsFriend;
 
         internal void Clean()
@@ -221,10 +222,10 @@ namespace CoreSystems.Support
             DroneStat = DroneStatus.Launch;
             DroneMsn = DroneMission.Attack;
             TaskPosition = Vector3D.Zero;
-            TaskTargetEnt = null;
-            TargetBound = new BoundingSphereD(Vector3D.Zero,0);
+            NavTargetEnt = null;
+            ShootTarget = null;
+            NavTargetBound = new BoundingSphereD(Vector3D.Zero,0);
             IsFriend = false;
-
         }
     }
 
