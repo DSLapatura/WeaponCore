@@ -216,6 +216,7 @@ namespace CoreSystems.Support
         internal Target ShootTarget;
         internal BoundingSphereD NavTargetBound;
         internal bool IsFriend;
+        internal bool UsesStrafe;
 
         internal void Clean()
         {
@@ -226,6 +227,7 @@ namespace CoreSystems.Support
             ShootTarget = null;
             NavTargetBound = new BoundingSphereD(Vector3D.Zero,0);
             IsFriend = false;
+            UsesStrafe = false;
         }
     }
 
