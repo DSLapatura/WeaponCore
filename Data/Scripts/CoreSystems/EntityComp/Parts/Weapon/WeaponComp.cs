@@ -671,8 +671,11 @@ namespace CoreSystems.Platform
 
             private void SendTargetNotice(string message)
             {
-                if (Session.TargetUi.LastTargetNoticeTick != Session.Tick)
-                    Session.ShowLocalNotify(message, 2000, "Red");
+                if (Session.TargetUi.LastTargetNoticeTick != Session.Tick && Session.Tick - Session.TargetUi.LastTargetNoticeTick > 30)
+                {
+                    Session.ShowLocalNotify(message, 2000, "White");
+                    Session.TargetUi.LastTargetNoticeTick = Session.Tick;
+                }
             }
 
             public enum AmmoStates
