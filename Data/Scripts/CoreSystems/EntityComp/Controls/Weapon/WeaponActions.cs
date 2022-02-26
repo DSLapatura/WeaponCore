@@ -18,7 +18,7 @@ namespace CoreSystems.Control
                 return;
 
             var on = comp.Data.Repo.Values.State.Trigger == On;
-            comp.ShootManager.RequestShootSync(comp.Session.PlayerId, on ? Weapon.ShootManager.RequestType.On : Weapon.ShootManager.RequestType.Off, Weapon.ShootManager.Signals.On);
+            comp.ShootManager.RequestShootSync(comp.Session.PlayerId, on ? Weapon.ShootManager.RequestType.Off : Weapon.ShootManager.RequestType.On, Weapon.ShootManager.Signals.On);
         }
 
         internal static void TerminalActionFriend(IMyTerminalBlock blk)
@@ -90,7 +90,7 @@ namespace CoreSystems.Control
                 var keyToggle = mode == Weapon.ShootManager.ShootModes.KeyToggle;
                 var signal = keyToggle ? Weapon.ShootManager.Signals.KeyToggle : Weapon.ShootManager.Signals.Once;
                 var on = comp.Data.Repo.Values.State.Trigger == On;
-                var onOff = on ? Weapon.ShootManager.RequestType.On : Weapon.ShootManager.RequestType.Off;
+                var onOff = on ? Weapon.ShootManager.RequestType.Off : Weapon.ShootManager.RequestType.On;
                 comp.ShootManager.RequestShootSync(comp.Session.PlayerId, keyToggle ? onOff : Weapon.ShootManager.RequestType.Once, signal);
             }
         }

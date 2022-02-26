@@ -103,6 +103,9 @@ namespace CoreSystems.Support
                     else OnAddedToSceneTasks(true);
 
                     Platform.State = CorePlatform.PlatformState.Ready;
+
+
+
                 } 
                 else Log.Line("BaseComp Init() failed");
             }

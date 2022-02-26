@@ -387,7 +387,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                 var color = Color.White;
                 var lockColor = Color.White;
 
-                var hudOpacity = MathHelper.Clamp(_session.UIHudOpacity, 0.25f, 1f);
+                //var hudOpacity = MathHelper.Clamp(_session.UIHudOpacity, 0.25f, 1f);
                 
                 switch (lockMode)
                 {
@@ -395,7 +395,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                         lockColor = Color.White;
                         break;
                     case FocusData.LockModes.Locked:
-                        lockColor = s.Count < 60 ? Color.White : new Color(0, 50, 0, hudOpacity);
+                        lockColor = Color.White;
                         break;
                 }
                 MyTransparentGeometry.AddBillboardOriented(textureName, color, offset, s.CameraMatrix.Left, s.CameraMatrix.Up, screenScale, BlendTypeEnum.PostPP);

@@ -113,6 +113,10 @@ namespace CoreSystems.Support
 
             Target.Reset(Weapon.System.Session.Tick, Target.States.ProjectileClosed);
             HitList.Clear();
+
+            if (usesStorage)
+                Storage.Clean();
+
             if (IsFragment)
             {
                 if (VoxelCache != null && Weapon.System.Session != null)
@@ -142,9 +146,6 @@ namespace CoreSystems.Support
                 AmmoDef.Const.PatternShuffleArray.Push(PatternShuffle);
                 PatternShuffle = null;
             }
-
-            if (usesStorage)
-                Storage.Clean();
 
             AvShot = null;
             Ai = null;

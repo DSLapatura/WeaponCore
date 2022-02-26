@@ -87,14 +87,19 @@ namespace CoreSystems.Platform
 
             internal void WeaponInit()
             {
-
+                var wValues = Data.Repo.Values;
+                var triggered = wValues.State.Trigger == Trigger.On;
                 for (int i = 0; i < Collection.Count; i++)
                 {
                     var w = Collection[i];
-                        w.UpdatePivotPos();
+                    w.UpdatePivotPos();
 
                     if (Session.IsClient)
+                    {
                         w.Target.ClientDirty = true;
+                        if (triggered)
+                            ShootManager.MakeReadyToShoot(true);
+                    }
 
                     if (w.ProtoWeaponAmmo.CurrentAmmo == 0 && !w.Loading)
                         w.EventTriggerStateChanged(WeaponDefinition.AnimationDef.PartAnimationSetDef.EventTriggers.EmptyOnGameLoad, true);

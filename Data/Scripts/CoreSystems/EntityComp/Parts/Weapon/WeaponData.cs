@@ -42,7 +42,7 @@ namespace CoreSystems.Platform
                     Repo = load;
                     if (Comp.Session.IsServer)
                         Repo.Values.Targets = new ProtoWeaponTransferTarget[collection.Count];
-
+                    
                     for (int i = 0; i < collection.Count; i++)
                     {
                         var w = collection[i];

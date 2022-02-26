@@ -280,7 +280,7 @@ namespace CoreSystems
                         }
 
                         var on = comp.Data.Repo.Values.State.Trigger == On;
-                        comp.ShootManager.RequestShootSync(comp.Session.PlayerId, on ? Weapon.ShootManager.RequestType.On : Weapon.ShootManager.RequestType.Off, Weapon.ShootManager.Signals.On);
+                        comp.ShootManager.RequestShootSync(comp.Session.PlayerId, on ? Weapon.ShootManager.RequestType.Off : Weapon.ShootManager.RequestType.On, Weapon.ShootManager.Signals.On);
                     };
 
                     var oldWriter = a.Writer;

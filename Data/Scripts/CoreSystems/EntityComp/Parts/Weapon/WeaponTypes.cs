@@ -222,7 +222,6 @@ namespace CoreSystems.Platform
 
             internal void UpdateShootSync(Weapon w)
             {
-
                 if (--w.ShootCount == 0 && ++WeaponsFired >= Comp.TotalWeapons)
                 {
                     var set = w.Comp.Data.Comp.Data.Repo.Values.Set;
@@ -386,7 +385,6 @@ namespace CoreSystems.Platform
 
             }
 
-
             internal bool ProcessInput(long playerId, RequestType requestType, Signals other, bool skipUpdateInputState = false)
             {
                 if (!skipUpdateInputState && ShootRequestPending(requestType))
@@ -394,7 +392,7 @@ namespace CoreSystems.Platform
 
                 var state = Comp.Data.Repo.Values.State;
                 var wasToggled = ClientToggleCount > state.ToggleCount || state.Trigger == CoreComponent.Trigger.On;
-                if (wasToggled && requestType == RequestType.Off )
+                if (wasToggled && requestType != RequestType.On)
                 {
                     // toggle off
 
@@ -487,7 +485,6 @@ namespace CoreSystems.Platform
 
                 if (!clientMakeupRequest)
                 {
-                    Log.Line($"[SERVER_END] cleint:{interval} - server:{CompletedCycles} - end:{endCycle}({LastCycle})");
                     EndShootMode();
                 }
                 else
