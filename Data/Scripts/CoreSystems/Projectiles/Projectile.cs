@@ -815,33 +815,34 @@ namespace CoreSystems.Projectiles
 
 
                     //debug line draw stuff
-                    
-                    if (orbitSphere.Center != Vector3D.Zero)
+                    if (Info.Weapon.System.WConst.DebugMode)
                     {
-                        var debugLine = new LineD(Position, orbitSphere.Center);
-                        if (s.DroneStat== Transit) DsDebugDraw.DrawLine(debugLine, Color.Blue, 0.5f);
-                        if (s.DroneStat== Approach) DsDebugDraw.DrawLine(debugLine, Color.Cyan, 0.5f);
-                        if (s.DroneStat== Kamikaze) DsDebugDraw.DrawLine(debugLine, Color.White, 0.5f);
-                        if (s.DroneStat== Return) DsDebugDraw.DrawLine(debugLine, Color.Yellow, 0.5f);
-                        if (s.DroneStat== Dock) DsDebugDraw.DrawLine(debugLine, Color.Purple, 0.5f);
-                        if (s.DroneStat== Strafe) DsDebugDraw.DrawLine(debugLine, Color.Pink, 0.5f);
-                        if (s.DroneStat== Escape) DsDebugDraw.DrawLine(debugLine, Color.Red, 0.5f);
-                        if (s.DroneStat== Orbit) DsDebugDraw.DrawLine(debugLine, Color.Green, 0.5f);
-                    }
+                        if (orbitSphere.Center != Vector3D.Zero)
+                        {
+                            var debugLine = new LineD(Position, orbitSphere.Center);
+                            if (s.DroneStat == Transit) DsDebugDraw.DrawLine(debugLine, Color.Blue, 0.5f);
+                            if (s.DroneStat == Approach) DsDebugDraw.DrawLine(debugLine, Color.Cyan, 0.5f);
+                            if (s.DroneStat == Kamikaze) DsDebugDraw.DrawLine(debugLine, Color.White, 0.5f);
+                            if (s.DroneStat == Return) DsDebugDraw.DrawLine(debugLine, Color.Yellow, 0.5f);
+                            if (s.DroneStat == Dock) DsDebugDraw.DrawLine(debugLine, Color.Purple, 0.5f);
+                            if (s.DroneStat == Strafe) DsDebugDraw.DrawLine(debugLine, Color.Pink, 0.5f);
+                            if (s.DroneStat == Escape) DsDebugDraw.DrawLine(debugLine, Color.Red, 0.5f);
+                            if (s.DroneStat == Orbit) DsDebugDraw.DrawLine(debugLine, Color.Green, 0.5f);
+                        }
 
-                    switch(s.DroneMsn)
-                    {
-                        case DroneMission.Attack:
-                            DsDebugDraw.DrawSphere(new BoundingSphereD(Position, 10), Color.Red);
-                            break;
-                        case DroneMission.Defend:
-                            DsDebugDraw.DrawSphere(new BoundingSphereD(Position, 10), Color.Blue);
-                            break;
-                        case DroneMission.Rtb:
-                            DsDebugDraw.DrawSphere(new BoundingSphereD(Position, 10), Color.Green);
-                            break;
+                        switch (s.DroneMsn)
+                        {
+                            case DroneMission.Attack:
+                                DsDebugDraw.DrawSphere(new BoundingSphereD(Position, 10), Color.Red);
+                                break;
+                            case DroneMission.Defend:
+                                DsDebugDraw.DrawSphere(new BoundingSphereD(Position, 10), Color.Blue);
+                                break;
+                            case DroneMission.Rtb:
+                                DsDebugDraw.DrawSphere(new BoundingSphereD(Position, 10), Color.Green);
+                                break;
+                        }
                     }
-                    
 
                     if (tracking && s.DroneMsn != DroneMission.Rtb)
                     {
