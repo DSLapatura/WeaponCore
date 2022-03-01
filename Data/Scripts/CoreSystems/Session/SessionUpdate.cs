@@ -355,14 +355,10 @@ namespace CoreSystems
 
                             Ai.PlayerController pControl;
                             pControl.ControlBlock = null;
-                            var playerControl = isControllingPlayer && !InMenu && rootConstruct.ControllingPlayers.TryGetValue(wValues.State.PlayerId, out pControl);
-                            
-                            var step1 = (isControllingPlayer && !InMenu && (PlayerId == wValues.State.PlayerId && playerControl || rootConstruct.ControllingPlayers.TryGetValue(PlayerId, out pControl)));
-                            if (!step1 && wComp.ShootManager.Signal == Weapon.ShootManager.Signals.MouseControl)
-                                wComp.ShootManager.RequestShootSync(PlayerId, Weapon.ShootManager.RequestType.Off);
+                            var playerControl = rootConstruct.ControllingPlayers.TryGetValue(PlayerId, out pControl);
 
-                            var step2 = step1 && cMode != ProtoWeaponOverrides.ControlModes.Auto || pControl.ControlBlock is IMyTurretControlBlock;
-                            var track = step2 && !UiInput.CameraBlockView || pControl.ControlBlock is IMyTurretControlBlock || UiInput.CameraChannelId > 0 && UiInput.CameraChannelId == wValues.Set.Overrides.CameraChannel;
+                            if (!playerControl && wComp.ShootManager.Signal == Weapon.ShootManager.Signals.MouseControl)
+                                wComp.ShootManager.RequestShootSync(PlayerId, Weapon.ShootManager.RequestType.Off);
 
                             if (!wComp.HasAim && ai.RotorManualControlId >= 0 && sMode == Weapon.ShootManager.ShootModes.AiShoot && pControl.ControlBlock is IMyTurretControlBlock) {
                                 BlockUi.RequestShootModes(wComp.TerminalBlock, 1);
@@ -374,11 +370,14 @@ namespace CoreSystems
                             if (cMode == ProtoWeaponOverrides.ControlModes.Manual)
                                 TargetUi.LastManualTick = Tick;
 
+                            var control = playerControl && (cMode != ProtoWeaponOverrides.ControlModes.Auto || pControl.ControlBlock is IMyTurretControlBlock);
+                            var track = control && !InMenu && !UiInput.CameraBlockView || pControl.ControlBlock is IMyTurretControlBlock || UiInput.CameraChannelId > 0 && UiInput.CameraChannelId == wValues.Set.Overrides.CameraChannel;
+
                             if (wValues.State.TrackingReticle != track)
                                 wComp.Session.TrackReticleUpdate(wComp, track);
 
                             var active = wComp.ShootManager.ClientToggleCount > wValues.State.ToggleCount || wValues.State.Trigger == On;
-                            var turnOn = !active && UiInput.ClientInputState.MouseButtonLeft;
+                            var turnOn = !active && UiInput.ClientInputState.MouseButtonLeft && playerControl;
                             var turnOff = active && !UiInput.ClientInputState.MouseButtonLeft;
 
                             if (sMode == Weapon.ShootManager.ShootModes.AiShoot) {
