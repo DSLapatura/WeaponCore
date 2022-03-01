@@ -355,10 +355,14 @@ namespace CoreSystems
 
                             Ai.PlayerController pControl;
                             pControl.ControlBlock = null;
-                            var playerControl = rootConstruct.ControllingPlayers.TryGetValue(PlayerId, out pControl);
-
-                            if (!playerControl && wComp.ShootManager.Signal == Weapon.ShootManager.Signals.MouseControl)
+                            var playerControl = rootConstruct.ControllingPlayers.TryGetValue(wValues.State.PlayerId, out pControl);
+                            
+                            var activePlayer = PlayerId == wValues.State.PlayerId && playerControl;
+                            if (!activePlayer && wComp.ShootManager.Signal == Weapon.ShootManager.Signals.MouseControl)
                                 wComp.ShootManager.RequestShootSync(PlayerId, Weapon.ShootManager.RequestType.Off);
+
+                            var playerAim = activePlayer && cMode != ProtoWeaponOverrides.ControlModes.Auto || pControl.ControlBlock is IMyTurretControlBlock;
+                            var track = !InMenu && (playerAim && !UiInput.CameraBlockView || pControl.ControlBlock is IMyTurretControlBlock || UiInput.CameraChannelId > 0 && UiInput.CameraChannelId == wValues.Set.Overrides.CameraChannel);
 
                             if (!wComp.HasAim && ai.RotorManualControlId >= 0 && sMode == Weapon.ShootManager.ShootModes.AiShoot && pControl.ControlBlock is IMyTurretControlBlock) {
                                 BlockUi.RequestShootModes(wComp.TerminalBlock, 1);
@@ -369,9 +373,6 @@ namespace CoreSystems
 
                             if (cMode == ProtoWeaponOverrides.ControlModes.Manual)
                                 TargetUi.LastManualTick = Tick;
-
-                            var control = playerControl && (cMode != ProtoWeaponOverrides.ControlModes.Auto || pControl.ControlBlock is IMyTurretControlBlock);
-                            var track = control && !InMenu && !UiInput.CameraBlockView || pControl.ControlBlock is IMyTurretControlBlock || UiInput.CameraChannelId > 0 && UiInput.CameraChannelId == wValues.Set.Overrides.CameraChannel;
 
                             if (wValues.State.TrackingReticle != track)
                                 wComp.Session.TrackReticleUpdate(wComp, track);
