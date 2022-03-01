@@ -51,7 +51,8 @@ namespace CoreSystems.Support
         internal readonly HashSet<MyBatteryBlock> Batteries = new HashSet<MyBatteryBlock>();
         internal readonly HashSet<MyCubeGrid> SubGridCache = new HashSet<MyCubeGrid>();
         internal readonly HashSet<Projectile> LiveProjectile = new HashSet<Projectile>();
-
+        internal readonly HashSet<IMyMotorStator> Stators = new HashSet<IMyMotorStator>();
+        internal readonly HashSet<IMyShipToolBase> Tools = new HashSet<IMyShipToolBase>();
 
         internal readonly ConcurrentDictionary<MyCubeGrid, byte> SubGridsRegistered = new ConcurrentDictionary<MyCubeGrid, byte>();
 
@@ -148,7 +149,7 @@ namespace CoreSystems.Support
         internal uint ProjectileTicker;
         internal uint LastDetectEvent;
         internal uint LastBlockChangeTick;
-        internal uint LastRootWeaponTick;
+        internal uint LastAddToRotorTick;
         internal int SleepingComps;
         internal int AwakeComps;
         internal int SourceCount;

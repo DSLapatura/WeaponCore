@@ -482,7 +482,7 @@ namespace CoreSystems
                 switch (code)
                 {
                     case Weapon.ShootManager.ShootCodes.ClientRequestReject:
-                        wComp.ShootManager.ServerReject();
+                        wComp.ShootManager.ReceivedServerReject();
                         break;
                     case Weapon.ShootManager.ShootCodes.ToggleClientOff:
                         wComp.ShootManager.ClientToggledOffByServer(interval);
@@ -494,7 +494,6 @@ namespace CoreSystems
                         wComp.ShootManager.ClientToggledOffByServer(interval, true);
                         break;
                     default:
-                        Log.Line($"default server response");
                         long playerId;
                         SteamToPlayer.TryGetValue(packet.SenderId, out playerId);
                         wComp.ShootManager.RequestShootSync(0, type, signal);

@@ -245,25 +245,34 @@ namespace CoreSystems
                             continue;
                         }
 
-                        topAi.RotorCommandTick = Tick;
+                        var trackWeapon = topAi.RootFixedWeaponComp?.TrackingWeapon;
+                        controlPart.TrackingWeapon = trackWeapon;
+                        if (trackWeapon == null)
+                            continue;
+
+                        //if (topAi.LastAddToRotorTick >= cComp.LastAddTick)
+                        //    cComp.AddThings(topAi);
+
                         Ai.PlayerController pControl;
                         var hasControl = rootConstruct.ControllingPlayers.TryGetValue(PlayerId, out pControl) && pControl.ControlBlock == cComp.CoreEntity;
+
                         topAi.RotorManualControlId = hasControl ? PlayerId : topAi.RotorManualControlId != -2 ? -1 : -2;
+                        topAi.RotorCommandTick = Tick;
+                        
+                        trackWeapon.MasterComp = cComp;
+                        trackWeapon.RotorTurretTracking = true;
 
                         if (cComp.Controller.IsUnderControl) {
                             cComp.RotorsMoving = true;
                             continue;
                         }
                         
-                        if (!cComp.Data.Repo.Values.Set.Overrides.AiEnabled || topAi.RootFixedWeaponComp?.TrackingWeapon == null || topAi.RootFixedWeaponComp.TrackingWeapon.Comp.CoreEntity.MarkedForClose) {
+                        if (!cComp.Data.Repo.Values.Set.Overrides.AiEnabled || topAi.RootFixedWeaponComp.TrackingWeapon.Comp.CoreEntity.MarkedForClose) {
                             if (cComp.RotorsMoving)
                                 cComp.StopRotors();
                             continue;
                         }
 
-                        controlPart.TrackingWeapon = topAi.RootFixedWeaponComp.TrackingWeapon;
-                        controlPart.TrackingWeapon.MasterComp = cComp;
-                        controlPart.TrackingWeapon.RotorTurretTracking = true;
                         var desiredDirection = Vector3D.Zero;
                         var noTarget = false;
 
@@ -279,8 +288,32 @@ namespace CoreSystems
                             continue;
                         }
 
-                        if (!cComp.TrackTarget(topAi, ref desiredDirection))
+                        if (!cComp.TrackTarget(topAi, cComp.Platform.Control.BaseMap,  cComp.Platform.Control.OtherMap, true, ref desiredDirection))
                             continue;
+                        //cComp.CheckAction1(topAi);
+
+                        /*
+                        foreach (var s in topAi.Stators)
+                        {
+                            var top = s.TopGrid as MyCubeGrid;
+                            Ai otherAi;
+                            if (top != null && EntityAIs.TryGetValue(top, out otherAi))
+                            {
+                                if (otherAi == topAi)
+                                    continue;
+                                if (otherAi.RootFixedWeaponComp.TrackingWeapon.Target.TargetEntity != topAi.RootFixedWeaponComp.TrackingWeapon.Target.TargetEntity)
+                                {
+                                    topAi.RootFixedWeaponComp.TrackingWeapon.Target.CopyTo(otherAi.RootFixedWeaponComp.TrackingWeapon.Target, false);
+                                }
+                                otherAi.RootFixedWeaponComp.TrackingWeapon.MasterComp = cComp;
+                                otherAi.RootFixedWeaponComp.TrackingWeapon.RotorTurretTracking = true;
+                                otherAi.RotorCommandTick = Tick;
+                                otherAi.RotorManualControlId = hasControl ? PlayerId : otherAi.RotorManualControlId != -2 ? -1 : -2;
+
+                                cComp.TrackTarget(otherAi, cComp.Platform.Control.BaseMap, s, false, ref desiredDirection);
+                            }
+                        }
+                        */
                     }
 
                 }
@@ -312,7 +345,7 @@ namespace CoreSystems
                     if (HandlesInput) {
 
                         if (IsClient && ai.GridMap.LastControllerTick == Tick && wComp.ShootManager.Signal == Weapon.ShootManager.Signals.Manual && (wComp.ShootManager.ClientToggleCount > wValues.State.ToggleCount || wValues.State.Trigger == On) && wValues.State.PlayerId > 0) 
-                                wComp.ShootManager.RequestShootSync(PlayerId, Weapon.ShootManager.RequestType.Off);
+                            wComp.ShootManager.RequestShootSync(PlayerId, Weapon.ShootManager.RequestType.Off);
 
                         if (wComp.TypeSpecific == CoreComponent.CompTypeSpecific.Rifle && wValues.State.Control != ControlMode.Ui)
                             wComp.ShootManager.RequestShootSync(PlayerId, Weapon.ShootManager.RequestType.Once, Weapon.ShootManager.Signals.Once);
@@ -345,8 +378,8 @@ namespace CoreSystems
                                 wComp.Session.TrackReticleUpdate(wComp, track);
 
                             var active = wComp.ShootManager.ClientToggleCount > wValues.State.ToggleCount || wValues.State.Trigger == On;
-                            var turnOn = !active && UiInput.MouseButtonLeftNewPressed;
-                            var turnOff = active && UiInput.MouseButtonLeftReleased;
+                            var turnOn = !active && UiInput.ClientInputState.MouseButtonLeft;
+                            var turnOff = active && !UiInput.ClientInputState.MouseButtonLeft;
 
                             if (sMode == Weapon.ShootManager.ShootModes.AiShoot) {
 
@@ -451,7 +484,6 @@ namespace CoreSystems
                         /// 
                         var noAmmo = w.NoMagsToLoad && w.ProtoWeaponAmmo.CurrentAmmo == 0 && aConst.Reloadable && !w.System.DesignatorWeapon && Tick - w.LastMagSeenTick > 600;
                         if (w.Target.HasTarget) {
-
                             
                             if (!IsClient && noAmmo)
                                 w.Target.Reset(Tick, States.Expired);

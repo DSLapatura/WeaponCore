@@ -10,10 +10,6 @@ namespace CoreSystems.Platform
 {
     public partial class ControlSys : Part
     {
-
-        internal readonly HashSet<IMySlimBlock> SuppotedBlocks = new HashSet<IMySlimBlock>();
-        internal readonly Dictionary<IMySlimBlock, BlockBackup> BlockColorBackup = new Dictionary<IMySlimBlock, BlockBackup>();
-
         internal readonly ControlInfo Info = new ControlInfo();
         internal readonly ControlComponent Comp;
         internal readonly ControlSystem System;
@@ -22,7 +18,6 @@ namespace CoreSystems.Platform
         internal IMyMotorStator BaseMap;
         internal IMyMotorStator OtherMap;
         internal Weapon TrackingWeapon;
-
         internal ProtoControlPartState PartState;
 
         internal ControlSys(ControlSystem system, ControlComponent comp, int partId)

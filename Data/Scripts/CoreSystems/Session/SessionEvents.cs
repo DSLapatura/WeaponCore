@@ -63,7 +63,7 @@ namespace CoreSystems
                             DelayedHandWeaponsSpawn.Enqueue(rifle);
                             return;
                         }
-                        var cubeType = cube != null && (ReplaceVanilla && VanillaIds.ContainsKey(cube.BlockDefinition.Id) || PartPlatforms.ContainsKey(cube.BlockDefinition.Id)) || turretController != null;
+                        var cubeType = cube != null && (VanillaIds.ContainsKey(cube.BlockDefinition.Id) || PartPlatforms.ContainsKey(cube.BlockDefinition.Id)) || turretController != null;
                         var validType = cubeType;
                         if (!validType)
                         {

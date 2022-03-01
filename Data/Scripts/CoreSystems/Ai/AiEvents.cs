@@ -121,10 +121,22 @@ namespace CoreSystems.Support
         {
             try
             {
-                var battery = cube as MyBatteryBlock;
+                var stator = cube as IMyMotorStator;
+                var tool = cube as IMyShipToolBase;
 
+                if (stator != null || tool != null)
+                {
+                    if (stator != null)
+                        Stators.Add(stator);
+
+                    if (tool != null)
+                        Tools.Add(tool);
+                    return;
+                }
+
+                var battery = cube as MyBatteryBlock;
                 var weaponType = (cube is MyConveyorSorter || cube is IMyUserControllableGun);
-                var isWeaponBase = weaponType && cube.BlockDefinition != null && (Session.ReplaceVanilla && Session.VanillaIds.ContainsKey(cube.BlockDefinition.Id) || Session.PartPlatforms.ContainsKey(cube.BlockDefinition.Id));
+                var isWeaponBase = weaponType && cube.BlockDefinition != null && (Session.VanillaIds.ContainsKey(cube.BlockDefinition.Id) || Session.PartPlatforms.ContainsKey(cube.BlockDefinition.Id));
 
                 if (!isWeaponBase && (cube is MyConveyor || cube is IMyConveyorTube || cube is MyConveyorSorter || cube is MyCargoContainer || cube is MyCockpit || cube is IMyAssembler || cube is IMyShipConnector) && cube.CubeGrid.IsSameConstructAs(GridEntity)) { 
                     
@@ -171,9 +183,23 @@ namespace CoreSystems.Support
         {
             try
             {
+                var stator = cube as IMyMotorStator;
+                var tool = cube as IMyShipToolBase;
+
+                if (stator != null || tool != null)
+                {
+                    LastAddToRotorTick = Session.Tick;
+                    if (stator != null)
+                        Stators.Remove(stator);
+
+                    if (tool != null)
+                        Tools.Remove(tool);
+                    return;
+                }
+
                 var weaponType = (cube is MyConveyorSorter || cube is IMyUserControllableGun);
                 var cubeDef = cube.BlockDefinition;
-                var isWeaponBase = weaponType && cubeDef != null && (Session.ReplaceVanilla && Session.VanillaIds.ContainsKey(cubeDef.Id) || Session.PartPlatforms.ContainsKey(cubeDef.Id));
+                var isWeaponBase = weaponType && cubeDef != null && (Session.VanillaIds.ContainsKey(cubeDef.Id) || Session.PartPlatforms.ContainsKey(cubeDef.Id));
                 var battery = cube as MyBatteryBlock;
                 MyInventory inventory;
 

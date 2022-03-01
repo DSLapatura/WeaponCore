@@ -456,6 +456,11 @@ namespace CoreSystems.Control
             builder.Append(BlockUi.GetRof(block).ToString("N2"));
         }
 
+        internal static void KeyShootStringBuilder(IMyTerminalBlock block, StringBuilder builder)
+        {
+            builder.Append(BlockUi.GetStringShootStatus(block));
+        }
+
         internal static void EmptyStringBuilder(IMyTerminalBlock block, StringBuilder builder)
         {
             builder.Append("");

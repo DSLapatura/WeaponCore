@@ -38,6 +38,7 @@ namespace CoreSystems.Support
         internal uint ExpiredTick;
         internal uint ResetTick;
         internal uint ProjectileEndTick;
+        internal uint ChangeTick;
         internal BlockTypes LastBlockType;
         internal TargetStates TargetState;
         internal Vector3D TargetPos;
@@ -195,6 +196,18 @@ namespace CoreSystems.Support
             Reset(expireTick, States.Transfered);
         }
 
+        internal void CopyTo(Target target, bool drone = false)
+        {
+            target.IsDrone = drone;
+            target.TargetEntity = TargetEntity;
+            target.Projectile = Projectile;
+            target.TargetPos = TargetPos;
+            target.HitShortDist = HitShortDist;
+            target.OrigDistance = OrigDistance;
+            target.TopEntityId = TopEntityId;
+            target.TargetState = TargetState;
+            target.StateChange(HasTarget, CurrentState);
+        }
 
         internal void Set(MyEntity ent, Vector3D pos, double shortDist, double origDist, long topEntId, Projectile projectile = null, bool isFakeTarget = false)
         {
@@ -282,6 +295,8 @@ namespace CoreSystems.Support
             HasTarget = setTarget;
             PreviousState = CurrentState;
             CurrentState = reason;
+            if (Part != null)
+                ChangeTick = Part.BaseComp.Session.Tick;
         }
 
         internal void SetTargetId(bool setTarget, States reason)

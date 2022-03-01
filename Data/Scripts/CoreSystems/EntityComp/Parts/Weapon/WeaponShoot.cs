@@ -352,8 +352,12 @@ namespace CoreSystems.Platform
             EventTriggerStateChanged(EventTriggers.Overheated, true);
 
             var wasOver = PartState.Overheated;
+            
             if (System.Session.IsServer)
             {
+                if (!wasOver)
+                    Comp.ShootManager.EndShootMode(true);
+
                 PartState.Overheated = true;
                 if (System.Session.MpActive && !wasOver)
                     System.Session.SendState(Comp);

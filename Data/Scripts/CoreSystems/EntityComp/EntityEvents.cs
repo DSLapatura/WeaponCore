@@ -301,6 +301,7 @@ namespace CoreSystems.Support
         {
             try
             {
+                var comp = ((ControlSys.ControlComponent)this);
 
                 stringBuilder.Append("\n==== ControlSys ====\n");
 
@@ -311,7 +312,7 @@ namespace CoreSystems.Support
 
                 if (initted)
                 {
-                    stringBuilder.Append($"Weapons: {ai.WeaponComps.Count}\nTools: {0}\nCameras: {0}\n");
+                    stringBuilder.Append($"Weapons: {ai.WeaponComps.Count}\nTools: {ai.Tools.Count}\nCamera: {comp.Controller.Camera != null}\n");
                 }
 
                 if (Debug)

@@ -224,6 +224,14 @@ namespace CoreSystems
 
         private void CompileWeaponStructures()
         {
+            if (ReplaceVanilla) {
+
+                for (int i = WeaponDefinitions.Count - 1; i >= 0; i--) {
+                    var def = WeaponDefinitions[i];
+                    if (def.ModPath == ModContext.ModPath)
+                        WeaponDefinitions.RemoveAtFast(i);
+                }
+            }
 
             foreach (var x in WeaponDefinitions)
             {
@@ -296,7 +304,7 @@ namespace CoreSystems
                             {
 
                                 MyDefinitionId defid;
-                                var matchingDef = def.Id.SubtypeName == subTypeMap.Key || (ReplaceVanilla && VanillaCoreIds.TryGetValue(MyStringHash.GetOrCompute(subTypeMap.Key), out defid) && defid == def.Id);
+                                var matchingDef = def.Id.SubtypeName == subTypeMap.Key || (VanillaCoreIds.TryGetValue(MyStringHash.GetOrCompute(subTypeMap.Key), out defid) && defid == def.Id);
 
                                 if (matchingDef)
                                 {
@@ -499,7 +507,7 @@ namespace CoreSystems
                         {
 
                             MyDefinitionId defid;
-                            var matchingDef = def.Id.SubtypeName == subTypeMap.Key || (ReplaceVanilla && VanillaCoreIds.TryGetValue(MyStringHash.GetOrCompute(subTypeMap.Key), out defid) && defid == def.Id);
+                            var matchingDef = def.Id.SubtypeName == subTypeMap.Key || (VanillaCoreIds.TryGetValue(MyStringHash.GetOrCompute(subTypeMap.Key), out defid) && defid == def.Id);
 
                             if (matchingDef)
                             {
@@ -632,7 +640,7 @@ namespace CoreSystems
                         {
 
                             MyDefinitionId defid;
-                            var matchingDef = def.Id.SubtypeName == subTypeMap.Key || (ReplaceVanilla && VanillaCoreIds.TryGetValue(MyStringHash.GetOrCompute(subTypeMap.Key), out defid) && defid == def.Id);
+                            var matchingDef = def.Id.SubtypeName == subTypeMap.Key || (VanillaCoreIds.TryGetValue(MyStringHash.GetOrCompute(subTypeMap.Key), out defid) && defid == def.Id);
 
                             if (matchingDef)
                             {

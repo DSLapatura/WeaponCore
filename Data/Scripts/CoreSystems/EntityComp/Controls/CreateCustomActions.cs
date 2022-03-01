@@ -43,7 +43,7 @@ namespace CoreSystems.Control
             action.Icon = @"Textures\GUI\Icons\Actions\SwitchOn.dds";
             action.Name = new StringBuilder(Localization.GetText("ActionFire"));
             action.Action = CustomActions.TerminalActionKeyShoot;
-            action.Writer = TerminalHelpers.EmptyStringBuilder;
+            action.Writer = TerminalHelpers.KeyShootStringBuilder;
             action.Enabled = TerminalHelpers.KeyShootWeapon;
             action.ValidForGroups = true;
 

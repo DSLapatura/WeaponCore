@@ -180,6 +180,21 @@ namespace CoreSystems
             return comp.Data.Repo.Values.Set.ReportTarget;
         }
 
+        private const string KeyDisable = "Inactive";
+        private const string KeyShoot = "Once";
+        private const string KeyToggle = "Toggle";
+
+        internal static string GetStringShootStatus(IMyTerminalBlock block)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return string.Empty;
+
+            var value = ((int)comp.Data.Repo.Values.Set.Overrides.ShootMode);
+            var active = value >= 2;
+
+            return !active ? KeyDisable : value == 2 ? KeyToggle : KeyShoot;
+        }
+
         internal static float GetRof(IMyTerminalBlock block)
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;

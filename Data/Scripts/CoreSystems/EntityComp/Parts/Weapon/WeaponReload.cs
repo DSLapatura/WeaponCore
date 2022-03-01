@@ -373,14 +373,8 @@ namespace CoreSystems.Platform
                 ProjectileCounter = 0;
                 ShootDelay = 0;
 
-                var mgr = Comp.ShootManager;
-                var state = Comp.Data.Repo.Values.State;
-
-                if (mgr.ShootActive && mgr.ClientToggleCount <= state.ToggleCount && state.Trigger == CoreComponent.Trigger.Off)
-                {
-                    Log.Line($"EndShootMode called by reload due to toggle state being off while ShootActive was true!", Session.InputLog);
-                    mgr.EndShootMode();
-                }
+                if (Comp.ShootManager.LastCycle != uint.MaxValue)
+                    Comp.ShootManager.EndShootMode();
             }
         }
 

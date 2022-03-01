@@ -1,6 +1,7 @@
 ﻿using System;
 using CoreSystems.Platform;
 using Sandbox.Game.Entities;
+using Sandbox.ModAPI;
 using VRage.Game.Components;
 using VRageMath;
 using static CoreSystems.Session;
@@ -200,7 +201,10 @@ namespace CoreSystems.Support
                         {
 
                             var cubeBlock = fatList[i];
-                            if (cubeBlock is MyBatteryBlock || cubeBlock.HasInventory)
+                            var stator = cubeBlock as IMyMotorStator;
+                            var tool = cubeBlock as IMyShipToolBase;
+
+                            if (cubeBlock is MyBatteryBlock || cubeBlock.HasInventory || stator != null || tool != null)
                                 Ai.FatBlockAdded(cubeBlock);
                         }
                         var bigOwners = Ai.GridEntity.BigOwners;

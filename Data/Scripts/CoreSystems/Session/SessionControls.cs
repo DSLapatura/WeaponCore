@@ -142,8 +142,8 @@ namespace CoreSystems
             CreateCustomActions<T>.CreateShootToggle(session);
             CreateCustomActions<T>.CreateShootOn(session);
             CreateCustomActions<T>.CreateShootOff(session);
-            CreateCustomActions<T>.CreateKeyShoot(session);
             CreateCustomActions<T>.CreateShootMode(session);
+            CreateCustomActions<T>.CreateKeyShoot(session);
             CreateCustomActions<T>.CreateMouseToggle(session);
             CreateCustomActions<T>.CreateSubSystems(session);
             CreateCustomActions<T>.CreateControlModes(session);
@@ -397,7 +397,7 @@ namespace CoreSystems
                 "RemoveSelectedTextures",
                 "PreserveAspectRatio",
 
-                "Open Toolbar",
+                //"Open Toolbar",
                 "RotorAzimuth",
                 "RotorElevation",
                 "CameraList",

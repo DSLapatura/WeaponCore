@@ -430,16 +430,15 @@ namespace CoreSystems
                 }
                 else if (SteamToPlayer.TryGetValue(packet.SenderId, out playerId))
                 {
-                    if (wComp.Data.Repo.Values.State.Trigger == CoreComponent.Trigger.Off && type != Weapon.ShootManager.RequestType.Off)
-                        wComp.ShootManager.RequestShootSync(playerId, type, signal);
-
-                    if (wComp.Data.Repo.Values.State.Trigger == CoreComponent.Trigger.Off)
-                        wComp.ShootManager.ServerRejectResponse(packet.SenderId);
+                    var success = (wComp.Data.Repo.Values.State.Trigger != CoreComponent.Trigger.On && type != Weapon.ShootManager.RequestType.Off && wComp.ShootManager.RequestShootSync(playerId, type, signal));
+                    if (!success || wComp.Data.Repo.Values.State.Trigger == CoreComponent.Trigger.Off)
+                    {
+                        wComp.ShootManager.ServerRejectResponse(packet.SenderId, type);
+                    }
                 }
                 else
                 {
                     Log.Line($"ServerShootSyncs failed: - mode:{signal} - {type}", InputLog);
-
                 }
             }
 

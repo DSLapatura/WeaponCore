@@ -372,10 +372,11 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                 double dist;
                 Vector3D.DistanceSquared(ref entCenter, ref origin, out dist);
 
-                if (dist > 640000)
+                if (dist > 360000)
                 {
                     var inflated = info.PositionComp.WorldVolume;
-                    inflated.Radius *= 3;
+                    var clamped = MathHelperD.Clamp(inflated.Radius * 3, 100f, double.MaxValue);
+                    inflated.Radius = clamped;
                     var dist2 = ray.Intersects(inflated);
                     if (dist2 < closestDist2)
                     {
@@ -409,10 +410,11 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                         double dist;
                         Vector3D.DistanceSquared(ref entCenter, ref origin, out dist);
 
-                        if (dist > 640000)
+                        if (dist > 360000)
                         {
                             var inflated = entVolume;
-                            inflated.Radius *= 3;
+                            var clamped = MathHelperD.Clamp(inflated.Radius * 3, 100f, double.MaxValue);
+                            inflated.Radius = clamped;
                             var dist2 = ray.Intersects(inflated);
                             if (dist2 < closestDist2)
                             {

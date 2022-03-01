@@ -461,12 +461,12 @@ namespace CoreSystems.Support
 
             ClientPredictedAmmo = predictionEligible && FixedFireAmmo && !ammo.IsShrapnel && RealShotsPerMin <= 120 && !clientPredictedAmmoDisabled;
 
-            if (!ClientPredictedAmmo)
+            if (!ClientPredictedAmmo && predictionEligible)
                 Log.Line($"{ammo.AmmoDef.AmmoRound} is NOT enabled for client prediction");
 
             SlowFireFixedWeapon = system.TurretMovement == WeaponSystem.TurretType.Fixed && (RealShotsPerMin <= 120 || Reloadable && system.WConst.ReloadTime >= 120);
 
-            if (!SlowFireFixedWeapon && system.TurretMovement == WeaponSystem.TurretType.Fixed)
+            if (!SlowFireFixedWeapon && system.TurretMovement == WeaponSystem.TurretType.Fixed && predictionEligible)
                 Log.Line($"{ammo.AmmoDef.AmmoRound} does not qualify for fixed weapon client reload verification");
 
             SkipAimChecks = (ammo.AmmoDef.Trajectory.Guidance == Smart || ammo.AmmoDef.Trajectory.Guidance == DroneAdvanced) && system.TurretMovement == WeaponSystem.TurretType.Fixed;

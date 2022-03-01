@@ -7,6 +7,7 @@ using CoreSystems.Support;
 using ParallelTasks;
 using Sandbox.Common.ObjectBuilders;
 using Sandbox.Definitions;
+using Sandbox.Game;
 using Sandbox.Game.Entities;
 using Sandbox.Game.EntityComponents;
 using Sandbox.ModAPI;
@@ -669,7 +670,7 @@ namespace CoreSystems
 
                     MyDefinitionId defId = new MyDefinitionId();
 
-                    if ((ReplaceVanilla && VanillaCoreIds.TryGetValue(MyStringHash.GetOrCompute(subTypeId), out defId)))
+                    if ((VanillaCoreIds.TryGetValue(MyStringHash.GetOrCompute(subTypeId), out defId)))
                         removeDefs.Add(defId);
                     else
                     {
@@ -755,7 +756,7 @@ namespace CoreSystems
                         if (toolbarItem != null)
                         {
                             var defId = (MyDefinitionId)toolbarItem.defId;
-                            if ((ReplaceVanilla && VanillaIds.ContainsKey(defId)) || PartPlatforms.ContainsKey(defId))
+                            if ((VanillaIds.ContainsKey(defId)) || PartPlatforms.ContainsKey(defId))
                             {
                                 var index = ob.Toolbar.Slots[i].Index;
                                 var item = ob.Toolbar.Slots[i].Item;
@@ -770,6 +771,7 @@ namespace CoreSystems
                 }
             }
         }
+
 
         private static void CounterKeenLogMessage(bool console = true)
         {

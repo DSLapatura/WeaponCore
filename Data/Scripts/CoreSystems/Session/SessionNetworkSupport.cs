@@ -1221,7 +1221,7 @@ namespace CoreSystems
             else Log.Line("SendSetFloatRequest should never be called on Non-HandlesInput");
         }
 
-        internal void SendBurstReject(CoreComponent comp, ulong newLong, PacketType type, ulong clientId)
+        internal void SendShootReject(CoreComponent comp, ulong newLong, PacketType type, ulong clientId)
         {
             if (IsClient)
             {

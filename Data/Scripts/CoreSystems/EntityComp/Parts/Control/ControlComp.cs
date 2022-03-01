@@ -1,11 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using CoreSystems.Support;
+using Sandbox.Game;
 using Sandbox.Game.Entities;
+using Sandbox.Game.Gui;
+using Sandbox.Game.Weapons;
 using Sandbox.ModAPI;
 using SpaceEngineers.Game.ModAPI;
 using VRage.Game;
 using VRage.Game.Entity;
+using VRage.Input;
 using VRage.Utils;
 using VRageMath;
 
@@ -15,15 +19,13 @@ namespace CoreSystems.Platform
     {
         public class ControlComponent : CoreComponent
         {
+            internal readonly List<Sandbox.ModAPI.Interfaces.ITerminalAction> Actions = new List<Sandbox.ModAPI.Interfaces.ITerminalAction>();
             internal readonly ControlCompData Data;
             internal readonly ControlStructure Structure;
             internal readonly IMyTurretControlBlock Controller;
-            internal bool RotorsDirty;
             internal bool RotorsMoving;
-            internal Target.TargetStates OldState = Target.TargetStates.WasFake;
-            internal uint LastCrashTick;
             internal uint LastOwnerRequestTick;
-
+            internal uint LastAddTick;
             internal ControlComponent(Session session, MyEntity coreEntity, MyDefinitionId id)
             {
                 Controller = (IMyTurretControlBlock)coreEntity;
@@ -81,6 +83,16 @@ namespace CoreSystems.Platform
                     Ai.AwakeComps++;
             }
 
+            internal void AddThings(Ai topAi)
+            {
+                Controller.ClearTools();
+                foreach (var t in topAi.Tools)
+                {
+                    Controller.AddTool(t);
+                }
+
+                LastAddTick = Session.Tick;
+            }
 
             internal void StopRotors()
             {
@@ -268,10 +280,9 @@ namespace CoreSystems.Platform
             }
 
 
-            internal bool TrackTarget(Ai topAi, ref Vector3D desiredDirection)
+            internal bool TrackTarget(Ai topAi, IMyMotorStator root, IMyMotorStator other, bool isRoot, ref Vector3D desiredDirection)
             {
-                var trackingWeapon = Platform.Control.TrackingWeapon;
-                var root = Platform.Control.BaseMap;
+                var trackingWeapon = isRoot? Platform.Control.TrackingWeapon : topAi.RootFixedWeaponComp.TrackingWeapon;
                 RotorsMoving = true;
                 var targetDistSqr = Vector3D.DistanceSquared(root.PositionComp.WorldAABB.Center, trackingWeapon.Target.TargetEntity.PositionComp.WorldAABB.Center);
 
@@ -291,7 +302,7 @@ namespace CoreSystems.Platform
                 var rootOutsideLimits = false;
                 if (MyUtils.IsZero((float) rootAngle, (float)epsilon))
                 {
-                    if (Session.IsServer)
+                    if (Session.IsServer && isRoot)
                         root.TargetVelocityRad = 0;
                 }
                 else
@@ -304,13 +315,11 @@ namespace CoreSystems.Platform
                     if ((desiredAngle < root.LowerLimitRad && desiredAngle + MathHelper.TwoPi < root.UpperLimitRad) || (desiredAngle > root.UpperLimitRad && desiredAngle - MathHelper.TwoPi > root.LowerLimitRad))
                         rootAngle = -Math.Sign(rootAngle) * (MathHelper.TwoPi - Math.Abs(rootAngle));
 
-                    if (Session.IsServer)
+                    if (Session.IsServer && isRoot)
                         root.TargetVelocityRad = rootOutsideLimits ? 0 : Math.Abs(Controller.VelocityMultiplierAzimuthRpm) * (float)rootAngle;
                 }
 
                 var primaryWeapon = topAi.WeaponComps[0].Collection[0];
-
-                var other = Platform.Control.OtherMap;
 
                 currentDirection = primaryWeapon.GetScope.Info.Direction;
                 up = other.PositionComp.WorldMatrixRef.Up;
@@ -343,6 +352,42 @@ namespace CoreSystems.Platform
                 }
 
                 return true;
+            }
+
+            private uint _lastAction1Tick;
+            internal void CheckAction1(Ai topAi)
+            {
+                var w = topAi.RootFixedWeaponComp.TrackingWeapon;
+                var target = w.Target;
+                Vector3D targetPos;
+                if (target.HasTarget && target.HasTarget && target.ChangeTick > _lastAction1Tick && Weapon.TargetAligned(w, target, out targetPos))
+                {
+                    Actions.Clear();
+                    Controller.GetActions(Actions, null);
+
+                    foreach (var a in Actions)
+                    {
+                        Log.Line($"tracking: {a.Id} - {a.Name}");
+                    }
+                    _lastAction1Tick = Session.Tick;
+                }
+
+            }
+
+            private uint _lastAction2Tick;
+            internal void CheckActions2(Ai topAi)
+            {
+                if (_lastAction2Tick > 1)
+                {
+                    Actions.Clear();
+                    Controller.GetActions(Actions, null);
+
+                    foreach (var a in Actions)
+                    {
+                        Log.Line($"notTracking: {a.Id} - {a.Name}");
+                    }
+                }
+                _lastAction2Tick = Session.Tick;
             }
         }
     }

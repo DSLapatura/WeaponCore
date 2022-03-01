@@ -144,12 +144,11 @@ namespace CoreSystems.Platform
         public class ShootManager
         {
             public readonly WeaponComponent Comp;
-            internal bool ShootActive;
             internal bool WaitingShootResponse;
             internal bool FreezeClientShoot;
             internal Signals Signal;
             internal uint CompletedCycles;
-            internal uint LastCycle;
+            internal uint LastCycle = uint.MaxValue;
             internal uint LastShootTick;
             internal uint WaitingTick;
             internal uint FreezeTick;
@@ -198,170 +197,30 @@ namespace CoreSystems.Platform
                 Comp = comp;
             }
 
-            #region Main
-
-            internal void RestoreWeaponShot()
-            {
-                for (int i = 0; i < Comp.Collection.Count; i++)
-                {
-                    var w = Comp.Collection[i];
-                    var predicted = w.ActiveAmmoDef.AmmoDef.Const.ClientPredictedAmmo;
-                    if (w.ActiveAmmoDef.AmmoDef.Const.MustCharge && !predicted)
-                    {
-                        Log.Line($"RestoreWeaponShot, recharge", Session.InputLog);
-                        w.ProtoWeaponAmmo.CurrentCharge = w.MaxCharge;
-                        w.EstimatedCharge = w.MaxCharge;
-                    }
-                    else if (!predicted)
-                    {
-                        w.ProtoWeaponAmmo.CurrentAmmo += (int)CompletedCycles;
-                        Log.Line($"RestoreWeaponShot, return ammo:{CompletedCycles}", Session.InputLog);
-                    }
-                }
-            }
-
-            internal void UpdateShootSync(Weapon w)
-            {
-                if (--w.ShootCount == 0 && ++WeaponsFired >= Comp.TotalWeapons)
-                {
-                    var set = w.Comp.Data.Comp.Data.Repo.Values.Set;
-                    var state = w.Comp.Data.Comp.Data.Repo.Values.State;
-
-                    w.ShootDelay = set.Overrides.BurstDelay;
-
-                    var toggled = w.Comp.ShootManager.ClientToggleCount > state.ToggleCount || state.Trigger == CoreComponent.Trigger.On;
-                    ++CompletedCycles;
-                    if (!toggled && CompletedCycles >= LastCycle)
-                    {
-                        EndShootMode();
-                    }
-                    else
-                    {
-                        MakeReadyToShoot(true);
-                    }
-                }
-
-                LastShootTick = Comp.Session.Tick;
-            }
-
-            internal bool MakeReadyToShoot(bool skipReady = false)
-            {
-                var weaponsReady = 0;
-                var totalWeapons = Comp.Collection.Count;
-                var burstTarget = Comp.Data.Repo.Values.Set.Overrides.BurstCount;
-                var client = Comp.Session.IsClient;
-                for (int i = 0; i < totalWeapons; i++)
-                {
-                    var w = Comp.Collection[i];
-                    if (!w.System.DesignatorWeapon)
-                    {
-                        var aConst = w.ActiveAmmoDef.AmmoDef.Const;
-                        var reloading = aConst.Reloadable && w.ClientMakeUpShots == 0 && (w.Loading || w.ProtoWeaponAmmo.CurrentAmmo == 0 || w.Reload.WaitForClient);
-                        
-                        var reloadMinusAmmoCheck = aConst.Reloadable && w.ClientMakeUpShots == 0 && (w.Loading || w.Reload.WaitForClient);
-                        var skipReload = client && reloading && !skipReady && !FreezeClientShoot && !WaitingShootResponse && !reloadMinusAmmoCheck && Comp.Session.Tick - LastShootTick > 30;
-
-                        var canShoot = !w.PartState.Overheated && (!reloading || skipReload);
-                        
-                        if (canShoot && skipReload)
-                            Log.Line($"ReadyToShoot succeeded on client but with CurrentAmmo > 0", Session.InputLog);
-
-                        var weaponReady = canShoot && !w.IsShooting;
-
-                        if (!weaponReady && !skipReady)
-                            break;
-
-                        weaponsReady += 1;
-
-                        w.ShootCount = MathHelper.Clamp(burstTarget, 1, w.ProtoWeaponAmmo.CurrentAmmo + w.ClientMakeUpShots);
-                    }
-                    else
-                        weaponsReady += 1;
-                }
-
-                var ready = weaponsReady == totalWeapons;
-
-                if (!ready && weaponsReady > 0)
-                {
-                    Log.Line($"not ready to MakeReadyToShoot", Session.InputLog);
-                    ResetShootRequest();
-                }
-
-                return ready;
-            }
-
-            internal void ResetShootRequest()
-            {
-                for (int i = 0; i < Comp.Collection.Count; i++)
-                    Comp.Collection[i].ShootCount = 0; 
-
-                WeaponsFired = 0;
-            }
-
-            internal void EndShootMode(bool hardReset = true)
-            {
-                var wValues = Comp.Data.Repo.Values;
-                if (hardReset)
-                {
-                    for (int i = 0; i < Comp.TotalWeapons; i++)
-                    {
-                        var w = Comp.Collection[i];
-                        if (Comp.Session.MpActive) Log.Line($"[clear] ammo:{w.ProtoWeaponAmmo.CurrentAmmo} - CompletedCycles:{CompletedCycles} - WeaponsFired:{WeaponsFired} - Signal:{Signal} - Trigger:{wValues.State.Trigger} - ClientToggleCount:{ClientToggleCount} - toggleCount:{wValues.State.ToggleCount}", Session.InputLog);
-
-                        w.ShootCount = 0;
-                        w.ShootDelay = 0;
-                    }
-
-                    CompletedCycles = 0;
-                    WeaponsFired = 0;
-                    LastCycle = 0;
-                    ShootActive = false;
-
-                }
-
-                ClientToggleCount = 0;
-                FreezeClientShoot = false;
-                WaitingShootResponse = false;
-                Signal = Signals.None;
-
-                if (Comp.Session.MpActive && Comp.Session.IsServer)
-                {
-                    wValues.State.Trigger = CoreComponent.Trigger.Off;
-                    Comp.Session.SendState(Comp);
-                }
-            }
-
-            internal void FailSafe()
-            {
-                Log.Line($"ShootMode failsafe triggered: LastCycle:{LastCycle} - CompletedCycles:{CompletedCycles} - WeaponsFired:{WeaponsFired} - wait:{WaitingShootResponse} - freeze:{FreezeClientShoot}", Session.InputLog);
-                EndShootMode();
-            }
-
-            #endregion
 
             #region InputManager
-
-            internal void RequestShootSync(long playerId, RequestType request, Signals signal = Signals.None) // this shoot method mixes client initiation with server delayed server confirmation in order to maintain sync while avoiding authoritative delays in the common case. 
+            internal bool RequestShootSync(long playerId, RequestType request, Signals signal = Signals.None) // this shoot method mixes client initiation with server delayed server confirmation in order to maintain sync while avoiding authoritative delays in the common case. 
             {
                 var values = Comp.Data.Repo.Values;
                 var state = values.State;
                 var isRequestor = !Comp.Session.IsClient || playerId == Comp.Session.PlayerId;
                 
-                Signal = signal;
-                if (request == RequestType.Off)
-                    Signal = Signals.None;
-
+                if (isRequestor && Comp.Session.IsClient && request == RequestType.Once && (WaitingShootResponse || FreezeClientShoot || CompletedCycles > 0 || ClientToggleCount > state.ToggleCount || state.Trigger != CoreComponent.Trigger.Off)) {
+                    Log.Line($"alreadyActive: WaitingShootResponse:{WaitingShootResponse} - FreezeClientShoot:{FreezeClientShoot} - LastCycle: {LastCycle} - CompletedCycles>0:{CompletedCycles > 0} - cToggle:{ClientToggleCount > state.ToggleCount} - trigger!Off:{state.Trigger != CoreComponent.Trigger.Off}", Session.InputLog);
+                    return false;
+                }
+                
                 if (isRequestor && !ProcessInput(playerId, request, signal) || !MakeReadyToShoot()) {
                     ChangeState(request, playerId, false);
-                    return;
+                    return false;
                 }
 
-                ShootActive = true;
+                Signal = request != RequestType.Off ? signal : Signals.None;
+
                 if (Comp.IsBlock && Comp.Session.HandlesInput)
                     Comp.Session.TerminalMon.HandleInputUpdate(Comp);
 
                 var sendRequest = !Comp.Session.IsClient || playerId == Comp.Session.PlayerId; // this method is used both by initiators and by receives. 
-                
                 
                 if (Comp.Session.MpActive && sendRequest)
                 {
@@ -383,48 +242,44 @@ namespace CoreSystems.Platform
 
                 ChangeState(request, playerId, true);
 
+                return true;
             }
 
-            internal bool ProcessInput(long playerId, RequestType requestType, Signals other, bool skipUpdateInputState = false)
+            internal bool ProcessInput(long playerId, RequestType request, Signals signal, bool skipUpdateInputState = false)
             {
-                if (!skipUpdateInputState && ShootRequestPending(requestType))
+                if (!skipUpdateInputState && ShootRequestPending(request))
                     return false;
 
                 var state = Comp.Data.Repo.Values.State;
                 var wasToggled = ClientToggleCount > state.ToggleCount || state.Trigger == CoreComponent.Trigger.On;
-                if (wasToggled && requestType != RequestType.On)
+                if (wasToggled && request != RequestType.On && !FreezeClientShoot) // toggle off
                 {
-                    // toggle off
-
                     if (Comp.Session.MpActive)
                     {
                         FreezeClientShoot = Comp.Session.IsClient; //if the initiators is a client pause future cycles until the server returns which cycle state to terminate on.
                         FreezeTick = Comp.Session.Tick;
 
                         ulong packagedMessage;
-                        EncodeShootState((uint)requestType, (uint)other, CompletedCycles, (uint)ShootCodes.ToggleServerOff, out packagedMessage);
+                        EncodeShootState((uint)request, (uint)signal, CompletedCycles, (uint)ShootCodes.ToggleServerOff, out packagedMessage);
                         Comp.Session.SendShootRequest(Comp, packagedMessage, PacketType.ShootSync, RewriteShootSyncToServerResponse, playerId);
                     }
 
-                    if (Comp.Session.IsServer)
-                    {
+                    if (Comp.Session.IsServer) {
                         EndShootMode();
                         if (Comp.Session.MpActive)
                             Log.Line($"server toggled shoot off, calling EndShoot", Session.InputLog);
                     }
+                    Signal = request != RequestType.Off ? signal : Signals.None;
                 }
 
                 var pendingRequest = Comp.IsDisabled || wasToggled || Comp.IsBlock && !Comp.Cube.IsWorking;
-
                 return !pendingRequest;
             }
-
 
             private bool ShootRequestPending(RequestType requestType)
             {
                 if (FreezeClientShoot || WaitingShootResponse && (requestType == RequestType.On || requestType == RequestType.Once))
                 {
-                    Log.Line($"[ShootRequestPending Reject] request:{requestType} - WaitingShootResponse:{WaitingShootResponse} - FreezeClientShoot:{FreezeClientShoot} - CompletedCycles:{CompletedCycles}", Session.InputLog);
                     return true;
                 }
                 return false;
@@ -454,17 +309,182 @@ namespace CoreSystems.Platform
                     if (activated)
                     {
                         ++state.ToggleCount;
-                        LastCycle = ClientToggleCount > state.ToggleCount || state.Trigger == CoreComponent.Trigger.On ? uint.MaxValue : 1;
                     }
 
                     if (Comp.Session.MpActive)
                         Comp.Session.SendState(Comp);
                 }
-            }
 
+                if (activated)
+                    LastCycle = ClientToggleCount > state.ToggleCount && request != RequestType.Once || state.Trigger == CoreComponent.Trigger.On || Comp.Session.IsClient && request == RequestType.On && playerId == 0 ? uint.MaxValue : 1;
+
+            }
             #endregion
 
+            #region Main
+            internal void RestoreWeaponShot()
+            {
+                for (int i = 0; i < Comp.Collection.Count; i++)
+                {
+                    var w = Comp.Collection[i];
+                    var predicted = w.ActiveAmmoDef.AmmoDef.Const.ClientPredictedAmmo;
+                    if (w.ActiveAmmoDef.AmmoDef.Const.MustCharge && !predicted)
+                    {
+                        Log.Line($"RestoreWeaponShot, recharge", Session.InputLog);
+                        w.ProtoWeaponAmmo.CurrentCharge = w.MaxCharge;
+                        w.EstimatedCharge = w.MaxCharge;
+                    }
+                    else if (!predicted)
+                    {
+                        w.ProtoWeaponAmmo.CurrentAmmo += (int)CompletedCycles;
+                        Log.Line($"RestoreWeaponShot, return ammo:{CompletedCycles}", Session.InputLog);
+                    }
+                }
+            }
+
+            internal void UpdateShootSync(Weapon w)
+            {
+                if (--w.ShootCount == 0 && ++WeaponsFired >= Comp.TotalWeapons)
+                {
+                    var set = w.Comp.Data.Comp.Data.Repo.Values.Set;
+                    var state = w.Comp.Data.Comp.Data.Repo.Values.State;
+
+                    w.ShootDelay = set.Overrides.BurstDelay;
+                    ++CompletedCycles;
+                    
+                    var toggled = w.Comp.ShootManager.ClientToggleCount > state.ToggleCount || state.Trigger == CoreComponent.Trigger.On;
+                    var overCount = CompletedCycles >= LastCycle;
+
+                    if (!toggled || overCount)
+                        EndShootMode();
+                    else
+                        MakeReadyToShoot(true);
+                }
+
+                LastShootTick = Comp.Session.Tick;
+            }
+
+            internal bool MakeReadyToShoot(bool skipReady = false)
+            {
+                var weaponsReady = 0;
+                var totalWeapons = Comp.Collection.Count;
+                var burstTarget = Comp.Data.Repo.Values.Set.Overrides.BurstCount;
+                var client = Comp.Session.IsClient;
+                for (int i = 0; i < totalWeapons; i++)
+                {
+                    var w = Comp.Collection[i];
+                    if (!w.System.DesignatorWeapon)
+                    {
+                        var aConst = w.ActiveAmmoDef.AmmoDef.Const;
+                        var reloading = aConst.Reloadable && w.ClientMakeUpShots == 0 && (w.Loading || w.ProtoWeaponAmmo.CurrentAmmo == 0 || w.Reload.WaitForClient);
+
+                        var reloadMinusAmmoCheck = aConst.Reloadable && w.ClientMakeUpShots == 0 && (w.Loading || w.Reload.WaitForClient);
+                        var skipReload = client && reloading && !skipReady && !FreezeClientShoot && !WaitingShootResponse && !reloadMinusAmmoCheck && Comp.Session.Tick - LastShootTick > 30;
+
+                        var canShoot = !w.PartState.Overheated && (!reloading || skipReload);
+
+                        if (canShoot && skipReload)
+                            Log.Line($"ReadyToShoot succeeded on client but with CurrentAmmo > 0", Session.InputLog);
+
+                        var weaponReady = canShoot && !w.IsShooting;
+
+                        if (!weaponReady && !skipReady)
+                        {
+                            if (Comp.Session.IsServer) 
+                                Log.Line($"MakeReadyToShoot: canShoot:{canShoot} - alreadyShooting:{w.IsShooting} - reloading:{reloading} - skipReload:{skipReload} - CurrentAmmo:{w.ProtoWeaponAmmo.CurrentAmmo} - wait:{w.Reload.WaitForClient}", Session.InputLog);
+                            break;
+                        }
+
+                        weaponsReady += 1;
+
+                        w.ShootCount += MathHelper.Clamp(burstTarget, 1, w.ProtoWeaponAmmo.CurrentAmmo + w.ClientMakeUpShots);
+                    }
+                    else
+                        weaponsReady += 1;
+                }
+
+                var ready = weaponsReady == totalWeapons;
+
+                if (!ready && weaponsReady > 0)
+                {
+                    Log.Line($"not ready to MakeReadyToShoot", Session.InputLog);
+                    ResetShootRequest();
+                }
+
+                return ready;
+            }
+
+            internal void ResetShootRequest()
+            {
+                for (int i = 0; i < Comp.Collection.Count; i++)
+                    Comp.Collection[i].ShootCount = 0;
+
+                WeaponsFired = 0;
+            }
+
+            internal void EndShootMode(bool skipNetwork = false)
+            {
+                var wValues = Comp.Data.Repo.Values;
+
+                for (int i = 0; i < Comp.TotalWeapons; i++)
+                {
+                    var w = Comp.Collection[i];
+                    if (Comp.Session.MpActive) Log.Line($"[clear] ammo:{w.ProtoWeaponAmmo.CurrentAmmo} - Trigger:{wValues.State.Trigger} - Signal:{Signal} - CompletedCycles:{CompletedCycles} - LastCycle:{LastCycle} - sCount:{wValues.State.ToggleCount} - cCount:{ClientToggleCount} - WeaponsFired:{WeaponsFired}", Session.InputLog);
+
+                    w.ShootCount = 0;
+                    w.ShootDelay = 0;
+                }
+
+                CompletedCycles = 0;
+                WeaponsFired = 0;
+                LastCycle = uint.MaxValue;
+
+
+                ClientToggleCount = 0;
+                FreezeClientShoot = false;
+                WaitingShootResponse = false;
+                Signal = Signals.None;
+
+                if (Comp.Session.IsServer)
+                {
+                    wValues.State.Trigger = CoreComponent.Trigger.Off;
+                    if (Comp.Session.MpActive && !skipNetwork)
+                    {
+                        Comp.Session.SendState(Comp);
+                    }
+                }
+            }
+            #endregion
+
+
             #region Network
+
+            internal void ServerRejectResponse(ulong clientId, RequestType requestType)
+            {
+                Log.Line($"[server rejecting] Signal:{Signal} - CompletedCycles:{CompletedCycles} requestType:{requestType} - Trigger:{Comp.Data.Repo.Values.State.Trigger}", Session.InputLog);
+                ulong packagedMessage;
+                EncodeShootState(0, (uint)Signals.None, CompletedCycles, (uint)ShootCodes.ClientRequestReject, out packagedMessage);
+                Comp.Session.SendShootReject(Comp, packagedMessage, PacketType.ShootSync, clientId);
+
+                ChangeState(RequestType.Off, 0, false);
+            }
+
+
+            internal void ReceivedServerReject()
+            {
+                Log.Line($"[client rejection] message reset - wait:{WaitingShootResponse} - frozen:{FreezeClientShoot}", Session.InputLog);
+                if (CompletedCycles > 0)
+                    RestoreWeaponShot();
+
+                EndShootMode();
+            }
+
+            internal void FailSafe()
+            {
+                Log.Line($"ShootMode failsafe triggered: LastCycle:{LastCycle} - CompletedCycles:{CompletedCycles} - WeaponsFired:{WeaponsFired} - wait:{WaitingShootResponse} - freeze:{FreezeClientShoot}", Session.InputLog);
+                EndShootMode();
+            }
+
             internal void ServerToggleOffByClient(uint interval)
             {
                 if (interval > CompletedCycles)
@@ -485,25 +505,18 @@ namespace CoreSystems.Platform
 
                 if (!clientMakeupRequest)
                 {
-                    EndShootMode();
+                    if (CompletedCycles == LastCycle || LastCycle == uint.MaxValue)
+                        EndShootMode();
+                    else
+                        Log.Line($"ServerToggleOffByClient skipping EndShootMode to lastCycle being set: {CompletedCycles} > {LastCycle}", Session.InputLog);
                 }
                 else
                 {
                     Log.Line($"server catching up to client -- from:{CompletedCycles} to:{interval}", Session.InputLog);
                     LastCycle = endCycle;
-                    EndShootMode(false);
                 }
             }
 
-            internal void ServerRejectResponse(ulong clientId)
-            {
-                Log.Line($"failed to burst on server, sending reject message", Session.InputLog);
-
-                var values = Comp.Data.Repo.Values;
-                ulong packagedMessage;
-                EncodeShootState(0, (uint)Signals.None, CompletedCycles, (uint)ShootCodes.ClientRequestReject, out packagedMessage);
-                Comp.Session.SendBurstReject(Comp, packagedMessage, PacketType.ShootSync, clientId);
-            }
 
             internal void ClientToggledOffByServer(uint interval, bool server = false)
             {
@@ -525,20 +538,13 @@ namespace CoreSystems.Platform
                 }
                 else if (interval > CompletedCycles)
                 {
-                    Log.Line($"[ClientToggleResponse] makeup attempt: Current: {CompletedCycles} freeze:{FreezeClientShoot} - target:{interval} - LastCycle:{LastCycle}", Session.InputLog);
-                    
-                    LastCycle = interval;
+                    Log.Line($"[ClientToggleResponse] client is behind server: Current: {CompletedCycles} freeze:{FreezeClientShoot} - target:{interval} - LastCycle:{LastCycle}", Session.InputLog);
+
+                    //LastCycle = interval;
+                    EndShootMode();
+
                 }
                 FreezeClientShoot = false;
-            }
-
-            internal void ServerReject()
-            {
-                Log.Line($"client received reject message reset - wait:{WaitingShootResponse} - frozen:{FreezeClientShoot}", Session.InputLog);
-                if (CompletedCycles > 0)
-                    RestoreWeaponShot();
-
-                EndShootMode();
             }
 
             private static object RewriteShootSyncToServerResponse(object o)

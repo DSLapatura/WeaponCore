@@ -336,7 +336,7 @@ namespace CoreSystems
 
             Tasks.Sync(comp, sync.Tasks);
             for (int i = 0; i < sync.Weapons.Length; i++)
-                comp.Platform.Weapons[i].PartState.Sync(sync.Weapons[i]);
+                comp.Platform.Weapons[i].PartState.Sync(comp, sync.Weapons[i]);
 
             comp.ManualMode = wValues.State.TrackingReticle && wValues.Set.Overrides.Control == ProtoWeaponOverrides.ControlModes.Manual; // needs to be set everywhere dedicated and non-tracking clients receive TrackingReticle or Control updates.
         }
@@ -433,10 +433,13 @@ namespace CoreSystems
         [ProtoMember(2)] public bool Overheated; //don't save
         //[ProtoMember(3), DefaultValue(Trigger.Off)] public Trigger Action = Trigger.Off; // save
 
-        public void Sync(ProtoWeaponPartState sync)
+        public void Sync(Weapon.WeaponComponent comp, ProtoWeaponPartState sync)
         {
             Heat = sync.Heat;
+            var wasOver = Overheated;
             Overheated = sync.Overheated;
+            if (wasOver != Overheated)
+                comp.ShootManager.EndShootMode(true);
             //Action = sync.Action;
         }
 

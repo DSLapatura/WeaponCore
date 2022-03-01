@@ -436,6 +436,8 @@ namespace CoreSystems.Support
             UpgradeIdx.Clear();
             PhantomIdx.Clear();
             CompBase.Clear();
+            Stators.Clear();
+            Tools.Clear();
 
             LiveProjectile.Clear();
             DeadProjectiles.Clear();
@@ -449,6 +451,7 @@ namespace CoreSystems.Support
             SourceCount = 0;
             PartCount = 0;
             AiOwner = 0;
+            LastAddToRotorTick = 0;
             ProjectileTicker = 0;
             NearByEntities = 0;
             NearByEntitiesTmp = 0;

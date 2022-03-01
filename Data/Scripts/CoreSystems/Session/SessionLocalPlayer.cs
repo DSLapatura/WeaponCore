@@ -364,12 +364,13 @@ namespace CoreSystems
 
                     var blockId = MyCubeBuilder.Static.CurrentBlockDefinition.Id;
                     var subtypeIdHash = blockId.SubtypeId;
+                    /*
                     if (!ReplaceVanilla && (LastVanillaWarnTick == 0 || Tick - LastVanillaWarnTick > 600) && VanillaIds.ContainsKey(blockId))
                     {
                         ShowLocalNotify("You have not installed a Vanilla Weapon Replacer mod and without one these weapons will not work. You can find one one the steam workshop.", 600 * MyEngineConstants.UPDATE_STEP_SIZE_IN_MILLISECONDS, "Red");
                         LastVanillaWarnTick = Tick;
                     }
-
+                    */
                     Ai ai;
                     if (EntityToMasterAi.TryGetValue(grid, out ai))
                     {
