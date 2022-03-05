@@ -358,6 +358,7 @@ namespace CoreSystems.Platform
                     Comp.ShootManager.EndShootMode(true);
 
                 PartState.Overheated = true;
+                LastOverheatTick = System.Session.Tick;
                 if (System.Session.MpActive && !wasOver)
                     System.Session.SendState(Comp);
             }

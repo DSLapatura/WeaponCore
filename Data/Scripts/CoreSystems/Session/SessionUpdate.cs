@@ -178,7 +178,8 @@ namespace CoreSystems
                             p.Reloaded(1);
 
                         var reloading = p.ActiveAmmoDef.AmmoDef.Const.Reloadable && p.ClientMakeUpShots == 0 && (p.Loading || p.ProtoWeaponAmmo.CurrentAmmo == 0);
-                        var canShoot = !p.PartState.Overheated && !reloading && !p.System.DesignatorWeapon;
+                        var overHeat = p.PartState.Overheated && Tick - p.LastOverheatTick > 30;
+                        var canShoot = !overHeat && !reloading && !p.System.DesignatorWeapon;
 
                         var autoShot =  pComp.Data.Repo.Values.State.Trigger == On || p.AiShooting && pComp.Data.Repo.Values.State.Trigger == Off;
 
@@ -379,7 +380,7 @@ namespace CoreSystems
 
                             var active = wComp.ShootManager.ClientToggleCount > wValues.State.ToggleCount || wValues.State.Trigger == On;
                             var turnOn = !active && UiInput.ClientInputState.MouseButtonLeft && playerControl;
-                            var turnOff = active && !UiInput.ClientInputState.MouseButtonLeft;
+                            var turnOff = active && !UiInput.ClientInputState.MouseButtonLeft && Tick5;
 
                             if (sMode == Weapon.ShootManager.ShootModes.AiShoot) {
 
@@ -554,7 +555,9 @@ namespace CoreSystems
                         w.AiShooting = !wComp.UserControlled && !w.System.SuppressFire && (w.TargetLock || ai.RotorTurretAimed && Vector3D.DistanceSquared(wComp.CoreEntity.PositionComp.WorldAABB.Center, ai.RotorTargetPosition) <= wComp.MaxDetectDistanceSqr);
 
                         var reloading = aConst.Reloadable && w.ClientMakeUpShots == 0 && (w.Loading || w.ProtoWeaponAmmo.CurrentAmmo == 0 || w.Reload.WaitForClient);
-                        var canShoot = !w.PartState.Overheated && !reloading && !w.System.DesignatorWeapon;
+                        var overHeat = w.PartState.Overheated && Tick - w.LastOverheatTick > 30;
+
+                        var canShoot = !overHeat && !reloading && !w.System.DesignatorWeapon;
                         var paintedTarget = wComp.PainterMode && w.Target.TargetState == TargetStates.IsFake && w.Target.IsAligned;
                         var autoShot = paintedTarget || w.AiShooting && wValues.State.Trigger == Off;
                         var anyShot = !wComp.ShootManager.FreezeClientShoot && (w.ShootCount > 0 || onConfrimed) && (w.ShootDelay == 0 || w.ShootDelay != 0 && w.ShootDelay-- == 0) || autoShot && sMode == Weapon.ShootManager.ShootModes.AiShoot;

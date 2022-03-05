@@ -160,6 +160,7 @@ namespace CoreSystems.Platform
             ClientStartId = Reload.StartId;
             ClientMakeUpShots += ProtoWeaponAmmo.CurrentAmmo;
 
+
             ProtoWeaponAmmo.CurrentAmmo = 0;
 
             if (!Comp.Session.IsCreative) {
@@ -339,11 +340,16 @@ namespace CoreSystems.Platform
 
                     ++Reload.EndId;
                     ClientEndId = Reload.EndId;
-                    if (System.Session.MpActive)
-                        System.Session.SendWeaponReload(this);
 
                     if (Comp.TypeSpecific == CoreComponent.CompTypeSpecific.Phantom && ActiveAmmoDef.AmmoDef.Const.EnergyAmmo)
                         --Reload.CurrentMags;
+
+                    if (System.Session.MpActive) {
+
+                        System.Session.SendWeaponReload(this);
+                        if (Reload.EndId == 1)
+                            System.Session.SendWeaponAmmoData(this);
+                    }
                 }
                 else {
                     ClientReloading = false;

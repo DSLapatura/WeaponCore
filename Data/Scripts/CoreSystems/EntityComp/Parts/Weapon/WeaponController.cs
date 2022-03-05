@@ -289,6 +289,7 @@ namespace CoreSystems.Platform
                     if (System.Session.IsServer)
                     {
                         PartState.Overheated = false;
+                        LastOverheatTick = 0;
                         if (System.Session.MpActive)
                             System.Session.SendState(Comp);
                     }

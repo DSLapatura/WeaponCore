@@ -115,6 +115,9 @@ namespace CoreSystems.Platform
                         w.Elevation = w.System.HomeElevation;
                         w.AimBarrel();
                     }
+
+
+
                 }
             }
 

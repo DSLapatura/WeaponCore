@@ -379,6 +379,7 @@ namespace CoreSystems
         internal bool GameLoaded;
         internal bool PlayersLoaded;
         internal bool MiscLoaded;
+        internal bool Tick5;
         internal bool Tick10;
         internal bool Tick20;
         internal bool Tick30;

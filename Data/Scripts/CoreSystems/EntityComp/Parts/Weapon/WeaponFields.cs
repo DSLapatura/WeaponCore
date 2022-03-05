@@ -75,6 +75,7 @@ namespace CoreSystems.Platform
         internal uint AzimuthTick;
         internal uint FastTargetResetTick;
         internal uint LastNanTick;
+        internal uint LastOverheatTick;
         internal float HeatPerc;
         internal int BarrelRate;
         internal int ShotsFired;
@@ -207,7 +208,8 @@ namespace CoreSystems.Platform
             get
             {
                 var reloading = ActiveAmmoDef.AmmoDef.Const.Reloadable && ClientMakeUpShots == 0 && (Loading || ProtoWeaponAmmo.CurrentAmmo == 0 || Reload.WaitForClient);
-                var canShoot = !PartState.Overheated && !reloading && !System.DesignatorWeapon;
+                var overHeat = PartState.Overheated && System.Session.Tick - LastOverheatTick > 30;
+                var canShoot = !overHeat && !reloading && !System.DesignatorWeapon;
                 var shotReady = canShoot;
                 return shotReady;
             }

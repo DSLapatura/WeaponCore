@@ -278,7 +278,7 @@ namespace CoreSystems.Platform
 
             private bool ShootRequestPending(RequestType requestType)
             {
-                if (FreezeClientShoot || WaitingShootResponse && (requestType == RequestType.On || requestType == RequestType.Once))
+                if (FreezeClientShoot || WaitingShootResponse)
                 {
                     return true;
                 }
@@ -380,8 +380,8 @@ namespace CoreSystems.Platform
 
                         var reloadMinusAmmoCheck = aConst.Reloadable && w.ClientMakeUpShots == 0 && (w.Loading || w.Reload.WaitForClient);
                         var skipReload = client && reloading && !skipReady && !FreezeClientShoot && !WaitingShootResponse && !reloadMinusAmmoCheck && Comp.Session.Tick - LastShootTick > 30;
-
-                        var canShoot = !w.PartState.Overheated && (!reloading || skipReload);
+                        var overHeat = w.PartState.Overheated && w.System.Session.Tick - w.LastOverheatTick > 30;
+                        var canShoot = !overHeat && (!reloading || skipReload);
 
                         if (canShoot && skipReload)
                             Log.Line($"ReadyToShoot succeeded on client but with CurrentAmmo > 0", Session.InputLog);

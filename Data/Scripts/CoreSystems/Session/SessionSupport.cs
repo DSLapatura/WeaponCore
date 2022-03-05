@@ -32,6 +32,7 @@ namespace CoreSystems
         {
             _paused = false;
             Tick++;
+            Tick5 = Tick % 5 == 0;
             Tick10 = Tick % 10 == 0;
             Tick20 = Tick % 20 == 0;
             Tick30 = Tick % 30 == 0;

@@ -75,7 +75,6 @@ namespace CoreSystems.Platform
                 }
                 else
                 {
-
                     Repo = new ProtoWeaponRepo
                     {
                         Values = new ProtoWeaponComp
