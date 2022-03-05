@@ -261,7 +261,7 @@ namespace CoreSystems.Platform
 
                         PartState.Heat += HeatPShot;
                         Comp.CurrentHeat += HeatPShot;
-                        if (PartState.Heat >= System.MaxHeat) {
+                        if (PartState.Heat >= System.MaxHeat || PartState.Overheated) {
                             OverHeat();
                             break;
                         }
@@ -348,17 +348,18 @@ namespace CoreSystems.Platform
                 var dmg = .02f * Comp.MaxIntegrity;
                 Comp.Slim.DoDamage(dmg, MyDamageType.Environment, true, null, Comp.Ai.TopEntity.EntityId);
             }
-            EventTriggerStateChanged(EventTriggers.Overheated, true);
 
-            var wasOver = PartState.Overheated;
-            
+            EventTriggerStateChanged(EventTriggers.Overheated, true);
+            Comp.ShootManager.EndShootMode(true);
+
+
             if (System.Session.IsServer)
             {
+                var wasOver = PartState.Overheated;
                 if (!wasOver)
-                    Comp.ShootManager.EndShootMode(true);
+                    OverHeatCountDown = 15;
 
                 PartState.Overheated = true;
-                LastOverheatTick = System.Session.Tick;
                 if (System.Session.MpActive && !wasOver)
                     System.Session.SendState(Comp);
             }

@@ -178,7 +178,7 @@ namespace CoreSystems
                             p.Reloaded(1);
 
                         var reloading = p.ActiveAmmoDef.AmmoDef.Const.Reloadable && p.ClientMakeUpShots == 0 && (p.Loading || p.ProtoWeaponAmmo.CurrentAmmo == 0);
-                        var overHeat = p.PartState.Overheated && Tick - p.LastOverheatTick > 30;
+                        var overHeat = p.PartState.Overheated && p.OverHeatCountDown == 0;
                         var canShoot = !overHeat && !reloading && !p.System.DesignatorWeapon;
 
                         var autoShot =  pComp.Data.Repo.Values.State.Trigger == On || p.AiShooting && pComp.Data.Repo.Values.State.Trigger == Off;
@@ -555,7 +555,7 @@ namespace CoreSystems
                         w.AiShooting = !wComp.UserControlled && !w.System.SuppressFire && (w.TargetLock || ai.RotorTurretAimed && Vector3D.DistanceSquared(wComp.CoreEntity.PositionComp.WorldAABB.Center, ai.RotorTargetPosition) <= wComp.MaxDetectDistanceSqr);
 
                         var reloading = aConst.Reloadable && w.ClientMakeUpShots == 0 && (w.Loading || w.ProtoWeaponAmmo.CurrentAmmo == 0 || w.Reload.WaitForClient);
-                        var overHeat = w.PartState.Overheated && Tick - w.LastOverheatTick > 30;
+                        var overHeat = w.PartState.Overheated && (w.OverHeatCountDown == 0 || w.OverHeatCountDown != 0 && w.OverHeatCountDown-- == 0);
 
                         var canShoot = !overHeat && !reloading && !w.System.DesignatorWeapon;
                         var paintedTarget = wComp.PainterMode && w.Target.TargetState == TargetStates.IsFake && w.Target.IsAligned;

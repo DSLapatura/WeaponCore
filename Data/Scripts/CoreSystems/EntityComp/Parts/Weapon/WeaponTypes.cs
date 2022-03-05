@@ -380,11 +380,11 @@ namespace CoreSystems.Platform
 
                         var reloadMinusAmmoCheck = aConst.Reloadable && w.ClientMakeUpShots == 0 && (w.Loading || w.Reload.WaitForClient);
                         var skipReload = client && reloading && !skipReady && !FreezeClientShoot && !WaitingShootResponse && !reloadMinusAmmoCheck && Comp.Session.Tick - LastShootTick > 30;
-                        var overHeat = w.PartState.Overheated && w.System.Session.Tick - w.LastOverheatTick > 30;
+                        var overHeat = w.PartState.Overheated && w.OverHeatCountDown == 0;
                         var canShoot = !overHeat && (!reloading || skipReload);
 
                         if (canShoot && skipReload)
-                            Log.Line($"ReadyToShoot succeeded on client but with CurrentAmmo > 0", Session.InputLog);
+                            Log.Line($"ReadyToShoot succeeded on client but with CurrentAmmo > 0 - shooting:{w.IsShooting} - charging:{w.Charging} - charge:{w.ProtoWeaponAmmo.CurrentCharge}({w.MaxCharge})", Session.InputLog);
 
                         var weaponReady = canShoot && !w.IsShooting;
 
@@ -466,7 +466,7 @@ namespace CoreSystems.Platform
                 EncodeShootState(0, (uint)Signals.None, CompletedCycles, (uint)ShootCodes.ClientRequestReject, out packagedMessage);
                 Comp.Session.SendShootReject(Comp, packagedMessage, PacketType.ShootSync, clientId);
 
-                ChangeState(RequestType.Off, 0, false);
+                EndShootMode();
             }
 
 
@@ -487,14 +487,6 @@ namespace CoreSystems.Platform
 
             internal void ServerToggleOffByClient(uint interval)
             {
-                if (interval > CompletedCycles)
-                {
-                    Log.Line($"[ServerToggleOffByClient] client had a higher interval than server: client: {interval} > server:{CompletedCycles} - LastCycle:{LastCycle}", Session.InputLog);
-                }
-                else if (interval < CompletedCycles)
-                {
-                    Log.Line($"[ServerToggleOffByClient] client had a lower interval than server: client: {interval} < server:{CompletedCycles} - LastCycle:{LastCycle}", Session.InputLog);
-                }
 
                 var clientMakeupRequest = interval > CompletedCycles && LastCycle == uint.MaxValue;
                 var endCycle = !clientMakeupRequest ? CompletedCycles : interval;
@@ -505,10 +497,7 @@ namespace CoreSystems.Platform
 
                 if (!clientMakeupRequest)
                 {
-                    if (CompletedCycles == LastCycle || LastCycle == uint.MaxValue)
-                        EndShootMode();
-                    else
-                        Log.Line($"ServerToggleOffByClient skipping EndShootMode to lastCycle being set: {CompletedCycles} > {LastCycle}", Session.InputLog);
+                    EndShootMode();
                 }
                 else
                 {

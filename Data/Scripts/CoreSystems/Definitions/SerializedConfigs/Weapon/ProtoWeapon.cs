@@ -432,7 +432,7 @@ namespace CoreSystems
             var wasOver = Overheated;
             Overheated = sync.Overheated;
             if (!wasOver && Overheated)
-                w.LastOverheatTick = w.System.Session.Tick;
+                w.OverHeatCountDown = 15;
         }
     }
 
