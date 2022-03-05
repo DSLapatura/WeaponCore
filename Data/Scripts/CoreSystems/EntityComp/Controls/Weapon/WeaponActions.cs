@@ -95,6 +95,14 @@ namespace CoreSystems.Control
             }
         }
 
+        internal static void TerminalRequestReload(IMyTerminalBlock blk)
+        {
+            var comp = blk?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
+
+            comp.RequestForceReload();
+        }
+
         internal static void TerminalActionControlMode(IMyTerminalBlock blk)
         {
             var comp = blk?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
@@ -581,15 +589,17 @@ namespace CoreSystems.Control
             var comp = blk.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
-            sb.Append(comp.Data.Repo.Values.Set.Overrides.ShootMode);
+            var altAiControlName = !comp.HasAim && comp.Data.Repo.Values.Set.Overrides.ShootMode == Weapon.ShootManager.ShootModes.AiShoot ? InActive : comp.Data.Repo.Values.Set.Overrides.ShootMode.ToString();
+            sb.Append(altAiControlName);
         }
 
+        private const string InActive = "Inactive";
         internal static void MouseToggleWriter(IMyTerminalBlock blk, StringBuilder sb)
         {
             var comp = blk.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
-            var message = (comp.Data.Repo.Values.Set.Overrides.ShootMode == Weapon.ShootManager.ShootModes.AiShoot || comp.Data.Repo.Values.Set.Overrides.ShootMode == Weapon.ShootManager.ShootModes.MouseControl) ? comp.Data.Repo.Values.Set.Overrides.ShootMode.ToString() : "Other"; 
+            var message = comp.Data.Repo.Values.Set.Overrides.ShootMode == Weapon.ShootManager.ShootModes.MouseControl ? comp.Data.Repo.Values.Set.Overrides.ShootMode.ToString() : InActive; 
 
             sb.Append(message);
         }

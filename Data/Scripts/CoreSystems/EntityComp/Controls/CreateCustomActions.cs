@@ -51,6 +51,21 @@ namespace CoreSystems.Control
             session.CustomActions.Add(action);
         }
 
+        public static void CreateForceReload(Session session)
+        {
+            var action = MyAPIGateway.TerminalControls.CreateAction<T>("ForceReload");
+            action.Icon = @"Textures\GUI\Icons\Actions\SwitchOn.dds";
+            action.Name = new StringBuilder(Localization.GetText("ForceReload"));
+            action.Action = CustomActions.TerminalRequestReload;
+            action.Writer = TerminalHelpers.EmptyStringBuilder;
+            action.Enabled = TerminalHelpers.IsReady;
+            action.ValidForGroups = true;
+
+            MyAPIGateway.TerminalControls.AddAction<T>(action);
+            session.CustomActions.Add(action);
+        }
+
+
         public static void CreateSelectTarget(Session session)
         {
             var action = MyAPIGateway.TerminalControls.CreateAction<T>("ActionTarget");

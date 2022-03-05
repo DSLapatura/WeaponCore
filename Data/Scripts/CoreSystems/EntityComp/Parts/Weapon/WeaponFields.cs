@@ -78,7 +78,6 @@ namespace CoreSystems.Platform
         internal float HeatPerc;
         internal int BarrelRate;
         internal int ShotsFired;
-        internal int LastMuzzle;
         internal int MiddleMuzzleIndex;
         internal int DelayedCycleId = -1;
         internal List<MyEntity> HeatingParts;

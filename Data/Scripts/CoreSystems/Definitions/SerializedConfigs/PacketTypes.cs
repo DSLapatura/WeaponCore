@@ -56,6 +56,7 @@ namespace CoreSystems
         ProjectileSyncs,
         ControlComp,
         ControlState,
+        ForceReload,
     }
 
     #region packets
@@ -267,7 +268,7 @@ namespace CoreSystems
         public override void CleanUp()
         {
             base.CleanUp();
-            Mode = ProtoWeaponState.ControlMode.None;
+            Mode = ProtoWeaponState.ControlMode.Ui;
             PlayerId = -1;
         }
     }

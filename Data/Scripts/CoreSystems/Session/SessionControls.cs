@@ -115,17 +115,13 @@ namespace CoreSystems
                 }
                 else if (typeof(T) == typeof(IMyConveyorSorter))
                 {
-                    CreateDefaultActions<T>(session);
+                    CreateCustomActionSet<T>(session);
+
                 }
 
                 TerminalHelpers.AddTurretOrTrackingControls<T>(session);
             }
             catch (Exception ex) { Log.Line($"Exception in CreateControlUi: {ex}"); }
-        }
-
-        internal static void CreateDefaultActions<T>(Session session) where T : IMyTerminalBlock
-        {
-            CreateCustomActionSet<T>(session);
         }
 
         internal static void CreateCustomDecoyActions<T>(Session session) where T : IMyTerminalBlock
@@ -147,8 +143,9 @@ namespace CoreSystems
             CreateCustomActions<T>.CreateMouseToggle(session);
             CreateCustomActions<T>.CreateSubSystems(session);
             CreateCustomActions<T>.CreateControlModes(session);
-            CreateCustomActions<T>.CreateMovementState(session);
             CreateCustomActions<T>.CreateCycleAmmo(session);
+            CreateCustomActions<T>.CreateMovementState(session);
+            CreateCustomActions<T>.CreateForceReload(session);
             CreateCustomActions<T>.CreateFocusTargets(session);
             CreateCustomActions<T>.CreateFocusSubSystem(session);
             CreateCustomActions<T>.CreateGrids(session);

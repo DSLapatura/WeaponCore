@@ -107,6 +107,7 @@ namespace CoreSystems.Support
                         { "ActionWCShootMode", "Cycle Shoot Modes" },
                         { "ActionWCMouseToggle", "Toggle Mouse Shoot (Mode: MouseControl)" },
                         { "ActionFire", "Shoot (Modes: KeyToggle/KeyFire)" },
+                        { "ForceReload", "Force Reload" },
                         { "ActionShoot", "Shoot On/Off" },
                         { "ActionShoot_Off", "Shoot Off" },
                         { "ActionShoot_On", "Shoot On" },

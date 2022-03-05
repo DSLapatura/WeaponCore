@@ -403,7 +403,7 @@ namespace CoreSystems
                         PlayerDummyTargets.TryGetValue(wValues.State.PlayerId, out fakeTargets);
 
                     wComp.PainterMode = fakeTargets != null && cMode == ProtoWeaponOverrides.ControlModes.Painter && fakeTargets.PaintedTarget.EntityId != 0;
-                    wComp.UserControlled = wValues.State.Control != ControlMode.None && (cMode != ProtoWeaponOverrides.ControlModes.Auto || wValues.State.Control == ControlMode.Camera || fakeTargets != null && fakeTargets.PaintedTarget.EntityId != 0);
+                    wComp.UserControlled = cMode != ProtoWeaponOverrides.ControlModes.Auto || wValues.State.Control == ControlMode.Camera || fakeTargets != null && fakeTargets.PaintedTarget.EntityId != 0;
                     wComp.FakeMode = wComp.ManualMode || wComp.PainterMode;
 
                     var onConfrimed = wValues.State.Trigger == On && !wComp.ShootManager.FreezeClientShoot && !wComp.ShootManager.WaitingShootResponse && (sMode != Weapon.ShootManager.ShootModes.AiShoot || wComp.ShootManager.Signal == Weapon.ShootManager.Signals.Manual);

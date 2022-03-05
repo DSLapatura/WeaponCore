@@ -1315,6 +1315,20 @@ namespace CoreSystems
             }
         }
 
+        internal void RequestToggle(CoreComponent comp, PacketType type)
+        {
+            if (IsClient)
+            {
+                PacketsToServer.Add(new Packet
+                {
+                    EntityId = comp.CoreEntity.EntityId,
+                    SenderId = MultiplayerId,
+                    PType = type,
+                });
+            }
+            else Log.Line("SendToggle not called on client");
+        }
+
         #region Misc Network Methods
         private bool AuthorDebug()
         {

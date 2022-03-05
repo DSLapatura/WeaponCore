@@ -307,6 +307,22 @@ namespace CoreSystems
             return true;
         }
 
+        private bool ServerForceReload(PacketObj data)
+        {
+            var packet = data.Packet;
+            var ent = MyEntities.GetEntityByIdOrDefault(packet.EntityId);
+            var comp = ent?.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
+
+            if (comp?.Ai == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return Error(data, Msg("BaseComp", comp != null), Msg("Ai", comp?.Ai != null), Msg("Ai", comp?.Platform.State == CorePlatform.PlatformState.Ready));
+
+            comp.RequestForceReload();
+
+            data.Report.PacketValid = true;
+
+            return true;
+        }
+
+
         private bool ServerTerminalMonitor(PacketObj data)
         {
             var packet = data.Packet;

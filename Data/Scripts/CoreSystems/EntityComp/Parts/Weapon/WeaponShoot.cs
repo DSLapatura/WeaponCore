@@ -74,11 +74,11 @@ namespace CoreSystems.Platform
 
                 var rnd = wValues.Targets[PartId].WeaponRandom;
                 var pattern = ActiveAmmoDef.AmmoDef.Pattern;
-
+                var loading = System.Values.HardPoint.Loading;
                 FireCounter++;
                 List<NewVirtual> vProList = null;
                 var selfDamage = 0f;
-                for (int i = 0; i < System.Values.HardPoint.Loading.BarrelsPerShot; i++) {
+                for (int i = 0; i < loading.BarrelsPerShot; i++) {
 
                     #region Update ProtoWeaponAmmo state
                     if (aConst.Reloadable) {
@@ -158,7 +158,7 @@ namespace CoreSystems.Platform
                         }
                     }
 
-                    for (int j = 0; j < System.Values.HardPoint.Loading.TrajectilesPerBarrel; j++) {
+                    for (int j = 0; j < loading.TrajectilesPerBarrel; j++) {
 
                         #region Pick projectile direction
                         if (System.WConst.DeviateShotAngleRads > 0) {
@@ -267,7 +267,6 @@ namespace CoreSystems.Platform
                         }
                     }
                     
-                    LastMuzzle = NextMuzzle;
                     if (i == System.Values.HardPoint.Loading.BarrelsPerShot) NextMuzzle++;
 
                     NextMuzzle = (NextMuzzle + (System.Values.HardPoint.Loading.SkipBarrels + 1)) % _numOfMuzzles;

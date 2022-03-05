@@ -31,9 +31,6 @@ namespace CoreSystems
             if (UiInput.AltPressed && UiInput.ShiftReleased || TargetUi.DrawReticle && UiInput.ClientInputState.MouseButtonRight && PlayerDummyTargets[PlayerId].PaintedTarget.EntityId == 0 && !TargetUi.SelectTarget(true, true, true))
                 TrackingAi.Construct.Focus.RequestReleaseActive(TrackingAi);
 
-            //if (UiInput.ActionKeyReleased && TrackingAi.Construct.Data.Repo.FocusData.HasFocus)
-            //    TrackingAi.Construct.Focus.RequestAddLock(TrackingAi);
-
             if (!TrackingAi.IsGrid)
             {
                 if (TrackingAi.WeaponComps.Count == 0) return;
@@ -127,6 +124,9 @@ namespace CoreSystems
 
                 if (oldControlId.EntityId != controlledEntity.EntityId)
                 {
+                    if (ActiveControlBlock is MyShipController)
+                        CheckToolbarForVanilla(ActiveControlBlock);
+
                     SendActiveControlUpdate(TrackingAi, controlledEntity, true);
                     TargetLeadUpdate();
                 }

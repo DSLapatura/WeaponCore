@@ -199,29 +199,22 @@ namespace CoreSystems.Support
                 var comp = ((Weapon.WeaponComponent)this);
                 var status = GetSystemStatus();
 
-                stringBuilder.Append(status);
+                stringBuilder.Append($"{status}\n");
 
                 if (HasServerOverrides)
                     stringBuilder.Append("\nWeapon modified by server!\n")
                         .Append("Report issues to server admins.\n");
 
                 stringBuilder.Append($"\n{Localization.GetText("WeaponInfoConstructDPS")}: " + Ai.EffectiveDps.ToString("e2"))
-                    .Append($"\n                        [ " + Ai.PerfectDps.ToString("e2") +" ]")
-                    .Append($"\n{Localization.GetText("WeaponInfoShotsPerSec")}: " + comp.RealShotsPerSec.ToString("0.00") + " (" + comp.ShotsPerSec.ToString("0.00") + ")")
+                    .Append($"\n{Localization.GetText("WeaponInfoPeakDps")}: " + comp.PeakDps.ToString("0.0"))
+                    .Append($"\n{Localization.GetText("WeaponInfoBaseDps")}: " + comp.BaseDps.ToString("0.0"))
+                    .Append($"\n{Localization.GetText("WeaponInfoAreaDps")}: " + comp.AreaDps.ToString("0.0"))
+                    .Append($"\n{Localization.GetText("WeaponInfoExplode")}: " + comp.DetDps.ToString("0.0"))
                     .Append("\n")
                     .Append($"\n{Localization.GetText("WeaponTotalEffect")}: " + comp.TotalEffect.ToString("e2"))
                     .Append($"\n              [ " + Ai.Construct.RootAi?.Construct.TotalEffect.ToString("e2") + " ]")
                     .Append($"\n{Localization.GetText("WeaponTotalEffectAvgDps")}: " + comp.AverageEffect.ToString("N0") + " - (" + comp.AddEffect.ToString("N0") + ")")
-                    .Append($"\n             [ " + Ai.Construct.RootAi?.Construct.AverageEffect.ToString("N0") + " - (" + Ai.Construct.RootAi?.Construct.AddEffect.ToString("N0") + ") ]")
-
-                    .Append("\n")
-                    .Append($"\n{Localization.GetText("WeaponInfoRealDps")}: " + comp.EffectiveDps.ToString("0.0"))
-                    .Append($"\n{Localization.GetText("WeaponInfoPerfectDps")}: " + comp.PerfectDps.ToString("0.0"))
-                    .Append($"\n{Localization.GetText("WeaponInfoPeakDps")}: " + comp.PeakDps.ToString("0.0"))
-                    .Append($"\n{Localization.GetText("WeaponInfoBaseDps")}: " + comp.BaseDps.ToString("0.0"))
-                    .Append($"\n{Localization.GetText("WeaponInfoAreaDps")}: " + comp.AreaDps.ToString("0.0"))
-                    .Append($"\n{Localization.GetText("WeaponInfoExplode")}: " + comp.DetDps.ToString("0.0"));
-
+                    .Append($"\n             [ " + Ai.Construct.RootAi?.Construct.AverageEffect.ToString("N0") + " - (" + Ai.Construct.RootAi?.Construct.AddEffect.ToString("N0") + ") ]");
 
                 if (HeatPerSecond > 0)
                     stringBuilder.Append("\n__________________________________" )
@@ -230,6 +223,8 @@ namespace CoreSystems.Support
                         .Append($"\n{Localization.GetText("WeaponInfoCurrentHeat")}: {CurrentHeat:0.0} J ({(CurrentHeat / MaxHeat):P})");
 
                 stringBuilder.Append("\n__________________________________")
+                    .Append("\n")
+                    .Append($"\n{Localization.GetText("WeaponInfoShotsPerSec")}: " + comp.RealShotsPerSec.ToString("0.00") + " (" + comp.ShotsPerSec.ToString("0.00") + ")")
                     .Append($"\n{Localization.GetText("WeaponInfoCurrentDraw")}: " + SinkPower.ToString("0.000") + " MW");
 
                 if (comp.HasEnergyWeapon)

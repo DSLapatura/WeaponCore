@@ -266,6 +266,11 @@ namespace CoreSystems
 
             switch (packetObj.Packet.PType) {
 
+                case PacketType.ForceReload:
+                {
+                    ServerForceReload(packetObj);
+                    break;
+                }
                 case PacketType.ShootSync:
                 {
                     ServerShootSyncs(packetObj);

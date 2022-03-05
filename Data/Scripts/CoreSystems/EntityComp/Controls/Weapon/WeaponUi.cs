@@ -489,12 +489,10 @@ namespace CoreSystems
 
         internal static void ListShootModes(List<MyTerminalControlComboBoxItem> shootModeList)
         {
-            foreach (var sub in ShootModeList) shootModeList.Add(sub);
-        }
-
-        internal static void ListShootModesNoBurst(List<MyTerminalControlComboBoxItem> shootModeList)
-        {
-            foreach (var sub in ShootModeListNoBurst) shootModeList.Add(sub);
+            foreach (var sub in ShootModeList)
+            {
+                shootModeList.Add(sub);
+            }
         }
 
         private static readonly List<MyTerminalControlComboBoxItem> ShootModeList = new List<MyTerminalControlComboBoxItem>

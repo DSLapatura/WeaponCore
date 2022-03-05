@@ -736,42 +736,34 @@ namespace CoreSystems
 
         internal Dictionary<ulong, string[]> JokeCollection = new Dictionary<ulong, string[]>
         {
-            [76561198000167584] = new[]
-            {
-                "Streamer who doesn't like updates on friday nights detected... rapid update schedule activated",
-            }
         };
 
-        internal void RemoveCoreToolbarWeapons(MyCubeGrid grid)
+        internal void CheckToolbarForVanilla(MyCubeBlock cube)
         {
-            foreach (var cube in grid.GetFatBlocks())
+            string message = null;
+            if (cube is MyShipController)
             {
-                if (cube is MyShipController)
+                var ob = (MyObjectBuilder_ShipController)cube.GetObjectBuilderCubeBlock();
+                for (int i = 0; i < ob.Toolbar.Slots.Count; i++)
                 {
-                    var ob = (MyObjectBuilder_ShipController)cube.GetObjectBuilderCubeBlock();
-                    var reinit = false;
-                    for (int i = 0; i < ob.Toolbar.Slots.Count; i++)
+                    var toolbarItem = ob.Toolbar.Slots[i].Data as MyObjectBuilder_ToolbarItemWeapon;
+                    if (toolbarItem != null)
                     {
-                        var toolbarItem = ob.Toolbar.Slots[i].Data as MyObjectBuilder_ToolbarItemWeapon;
-                        if (toolbarItem != null)
+                        var defId = (MyDefinitionId)toolbarItem.defId;
+                        if (VanillaIds.ContainsKey(defId) || PartPlatforms.ContainsKey(defId))
                         {
-                            var defId = (MyDefinitionId)toolbarItem.defId;
-                            if ((VanillaIds.ContainsKey(defId)) || PartPlatforms.ContainsKey(defId))
-                            {
-                                var index = ob.Toolbar.Slots[i].Index;
-                                var item = ob.Toolbar.Slots[i].Item;
-                                ob.Toolbar.Slots[i] = new MyObjectBuilder_Toolbar.Slot { Index = index, Item = item };
-                                reinit = true;
-                            }
+                            var index = ob.Toolbar.Slots[i].Index;
+                            message += $"*Warning* Vanilla weapon toolbar action detected at position {index + 1}, replace with WeaponCore Group action!\n";
                         }
                     }
-
-                    if (reinit)
-                        cube.Init(ob, grid);
                 }
+
+                if (message != null)
+                    ShowLocalNotify(message, 10000, "Red");
+
+
             }
         }
-
 
         private static void CounterKeenLogMessage(bool console = true)
         {

@@ -285,7 +285,7 @@ namespace CoreSystems.Platform
             internal void ResetShootState(Trigger action, long playerId)
             {
 
-                Data.Repo.Values.State.Control = action == Trigger.On ? ProtoWeaponState.ControlMode.Ui : ProtoWeaponState.ControlMode.None;
+                Data.Repo.Values.State.Control = ProtoWeaponState.ControlMode.Ui;
 
                 var cycleShootOn = Data.Repo.Values.State.Trigger == Trigger.On && action == Trigger.On;
                 Data.Repo.Values.State.Trigger = cycleShootOn ? Trigger.Off : action;
@@ -504,14 +504,11 @@ namespace CoreSystems.Platform
 
                 if (userControl)
                 {
-                    wValues.State.Control = ProtoWeaponState.ControlMode.Ui;
                     wValues.State.Trigger = Trigger.Off;
                     if (settings != null) settings["ControlModes"] = (int)o.Control;
                 }
-                else if (resetState)
-                {
-                    wValues.State.Control = ProtoWeaponState.ControlMode.None;
-                }
+
+                wValues.State.Control = ProtoWeaponState.ControlMode.Ui;
 
                 comp.ManualMode = wValues.State.TrackingReticle && wValues.Set.Overrides.Control == ProtoWeaponOverrides.ControlModes.Manual; // needs to be set everywhere dedicated and non-tracking clients receive TrackingReticle or Control updates.
 
@@ -673,6 +670,22 @@ namespace CoreSystems.Platform
                 Positions.Remove(name);
             }
 
+            internal void RequestForceReload()
+            {
+                foreach (var w in Collection)
+                {
+                    w.ProtoWeaponAmmo.CurrentAmmo = 0;
+                    w.ProtoWeaponAmmo.CurrentCharge = 0;
+                    w.ClientMakeUpShots = 0;
+
+                    if (Session.MpActive && Session.IsServer)
+                        Session.SendWeaponAmmoData(w);
+                }
+
+                if (Session.IsClient)
+                    Session.RequestToggle(this, PacketType.ForceReload);
+            }
+
             private void SendTargetNotice(string message)
             {
                 if (Session.TargetUi.LastTargetNoticeTick != Session.Tick && Session.Tick - Session.TargetUi.LastTargetNoticeTick > 30)
@@ -824,9 +837,7 @@ namespace CoreSystems.Platform
 
                     if (Data.Repo != null)
                     {
-
-                        //Data.Repo.Values.State.PlayerId = -1;
-                        Data.Repo.Values.State.Control = ProtoWeaponState.ControlMode.None;
+                        Data.Repo.Values.State.Control = ProtoWeaponState.ControlMode.Ui;
 
                         if (Session.MpActive)
                             Session.SendComp(this);

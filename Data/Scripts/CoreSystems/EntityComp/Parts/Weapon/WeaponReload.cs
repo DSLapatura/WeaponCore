@@ -372,6 +372,7 @@ namespace CoreSystems.Platform
                 ReloadEndTick = uint.MaxValue;
                 ProjectileCounter = 0;
                 ShootDelay = 0;
+                NextMuzzle = 0;
 
                 if (Comp.ShootManager.LastCycle != uint.MaxValue)
                     Comp.ShootManager.EndShootMode();
@@ -391,6 +392,7 @@ namespace CoreSystems.Platform
             if (ReloadEndTick == uint.MaxValue)
                 return;
             ShootDelay = 0;
+            NextMuzzle = 0;
             EventTriggerStateChanged(EventTriggers.Reloading, false);
             LastLoadedTick = Comp.Session.Tick;
             Loading = false;

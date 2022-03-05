@@ -24,10 +24,7 @@ namespace CoreSystems
             Values.State.TrackingReticle = false;
             Values.State.ToggleCount = 0;
             Values.State.Trigger = Trigger.Off;
-            Values.Set.Overrides.Control = ProtoWeaponOverrides.ControlModes.Auto;
-            Values.Set.Overrides.ShootMode = Weapon.ShootManager.ShootModes.AiShoot;
-            if (Values.State.Control == ProtoWeaponState.ControlMode.Ui)
-                Values.State.Control = ProtoWeaponState.ControlMode.None;
+            Values.State.Control = ProtoWeaponState.ControlMode.Ui;
 
             if (comp.DefaultTrigger != Trigger.Off)
                 Values.State.Trigger = comp.DefaultTrigger;
@@ -295,12 +292,6 @@ namespace CoreSystems
     [ProtoContract]
     public class ProtoWeaponState
     {
-        public enum Caller
-        {
-            Direct,
-            CompData,
-        }
-
         public enum ControlMode
         {
             None,
@@ -312,7 +303,7 @@ namespace CoreSystems
         [ProtoMember(2)] public ProtoWeaponPartState[] Weapons;
         [ProtoMember(3)] public bool TrackingReticle; //don't save
         [ProtoMember(4), DefaultValue(-1)] public long PlayerId = -1;
-        [ProtoMember(5), DefaultValue(ControlMode.None)] public ControlMode Control = ControlMode.None;
+        [ProtoMember(5), DefaultValue(ControlMode.Ui)] public ControlMode Control = ControlMode.Ui;
         [ProtoMember(6)] public Trigger Trigger;
         [ProtoMember(7)] public bool CountingDown;
         [ProtoMember(8)] public bool CriticalReaction;
@@ -431,7 +422,6 @@ namespace CoreSystems
     {
         [ProtoMember(1)] public float Heat; // don't save
         [ProtoMember(2)] public bool Overheated; //don't save
-        //[ProtoMember(3), DefaultValue(Trigger.Off)] public Trigger Action = Trigger.Off; // save
 
         public void Sync(Weapon.WeaponComponent comp, ProtoWeaponPartState sync)
         {
@@ -440,19 +430,7 @@ namespace CoreSystems
             Overheated = sync.Overheated;
             if (wasOver != Overheated)
                 comp.ShootManager.EndShootMode(true);
-            //Action = sync.Action;
         }
-
-        public void WeaponMode(Weapon.WeaponComponent comp, Trigger action, bool resetTerminalAction = true, bool syncCompState = true)
-        {
-            if (resetTerminalAction)
-                comp.Data.Repo.Values.State.Trigger = Trigger.Off;
-
-            //Action = action;
-            if (comp.Session.MpActive && comp.Session.IsServer && syncCompState)
-                comp.Session.SendState(comp);
-        }
-
     }
 
     [ProtoContract]
