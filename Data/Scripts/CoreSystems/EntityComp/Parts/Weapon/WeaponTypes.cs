@@ -205,10 +205,8 @@ namespace CoreSystems.Platform
                 var state = values.State;
                 var isRequestor = !Comp.Session.IsClient || playerId == Comp.Session.PlayerId;
                 
-                if (isRequestor && Comp.Session.IsClient && request == RequestType.Once && (WaitingShootResponse || FreezeClientShoot || CompletedCycles > 0 || ClientToggleCount > state.ToggleCount || state.Trigger != CoreComponent.Trigger.Off)) {
-                    Log.Line($"alreadyActive: WaitingShootResponse:{WaitingShootResponse} - FreezeClientShoot:{FreezeClientShoot} - LastCycle: {LastCycle} - CompletedCycles>0:{CompletedCycles > 0} - cToggle:{ClientToggleCount > state.ToggleCount} - trigger!Off:{state.Trigger != CoreComponent.Trigger.Off}", Session.InputLog);
+                if (isRequestor && Comp.Session.IsClient && request == RequestType.Once && (WaitingShootResponse || FreezeClientShoot || CompletedCycles > 0 || ClientToggleCount > state.ToggleCount || state.Trigger != CoreComponent.Trigger.Off)) 
                     return false;
-                }
                 
                 if (isRequestor && !ProcessInput(playerId, request, signal) || !MakeReadyToShoot()) {
                     ChangeState(request, playerId, false);
@@ -245,9 +243,9 @@ namespace CoreSystems.Platform
                 return true;
             }
 
-            internal bool ProcessInput(long playerId, RequestType request, Signals signal, bool skipUpdateInputState = false)
+            internal bool ProcessInput(long playerId, RequestType request, Signals signal)
             {
-                if (!skipUpdateInputState && ShootRequestPending(request))
+                if (ShootRequestPending(request))
                     return false;
 
                 var state = Comp.Data.Repo.Values.State;
@@ -264,11 +262,9 @@ namespace CoreSystems.Platform
                         Comp.Session.SendShootRequest(Comp, packagedMessage, PacketType.ShootSync, RewriteShootSyncToServerResponse, playerId);
                     }
 
-                    if (Comp.Session.IsServer) {
+                    if (Comp.Session.IsServer) 
                         EndShootMode();
-                        if (Comp.Session.MpActive)
-                            Log.Line($"server toggled shoot off, calling EndShoot", Session.InputLog);
-                    }
+
                     Signal = request != RequestType.Off ? signal : Signals.None;
                 }
 
@@ -307,9 +303,7 @@ namespace CoreSystems.Platform
                     }
 
                     if (activated)
-                    {
                         ++state.ToggleCount;
-                    }
 
                     if (Comp.Session.MpActive)
                         Comp.Session.SendState(Comp);

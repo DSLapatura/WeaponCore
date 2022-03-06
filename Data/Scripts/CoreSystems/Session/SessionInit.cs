@@ -9,12 +9,10 @@ using Sandbox.Game;
 using Sandbox.ModAPI;
 using VRage;
 using VRage.Game;
-using VRage.Game.Entity;
 using VRage.Input;
 using VRage.ObjectBuilders;
 using VRage.Utils;
 using VRageMath;
-using static CoreSystems.Settings.CoreSettings.ServerSettings;
 using static CoreSystems.Support.WeaponDefinition.HardPointDef.HardwareDef.HardwareType;
 namespace CoreSystems
 {
@@ -191,12 +189,7 @@ namespace CoreSystems
                 else
                     PowerGroups.Add(t, 2);
             }
-            /*
-            foreach (var g in PowerGroups)
-            {
-                Log.Line($"ChargePowerRequired: {g.Key.ApproximatePeakPowerCombined} - assingedPowerGroup:{g.Value}");
-            }
-            */
+
             _tmpStructureSorting.Clear();
         }
 
