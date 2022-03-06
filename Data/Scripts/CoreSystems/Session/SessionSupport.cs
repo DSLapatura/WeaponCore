@@ -1,25 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using CoreSystems.Platform;
 using CoreSystems.Settings;
 using CoreSystems.Support;
 using ParallelTasks;
 using Sandbox.Common.ObjectBuilders;
 using Sandbox.Definitions;
-using Sandbox.Game;
 using Sandbox.Game.Entities;
 using Sandbox.Game.EntityComponents;
 using Sandbox.ModAPI;
 using Sandbox.ModAPI.Weapons;
+using Scripts;
 using VRage;
 using VRage.Game;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
-using VRage.Game.ObjectBuilders.ComponentSystem;
 using VRage.Input;
 using VRage.ModAPI;
-using VRage.ObjectBuilders;
 using VRage.Utils;
 using VRageMath;
 using static CoreSystems.Support.CoreComponent;
@@ -803,15 +800,11 @@ namespace CoreSystems
 
         private void ModChecker()
         {
-            var validId = false;
             foreach (var mod in Session.Mods)
             {
                 var modPath = mod.GetPath();
                 if (!string.IsNullOrEmpty(modPath))
                     ModInfo.TryAdd(mod.GetPath(), mod);
-
-                if (mod.PublishedFileId == 1918681825 || mod.PublishedFileId == 2189703321 || mod.PublishedFileId == 2496225055 || mod.PublishedFileId == 2726343161 || mod.PublishedFileId == 2734980390)
-                    validId = true;
 
                 if (mod.PublishedFileId == 1365616918 || mod.PublishedFileId == 2372872458) ShieldMod = true;
                 else if (mod.GetPath().Contains("AppData\\Roaming\\SpaceEngineers\\Mods\\DefenseShields"))
@@ -824,22 +817,18 @@ namespace CoreSystems
                     DebugMod = true;
                 else if (mod.PublishedFileId == 2200451495)
                     WaterMod = true;
-                else if ((mod.Name == "WeaponCore" || mod.Name == "CoreSystems") && ModContext.ModId != mod.Name)
-                    SuppressWc = true;
             }
 
-            if (!validId && Session.SessionSettings.OnlineMode != MyOnlineModeEnum.OFFLINE)
-                SuppressWc = true;
+            SuppressWc = !SUtils.ModActivate(ModContext, Session);
 
-            if (DebugMod)
+            if (!SuppressWc && !ReplaceVanilla)
             {
-                foreach (var mod in Session.Mods)
+                ContainerDefinition baseDefs;
+                Parts.GetBaseDefinitions(out baseDefs);
+                if (baseDefs != null)
                 {
-                    if (mod.Name == ModContext.ModId && mod.PublishedFileId == 1918681825)
-                    {
-                        SuppressWc = true;
-                        break;
-                    }
+                    Parts.SetModPath(baseDefs, ModContext.ModPath);
+                    PickDef(baseDefs);
                 }
             }
         }

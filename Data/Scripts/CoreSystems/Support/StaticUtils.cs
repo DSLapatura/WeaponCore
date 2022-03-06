@@ -14,6 +14,53 @@ namespace CoreSystems.Support
 {
     internal static class SUtils
     {
+        public static bool ModActivate(IMyModContext context, IMySession session)
+        {
+            var priority1 = 2734980390ul;
+            var priority2 = 2189703321ul;
+            var isP0 = context.ModName == "WeaponCore" || context.ModName == "CoreSystems";
+            if (isP0) return true;
+
+            var isP1 = false;
+            var isP2 = false;
+            var isP3 = false;
+            var p0Exists = false;
+            var p1Exists = false;
+            var p2Exists = false;
+
+            foreach (var mod in session.Mods)
+            {
+                if (mod.Name == "WeaponCore" || mod.Name == "CoreSystems")
+                    p0Exists = true;
+
+                if (mod.PublishedFileId == priority1)
+                    p1Exists = true;
+
+                if (mod.PublishedFileId == priority2)
+                    p2Exists = true;
+
+                if (mod.Name == context.ModId)
+                {
+                    if (mod.PublishedFileId == priority1)
+                    {
+                        isP1 = true;
+                    }
+                    else if (mod.PublishedFileId == priority2)
+                    {
+                        isP2 = true;
+                    }
+                    else if (mod.PublishedFileId == 1918681825 || mod.PublishedFileId == 2496225055 || mod.PublishedFileId == 2726343161)
+                    {
+                        isP3 = true;
+                    }
+                }
+            }
+
+            if (isP1 && !p0Exists || isP2 && !p0Exists && !p1Exists) return true;
+            var validP3 = isP3 && (!p0Exists && !p1Exists && !p2Exists);
+            return validP3;
+        }
+
         public static void GetFourInt16FromLong(long id, out int w, out int x, out int y, out int z)
         {
 

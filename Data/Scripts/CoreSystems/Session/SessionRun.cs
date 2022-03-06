@@ -1,7 +1,5 @@
 using System;
-using System.Linq;
 using CoreSystems.Support;
-using Sandbox.Definitions;
 using Sandbox.Game;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
@@ -9,9 +7,6 @@ using VRage.Collections;
 using VRage.Game;
 using VRage.Game.Components;
 using VRage.Game.Entity;
-using VRage.Game.ModAPI;
-using VRage.Game.ObjectBuilders;
-using VRage.ObjectBuilders;
 using VRage.Utils;
 using VRageMath;
 using static Sandbox.Definitions.MyDefinitionManager;
@@ -56,6 +51,7 @@ namespace CoreSystems
             {
                 if (SuppressWc)
                     return;
+
 
                 if (!DelayedHandWeaponsSpawn.IsEmpty)
                     InitDelayedHandWeapons();
@@ -343,6 +339,8 @@ namespace CoreSystems
         {
             try
             {
+                AllDefinitions = Static.GetAllDefinitions();
+
                 ModChecker();
 
                 if (SuppressWc)
@@ -350,7 +348,6 @@ namespace CoreSystems
 
                 IsServer = MyAPIGateway.Multiplayer.IsServer;
                 DedicatedServer = MyAPIGateway.Utilities.IsDedicated;
-                AllDefinitions = Static.GetAllDefinitions();
 
                 SoundDefinitions = Static.GetSoundDefinitions();
                 MyEntities.OnEntityCreate += OnEntityCreate;
@@ -373,7 +370,7 @@ namespace CoreSystems
         {
             try
             {
-                if (SuppressWc)
+                if (SuppressWc && !Inited)
                     return;
 
                 if (!PTask.IsComplete)

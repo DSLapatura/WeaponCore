@@ -190,7 +190,7 @@ namespace CoreSystems.Platform
                 var partHashId = Structure.PartHashes[index];
                 CoreSystem coreSystem;
                 if (!Structure.PartSystems.TryGetValue(partHashId, out coreSystem) || !(coreSystem is WeaponSystem))
-                    return PlatformCrash(Comp, true, true, $"Your block subTypeId ({Comp.SubtypeName}) Invalid weapon system - id:{partHashId} - partCount:{Structure.PartHashes.Length}, check to make sure you don't have duplicate partnames in your mod, I am crashing now Dave.");
+                    return PlatformCrash(Comp, true, true, $"Your block subTypeId ({Comp.SubtypeName}) Invalid weapon system - id:{partHashId} - partCount:{Structure.PartHashes.Length} - modContext:{Comp.Session.ModContext.ModId}[{Comp.Session.ModContext.ModName}], check to make sure you don't have duplicate partnames in your mod, I am crashing now Dave.");
 
                 var system = (WeaponSystem)coreSystem;
                 var muzzlePartName = system.MuzzlePartName.String != "Designator" ? system.MuzzlePartName.String : system.ElevationPartName.String;

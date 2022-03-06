@@ -62,7 +62,7 @@ namespace CoreSystems.Support
             switch (Platform.Init()) {
 
                 case CorePlatform.PlatformState.Invalid:
-                    Platform.PlatformCrash(this, false, false, $"Platform PreInit is in an invalid state: {SubtypeName}");
+                    Invalidate();
                     break;
                 case CorePlatform.PlatformState.Valid:
                     Platform.PlatformCrash(this, false, true, $"Something went wrong with Platform PreInit: {SubtypeName}");
@@ -281,5 +281,10 @@ namespace CoreSystems.Support
         }
 
         public override string ComponentTypeDebugString => "CoreSystems";
+
+        private void Invalidate()
+        {
+            Platform.PlatformCrash(this, false, false, $"Platform PreInit is in an invalid state: {SubtypeName}");
+        }
     }
 }

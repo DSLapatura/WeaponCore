@@ -36,6 +36,7 @@ namespace CoreSystems
             }
             catch (Exception ex) { MyLog.Default.WriteLine($"Exception in Handler: {ex}"); }
         }
+
         private void PickDef(ContainerDefinition baseDefArray)
         {
             if (baseDefArray.WeaponDefs != null)
@@ -53,6 +54,7 @@ namespace CoreSystems
 
         public void AssemblePartDefinitions(WeaponDefinition[] partDefs)
         {
+
             var subTypes = new HashSet<string>();
             foreach (var wepDef in partDefs)
             {

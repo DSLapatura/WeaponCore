@@ -224,15 +224,6 @@ namespace CoreSystems
 
         private void CompileWeaponStructures()
         {
-            if (ReplaceVanilla) {
-
-                for (int i = WeaponDefinitions.Count - 1; i >= 0; i--) {
-                    var def = WeaponDefinitions[i];
-                    if (def.ModPath == ModContext.ModPath)
-                        WeaponDefinitions.RemoveAtFast(i);
-                }
-            }
-
             foreach (var x in WeaponDefinitions)
             {
                 for (int i = 0; i < x.Assignments.MountPoints.Length; i++)
