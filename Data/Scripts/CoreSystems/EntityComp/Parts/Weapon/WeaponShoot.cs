@@ -78,6 +78,9 @@ namespace CoreSystems.Platform
                 FireCounter++;
                 List<NewVirtual> vProList = null;
                 var selfDamage = 0f;
+                LastShootTick = Comp.Session.Tick;
+                Comp.ShootManager.LastShootTick = Comp.Session.Tick;
+
                 for (int i = 0; i < loading.BarrelsPerShot; i++) {
 
                     #region Update ProtoWeaponAmmo state

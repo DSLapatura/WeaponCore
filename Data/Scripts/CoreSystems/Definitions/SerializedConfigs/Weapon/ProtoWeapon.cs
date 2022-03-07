@@ -260,6 +260,12 @@ namespace CoreSystems
             Range = sync.Range;
             SetRange(comp);
 
+            if (Overrides.WeaponGroupId != sync.Overrides.WeaponGroupId)
+                comp.ChangeWeaponGroup(sync.Overrides.WeaponGroupId);
+
+            if (Overrides.SequenceId != sync.Overrides.SequenceId)
+                comp.ChangeSequenceId();
+
             Overrides.Sync(sync.Overrides);
 
             var rofChange = Math.Abs(RofModifier - sync.RofModifier) > 0.0001f;
@@ -280,7 +286,6 @@ namespace CoreSystems
         {
             ReportTarget = sync.ReportTarget;
             Range = sync.Range;
-
             Overrides.Sync(sync.Overrides);
 
             var wValues = comp.Data.Repo.Values;
@@ -585,8 +590,6 @@ namespace CoreSystems
             ShootMode = syncFrom.ShootMode;
             WeaponGroupId = syncFrom.WeaponGroupId;
             AiEnabled = syncFrom.AiEnabled;
-
-
         }
     }
 }

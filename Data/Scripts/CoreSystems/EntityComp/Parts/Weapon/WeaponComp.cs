@@ -28,6 +28,7 @@ namespace CoreSystems.Platform
 
             internal readonly int TotalWeapons;
             internal Weapon TrackingWeapon;
+            internal ShootManager.Signals LastShootSignal;
             internal int DefaultAmmoId;
             internal int DefaultReloads;
             internal int MaxAmmoCount;
@@ -239,6 +240,44 @@ namespace CoreSystems.Platform
 
                 if (weapon.System.TrackProjectile)
                     Ai.PointDefense = true;
+            }
+
+            internal bool SequenceReady(Ai.Constructs rootConstruct)
+            {
+                var wValues = Data.Repo.Values;
+                var overrides = wValues.Set.Overrides;
+
+                Ai.WeaponGroup group;
+                Ai.WeaponSequence sequence;
+
+                var prevSignal = LastShootSignal;
+                LastShootSignal = ShootManager.Signal;
+
+                var active = prevSignal != LastShootSignal || LastShootSignal != ShootManager.Signals.None || overrides.ShootMode == ShootManager.ShootModes.AiShoot;
+
+                if (active && rootConstruct.WeaponGroups.TryGetValue(overrides.WeaponGroupId, out group) && group.OrderSequencesIds[group.SequenceStep] == overrides.SequenceId && group.Sequences.TryGetValue(overrides.SequenceId, out sequence))
+                {
+                    if (ShootManager.LastShootTick > ShootManager.PrevShootEventTick)
+                    {
+                        ShootManager.PrevShootEventTick = ShootManager.LastShootTick;
+                        ++sequence.ShotsFired;
+                    }
+
+                    if (sequence.ShotsFired < overrides.BurstCount)
+                        return true;
+
+                    if (Session.Tick - ShootManager.PrevShootEventTick > overrides.BurstDelay && ++sequence.WeaponsFinished >= sequence.TotalWeapons)
+                    {
+                        if (++group.SequenceStep >= group.Sequences.Count)
+                            group.SequenceStep = 0;
+
+                        sequence.WeaponsFinished = 0;
+                        sequence.ShotsFired = 0;
+                    }
+                    return false;
+                }
+
+                return false;
             }
 
             internal bool AllWeaponsOutOfAmmo()
@@ -464,9 +503,17 @@ namespace CoreSystems.Platform
                         o.BurstDelay = v;
                         break;
                     case "SequenceId":
+
+                        if (o.SequenceId != v)
+                            comp.ChangeSequenceId();
+
                         o.SequenceId = v;
                         break;
                     case "WeaponGroupId":
+
+                        if (o.WeaponGroupId != v)
+                            comp.ChangeWeaponGroup(v);
+
                         o.WeaponGroupId = v;
                         break;
                     case "ShootMode":
@@ -528,6 +575,27 @@ namespace CoreSystems.Platform
                         comp.Collection[i].Target.Reset(comp.Session.Tick, Target.States.ControlReset);
                 }
             }
+
+            internal void ChangeWeaponGroup(int newGroup)
+            {
+                var oldGroup = Data.Repo.Values.Set.Overrides.WeaponGroupId;
+
+                if (oldGroup != newGroup) {
+
+                    if (newGroup > 0)
+                        Ai.CompWeaponGroups[this] = newGroup;
+                    else 
+                        Ai.CompWeaponGroups.Remove(this);
+                }
+
+                Ai.Construct.RootAi.Construct.DirtyWeaponGroups = true;
+            }
+
+            internal void ChangeSequenceId()
+            {
+                Ai.Construct.RootAi.Construct.DirtyWeaponGroups = true;
+            }
+
 
             internal void NotFunctional()
             {

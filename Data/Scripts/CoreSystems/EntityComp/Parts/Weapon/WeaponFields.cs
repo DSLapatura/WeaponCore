@@ -137,7 +137,6 @@ namespace CoreSystems.Platform
         internal uint StopBarrelAvTick;
         internal int ProposedAmmoId = -1;
         internal int ShootCount;
-        internal int ShootDelay;
         internal int FireCounter;
         internal int RateOfFire;
         internal int BarrelSpinRate;
@@ -375,7 +374,7 @@ namespace CoreSystems.Platform
             ParticleEvents = comp.Session.CreateWeaponParticleEvents(system, parts);
 
             var burstDelay = System.Values.HardPoint.Loading.DelayAfterBurst;
-            ShowReload = Comp.Session.HandlesInput && (System.WConst.ReloadTime >= 240 || System.Values.HardPoint.Loading.ShotsInBurst > 0 && burstDelay >= 240);
+            ShowReload = Comp.Session.HandlesInput && (System.WConst.ReloadTime >= 60 || System.Values.HardPoint.Loading.ShotsInBurst > 0 && burstDelay >= 60);
 
             ParentIsSubpart = azimuthPart.Parent is MyEntitySubpart;
             AzimuthInitFwdDir = azimuthPart.PositionComp.LocalMatrixRef.Forward;

@@ -36,6 +36,10 @@ namespace CoreSystems.Support
 
                             WeaponIdx.Add(wComp,  WeaponComps.Count);
                             WeaponComps.Add(wComp);
+                            
+                            if (wComp.Data.Repo.Values.Set.Overrides.WeaponGroupId > 0)
+                                CompWeaponGroups[wComp] = wComp.Data.Repo.Values.Set.Overrides.WeaponGroupId;
+
                             if (optimize)
                             {
                                 if (WeaponTrackIdx.ContainsKey(wComp))
@@ -62,6 +66,8 @@ namespace CoreSystems.Support
                                 WeaponIdx[WeaponComps[weaponIdx]] = weaponIdx;
                             WeaponIdx.Remove(wComp);
 
+                            if (wComp.Data.Repo.Values.Set.Overrides.WeaponGroupId > 0)
+                                CompWeaponGroups.Remove(wComp);
 
                             if (optimize)
                             {
@@ -438,6 +444,7 @@ namespace CoreSystems.Support
             CompBase.Clear();
             Stators.Clear();
             Tools.Clear();
+            CompWeaponGroups.Clear();
 
             LiveProjectile.Clear();
             DeadProjectiles.Clear();

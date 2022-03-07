@@ -1020,6 +1020,7 @@ namespace CoreSystems
 
                 Ai.Constructs.UpdatePlayerStates(this);
                 Ai.Constructs.BuildAiListAndCounters(this);
+                Ai.Constructs.WeaponGroupsMarkDirty(this);
             }
 
 

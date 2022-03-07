@@ -542,6 +542,49 @@ namespace CoreSystems.Support
         }
 
 
+        internal class WeaponGroup
+        {
+            internal readonly Dictionary<int, WeaponSequence> Sequences = new Dictionary<int, WeaponSequence>();
+            internal readonly List<int> OrderSequencesIds = new List<int>();
+
+            internal int SequenceStep;
+            internal int WeaponsFinished;
+
+            public void Clean(Session session)
+            {
+                foreach (var s in Sequences.Values)
+                   s.Clean(session);
+
+                OrderSequencesIds.Clear();
+                Sequences.Clear();
+                WeaponsFinished = 0;
+                SequenceStep = 0;
+                session.GroupPool.Push(this);
+            }
+        }
+
+        internal class WeaponSequence
+        {
+            internal int TotalWeapons;
+            internal int WeaponsFinished;
+            internal int ShotsFired;
+            internal Dictionary<Weapon.WeaponComponent, int> Weapons = new Dictionary<Weapon.WeaponComponent, int>();
+
+            public void AddWeapon(Weapon.WeaponComponent comp)
+            {
+                Weapons.Add(comp, 0);
+                TotalWeapons = Weapons.Count;
+            }
+
+            public void Clean(Session session)
+            {
+                WeaponsFinished = 0;
+                TotalWeapons = 0;
+                ShotsFired = 0;
+                Weapons.Clear();
+                session.SequencePool.Push(this);
+            }
+        }
 
         internal struct Shields
         {

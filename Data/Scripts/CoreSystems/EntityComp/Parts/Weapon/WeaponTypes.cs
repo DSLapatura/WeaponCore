@@ -150,9 +150,10 @@ namespace CoreSystems.Platform
             internal uint CompletedCycles;
             internal uint LastCycle = uint.MaxValue;
             internal uint LastShootTick;
+            internal uint PrevShootEventTick;
             internal uint WaitingTick;
             internal uint FreezeTick;
-
+            internal int ShootDelay;
             internal uint ClientToggleCount;
             internal int WeaponsFired;
 
@@ -340,10 +341,9 @@ namespace CoreSystems.Platform
             {
                 if (--w.ShootCount == 0 && ++WeaponsFired >= Comp.TotalWeapons)
                 {
-                    var set = w.Comp.Data.Comp.Data.Repo.Values.Set;
+                    var overrides = w.Comp.Data.Comp.Data.Repo.Values.Set.Overrides;
                     var state = w.Comp.Data.Comp.Data.Repo.Values.State;
 
-                    w.ShootDelay = set.Overrides.BurstDelay;
                     ++CompletedCycles;
                     
                     var toggled = w.Comp.ShootManager.ClientToggleCount > state.ToggleCount || state.Trigger == CoreComponent.Trigger.On;
@@ -352,17 +352,19 @@ namespace CoreSystems.Platform
                     if (!toggled || overCount)
                         EndShootMode();
                     else
+                    {
                         MakeReadyToShoot(true);
+                        ShootDelay = overrides.BurstDelay;
+                    }
                 }
-
-                LastShootTick = Comp.Session.Tick;
             }
 
             internal bool MakeReadyToShoot(bool skipReady = false)
             {
                 var weaponsReady = 0;
                 var totalWeapons = Comp.Collection.Count;
-                var burstTarget = Comp.Data.Repo.Values.Set.Overrides.BurstCount;
+                var overrides = Comp.Data.Repo.Values.Set.Overrides;
+                var burstTarget = overrides.BurstCount;
                 var client = Comp.Session.IsClient;
                 for (int i = 0; i < totalWeapons; i++)
                 {
@@ -426,13 +428,12 @@ namespace CoreSystems.Platform
                     if (Comp.Session.MpActive) Log.Line($"[clear] ammo:{w.ProtoWeaponAmmo.CurrentAmmo} - Trigger:{wValues.State.Trigger} - Signal:{Signal} - CompletedCycles:{CompletedCycles} - LastCycle:{LastCycle} - sCount:{wValues.State.ToggleCount} - cCount:{ClientToggleCount} - WeaponsFired:{WeaponsFired}", Session.InputLog);
 
                     w.ShootCount = 0;
-                    w.ShootDelay = 0;
                 }
 
+                ShootDelay = 0;
                 CompletedCycles = 0;
                 WeaponsFired = 0;
                 LastCycle = uint.MaxValue;
-
 
                 ClientToggleCount = 0;
                 FreezeClientShoot = false;

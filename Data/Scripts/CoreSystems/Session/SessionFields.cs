@@ -52,8 +52,6 @@ namespace CoreSystems
         internal volatile bool FixedMissileControls;
         internal volatile bool FixedMissileReloadControls;
         internal volatile bool FixedGunControls;
-        internal volatile bool ArmorControls;
-        internal volatile bool UpgradeControls;
         internal volatile bool TurretControllerControls;
         internal volatile bool SorterControls;
         internal volatile bool BaseControlsActions;
@@ -101,6 +99,8 @@ namespace CoreSystems
         internal readonly Stack<MyEntity3DSoundEmitter> Emitters = new Stack<MyEntity3DSoundEmitter>(256);
         internal readonly Stack<VoxelCache> VoxelCachePool = new Stack<VoxelCache>(256);
         internal readonly Stack<ProtoWeaponProSync> ProtoWeaponProSyncPool = new Stack<ProtoWeaponProSync>(256);
+        internal readonly Stack<WeaponSequence> SequencePool = new Stack<WeaponSequence>(32);
+        internal readonly Stack<WeaponGroup> GroupPool = new Stack<WeaponGroup>(32);
 
         internal readonly HashSet<MyCubeGrid> DirtyGridInfos = new HashSet<MyCubeGrid>();
 
@@ -155,7 +155,6 @@ namespace CoreSystems
         internal readonly Dictionary<ulong, AvInfoCache> AvShotCache = new Dictionary<ulong, AvInfoCache>();
         internal readonly Dictionary<ulong, VoxelCache> VoxelCaches = new Dictionary<ulong, VoxelCache>();
         internal readonly Dictionary<MyEntity, CoreComponent> ArmorCubes = new Dictionary<MyEntity, CoreComponent>();
-        internal readonly Dictionary<MyInventory, MyFixedPoint> InventoryVolume = new Dictionary<MyInventory, MyFixedPoint>();
         internal readonly Dictionary<object, PacketInfo> PrunedPacketsToClient = new Dictionary<object, PacketInfo>();
         internal readonly Dictionary<long, CoreComponent> IdToCompMap = new Dictionary<long, CoreComponent>();
         internal readonly Dictionary<uint, MyPhysicalInventoryItem> AmmoItems = new Dictionary<uint, MyPhysicalInventoryItem>();
@@ -184,7 +183,6 @@ namespace CoreSystems
         internal readonly HashSet<SupportSys> DisplayAffectedArmor = new HashSet<SupportSys>();
         internal readonly HashSet<Type> ControlTypeActivated = new HashSet<Type>();
         internal readonly HashSet<IMyPlayer> PlayerControllerMonitor = new HashSet<IMyPlayer>();
-        internal readonly HashSet<MyDefinitionId> BadModBlock = new HashSet<MyDefinitionId>();
         internal readonly List<GridGroupMap> GridGroupUpdates = new List<GridGroupMap>();
         internal readonly List<Weapon> InvPullClean = new List<Weapon>();
         internal readonly List<Weapon> InvRemoveClean = new List<Weapon>();
@@ -239,7 +237,6 @@ namespace CoreSystems
         internal readonly double VisDirToleranceCosine;
         internal readonly double AimDirToleranceCosine;
 
-        private readonly MyConcurrentPool<List<Vector3I>> _blockSpherePool = new MyConcurrentPool<List<Vector3I>>(25);
         private readonly HashSet<IMySlimBlock> _slimsSet = new HashSet<IMySlimBlock>();
         private readonly HashSet<IMySlimBlock> _destroyedSlims = new HashSet<IMySlimBlock>();
         private readonly HashSet<IMySlimBlock> _destroyedSlimsClient = new HashSet<IMySlimBlock>();
@@ -289,7 +286,6 @@ namespace CoreSystems
         internal ShieldApi SApi = new ShieldApi();
         internal NetworkReporter Reporter = new NetworkReporter();
         internal MyStorageData TmpStorage = new MyStorageData();
-        internal InputStateData DefaultInputStateData = new InputStateData();
         internal AcquireManager AcqManager;
 
         internal RunAv Av;
@@ -322,7 +318,6 @@ namespace CoreSystems
         internal uint Tick;
         internal uint ClientDestroyBlockTick;
         internal uint ReInitTick;
-        internal uint LastVanillaWarnTick;
         internal int WeaponIdCounter;
         internal int PlayerEventId;
         internal int TargetRequests;
@@ -406,7 +401,6 @@ namespace CoreSystems
         internal bool SuppressWc;
         internal bool PbApiInited;
         internal bool PbActivate;
-        internal bool ManualShot;
         internal bool ClientCheck;
         internal bool DbUpdating;
         internal bool InventoryUpdate;
@@ -432,7 +426,6 @@ namespace CoreSystems
 
         internal readonly HashSet<ulong> JokePlayerList = new HashSet<ulong>()
         {
-            76561198000167584
         };
 
 

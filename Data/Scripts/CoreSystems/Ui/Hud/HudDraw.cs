@@ -236,16 +236,13 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
                     continue;
 
                 var ai = weapon.Comp.Ai;
-                var currLock = _session.TrackingAi.Construct.Data.Repo.FocusData.Locked == FocusData.LockModes.Locked ? NeedsLockStr : CurrentLockStr;
-                var needsLock = weapon.System.LockOnFocus && currLock == CurrentLockStr ? GapStr + _session.UiInput.ActionKey : NeedsLockStr;
                 var overrides = comp.Data.Repo.Values.Set.Overrides;
-
                 var delayNoTarget = !weapon.System.WConst.GiveUpAfter || _session.Tick - weapon.LastShootTick > weapon.System.WConst.DelayAfterBurst;
                 var notAnyBlock = overrides.SubSystem != WeaponDefinition.TargetingDef.BlockTypes.Any;
                 var needsTarget =  !weapon.Target.HasTarget && overrides.Grids && (comp.DetectOtherSignals && ai.DetectionInfo.OtherInRange || ai.DetectionInfo.PriorityInRange) && weapon.ActiveAmmoDef.AmmoDef.Const.CanReportTargetStatus && comp.Data.Repo.Values.Set.ReportTarget && delayNoTarget && ai.DetectionInfo.TargetInRange(weapon);
                 var showReloadIcon = (weapon.Loading || weapon.Reload.WaitForClient || _session.Tick - weapon.LastLoadedTick < 60);
 
-                var name = weapon.System.ShortName + (needsTarget ? overrides.FocusSubSystem && !showReloadIcon  && notAnyBlock && weapon.FoundTopMostTarget ? NoSubsystem : NoTargetStr : weapon.System.LockOnFocus && !showReloadIcon ? needsLock : EmptyStr);
+                var name = weapon.System.ShortName + (needsTarget ? overrides.FocusSubSystem && !showReloadIcon  && notAnyBlock && weapon.FoundTopMostTarget ? NoSubsystem : NoTargetStr : EmptyStr);
 
                 var textOffset = bgStartPosX - _bgWidth + _reloadWidth + _padding;
                 var hasHeat = weapon.HeatPerc > 0;

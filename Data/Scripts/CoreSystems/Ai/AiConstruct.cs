@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Security.Policy;
 using CoreSystems.Platform;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
@@ -40,6 +39,8 @@ namespace CoreSystems.Support
             }
 
             Construct.ControllingPlayers.Clear();
+            if (Construct.WeaponGroups.Count > 0)
+                Construct.CleanWeaponGroups(Session);
         }
 
         public void RegisterSubGrid(MyCubeGrid grid)
@@ -104,6 +105,7 @@ namespace CoreSystems.Support
             internal readonly Dictionary<long, PlayerController> ControllingPlayers = new Dictionary<long, PlayerController>();
             internal readonly HashSet<MyEntity> PreviousTargets = new HashSet<MyEntity>();
             internal readonly RunningAverage DamageAverage = new RunningAverage(10);
+            internal readonly Dictionary<int, WeaponGroup> WeaponGroups = new Dictionary<int, WeaponGroup>();
             internal readonly Ai Ai;
             internal float OptimalDps;
             internal int BlockCount;
@@ -115,6 +117,7 @@ namespace CoreSystems.Support
             internal uint LastEffectUpdateTick;
             internal uint TargetResetTick;
             internal uint LastRefreshTick;
+            internal bool DirtyWeaponGroups;
             internal bool DroneAlert;
 
             internal double TotalEffect;
@@ -279,6 +282,58 @@ namespace CoreSystems.Support
                 }
             }
 
+            internal static void WeaponGroupsMarkDirty(GridGroupMap map)
+            {
+                if (map.Ais.Count == 0)
+                {
+                    Log.Line($"RebuildWeaponGroups gridgroup had no AIs");
+                    return;
+                }
+                map.Ais[0].Construct.RootAi.Construct.DirtyWeaponGroups = true;
+            }
+
+            internal static void RebuildWeaponGroups(GridGroupMap map)
+            {
+                if (map.Ais.Count == 0)
+                {
+                    Log.Line($"RebuildWeaponGroups gridgroup had no AIs");
+                    return;
+                }
+                var s = map.Session;
+                var rootAi = map.Ais[0].Construct.RootAi;
+                var rootConstruct = rootAi.Construct;
+
+                rootConstruct.DirtyWeaponGroups = false;
+
+                if (rootConstruct.WeaponGroups.Count > 0)
+                    rootConstruct.CleanWeaponGroups(s);
+
+                foreach (var ai in map.Ais)
+                {
+                    foreach (var g in ai.CompWeaponGroups)
+                    {
+                        var overrides = g.Key.Data.Repo.Values.Set.Overrides;
+
+                        WeaponGroup group;
+                        if (!rootConstruct.WeaponGroups.TryGetValue(g.Value, out group))
+                            group = s.GroupPool.Count > 0 ? s.GroupPool.Pop() : new WeaponGroup();
+                        
+                        rootConstruct.WeaponGroups[g.Value] = group;
+
+
+                        WeaponSequence sequence;
+                        if (!group.Sequences.TryGetValue(overrides.SequenceId, out sequence))
+                            sequence = s.SequencePool.Count > 0 ? s.SequencePool.Pop() : new WeaponSequence();
+
+                        group.Sequences[overrides.SequenceId] = sequence;
+                        group.OrderSequencesIds.Add(overrides.SequenceId);
+                        sequence.AddWeapon(g.Key);
+                    }
+                }
+
+                foreach (var g in rootConstruct.WeaponGroups)
+                    g.Value.OrderSequencesIds.Sort();
+            }
 
             internal static void UpdatePlayerStates(GridGroupMap map)
             {
@@ -298,7 +353,6 @@ namespace CoreSystems.Support
                     GridMap gridMap;
                     if (s.GridToInfoMap.TryGetValue(sub, out gridMap))
                     {
-
                         foreach (var c in gridMap.PlayerControllers)
                         {
                             rootConstruct.ControllingPlayers[c.Key] = c.Value;
@@ -426,110 +480,29 @@ namespace CoreSystems.Support
                     w.CheckInventorySystem = true;
             }
 
-            public static bool ConstructSynced(Ai ai)
-            {
-                var tempSet = new HashSet<MyCubeGrid>();
-
-                foreach (var g in ai.GridMap.GroupMap.Construct)
-                    tempSet.Add(g.Key);
-
-                var sameSet = tempSet.SetEquals(ai.SubGridCache);
-
-                if (!sameSet)
-                    Log.Line($"not same set");
-
-                var sameRoot = true;
-                foreach (var sub in ai.SubGridCache)
-                {
-                    Ai subAi;
-                    if (ai.Session.EntityAIs.TryGetValue(sub, out subAi))
-                    {
-                        if (subAi.Construct.RootAi != ai.Construct.RootAi)
-                            sameRoot = false;
-                    }
-
-                    Ai rootAi;
-                    if (ai.Session.EntityToMasterAi.TryGetValue(sub, out rootAi))
-                    {
-                        if (rootAi != ai.Construct.RootAi)
-                            sameRoot = false;
-                    }
-                }
-                if (!sameRoot)
-                    Log.Line($"not same root");
-                var sameSubs = true;
-                foreach (var sub in ai.SubGridCache)
-                {
-                    Ai subAi;
-                    if (ai.Session.EntityAIs.TryGetValue(sub, out subAi))
-                    {
-                        if (!ai.SubGridCache.SetEquals(subAi.SubGridCache) || !subAi.SubGridCache.Contains(ai.GridEntity))
-                            sameSubs = false;
-                    }
-                }
-
-                if (!sameSubs)
-                    Log.Line($"subs not same");
-
-                return sameSet && sameRoot && sameSubs;
-            }
-
-            public static int ConstructPlayerCount(Ai ai)
-            {
-                int playerCount = 0;
-                foreach (var sub in ai.SubGridCache)
-                {
-                    GridMap gridMap;
-                    if (ai.Session.GridToInfoMap.TryGetValue(sub, out gridMap))
-                    {
-                        playerCount += gridMap.PlayerControllers.Count;
-                    }
-                }
-
-                return playerCount;
-            }
-
-            public bool ValidateStatorAssignemnts(IMyMotorStator stator)
-            {
-                foreach (var ai in Ai.GridMap.GroupMap.Ais)
-                {
-                    if (stator.TopGrid == ai.TopEntity)
-                        return true;
-                }
-
-                return false;
-            }
-
-            public static bool MatchPlayerId(Ai ai, long playerId)
-            {
-                foreach (var sub in ai.SubGridCache)
-                {
-                    GridMap gridMap;
-                    if (ai.Session.GridToInfoMap.TryGetValue(sub, out gridMap))
-                    {
-                        foreach (var c in gridMap.PlayerControllers)
-                        {
-                            if (c.Key == playerId)
-                            {
-                                Log.Line($"wasRoot: {sub == ai.Construct.RootAi.TopEntity} rootConstructHasPlayer:{ai.Construct.RootAi.Construct.ControllingPlayers.ContainsKey(playerId)} - {sub.EntityId}");
-                                return true;
-                            }
-                        }
-                    }
-                }
-
-                return false;
-            }
-
-
             internal void Init(Ai ai)
             {
                 RootAi = ai;
                 Data.Init(ai);
             }
-            
+
+            internal void CleanWeaponGroups(Session session)
+            {
+                foreach (var pair in WeaponGroups)
+                {
+                    var group = pair.Value;
+                    group.Clean(session);
+                }
+                WeaponGroups.Clear();
+                DirtyWeaponGroups = false;
+            }
+
             internal void Clean()
             {
+
+                if (WeaponGroups.Count > 0)
+                    CleanWeaponGroups(RootAi.Session);
+
                 Data.Clean();
                 OptimalDps = 0;
                 BlockCount = 0;
@@ -538,6 +511,7 @@ namespace CoreSystems.Support
                 PreviousTotalEffect = 0;
                 LastRefreshTick = 0;
                 TargetResetTick = 0;
+                DirtyWeaponGroups = false;
                 RootAi = null;
                 LargestAi = null;
                 Counter.Clear();
