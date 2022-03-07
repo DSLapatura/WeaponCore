@@ -68,7 +68,6 @@ namespace CoreSystems.Support
             Designator,
             Acquired,
             NoTargetsSeen,
-            ProjectileClosed,
             RayCheckFailed,
             RayCheckSelfHit,
             RayCheckFriendly,
@@ -86,6 +85,10 @@ namespace CoreSystems.Support
             AiLost,
             Offline,
             LostTracking,
+            ProjectileClean,
+            ProjetileIntercept,
+            ProjectileClose,
+            ProjectileNewTarget,
         }
 
         internal Target(Part part = null, bool main = false)

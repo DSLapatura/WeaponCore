@@ -410,7 +410,11 @@ namespace CoreSystems.Projectiles
             for (int i = 0; i < Watchers.Count; i++) Watchers[i].DeadProjectiles.Add(this);
             Watchers.Clear();
 
-            foreach (var seeker in Seekers) seeker.Info.Target.Reset(session.Tick, Target.States.ProjectileClosed);
+            foreach (var seeker in Seekers)
+            {
+                if (seeker.Info.Target.Projectile == this)
+                    seeker.Info.Target.Reset(session.Tick, Target.States.ProjectileClose);
+            }
             Seekers.Clear();
 
             if (EnableAv && Info.AvShot.ForceHitParticle)
@@ -1393,7 +1397,6 @@ namespace CoreSystems.Projectiles
             var giveUp = HadTarget != HadTargetState.None && ++NewTargets > Info.AmmoDef.Const.MaxTargets && Info.AmmoDef.Const.MaxTargets != 0;
             ChaseAge = Info.Age;
             PickTarget = false;
-
             if (HadTarget != HadTargetState.Projectile)
             {
                 if (giveUp || !Ai.ReacquireTarget(this))
@@ -1403,7 +1406,7 @@ namespace CoreSystems.Projectiles
                     if (!giveUp && !Info.LockOnFireState || Info.LockOnFireState && giveUp || !Info.AmmoDef.Trajectory.Smarts.NoTargetExpire || badEntity)
                     {
                         if (Info.Target.TargetState == Target.TargetStates.IsEntity)
-                            Info.Target.Reset(Info.Ai.Session.Tick, Target.States.ProjectileClosed);
+                            Info.Target.Reset(Info.Ai.Session.Tick, Target.States.ProjectileNewTarget);
                     }
 
                     return false;
@@ -1411,12 +1414,14 @@ namespace CoreSystems.Projectiles
             }
             else
             {
+
+                Info.Target.Projectile?.Seekers.Remove(this);
+
                 if (giveUp || !Ai.ReAcquireProjectile(this))
                 {
-                    if (Info.Target.TargetState == Target.TargetStates.IsProjectile) {
-                        Info.Target.Projectile.Seekers.Remove(this);
-                        Info.Target.Reset(Info.Ai.Session.Tick, Target.States.ProjectileClosed);
-                    }
+                    if (Info.Target.TargetState == Target.TargetStates.IsProjectile) 
+                        Info.Target.Reset(Info.Ai.Session.Tick, Target.States.ProjectileNewTarget);
+
                     return false;
                 }
             }

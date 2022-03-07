@@ -111,7 +111,7 @@ namespace CoreSystems.Support
                 Weapon.System.Session.MonitoredProjectiles.Remove(Id);
             }
 
-            Target.Reset(Weapon.System.Session.Tick, Target.States.ProjectileClosed);
+            Target.Reset(Weapon.System.Session.Tick, Target.States.ProjectileClean);
             HitList.Clear();
 
             if (usesStorage)

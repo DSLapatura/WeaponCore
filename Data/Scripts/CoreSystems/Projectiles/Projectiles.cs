@@ -154,7 +154,7 @@ namespace CoreSystems.Projectiles
 
                 if (target.TargetState == Target.TargetStates.IsProjectile && target.Projectile.State != ProjectileState.Alive) {
                     target.Projectile.Seekers.Remove(p);
-                    target.Reset(Session.Tick, Target.States.ProjectileClosed);
+                    target.Reset(Session.Tick, Target.States.ProjetileIntercept);
                 }
 
 
