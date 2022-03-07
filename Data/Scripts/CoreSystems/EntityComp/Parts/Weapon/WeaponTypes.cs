@@ -430,6 +430,7 @@ namespace CoreSystems.Platform
                     w.ShootCount = 0;
                 }
 
+                Log.Line($"EndShoot");
                 ShootDelay = 0;
                 CompletedCycles = 0;
                 WeaponsFired = 0;

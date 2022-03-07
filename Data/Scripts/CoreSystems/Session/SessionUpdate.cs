@@ -347,7 +347,6 @@ namespace CoreSystems
                     var overrides = wValues.Set.Overrides;
                     var cMode = overrides.Control;
                     var sMode = overrides.ShootMode;
-                    var sequenceReady = overrides.WeaponGroupId == 0 || wComp.SequenceReady(rootConstruct);
 
                     if (HandlesInput) {
 
@@ -415,6 +414,7 @@ namespace CoreSystems
 
                     var onConfrimed = wValues.State.Trigger == On && !wComp.ShootManager.FreezeClientShoot && !wComp.ShootManager.WaitingShootResponse && (sMode != Weapon.ShootManager.ShootModes.AiShoot || wComp.ShootManager.Signal == Weapon.ShootManager.Signals.Manual);
                     var noShootDelay = wComp.ShootManager.ShootDelay == 0 || wComp.ShootManager.ShootDelay != 0 && wComp.ShootManager.ShootDelay-- == 0;
+                    var sequenceReady = overrides.WeaponGroupId == 0 || wComp.SequenceReady(rootConstruct);
 
                     if (Tick60) {
                         var add = wComp.TotalEffect - wComp.PreviousTotalEffect;

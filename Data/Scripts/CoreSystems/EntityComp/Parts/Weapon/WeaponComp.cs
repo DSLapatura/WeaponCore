@@ -253,7 +253,9 @@ namespace CoreSystems.Platform
                 var prevSignal = LastShootSignal;
                 LastShootSignal = ShootManager.Signal;
 
-                var active = prevSignal != LastShootSignal || LastShootSignal != ShootManager.Signals.None || overrides.ShootMode == ShootManager.ShootModes.AiShoot;
+                var manual = prevSignal != LastShootSignal || LastShootSignal != ShootManager.Signals.None;
+                var auto = overrides.ShootMode == ShootManager.ShootModes.AiShoot;
+                var active = manual || auto;
 
                 if (active && rootConstruct.WeaponGroups.TryGetValue(overrides.WeaponGroupId, out group) && group.OrderSequencesIds[group.SequenceStep] == overrides.SequenceId && group.Sequences.TryGetValue(overrides.SequenceId, out sequence))
                 {
@@ -273,7 +275,11 @@ namespace CoreSystems.Platform
 
                         sequence.WeaponsFinished = 0;
                         sequence.ShotsFired = 0;
+
+                        if (auto)
+                            ShootManager.ShootDelay = overrides.BurstDelay;
                     }
+
                     return false;
                 }
 
