@@ -866,9 +866,11 @@ namespace CoreSystems.Platform
                 var cube = Target.TargetEntity as MyCubeBlock;
                 if (cube != null)
                 {
-                    var focusFailed = (!cube.IsWorking || overrides.FocusTargets) && !Comp.Ai.Construct.Focus.EntityIsFocused(Comp.Ai, cube.CubeGrid);
+                    var invalidCube = !cube.IsWorking || cube.MarkedForClose;
+                    var rootAi = Comp.Ai.Construct.RootAi;
+                    var focusFailed = overrides.FocusTargets && !rootAi.Construct.Focus.EntityIsFocused(rootAi, cube.CubeGrid);
                     var checkSubsystem = overrides.FocusSubSystem && overrides.SubSystem != WeaponDefinition.TargetingDef.BlockTypes.Any;
-                    if (focusFailed || checkSubsystem && !ValidSubSystemTarget(cube, overrides.SubSystem))
+                    if (invalidCube || focusFailed || checkSubsystem && !ValidSubSystemTarget(cube, overrides.SubSystem))
                     {
                         masterWeapon.Target.Reset(Comp.Session.Tick, Target.States.RayCheckDeadBlock);
                         if (masterWeapon != this) Target.Reset(Comp.Session.Tick, Target.States.RayCheckDeadBlock);

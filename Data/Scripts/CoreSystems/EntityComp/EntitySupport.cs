@@ -62,6 +62,7 @@ namespace CoreSystems.Support
                             Ai.OptimalDps -= ((Weapon.WeaponComponent)this).PeakDps;
                             Ai.EffectiveDps -= ((Weapon.WeaponComponent)this).EffectiveDps;
                             Ai.PerfectDps -= ((Weapon.WeaponComponent)this).PerfectDps;
+                            Constructs.WeaponGroupsMarkDirty(Ai.GridMap.GroupMap);
                         }
 
                         PartCounter wCount;

@@ -1415,7 +1415,8 @@ namespace CoreSystems.Projectiles
             else
             {
 
-                Info.Target.Projectile?.Seekers.Remove(this);
+                if (Info.Target.TargetState == Target.TargetStates.IsProjectile)
+                    Info.Target.Projectile?.Seekers.Remove(this);
 
                 if (giveUp || !Ai.ReAcquireProjectile(this))
                 {

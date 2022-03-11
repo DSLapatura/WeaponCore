@@ -26,11 +26,11 @@ namespace CoreSystems
             catch (Exception ex) { Log.Line($"Exception in BeforeStart: {ex}", null, true); }
         }
 
-            public override MyObjectBuilder_SessionComponent GetObjectBuilder()
-            {
-                ResetVisualAreas();
-                return base.GetObjectBuilder();
-            }
+        public override MyObjectBuilder_SessionComponent GetObjectBuilder()
+        {
+            ResetVisualAreas();
+            return base.GetObjectBuilder();
+        }
 
         public override void UpdatingStopped()
         {

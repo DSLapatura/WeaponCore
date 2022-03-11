@@ -1099,7 +1099,7 @@ namespace CoreSystems.Api
         private bool SetPhantomFocusTarget(MyEntity phantom, MyEntity target, int focusId)
         {
             Ai ai;
-            if (target != null && !target.MarkedForClose && _session.EntityAIs.TryGetValue(phantom, out ai))
+            if (target != null && !target.MarkedForClose && _session.EntityToMasterAi.TryGetValue(phantom, out ai))
             {
                 if (!ai.Session.IsServer)
                     return false;

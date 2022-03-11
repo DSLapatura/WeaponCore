@@ -169,11 +169,17 @@ namespace CoreSystems.Support
                     IsWorkingChangedTick = Session.Tick;
                 }
 
-                if (wasFunctional && !IsFunctional && Platform.State == PlatformState.Ready) {
+                if (Platform.State == PlatformState.Ready) {
 
                     if (Type == CompType.Weapon)
-                        ((Weapon.WeaponComponent)this).NotFunctional();
+                    {
+                        var wComp = ((Weapon.WeaponComponent) this);
+                        if (wasFunctional && !IsFunctional)
+                            wComp.NotFunctional();
 
+                        if (wasFunctional != IsFunctional && wComp.Data.Repo.Values.Set.Overrides.WeaponGroupId > 0)
+                            Ai.Construct.RootAi.Construct.DirtyWeaponGroups = true;
+                    }
                 }
                 
                 if (Session.MpActive && Session.IsServer) {

@@ -284,12 +284,15 @@ namespace CoreSystems.Support
 
             internal static void WeaponGroupsMarkDirty(GridGroupMap map)
             {
-                if (map.Ais.Count == 0)
+                if (map == null || map.Ais.Count == 0)
                 {
                     Log.Line($"RebuildWeaponGroups gridgroup had no AIs");
                     return;
                 }
-                map.Ais[0].Construct.RootAi.Construct.DirtyWeaponGroups = true;
+                var rootAi = map.Ais[0].Construct.RootAi;
+                
+                if (rootAi != null)
+                    rootAi.Construct.DirtyWeaponGroups = true;
             }
 
             internal static void RebuildWeaponGroups(GridGroupMap map)
@@ -312,6 +315,9 @@ namespace CoreSystems.Support
                 {
                     foreach (var g in ai.CompWeaponGroups)
                     {
+                        if (!g.Key.IsWorking)
+                            continue;
+
                         var overrides = g.Key.Data.Repo.Values.Set.Overrides;
 
                         WeaponGroup group;
