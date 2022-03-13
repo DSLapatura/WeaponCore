@@ -37,8 +37,7 @@ namespace CoreSystems.Platform
 
                 if (Comp.Session.MpActive && Comp.Session.IsServer)  {
                     TargetData.ClearTarget();
-                    if (!Comp.FakeMode)
-                        Target.PushTargetToClient(this);
+                    Target.PushTargetToClient(this);
                 } 
             }
 

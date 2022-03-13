@@ -193,6 +193,18 @@ namespace CoreSystems.Platform
                 ClientRequestReject,
             }
 
+            internal enum EndReason
+            {
+                Overheat,
+                Reload,
+                Toggle,
+                ServerRequested,
+                ServerAhead,
+                Failed,
+                Finished,
+                Rejected,
+            }
+
             public ShootManager(WeaponComponent comp)
             {
                 Comp = comp;
@@ -264,7 +276,7 @@ namespace CoreSystems.Platform
                     }
 
                     if (Comp.Session.IsServer) 
-                        EndShootMode();
+                        EndShootMode(EndReason.ServerRequested);
 
                     Signal = request != RequestType.Off ? signal : Signals.None;
                 }
@@ -350,7 +362,7 @@ namespace CoreSystems.Platform
                     var overCount = CompletedCycles >= LastCycle;
 
                     if (!toggled || overCount)
-                        EndShootMode();
+                        EndShootMode(EndReason.Finished);
                     else
                     {
                         MakeReadyToShoot(true);
@@ -418,14 +430,14 @@ namespace CoreSystems.Platform
                 WeaponsFired = 0;
             }
 
-            internal void EndShootMode(bool skipNetwork = false)
+            internal void EndShootMode(EndReason reason, bool skipNetwork = false)
             {
                 var wValues = Comp.Data.Repo.Values;
 
                 for (int i = 0; i < Comp.TotalWeapons; i++)
                 {
                     var w = Comp.Collection[i];
-                    if (Comp.Session.MpActive) Log.Line($"[clear] ammo:{w.ProtoWeaponAmmo.CurrentAmmo} - Trigger:{wValues.State.Trigger} - Signal:{Signal} - CompletedCycles:{CompletedCycles} - LastCycle:{LastCycle} - sCount:{wValues.State.ToggleCount} - cCount:{ClientToggleCount} - WeaponsFired:{WeaponsFired}", Session.InputLog);
+                    if (Comp.Session.MpActive) Log.Line($"[clear] Reason:{reason} - ammo:{w.ProtoWeaponAmmo.CurrentAmmo} - Trigger:{wValues.State.Trigger} - Signal:{Signal} - Cycles:{CompletedCycles}[{LastCycle}] - Count:{wValues.State.ToggleCount}[{ClientToggleCount}] - WeaponsFired:{WeaponsFired}", Session.InputLog);
 
                     w.ShootCount = 0;
                 }
@@ -461,7 +473,7 @@ namespace CoreSystems.Platform
                 EncodeShootState(0, (uint)Signals.None, CompletedCycles, (uint)ShootCodes.ClientRequestReject, out packagedMessage);
                 Comp.Session.SendShootReject(Comp, packagedMessage, PacketType.ShootSync, clientId);
 
-                EndShootMode();
+                EndShootMode(EndReason.Rejected);
             }
 
 
@@ -471,13 +483,13 @@ namespace CoreSystems.Platform
                 if (CompletedCycles > 0)
                     RestoreWeaponShot();
 
-                EndShootMode();
+                EndShootMode(EndReason.Rejected);
             }
 
             internal void FailSafe()
             {
                 Log.Line($"ShootMode failsafe triggered: LastCycle:{LastCycle} - CompletedCycles:{CompletedCycles} - WeaponsFired:{WeaponsFired} - wait:{WaitingShootResponse} - freeze:{FreezeClientShoot}", Session.InputLog);
-                EndShootMode();
+                EndShootMode(EndReason.Failed);
             }
 
             internal void ServerToggleOffByClient(uint interval)
@@ -492,7 +504,7 @@ namespace CoreSystems.Platform
 
                 if (!clientMakeupRequest)
                 {
-                    EndShootMode();
+                    EndShootMode(EndReason.Toggle);
                 }
                 else
                 {
@@ -518,14 +530,14 @@ namespace CoreSystems.Platform
 
                 if (interval <= CompletedCycles)
                 {
-                    EndShootMode();
+                    EndShootMode(EndReason.Toggle);
                 }
                 else if (interval > CompletedCycles)
                 {
                     Log.Line($"[ClientToggleResponse] client is behind server: Current: {CompletedCycles} freeze:{FreezeClientShoot} - target:{interval} - LastCycle:{LastCycle}", Session.InputLog);
 
                     //LastCycle = interval;
-                    EndShootMode();
+                    EndShootMode(EndReason.ServerAhead);
 
                 }
                 FreezeClientShoot = false;

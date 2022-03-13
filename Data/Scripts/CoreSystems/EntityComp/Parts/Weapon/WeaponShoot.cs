@@ -354,7 +354,7 @@ namespace CoreSystems.Platform
             }
 
             EventTriggerStateChanged(EventTriggers.Overheated, true);
-            Comp.ShootManager.EndShootMode(true);
+            Comp.ShootManager.EndShootMode(ShootManager.EndReason.Overheat, true);
 
 
             if (System.Session.IsServer)

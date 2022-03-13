@@ -4,7 +4,6 @@ using CoreSystems.Platform;
 using CoreSystems.Support;
 using ProtoBuf;
 using Sandbox.Game.Entities;
-using Sandbox.ModAPI;
 using VRage.Game.Entity;
 using VRageMath;
 using static CoreSystems.Support.WeaponDefinition.TargetingDef;

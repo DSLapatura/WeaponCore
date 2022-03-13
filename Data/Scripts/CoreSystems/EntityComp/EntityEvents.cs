@@ -254,7 +254,7 @@ namespace CoreSystems.Support
 
                     else shots = "\n" + w.ActiveAmmoDef.AmmoDef.AmmoRound + ": " + w.ProtoWeaponAmmo.CurrentAmmo;
 
-                    var burst = w.ActiveAmmoDef.AmmoDef.Const.BurstMode ? $"\n{Localization.GetText("WeaponInfoBurst")}: " + w.ShotsFired + "(" + w.System.ShotsPerBurst + $") - {Localization.GetText("WeaponInfoDelay")}: " + w .System.Values.HardPoint.Loading.DelayAfterBurst : string.Empty;
+                    var burst = w.ActiveAmmoDef.AmmoDef.Const.BurstMode ? $"\nShootMode: " + w.ShotsFired + "(" + w.System.ShotsPerBurst + $") - {Localization.GetText("WeaponInfoDelay")}: " + w .System.Values.HardPoint.Loading.DelayAfterBurst : string.Empty;
 
                     var endReturn = i + 1 != collection.Count ? "\n" : string.Empty;
 

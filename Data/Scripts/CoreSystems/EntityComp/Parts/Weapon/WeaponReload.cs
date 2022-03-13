@@ -380,7 +380,7 @@ namespace CoreSystems.Platform
                 NextMuzzle = 0;
 
                 if (Comp.ShootManager.LastCycle != uint.MaxValue)
-                    Comp.ShootManager.EndShootMode();
+                    Comp.ShootManager.EndShootMode(ShootManager.EndReason.Reload);
             }
         }
 

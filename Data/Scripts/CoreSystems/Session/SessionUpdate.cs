@@ -491,29 +491,24 @@ namespace CoreSystems
                         /// Check target for expire states
                         /// 
                         var noAmmo = w.NoMagsToLoad && w.ProtoWeaponAmmo.CurrentAmmo == 0 && aConst.Reloadable && !w.System.DesignatorWeapon && Tick - w.LastMagSeenTick > 600;
-                        if (w.Target.HasTarget) {
+                        if (!IsClient && w.Target.HasTarget) {
                             
-                            if (!IsClient && noAmmo)
+                            if (noAmmo)
                                 w.Target.Reset(Tick, States.Expired);
-                            else if (!IsClient && w.Target.TargetEntity == null && w.Target.Projectile == null && !wComp.FakeMode || wComp.ManualMode && (fakeTargets == null || Tick - fakeTargets.ManualTarget.LastUpdateTick > 120))
+                            else if (w.Target.TargetEntity == null && w.Target.Projectile == null && !wComp.FakeMode || wComp.ManualMode && (fakeTargets == null || Tick - fakeTargets.ManualTarget.LastUpdateTick > 120))
                                 w.Target.Reset(Tick, States.Expired, !wComp.ManualMode);
-                            else if (!IsClient && w.Target.TargetEntity != null && (wComp.UserControlled && !w.System.SuppressFire || w.Target.TargetEntity.MarkedForClose || Tick60 && (overrides.FocusTargets && !focus.ValidFocusTarget(w) || Tick60 && !overrides.FocusTargets && !w.TurretController && (aConst.RequiresTarget || w.RotorTurretTracking) && !w.TargetInRange(w.Target.TargetEntity))))
+                            else if (w.Target.TargetEntity != null && (wComp.UserControlled && !w.System.SuppressFire || w.Target.TargetEntity.MarkedForClose || Tick60 && (overrides.FocusTargets && !focus.ValidFocusTarget(w) || Tick60 && !overrides.FocusTargets && !w.TurretController && (aConst.RequiresTarget || w.RotorTurretTracking) && !w.TargetInRange(w.Target.TargetEntity))))
                                 w.Target.Reset(Tick, States.Expired);
-                            else if (!IsClient && w.Target.Projectile != null && (!ai.LiveProjectile.Contains(w.Target.Projectile) || w.Target.TargetState == TargetStates.IsProjectile && w.Target.Projectile.State != Projectile.ProjectileState.Alive)) {
+                            else if (w.Target.Projectile != null && (!ai.LiveProjectile.Contains(w.Target.Projectile) || w.Target.TargetState == TargetStates.IsProjectile && w.Target.Projectile.State != Projectile.ProjectileState.Alive)) {
                                 w.Target.Reset(Tick, States.Expired);
                                 w.FastTargetResetTick = Tick + 6;
                             }
-                            else if (w.TurretController) {
-
-                                if (!advOptimize && !Weapon.TrackingTarget(w, w.Target, out w.TargetLock) && !IsClient && w.Target.ExpiredTick != Tick)
-                                    w.Target.Reset(Tick, States.LostTracking, !wComp.ManualMode && (w.Target.CurrentState != States.RayCheckFailed && !w.Target.HasTarget));
-                            }
-                            else {
+                            else if (!w.TurretController) {
 
                                 Vector3D targetPos;
                                 if (w.TurretAttached) {
 
-                                    if (!w.System.TrackTargets && !IsClient) {
+                                    if (!w.System.TrackTargets) {
 
                                         var trackingWeaponIsFake = wComp.TrackingWeapon.Target.TargetState == TargetStates.IsFake;
                                         var thisWeaponIsFake = w.Target.TargetState == TargetStates.IsFake;
@@ -522,10 +517,10 @@ namespace CoreSystems
                                         else
                                             w.TargetLock = true;
                                     }
-                                    else if (!Weapon.TargetAligned(w, w.Target, out targetPos) && !IsClient)
+                                    else if (!Weapon.TargetAligned(w, w.Target, out targetPos))
                                         w.Target.Reset(Tick, States.Expired);
                                 }
-                                else if (w.System.TrackTargets && !Weapon.TargetAligned(w, w.Target, out targetPos) && !IsClient)
+                                else if (w.System.TrackTargets && !Weapon.TargetAligned(w, w.Target, out targetPos))
                                     w.Target.Reset(Tick, States.Expired);
                             }
                         }
@@ -574,7 +569,7 @@ namespace CoreSystems
 
                         w.LockOnFireState = shootRequest && (w.System.LockOnFocus && !w.Comp.ModOverride) && construct.Data.Repo.FocusData.HasFocus && focus.FocusInRange(w);
                         var shotReady = canShoot && (shootRequest && (!w.System.LockOnFocus || w.Comp.ModOverride) || w.LockOnFireState);
-                        var shoot = shotReady && ai.CanShoot && (!aConst.RequiresTarget || w.Target.HasTarget || overrides.Override || wComp.ShootManager.Signal == Weapon.ShootManager.Signals.Manual); 
+                        var shoot = shotReady && ai.CanShoot && (!aConst.RequiresTarget || w.Target.HasTarget || overrides.Override || wComp.ShootManager.Signal == Weapon.ShootManager.Signals.Manual);
 
                         if (shoot) {
                             
@@ -595,7 +590,7 @@ namespace CoreSystems
 
                         if (w.TurretController) {
                             w.TurretActive = w.Target.HasTarget;
-                            if (advOptimize && w.TurretActive)
+                            if (w.TurretActive)
                                 activeTurret = true;
                         }
 
@@ -645,8 +640,8 @@ namespace CoreSystems
                         var w = wComp.Platform.Weapons[k];
                         if (!w.TurretActive || !ai.AiInit || ai.MarkedForClose || ai.Concealed || w.Comp.Ai == null || ai.TopEntity == null || ai.Construct.RootAi == null || w.Comp.CoreEntity == null  || wComp.IsDisabled || wComp.IsAsleep || !wComp.IsWorking || ai.TopEntity.MarkedForClose || wComp.CoreEntity.MarkedForClose || w.Comp.Platform.State != CorePlatform.PlatformState.Ready) continue;
 
-                        if (!Weapon.TrackingTarget(w, w.Target, out w.TargetLock) && !IsClient && w.Target.ExpiredTick != Tick)
-                            w.Target.Reset(Tick, States.LostTracking, !w.Comp.ManualMode && (w.Target.CurrentState != States.RayCheckFailed && !w.Target.HasTarget));
+                        if (!Weapon.TrackingTarget(w, w.Target, out w.TargetLock) && !IsClient && w.Target.ExpiredTick != Tick && w.Target.CurrentState != States.RayCheckFailed && w.Target.HasTarget)
+                            w.Target.Reset(Tick, States.LostTracking);
                     }
                 }
 

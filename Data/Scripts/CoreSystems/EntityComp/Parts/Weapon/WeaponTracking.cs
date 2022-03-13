@@ -394,9 +394,6 @@ namespace CoreSystems.Platform
             if (w.HasHardPointSound && w.PlayingHardPointSound && !w.Rotating)
                 w.StopHardPointSound();
 
-            if (baseData.State.Control == ProtoWeaponState.ControlMode.Camera)
-                return isTracking;
-
             var isAligned = false;
 
             if (isTracking)
@@ -404,6 +401,7 @@ namespace CoreSystems.Platform
 
             var wasAligned = w.Target.IsAligned;
             w.Target.IsAligned = isAligned;
+
             var alignedChange = wasAligned != isAligned;
             if (w.System.DesignatorWeapon && session.IsServer && alignedChange)
             {
@@ -419,7 +417,7 @@ namespace CoreSystems.Platform
 
             targetLock = isTracking && w.Target.IsAligned;
 
-            if (session.IsServer && baseData.Set.Overrides.Repel && ai.DetectionInfo.DroneInRange && target.IsDrone && (session.AwakeCount == w.Acquire.SlotId || ai.Construct.RootAi.Construct.LastDroneTick == session.Tick) && Ai.SwitchToDrone(w))
+            if (baseData.State.Control == ProtoWeaponState.ControlMode.Camera || w.Comp.FakeMode || session.IsServer && baseData.Set.Overrides.Repel && ai.DetectionInfo.DroneInRange && target.IsDrone && (session.AwakeCount == w.Acquire.SlotId || ai.Construct.RootAi.Construct.LastDroneTick == session.Tick) && Ai.SwitchToDrone(w))
                 return true;
 
             var rayCheckTest = !w.Comp.Session.IsClient && targetLock && baseData.State.Control != ProtoWeaponState.ControlMode.Camera && (w.ActiveAmmoDef.AmmoDef.Trajectory.Guidance != GuidanceType.Smart && w.ActiveAmmoDef.AmmoDef.Trajectory.Guidance != GuidanceType.DroneAdvanced) && (!w.Casting && session.Tick - w.Comp.LastRayCastTick > 29 || w.System.Values.HardPoint.Other.MuzzleCheck && session.Tick - w.LastMuzzleCheck > 29);
