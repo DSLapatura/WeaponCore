@@ -28,11 +28,9 @@ namespace CoreSystems.Platform
 
             internal readonly int TotalWeapons;
             internal Weapon TrackingWeapon;
-            internal ShootManager.Signals LastShootSignal;
             internal int DefaultAmmoId;
             internal int DefaultReloads;
             internal int MaxAmmoCount;
-
             internal uint LastOwnerRequestTick;
             internal uint LastRayCastTick;
             internal float EffectiveDps;
@@ -250,14 +248,7 @@ namespace CoreSystems.Platform
                 Ai.WeaponGroup group;
                 Ai.WeaponSequence sequence;
 
-                var prevSignal = LastShootSignal;
-                LastShootSignal = ShootManager.Signal;
-
-                var manual = prevSignal != LastShootSignal || LastShootSignal != ShootManager.Signals.None;
-                var auto = overrides.ShootMode == ShootManager.ShootModes.AiShoot;
-                var active = manual || auto;
-
-                if (active && rootConstruct.WeaponGroups.TryGetValue(overrides.WeaponGroupId, out group) && group.OrderSequencesIds[group.SequenceStep] == overrides.SequenceId && group.Sequences.TryGetValue(overrides.SequenceId, out sequence))
+                if (rootConstruct.WeaponGroups.TryGetValue(overrides.WeaponGroupId, out group) && group.OrderSequencesIds[group.SequenceStep] == overrides.SequenceId && group.Sequences.TryGetValue(overrides.SequenceId, out sequence))
                 {
                     if (ShootManager.LastShootTick > ShootManager.PrevShootEventTick)
                     {
@@ -276,8 +267,10 @@ namespace CoreSystems.Platform
                         sequence.WeaponsFinished = 0;
                         sequence.ShotsFired = 0;
 
-                        if (auto)
+                        if (overrides.ShootMode == ShootManager.ShootModes.AiShoot)
                             ShootManager.ShootDelay = overrides.BurstDelay;
+
+
                     }
 
                     return false;
