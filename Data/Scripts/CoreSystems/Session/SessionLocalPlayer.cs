@@ -169,19 +169,26 @@ namespace CoreSystems
             foreach (var list in LeadGroups)
                 list.Clear();
             
-            if (Settings.Enforcement.DisableLeads)
+            if (Settings.Enforcement.DisableLeads || TrackingAi.GridMap?.GroupMap?.Ais == null)
                 return;
 
             foreach (var ai in TrackingAi.GridMap.GroupMap.Ais)
             {
+                if (ai.MarkedForClose)
+                    continue;
+
                 foreach (var comp in ai.WeaponComps)
                 {
+                    if (comp.CoreEntity == null || comp.CoreEntity.MarkedForClose)
+                        continue;
+
                     var collection = comp.TypeSpecific != CoreComponent.CompTypeSpecific.Phantom ? comp.Platform.Weapons : comp.Platform.Phantoms;
                     foreach (var w in collection)
                     {
-                        if ((!w.Comp.HasTurret && !w.Comp.OverrideLeads || w.Comp.HasTurret && w.Comp.OverrideLeads) && w.Comp.Data.Repo.Values.Set.Overrides.LeadGroup > 0)
+
+                        if ((!comp.HasTurret && !comp.OverrideLeads || comp.HasTurret && comp.OverrideLeads) && comp.Data.Repo != null && comp.Data.Repo.Values.Set.Overrides.LeadGroup > 0)
                         {
-                            LeadGroups[MathHelper.Clamp(w.Comp.Data.Repo.Values.Set.Overrides.LeadGroup - 1, 0, 3)].Add(w);
+                            LeadGroups[MathHelper.Clamp(comp.Data.Repo.Values.Set.Overrides.LeadGroup - 1, 0, 3)].Add(w);
                             LeadGroupActive = true;
                         }
                     }

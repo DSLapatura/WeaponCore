@@ -24,17 +24,27 @@ namespace CoreSystems.Control
             ControlSys.ControlComponent.RequestSetValue(comp, "AiEnabled", newValue, comp.Session.PlayerId);
         }
 
-        internal static void TerminalActionControlModeControl(IMyTerminalBlock blk)
+        internal static void TerminActionCycleShootModeControl(IMyTerminalBlock blk)
         {
             var comp = blk?.Components?.Get<CoreComponent>() as ControlSys.ControlComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
                 return;
-            
-            var numValue = (int)comp.Data.Repo.Values.Set.Overrides.Control;
-            var value = numValue + 1 <= 2 ? numValue + 1 : 0;
 
-            ControlSys.ControlComponent.RequestSetValue(comp, "ControlModes", value, comp.Session.PlayerId);
+            var numValue = (int)comp.Data.Repo.Values.Set.Overrides.ShootMode;
+            var value = numValue + 1 <= 3 ? numValue + 1 : 0;
+
+            ControlSys.ControlComponent.RequestSetValue(comp, "ShootMode", value, comp.Session.PlayerId);
         }
+        internal static void ShootModeWriterControl(IMyTerminalBlock blk, StringBuilder sb)
+        {
+            var comp = blk.Components.Get<CoreComponent>() as ControlSys.ControlComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
+
+            var altAiControlName = !comp.HasAim && comp.Data.Repo.Values.Set.Overrides.ShootMode == Weapon.ShootManager.ShootModes.AiShoot ? InActive : comp.Data.Repo.Values.Set.Overrides.ShootMode.ToString();
+            sb.Append(altAiControlName);
+        }
+
+
 
         internal static void TerminalActionMovementModeControl(IMyTerminalBlock blk)
         {

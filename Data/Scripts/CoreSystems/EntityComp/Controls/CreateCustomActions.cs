@@ -845,6 +845,18 @@ namespace CoreSystems.Control
             MyAPIGateway.TerminalControls.AddAction<T>(action);
             session.CustomActions.Add(action);
         }
+        internal static void CreateShootModeControl(Session session)
+        {
+            var action = MyAPIGateway.TerminalControls.CreateAction<T>("WCShootMode");
+            action.Icon = @"Textures\GUI\Icons\Actions\Toggle.dds";
+            action.Name = new StringBuilder(Localization.GetText("ActionWCShootMode"));
+            action.Action = CustomActions.TerminActionCycleShootModeControl;
+            action.Writer = CustomActions.ShootModeWriterControl;
+            action.Enabled = TerminalHelpers.CtcIsReady;
+            action.ValidForGroups = true;
 
+            MyAPIGateway.TerminalControls.AddAction<T>(action);
+            session.CustomActions.Add(action);
+        }
     }
 }

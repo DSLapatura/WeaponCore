@@ -52,7 +52,6 @@ namespace CoreSystems
                     ai.UpdateGridPower();
 
                 var enforcement = Settings.Enforcement;
-                var advOptimize = enforcement.AdvancedOptimizations;
 
                 if (ai.AiType == Ai.AiTypes.Grid && !ai.HasPower || enforcement.ServerSleepSupport && IsServer && ai.AwakeComps == 0 && ai.WeaponsTracking == 0 && ai.SleepingComps > 0 && !ai.CheckProjectiles && ai.AiSleep && !ai.DbUpdated) 
                     continue;
@@ -267,7 +266,36 @@ namespace CoreSystems
                         trackWeapon.MasterComp = cComp;
                         trackWeapon.RotorTurretTracking = true;
 
-                        if (cComp.Controller.IsUnderControl) {
+                        if (cComp.Controller.IsUnderControl)
+                        {
+                            /*
+                            if (HandlesInput)
+                            {
+                                var on = cComp.Data.Repo.Values.State.Terminal == On;
+                                var mouseOn = UiInput.ClientInputState.MouseButtonLeft;
+                                if (on && !mouseOn || !on && mouseOn)
+                                {
+                                    if (IsServer)
+                                    {
+                                        cComp.Data.Repo.Values.State.Terminal = mouseOn ? On : Off;
+                                        if (MpActive)
+                                            SendState(cComp);
+                                    }
+                                    else
+                                    {
+                                        SendSetCompBoolRequest(cComp, on, PacketType.ControlOnOff);
+                                    }
+                                }
+                            }
+
+
+                            if (IsServer)
+                            {
+                                var on = cComp.Data.Repo.Values.State.Terminal == On;
+                                if (!cComp.ToolsActive && on || cComp.ToolsActive && !on)
+                                    cComp.ToggleTools(topAi, on);
+                            }
+                            */
                             cComp.RotorsMoving = true;
                             continue;
                         }
@@ -545,12 +573,6 @@ namespace CoreSystems
                             w.TargetChanged();
 
                         ///
-                        /// Check weapon's turret to see if its time to go home
-                        ///
-                        if (w.TurretController && !w.IsHome && !w.ReturingHome && !w.Target.HasTarget && Tick - w.Target.ResetTick > 239 && !wComp.UserControlled && wValues.State.Trigger == Off)
-                            w.ScheduleWeaponHome();
-
-                        ///
                         /// Determine if its time to shoot
                         ///
                         ///
@@ -565,11 +587,12 @@ namespace CoreSystems
                         var anyShot = !wComp.ShootManager.FreezeClientShoot && (w.ShootCount > 0 || onConfrimed) && noShootDelay || autoShot && sMode == Weapon.ShootManager.ShootModes.AiShoot;
 
                         var delayedFire = w.System.DelayCeaseFire && !w.Target.IsAligned && Tick - w.CeaseFireDelayTick <= w.System.CeaseFireDelay;
-                        var shootRequest = (anyShot || w.FinishShots || delayedFire);
+                        var finish = w.FinishShots || delayedFire;
+                        var shootRequest = (anyShot || finish);
 
                         w.LockOnFireState = shootRequest && (w.System.LockOnFocus && !w.Comp.ModOverride) && construct.Data.Repo.FocusData.HasFocus && focus.FocusInRange(w);
                         var shotReady = canShoot && (shootRequest && (!w.System.LockOnFocus || w.Comp.ModOverride) || w.LockOnFireState);
-                        var shoot = shotReady && ai.CanShoot && (!aConst.RequiresTarget || w.Target.HasTarget || overrides.Override || wComp.ShootManager.Signal == Weapon.ShootManager.Signals.Manual);
+                        var shoot = shotReady && ai.CanShoot && (!aConst.RequiresTarget || w.Target.HasTarget || finish || overrides.Override || wComp.ShootManager.Signal == Weapon.ShootManager.Signals.Manual);
 
                         if (shoot) {
                             
@@ -593,6 +616,12 @@ namespace CoreSystems
                             if (w.TurretActive)
                                 activeTurret = true;
                         }
+
+                        ///
+                        /// Check weapon's turret to see if its time to go home
+                        ///
+                        if (w.TurretController && !w.IsHome && !w.ReturingHome && !w.Target.HasTarget && !shootRequest && Tick - w.Target.ResetTick > 239 && !wComp.UserControlled && wValues.State.Trigger == Off)
+                            w.ScheduleWeaponHome();
 
                         w.TargetLock = false;
 
@@ -640,13 +669,12 @@ namespace CoreSystems
                         var w = wComp.Platform.Weapons[k];
                         if (!w.TurretActive || !ai.AiInit || ai.MarkedForClose || ai.Concealed || w.Comp.Ai == null || ai.TopEntity == null || ai.Construct.RootAi == null || w.Comp.CoreEntity == null  || wComp.IsDisabled || wComp.IsAsleep || !wComp.IsWorking || ai.TopEntity.MarkedForClose || wComp.CoreEntity.MarkedForClose || w.Comp.Platform.State != CorePlatform.PlatformState.Ready) continue;
 
-                        if (!Weapon.TrackingTarget(w, w.Target, out w.TargetLock) && !IsClient && w.Target.ExpiredTick != Tick && w.Target.CurrentState != States.RayCheckFailed && w.Target.HasTarget)
+                        if (!Weapon.TrackingTarget(w, w.Target, out w.TargetLock) && !IsClient && w.Target.ExpiredTick != Tick && w.Target.HasTarget)
                             w.Target.Reset(Tick, States.LostTracking);
                     }
                 }
 
-            },
-                stride);
+            }, stride);
 
             AimingAi.Clear();
         }
@@ -674,6 +702,7 @@ namespace CoreSystems
                 var checkTime = w.Target.TargetChanged || acquire || seekProjectile || w.FastTargetResetTick == Tick;
                 var ai = w.BaseComp.Ai;
 
+                var hadTarget = w.Target.HasTarget;
                 if (checkTime || ai.Construct.RootAi.Construct.TargetResetTick == Tick && w.Target.HasTarget) {
 
                     if (seekProjectile || comp.Data.Repo.Values.State.TrackingReticle || (comp.DetectOtherSignals && ai.DetectionInfo.OtherInRange || ai.DetectionInfo.PriorityInRange) && ai.DetectionInfo.ValidSignalExists(w))

@@ -57,6 +57,7 @@ namespace CoreSystems
         ControlComp,
         ControlState,
         ForceReload,
+        ControlOnOff,
     }
 
     #region packets

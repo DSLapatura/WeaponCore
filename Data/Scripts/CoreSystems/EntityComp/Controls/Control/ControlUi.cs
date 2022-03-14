@@ -88,6 +88,37 @@ namespace CoreSystems
             }
         }
 
+        internal static long CtcGetShootModes(IMyTerminalBlock block)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as ControlSys.ControlComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return 0;
+            return (int)comp.Data.Repo.Values.Set.Overrides.ShootMode;
+        }
+
+        internal static void CtcRequestShootModes(IMyTerminalBlock block, long newValue)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as ControlSys.ControlComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
+            ControlSys.ControlComponent.RequestSetValue(comp, "ShootMode", (int)newValue, comp.Session.PlayerId);
+        }
+
+        internal static void CtcListShootModes(List<MyTerminalControlComboBoxItem> shootModeList)
+        {
+            foreach (var sub in CtcShootModeList)
+            {
+                shootModeList.Add(sub);
+            }
+        }
+
+        private static readonly List<MyTerminalControlComboBoxItem> CtcShootModeList = new List<MyTerminalControlComboBoxItem>
+        {
+            new MyTerminalControlComboBoxItem { Key = 0, Value = MyStringId.GetOrCompute($"{(Weapon.ShootManager.ShootModes)0}") },
+            new MyTerminalControlComboBoxItem { Key = 1, Value = MyStringId.GetOrCompute($"{(Weapon.ShootManager.ShootModes)1}") },
+            new MyTerminalControlComboBoxItem { Key = 2, Value = MyStringId.GetOrCompute($"{(Weapon.ShootManager.ShootModes)2}") },
+            new MyTerminalControlComboBoxItem { Key = 3, Value = MyStringId.GetOrCompute($"{(Weapon.ShootManager.ShootModes)3}") },
+        };
+
+
         internal static float GetMinGravity(IMyTerminalBlock block)
         {
             return -0.5f;

@@ -9,6 +9,7 @@ using Sandbox.ModAPI;
 using SpaceEngineers.Game.ModAPI;
 using VRage.Game;
 using VRage.Game.Entity;
+using VRage.Game.ModAPI;
 using VRage.Input;
 using VRage.Utils;
 using VRageMath;
@@ -24,6 +25,7 @@ namespace CoreSystems.Platform
             internal readonly ControlStructure Structure;
             internal readonly IMyTurretControlBlock Controller;
             internal bool RotorsMoving;
+            internal bool ToolsActive;
             internal uint LastOwnerRequestTick;
             internal uint LastAddTick;
             internal ControlComponent(Session session, MyEntity coreEntity, MyDefinitionId id)
@@ -176,6 +178,9 @@ namespace CoreSystems.Platform
                     case "AiEnabled":
                         o.AiEnabled = enabled;
                         break;
+                    case "ShootMode":
+                        o.ShootMode = (Weapon.ShootManager.ShootModes)v;
+                        break;
                 }
 
                 ResetCompState(comp, playerId, clearTargets);
@@ -279,6 +284,21 @@ namespace CoreSystems.Platform
                 return true;
             }
 
+            internal void ToggleTools(Ai topAi, bool on)
+            {
+                if (on)
+                {
+                    ToolsActive = true;
+                    foreach (var t in topAi.Tools)
+                        t.Enabled = true;
+                }
+                else
+                {
+                    ToolsActive = false;
+                    foreach (var t in topAi.Tools)
+                        t.Enabled = false;
+                }
+            }
 
             internal bool TrackTarget(Ai topAi, IMyMotorStator root, IMyMotorStator other, bool isRoot, ref Vector3D desiredDirection)
             {

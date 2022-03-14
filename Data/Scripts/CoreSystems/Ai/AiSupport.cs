@@ -2,12 +2,8 @@
 using System.Collections.Generic;
 using CoreSystems.Platform;
 using CoreSystems.Projectiles;
-using Sandbox.Game.Entities;
-using Sandbox.Game.Entities.Cube;
 using Sandbox.Game.EntityComponents;
-using Sandbox.ModAPI;
 using VRage;
-using VRage.Game.ModAPI;
 using VRageMath;
 using static CoreSystems.WeaponRandomGenerator;
 
@@ -17,7 +13,6 @@ namespace CoreSystems.Support
     {
         internal void CompChange(bool add, CoreComponent comp)
         {
-            var optimize = comp.TurretController && Session.Settings.Enforcement.AdvancedOptimizations;
             int idx;
             switch (comp.Type)
             {
@@ -40,17 +35,14 @@ namespace CoreSystems.Support
                             if (wComp.Data.Repo.Values.Set.Overrides.WeaponGroupId > 0)
                                 CompWeaponGroups[wComp] = wComp.Data.Repo.Values.Set.Overrides.WeaponGroupId;
 
-                            if (optimize)
+                            if (WeaponTrackIdx.ContainsKey(wComp))
                             {
-                                if (WeaponTrackIdx.ContainsKey(wComp))
-                                {
-                                    Log.Line($"CompTrackAddFailed:<{wComp.CoreEntity.EntityId}> - comp({wComp.CoreEntity.DebugName}[{wComp.SubtypeName}]) already existed in {TopEntity.DebugName}");
-                                    return;
-                                }
-
-                                WeaponTrackIdx.Add(wComp, TrackingComps.Count);
-                                TrackingComps.Add(wComp);
+                                Log.Line($"CompTrackAddFailed:<{wComp.CoreEntity.EntityId}> - comp({wComp.CoreEntity.DebugName}[{wComp.SubtypeName}]) already existed in {TopEntity.DebugName}");
+                                return;
                             }
+
+                            WeaponTrackIdx.Add(wComp, TrackingComps.Count);
+                            TrackingComps.Add(wComp);
                         }
                         else
                         {
@@ -69,20 +61,17 @@ namespace CoreSystems.Support
                             if (wComp.Data.Repo.Values.Set.Overrides.WeaponGroupId > 0)
                                 CompWeaponGroups.Remove(wComp);
 
-                            if (optimize)
+                            int weaponTrackIdx;
+                            if (!WeaponTrackIdx.TryGetValue(wComp, out weaponTrackIdx))
                             {
-                                int weaponTrackIdx;
-                                if (!WeaponTrackIdx.TryGetValue(wComp, out weaponTrackIdx))
-                                {
-                                    Log.Line($"CompRemoveFailed: <{wComp.CoreEntity.EntityId}> - {WeaponComps.Count}[{WeaponIdx.Count}]({CompBase.Count}) - {WeaponComps.Contains(wComp)}[{WeaponComps.Count}] - {Session.EntityAIs[wComp.TopEntity].CompBase.ContainsKey(wComp.CoreEntity)} - {Session.EntityAIs[wComp.TopEntity].CompBase.Count} ");
-                                    return;
-                                }
-
-                                TrackingComps.RemoveAtFast(weaponTrackIdx);
-                                if (weaponTrackIdx < TrackingComps.Count)
-                                    WeaponTrackIdx[TrackingComps[weaponTrackIdx]] = weaponTrackIdx;
-                                WeaponTrackIdx.Remove(wComp);
+                                Log.Line($"CompRemoveFailed: <{wComp.CoreEntity.EntityId}> - {WeaponComps.Count}[{WeaponIdx.Count}]({CompBase.Count}) - {WeaponComps.Contains(wComp)}[{WeaponComps.Count}] - {Session.EntityAIs[wComp.TopEntity].CompBase.ContainsKey(wComp.CoreEntity)} - {Session.EntityAIs[wComp.TopEntity].CompBase.Count} ");
+                                return;
                             }
+
+                            TrackingComps.RemoveAtFast(weaponTrackIdx);
+                            if (weaponTrackIdx < TrackingComps.Count)
+                                WeaponTrackIdx[TrackingComps[weaponTrackIdx]] = weaponTrackIdx;
+                            WeaponTrackIdx.Remove(wComp);
                         }
                     }
                     else

@@ -160,6 +160,11 @@ namespace CoreSystems
                         ClientControlComp(packetObj);
                         break;
                     }
+                    case PacketType.ControlOnOff:
+                    {
+                        ClientControlOnOff(packetObj);
+                        break;
+                    }
                     case PacketType.ControlState:
                     {
                         ClientControlState(packetObj);

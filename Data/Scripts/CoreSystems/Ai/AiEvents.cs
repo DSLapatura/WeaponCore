@@ -141,20 +141,28 @@ namespace CoreSystems.Support
                 if (!isWeaponBase && (cube is MyConveyor || cube is IMyConveyorTube || cube is MyConveyorSorter || cube is MyCargoContainer || cube is MyCockpit || cube is IMyAssembler || cube is IMyShipConnector) && cube.CubeGrid.IsSameConstructAs(GridEntity)) { 
                     
                     MyInventory inventory;
-                    if (cube.HasInventory && cube.TryGetInventory(out inventory) && InventoryMonitor.TryAdd(cube, inventory)) {
+                    if (cube.HasInventory && cube.TryGetInventory(out inventory))
+                    {
+                        var assembler = cube as IMyAssembler;
+                        if (assembler != null)
+                            inventory = assembler.GetInventory(1) as MyInventory;
 
-                        inventory.InventoryContentChanged += CheckAmmoInventory;
-                        Construct.RootAi.Construct.NewInventoryDetected = true;
+                        if (inventory != null && InventoryMonitor.TryAdd(cube, inventory))
+                        {
+                            inventory.InventoryContentChanged += CheckAmmoInventory;
+                            Construct.RootAi.Construct.NewInventoryDetected = true;
 
-                        int monitors;
-                        if (!Session.InventoryMonitors.TryGetValue(inventory, out monitors)) {
-                            
-                            Session.InventoryMonitors[inventory] = 0;
-                            Session.InventoryItems[inventory] = Session.PhysicalItemListPool.Get();
-                            Session.ConsumableItemList[inventory] = Session.BetterItemsListPool.Get();
+                            int monitors;
+                            if (!Session.InventoryMonitors.TryGetValue(inventory, out monitors))
+                            {
+
+                                Session.InventoryMonitors[inventory] = 0;
+                                Session.InventoryItems[inventory] = Session.PhysicalItemListPool.Get();
+                                Session.ConsumableItemList[inventory] = Session.BetterItemsListPool.Get();
+                            }
+                            else
+                                Session.InventoryMonitors[inventory] = monitors + 1;
                         }
-                        else
-                            Session.InventoryMonitors[inventory] = monitors + 1;
                     }
                 }
                 else if (battery != null) {
@@ -203,10 +211,13 @@ namespace CoreSystems.Support
                 var battery = cube as MyBatteryBlock;
                 MyInventory inventory;
 
-
                 if (!isWeaponBase && cube.HasInventory && cube.TryGetInventory(out inventory)) {
 
-                    if (!InventoryRemove(cube, inventory))
+                    var assembler = cube as IMyAssembler;
+                    if (assembler != null)
+                        inventory = assembler.GetInventory(1) as MyInventory;
+
+                    if (inventory != null && !InventoryRemove(cube, inventory))
                         Log.Line($"FatBlock inventory remove failed: {cube.BlockDefinition?.Id.SubtypeName} - gridMatch:{cube.CubeGrid == TopEntity} - aiMarked:{MarkedForClose} - {cube.CubeGrid.DebugName} - {TopEntity?.DebugName}");
                 }
                 else if (battery != null)

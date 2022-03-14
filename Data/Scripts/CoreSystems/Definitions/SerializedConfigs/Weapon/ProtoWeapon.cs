@@ -130,27 +130,21 @@ namespace CoreSystems
         [ProtoMember(4)] public ProtoWeaponTransferTarget[] Targets;
         [ProtoMember(5)] public ProtoWeaponReload[] Reloads;
 
-        public bool Sync(Weapon.WeaponComponent comp, ProtoWeaponComp sync)
+        public void Sync(Weapon.WeaponComponent comp, ProtoWeaponComp sync)
         {
-            if (sync.Revision > Revision)
+            Revision = sync.Revision;
+            Set.Sync(comp, sync.Set);
+            State.Sync(comp, sync.State);
+
+            for (int i = 0; i < Targets.Length; i++)
             {
-                Revision = sync.Revision;
-                Set.Sync(comp, sync.Set);
-                State.Sync(comp, sync.State);
-
-                for (int i = 0; i < Targets.Length; i++)
-                {
-                    var w = comp.Collection[i];
-                    sync.Targets[i].SyncTarget(w, true);
-                    Reloads[i].Sync(w, sync.Reloads[i], true);
-                }
-                return true;
+                var w = comp.Collection[i];
+                sync.Targets[i].SyncTarget(w);
+                Reloads[i].Sync(w, sync.Reloads[i], true);
             }
-            return false;
-
         }
 
-        public void UpdateCompPacketInfo(Weapon.WeaponComponent comp, bool clean = false, bool resetRnd = false)
+        public void UpdateCompPacketInfo(Weapon.WeaponComponent comp, bool clean = false, bool resetRnd = false, int partId = -1)
         {
             ++Revision;
             Session.PacketInfo info;
@@ -165,8 +159,9 @@ namespace CoreSystems
 
                 var t = Targets[i];
                 var wr = Reloads[i];
+                var validPart = partId == -1 || partId == i;
 
-                if (clean)
+                if (clean && validPart)
                 {
                     if (comp.Session.PrunedPacketsToClient.TryGetValue(t, out info))
                     {
@@ -449,56 +444,50 @@ namespace CoreSystems
         [ProtoMember(4)] public int PartId;
         [ProtoMember(5)] public WeaponRandomGenerator WeaponRandom; // save
 
-        internal bool SyncTarget(Weapon w, bool force)
+        internal void SyncTarget(Weapon w)
         {
-            if (Revision > w.TargetData.Revision || force)
+            w.TargetData.Revision = Revision;
+            w.TargetData.EntityId = EntityId;
+            w.TargetData.TargetPos = TargetPos;
+            w.PartId = PartId;
+            w.TargetData.WeaponRandom.Sync(WeaponRandom);
+
+            var target = w.Target;
+
+            var isProjectile = EntityId == -1;
+            var noTarget = EntityId == 0;
+            var isFakeTarget = EntityId == -2;
+
+            if (!w.ActiveAmmoDef.AmmoDef.Const.Reloadable && !noTarget)
+                w.ProjectileCounter = 0;
+
+            if (isProjectile)
             {
-                w.TargetData.Revision = Revision;
-                w.TargetData.EntityId = EntityId;
-                w.TargetData.TargetPos = TargetPos;
-                w.PartId = PartId;
-                w.TargetData.WeaponRandom.Sync(WeaponRandom);
-
-                var target = w.Target;
-
-                var isProjectile = EntityId == -1;
-                var noTarget = EntityId == 0;
-                var isFakeTarget = EntityId == -2;
-
-                if (!w.ActiveAmmoDef.AmmoDef.Const.Reloadable && !noTarget)
-                    w.ProjectileCounter = 0;
-
-                if (isProjectile)
-                {
-                    target.ProjectileEndTick = 0;
-                    target.SoftProjetileReset = false;
-                    target.TargetState = Target.TargetStates.IsProjectile;
-                }
-                else if (noTarget && target.TargetState == Target.TargetStates.IsProjectile)
-                {
-                    target.SoftProjetileReset = true;
-                    target.ProjectileEndTick = w.System.Session.Tick + 62;
-                    target.TargetState = Target.TargetStates.WasProjectile;
-                }
-                else
-                {
-                    target.ProjectileEndTick = 0;
-                    target.SoftProjetileReset = false;
-
-                    if (noTarget)
-                        target.TargetState = Target.TargetStates.None;
-                    else if (isFakeTarget)
-                        target.TargetState = Target.TargetStates.IsFake;
-                    else
-                        target.TargetState = Target.TargetStates.IsEntity;
-                }
-
-
-                target.TargetPos = TargetPos;
-                target.ClientDirty = true;
-                return true;
+                target.ProjectileEndTick = 0;
+                target.SoftProjetileReset = false;
+                target.TargetState = Target.TargetStates.IsProjectile;
             }
-            return false;
+            else if (noTarget && target.TargetState == Target.TargetStates.IsProjectile)
+            {
+                target.SoftProjetileReset = true;
+                target.ProjectileEndTick = w.System.Session.Tick + 62;
+                target.TargetState = Target.TargetStates.WasProjectile;
+            }
+            else
+            {
+                target.ProjectileEndTick = 0;
+                target.SoftProjetileReset = false;
+
+                if (noTarget)
+                    target.TargetState = Target.TargetStates.None;
+                else if (isFakeTarget)
+                    target.TargetState = Target.TargetStates.IsFake;
+                else
+                    target.TargetState = Target.TargetStates.IsEntity;
+            }
+
+            target.TargetPos = TargetPos;
+            target.ClientDirty = true;
         }
 
         internal void ClearTarget()

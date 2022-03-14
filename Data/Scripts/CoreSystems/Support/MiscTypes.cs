@@ -107,6 +107,8 @@ namespace CoreSystems.Support
             if (!w.System.Session.MpActive || w.System.Session.IsClient)
                 return;
 
+            //Log.Line($"PushTargetToClient: {w.System.PartName} - has:{w.Target.HasTarget} - Id:{w.Target.TargetId} - state:{w.Target.TargetState} - marked:{w.Target.TargetEntity?.MarkedForClose}");
+
             w.TargetData.TargetPos = TargetPos;
             w.TargetData.PartId = w.PartId;
             w.TargetData.EntityId = w.Target.TargetId;
@@ -119,7 +121,6 @@ namespace CoreSystems.Support
 
         internal void ClientUpdate(Weapon w, ProtoWeaponTransferTarget tData)
         {
-
             if (w.System.Session.Tick < w.Target.ProjectileEndTick)
             {
                 var first = w.Target.SoftProjetileReset;
@@ -143,7 +144,6 @@ namespace CoreSystems.Support
                             w.Target.Reset(w.Comp.Session.Tick, States.NoTargetsSeen, !w.Comp.Data.Repo.Values.State.TrackingReticle && w.Comp.Data.Repo.Values.Set.Overrides.Control != ProtoWeaponOverrides.ControlModes.Painter);
                     }
                 }
-
                 return;
             }
 
@@ -182,6 +182,9 @@ namespace CoreSystems.Support
 
                 ClientDirty = false;
             }
+
+            w.Target.ExpiredTick = w.System.Session.Tick;
+            //Log.Line($"ClientTargetReceived: {w.System.PartName} - has:{w.Target.HasTarget} - Id:{tData.EntityId}[{w.Target.TargetId}] - state:{w.Target.TargetState} - marked:{w.Target.TargetEntity?.MarkedForClose}");
         }
 
         internal void TransferTo(Target target, uint expireTick, bool drone = false)

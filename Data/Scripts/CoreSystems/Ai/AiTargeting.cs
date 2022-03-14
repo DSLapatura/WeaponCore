@@ -70,7 +70,10 @@ namespace CoreSystems.Support
                     w.Acquire.Monitoring = false;
 
                 if (w.NewTarget.CurrentState != Target.States.NoTargetsSeen) w.NewTarget.Reset(w.Comp.Session.Tick, Target.States.NoTargetsSeen);
-                if (w.Target.CurrentState != Target.States.NoTargetsSeen) w.Target.Reset(w.Comp.Session.Tick, Target.States.NoTargetsSeen, fakeInfo == null);
+                if (w.Target.CurrentState != Target.States.NoTargetsSeen)
+                {
+                    w.Target.Reset(w.Comp.Session.Tick, Target.States.NoTargetsSeen, fakeInfo == null);
+                }
 
                 w.LastBlockCount = w.Comp.Ai.BlockCount;
             }

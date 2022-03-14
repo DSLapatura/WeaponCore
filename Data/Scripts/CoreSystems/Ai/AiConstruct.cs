@@ -286,7 +286,7 @@ namespace CoreSystems.Support
             {
                 if (map == null || map.Ais.Count == 0)
                 {
-                    Log.Line($"RebuildWeaponGroups gridgroup had no AIs");
+                    //Log.Line($"WeaponGroupsMarkDirty gridgroup had no AIs");
                     return;
                 }
                 var rootAi = map.Ais[0].Construct.RootAi;

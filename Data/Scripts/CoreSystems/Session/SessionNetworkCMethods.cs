@@ -119,8 +119,7 @@ namespace CoreSystems
             var comp = ent?.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp?.Ai == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return Error(data, Msg($"CompId: {packet.EntityId}", comp != null), Msg("Ai", comp?.Ai != null), Msg("Ai", comp?.Platform.State == CorePlatform.PlatformState.Ready));
 
-            if (!comp.Data.Repo.Values.Sync(comp, compDataPacket.Data))
-                Log.Line($"ClientWeaponComp: version fail - senderId:{packet.SenderId} - version:{comp.Data.Repo.Values.Revision}({compDataPacket.Data.Revision})");
+            comp.Data.Repo.Values.Sync(comp, compDataPacket.Data);
 
             if (comp.IsBomb) comp.Cube.UpdateTerminal();
             data.Report.PacketValid = true;
@@ -224,6 +223,24 @@ namespace CoreSystems
             return true;
         }
 
+        private bool ClientControlOnOff(PacketObj data)
+        {
+            var packet = data.Packet;
+            var boolPacket = (BoolUpdatePacket)packet;
+            var ent = MyEntities.GetEntityByIdOrDefault(packet.EntityId);
+            var comp = ent?.Components.Get<CoreComponent>() as ControlSys.ControlComponent;
+            if (comp?.Ai == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return Error(data, Msg($"CompId: {packet.EntityId}", comp != null), Msg("Ai", comp?.Ai != null), Msg("Ai", comp?.Platform.State == CorePlatform.PlatformState.Ready));
+            
+            comp.Data.Repo.Values.State.Terminal = boolPacket.Data ? CoreComponent.Trigger.On : CoreComponent.Trigger.Off; 
+            Log.Line($"ClientControlOnOff: {boolPacket.Data}");
+            SendState(comp);
+
+            data.Report.PacketValid = true;
+
+            return true;
+        }
+
+
         private bool ClientControlState(PacketObj data)
         {
             var packet = data.Packet;
@@ -267,7 +284,7 @@ namespace CoreSystems
             if (comp?.Ai == null || comp.Platform.State != CorePlatform.PlatformState.Ready ) return Error(data, Msg($"CompId: {packet.EntityId}", comp != null), Msg("Ai", comp?.Ai != null), Msg("Ai", comp?.Platform.State == CorePlatform.PlatformState.Ready));
             var collection = comp.TypeSpecific != CoreComponent.CompTypeSpecific.Phantom ? comp.Platform.Weapons : comp.Platform.Phantoms;
             var w = collection[targetPacket.Target.PartId];
-            targetPacket.Target.SyncTarget(w, false);
+            targetPacket.Target.SyncTarget(w);
 
             data.Report.PacketValid = true;
 

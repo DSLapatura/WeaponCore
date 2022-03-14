@@ -572,19 +572,20 @@ namespace CoreSystems
         {
             if (IsServer)
             {
-
                 if (!comp.Session.PrunedPacketsToClient.ContainsKey(comp.Data.Repo.Values))
                 {
 
                     const PacketType type = PacketType.TargetChange;
-                    comp.Data.Repo.Values.UpdateCompPacketInfo(comp, true);
+                    comp.Data.Repo.Values.UpdateCompPacketInfo(comp, true, false, partId);
 
                     var collection = comp.TypeSpecific != CompTypeSpecific.Phantom ? comp.Platform.Weapons : comp.Platform.Phantoms;
                     var w = collection[partId];
+
                     PacketInfo oldInfo;
                     TargetPacket iPacket;
                     if (PrunedPacketsToClient.TryGetValue(w.TargetData, out oldInfo))
                     {
+
                         iPacket = (TargetPacket)oldInfo.Packet;
                         iPacket.EntityId = comp.CoreEntity.EntityId;
                         iPacket.Target = w.TargetData;
@@ -597,7 +598,6 @@ namespace CoreSystems
                         iPacket.PType = type;
                         iPacket.Target = w.TargetData;
                     }
-
 
                     PrunedPacketsToClient[w.TargetData] = new PacketInfo
                     {
