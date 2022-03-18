@@ -483,7 +483,7 @@ namespace CoreSystems.Support
                 frag.CoreCube = target.CoreCube;
                 frag.CoreIsCube = target.CoreIsCube;
                 frag.Radial = aConst.FragRadial;
-
+                frag.SceneVersion = info.CompSceneVersion;
                 frag.Origin = newOrigin;
                 frag.OriginUp = info.OriginUp;
                 frag.Random = new XorShiftRandomStruct(info.Random.NextUInt64());
@@ -565,6 +565,7 @@ namespace CoreSystems.Support
                 info.MaxTrajectory = aConst.MaxTrajectory;
                 info.ShotFade = 0;
                 info.ShieldBypassed = frag.IgnoreShield;
+                info.CompSceneVersion = frag.SceneVersion;
 
                 session.Projectiles.ActiveProjetiles.Add(p);
                 p.Start();
@@ -607,6 +608,7 @@ namespace CoreSystems.Support
         public bool CoreIsCube;
         public Target.TargetStates TargetState;
         public float Radial;
+        internal int SceneVersion;
     }
 
     public class VoxelCache
