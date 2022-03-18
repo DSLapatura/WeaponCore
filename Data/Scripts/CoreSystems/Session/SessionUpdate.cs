@@ -159,6 +159,24 @@ namespace CoreSystems
                         pComp.DetectStateChanges();
                     }
 
+                    switch (pComp.Data.Repo.Values.State.Trigger)
+                    {
+                        case Once:
+                            pComp.ShootManager.RequestShootSync(PlayerId, Weapon.ShootManager.RequestType.Once, Weapon.ShootManager.Signals.Once);
+                            break;
+                        case On:
+                            pComp.ShootManager.RequestShootSync(PlayerId, Weapon.ShootManager.RequestType.On, Weapon.ShootManager.Signals.On);
+                            break;
+                    }
+
+                    var pValues = pComp.Data.Repo.Values;
+                    var overrides = pValues.Set.Overrides;
+                    var cMode = overrides.Control;
+                    var sMode = overrides.ShootMode;
+
+                    var onConfrimed = pValues.State.Trigger == On && !pComp.ShootManager.FreezeClientShoot && !pComp.ShootManager.WaitingShootResponse && (sMode != Weapon.ShootManager.ShootModes.AiShoot || pComp.ShootManager.Signal == Weapon.ShootManager.Signals.Manual);
+                    var noShootDelay = pComp.ShootManager.ShootDelay == 0 || pComp.ShootManager.ShootDelay != 0 && pComp.ShootManager.ShootDelay-- == 0;
+
                     ///
                     /// Phantom update section
                     /// 
@@ -185,8 +203,7 @@ namespace CoreSystems
                         var canShoot = !overHeat && !reloading && !p.System.DesignatorWeapon;
 
                         var autoShot =  pComp.Data.Repo.Values.State.Trigger == On || p.AiShooting && pComp.Data.Repo.Values.State.Trigger == Off;
-
-                        var anyShot = autoShot;
+                        var anyShot = !pComp.ShootManager.FreezeClientShoot && (p.ShootCount > 0 || onConfrimed) && noShootDelay || autoShot && sMode == Weapon.ShootManager.ShootModes.AiShoot;
 
                         var delayedFire = p.System.DelayCeaseFire && !p.Target.IsAligned && Tick - p.CeaseFireDelayTick <= p.System.CeaseFireDelay;
                         var shoot = (anyShot || p.FinishShots || delayedFire);
@@ -412,8 +429,8 @@ namespace CoreSystems
                                 wComp.Session.TrackReticleUpdate(wComp, track);
 
                             var active = wComp.ShootManager.ClientToggleCount > wValues.State.ToggleCount || wValues.State.Trigger == On;
-                            var turnOn = !active && UiInput.ClientInputState.MouseButtonLeft && playerControl;
-                            var turnOff = active && !UiInput.ClientInputState.MouseButtonLeft && Tick5;
+                            var turnOn = !active && UiInput.ClientInputState.MouseButtonLeft && playerControl && !InMenu;
+                            var turnOff = active && (!UiInput.ClientInputState.MouseButtonLeft || InMenu) && Tick5;
 
                             if (sMode == Weapon.ShootManager.ShootModes.AiShoot) {
 

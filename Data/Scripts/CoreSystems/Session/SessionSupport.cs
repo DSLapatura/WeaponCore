@@ -984,11 +984,6 @@ namespace CoreSystems
 
             comp.DefaultReloads = (int)defaultReloads;
 
-            if (trigger == Once) {
-                comp.ShootManager.RequestShootSync(identity, Weapon.ShootManager.RequestType.Once, Weapon.ShootManager.Signals.Once);
-                trigger = Off;
-            }
-
             comp.DefaultTrigger = trigger;
             comp.HasCloseConsition = closeWhenOutOfAmmo;
             comp.CustomIdentity = identity;

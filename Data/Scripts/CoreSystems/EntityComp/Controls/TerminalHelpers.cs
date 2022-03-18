@@ -18,7 +18,7 @@ namespace CoreSystems.Control
         internal static void AddUiControls<T>(Session session) where T : IMyTerminalBlock
         {
             //AddComboboxNoAction<T>(session, "Shoot Mode", Localization.GetText("TerminalShootModeTitle"), Localization.GetText("TerminalShootModeTooltip"), BlockUi.GetShootModes, BlockUi.RequestShootModes, BlockUi.ListShootModesNoBurst, Istrue);
-            AddComboboxNoAction<T>(session, "Shoot Mode", Localization.GetText("TerminalShootModeTitle"), Localization.GetText("TerminalShootModeTooltip"), BlockUi.GetShootModes, BlockUi.RequestShootModes, BlockUi.ListShootModes, IsReady);
+            AddComboboxNoAction<T>(session, "Shoot Mode", Localization.GetText("TerminalShootModeTitle"), Localization.GetText("TerminalShootModeTooltip"), BlockUi.GetShootModes, BlockUi.RequestShootModes, BlockUi.ListShootModes, IsNotBomb);
 
             AddSliderRof<T>(session, "Weapon ROF", Localization.GetText("TerminalWeaponROFTitle"), Localization.GetText("TerminalWeaponROFTooltip"), BlockUi.GetRof, BlockUi.RequestSetRof, UiRofSlider);
 
@@ -69,10 +69,10 @@ namespace CoreSystems.Control
 
             Separator<T>(session, "WC_sep3", IsTrue);
 
-            AddWeaponBurstCountSliderRange<T>(session, "Burst Count", Localization.GetText("TerminalBurstShotsTitle"), Localization.GetText("TerminalBurstShotsTooltip"), BlockUi.GetBurstCount, BlockUi.RequestSetBurstCount, CanBurst, BlockUi.GetMinBurstCount, BlockUi.GetMaxBurstCount, true);
-            AddWeaponBurstDelaySliderRange<T>(session, "Burst Delay", Localization.GetText("TerminalBurstDelayTitle"), Localization.GetText("TerminalBurstDelayTooltip"), BlockUi.GetBurstDelay, BlockUi.RequestSetBurstDelay, IsReady, BlockUi.GetMinBurstDelay, BlockUi.GetMaxBurstDelay, true);
-            AddWeaponSequenceIdSliderRange<T>(session, "Sequence Id", Localization.GetText("TerminalSequenceIdTitle"), Localization.GetText("TerminalSequenceIdTooltip"), BlockUi.GetSequenceId, BlockUi.RequestSetSequenceId, IsReady, BlockUi.GetMinSequenceId, BlockUi.GetMaxSequenceId, true);
-            AddWeaponGroupIdIdSliderRange<T>(session, "Weapon Group Id", Localization.GetText("TerminalWeaponGroupIdTitle"), Localization.GetText("TerminalWeaponGroupIdTooltip"), BlockUi.GetWeaponGroupId, BlockUi.RequestSetWeaponGroupId, IsReady, BlockUi.GetMinWeaponGroupId, BlockUi.GetMaxWeaponGroupId, true);
+            AddWeaponBurstCountSliderRange<T>(session, "Burst Count", Localization.GetText("TerminalBurstShotsTitle"), Localization.GetText("TerminalBurstShotsTooltip"), BlockUi.GetBurstCount, BlockUi.RequestSetBurstCount, CanBurstIsNotBomb, BlockUi.GetMinBurstCount, BlockUi.GetMaxBurstCount, true);
+            AddWeaponBurstDelaySliderRange<T>(session, "Burst Delay", Localization.GetText("TerminalBurstDelayTitle"), Localization.GetText("TerminalBurstDelayTooltip"), BlockUi.GetBurstDelay, BlockUi.RequestSetBurstDelay, IsNotBomb, BlockUi.GetMinBurstDelay, BlockUi.GetMaxBurstDelay, true);
+            AddWeaponSequenceIdSliderRange<T>(session, "Sequence Id", Localization.GetText("TerminalSequenceIdTitle"), Localization.GetText("TerminalSequenceIdTooltip"), BlockUi.GetSequenceId, BlockUi.RequestSetSequenceId, IsNotBomb, BlockUi.GetMinSequenceId, BlockUi.GetMaxSequenceId, true);
+            AddWeaponGroupIdIdSliderRange<T>(session, "Weapon Group Id", Localization.GetText("TerminalWeaponGroupIdTitle"), Localization.GetText("TerminalWeaponGroupIdTooltip"), BlockUi.GetWeaponGroupId, BlockUi.RequestSetWeaponGroupId, IsNotBomb, BlockUi.GetMinWeaponGroupId, BlockUi.GetMaxWeaponGroupId, true);
 
             Separator<T>(session, "WC_sep4", IsTrue);
 
@@ -256,6 +256,11 @@ namespace CoreSystems.Control
             return !comp.HasDisabledBurst;
         }
 
+        internal static bool CanBurstIsNotBomb(IMyTerminalBlock block)
+        {
+            return CanBurst(block) && IsNotBomb(block);
+
+        }
         internal static bool CanBeArmed(IMyTerminalBlock block)
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;

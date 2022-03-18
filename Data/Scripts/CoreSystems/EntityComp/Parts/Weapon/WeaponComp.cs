@@ -269,8 +269,6 @@ namespace CoreSystems.Platform
 
                         if (overrides.ShootMode == ShootManager.ShootModes.AiShoot)
                             ShootManager.ShootDelay = overrides.BurstDelay;
-
-
                     }
 
                     return false;
