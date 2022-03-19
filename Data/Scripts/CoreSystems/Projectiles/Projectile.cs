@@ -236,7 +236,7 @@ namespace CoreSystems.Projectiles
                         HadTarget = HadTargetState.None;
                         Info.Target.TargetState = Target.TargetStates.None;
                         OriginTargetPos = Vector3D.Zero;
-                        Log.Line($"ProjectileStart had invalid entity target state");
+                        Log.Line($"ProjectileStart had invalid entity target state, isFragment: {Info.IsFragment}");
                         break;
                     }
                     OriginTargetPos = Info.Target.TargetEntity.PositionComp.WorldAABB.Center;
