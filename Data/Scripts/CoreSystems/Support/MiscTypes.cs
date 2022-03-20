@@ -152,8 +152,10 @@ namespace CoreSystems.Support
 
                 if (tData.EntityId == 0)
                 {
-                    w.DelayedTargetResetTick = w.System.Session.Tick + 30;
-                    //w.Target.Reset(w.System.Session.Tick, States.ServerReset);
+                    if (w.Target.TargetState == TargetStates.IsFake)
+                        w.Target.Reset(w.System.Session.Tick, States.ServerReset);
+                    else
+                        w.DelayedTargetResetTick = w.System.Session.Tick + 30;
                 }
                 else
                 {

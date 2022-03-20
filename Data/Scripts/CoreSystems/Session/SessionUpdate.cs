@@ -573,7 +573,7 @@ namespace CoreSystems
                                 }
                             }
                         }
-                        else if (w.DelayedTargetResetTick == Tick && w.TargetData.EntityId == 0)
+                        else if(w.Target.TargetEntity != null && w.Target.TargetEntity.MarkedForClose || w.DelayedTargetResetTick == Tick && w.TargetData.EntityId == 0)
                             w.Target.Reset(w.System.Session.Tick, States.ServerReset);
 
                         w.ProjectilesNear = enemyProjectiles && w.System.TrackProjectile && overrides.Projectiles && w.Target.TargetState != TargetStates.IsProjectile && (w.Target.TargetChanged || QCount == w.ShortLoadId);
