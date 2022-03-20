@@ -574,7 +574,6 @@ namespace CoreSystems
             {
                 if (!comp.Session.PrunedPacketsToClient.ContainsKey(comp.Data.Repo.Values))
                 {
-
                     const PacketType type = PacketType.TargetChange;
                     comp.Data.Repo.Values.UpdateCompPacketInfo(comp, true, false, partId);
 
@@ -585,7 +584,6 @@ namespace CoreSystems
                     TargetPacket iPacket;
                     if (PrunedPacketsToClient.TryGetValue(w.TargetData, out oldInfo))
                     {
-
                         iPacket = (TargetPacket)oldInfo.Packet;
                         iPacket.EntityId = comp.CoreEntity.EntityId;
                         iPacket.Target = w.TargetData;

@@ -890,7 +890,6 @@ namespace CoreSystems
             {
                 attacker.BaseDamagePool = 0;
                 attacker.DamageDone += scaledDamage;
-
                 pTarget.Info.BaseHealthPool -= scaledDamage;
                 DetonateProjectile(hitEnt, attacker);
             }

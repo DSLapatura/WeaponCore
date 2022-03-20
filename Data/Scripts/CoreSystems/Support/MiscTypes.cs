@@ -107,8 +107,6 @@ namespace CoreSystems.Support
             if (!w.System.Session.MpActive || w.System.Session.IsClient)
                 return;
 
-            //Log.Line($"PushTargetToClient: {w.System.PartName} - has:{w.Target.HasTarget} - Id:{w.Target.TargetId} - state:{w.Target.TargetState} - marked:{w.Target.TargetEntity?.MarkedForClose}");
-
             w.TargetData.TargetPos = TargetPos;
             w.TargetData.PartId = w.PartId;
             w.TargetData.EntityId = w.Target.TargetId;
@@ -153,14 +151,19 @@ namespace CoreSystems.Support
                 TargetEntity = targetEntity;
 
                 if (tData.EntityId == 0)
-                    w.Target.Reset(w.System.Session.Tick, States.ServerReset);
+                {
+                    w.DelayedTargetResetTick = w.System.Session.Tick + 30;
+                    //w.Target.Reset(w.System.Session.Tick, States.ServerReset);
+                }
                 else
                 {
                     StateChange(true, tData.EntityId == -2 ? States.Fake : States.Acquired);
 
+                    if (w.Target.TargetState == TargetStates.None && tData.EntityId != 0)
+                        w.TargetData.SyncTarget(w);
+
                     if (w.Target.TargetState == TargetStates.IsProjectile)
                     {
-
                         Ai.TargetType targetType;
                         Ai.AcquireProjectile(w, out targetType);
 
@@ -184,7 +187,6 @@ namespace CoreSystems.Support
             }
 
             w.Target.ExpiredTick = w.System.Session.Tick;
-            //Log.Line($"ClientTargetReceived: {w.System.PartName} - has:{w.Target.HasTarget} - Id:{tData.EntityId}[{w.Target.TargetId}] - state:{w.Target.TargetState} - marked:{w.Target.TargetEntity?.MarkedForClose}");
         }
 
         internal void TransferTo(Target target, uint expireTick, bool drone = false)

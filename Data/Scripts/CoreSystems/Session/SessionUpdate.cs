@@ -536,39 +536,45 @@ namespace CoreSystems
                         /// Check target for expire states
                         /// 
                         var noAmmo = w.NoMagsToLoad && w.ProtoWeaponAmmo.CurrentAmmo == 0 && aConst.Reloadable && !w.System.DesignatorWeapon && Tick - w.LastMagSeenTick > 600;
-                        if (!IsClient && w.Target.HasTarget) {
-                            
-                            if (noAmmo)
-                                w.Target.Reset(Tick, States.Expired);
-                            else if (w.Target.TargetEntity == null && w.Target.Projectile == null && !wComp.FakeMode || wComp.ManualMode && (fakeTargets == null || Tick - fakeTargets.ManualTarget.LastUpdateTick > 120))
-                                w.Target.Reset(Tick, States.Expired, !wComp.ManualMode);
-                            else if (w.Target.TargetEntity != null && (wComp.UserControlled && !w.System.SuppressFire || w.Target.TargetEntity.MarkedForClose || Tick60 && (overrides.FocusTargets && !focus.ValidFocusTarget(w) || Tick60 && !overrides.FocusTargets && !w.TurretController && (aConst.RequiresTarget || w.RotorTurretTracking) && !w.TargetInRange(w.Target.TargetEntity))))
-                                w.Target.Reset(Tick, States.Expired);
-                            else if (w.Target.Projectile != null && (!ai.LiveProjectile.Contains(w.Target.Projectile) || w.Target.TargetState == TargetStates.IsProjectile && w.Target.Projectile.State != Projectile.ProjectileState.Alive)) {
-                                w.Target.Reset(Tick, States.Expired);
-                                w.FastTargetResetTick = Tick + 6;
-                            }
-                            else if (!w.TurretController) {
+                        if (!IsClient) {
 
-                                Vector3D targetPos;
-                                if (w.TurretAttached) {
-
-                                    if (!w.System.TrackTargets) {
-
-                                        var trackingWeaponIsFake = wComp.TrackingWeapon.Target.TargetState == TargetStates.IsFake;
-                                        var thisWeaponIsFake = w.Target.TargetState == TargetStates.IsFake;
-                                        if ((wComp.TrackingWeapon.Target.Projectile != w.Target.Projectile || w.Target.TargetState == TargetStates.IsProjectile && w.Target.Projectile.State != Projectile.ProjectileState.Alive || wComp.TrackingWeapon.Target.TargetEntity != w.Target.TargetEntity || trackingWeaponIsFake != thisWeaponIsFake))
+                            if (w.Target.HasTarget) 
+                            {
+                                if (noAmmo)
+                                    w.Target.Reset(Tick, States.Expired);
+                                else if (w.Target.TargetEntity == null && w.Target.Projectile == null && !wComp.FakeMode || wComp.ManualMode && (fakeTargets == null || Tick - fakeTargets.ManualTarget.LastUpdateTick > 120))
+                                    w.Target.Reset(Tick, States.Expired, !wComp.ManualMode);
+                                else if (w.Target.TargetEntity != null && (wComp.UserControlled && !w.System.SuppressFire || w.Target.TargetEntity.MarkedForClose || Tick60 && (overrides.FocusTargets && !focus.ValidFocusTarget(w) || Tick60 && !overrides.FocusTargets && !w.TurretController && (aConst.RequiresTarget || w.RotorTurretTracking) && !w.TargetInRange(w.Target.TargetEntity))))
+                                    w.Target.Reset(Tick, States.Expired);
+                                else if (w.Target.Projectile != null && (!ai.LiveProjectile.Contains(w.Target.Projectile) || w.Target.TargetState == TargetStates.IsProjectile && w.Target.Projectile.State != Projectile.ProjectileState.Alive)) 
+                                {
+                                    w.Target.Reset(Tick, States.Expired);
+                                    w.FastTargetResetTick = Tick + 6;
+                                }
+                                else if (!w.TurretController)
+                                {
+                                    Vector3D targetPos;
+                                    if (w.TurretAttached) 
+                                    {
+                                        if (!w.System.TrackTargets) 
+                                        {
+                                            var trackingWeaponIsFake = wComp.TrackingWeapon.Target.TargetState == TargetStates.IsFake;
+                                            var thisWeaponIsFake = w.Target.TargetState == TargetStates.IsFake;
+                                            if ((wComp.TrackingWeapon.Target.Projectile != w.Target.Projectile || w.Target.TargetState == TargetStates.IsProjectile && w.Target.Projectile.State != Projectile.ProjectileState.Alive || wComp.TrackingWeapon.Target.TargetEntity != w.Target.TargetEntity || trackingWeaponIsFake != thisWeaponIsFake))
+                                                w.Target.Reset(Tick, States.Expired);
+                                            else
+                                                w.TargetLock = true;
+                                        }
+                                        else if (!Weapon.TargetAligned(w, w.Target, out targetPos))
                                             w.Target.Reset(Tick, States.Expired);
-                                        else
-                                            w.TargetLock = true;
                                     }
-                                    else if (!Weapon.TargetAligned(w, w.Target, out targetPos))
+                                    else if (w.System.TrackTargets && !Weapon.TargetAligned(w, w.Target, out targetPos))
                                         w.Target.Reset(Tick, States.Expired);
                                 }
-                                else if (w.System.TrackTargets && !Weapon.TargetAligned(w, w.Target, out targetPos))
-                                    w.Target.Reset(Tick, States.Expired);
                             }
                         }
+                        else if (w.DelayedTargetResetTick == Tick && w.TargetData.EntityId == 0)
+                            w.Target.Reset(w.System.Session.Tick, States.ServerReset);
 
                         w.ProjectilesNear = enemyProjectiles && w.System.TrackProjectile && overrides.Projectiles && w.Target.TargetState != TargetStates.IsProjectile && (w.Target.TargetChanged || QCount == w.ShortLoadId);
 
@@ -719,7 +725,6 @@ namespace CoreSystems
                 var checkTime = w.Target.TargetChanged || acquire || seekProjectile || w.FastTargetResetTick == Tick;
                 var ai = w.BaseComp.Ai;
 
-                var hadTarget = w.Target.HasTarget;
                 if (checkTime || ai.Construct.RootAi.Construct.TargetResetTick == Tick && w.Target.HasTarget) {
 
                     if (seekProjectile || comp.Data.Repo.Values.State.TrackingReticle || (comp.DetectOtherSignals && ai.DetectionInfo.OtherInRange || ai.DetectionInfo.PriorityInRange) && ai.DetectionInfo.ValidSignalExists(w))
