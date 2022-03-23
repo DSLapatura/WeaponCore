@@ -474,15 +474,18 @@ namespace CoreSystems.Projectiles
         var s = Info.Storage;
         var newVel = new Vector3D();
         var parentEnt = Info.Target.CoreParent;
-            if (s.DroneStat == Launch && Info.DistanceTraveled * Info.DistanceTraveled >= aConst.SmartsDelayDistSqr && Info.Target.CoreIsCube && parentEnt!=null)//Check for LOS & delaytrack after launch
+            if (s.DroneStat == Launch)
             {
-                var lineCheck = new LineD(Position, Position + (Info.Direction * 10000f), 10000f);
-                var startTrack = !new MyOrientedBoundingBoxD(parentEnt.PositionComp.LocalAABB, parentEnt.PositionComp.WorldMatrixRef).Intersects(ref lineCheck).HasValue;
-                if (startTrack) s.DroneStat = Transit;
-            }
-            else if(parentEnt==null||!Info.Target.CoreIsCube)
-            {
-                s.DroneStat = Transit;
+                if (s.DroneStat == Launch && Info.DistanceTraveled * Info.DistanceTraveled >= aConst.SmartsDelayDistSqr && Info.Target.CoreIsCube && parentEnt != null)//Check for LOS & delaytrack after launch
+                {
+                    var lineCheck = new LineD(Position, Position + (Info.Direction * 10000f), 10000f);
+                    var startTrack = !new MyOrientedBoundingBoxD(parentEnt.PositionComp.LocalAABB, parentEnt.PositionComp.WorldMatrixRef).Intersects(ref lineCheck).HasValue;
+                    if (startTrack) s.DroneStat = Transit;
+                }
+                else if (parentEnt == null || !Info.Target.CoreIsCube)
+                {
+                    s.DroneStat = Transit;
+                }
             }
 
             if (s.DroneStat != Launch)//Start of main nav after clear of launcher
