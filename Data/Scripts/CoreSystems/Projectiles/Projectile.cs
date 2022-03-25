@@ -965,13 +965,21 @@ namespace CoreSystems.Projectiles
                     break;
 
                 case Orbit://Orbit & shoot behavior
-                    var noseOffset = new Vector3D(Position + (Info.Direction * (AccelInMetersPerSec)));
-                    double length;
-                    Vector3D.Distance(ref orbitSphere.Center, ref noseOffset, out length);
-                    var dir = (noseOffset - orbitSphere.Center) / length;
-                    var deltaDist = length - orbitSphere.Radius * 0.95; //0.95 modifier for hysterisis, keeps target inside dronesphere
-                    var navPoint = noseOffset + (-dir * deltaDist);
-                    droneNavTarget = Vector3D.Normalize(navPoint - Position);
+                    var insideOrbitSphere = new BoundingSphereD(orbitSphere.Center, orbitSphere.Radius * 0.90);
+                    if (insideOrbitSphere.Contains(Position) != ContainmentType.Disjoint)
+                    {
+                        droneNavTarget = Vector3D.Normalize(Info.Direction + new Vector3D(0,0.5,0));//Strafe or too far inside sphere recovery
+                    }
+                    else
+                    {
+                        var noseOffset = new Vector3D(Position + (Info.Direction * (AccelInMetersPerSec)));
+                        double length;
+                        Vector3D.Distance(ref orbitSphere.Center, ref noseOffset, out length);
+                        var dir = (noseOffset - orbitSphere.Center) / length;
+                        var deltaDist = length - orbitSphere.Radius * 0.95; //0.95 modifier for hysterisis, keeps target inside dronesphere
+                        var navPoint = noseOffset + (-dir * deltaDist);
+                        droneNavTarget = Vector3D.Normalize(navPoint - Position);
+                    }
                     break;
                
                 case Strafe:
