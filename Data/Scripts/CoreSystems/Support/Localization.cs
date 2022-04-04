@@ -156,7 +156,7 @@ namespace CoreSystems.Support
                         { "WeaponInfoHeatDissipated", "Heat Dissipated" },
                         { "WeaponInfoCurrentHeat", "Current Heat" },
                         { "WeaponInfoCurrentDraw", "Current Draw" },
-                        { "WeaponInfoRequiredPower", "Required Power" },
+                        { "WeaponInfoRequiredPower", "Power Per Shot" },
                         { "WeaponInfoDividerLineWeapon", "==== Weapons ====" },
                         { "WeaponInfoName", "Name" },
                         { "WeaponInfoBurst", "Shoot (for keyboard ShootModes)" },

@@ -234,7 +234,7 @@ namespace CoreSystems.Support
                     .Append($"\n{Localization.GetText("WeaponInfoCurrentDraw")}: " + SinkPower.ToString("0.000") + " MW");
 
                 if (comp.HasEnergyWeapon)
-                    stringBuilder.Append($"\n{Localization.GetText("WeaponInfoRequiredPower")}: " + Platform.Structure.ActualPeakPowerCombined.ToString("0.00") + " MJ");
+                    stringBuilder.Append($"\n{Localization.GetText("WeaponInfoRequiredPower")}: " + Platform.Structure.ActualPeakPowerCombined.ToString("0.00") + " MW");
 
                 stringBuilder.Append($"\n\n{Localization.GetText("WeaponInfoDividerLineWeapon")}");
 
@@ -248,6 +248,7 @@ namespace CoreSystems.Support
                         var chargeTime = w.AssignedPower > 0 ? (int)((w.MaxCharge - w.ProtoWeaponAmmo.CurrentCharge) / w.AssignedPower * MyEngineConstants.PHYSICS_STEP_SIZE_IN_SECONDS) : 0;
 
                         shots = "\nCharging: " + w.Charging +" ("+ chargeTime+")";
+                        shots += "\nMax Charge Rate: "+ w.ActiveAmmoDef.AmmoDef.Const.PowerPerTick.ToString("0.00") + " MW";
 
                         if (w.ActiveAmmoDef.AmmoDef.Const.IsHybrid) shots += "\n" + w.ActiveAmmoDef.AmmoDef.AmmoRound + ": " + w.ProtoWeaponAmmo.CurrentAmmo;
                     }
