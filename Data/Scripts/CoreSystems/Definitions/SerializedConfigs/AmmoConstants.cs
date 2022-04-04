@@ -850,7 +850,6 @@ namespace CoreSystems.Support
                 var chargeCeil = (int)Math.Ceiling(requiredPowerPerTick * reloadTime);
 
                 energyMagSize = ammoPair.AmmoDef.EnergyMagazineSize > 0 ? ammoPair.AmmoDef.EnergyMagazineSize : chargeCeil;
-                if(ammoPair.AmmoName=="AryxLightCoilgunAmmoWC") Log.Line($"ChargeSize: {chargeSize} EnergyCost: {energyCost} EnergyPerTick: {energyPerTick} ReqdPowerPerTick: {requiredPowerPerTick} ShotEnergyCost: {shotEnergyCost}");
                 return;
             }
             energyCost = 0;
