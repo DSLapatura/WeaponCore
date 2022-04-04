@@ -536,6 +536,7 @@ namespace CoreSystems
                         /// Check target for expire states
                         /// 
                         var noAmmo = w.NoMagsToLoad && w.ProtoWeaponAmmo.CurrentAmmo == 0 && aConst.Reloadable && !w.System.DesignatorWeapon && Tick - w.LastMagSeenTick > 600;
+
                         if (!IsClient) {
 
                             if (w.Target.HasTarget) 
@@ -573,7 +574,7 @@ namespace CoreSystems
                                 }
                             }
                         }
-                        else if(w.Target.TargetEntity != null && w.Target.TargetEntity.MarkedForClose || w.DelayedTargetResetTick == Tick && w.TargetData.EntityId == 0)
+                        else if(w.Target.TargetEntity != null && w.Target.TargetEntity.MarkedForClose || w.DelayedTargetResetTick == Tick && w.TargetData.EntityId == 0 && w.Target.HasTarget)
                             w.Target.Reset(w.System.Session.Tick, States.ServerReset);
 
                         w.ProjectilesNear = enemyProjectiles && w.System.TrackProjectile && overrides.Projectiles && w.Target.TargetState != TargetStates.IsProjectile && (w.Target.TargetChanged || QCount == w.ShortLoadId);

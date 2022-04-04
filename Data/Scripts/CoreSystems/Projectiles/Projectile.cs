@@ -131,12 +131,6 @@ namespace CoreSystems.Projectiles
         internal void Start()
         {
             var session = Info.Ai.Session;
-
-            if (Info.Ai == null || Info.Weapon == null || Info.AmmoDef == null)
-            {
-                Log.Line($"Ai: {Info.Ai != null} - Weapon:{Info.Weapon != null} - AmmoDef:{Info.AmmoDef != null}");
-            }
-
             var ammoDef = Info.AmmoDef;
             var aConst = ammoDef.Const;
 
@@ -186,8 +180,6 @@ namespace CoreSystems.Projectiles
                 Info.Storage.ShootTarget = Info.Target;
                 Info.Storage.UsesStrafe= Info.AmmoDef.Fragment.TimedSpawns.PointType == PointTypes.Direct && Info.AmmoDef.Fragment.TimedSpawns.PointAtTarget == false;
             }
-
-
 
             CachedId = Info.MuzzleId == -1 ? Info.Weapon.WeaponCache.VirutalId : Info.MuzzleId;
             if (aConst.DynamicGuidance && session.AntiSmartActive) DynTrees.RegisterProjectile(this);
