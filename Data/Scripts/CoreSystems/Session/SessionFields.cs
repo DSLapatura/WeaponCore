@@ -364,6 +364,7 @@ namespace CoreSystems
         internal float ClientSimulation;
         internal bool PurgedAll;
         internal bool InMenu;
+        internal int MenuDepth;
         internal bool GunnerBlackList;
         internal bool MpActive;
         internal bool IsServer;
