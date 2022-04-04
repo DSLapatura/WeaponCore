@@ -423,26 +423,34 @@ namespace CoreSystems
             try
             {
                 InMenu = true;
+                MenuDepth++;
                 Ai ai;
                 if (ActiveControlBlock != null && EntityToMasterAi.TryGetValue(ActiveControlBlock.CubeGrid, out ai))  {
                     //Send updates?
                 }
             }
-            catch (Exception ex) { Log.Line($"Exception in MenuOpened: {ex}", null, true); }
+            catch (Exception ex) { Log.Line($"Exception in MenuOpened: {ex} {MenuDepth}", null, true); }
         }
 
         private void MenuClosed(object obj)
         {
             try
             {
-                InMenu = false;
-                HudUi.NeedsUpdate = true;
-                Ai ai;
-                if (ActiveControlBlock != null && EntityToMasterAi.TryGetValue(ActiveControlBlock.CubeGrid, out ai))  {
-                    //Send updates?
+                MenuDepth--;
+                if (MenuDepth <= 0)
+                {
+                    InMenu = false;
+                    HudUi.NeedsUpdate = true;
+                    Ai ai;
+                    if (ActiveControlBlock != null && EntityToMasterAi.TryGetValue(ActiveControlBlock.CubeGrid, out ai))
+                    {
+                        //Send updates?
+                    }
+                    MenuDepth = 0;//Catch for any keen BS
                 }
+
             }
-            catch (Exception ex) { Log.Line($"Exception in MenuClosed: {ex}", null, true); }
+            catch (Exception ex) { Log.Line($"Exception in MenuClosed: {ex} {MenuDepth}", null, true); }
         }
 
 
