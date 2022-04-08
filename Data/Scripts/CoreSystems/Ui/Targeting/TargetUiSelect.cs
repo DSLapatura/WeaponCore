@@ -289,11 +289,11 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                 if (canMoveBackward)
                     _currentIdx -= 1;
                 else _currentIdx = _endIdx;
-            else if (s.UiInput.NextKey)
+            else if (s.UiInput.NextKeyPressed)
                 if (canMoveForward)
                     _currentIdx += 1;
                 else _currentIdx = 0;
-            else if (s.UiInput.PrevKey)
+            else if (s.UiInput.PrevKeyPressed)
                 if (canMoveBackward)
                     _currentIdx -= 1;
                 else _currentIdx = _endIdx;
