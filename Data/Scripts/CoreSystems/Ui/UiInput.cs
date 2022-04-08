@@ -26,6 +26,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
         internal bool WasInMenu;
         internal bool WheelForward;
         internal bool WheelBackward;
+        internal bool NextKeyPressed;
+        internal bool PrevKeyPressed;
         internal bool ShiftReleased;
         internal bool ShiftPressed;
         internal bool LongShift;
@@ -56,6 +58,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
         internal MyKeys ControlKey;
         internal MyKeys ActionKey;
         internal MyKeys InfoKey;
+        internal MyKeys NextKey;
+        internal MyKeys PrevKey;
 
         internal MyMouseButtonsEnum MouseButtonMenu;
 
@@ -121,6 +125,13 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
                 ShiftReleased = MyAPIGateway.Input.IsNewKeyReleased(MyKeys.LeftShift);
                 ShiftPressed = MyAPIGateway.Input.IsKeyPress(MyKeys.LeftShift);
                 ControlKeyReleased = MyAPIGateway.Input.IsNewKeyReleased(ControlKey);
+                if (NextKeyPressed || PrevKeyPressed)
+                {
+                    NextKeyPressed = false;
+                    PrevKeyPressed = false;
+                }
+                NextKeyPressed = MyAPIGateway.Input.IsKeyPress(NextKey);
+                PrevKeyPressed = MyAPIGateway.Input.IsKeyPress(PrevKey);
 
                 if (ShiftPressed)
                 {
@@ -239,6 +250,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
                 ActionKeyReleased = false;
                 InfoKeyPressed = false;
                 InfoKeyReleased = false;
+                NextKeyPressed = false;
+                PrevKeyPressed = false;
             }
 
             if (_session.MpActive && !s.InGridAiBlock)
