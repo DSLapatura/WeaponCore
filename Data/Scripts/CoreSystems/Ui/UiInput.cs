@@ -26,8 +26,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
         internal bool WasInMenu;
         internal bool WheelForward;
         internal bool WheelBackward;
-        internal bool NextKeyPressed;
-        internal bool PrevKeyPressed;
+        internal bool CycleKeyPressed;
+        internal bool CycleKeyReleased;
         internal bool ShiftReleased;
         internal bool ShiftPressed;
         internal bool LongShift;
@@ -58,8 +58,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
         internal MyKeys ControlKey;
         internal MyKeys ActionKey;
         internal MyKeys InfoKey;
-        internal MyKeys NextKey;
-        internal MyKeys PrevKey;
+        internal MyKeys CycleKey;
 
         internal MyMouseButtonsEnum MouseButtonMenu;
 
@@ -75,6 +74,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
             WheelForward = false;
             WheelBackward = false;
             AimRay = new LineD();
+            CycleKeyPressed = false;
 
             if (!s.InGridAiBlock) s.UpdateLocalAiAndCockpit();
 
@@ -125,13 +125,6 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
                 ShiftReleased = MyAPIGateway.Input.IsNewKeyReleased(MyKeys.LeftShift);
                 ShiftPressed = MyAPIGateway.Input.IsKeyPress(MyKeys.LeftShift);
                 ControlKeyReleased = MyAPIGateway.Input.IsNewKeyReleased(ControlKey);
-                if (NextKeyPressed || PrevKeyPressed)
-                {
-                    NextKeyPressed = false;
-                    PrevKeyPressed = false;
-                }
-                NextKeyPressed = MyAPIGateway.Input.IsKeyPress(NextKey);
-                PrevKeyPressed = MyAPIGateway.Input.IsKeyPress(PrevKey);
 
                 if (ShiftPressed)
                 {
@@ -250,8 +243,6 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
                 ActionKeyReleased = false;
                 InfoKeyPressed = false;
                 InfoKeyReleased = false;
-                NextKeyPressed = false;
-                PrevKeyPressed = false;
             }
 
             if (_session.MpActive && !s.InGridAiBlock)
@@ -270,6 +261,16 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
                 WheelForward = true;
             else if (s.UiInput.CurrentWheel != s.UiInput.PreviousWheel)
                 WheelBackward = true;
+
+            if (MyAPIGateway.Input.IsKeyPress(CycleKey) && CycleKeyReleased)
+            {
+                CycleKeyPressed = true;
+                CycleKeyReleased = false;
+            }
+            if (MyAPIGateway.Input.IsNewKeyReleased(CycleKey))
+            {
+                CycleKeyReleased = true;
+            }
 
             if (!ActionKeyPressed && BlackListActive1)
                 BlackList1(false);

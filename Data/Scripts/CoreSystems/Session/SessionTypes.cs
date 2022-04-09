@@ -862,8 +862,7 @@ namespace CoreSystems
             Action,
             Info,
             Mouse,
-            Next,
-            Prev,
+            Cycle,
         }
 
         internal struct BlockDamage

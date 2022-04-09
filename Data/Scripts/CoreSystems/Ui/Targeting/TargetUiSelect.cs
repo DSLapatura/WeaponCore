@@ -281,22 +281,18 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
 
             var canMoveForward = _currentIdx + 1 <= _endIdx;
             var canMoveBackward = _currentIdx - 1 >= 0;
-            if (s.UiInput.WheelForward)
+            if (s.UiInput.WheelForward || s.UiInput.CycleKeyPressed)
+            {
                 if (canMoveForward)
                     _currentIdx += 1;
                 else _currentIdx = 0;
+            }
             else if (s.UiInput.WheelBackward)
+            {
                 if (canMoveBackward)
                     _currentIdx -= 1;
                 else _currentIdx = _endIdx;
-            else if (s.UiInput.NextKeyPressed)
-                if (canMoveForward)
-                    _currentIdx += 1;
-                else _currentIdx = 0;
-            else if (s.UiInput.PrevKeyPressed)
-                if (canMoveBackward)
-                    _currentIdx -= 1;
-                else _currentIdx = _endIdx;
+            }
 
             var ent = _sortedMasterList[_currentIdx];
             if (ent == null || ent.MarkedForClose || ai.NoTargetLos.ContainsKey(ent))

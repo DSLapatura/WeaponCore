@@ -524,7 +524,7 @@ namespace CoreSystems
                     ControlRequest = ControlQuery.None;
                 }
             }
-            else if (ControlRequest == ControlQuery.Next)
+            else if (ControlRequest == ControlQuery.Cycle)
             {
 
                 MyAPIGateway.Input.GetListOfPressedKeys(_pressedKeys);
@@ -532,26 +532,11 @@ namespace CoreSystems
                 {
 
                     var firstKey = _pressedKeys[0];
-                    Settings.ClientConfig.NextKey = firstKey.ToString();
-                    UiInput.NextKey = firstKey;
+                    Settings.ClientConfig.CycleKey = firstKey.ToString();
+                    UiInput.CycleKey = firstKey;
                     ControlRequest = ControlQuery.None;
                     Settings.VersionControl.UpdateClientCfgFile();
-                    MyAPIGateway.Utilities.ShowNotification($"{firstKey.ToString()} is now the extra Next Target Key", 10000);
-                }
-            }
-            else if (ControlRequest == ControlQuery.Prev)
-            {
-
-                MyAPIGateway.Input.GetListOfPressedKeys(_pressedKeys);
-                if (_pressedKeys.Count > 0 && _pressedKeys[0] != MyKeys.Enter)
-                {
-
-                    var firstKey = _pressedKeys[0];
-                    Settings.ClientConfig.PrevKey = firstKey.ToString();
-                    UiInput.PrevKey = firstKey;
-                    ControlRequest = ControlQuery.None;
-                    Settings.VersionControl.UpdateClientCfgFile();
-                    MyAPIGateway.Utilities.ShowNotification($"{firstKey.ToString()} is now the extra Previous Target Key", 10000);
+                    MyAPIGateway.Utilities.ShowNotification($"{firstKey.ToString()} is now the Cycle Target Key", 10000);
                 }
             }
             _pressedKeys.Clear();
@@ -587,15 +572,10 @@ namespace CoreSystems
                         somethingUpdated = true;
                         MyAPIGateway.Utilities.ShowNotification($"Press the key you want to use for the WeaponCore Info key", 10000);
                         break;
-                    case "/wc remap next":
-                        ControlRequest = ControlQuery.Next;
+                    case "/wc remap cycle":
+                        ControlRequest = ControlQuery.Cycle;
                         somethingUpdated = true;
-                        MyAPIGateway.Utilities.ShowNotification($"Press the key you want to use for Next Target Selection", 10000);
-                        break;
-                    case "/wc remap prev":
-                        ControlRequest = ControlQuery.Prev;
-                        somethingUpdated = true;
-                        MyAPIGateway.Utilities.ShowNotification($"Press the key you want to use for Previous Target Selection", 10000);
+                        MyAPIGateway.Utilities.ShowNotification($"Press the key you want to use for Cycling Target Selection", 10000);
                         break;
                 }
 
@@ -650,7 +630,7 @@ namespace CoreSystems
                     if (message.Length <= 3)
                         MyAPIGateway.Utilities.ShowNotification("Valid WeaponCore Commands:\n'/wc remap -- Remap keys'\n'/wc drawlimit 1000' -- Limits total number of projectiles on screen (default unlimited)\n'/wc changehud' to enable moving/resizing of WC Hud\n'/wc setdefaults' -- Resets shield client configs to default values\n'/wc stickypainter' -- Disable Painter LoS checks\n", 10000);
                     else if (message.StartsWith("/wc remap"))
-                        MyAPIGateway.Utilities.ShowNotification("'/wc remap keyboard' -- Remaps control key (default R)\n'/wc remap mouse' -- Remaps menu mouse key (default middle button)\n'/wc remap action' -- Remaps action key (default numpad0)\n'/wc remap info' -- Remaps info key (default decimal key, aka numpad period key)\n'/wc remap next' -- Remaps an extra Next Target key (default mousewheel down)\n'/wc remap prev' -- Remaps an extra Previous Target key (default mousewheel up)\n", 10000, "White");
+                        MyAPIGateway.Utilities.ShowNotification("'/wc remap keyboard' -- Remaps control key (default R)\n'/wc remap mouse' -- Remaps menu mouse key (default middle button)\n'/wc remap action' -- Remaps action key (default numpad0)\n'/wc remap info' -- Remaps info key (default decimal key, aka numpad period key)\n'/wc remap cycle' -- Remaps the Cycle Target key (default Page Down)\n", 10000, "White");
                 }
                 sendToOthers = false;
             }

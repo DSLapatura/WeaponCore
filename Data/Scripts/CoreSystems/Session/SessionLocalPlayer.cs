@@ -51,6 +51,8 @@ namespace CoreSystems
                 if (UiInput.CurrentWheel != UiInput.PreviousWheel && !Settings.Enforcement.DisableTargetCycle)
                     TargetUi.SelectNext();
             }
+            if (UiInput.CycleKeyPressed && !Settings.Enforcement.DisableTargetCycle) TargetUi.SelectNext();
+
         }
 
 
