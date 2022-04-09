@@ -267,10 +267,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
                 CycleKeyPressed = true;
                 CycleKeyReleased = false;
             }
-            if (MyAPIGateway.Input.IsNewKeyReleased(CycleKey))
-            {
-                CycleKeyReleased = true;
-            }
+            if (MyAPIGateway.Input.IsNewKeyReleased(CycleKey)) CycleKeyReleased = true;
 
             if (!ActionKeyPressed && BlackListActive1)
                 BlackList1(false);
