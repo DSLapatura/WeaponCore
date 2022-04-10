@@ -46,12 +46,11 @@ namespace CoreSystems
 
             if (UiInput.MouseButtonRightNewPressed || UiInput.MouseButtonRightReleased && (TargetUi.DrawReticle || UiInput.FirstPersonView))
                 TargetUi.SelectTarget(true, UiInput.MouseButtonRightNewPressed);
-            else if (!UiInput.CameraBlockView)
+            else if (!Settings.Enforcement.DisableTargetCycle)
             {
-                if (UiInput.CurrentWheel != UiInput.PreviousWheel && !Settings.Enforcement.DisableTargetCycle)
+                if (UiInput.CurrentWheel != UiInput.PreviousWheel && !UiInput.CameraBlockView || UiInput.CycleKeyPressed || UiInput.PrevKeyPressed)
                     TargetUi.SelectNext();
             }
-            if (UiInput.CycleKeyPressed && !Settings.Enforcement.DisableTargetCycle) TargetUi.SelectNext();
 
         }
 

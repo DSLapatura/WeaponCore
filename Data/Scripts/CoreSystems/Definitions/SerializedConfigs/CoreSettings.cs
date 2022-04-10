@@ -99,6 +99,7 @@ namespace CoreSystems.Settings
             [ProtoMember(11)] public bool MinimalHud = false;
             [ProtoMember(12)] public bool StikcyPainter = true;
             [ProtoMember(13)] public string CycleKey = MyKeys.PageDown.ToString();
+            [ProtoMember(14)] public string PrevKey = MyKeys.PageUp.ToString();
         }
     }
 }

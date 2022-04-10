@@ -285,7 +285,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                 if (canMoveForward)
                     _currentIdx += 1;
                 else _currentIdx = 0;
-            else if (s.UiInput.WheelBackward)
+            else if (s.UiInput.WheelBackward || s.UiInput.PrevKeyPressed)
                 if (canMoveBackward)
                     _currentIdx -= 1;
                 else _currentIdx = _endIdx;
