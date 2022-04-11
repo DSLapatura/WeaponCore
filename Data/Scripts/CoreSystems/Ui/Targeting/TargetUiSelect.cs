@@ -281,11 +281,11 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
 
             var canMoveForward = _currentIdx + 1 <= _endIdx;
             var canMoveBackward = _currentIdx - 1 >= 0;
-            if (s.UiInput.WheelForward || s.UiInput.CycleKeyPressed)
+            if (s.UiInput.WheelForward || s.UiInput.CycleNextKeyPressed)
                 if (canMoveForward)
                     _currentIdx += 1;
                 else _currentIdx = 0;
-            else if (s.UiInput.WheelBackward || s.UiInput.PrevKeyPressed)
+            else if (s.UiInput.WheelBackward || s.UiInput.CyclePrevKeyPressed)
                 if (canMoveBackward)
                     _currentIdx -= 1;
                 else _currentIdx = _endIdx;

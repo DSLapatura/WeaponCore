@@ -862,7 +862,7 @@ namespace CoreSystems
             Action,
             Info,
             Mouse,
-            Cycle,
+            Next,
             Prev,
         }
 
