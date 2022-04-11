@@ -36,8 +36,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
                     Core.Session.UiInput.ActionKey = Core.Session.KeyMap[xmlData.ActionKey];
                     Core.Session.UiInput.MouseButtonMenu = Core.Session.MouseMap[xmlData.MenuButton];
                     Core.Session.UiInput.InfoKey = Core.Session.KeyMap[xmlData.InfoKey];
-                    Core.Session.UiInput.CycleKey = Core.Session.KeyMap[xmlData.CycleKey];
-                    Core.Session.UiInput.PrevKey = Core.Session.KeyMap[xmlData.PrevKey];
+                    Core.Session.UiInput.CycleNextKey = Core.Session.KeyMap[xmlData.CycleNextKey];
+                    Core.Session.UiInput.CyclePrevKey = Core.Session.KeyMap[xmlData.CyclePrevKey];
                 }
                 else
                     WriteNewClientCfg();
