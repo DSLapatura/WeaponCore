@@ -48,7 +48,7 @@ namespace CoreSystems
                 TargetUi.SelectTarget(true, UiInput.MouseButtonRightNewPressed);
             else if (!Settings.Enforcement.DisableTargetCycle)
             {
-                if (UiInput.CurrentWheel != UiInput.PreviousWheel && !UiInput.CameraBlockView || UiInput.CycleNextKeyPressed || UiInput.CyclePrevKeyPressed)
+                if (UiInput.CurrentWheel != UiInput.PreviousWheel && !UiInput.CameraBlockView || UiInput.CycleKeyPressed || UiInput.PrevKeyPressed)
                     TargetUi.SelectNext();
             }
 

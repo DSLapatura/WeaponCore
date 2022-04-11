@@ -26,10 +26,10 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
         internal bool WasInMenu;
         internal bool WheelForward;
         internal bool WheelBackward;
-        internal bool CycleNextKeyPressed;
-        internal bool CycleNextKeyReleased;
-        internal bool CyclePrevKeyPressed;
-        internal bool CyclePrevKeyReleased;
+        internal bool CycleKeyPressed;
+        internal bool CycleKeyReleased;
+        internal bool PrevKeyPressed;
+        internal bool PrevKeyReleased;
         internal bool ShiftReleased;
         internal bool ShiftPressed;
         internal bool LongShift;
@@ -60,8 +60,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
         internal MyKeys ControlKey;
         internal MyKeys ActionKey;
         internal MyKeys InfoKey;
-        internal MyKeys CycleNextKey;
-        internal MyKeys CyclePrevKey;
+        internal MyKeys CycleKey;
+        internal MyKeys PrevKey;
 
         internal MyMouseButtonsEnum MouseButtonMenu;
 
@@ -77,8 +77,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
             WheelForward = false;
             WheelBackward = false;
             AimRay = new LineD();
-            CycleNextKeyPressed = false;
-            CyclePrevKeyPressed = false;
+            CycleKeyPressed = false;
+            PrevKeyPressed = false;
 
             if (!s.InGridAiBlock) s.UpdateLocalAiAndCockpit();
 
@@ -266,19 +266,19 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
             else if (s.UiInput.CurrentWheel != s.UiInput.PreviousWheel)
                 WheelBackward = true;
 
-            if (MyAPIGateway.Input.IsKeyPress(CycleNextKey) && CycleNextKeyReleased)
+            if (MyAPIGateway.Input.IsKeyPress(CycleKey) && CycleKeyReleased)
             {
-                CycleNextKeyPressed = true;
-                CycleNextKeyReleased = false;
+                CycleKeyPressed = true;
+                CycleKeyReleased = false;
             }
-            if (MyAPIGateway.Input.IsNewKeyReleased(CycleNextKey)) CycleNextKeyReleased = true;
+            if (MyAPIGateway.Input.IsNewKeyReleased(CycleKey)) CycleKeyReleased = true;
 
-            if (MyAPIGateway.Input.IsKeyPress(CyclePrevKey) && CyclePrevKeyReleased)
+            if (MyAPIGateway.Input.IsKeyPress(PrevKey) && PrevKeyReleased)
             {
-                CyclePrevKeyPressed = true;
-                CyclePrevKeyReleased = false;
+                PrevKeyPressed = true;
+                PrevKeyReleased = false;
             }
-            if (MyAPIGateway.Input.IsNewKeyReleased(CyclePrevKey)) CyclePrevKeyReleased = true;
+            if (MyAPIGateway.Input.IsNewKeyReleased(PrevKey)) PrevKeyReleased = true;
 
             if (!ActionKeyPressed && BlackListActive1)
                 BlackList1(false);
