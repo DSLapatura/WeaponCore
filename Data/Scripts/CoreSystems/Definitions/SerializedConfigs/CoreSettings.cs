@@ -98,6 +98,8 @@ namespace CoreSystems.Settings
             [ProtoMember(10)] public string InfoKey = MyKeys.Decimal.ToString();
             [ProtoMember(11)] public bool MinimalHud = false;
             [ProtoMember(12)] public bool StikcyPainter = true;
+            [ProtoMember(13)] public string CycleNextKey = MyKeys.PageDown.ToString();
+            [ProtoMember(14)] public string CyclePrevKey = MyKeys.PageUp.ToString();
         }
     }
 }

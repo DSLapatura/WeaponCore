@@ -26,6 +26,10 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
         internal bool WasInMenu;
         internal bool WheelForward;
         internal bool WheelBackward;
+        internal bool CycleNextKeyPressed;
+        internal bool CycleNextKeyReleased;
+        internal bool CyclePrevKeyPressed;
+        internal bool CyclePrevKeyReleased;
         internal bool ShiftReleased;
         internal bool ShiftPressed;
         internal bool LongShift;
@@ -56,6 +60,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
         internal MyKeys ControlKey;
         internal MyKeys ActionKey;
         internal MyKeys InfoKey;
+        internal MyKeys CycleNextKey;
+        internal MyKeys CyclePrevKey;
 
         internal MyMouseButtonsEnum MouseButtonMenu;
 
@@ -71,6 +77,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
             WheelForward = false;
             WheelBackward = false;
             AimRay = new LineD();
+            CycleNextKeyPressed = false;
+            CyclePrevKeyPressed = false;
 
             if (!s.InGridAiBlock) s.UpdateLocalAiAndCockpit();
 
@@ -257,6 +265,20 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
                 WheelForward = true;
             else if (s.UiInput.CurrentWheel != s.UiInput.PreviousWheel)
                 WheelBackward = true;
+
+            if (MyAPIGateway.Input.IsKeyPress(CycleNextKey) && CycleNextKeyReleased)
+            {
+                CycleNextKeyPressed = true;
+                CycleNextKeyReleased = false;
+            }
+            if (MyAPIGateway.Input.IsNewKeyReleased(CycleNextKey)) CycleNextKeyReleased = true;
+
+            if (MyAPIGateway.Input.IsKeyPress(CyclePrevKey) && CyclePrevKeyReleased)
+            {
+                CyclePrevKeyPressed = true;
+                CyclePrevKeyReleased = false;
+            }
+            if (MyAPIGateway.Input.IsNewKeyReleased(CyclePrevKey)) CyclePrevKeyReleased = true;
 
             if (!ActionKeyPressed && BlackListActive1)
                 BlackList1(false);
