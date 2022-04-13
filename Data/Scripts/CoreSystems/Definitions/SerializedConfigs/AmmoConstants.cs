@@ -246,6 +246,7 @@ namespace CoreSystems.Support
         public readonly bool IsDrone;
         public readonly bool IsSmart;
         public readonly bool DynamicGuidance;
+        public readonly float PowerPerTick;
         public readonly float DirectAimCone;
         public readonly float FragRadial;
         public readonly float FragDegrees;
@@ -447,7 +448,7 @@ namespace CoreSystems.Support
             SmartsDelayDistSqr = (CollisionSize * ammo.AmmoDef.Trajectory.Smarts.TrackingDelay) * (CollisionSize * ammo.AmmoDef.Trajectory.Smarts.TrackingDelay);
             PrimeEntityPool = Models(ammo.AmmoDef, wDef, out PrimeModel, out TriggerModel, out ModelPath);
 
-            Energy(ammo, system, wDef, out EnergyAmmo, out MustCharge, out Reloadable, out EnergyCost, out EnergyMagSize, out ChargSize, out BurstMode, out HasShotReloadDelay);
+            Energy(ammo, system, wDef, out EnergyAmmo, out MustCharge, out Reloadable, out EnergyCost, out EnergyMagSize, out ChargSize, out BurstMode, out HasShotReloadDelay, out PowerPerTick);
             Sound(ammo, system, session, out HitSound, out HitSoundPair, out AmmoTravelSound, out TravelSoundPair, out ShotSound, out ShotSoundPair, out DetonationSound, out DetSoundPair, out HitSoundDistSqr, out AmmoTravelSoundDistSqr, out AmmoSoundMaxDistSqr, 
                 out ShotSoundDistSqr, out DetonationSoundDistSqr, out ShotSoundStr, out VoxelSound, out VoxelSoundPair, out FloatingSound, out FloatingSoundPair, out PlayerSound, out PlayerSoundPair, out ShieldSound, out ShieldSoundPair);
 
@@ -824,7 +825,7 @@ namespace CoreSystems.Support
             voxelHitModifer = d.VoxelHitModifier > 0 ? d.VoxelHitModifier : 1;
         }
 
-        private void Energy(WeaponSystem.AmmoType ammoPair, WeaponSystem system, WeaponDefinition wDef, out bool energyAmmo, out bool mustCharge, out bool reloadable, out float energyCost, out int energyMagSize, out float chargeSize, out bool burstMode, out bool shotReload)
+        private void Energy(WeaponSystem.AmmoType ammoPair, WeaponSystem system, WeaponDefinition wDef, out bool energyAmmo, out bool mustCharge, out bool reloadable, out float energyCost, out int energyMagSize, out float chargeSize, out bool burstMode, out bool shotReload, out float requiredPowerPerTick)
         {
             energyAmmo = ammoPair.AmmoDefinitionId.SubtypeId.String == "Energy" || ammoPair.AmmoDefinitionId.SubtypeId.String == string.Empty;
             mustCharge = (energyAmmo || IsHybrid);
@@ -842,7 +843,7 @@ namespace CoreSystems.Support
                 var shotEnergyCost = ewar ? energyCost * ammoPair.AmmoDef.Ewar.Strength : energyCost * BaseDamage;
                 var shotsPerTick = system.WConst.RateOfFire / MyEngineConstants.UPDATE_STEPS_PER_MINUTE;
                 var energyPerTick = shotEnergyCost * shotsPerTick;
-                var requiredPowerPerTick = (energyPerTick * wDef.HardPoint.Loading.BarrelsPerShot) * wDef.HardPoint.Loading.TrajectilesPerBarrel;
+                requiredPowerPerTick = (energyPerTick * wDef.HardPoint.Loading.BarrelsPerShot) * wDef.HardPoint.Loading.TrajectilesPerBarrel;
 
                 var reloadTime = system.WConst.ReloadTime > 0 ? system.WConst.ReloadTime : 1;
                 chargeSize = requiredPowerPerTick * reloadTime;
@@ -854,6 +855,7 @@ namespace CoreSystems.Support
             energyCost = 0;
             chargeSize = 0;
             energyMagSize = 0;
+            requiredPowerPerTick = 0;
         }
 
         private void Sound(WeaponSystem.AmmoType ammo, WeaponSystem system, Session session, out bool hitSound, out MySoundPair hitSoundPair, out bool ammoTravelSound, out MySoundPair travelSoundPair, out bool shotSound, out MySoundPair shotSoundPair, 
