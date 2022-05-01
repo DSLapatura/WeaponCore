@@ -133,6 +133,7 @@ namespace CoreSystems
             Log.Init("combat", this, false);
             Log.Init("ammostats", this, false);
             Log.Init("wepstats", this, false);
+            Log.Init("dmgstats", this, false);
             Log.Init(InputLog, this, false);
             MpActive = MyAPIGateway.Multiplayer.MultiplayerActive;
             IsServer = MyAPIGateway.Multiplayer.IsServer;
@@ -270,6 +271,13 @@ namespace CoreSystems
                         tempammostring += x.Ammos[y].Trajectory.AccelPerSec + ", " + x.Ammos[y].Trajectory.DesiredSpeed + ", " + x.Ammos[y].Trajectory.MaxTrajectory + ", " + x.Ammos[y].Trajectory.MaxLifeTime;
                         Log.Stats($"{tempammostring}", "ammostats");
                         tempammo = tempammo + "   " + x.Ammos[y].AmmoRound;
+
+                        if (!DmgLog.ContainsKey(x.Ammos[y].AmmoRound))
+                        {
+                            DmgLog.Add(x.Ammos[y].AmmoRound, 0);
+                            DmgLog.Add(x.Ammos[y].AmmoRound+"shld", 0);
+                            DmgLog.Add(x.Ammos[y].AmmoRound+"aoe", 0);
+                        }
                     }
 
 

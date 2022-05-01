@@ -119,6 +119,10 @@ namespace CoreSystems.Support
                     Stats("Name, BaseDamage, BaseDamageType, AreaDamageType, DetDamageType, ShieldDamageType, LargeGridModifier, SmallGridModifier, ArmorModifier, LightArmorModifier, HeavyArmorModifier, NonArmorModifier, ShieldsModifier, ShieldBypass, " +
                         "FragmentName, FragmentQuanty, FragmentDegrees, BBHRadius, BBHDamage, BBHDepth, BBHMaxAbsorb, BBHFalloff, EOLRadius, EOLDamage, EOLDepth, EOLMaxAbsorb, EOLFalloff, AccelPerSec, MaxSpeed, MaxTrajectory, MaxLifeTime", name);
                 }
+                else if (name == "dmgstats")
+                {
+                    Line("Damage Log", name);
+                }
                 else
                 {
                     Line("Logging Started", name);

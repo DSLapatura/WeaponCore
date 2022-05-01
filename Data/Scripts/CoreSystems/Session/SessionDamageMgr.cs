@@ -236,6 +236,8 @@ namespace CoreSystems
                 }
             }
             if (logDamage) Log.Line($"Shld hit: Primary dmg- {priDamage}    AOE dmg- {detonateDamage+radiantDamage}");
+            if (true) DmgLog[info.AmmoDef.AmmoRound+"shld"] += (long)scaledDamage; //switch to server check
+
             var hitWave = info.AmmoDef.Const.RealShotsPerMin <= 120;
             var hit = SApi.PointAttackShieldCon(shield, hitEnt.HitPos.Value, info.Target.CoreEntity.EntityId, (float)scaledDamage, (float)detonateDamage, energy, hitWave);
             info.DamageDone += (scaledDamage + detonateDamage);
@@ -717,7 +719,8 @@ namespace CoreSystems
                         }
 
                         var endCycle = (!foundAoeBlocks && basePool <= 0) || (!rootStep && (aoeDmgTally >= aoeAbsorb && aoeAbsorb != 0 || aoeDamage <= 0.5d)) || objectsHit >= maxObjects;
-                        if (showHits && primaryDamage) Log.Line($"Primary: RootBlock {rootBlock} hit for {scaledDamage} damage of {blockHp} block HP total");
+                        if (showHits && primaryDamage) Log.Line($"{t.AmmoDef.AmmoRound} Primary Dmg: RootBlock {rootBlock} hit for {scaledDamage} damage of {blockHp} block HP total");
+                        if (true) DmgLog[t.AmmoDef.AmmoRound] += (long)scaledDamage; //switch to server check
 
                         //doneskies
                         if (endCycle)
@@ -749,6 +752,7 @@ namespace CoreSystems
                     DamageBlockCache[l].Clear();
                 if (showHits && !detActive && hasAoe) Log.Line($"BBH: RootBlock {rootBlock} hit, AOE dmg: {aoeDmgTally} Blocks Splashed: {aoeHits} Blocks Killed: {destroyed} ");
                 if (showHits && detActive && aoeDmgTally>0) Log.Line($"EOL: RootBlock {rootBlock} hit, AOE dmg: {aoeDmgTally} Blocks Splashed: {aoeHits} Blocks Killed: {destroyed} ");
+                if (true) DmgLog[t.AmmoDef.AmmoRound+"aoe"] += (long)aoeDmgTally; //switch to server check
 
             }
 
