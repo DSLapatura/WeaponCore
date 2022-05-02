@@ -411,12 +411,11 @@ namespace CoreSystems
                 PurgeAll();
 
                 Log.Line("Logging stopped.");
-                Log.Stats("Damage Log Dump: Ammo Name, Primary Damage, AOE Damage, Shield Damage", "dmgstats");
-
-                foreach(var pair in DmgLog)
+                foreach (var pair in DmgLog)
                 {
-                    if (pair.Key.Contains("shld") || pair.Key.Contains("aoe")) continue;
-                    Log.Stats($"{pair.Key}, {pair.Value}, {DmgLog[pair.Key+"aoe"]}, {DmgLog[pair.Key+"shld"]}", "dmgstats");
+                    var x = pair.Value;
+                    var total = x.Primary + x.AOE + x.Shield;
+                    Log.Stats($"{x.Name}, {total}, {x.Primary}, {x.AOE}, {x.Shield}", "dmgstats");
                 }
 
 

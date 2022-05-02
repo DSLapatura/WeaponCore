@@ -134,6 +134,7 @@ namespace CoreSystems
             Log.Init("ammostats", this, false);
             Log.Init("wepstats", this, false);
             Log.Init("dmgstats", this, false);
+            Log.Init("griddmgstats", this, false);
             Log.Init(InputLog, this, false);
             MpActive = MyAPIGateway.Multiplayer.MultiplayerActive;
             IsServer = MyAPIGateway.Multiplayer.IsServer;
@@ -250,19 +251,17 @@ namespace CoreSystems
                         {
                             tempammostring += x.Ammos[y].Fragment.AmmoRound + ", " + x.Ammos[y].Fragment.Fragments + ", " + x.Ammos[y].Fragment.Degrees + ", ";
                         }
-
-
                         if (x.Ammos[y].AreaOfDamage.ByBlockHit.Enable == true)
                         {
                             tempammostring += x.Ammos[y].AreaOfDamage.ByBlockHit.Radius + ", " + x.Ammos[y].AreaOfDamage.ByBlockHit.Damage + ", " + x.Ammos[y].AreaOfDamage.ByBlockHit.Depth + ", " + x.Ammos[y].AreaOfDamage.ByBlockHit.MaxAbsorb + ", " + x.Ammos[y].AreaOfDamage.ByBlockHit.Falloff + ", ";
                         }
                         else
                         {
-                        tempammostring += "0, 0, 0, 0, NoFallOff, ";
+                            tempammostring += "0, 0, 0, 0, NoFallOff, ";
                         }
                         if (x.Ammos[y].AreaOfDamage.EndOfLife.Enable == true)
                         {
-                            tempammostring += x.Ammos[y].AreaOfDamage.EndOfLife.Radius + ", " + x.Ammos[y].AreaOfDamage.EndOfLife.Damage + ", " + x.Ammos[y].AreaOfDamage.EndOfLife.Depth + ", " + x.Ammos[y].AreaOfDamage.EndOfLife.MaxAbsorb + ", " + x.Ammos[y].AreaOfDamage.EndOfLife.Falloff+", ";
+                            tempammostring += x.Ammos[y].AreaOfDamage.EndOfLife.Radius + ", " + x.Ammos[y].AreaOfDamage.EndOfLife.Damage + ", " + x.Ammos[y].AreaOfDamage.EndOfLife.Depth + ", " + x.Ammos[y].AreaOfDamage.EndOfLife.MaxAbsorb + ", " + x.Ammos[y].AreaOfDamage.EndOfLife.Falloff + ", ";
                         }
                         else
                         {
@@ -271,18 +270,10 @@ namespace CoreSystems
                         tempammostring += x.Ammos[y].Trajectory.AccelPerSec + ", " + x.Ammos[y].Trajectory.DesiredSpeed + ", " + x.Ammos[y].Trajectory.MaxTrajectory + ", " + x.Ammos[y].Trajectory.MaxLifeTime;
                         Log.Stats($"{tempammostring}", "ammostats");
                         tempammo = tempammo + "   " + x.Ammos[y].AmmoRound;
-
-                        if (!DmgLog.ContainsKey(x.Ammos[y].AmmoRound))
-                        {
-                            DmgLog.Add(x.Ammos[y].AmmoRound, 0);
-                            DmgLog.Add(x.Ammos[y].AmmoRound+"shld", 0);
-                            DmgLog.Add(x.Ammos[y].AmmoRound+"aoe", 0);
-                        }
                     }
 
-
-                    Log.Stats($"{x.HardPoint.PartName}, {x.Targeting.MaxTargetDistance}, {x.Targeting.MinTargetDistance}, {x.HardPoint.DeviateShotAngle}, {x.HardPoint.AimingTolerance}, {x.HardPoint.AimLeadingPrediction}, {x.HardPoint.HardWare.RotateRate}, {x.HardPoint.HardWare.ElevateRate}, {x.HardPoint.HardWare.IdlePower}, {x.HardPoint.Loading.RateOfFire}" +
-                        $"{x.HardPoint.Loading.ReloadTime}, {x.HardPoint.Loading.HeatPerShot},{x.HardPoint.Loading.MaxHeat}, {x.HardPoint.Loading.HeatSinkRate}, {x.HardPoint.Loading.ShotsInBurst}, {x.HardPoint.Loading.DelayAfterBurst}, {tempammo}","wepstats");
+                    Log.Stats($"{x.HardPoint.PartName}, {x.Targeting.MaxTargetDistance}, {x.Targeting.MinTargetDistance}, {x.HardPoint.DeviateShotAngle}, {x.HardPoint.AimingTolerance}, {x.HardPoint.AimLeadingPrediction}, {x.HardPoint.HardWare.RotateRate}, {x.HardPoint.HardWare.ElevateRate}, {x.HardPoint.HardWare.IdlePower}, {x.HardPoint.Loading.RateOfFire}, " +
+                        $"{x.HardPoint.Loading.ReloadTime}, {x.HardPoint.Loading.HeatPerShot}, {x.HardPoint.Loading.MaxHeat}, {x.HardPoint.Loading.HeatSinkRate}, {x.HardPoint.Loading.ShotsInBurst}, {x.HardPoint.Loading.DelayAfterBurst}, {tempammo}","wepstats");
                     if (!_subTypeMaps.ContainsKey(subTypeId))
                     {
                         _subTypeMaps[subTypeId] = new Dictionary<string, MyTuple<string, string, string, string>> { [partAttachmentId] = extraInfo };
@@ -310,6 +301,12 @@ namespace CoreSystems
             {
                 var subTypeIdHash = MyStringHash.GetOrCompute(subTypeMap.Key);
                 SubTypeIdHashMap[subTypeMap.Key] = subTypeIdHash;
+                
+                if (!DmgLog.ContainsKey(subTypeIdHash.m_hash))
+                DmgLog[subTypeIdHash.m_hash] = new DamageInfoClass
+                {
+                    Name = subTypeMap.Key
+                };
 
                 AreaRestriction areaRestriction;
                 if (AreaRestrictions.ContainsKey(subTypeIdHash))
@@ -460,7 +457,7 @@ namespace CoreSystems
                     }
                     catch (Exception e) { Log.Line($"Failed to load {partDef.HardPoint.PartName}", null, true); }
                 }
-
+                
                 MyDefinitionId defId;
                 if (CoreSystemsDefs.TryGetValue(subTypeMap.Key, out defId))
                 {

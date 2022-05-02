@@ -236,11 +236,10 @@ namespace CoreSystems
                 }
             }
             if (logDamage) Log.Line($"Shld hit: Primary dmg- {priDamage}    AOE dmg- {detonateDamage+radiantDamage}");
-            if (true) DmgLog[info.AmmoDef.AmmoRound+"shld"] += (long)scaledDamage; //switch to server check
 
             var hitWave = info.AmmoDef.Const.RealShotsPerMin <= 120;
             var hit = SApi.PointAttackShieldCon(shield, hitEnt.HitPos.Value, info.Target.CoreEntity.EntityId, (float)scaledDamage, (float)detonateDamage, energy, hitWave);
-            info.DamageDone += (scaledDamage + detonateDamage);
+            info.DamageDoneShld += (long)(scaledDamage + detonateDamage);
 
             if (hit.HasValue)
             {
@@ -600,6 +599,7 @@ namespace CoreSystems
                         //Check for end of primary life
                         if (primaryDamage && scaledDamage <= blockHp)
                         {
+                            t.DamageDonePri += (long)scaledDamage;
                             basePool = 0;
                             t.BaseDamagePool = basePool;
                             detRequested = hasDet;
@@ -608,6 +608,7 @@ namespace CoreSystems
                         }
                         else if (primaryDamage)
                         {
+                            t.DamageDonePri += (long)scaledDamage;
                             deadBlock = true;
                             var scale = baseScale == 0d ? 0.0000001 : baseScale;
                             basePool -= (float)(blockHp / scale); 
@@ -683,8 +684,6 @@ namespace CoreSystems
                             try
                             {
                                 block.DoDamage(scaledDamage, damageType, sync, null, attackerId);
-                                t.DamageDone += scaledDamage;
-
                                 if (!appliedImpulse && primaryDamage && hitMass > 0 && Session.IsServer)
                                 {
                                     appliedImpulse = true;
@@ -706,8 +705,6 @@ namespace CoreSystems
                         else
                         {
                             var realDmg = scaledDamage * gridDamageModifier * blockDmgModifier;
-                            t.DamageDone += scaledDamage;
-
                             if (_slimHealthClient.ContainsKey(block))
                             {
                                 if (_slimHealthClient[block] - realDmg > 0)
@@ -720,7 +717,6 @@ namespace CoreSystems
 
                         var endCycle = (!foundAoeBlocks && basePool <= 0) || (!rootStep && (aoeDmgTally >= aoeAbsorb && aoeAbsorb != 0 || aoeDamage <= 0.5d)) || objectsHit >= maxObjects;
                         if (showHits && primaryDamage) Log.Line($"{t.AmmoDef.AmmoRound} Primary Dmg: RootBlock {rootBlock} hit for {scaledDamage} damage of {blockHp} block HP total");
-                        if (true) DmgLog[t.AmmoDef.AmmoRound] += (long)scaledDamage; //switch to server check
 
                         //doneskies
                         if (endCycle)
@@ -752,8 +748,7 @@ namespace CoreSystems
                     DamageBlockCache[l].Clear();
                 if (showHits && !detActive && hasAoe) Log.Line($"BBH: RootBlock {rootBlock} hit, AOE dmg: {aoeDmgTally} Blocks Splashed: {aoeHits} Blocks Killed: {destroyed} ");
                 if (showHits && detActive && aoeDmgTally>0) Log.Line($"EOL: RootBlock {rootBlock} hit, AOE dmg: {aoeDmgTally} Blocks Splashed: {aoeHits} Blocks Killed: {destroyed} ");
-                if (true) DmgLog[t.AmmoDef.AmmoRound+"aoe"] += (long)aoeDmgTally; //switch to server check
-
+                if (aoeDmgTally > 0) t.DamageDoneAOE += (long)aoeDmgTally;
             }
 
             //stuff I still haven't looked at yet
@@ -842,7 +837,7 @@ namespace CoreSystems
                 info.BaseDamagePool *= reduction;
             }
 
-            info.DamageDone += scaledDamage;
+            info.DamageDonePri += (long)scaledDamage;
 
             if (info.DoDamage)
                 destObj.DoDamage(scaledDamage, !info.ShieldBypassed ? MyDamageType.Bullet : MyDamageType.Drill, sync, null, attackerId);
@@ -882,7 +877,7 @@ namespace CoreSystems
                 var safeObjHp = objHp <= 0 ? 0.0000001f : objHp;
                 var remaining = (scaledDamage / safeObjHp) / damageScale;
                 
-                attacker.DamageDone += remaining;
+                attacker.DamageDonePri += (long)remaining;
                 attacker.BaseDamagePool -= remaining;
 
                 pTarget.Info.BaseHealthPool = 0;
@@ -893,7 +888,7 @@ namespace CoreSystems
             else
             {
                 attacker.BaseDamagePool = 0;
-                attacker.DamageDone += scaledDamage;
+                attacker.DamageDonePri += (long)scaledDamage;
                 pTarget.Info.BaseHealthPool -= scaledDamage;
                 DetonateProjectile(hitEnt, attacker);
             }
@@ -920,14 +915,14 @@ namespace CoreSystems
 
                         if (scaledDamage >= objHp)
                         {
-                            attacker.DamageDone += objHp;
+                            attacker.DamageDonePri += (long)objHp;
                             sTarget.Info.BaseHealthPool = 0;
                             sTarget.State = Projectile.ProjectileState.Detonated;
                         }
                         else
                         {
                             sTarget.Info.BaseHealthPool -= scaledDamage;
-                            attacker.DamageDone += scaledDamage;
+                            attacker.DamageDonePri += (long)scaledDamage;
 
                         }
                     }

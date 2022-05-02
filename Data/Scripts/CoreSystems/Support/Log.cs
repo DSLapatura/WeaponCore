@@ -121,7 +121,11 @@ namespace CoreSystems.Support
                 }
                 else if (name == "dmgstats")
                 {
-                    Line("Damage Log", name);
+                    Stats("WeaponName, TotalDamage, PrimaryDamage, AOEDamage, ShieldDamage", name);
+                }
+                else if (name == "griddmgstats")
+                {
+                    Stats("GridName, TotalDamage, PrimaryDamage, AOEDamage, ShieldDamage", name);
                 }
                 else
                 {

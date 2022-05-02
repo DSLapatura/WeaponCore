@@ -59,6 +59,9 @@ namespace CoreSystems.Support
         internal double MinDetectDistanceSqr = double.MaxValue;
         
         internal double TotalEffect;
+        internal long TotalPrimaryEffect;
+        internal long TotalAOEEffect;
+        internal long TotalShieldEffect;
         internal double PreviousTotalEffect;
         internal double AverageEffect;
         internal double AddEffect;
