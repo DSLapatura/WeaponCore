@@ -121,6 +121,9 @@ namespace CoreSystems.Support
             internal bool DroneAlert;
 
             internal double TotalEffect;
+            internal long TotalPrimaryEffect;
+            internal long TotalAOEEffect;
+            internal long TotalShieldEffect;
             internal double PreviousTotalEffect;
             internal double AddEffect;
             internal double AverageEffect;
@@ -505,7 +508,10 @@ namespace CoreSystems.Support
 
             internal void Clean()
             {
-
+                if(TotalEffect>0)
+                {
+                    Log.Stats($"{Data.Ai.ImyGridEntity.DisplayName}, {(long)TotalEffect}, {TotalPrimaryEffect}, {TotalAOEEffect}, {TotalShieldEffect}", "griddmgstats");
+                }
                 if (WeaponGroups.Count > 0)
                     CleanWeaponGroups(RootAi.Session);
 

@@ -137,6 +137,7 @@ namespace CoreSystems
         internal readonly ConcurrentDictionary<long, MyPlanet> PlanetMap = new ConcurrentDictionary<long, MyPlanet>();
         internal readonly ConcurrentDictionary<MyCubeGrid, GridMap> DirtyPowerGrids = new ConcurrentDictionary<MyCubeGrid, GridMap>();
         internal readonly ConcurrentDictionary<string, MyObjectBuilder_Checkpoint.ModItem> ModInfo = new ConcurrentDictionary<string, MyObjectBuilder_Checkpoint.ModItem>();
+        internal readonly Dictionary<MyStringHash, DamageInfoClass> DmgLog = new Dictionary<MyStringHash, DamageInfoClass>(MyStringHash.Comparer);
         internal readonly Dictionary<IMyGridGroupData, GridGroupMap> GridGroupMap = new Dictionary<IMyGridGroupData, GridGroupMap>();
         internal readonly Dictionary<string, Dictionary<string, WeaponSystem.AmmoType>> AmmoMaps = new Dictionary<string, Dictionary<string, WeaponSystem.AmmoType>>();
         internal readonly Dictionary<string, string> ModelMaps = new Dictionary<string, string>();
@@ -537,5 +538,12 @@ namespace CoreSystems
             for (int i = 0; i < DamageBlockCache.Length; i++)
                DamageBlockCache[i] = new List<IMySlimBlock>();
         }
+    }
+
+    internal class DamageInfoClass
+    {
+        public long Primary = 0;
+        public long Shield = 0;
+        public long AOE = 0;
     }
 }

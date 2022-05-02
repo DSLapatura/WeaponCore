@@ -443,10 +443,17 @@ namespace CoreSystems.Projectiles
 
             var target = Info.Target;
             CoreComponent comp;
-            if (Info.DamageDone > 0 && Info.Ai?.Construct.RootAi != null && target.CoreEntity != null && !Info.Ai.MarkedForClose && !target.CoreEntity.MarkedForClose && Info.Ai.CompBase.TryGetValue(target.CoreEntity, out comp))
+            var DmgTotal = Info.DamageDoneAOE + Info.DamageDonePri + Info.DamageDoneShld;
+            if (DmgTotal > 0 && Info.Ai?.Construct.RootAi != null && target.CoreEntity != null && !Info.Ai.MarkedForClose && !target.CoreEntity.MarkedForClose && Info.Ai.CompBase.TryGetValue(target.CoreEntity, out comp))
             {
-                Info.Ai.Construct.RootAi.Construct.TotalEffect += Info.DamageDone;
-                comp.TotalEffect += Info.DamageDone;
+                Info.Ai.Construct.RootAi.Construct.TotalEffect += DmgTotal;
+                comp.TotalEffect += DmgTotal;
+                comp.TotalPrimaryEffect += Info.DamageDonePri;
+                comp.TotalAOEEffect += Info.DamageDoneAOE;
+                comp.TotalShieldEffect += Info.DamageDoneShld;
+                Info.Ai.Construct.RootAi.Construct.TotalPrimaryEffect += Info.DamageDonePri;
+                Info.Ai.Construct.RootAi.Construct.TotalAOEEffect += Info.DamageDoneAOE;
+                Info.Ai.Construct.RootAi.Construct.TotalShieldEffect += Info.DamageDoneShld;
             }
 
             if (aConst.ProjectileSync && session.MpActive && session.IsServer)

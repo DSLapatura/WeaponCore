@@ -242,6 +242,14 @@ namespace CoreSystems
                     if (comp.Type == CoreComponent.CompType.Weapon) {
 
                         var wComp = (Weapon.WeaponComponent)comp;
+                        if(wComp.TotalEffect>0)
+                        {
+                            var storage = DmgLog[wComp.SubTypeId];
+                            storage.Primary += wComp.TotalPrimaryEffect;
+                            storage.Shield += wComp.TotalShieldEffect;
+                            storage.AOE += wComp.TotalAOEEffect;
+                        }
+
                         wComp.GeneralWeaponCleanUp();
                         wComp.StopAllSounds();
                         wComp.CleanCompParticles();

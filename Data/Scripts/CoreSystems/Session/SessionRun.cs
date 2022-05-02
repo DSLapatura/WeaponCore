@@ -411,7 +411,15 @@ namespace CoreSystems
                 PurgeAll();
 
                 Log.Line("Logging stopped.");
-                Log.Close();
+                foreach (var pair in DmgLog)
+                {
+                    var x = pair.Value;
+                    var total = x.Primary + x.AOE + x.Shield;
+                    Log.Stats($"{pair.Key.String}, {total}, {x.Primary}, {x.AOE}, {x.Shield}", "dmgstats");
+                }
+
+
+                    Log.Close();
             }
             catch (Exception ex) { Log.Line($"Exception in UnloadData: {ex}", null, true); }
         }

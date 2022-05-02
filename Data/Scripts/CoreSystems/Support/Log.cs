@@ -110,7 +110,27 @@ namespace CoreSystems.Support
                 _instances[name] = instance;
 
                 instance.TextWriter = MyAPIGateway.Utilities.WriteFileInLocalStorage(filename, typeof(LogInstance));
-                Line("Logging Started", name);
+                if (name == "wepstats")
+                {
+                    Stats("Name, MaxDist, MinDist, DevShotAngle, AimTolerance, AimLeadingPrediction, RotateRate, ElevateRate, IdlePower, RateOfFire, ReloadTime, HeatPerShot, MaxHeat, HeatSinkRate, ShotsInBurst, DelayAfterBurst, AmmoName", name);
+                }
+                else if (name == "ammostats")
+                {
+                    Stats("Name, BaseDamage, BaseDamageType, AreaDamageType, DetDamageType, ShieldDamageType, LargeGridModifier, SmallGridModifier, ArmorModifier, LightArmorModifier, HeavyArmorModifier, NonArmorModifier, ShieldsModifier, ShieldBypass, " +
+                        "FragmentName, FragmentQuanty, FragmentDegrees, BBHRadius, BBHDamage, BBHDepth, BBHMaxAbsorb, BBHFalloff, EOLRadius, EOLDamage, EOLDepth, EOLMaxAbsorb, EOLFalloff, AccelPerSec, MaxSpeed, MaxTrajectory, MaxLifeTime", name);
+                }
+                else if (name == "dmgstats")
+                {
+                    Stats("WeaponName, TotalDamage, PrimaryDamage, AOEDamage, ShieldDamage", name);
+                }
+                else if (name == "griddmgstats")
+                {
+                    Stats("GridName, TotalDamage, PrimaryDamage, AOEDamage, ShieldDamage", name);
+                }
+                else
+                {
+                    Line("Logging Started", name);
+                }
             }
             catch (Exception e)
             {
@@ -186,6 +206,28 @@ namespace CoreSystems.Support
                     var netEnabled = instance.Session.AuthLogging && name == _defaultInstance && set[0] >= 0 || name == "perf" && set[1] >= 0 || name == "stats" && set[2] >= 0 || name == "net" && set[3] >= 0;
                     if (netEnabled)
                         NetLogger(instance.Session, "[R-LOG] " + text, name);
+                }
+            }
+            catch (Exception e)
+            {
+            }
+        }
+        public static void Stats(string text, string instanceName = null, bool exception = false)
+        {
+            try
+            {
+                var name = instanceName ?? _defaultInstance;
+                var instance = _instances[name];
+                if (instance.TextWriter != null)
+                {
+
+                    if (name == _defaultInstance && !instance.Session.LocalVersion && instance.Paused())
+                        return;
+
+                    var message = text;
+                    instance.TextWriter.WriteLine(message);
+                    instance.TextWriter.Flush();
+                    var set = instance.Session.AuthorSettings;
                 }
             }
             catch (Exception e)

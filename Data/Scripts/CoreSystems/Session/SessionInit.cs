@@ -131,6 +131,10 @@ namespace CoreSystems
             Log.Init("net", this, false);
             Log.Init("report", this, false);
             Log.Init("combat", this, false);
+            Log.Init("ammostats", this, false);
+            Log.Init("wepstats", this, false);
+            Log.Init("dmgstats", this, false);
+            Log.Init("griddmgstats", this, false);
             Log.Init(InputLog, this, false);
             MpActive = MyAPIGateway.Multiplayer.MultiplayerActive;
             IsServer = MyAPIGateway.Multiplayer.IsServer;
@@ -232,7 +236,44 @@ namespace CoreSystems
                     var phantomModel = mount.PhantomModel;
 
                     var extraInfo = new MyTuple<string, string, string, string> { Item1 = x.HardPoint.PartName, Item2 = azimuthPartId, Item3 = elevationPartId, Item4 = spinPartId };
+                    var tempammo = "";
+                    for (int y = 0; y < x.Ammos.Length; y++)
+                    {
+                        var tempammostring = x.Ammos[y].AmmoRound + ", " + x.Ammos[y].BaseDamage + ", " + x.Ammos[y].DamageScales.DamageType.Base + ", " + x.Ammos[y].DamageScales.DamageType.AreaEffect + ", " + x.Ammos[y].DamageScales.DamageType.Detonation + ", " + x.Ammos[y].DamageScales.DamageType.Shield + ", " +
+                            x.Ammos[y].DamageScales.Grids.Large + ", " + x.Ammos[y].DamageScales.Grids.Small + ", " + x.Ammos[y].DamageScales.Armor.Armor + ", " + x.Ammos[y].DamageScales.Armor.Light + ", " + x.Ammos[y].DamageScales.Armor.Heavy + ", " + x.Ammos[y].DamageScales.Armor.NonArmor + ", " +
+                            x.Ammos[y].DamageScales.Shields.Modifier + ", " + x.Ammos[y].DamageScales.Shields.BypassModifier + ", ";
 
+                        if (x.Ammos[y].Fragment.AmmoRound == "")
+                        {
+                            tempammostring += "None, 0, 0, ";
+                        }
+                        else
+                        {
+                            tempammostring += x.Ammos[y].Fragment.AmmoRound + ", " + x.Ammos[y].Fragment.Fragments + ", " + x.Ammos[y].Fragment.Degrees + ", ";
+                        }
+                        if (x.Ammos[y].AreaOfDamage.ByBlockHit.Enable == true)
+                        {
+                            tempammostring += x.Ammos[y].AreaOfDamage.ByBlockHit.Radius + ", " + x.Ammos[y].AreaOfDamage.ByBlockHit.Damage + ", " + x.Ammos[y].AreaOfDamage.ByBlockHit.Depth + ", " + x.Ammos[y].AreaOfDamage.ByBlockHit.MaxAbsorb + ", " + x.Ammos[y].AreaOfDamage.ByBlockHit.Falloff + ", ";
+                        }
+                        else
+                        {
+                            tempammostring += "0, 0, 0, 0, NoFallOff, ";
+                        }
+                        if (x.Ammos[y].AreaOfDamage.EndOfLife.Enable == true)
+                        {
+                            tempammostring += x.Ammos[y].AreaOfDamage.EndOfLife.Radius + ", " + x.Ammos[y].AreaOfDamage.EndOfLife.Damage + ", " + x.Ammos[y].AreaOfDamage.EndOfLife.Depth + ", " + x.Ammos[y].AreaOfDamage.EndOfLife.MaxAbsorb + ", " + x.Ammos[y].AreaOfDamage.EndOfLife.Falloff + ", ";
+                        }
+                        else
+                        {
+                            tempammostring += "0, 0, 0, 0, NoFallOff, ";
+                        }
+                        tempammostring += x.Ammos[y].Trajectory.AccelPerSec + ", " + x.Ammos[y].Trajectory.DesiredSpeed + ", " + x.Ammos[y].Trajectory.MaxTrajectory + ", " + x.Ammos[y].Trajectory.MaxLifeTime;
+                        Log.Stats($"{tempammostring}", "ammostats");
+                        tempammo = tempammo + "   " + x.Ammos[y].AmmoRound;
+                    }
+
+                    Log.Stats($"{x.HardPoint.PartName}, {x.Targeting.MaxTargetDistance}, {x.Targeting.MinTargetDistance}, {x.HardPoint.DeviateShotAngle}, {x.HardPoint.AimingTolerance}, {x.HardPoint.AimLeadingPrediction}, {x.HardPoint.HardWare.RotateRate}, {x.HardPoint.HardWare.ElevateRate}, {x.HardPoint.HardWare.IdlePower}, {x.HardPoint.Loading.RateOfFire}, " +
+                        $"{x.HardPoint.Loading.ReloadTime}, {x.HardPoint.Loading.HeatPerShot}, {x.HardPoint.Loading.MaxHeat}, {x.HardPoint.Loading.HeatSinkRate}, {x.HardPoint.Loading.ShotsInBurst}, {x.HardPoint.Loading.DelayAfterBurst}, {tempammo}","wepstats");
                     if (!_subTypeMaps.ContainsKey(subTypeId))
                     {
                         _subTypeMaps[subTypeId] = new Dictionary<string, MyTuple<string, string, string, string>> { [partAttachmentId] = extraInfo };
@@ -260,6 +301,8 @@ namespace CoreSystems
             {
                 var subTypeIdHash = MyStringHash.GetOrCompute(subTypeMap.Key);
                 SubTypeIdHashMap[subTypeMap.Key] = subTypeIdHash;
+                
+                if (!DmgLog.ContainsKey(subTypeIdHash))DmgLog[subTypeIdHash] = new DamageInfoClass();
 
                 AreaRestriction areaRestriction;
                 if (AreaRestrictions.ContainsKey(subTypeIdHash))
@@ -382,6 +425,7 @@ namespace CoreSystems
                                                 gunDef.ElevationSpeed = blockDefs.ElevateRate / 60;
                                                 gunDef.AiEnabled = false;
                                                 gunDef.IdleRotation = false;
+
                                             }
 
                                             var cubeDef = def as MyCubeBlockDefinition;
@@ -409,7 +453,7 @@ namespace CoreSystems
                     }
                     catch (Exception e) { Log.Line($"Failed to load {partDef.HardPoint.PartName}", null, true); }
                 }
-
+                
                 MyDefinitionId defId;
                 if (CoreSystemsDefs.TryGetValue(subTypeMap.Key, out defId))
                 {
