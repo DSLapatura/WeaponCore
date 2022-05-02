@@ -244,7 +244,7 @@ namespace CoreSystems
                         var wComp = (Weapon.WeaponComponent)comp;
                         if(wComp.TotalEffect>0)
                         {
-                            var storage = DmgLog[wComp.SubTypeId.m_hash];
+                            var storage = DmgLog[wComp.SubTypeId];
                             storage.Primary += wComp.TotalPrimaryEffect;
                             storage.Shield += wComp.TotalShieldEffect;
                             storage.AOE += wComp.TotalAOEEffect;

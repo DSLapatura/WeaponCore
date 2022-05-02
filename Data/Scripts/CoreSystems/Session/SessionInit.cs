@@ -302,11 +302,7 @@ namespace CoreSystems
                 var subTypeIdHash = MyStringHash.GetOrCompute(subTypeMap.Key);
                 SubTypeIdHashMap[subTypeMap.Key] = subTypeIdHash;
                 
-                if (!DmgLog.ContainsKey(subTypeIdHash.m_hash))
-                DmgLog[subTypeIdHash.m_hash] = new DamageInfoClass
-                {
-                    Name = subTypeMap.Key
-                };
+                if (!DmgLog.ContainsKey(subTypeIdHash))DmgLog[subTypeIdHash] = new DamageInfoClass();
 
                 AreaRestriction areaRestriction;
                 if (AreaRestrictions.ContainsKey(subTypeIdHash))

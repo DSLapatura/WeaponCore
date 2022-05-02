@@ -415,7 +415,7 @@ namespace CoreSystems
                 {
                     var x = pair.Value;
                     var total = x.Primary + x.AOE + x.Shield;
-                    Log.Stats($"{x.Name}, {total}, {x.Primary}, {x.AOE}, {x.Shield}", "dmgstats");
+                    Log.Stats($"{pair.Key.String}, {total}, {x.Primary}, {x.AOE}, {x.Shield}", "dmgstats");
                 }
 
 
