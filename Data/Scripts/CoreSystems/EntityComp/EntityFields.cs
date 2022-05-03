@@ -62,6 +62,7 @@ namespace CoreSystems.Support
         internal long TotalPrimaryEffect;
         internal long TotalAOEEffect;
         internal long TotalShieldEffect;
+        internal long TotalProjectileEffect;
         internal double PreviousTotalEffect;
         internal double AverageEffect;
         internal double AddEffect;

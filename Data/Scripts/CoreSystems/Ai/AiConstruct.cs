@@ -124,6 +124,7 @@ namespace CoreSystems.Support
             internal long TotalPrimaryEffect;
             internal long TotalAOEEffect;
             internal long TotalShieldEffect;
+            internal long TotalProjectileEffect;
             internal double PreviousTotalEffect;
             internal double AddEffect;
             internal double AverageEffect;
@@ -510,7 +511,7 @@ namespace CoreSystems.Support
             {
                 if(TotalEffect>0)
                 {
-                    Log.Stats($"{Data.Ai.ImyGridEntity.DisplayName}, {(long)TotalEffect}, {TotalPrimaryEffect}, {TotalAOEEffect}, {TotalShieldEffect}", "griddmgstats");
+                    Log.Stats($"{Data.Ai.ImyGridEntity.DisplayName}, {(long)TotalEffect}, {TotalPrimaryEffect}, {TotalAOEEffect}, {TotalShieldEffect}, {TotalProjectileEffect}", "griddmgstats");
                 }
                 if (WeaponGroups.Count > 0)
                     CleanWeaponGroups(RootAi.Session);
@@ -520,6 +521,10 @@ namespace CoreSystems.Support
                 BlockCount = 0;
                 AverageEffect = 0;
                 TotalEffect = 0;
+                TotalPrimaryEffect = 0;
+                TotalAOEEffect = 0;
+                TotalShieldEffect = 0;
+                TotalProjectileEffect = 0;
                 PreviousTotalEffect = 0;
                 LastRefreshTick = 0;
                 TargetResetTick = 0;

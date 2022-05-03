@@ -324,6 +324,7 @@ namespace CoreSystems
                 {
                     try
                     {
+                        if(DmgLog[subTypeIdHash].TerminalName == "") DmgLog[subTypeIdHash].TerminalName=partDef.HardPoint.PartName;
                         modPath = partDef.ModPath;
                         if (partDef.HardPoint.HardWare.Type != Phantom)
                         {

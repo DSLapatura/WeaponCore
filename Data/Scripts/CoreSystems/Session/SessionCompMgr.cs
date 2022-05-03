@@ -248,6 +248,7 @@ namespace CoreSystems
                             storage.Primary += wComp.TotalPrimaryEffect;
                             storage.Shield += wComp.TotalShieldEffect;
                             storage.AOE += wComp.TotalAOEEffect;
+                            storage.Projectile += wComp.TotalProjectileEffect;
                         }
 
                         wComp.GeneralWeaponCleanUp();
