@@ -207,7 +207,8 @@ namespace CoreSystems.Platform
 
                             var ammoPattern = aConst.WeaponPattern ? aConst.AmmoPattern[AmmoShufflePattern[k]] : ActiveAmmoDef.AmmoDef;
 
-                            selfDamage += ammoPattern.DecayPerShot;
+                            if (ammoPattern.DecayPerShot == float.MaxValue) selfDamage = float.MaxValue;
+                            else selfDamage += ammoPattern.DecayPerShot;
 
                             long patternCycle = FireCounter;
                             if (ammoPattern.AmmoGraphics.Lines.Tracer.VisualFadeStart > 0 && ammoPattern.AmmoGraphics.Lines.Tracer.VisualFadeEnd > 0)
@@ -286,9 +287,18 @@ namespace CoreSystems.Platform
                 if (s.IsServer && selfDamage > 0)
                 {
                     if (Comp.IsBlock)
-                        ((IMyDestroyableObject)Comp.Cube.SlimBlock).DoDamage(selfDamage, MyDamageType.Grind, true, null, Comp.CoreEntity.EntityId);
+                    {
+                        IMySlimBlock currCube = Comp.Cube.SlimBlock as IMySlimBlock;
+                        if (selfDamage == float.MaxValue)
+                        {
+                            currCube.DecreaseMountLevel(currCube.MaxIntegrity, null, true);
+                            currCube.ClearConstructionStockpile(null);
+                        }
+                        else if (selfDamage >= currCube.Integrity) Comp.Cube.CubeGrid.RemoveBlock(Comp.Cube.SlimBlock); //Cleaner removal of wep block without a "bang" and deformation of neighbors
+                        else currCube.DoDamage(selfDamage, MyDamageType.Grind, true, null, Comp.CoreEntity.EntityId);
+                    }
                     else
-                        ((IMyDestroyableObject)Comp.TopEntity as IMyCharacter).DoDamage(selfDamage, MyDamageType.Grind, true, null, Comp.CoreEntity.EntityId);
+                    ((IMyDestroyableObject)Comp.TopEntity as IMyCharacter).DoDamage(selfDamage, MyDamageType.Grind, true, null, Comp.CoreEntity.EntityId);
                 }
 
                 if (ActiveAmmoDef.AmmoDef.Const.HasShotReloadDelay && System.ShotsPerBurst > 0 && ++ShotsFired == System.ShotsPerBurst)
