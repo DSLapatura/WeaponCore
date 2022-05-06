@@ -443,7 +443,7 @@ namespace CoreSystems.Projectiles
 
             var target = Info.Target;
             CoreComponent comp;
-            var DmgTotal = Info.DamageDoneAOE + Info.DamageDonePri + Info.DamageDoneShld;
+            var DmgTotal = Info.DamageDoneAOE + Info.DamageDonePri + Info.DamageDoneShld + Info.DamageDoneProj;
             if (DmgTotal > 0 && Info.Ai?.Construct.RootAi != null && target.CoreEntity != null && !Info.Ai.MarkedForClose && !target.CoreEntity.MarkedForClose && Info.Ai.CompBase.TryGetValue(target.CoreEntity, out comp))
             {
                 Info.Ai.Construct.RootAi.Construct.TotalEffect += DmgTotal;
@@ -451,9 +451,11 @@ namespace CoreSystems.Projectiles
                 comp.TotalPrimaryEffect += Info.DamageDonePri;
                 comp.TotalAOEEffect += Info.DamageDoneAOE;
                 comp.TotalShieldEffect += Info.DamageDoneShld;
+                comp.TotalProjectileEffect += Info.DamageDoneProj;
                 Info.Ai.Construct.RootAi.Construct.TotalPrimaryEffect += Info.DamageDonePri;
                 Info.Ai.Construct.RootAi.Construct.TotalAOEEffect += Info.DamageDoneAOE;
                 Info.Ai.Construct.RootAi.Construct.TotalShieldEffect += Info.DamageDoneShld;
+                Info.Ai.Construct.RootAi.Construct.TotalProjectileEffect += Info.DamageDoneProj;
             }
 
             if (aConst.ProjectileSync && session.MpActive && session.IsServer)

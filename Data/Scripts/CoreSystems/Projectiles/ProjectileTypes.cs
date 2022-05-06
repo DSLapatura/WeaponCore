@@ -60,6 +60,7 @@ namespace CoreSystems.Support
         internal long DamageDonePri;
         internal long DamageDoneAOE;
         internal long DamageDoneShld;
+        internal long DamageDoneProj;
         internal float ShotFade;
         internal float BaseDamagePool;
         internal float BaseHealthPool;
@@ -176,6 +177,7 @@ namespace CoreSystems.Support
             DamageDonePri = 0;
             DamageDoneAOE = 0;
             DamageDoneShld = 0;
+            DamageDoneProj = 0;
             ProjectileDisplacement = 0;
             MaxTrajectory = 0;
             ShotFade = 0;

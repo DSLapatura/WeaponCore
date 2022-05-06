@@ -877,7 +877,7 @@ namespace CoreSystems
                 var safeObjHp = objHp <= 0 ? 0.0000001f : objHp;
                 var remaining = (scaledDamage / safeObjHp) / damageScale;
                 
-                attacker.DamageDonePri += (long)remaining;
+                attacker.DamageDoneProj += (long)remaining;
                 attacker.BaseDamagePool -= remaining;
 
                 pTarget.Info.BaseHealthPool = 0;
@@ -888,7 +888,7 @@ namespace CoreSystems
             else
             {
                 attacker.BaseDamagePool = 0;
-                attacker.DamageDonePri += (long)scaledDamage;
+                attacker.DamageDoneProj += (long)scaledDamage;
                 pTarget.Info.BaseHealthPool -= scaledDamage;
                 DetonateProjectile(hitEnt, attacker);
             }
@@ -915,14 +915,14 @@ namespace CoreSystems
 
                         if (scaledDamage >= objHp)
                         {
-                            attacker.DamageDonePri += (long)objHp;
+                            attacker.DamageDoneProj += (long)objHp;
                             sTarget.Info.BaseHealthPool = 0;
                             sTarget.State = Projectile.ProjectileState.Detonated;
                         }
                         else
                         {
                             sTarget.Info.BaseHealthPool -= scaledDamage;
-                            attacker.DamageDonePri += (long)scaledDamage;
+                            attacker.DamageDoneProj += (long)scaledDamage;
 
                         }
                     }

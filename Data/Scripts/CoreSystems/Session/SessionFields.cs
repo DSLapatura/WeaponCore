@@ -542,8 +542,10 @@ namespace CoreSystems
 
     internal class DamageInfoLog
     {
+        public string TerminalName = "";
         public long Primary = 0;
         public long Shield = 0;
         public long AOE = 0;
+        public long Projectile = 0;
     }
 }

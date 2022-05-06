@@ -406,20 +406,18 @@ namespace CoreSystems
 
                 MyVisualScriptLogicProvider.PlayerDisconnected -= PlayerDisconnected;
                 MyVisualScriptLogicProvider.PlayerRespawnRequest -= PlayerConnected;
+                foreach (var pair in DmgLog)
+                {
+                    var x = pair.Value;
+                    var total = x.Primary + x.AOE + x.Shield + x.Projectile;
+                    if (total>0)Log.Stats($"{x.TerminalName}, {total}, {x.Primary}, {x.AOE}, {x.Shield}, {x.Projectile}", "dmgstats");
+                }
                 ApiServer.Unload();
 
                 PurgeAll();
 
                 Log.Line("Logging stopped.");
-                foreach (var pair in DmgLog)
-                {
-                    var x = pair.Value;
-                    var total = x.Primary + x.AOE + x.Shield;
-                    Log.Stats($"{pair.Key.String}, {total}, {x.Primary}, {x.AOE}, {x.Shield}", "dmgstats");
-                }
-
-
-                    Log.Close();
+                Log.Close();
             }
             catch (Exception ex) { Log.Line($"Exception in UnloadData: {ex}", null, true); }
         }
