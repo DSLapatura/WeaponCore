@@ -338,7 +338,7 @@ namespace CoreSystems
             TargetGps = null;
             SApi.Unload();
             if (WaterApiLoaded)
-                WApi.Unload();
+                WApi.Unregister();
             SApi = null;
             Api = null;
             ApiServer = null;

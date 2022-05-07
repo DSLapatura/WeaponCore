@@ -15,6 +15,9 @@ using static CoreSystems.Support.HitEntity.Type;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.EwarDef.EwarType;
 using static CoreSystems.Support.DeferedVoxels;
 using CollisionLayers = Sandbox.Engine.Physics.MyPhysics.CollisionLayers;
+using Jakaria;
+using Jakaria.API;
+
 namespace CoreSystems.Projectiles
 {
     public partial class Projectiles
@@ -255,6 +258,14 @@ namespace CoreSystems.Projectiles
                                             var estimatedHit = ray.Position + (ray.Direction * estiamtedSurfaceDistance.Value);
                                             voxelHit = estimatedHit;
                                             voxelState = VoxelIntersectBranch.PseudoHit2;
+                                            //water impact effects.  Add a bit of rand?
+                                            /*
+                                            var ammoInfo = p.Info.AmmoDef;
+                                            var splashSize = (float)(ammoInfo.Shape.Diameter + ammoInfo.AmmoGraphics.Lines.Tracer.Length);
+                                            var bubbleSize = (float)((ammoInfo.AreaOfDamage.ByBlockHit.Enable ? ammoInfo.AreaOfDamage.ByBlockHit.Radius : 0 )+ (ammoInfo.AreaOfDamage.EndOfLife.Enable ? ammoInfo.AreaOfDamage.EndOfLife.Radius:0));
+                                            WaterModAPI.CreateSplash(estimatedHit, splashSize,true);
+                                            if (bubbleSize>0)WaterModAPI.CreateBubble(estimatedHit, bubbleSize);
+                                            */
                                         }
                                     }
                                     if (voxelState != VoxelIntersectBranch.PseudoHit2)

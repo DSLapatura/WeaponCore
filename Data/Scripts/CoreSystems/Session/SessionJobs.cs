@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using CoreSystems.Support;
 using Jakaria;
+using Jakaria.API;
 using Sandbox.Game.Entities;
 using Sandbox.Game.EntityComponents;
 using Sandbox.ModAPI;
@@ -213,7 +214,7 @@ namespace CoreSystems
             foreach (var planet in PlanetMap.Values)
             {
                 WaterData data;
-                if (WaterApi.HasWater(planet.EntityId))
+                if (WaterModAPI.HasWater(planet.EntityId))
                 {
                     if (!WaterMap.TryGetValue(planet.EntityId, out data))
                     {
@@ -221,12 +222,12 @@ namespace CoreSystems
                         WaterMap[planet.EntityId] = data;
                     }
 
-                    var radiusInfo = WaterApi.GetPhysical(data.WaterId);
+                    var radiusInfo = WaterModAPI.GetPhysical(data.WaterId);
                     data.Center = radiusInfo.Item1;
                     data.Radius = radiusInfo.Item2;
                     data.MinRadius = radiusInfo.Item3;
                     data.MaxRadius = radiusInfo.Item3;
-                    var waveInfo = WaterApi.GetWaveData(data.WaterId);
+                    var waveInfo = WaterModAPI.GetWaveData(data.WaterId);
                     data.WaveHeight = waveInfo.Item1;
                     data.WaveSpeed = waveInfo.Item2;
                 }

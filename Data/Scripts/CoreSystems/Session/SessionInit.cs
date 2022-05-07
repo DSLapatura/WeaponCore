@@ -86,7 +86,7 @@ namespace CoreSystems
             if (WaterMod && !WaterApiLoaded)
             {
                 WaterApiLoaded = true;
-                WApi.Load();
+                WApi.Register(); 
                 WaterHash = MyStringHash.GetOrCompute("Water");
             }
 

@@ -1,22 +1,26 @@
-﻿using System;
+﻿using Sandbox.ModAPI;
+using System;
 using System.Collections.Generic;
-using Sandbox.Game.Entities;
-using Sandbox.ModAPI;
 using VRage;
 using VRage.Game;
-using VRage.Game.Entity;
+using VRage.Game.Components;
 using VRage.Utils;
 using VRageMath;
 
-namespace Jakaria
+namespace Jakaria.API
 {
-    //Only Include this file in your project
+    //See the steam guide for how to use this
+    //https://steamcommunity.com/sharedfiles/filedetails/?id=2639207010
+    /// <summary>
+    /// https://github.com/jakarianstudios/SE-Water/blob/master/API/WaterModAPI.cs
+    /// </summary>
 
-    public class WaterApi
+    [MySessionComponentDescriptor(MyUpdateOrder.NoUpdate)]
+    public class WaterModAPI : MySessionComponentBase
     {
         public static string ModName = MyAPIGateway.Utilities.GamePaths.ModScopeName.Split('_')[1];
         public const ushort ModHandlerID = 50271;
-        public const int ModAPIVersion = 15;
+        public const int ModAPIVersion = 18;
         public static bool Registered { get; private set; } = false;
 
         private static Dictionary<string, Delegate> ModAPIMethods;
@@ -48,6 +52,7 @@ namespace Jakaria
 
         private static Action<Vector3D, float, bool> _CreateSplash;
         private static Action<Vector3D, float> _CreateBubble;
+        private static Action<Vector3D, Vector3D, float, int> _CreatePhysicsSplash;
 
         /// <summary>
         /// Returns true if the version is compatibile with the API Backend, this is automatically called
@@ -112,6 +117,11 @@ namespace Jakaria
         public static void CreateSplash(Vector3D Position, float Radius, bool Audible) => _CreateSplash?.Invoke(Position, Radius, Audible);
 
         /// <summary>
+        /// Creates a physical splash at the provided position (Particles outside of the water)
+        /// </summary>
+        public static void CreatePhysicsSplash(Vector3D Position, Vector3D Velocity, float Radius, int Count = 1) => _CreatePhysicsSplash?.Invoke(Position, Velocity, Radius, Count);
+
+        /// <summary>
         /// Creates a bubble at the provided position
         /// </summary>
         public static void CreateBubble(Vector3D Position, float Radius) => _CreateBubble?.Invoke(Position, Radius);
@@ -137,9 +147,10 @@ namespace Jakaria
         public static float GetBuoyancyMultiplier(Vector3D Position, MyCubeSize GridSize, long? ID = null) => _GetBuoyancyMultiplier?.Invoke(Position, GridSize, ID) ?? 0;
 
         /// <summary>
-        /// Gets crush depth
+        /// Gets crush damage
         /// </summary>
-        public static int GetCrushDepth(long ID) => _GetCrushDepth?.Invoke(ID) ?? 500;
+        [Obsolete]
+        public static float GetCrushDepth(long ID) => _GetCrushDepth?.Invoke(ID) ?? 500;
 
         /// <summary>
         /// Gets position, radius, minimum radius, and maximum radius- in that order.
@@ -162,7 +173,7 @@ namespace Jakaria
         public static MyTuple<float, float> GetTideData(long ID) => (MyTuple<float, float>)(_GetTideData?.Invoke(ID) ?? null);
 
         /// <summary>
-        /// Gets tide height and tide speed- in that order.
+        /// Gets density and buoyancy multiplier- in that order.
         /// </summary>
         public static MyTuple<float, float> GetPhysicsData(long ID) => (MyTuple<float, float>)(_GetPhysicsData?.Invoke(ID) ?? null);
 
@@ -171,18 +182,48 @@ namespace Jakaria
         /// </summary>
         public static Vector3D GetTideDirection(long ID) => (Vector3D)(_GetTideDirection?.Invoke(ID) ?? null);
 
+        /// <summary>
+        /// Do not use. This is for the session component to register automatically
+        /// </summary>
+        public override void LoadData()
+        {
+            Register();
+        }
 
-        public void Load()
+        /// <summary>
+        /// Do not use. This is for the session component to register automatically
+        /// </summary>
+        protected override void UnloadData()
+        {
+            Unregister();
+        }
+
+        /// <summary>
+        /// Registers the mod and sets the mod name if it is not already set
+        /// </summary>
+        public void Register()
         {
             MyAPIGateway.Utilities.RegisterMessageHandler(ModHandlerID, ModHandler);
+
+            if (ModName == "")
+            {
+                if (MyAPIGateway.Utilities.GamePaths.ModScopeName.Contains("_"))
+                    ModName = MyAPIGateway.Utilities.GamePaths.ModScopeName.Split('_')[1];
+                else
+                    ModName = MyAPIGateway.Utilities.GamePaths.ModScopeName;
+            }
         }
 
-        public void Unload()
+        /// <summary>
+        /// Unregisters the mod
+        /// </summary>
+        public void Unregister()
         {
             MyAPIGateway.Utilities.UnregisterMessageHandler(ModHandlerID, ModHandler);
+            Registered = false;
         }
 
-        private static void ModHandler(object obj)
+        private void ModHandler(object obj)
         {
             if (obj == null)
             {
@@ -195,6 +236,8 @@ namespace Jakaria
                 _VerifyVersion = (Func<int, string, bool>)ModAPIMethods["VerifyVersion"];
 
                 Registered = VerifyVersion(ModAPIVersion, ModName);
+
+                MyLog.Default.WriteLine("Registering WaterAPI for Mod '" + ModName + "'");
 
                 if (Registered)
                 {
@@ -210,6 +253,7 @@ namespace Jakaria
                         _LineIntersectsWaterList = (Action<List<LineD>, ICollection<int>, long?>)ModAPIMethods["LineIntersectsWaterList"];
                         _GetDepth = (Func<Vector3D, long?, float?>)ModAPIMethods["GetDepth"];
                         _CreateSplash = (Action<Vector3D, float, bool>)ModAPIMethods["CreateSplash"];
+                        _CreatePhysicsSplash = (Action<Vector3D, Vector3D, float, int>)ModAPIMethods["CreatePhysicsSplash"];
                         _CreateBubble = (Action<Vector3D, float>)ModAPIMethods["CreateBubble"];
                         _ForceSync = (Action)ModAPIMethods["ForceSync"];
                         _RunCommand = (Action<string>)ModAPIMethods["RunCommand"];
@@ -227,7 +271,7 @@ namespace Jakaria
                     catch (Exception e)
                     {
                         MyAPIGateway.Utilities.ShowMessage("WaterMod", "Mod '" + ModName + "' encountered an error when registering the Water Mod API, see log for more info.");
-                        MyLog.Default.WriteLine(e);
+                        MyLog.Default.WriteLine("WaterMod: " + e);
                     }
                 }
             }
