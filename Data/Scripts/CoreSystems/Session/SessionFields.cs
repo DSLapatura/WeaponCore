@@ -9,6 +9,7 @@ using CoreSystems.Projectiles;
 using CoreSystems.Settings;
 using CoreSystems.Support;
 using Jakaria;
+using Jakaria.API;
 using ParallelTasks;
 using Sandbox.Game;
 using Sandbox.Game.Entities;
@@ -60,7 +61,7 @@ namespace CoreSystems
         internal volatile bool EarlyInitOver;
 
         internal readonly TargetCompare TargetCompare = new TargetCompare();
-        internal readonly WaterApi WApi = new WaterApi();
+        internal readonly WaterModAPI WApi = new WaterModAPI();
 
         internal static readonly HashSet<ulong> AuthorIds = new HashSet<ulong> { 76561197969691953 };
         internal readonly MyStringHash ShieldBypassDamageType = MyStringHash.GetOrCompute("bypass");

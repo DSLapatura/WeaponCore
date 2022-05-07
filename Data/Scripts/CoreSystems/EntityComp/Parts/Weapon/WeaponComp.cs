@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
 using CoreSystems.Support;
+using Jakaria;
+using Jakaria.API;
 using Sandbox.Game.Entities;
 using Sandbox.Game.Weapons;
 using Sandbox.ModAPI;
@@ -372,8 +374,14 @@ namespace CoreSystems.Platform
                     Ai.DetectOtherSignals = true;
                 var wasAsleep = IsAsleep;
                 IsAsleep = false;
-                IsDisabled = Ai.TouchingWater && !ShootSubmerged && Ai.WaterVolume.Contains(CoreEntity.PositionComp.WorldAABB.Center) != ContainmentType.Disjoint;
-                
+                //IsDisabled = Ai.TouchingWater && !ShootSubmerged && Ai.WaterVolume.Contains(CoreEntity.PositionComp.WorldAABB.Center) != ContainmentType.Disjoint; //submerged wep check
+                if (Ai.TouchingWater && !ShootSubmerged)
+                {
+                    var projectedPos = CoreEntity.PositionComp.WorldAABB.Center + (Vector3D.Normalize(CoreEntity.PositionComp.WorldVolume.Center- Ai.ClosestPlanetCenter) * CoreEntity.PositionComp.WorldVolume.Radius);
+                    IsDisabled=WaterModAPI.IsUnderwater(projectedPos);       
+                }
+                else IsDisabled = false;
+
                 if (!Ai.Session.IsServer)
                     return;
 
