@@ -35,11 +35,11 @@ namespace CoreSystems.Platform
                 targetPos = targetCenter;
             var targetDir = targetPos - weapon.MyPivotPos;
 
+
             double rangeToTarget;
             Vector3D.DistanceSquared(ref targetPos, ref weapon.MyPivotPos, out rangeToTarget);
 
             var inRange = rangeToTarget <= weapon.MaxTargetDistanceSqr && rangeToTarget >= weapon.MinTargetDistanceSqr;
-
             bool canTrack;
             bool isTracking;
 
@@ -79,7 +79,6 @@ namespace CoreSystems.Platform
                 }
                 else selfHit = true;
             }
-
             return !selfHit && (inRange && canTrack || weapon.Comp.Data.Repo.Values.State.TrackingReticle);
         }
 
@@ -177,8 +176,7 @@ namespace CoreSystems.Platform
         }
 
         internal static bool CanShootTargetObb(Weapon weapon, MyEntity entity, Vector3D targetLinVel, Vector3D targetAccel, out Vector3D targetPos)
-        {
-
+        {   
             if (weapon.PosChangedTick != weapon.Comp.Session.Tick)
                 weapon.UpdatePivotPos();
 
@@ -190,13 +188,12 @@ namespace CoreSystems.Platform
 
             var box = entity.PositionComp.LocalAABB;
             var obb = new MyOrientedBoundingBoxD(box, entity.PositionComp.WorldMatrixRef);
-
+            var tempObb = obb;
             var validEstimate = true;
             if (prediction != Prediction.Off && !weapon.ActiveAmmoDef.AmmoDef.Const.IsBeamWeapon && weapon.ActiveAmmoDef.AmmoDef.Const.DesiredProjectileSpeed > 0)
                 targetPos = TrajectoryEstimation(weapon, obb.Center, targetLinVel, targetAccel, out validEstimate);
             else
                 targetPos = obb.Center;
-
             obb.Center = targetPos;
             weapon.TargetBox = obb;
 
@@ -207,7 +204,8 @@ namespace CoreSystems.Platform
             maxRangeSqr *= maxRangeSqr;
             minRangeSqr *= minRangeSqr;
             double rangeToTarget;
-            Vector3D.DistanceSquared(ref targetPos, ref weapon.MyPivotPos, out rangeToTarget);
+            if (weapon.ActiveAmmoDef.AmmoDef.Const.FeelsGravity) Vector3D.DistanceSquared(ref tempObb.Center, ref weapon.MyPivotPos, out rangeToTarget);
+            else Vector3D.DistanceSquared(ref targetPos, ref weapon.MyPivotPos, out rangeToTarget);
 
             bool canTrack = false;
             if (validEstimate && rangeToTarget <= maxRangeSqr && rangeToTarget >= minRangeSqr)
@@ -221,7 +219,6 @@ namespace CoreSystems.Platform
                     double checkElevation;
 
                     MathFuncs.GetRotationAngles(ref targetDir, ref weapon.WeaponConstMatrix, out checkAzimuth, out checkElevation);
-
                     var azConstraint = Math.Min(weapon.MaxAzToleranceRadians, Math.Max(weapon.MinAzToleranceRadians, checkAzimuth));
                     var elConstraint = Math.Min(weapon.MaxElToleranceRadians, Math.Max(weapon.MinElToleranceRadians, checkElevation));
 
@@ -306,6 +303,7 @@ namespace CoreSystems.Platform
 
             weapon.Target.TargetPos = targetPos;
             weapon.Target.IsAligned = isAligned;
+
             return isAligned;
         }
 
@@ -669,7 +667,7 @@ namespace CoreSystems.Platform
                 projectileVel += aimDirectionNorm * projectileMaxSpeed;
             }
 
-            var count = projectileAccelerates ? 600 : hasGravity ? 320 : 60;
+            var count = projectileAccelerates ? 600 : hasGravity ? 60 : 60; //320 : 60
 
             double dt = Math.Max(MyEngineConstants.UPDATE_STEP_SIZE_IN_SECONDS, timeToIntercept / count); // This can be a const somewhere
             double dtSqr = dt * dt;
@@ -710,12 +708,39 @@ namespace CoreSystems.Platform
                 double diffLenSq = diff.LengthSquared();
                 aimOffset = diff;
                 minTime = dt * (i + 1);
-
                 if (diffLenSq < projectileMaxSpeedSqr * dtSqr || Vector3D.Dot(diff, aimDirectionNorm) < 0)
                     break;
             }
             Vector3D perpendicularAimOffset = aimOffset - Vector3D.Dot(aimOffset, aimDirectionNorm) * aimDirectionNorm;
-            Vector3D gravityOffset = hasGravity ? -0.5 * minTime * minTime * gravity : Vector3D.Zero;
+            Vector3D gravityOffset = Vector3D.Zero;
+
+            //gravity nonsense for differing elevations
+            if (hasGravity && ai.InPlanetGravity)
+            {
+                var targetLineVector = targetPos - shooterPos;
+                var targetLineLength = targetLineVector.Length();
+                var targetAngle = Math.Acos(Vector3D.Dot(gravity, targetLineVector) / (gravity.Length() * targetLineVector.Length()));
+                double elevationDifference;
+                if (targetAngle >= 1.5708) //Target is above weapon
+                {
+                    targetAngle -= 1.5708; //angle-90
+                    elevationDifference = Math.Sin(targetAngle) * targetLineLength;
+                }
+                else //Target is below weapon
+                {
+                    targetAngle = 1.5708 - targetAngle; //90-angle
+                    elevationDifference = -Math.Sin(targetAngle) * Vector3D.Distance(targetPos, shooterPos);
+                }
+                var horizontalDistance = Math.Sqrt(targetLineLength * targetLineLength - elevationDifference * elevationDifference);
+
+                //lord help me
+                var angleRequired = Math.Abs((Math.Acos(((gravity.Length() * (horizontalDistance * horizontalDistance) / (projectileMaxSpeed * projectileMaxSpeed)) - Math.Abs(elevationDifference)) / Math.Sqrt(horizontalDistance * horizontalDistance + elevationDifference * elevationDifference)) + Math.Atan(horizontalDistance / elevationDifference)) / 2);
+                var verticalDistance = Math.Tan(angleRequired) * horizontalDistance; //without below-the-horizon modifier
+                gravityOffset = new Vector3D((verticalDistance + Math.Abs(elevationDifference)) * -Vector3D.Normalize(gravity));
+
+                //Log.Stats($"Elevation Angle Delta calc->turret: {MathHelper.ToDegrees(angleRequired-weapon.Elevation)} degrees");
+
+            }
             return estimatedImpactPoint + perpendicularAimOffset + gravityOffset;
         }
 

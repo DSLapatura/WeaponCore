@@ -259,13 +259,14 @@ namespace CoreSystems.Projectiles
                                             voxelHit = estimatedHit;
                                             voxelState = VoxelIntersectBranch.PseudoHit2;
                                             //water impact effects.  Add a bit of rand?
-                                            /*
+
+                                            var splashHit = ray.Position + (ray.Direction * (estiamtedSurfaceDistance.Value-water.WaveHeight-water.TideHeight)); //Hopefully we can get a more precise surface intercept
                                             var ammoInfo = p.Info.AmmoDef;
                                             var splashSize = (float)(ammoInfo.Shape.Diameter + ammoInfo.AmmoGraphics.Lines.Tracer.Length);
                                             var bubbleSize = (float)((ammoInfo.AreaOfDamage.ByBlockHit.Enable ? ammoInfo.AreaOfDamage.ByBlockHit.Radius : 0 )+ (ammoInfo.AreaOfDamage.EndOfLife.Enable ? ammoInfo.AreaOfDamage.EndOfLife.Radius:0));
-                                            WaterModAPI.CreateSplash(estimatedHit, splashSize,true);
-                                            if (bubbleSize>0)WaterModAPI.CreateBubble(estimatedHit, bubbleSize);
-                                            */
+                                            WaterModAPI.CreateSplash(splashHit, splashSize,true);
+                                            if (bubbleSize>0)WaterModAPI.CreateBubble(splashHit, bubbleSize);
+                                            
                                         }
                                     }
                                     if (voxelState != VoxelIntersectBranch.PseudoHit2)

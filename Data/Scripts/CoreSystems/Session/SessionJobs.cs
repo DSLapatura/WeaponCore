@@ -230,6 +230,9 @@ namespace CoreSystems
                     var waveInfo = WaterModAPI.GetWaveData(data.WaterId);
                     data.WaveHeight = waveInfo.Item1;
                     data.WaveSpeed = waveInfo.Item2;
+                    var tideInfo = WaterModAPI.GetTideData(data.WaterId);
+                    data.TideHeight = tideInfo.Item1;
+                    data.TideSpeed = tideInfo.Item2;
                 }
                 else WaterMap.TryRemove(planet.EntityId, out data);
             }

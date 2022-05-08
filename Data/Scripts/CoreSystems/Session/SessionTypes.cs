@@ -1057,5 +1057,7 @@ namespace CoreSystems
         public float MaxRadius;
         public float WaveHeight;
         public float WaveSpeed;
+        public float TideHeight;
+        public float TideSpeed;
     }
 }

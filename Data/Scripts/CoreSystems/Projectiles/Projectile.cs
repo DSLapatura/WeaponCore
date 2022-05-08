@@ -464,7 +464,14 @@ namespace CoreSystems.Projectiles
             PruningProxyId = -1;
             HadTarget = HadTargetState.None;
             
-            Info.Clean(aConst.IsSmart || aConst.IsDrone);
+            if(aConst.IsSmart || aConst.IsDrone) Info.Clean();
+            else
+            {
+                Info.DamageDonePri = 0;
+                Info.DamageDoneAOE = 0;
+                Info.DamageDoneShld = 0;
+                Info.DamageDoneProj = 0;
+            }
         }
         #endregion
 
