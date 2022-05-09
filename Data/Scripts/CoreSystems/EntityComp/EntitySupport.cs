@@ -62,14 +62,19 @@ namespace CoreSystems.Support
                             Ai.OptimalDps -= ((Weapon.WeaponComponent)this).PeakDps;
                             Ai.EffectiveDps -= ((Weapon.WeaponComponent)this).EffectiveDps;
                             Ai.PerfectDps -= ((Weapon.WeaponComponent)this).PerfectDps;
-                            Constructs.WeaponGroupsMarkDirty(Ai.GridMap.GroupMap);
+                            
+                            if (IsBlock)
+                                Constructs.WeaponGroupsMarkDirty(Ai.GridMap.GroupMap);
                         }
 
                         PartCounter wCount;
                         if (Ai.PartCounting.TryGetValue(SubTypeId, out wCount))
                         {
                             wCount.Current--;
-                            Constructs.BuildAiListAndCounters(Ai);
+
+                            if (IsBlock)
+                                Constructs.BuildAiListAndCounters(Ai);
+
                             if (wCount.Current == 0)
                             {
                                 Ai.PartCounting.Remove(SubTypeId);

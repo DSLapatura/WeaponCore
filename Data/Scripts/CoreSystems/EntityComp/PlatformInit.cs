@@ -124,7 +124,10 @@ namespace CoreSystems.Platform
 
             if (wCounter.Max == 0 || Comp.Ai.ModOverride || Comp.Ai.Construct.GetPartCount(blockDef) + 1 <= wCounter.Max) {
                 wCounter.Current++;
-                Ai.Constructs.BuildAiListAndCounters(Comp.Ai);
+
+                if (Comp.IsBlock)
+                    Ai.Constructs.BuildAiListAndCounters(Comp.Ai);
+
                 State = PlatformState.Valid;
             }
             else

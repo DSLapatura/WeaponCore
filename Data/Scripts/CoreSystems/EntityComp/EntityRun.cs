@@ -166,7 +166,8 @@ namespace CoreSystems.Support
                         pCounter.Max = Platform.Structure.ConstructPartCap;
 
                         pCounter.Current++;
-                        Constructs.BuildAiListAndCounters(Ai);
+                        if (IsBlock)
+                            Constructs.BuildAiListAndCounters(Ai);
                         // end ReInit
 
                         OnAddedToSceneTasks(false);

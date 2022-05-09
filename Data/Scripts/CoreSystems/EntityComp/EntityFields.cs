@@ -220,7 +220,7 @@ namespace CoreSystems.Support
             }
 
             LazyUpdate = Type == CompType.Support || Type == CompType.Upgrade;
-            InventoryEntity = TypeSpecific != CompTypeSpecific.Rifle ? CoreEntity : CoreEntity.GetBaseEntity();
+            InventoryEntity =(TypeSpecific != CompTypeSpecific.Rifle ? CoreEntity : (MyEntity)((IMyAutomaticRifleGun)CoreEntity).AmmoInventory.Entity);
             CoreInventory = (MyInventory)InventoryEntity.GetInventoryBase();
             HasInventory = InventoryEntity.HasInventory;
             Platform = session.PlatFormPool.Get();
