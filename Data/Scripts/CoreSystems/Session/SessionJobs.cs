@@ -226,7 +226,7 @@ namespace CoreSystems
                     data.Center = radiusInfo.Item1;
                     data.Radius = radiusInfo.Item2;
                     data.MinRadius = radiusInfo.Item3;
-                    data.MaxRadius = radiusInfo.Item3;
+                    data.MaxRadius = radiusInfo.Item4;
                     var waveInfo = WaterModAPI.GetWaveData(data.WaterId);
                     data.WaveHeight = waveInfo.Item1;
                     data.WaveSpeed = waveInfo.Item2;

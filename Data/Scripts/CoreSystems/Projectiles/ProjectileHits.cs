@@ -159,6 +159,7 @@ namespace CoreSystems.Projectiles
 
                     if (checkShield && !info.EwarActive || info.EwarActive && (aConst.EwarType == Dot || aConst.EwarType == Emp))
                     {
+
                         shieldInfo = Session.SApi.MatchEntToShieldFastExt(ent, true);
                         if (shieldInfo != null && (firingCube == null || !firingCube.CubeGrid.IsSameConstructAs(shieldInfo.Value.Item1.CubeGrid) && !goCritical))
                         {
@@ -218,8 +219,37 @@ namespace CoreSystems.Projectiles
                         }
                     }
 
-                    var destroyable = ent as IMyDestroyableObject;
+
+                    //water surface check, for AV only
+                    if (water != null)
+                    {
+                        var waterSphereMin = new BoundingSphereD(info.MyPlanet.PositionComp.WorldAABB.Center, water.MinRadius);
+                        if (waterSphereMin.Contains(p.Beam.From) == ContainmentType.Contains && waterSphereMin.Contains(p.Beam.To) == ContainmentType.Contains)
+                        {
+                            //Log.Line($"Beam underwater");
+                            continue; //Beam totally underwater, can ignore
+                        }
+                        var estimatedSurfaceDistance = ray.Intersects(waterSphereMin);
+
+                        if (estimatedSurfaceDistance.HasValue && estimatedSurfaceDistance.Value <= p.Beam.Length && estimatedSurfaceDistance.Value>0)
+                        {
+                            var estimatedHit = ray.Position + (ray.Direction * (estimatedSurfaceDistance.Value-water.TideHeight-water.WaveHeight));//Average "middle" of water layer
+                            hitEntity = HitEntityPool.Get();
+                            hitEntity.EventType = Water;
+                            hitEntity.HitPos = estimatedHit;
+                            hitEntity.Entity = info.MyPlanet;
+                            hitEntity.HitDist = estimatedSurfaceDistance;
+                            hitEntity.Intersection = p.Beam;
+                            hitEntity.SphereCheck = !lineCheck;
+                            hitEntity.PruneSphere = p.PruneSphere;
+                            hitEntity.SelfHit = entIsSelf;
+                            hitEntity.DamageOverTime = aConst.EwarType == Dot;
+                            info.HitList.Add(hitEntity);
+                        }
+                    }
+
                     var voxel = ent as MyVoxelBase;
+                    var destroyable = ent as IMyDestroyableObject;
                     if (voxel != null && voxel == voxel?.RootVoxel && !ignoreVoxels)
                     {
 
@@ -248,7 +278,7 @@ namespace CoreSystems.Projectiles
 
                                 if (p.LinePlanetCheck)
                                 {
-                                    if (water != null && !aDef.IgnoreWater)
+                                    if (water != null && !aDef.IgnoreWater) //Still needed for a water hit that "kills" the projectile
                                     {
                                         var waterSphere = new BoundingSphereD(info.MyPlanet.PositionComp.WorldAABB.Center, water.MinRadius);
                                         var estiamtedSurfaceDistance = ray.Intersects(waterSphere);
@@ -258,18 +288,9 @@ namespace CoreSystems.Projectiles
                                             var estimatedHit = ray.Position + (ray.Direction * estiamtedSurfaceDistance.Value);
                                             voxelHit = estimatedHit;
                                             voxelState = VoxelIntersectBranch.PseudoHit2;
-                                            //water impact effects.  Add a bit of rand?
-
-                                            var splashHit = ray.Position + (ray.Direction * (estiamtedSurfaceDistance.Value-water.WaveHeight-water.TideHeight)); //Hopefully we can get a more precise surface intercept
-                                            var ammoInfo = p.Info.AmmoDef;
-                                            var splashSize = (float)(ammoInfo.Shape.Diameter + ammoInfo.AmmoGraphics.Lines.Tracer.Length);
-                                            var bubbleSize = (float)((ammoInfo.AreaOfDamage.ByBlockHit.Enable ? ammoInfo.AreaOfDamage.ByBlockHit.Radius : 0 )+ (ammoInfo.AreaOfDamage.EndOfLife.Enable ? ammoInfo.AreaOfDamage.EndOfLife.Radius:0));
-                                            WaterModAPI.CreateSplash(splashHit, splashSize,true);
-                                            if (bubbleSize>0)WaterModAPI.CreateBubble(splashHit, bubbleSize);
-                                            
                                         }
                                     }
-                                    if (voxelState != VoxelIntersectBranch.PseudoHit2)
+                                if (voxelState != VoxelIntersectBranch.PseudoHit2)
                                     {
 
                                         var surfacePos = info.MyPlanet.GetClosestSurfacePointGlobal(ref p.Position);
@@ -336,7 +357,6 @@ namespace CoreSystems.Projectiles
                             double dist;
                             Vector3D.Distance(ref p.Beam.From, ref hitPos, out dist);
                             hitEntity.HitDist = dist;
-
                             hitEntity.EventType = Voxel;
                         }
                         else if (voxelState == VoxelIntersectBranch.DeferedMissUpdate || voxelState == VoxelIntersectBranch.DeferFullCheck) {
@@ -441,7 +461,7 @@ namespace CoreSystems.Projectiles
                         hitEntity.EventType = Destroyable;
                     }
 
-                    if (hitEntity != null)
+                    if (hitEntity != null && hitEntity.EventType != Water)
                     {
                         var hitEnt = hitEntity.EventType != Shield ? ent : (MyEntity) shieldInfo.Value.Item1;
                         if (hitEnt != null)
@@ -620,8 +640,8 @@ namespace CoreSystems.Projectiles
                 var p = FinalHitCheck[x];
 
                 p.Intersecting = GenerateHitInfo(p);
-
                 var info = p.Info;
+
                 if (p.Intersecting)
                 {
                     var aConst = info.AmmoDef.Const;
@@ -698,20 +718,28 @@ namespace CoreSystems.Projectiles
             var pulseTrigger = false;
             
             var voxelFound = false;
-
             for (int i = info.HitList.Count - 1; i >= 0; i--)
             {
                 var ent = info.HitList[i];
+
+                Log.Line($"Hitlist {i}: event{ent.EventType}");
+
                 if (ent.EventType == Voxel)
                     voxelFound = true;
 
                 if (!ent.Hit)
                 {
-
                     if (ent.PulseTrigger) pulseTrigger = true;
+                    Log.Line($"Removed {i}  {ent.Entity}");
                     info.HitList.RemoveAtFast(i);
                     HitEntityPool.Return(ent);
                 }
+
+                if (ent.EventType == Water)
+                {
+                    //BDC
+                }
+
                 else break;
             }
 
@@ -727,6 +755,7 @@ namespace CoreSystems.Projectiles
                 info.HitList.Clear();
                 return false;
             }
+
 
             var finalCount = info.HitList.Count;
             if (finalCount > 0)
@@ -776,7 +805,7 @@ namespace CoreSystems.Projectiles
                 }
                 else visualHitPos = hitEntity.HitPos;
 
-                info.Hit = new Hit { Block = hitBlock, Entity = hitEntity.Entity, LastHit = visualHitPos ?? Vector3D.Zero, SurfaceHit = visualHitPos ?? Vector3D.Zero, HitVelocity = p.LastHitEntVel ?? Vector3D.Zero, HitTick = Session.Tick};
+                info.Hit = new Hit { Block = hitBlock, Entity = hitEntity.Entity, EventType = hitEntity.EventType, LastHit = visualHitPos ?? Vector3D.Zero, SurfaceHit = visualHitPos ?? Vector3D.Zero, HitVelocity = p.LastHitEntVel ?? Vector3D.Zero, HitTick = Session.Tick};
                 if (p.EnableAv)
                 {
                     info.AvShot.LastHitShield = hitEntity.EventType == Shield;
