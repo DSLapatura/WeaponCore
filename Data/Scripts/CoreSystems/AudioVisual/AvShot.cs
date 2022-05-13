@@ -1201,6 +1201,7 @@ namespace CoreSystems.Support
             HitParticleActive = false;
             MarkForClose = false;
             ProEnded = false;
+            WaterWasHit = false;
             TracerShrinks.Clear();
             GlowSteps.Clear();
             Offsets.Clear();
