@@ -83,6 +83,7 @@ namespace CoreSystems.Support
         internal uint LastTick;
         internal uint LastHit = uint.MaxValue / 2;
         internal int FireCounter;
+        internal bool WaterWasHit;
         internal ParticleState HitParticle;
         internal TracerState Tracer;
         internal TrailState Trail;

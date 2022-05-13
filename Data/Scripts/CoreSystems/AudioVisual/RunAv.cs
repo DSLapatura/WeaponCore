@@ -133,8 +133,9 @@ namespace CoreSystems.Support
                             }
 
                             //BDC call for drawsplash
-                            if (av.Hit.EventType == HitEntity.Type.Water)
+                            if (av.Hit.EventType == HitEntity.Type.Water && !av.WaterWasHit)
                             {
+                                av.WaterWasHit = true;
                                 //water impact effects.  Add a bit of rand?
                                 var splashHit = av.Hit.SurfaceHit;//Hopefully we can get a more precise surface intercept
                                 var ammoInfo = av.AmmoDef;
