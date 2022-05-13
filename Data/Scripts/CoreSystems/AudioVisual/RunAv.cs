@@ -88,6 +88,7 @@ namespace CoreSystems.Support
                             av.PrimeEntity.Render.RemoveRenderObjects();
                         }
                     }
+
                     if (av.Triggered && av.TriggerEntity != null)
                     {
                         if (!av.AmmoDef.Ewar.Field.HideModel && (!av.TriggerEntity.InScene))
@@ -129,6 +130,18 @@ namespace CoreSystems.Support
 
                                 if (hitEffect.Loop)
                                     hitEffect.Stop();
+                            }
+
+                            //BDC call for drawsplash
+                            if (av.Hit.EventType == HitEntity.Type.Water)
+                            {
+                                //water impact effects.  Add a bit of rand?
+                                var splashHit = av.Hit.SurfaceHit;//Hopefully we can get a more precise surface intercept
+                                var ammoInfo = av.AmmoDef;
+                                var splashSize = (float)(ammoInfo.Shape.Diameter + ammoInfo.AmmoGraphics.Lines.Tracer.Length);
+                                var bubbleSize = (float)((ammoInfo.AreaOfDamage.ByBlockHit.Enable ? ammoInfo.AreaOfDamage.ByBlockHit.Radius : 0) + (ammoInfo.AreaOfDamage.EndOfLife.Enable ? ammoInfo.AreaOfDamage.EndOfLife.Radius : 0));
+                                WaterModAPI.CreateSplash(splashHit, splashSize, true);
+                                if (bubbleSize > 0) WaterModAPI.CreateBubble(splashHit, bubbleSize);
                             }
                         }
                     }
@@ -322,20 +335,6 @@ namespace CoreSystems.Support
                     }
 
                     if (remove) av.GlowSteps.Dequeue();
-                }
-                if (av.OnScreen != AvShot.Screen.None)
-                {
-                    //BDC call for drawsplash
-                    if (av.Hit.EventType == HitEntity.Type.Water)
-                    {
-                        //water impact effects.  Add a bit of rand?
-                        var splashHit = av.Hit.SurfaceHit;//Hopefully we can get a more precise surface intercept
-                        var ammoInfo = av.AmmoDef;
-                        var splashSize = (float)(ammoInfo.Shape.Diameter + ammoInfo.AmmoGraphics.Lines.Tracer.Length);
-                        var bubbleSize = (float)((ammoInfo.AreaOfDamage.ByBlockHit.Enable ? ammoInfo.AreaOfDamage.ByBlockHit.Radius : 0) + (ammoInfo.AreaOfDamage.EndOfLife.Enable ? ammoInfo.AreaOfDamage.EndOfLife.Radius : 0));
-                        WaterModAPI.CreateSplash(splashHit, splashSize, true);
-                        if (bubbleSize > 0) WaterModAPI.CreateBubble(splashHit, bubbleSize);
-                    }
                 }
 
                 if (glowCnt == 0 && shrinkCnt == 0 && av.MarkForClose)

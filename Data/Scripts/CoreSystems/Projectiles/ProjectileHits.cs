@@ -250,6 +250,7 @@ namespace CoreSystems.Projectiles
 
                     var voxel = ent as MyVoxelBase;
                     var destroyable = ent as IMyDestroyableObject;
+                    var waterHit = false;
                     if (voxel != null && voxel == voxel?.RootVoxel && !ignoreVoxels)
                     {
 
@@ -288,9 +289,10 @@ namespace CoreSystems.Projectiles
                                             var estimatedHit = ray.Position + (ray.Direction * estiamtedSurfaceDistance.Value);
                                             voxelHit = estimatedHit;
                                             voxelState = VoxelIntersectBranch.PseudoHit2;
+                                            waterHit = true;
                                         }
                                     }
-                                if (voxelState != VoxelIntersectBranch.PseudoHit2)
+                                    if (voxelState != VoxelIntersectBranch.PseudoHit2)
                                     {
 
                                         var surfacePos = info.MyPlanet.GetClosestSurfacePointGlobal(ref p.Position);
@@ -357,7 +359,7 @@ namespace CoreSystems.Projectiles
                             double dist;
                             Vector3D.Distance(ref p.Beam.From, ref hitPos, out dist);
                             hitEntity.HitDist = dist;
-                            hitEntity.EventType = Voxel;
+                            hitEntity.EventType = !waterHit ? Voxel : Water;
                         }
                         else if (voxelState == VoxelIntersectBranch.DeferedMissUpdate || voxelState == VoxelIntersectBranch.DeferFullCheck) {
                             lock (DeferedVoxels)
