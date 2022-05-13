@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using CoreSystems.Platform;
+using Jakaria.API;
 using Sandbox.Game.Entities;
 using VRage.Collections;
 using VRage.Game;
@@ -223,7 +224,7 @@ namespace CoreSystems.Support
                                     }
                                     else
                                     {
-                                        rawLen = first ? av.SegmentLenTranserved * Session.ClientAvDivisor : seg.SegmentGap  * Session.ClientAvDivisor;
+                                        rawLen = first ? av.SegmentLenTranserved * Session.ClientAvDivisor : seg.SegmentGap * Session.ClientAvDivisor;
                                         if (rawLen <= 0)
                                             break;
                                         width = av.TracerWidth;
@@ -321,6 +322,20 @@ namespace CoreSystems.Support
                     }
 
                     if (remove) av.GlowSteps.Dequeue();
+                }
+                if (av.OnScreen != AvShot.Screen.None)
+                {
+                    //BDC call for drawsplash
+                    if (av.Hit.EventType == HitEntity.Type.Water)
+                    {
+                        //water impact effects.  Add a bit of rand?
+                        var splashHit = av.Hit.SurfaceHit;//Hopefully we can get a more precise surface intercept
+                        var ammoInfo = av.AmmoDef;
+                        var splashSize = (float)(ammoInfo.Shape.Diameter + ammoInfo.AmmoGraphics.Lines.Tracer.Length);
+                        var bubbleSize = (float)((ammoInfo.AreaOfDamage.ByBlockHit.Enable ? ammoInfo.AreaOfDamage.ByBlockHit.Radius : 0) + (ammoInfo.AreaOfDamage.EndOfLife.Enable ? ammoInfo.AreaOfDamage.EndOfLife.Radius : 0));
+                        WaterModAPI.CreateSplash(splashHit, splashSize, true);
+                        if (bubbleSize > 0) WaterModAPI.CreateBubble(splashHit, bubbleSize);
+                    }
                 }
 
                 if (glowCnt == 0 && shrinkCnt == 0 && av.MarkForClose)

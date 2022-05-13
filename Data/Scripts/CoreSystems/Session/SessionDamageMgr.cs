@@ -1002,6 +1002,13 @@ namespace CoreSystems
 
         public void RadiantAoe(ref HitEntity.RootBlocks rootInfo, MyCubeGrid grid, double radius, double depth, LineD direction, ref int maxDbc, out bool foundSomething, AoeShape shape, bool showHits,out int aoeHits) //added depth and angle
         {
+            if (depth <= 0)
+            {
+                aoeHits = 0;
+                foundSomething = false;
+                return;
+            }
+
             //Log.Line($"Start");
             //var watch = System.Diagnostics.Stopwatch.StartNew();
             var rootHitPos = rootInfo.QueryPos; //local cube grid

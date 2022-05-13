@@ -266,6 +266,7 @@ namespace CoreSystems.Support
             Projectile,
             Field,
             Effect,
+            Water,
         }
 
         public readonly List<RootBlocks> Blocks = new List<RootBlocks>(16);
@@ -319,6 +320,7 @@ namespace CoreSystems.Support
     {
         internal IMySlimBlock Block;
         internal MyEntity Entity;
+        internal HitEntity.Type EventType;
         internal Vector3D SurfaceHit;
         internal Vector3D LastHit;
         internal Vector3D HitVelocity;
