@@ -281,7 +281,6 @@ namespace CoreSystems.Projectiles
             Info.TracerLength = aConst.TracerLength <= Info.MaxTrajectory ? aConst.TracerLength : Info.MaxTrajectory;
 
             MaxTrajectorySqr = Info.MaxTrajectory * Info.MaxTrajectory;
-
             if (!Info.IsFragment) StartSpeed = Info.ShooterVel;
 
             MoveToAndActivate = LockedTarget && !aConst.IsBeamWeapon && guidance == GuidanceType.TravelTo;
@@ -320,14 +319,12 @@ namespace CoreSystems.Projectiles
             MaxSpeed = MaxVelocity.Length();
             MaxSpeedSqr = MaxSpeed * MaxSpeed;
             AccelVelocity = (AccelDir * aConst.DeltaVelocityPerTick);
-
             if (aConst.AmmoSkipAccel)
             {
                 Velocity = MaxVelocity;
                 VelocityLengthSqr = MaxSpeed * MaxSpeed;
             }
             else Velocity = StartSpeed + AccelVelocity;
-
             if (Info.IsFragment)
                 Vector3D.Normalize(ref Velocity, out Info.Direction);
 
@@ -464,14 +461,8 @@ namespace CoreSystems.Projectiles
             PruningProxyId = -1;
             HadTarget = HadTargetState.None;
             
-            if(aConst.IsSmart || aConst.IsDrone) Info.Clean();
-            else
-            {
-                Info.DamageDonePri = 0;
-                Info.DamageDoneAOE = 0;
-                Info.DamageDoneShld = 0;
-                Info.DamageDoneProj = 0;
-            }
+            Info.Clean(aConst.IsSmart||aConst.IsDrone);
+
         }
         #endregion
 

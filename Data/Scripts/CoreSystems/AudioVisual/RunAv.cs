@@ -64,7 +64,6 @@ namespace CoreSystems.Support
             for (int i = AvShots.Count - 1; i >= 0; i--)
             {
                 var av = AvShots[i];
-
                 var refreshed = av.LastTick == Session.Tick && !av.MarkForClose;
                 if (refreshed)
                 {
@@ -113,7 +112,6 @@ namespace CoreSystems.Support
                         }
                         else av.TravelEmitter.SetPosition(av.TracerFront);
                     }
-
                     if (av.HitParticle == AvShot.ParticleState.Custom)
                     {
                         av.HitParticle = AvShot.ParticleState.Dirty;
@@ -136,12 +134,11 @@ namespace CoreSystems.Support
                             if (av.Hit.EventType == HitEntity.Type.Water && !av.WaterWasHit)
                             {
                                 av.WaterWasHit = true;
-                                //water impact effects.  Add a bit of rand?
-                                var splashHit = av.Hit.SurfaceHit;//Hopefully we can get a more precise surface intercept
+                                var splashHit = av.Hit.SurfaceHit;//Hopefully we can get a more precise surface intercept or correction?
                                 var ammoInfo = av.AmmoDef;
                                 var splashSize = (float)(ammoInfo.Shape.Diameter + ammoInfo.AmmoGraphics.Lines.Tracer.Length);
                                 var bubbleSize = (float)((ammoInfo.AreaOfDamage.ByBlockHit.Enable ? ammoInfo.AreaOfDamage.ByBlockHit.Radius : 0) + (ammoInfo.AreaOfDamage.EndOfLife.Enable ? ammoInfo.AreaOfDamage.EndOfLife.Radius : 0));
-                                WaterModAPI.CreateSplash(splashHit, splashSize, true);
+                                WaterModAPI.CreateSplash(splashHit, MathHelper.Max(splashSize,bubbleSize), true);
                                 if (bubbleSize > 0) WaterModAPI.CreateBubble(splashHit, bubbleSize);
                             }
                         }
