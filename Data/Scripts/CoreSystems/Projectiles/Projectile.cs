@@ -171,15 +171,6 @@ namespace CoreSystems.Projectiles
             PrevEndPointToCenterSqr = double.MaxValue;
             var trajectory = ammoDef.Trajectory;
             var guidance = trajectory.Guidance;
-            if (aConst.IsDrone)
-            {
-                Info.Storage.DroneMsn = DroneMission.Attack;//TODO handle initial defensive assignment?
-                Info.Storage.DroneStat = Launch;
-                Info.Storage.NavTargetEnt = Info.Target.TargetEntity.GetTopMostParent();
-                Info.Storage.NavTargetBound = Info.Target.TargetEntity.PositionComp.WorldVolume;
-                Info.Storage.ShootTarget = Info.Target;
-                Info.Storage.UsesStrafe= Info.AmmoDef.Fragment.TimedSpawns.PointType == PointTypes.Direct && Info.AmmoDef.Fragment.TimedSpawns.PointAtTarget == false;
-            }
 
             CachedId = Info.MuzzleId == -1 ? Info.Weapon.WeaponCache.VirutalId : Info.MuzzleId;
             if (aConst.DynamicGuidance && session.AntiSmartActive) DynTrees.RegisterProjectile(this);
@@ -231,6 +222,17 @@ namespace CoreSystems.Projectiles
                         Log.Line($"ProjectileStart had invalid entity target state, isFragment: {Info.IsFragment}");
                         break;
                     }
+
+                    if (aConst.IsDrone)
+                    {
+                        Info.Storage.DroneMsn = DroneMission.Attack;//TODO handle initial defensive assignment?
+                        Info.Storage.DroneStat = Launch;
+                        Info.Storage.NavTargetEnt = Info.Target.TargetEntity.GetTopMostParent();
+                        Info.Storage.NavTargetBound = Info.Target.TargetEntity.PositionComp.WorldVolume;
+                        Info.Storage.ShootTarget = Info.Target;
+                        Info.Storage.UsesStrafe = Info.AmmoDef.Fragment.TimedSpawns.PointType == PointTypes.Direct && Info.AmmoDef.Fragment.TimedSpawns.PointAtTarget == false;
+                    }
+
                     OriginTargetPos = Info.Target.TargetEntity.PositionComp.WorldAABB.Center;
                     HadTarget = HadTargetState.Entity;
                     break;
@@ -440,11 +442,11 @@ namespace CoreSystems.Projectiles
 
             var target = Info.Target;
             CoreComponent comp;
-            var DmgTotal = Info.DamageDoneAOE + Info.DamageDonePri + Info.DamageDoneShld + Info.DamageDoneProj;
-            if (DmgTotal > 0 && Info.Ai?.Construct.RootAi != null && target.CoreEntity != null && !Info.Ai.MarkedForClose && !target.CoreEntity.MarkedForClose && Info.Ai.CompBase.TryGetValue(target.CoreEntity, out comp))
+            var dmgTotal = Info.DamageDoneAOE + Info.DamageDonePri + Info.DamageDoneShld + Info.DamageDoneProj;
+            if (dmgTotal > 0 && Info.Ai?.Construct.RootAi != null && target.CoreEntity != null && !Info.Ai.MarkedForClose && !target.CoreEntity.MarkedForClose && Info.Ai.CompBase.TryGetValue(target.CoreEntity, out comp))
             {
-                Info.Ai.Construct.RootAi.Construct.TotalEffect += DmgTotal;
-                comp.TotalEffect += DmgTotal;
+                Info.Ai.Construct.RootAi.Construct.TotalEffect += dmgTotal;
+                comp.TotalEffect += dmgTotal;
                 comp.TotalPrimaryEffect += Info.DamageDonePri;
                 comp.TotalAOEEffect += Info.DamageDoneAOE;
                 comp.TotalShieldEffect += Info.DamageDoneShld;
