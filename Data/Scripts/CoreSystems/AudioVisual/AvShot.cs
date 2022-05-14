@@ -791,6 +791,8 @@ namespace CoreSystems.Support
                 double distToCameraSqr;
                 Vector3D.DistanceSquared(ref Hit.SurfaceHit, ref System.Session.CameraPos, out distToCameraSqr);
 
+                if (Hit.EventType == HitEntity.Type.Water) HitParticleActive = true;//FML... didn't know there was rand for impacts.
+
                 if (OnScreen == Screen.Tracer || distToCameraSqr < 360000) {
                     if (HitParticleActive && AmmoDef.Const.HitParticle && !(LastHitShield && !AmmoDef.AmmoGraphics.Particles.Hit.ApplyToShield))
                         HitParticle = ParticleState.Custom;

@@ -732,13 +732,25 @@ namespace CoreSystems.Platform
                     elevationDifference = -Math.Sin(targetAngle) * Vector3D.Distance(targetPos, shooterPos);
                 }
                 var horizontalDistance = Math.Sqrt(targetLineLength * targetLineLength - elevationDifference * elevationDifference);
-
+                
+                //Minimized for my sanity
+                var g = -gravity.Length();
+                var v = projectileMaxSpeed;
+                var h = elevationDifference;
+                var d = horizontalDistance;
                 //lord help me
-                var angleRequired = Math.Abs((Math.Acos(((gravity.Length() * (horizontalDistance * horizontalDistance) / (projectileMaxSpeed * projectileMaxSpeed)) - Math.Abs(elevationDifference)) / Math.Sqrt(horizontalDistance * horizontalDistance + elevationDifference * elevationDifference)) + Math.Atan(horizontalDistance / elevationDifference)) / 2);
+                var angle1 = -Math.Atan((v * v + Math.Sqrt((v*v*v*v) - 2 * (v * v) * -h * g - (g * g) * (d * d))) / (g * d));//Higher angle
+                var angle2 = -Math.Atan((v * v - Math.Sqrt((v*v*v*v) - 2 * (v * v) * -h * g - (g * g) * (d * d))) / (g * d));//Lower angle
+                var angleRequired = 1.5;//practically straight up as an untargetable "default"
+                var minElev = weapon.MinElevationRadians;
+                var maxElev = weapon.MaxElevationRadians;
+
+                if (!double.IsNaN(angle2) && angle2 <= maxElev && angle2 >= minElev) angleRequired = angle2; //Tolerance checking with a preference for lower angle
+                else if (!double.IsNaN(angle1) && angle1 <= maxElev && angle1 >= minElev) angleRequired = angle1;
+
                 var verticalDistance = Math.Tan(angleRequired) * horizontalDistance; //without below-the-horizon modifier
                 gravityOffset = new Vector3D((verticalDistance + Math.Abs(elevationDifference)) * -Vector3D.Normalize(gravity));
-
-                //Log.Stats($"Elevation Angle Delta calc->turret: {MathHelper.ToDegrees(angleRequired-weapon.Elevation)} degrees");
+                //Log.Line($"Angle 1: {angle1} Angle 2: {angle2} Angle Reqd: {MathHelper.ToDegrees(angleRequired)}");
 
             }
             return estimatedImpactPoint + perpendicularAimOffset + gravityOffset;

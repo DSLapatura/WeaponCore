@@ -75,7 +75,7 @@ namespace CoreSystems
                             DamageDestObj(hitEnt, info);
                             continue;
                         case HitEntity.Type.Voxel:
-                            DamageVoxel(hitEnt, info);
+                            DamageVoxel(hitEnt, info, hitEnt.EventType);
                             continue;
                         case HitEntity.Type.Projectile:
                             DamageProjectile(hitEnt, info);
@@ -86,8 +86,10 @@ namespace CoreSystems
                         case HitEntity.Type.Effect:
                             UpdateEffect(hitEnt, info);
                             continue;
+                        case HitEntity.Type.Water:
+                            DamageVoxel(hitEnt, info, hitEnt.EventType);
+                            continue;
                     }
-
                     Projectiles.HitEntityPool.Return(hitEnt);
                 }
 
@@ -98,7 +100,6 @@ namespace CoreSystems
             }
             Hits.Clear();
         }
-
         private void DamageShield(HitEntity hitEnt, ProInfo info) // silly levels of inlining due to mod profiler
         {
             var shield = hitEnt.Entity as IMyTerminalBlock;
@@ -930,17 +931,18 @@ namespace CoreSystems
             }
         }
 
-        private void DamageVoxel(HitEntity hitEnt, ProInfo info)
+        private void DamageVoxel(HitEntity hitEnt, ProInfo info, HitEntity.Type type)
         {
             var entity = hitEnt.Entity;
             var destObj = hitEnt.Entity as MyVoxelBase;
             if (destObj == null || entity == null || !hitEnt.HitPos.HasValue) return;
             var shieldHeal = info.AmmoDef.DamageScales.Shields.Type == ShieldDef.ShieldType.Heal;
-            if (!info.AmmoDef.Const.VoxelDamage || shieldHeal)
+            if ((type == HitEntity.Type.Water && !info.AmmoDef.IgnoreWater) || !info.AmmoDef.Const.VoxelDamage || shieldHeal)
             {
                 info.BaseDamagePool = 0;
                 return;
             }
+            else if (type == HitEntity.Type.Water && info.AmmoDef.IgnoreWater) return;
 
             var directDmgGlobal = Settings.Enforcement.DirectDamageModifer;
             var detDmgGlobal = Settings.Enforcement.AreaDamageModifer;
