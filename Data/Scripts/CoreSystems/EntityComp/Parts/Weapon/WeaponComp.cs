@@ -149,7 +149,15 @@ namespace CoreSystems.Platform
 
                     if (w.ActiveAmmoDef.AmmoDef == null || !w.ActiveAmmoDef.AmmoDef.Const.IsTurretSelectable && w.System.AmmoTypes.Length > 1)
                     {
-                        Platform.PlatformCrash(this, false, true, $"[{w.System.PartName}] Your first ammoType is broken (isNull:{w.ActiveAmmoDef.AmmoDef == null}), I am crashing now Dave.");
+                        //additional logging formatting
+                        string errorString;
+                        if (w.ActiveAmmoDef.AmmoDef != null)
+                        {
+                            errorString = w.ActiveAmmoDef.AmmoName + " TurretSelectable:" + w.ActiveAmmoDef.AmmoDef.Const.IsTurretSelectable + " IsShrapnel:" + w.ActiveAmmoDef.IsShrapnel + " HardPointUsable:" + w.ActiveAmmoDef.AmmoDef.HardPointUsable;                      
+                        }
+                        else errorString = "ActiveAmmoDef was null";
+
+                        Platform.PlatformCrash(this, false, true, $"[{w.System.PartName}] heyyyyyy sweetie this gun is broken.  Your first ammoType is broken ({errorString}), I am crashing now Dave.");
                         return;
                     }
 

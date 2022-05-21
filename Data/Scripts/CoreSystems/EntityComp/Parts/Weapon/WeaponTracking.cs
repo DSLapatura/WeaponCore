@@ -667,7 +667,7 @@ namespace CoreSystems.Platform
                 projectileVel += aimDirectionNorm * projectileMaxSpeed;
             }
 
-            var count = projectileAccelerates ? 600 : hasGravity ? 60 : 60; //320 : 60
+            var count = projectileAccelerates ? 600 : hasGravity ? 320 : 60;
 
             double dt = Math.Max(MyEngineConstants.UPDATE_STEP_SIZE_IN_SECONDS, timeToIntercept / count); // This can be a const somewhere
             double dtSqr = dt * dt;
@@ -739,18 +739,22 @@ namespace CoreSystems.Platform
                 var h = elevationDifference;
                 var d = horizontalDistance;
                 //lord help me
-                var angle1 = -Math.Atan((v * v + Math.Sqrt((v*v*v*v) - 2 * (v * v) * -h * g - (g * g) * (d * d))) / (g * d));//Higher angle
-                var angle2 = -Math.Atan((v * v - Math.Sqrt((v*v*v*v) - 2 * (v * v) * -h * g - (g * g) * (d * d))) / (g * d));//Lower angle
-                var angleRequired = 1.5;//practically straight up as an untargetable "default"
-                var minElev = weapon.MinElevationRadians;
-                var maxElev = weapon.MaxElevationRadians;
-
-                if (!double.IsNaN(angle2) && angle2 <= maxElev && angle2 >= minElev) angleRequired = angle2; //Tolerance checking with a preference for lower angle
-                else if (!double.IsNaN(angle1) && angle1 <= maxElev && angle1 >= minElev) angleRequired = angle1;
-
-                var verticalDistance = Math.Tan(angleRequired) * horizontalDistance; //without below-the-horizon modifier
+                var angle1 =-Math.Atan(MathHelper.Clamp(v * v + Math.Sqrt((v*v*v*v) - 2 * (v * v) * -h * g - (g * g) * (d * d)) / (g * d), 0, 57295));//Higher angle
+                var angle2 =-Math.Atan(MathHelper.Clamp(v * v - Math.Sqrt((v*v*v*v) - 2 * (v * v) * -h * g - (g * g) * (d * d)) / (g * d), 0, 57295));//Lower angle
+               
+                //Try angle 2 first (the lower one)
+                bool isTracking;
+                var verticalDistance = Math.Tan(angle2) * horizontalDistance; //without below-the-horizon modifier
                 gravityOffset = new Vector3D((verticalDistance + Math.Abs(elevationDifference)) * -Vector3D.Normalize(gravity));
-                //Log.Line($"Angle 1: {angle1} Angle 2: {angle2} Angle Reqd: {MathHelper.ToDegrees(angleRequired)}");
+                var targetAimPoint = estimatedImpactPoint + perpendicularAimOffset + gravityOffset;
+                var targetDirection = targetAimPoint - shooterPos; 
+
+                if (!MathFuncs.WeaponLookAt(weapon, ref targetDirection, targetLineLength*targetLineLength, false, true, out isTracking)) //Angle 2 obscured, switch to angle 1
+                {
+                    verticalDistance = Math.Tan(angle1) * horizontalDistance;
+                    gravityOffset = new Vector3D((verticalDistance + Math.Abs(elevationDifference)) * -Vector3D.Normalize(gravity));
+                }
+                //Log.Line($"Angle 1: {MathHelper.ToDegrees(angle1)} Angle 2: {MathHelper.ToDegrees(angle2)}");
 
             }
             return estimatedImpactPoint + perpendicularAimOffset + gravityOffset;
