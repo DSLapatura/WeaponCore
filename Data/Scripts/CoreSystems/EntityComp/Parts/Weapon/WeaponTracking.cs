@@ -724,7 +724,7 @@ namespace CoreSystems.Platform
                 if (targetAngle >= 1.5708) //Target is above weapon
                 {
                     targetAngle -= 1.5708; //angle-90
-                    elevationDifference = Math.Sin(targetAngle) * targetLineLength;
+                    elevationDifference = -Math.Sin(targetAngle) * targetLineLength;
                 }
                 else //Target is below weapon
                 {
@@ -734,7 +734,7 @@ namespace CoreSystems.Platform
                 var horizontalDistance = Math.Sqrt(targetLineLength * targetLineLength - elevationDifference * elevationDifference);
                 
                 //Minimized for my sanity
-                var g = -gravity.Length();
+                var g = -(gravity.Length()*gravityMultiplier);
                 var v = projectileMaxSpeed;
                 var h = elevationDifference;
                 var d = horizontalDistance;
@@ -751,7 +751,7 @@ namespace CoreSystems.Platform
                 var targetAimPoint = estimatedImpactPoint + perpendicularAimOffset + gravityOffset;
                 var targetDirection = targetAimPoint - shooterPos; 
                 
-                if (!MathFuncs.WeaponLookAt(weapon, ref targetDirection, targetLineLength*targetLineLength, false, true, out isTracking)) //Angle 2 obscured, switch to angle 1
+                if (angle1 < 1.57 && !MathFuncs.WeaponLookAt(weapon, ref targetDirection, targetLineLength * targetLineLength, false, true, out isTracking)) //Angle 2 obscured, switch to angle 1
                 {
                     verticalDistance = Math.Tan(angle1) * horizontalDistance;
                     gravityOffset = new Vector3D((verticalDistance + Math.Abs(elevationDifference)) * -Vector3D.Normalize(gravity));
