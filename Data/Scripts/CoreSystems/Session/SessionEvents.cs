@@ -28,10 +28,12 @@ namespace CoreSystems
             try
             {
                 if (!Inited) lock (InitObj) Init();
-
+                
                 var planet = entity as MyPlanet;
                 if (planet != null)
-                    PlanetMap.TryAdd(planet.EntityId, planet);
+                {
+                    PlanetTemp.TryAdd(planet, byte.MaxValue); //More keen jank workarounds
+                }
 
                 var grid = entity as MyCubeGrid;
                 if (grid != null)

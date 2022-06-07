@@ -211,6 +211,13 @@ namespace CoreSystems
 
         private void UpdateWaters()
         {
+            foreach (var planetToAdd in PlanetTemp)
+            {
+                if (planetToAdd.Key.EntityId != 0) PlanetMap.TryAdd(planetToAdd.Key.EntityId, planetToAdd.Key);
+            }
+            PlanetTemp.Clear();
+
+
             foreach (var planet in PlanetMap.Values)
             {
                 WaterData data;

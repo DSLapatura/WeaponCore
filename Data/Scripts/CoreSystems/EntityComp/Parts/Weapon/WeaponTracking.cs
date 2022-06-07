@@ -677,43 +677,49 @@ namespace CoreSystems.Platform
             Vector3D aimOffset = Vector3D.Zero;
             double minTime = 0;
 
-            for (int i = 0; i < count; ++i)
+            //BD Todo:  Clamp this for projectiles OR targets that don't accelerate
+            if (projectileAccelerates || targetVel.LengthSquared() >= 0.01)
             {
-
-                targetVel += targetAccStep;
-
-                if (targetVel.LengthSquared() > maxSpeedSqr)
-                {
-                    Vector3D targetNormVel;
-                    Vector3D.Normalize(ref targetVel, out targetNormVel);
-                    targetVel = targetNormVel * targetMaxSpeed;
-
-                }
-
-                targetPos += targetVel * dt;
-                if (projectileAccelerates)
+                for (int i = 0; i < count; ++i)
                 {
 
-                    projectileVel += projectileAccStep;
-                    if (projectileVel.LengthSquared() > projectileMaxSpeedSqr)
+                    targetVel += targetAccStep;
+
+                    if (targetVel.LengthSquared() > maxSpeedSqr)
                     {
-                        Vector3D pNormVel;
-                        Vector3D.Normalize(ref projectileVel, out pNormVel);
-                        projectileVel = pNormVel * projectileMaxSpeed;
+                        Vector3D targetNormVel;
+                        Vector3D.Normalize(ref targetVel, out targetNormVel);
+                        targetVel = targetNormVel * targetMaxSpeed;
+
                     }
+
+                    targetPos += targetVel * dt;
+                    if (projectileAccelerates)
+                    {
+
+                        projectileVel += projectileAccStep;
+                        if (projectileVel.LengthSquared() > projectileMaxSpeedSqr)
+                        {
+                            Vector3D pNormVel;
+                            Vector3D.Normalize(ref projectileVel, out pNormVel);
+                            projectileVel = pNormVel * projectileMaxSpeed;
+                        }
+                    }
+
+                    projectilePos += projectileVel * dt;
+                    Vector3D diff = (targetPos - projectilePos);
+                    double diffLenSq = diff.LengthSquared();
+                    aimOffset = diff;
+                    minTime = dt * (i + 1);
+                    if (diffLenSq < projectileMaxSpeedSqr * dtSqr || Vector3D.Dot(diff, aimDirectionNorm) < 0)
+                        break;
                 }
-
-                projectilePos += projectileVel * dt;
-                Vector3D diff = (targetPos - projectilePos);
-                double diffLenSq = diff.LengthSquared();
-                aimOffset = diff;
-                minTime = dt * (i + 1);
-                if (diffLenSq < projectileMaxSpeedSqr * dtSqr || Vector3D.Dot(diff, aimDirectionNorm) < 0)
-                    break;
             }
-            Vector3D perpendicularAimOffset = aimOffset - Vector3D.Dot(aimOffset, aimDirectionNorm) * aimDirectionNorm;
-            Vector3D gravityOffset = Vector3D.Zero;
 
+            Vector3D perpendicularAimOffset = aimOffset - Vector3D.Dot(aimOffset, aimDirectionNorm) * aimDirectionNorm;
+
+            Vector3D gravityOffset = Vector3D.Zero;
+            double gravTTI = 0;
             //gravity nonsense for differing elevations
             if (hasGravity && ai.InPlanetGravity)
             {
@@ -749,15 +755,18 @@ namespace CoreSystems.Platform
                 var verticalDistance = Math.Tan(angle2) * horizontalDistance; //without below-the-horizon modifier
                 gravityOffset = new Vector3D((verticalDistance + Math.Abs(elevationDifference)) * -Vector3D.Normalize(gravity));
                 var targetAimPoint = estimatedImpactPoint + perpendicularAimOffset + gravityOffset;
-                var targetDirection = targetAimPoint - shooterPos; 
-                
+                var targetDirection = targetAimPoint - shooterPos;
+                gravTTI = d / (Math.Cos(angle2) * v);
+
                 if (angle1 < 1.57 && !MathFuncs.WeaponLookAt(weapon, ref targetDirection, targetLineLength * targetLineLength, false, true, out isTracking)) //Angle 2 obscured, switch to angle 1
                 {
                     verticalDistance = Math.Tan(angle1) * horizontalDistance;
                     gravityOffset = new Vector3D((verticalDistance + Math.Abs(elevationDifference)) * -Vector3D.Normalize(gravity));
+                    gravTTI = d / (Math.Cos(angle1) * v);
                 }
                 //Log.Line($"Angle 1: {MathHelper.ToDegrees(angle1)} Angle 2: {MathHelper.ToDegrees(angle2)} G{g} V{v} H{h} D{d} {Math.Sqrt((v * v * v * v) - 2 * (v * v) * -h * g - (g * g) * (d * d))}");
             }
+            //Log.Line($"Mintime: {minTime} Grav TTI: {gravTTI} TimeToIntercept: {timeToIntercept} perpdist: {perpendicularAimOffset.Length()}");
             return estimatedImpactPoint + perpendicularAimOffset + gravityOffset;
         }
 
