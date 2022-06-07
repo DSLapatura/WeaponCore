@@ -31,9 +31,7 @@ namespace CoreSystems
                 
                 var planet = entity as MyPlanet;
                 if (planet != null)
-                {
                     PlanetTemp.TryAdd(planet, byte.MaxValue); //More keen jank workarounds
-                }
 
                 var grid = entity as MyCubeGrid;
                 if (grid != null)
