@@ -251,6 +251,7 @@ namespace CoreSystems
                                 storage.Shield += wComp.TotalShieldEffect;
                                 storage.AOE += wComp.TotalAOEEffect;
                                 storage.Projectile += wComp.TotalProjectileEffect;
+                                storage.WepCount += 1;
                             }
                         }
 

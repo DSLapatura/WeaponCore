@@ -550,5 +550,6 @@ namespace CoreSystems
         public long Shield = 0;
         public long AOE = 0;
         public long Projectile = 0;
+        public int WepCount = 0;
     }
 }

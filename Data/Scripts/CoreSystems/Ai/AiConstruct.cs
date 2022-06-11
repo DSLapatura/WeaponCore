@@ -511,7 +511,11 @@ namespace CoreSystems.Support
             {
                 if(TotalEffect>0)
                 {
-                    Log.Stats($"{Data.Ai.ImyGridEntity.DisplayName}, {(long)TotalEffect}, {TotalPrimaryEffect}, {TotalAOEEffect}, {TotalShieldEffect}, {TotalProjectileEffect}", "griddmgstats");
+                    PlayerMap player;
+                    var playerName = "PlayerNotFound";
+                    Data.Ai.Session.Players.TryGetValue(Data.Ai.ImyGridEntity.BigOwners[0], out player);
+                    if (player.Player.DisplayName != null) playerName = player.Player.DisplayName;
+                    Log.Stats($"{Data.Ai.ImyGridEntity.DisplayName}, {playerName}, {(long)TotalEffect}, {TotalPrimaryEffect}, {TotalAOEEffect}, {TotalShieldEffect}, {TotalProjectileEffect}", "griddmgstats");
                 }
                 if (WeaponGroups.Count > 0)
                     CleanWeaponGroups(RootAi.Session);
