@@ -121,11 +121,11 @@ namespace CoreSystems.Support
                 }
                 else if (name == "dmgstats")
                 {
-                    Stats("WeaponName, TotalDamage, PrimaryDamage, AOEDamage, ShieldDamage, ProjectileDamage", name);
+                    Stats("WeaponName, Quantity, TotalDamage, PrimaryDamage, AOEDamage, ShieldDamage, ProjectileDamage", name);
                 }
                 else if (name == "griddmgstats")
                 {
-                    Stats("GridName, TotalDamage, PrimaryDamage, AOEDamage, ShieldDamage, ProjectileDamage", name);
+                    Stats("GridName, MainOwner, TotalDamage, PrimaryDamage, AOEDamage, ShieldDamage, ProjectileDamage", name);
                 }
                 else
                 {
