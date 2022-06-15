@@ -547,6 +547,9 @@ namespace CoreSystems
         [ProtoMember(29)] public int CameraChannel;
         [ProtoMember(30)] public int WeaponGroupId;
         [ProtoMember(31)] public bool AiEnabled;
+        [ProtoMember(32), DefaultValue(true)] public bool LargeGrid = true;
+        [ProtoMember(33), DefaultValue(true)] public bool SmallGrid = true;
+
 
 
         public void Sync(ProtoWeaponOverrides syncFrom)
@@ -578,6 +581,9 @@ namespace CoreSystems
             ShootMode = syncFrom.ShootMode;
             WeaponGroupId = syncFrom.WeaponGroupId;
             AiEnabled = syncFrom.AiEnabled;
+            LargeGrid = syncFrom.LargeGrid;
+            SmallGrid = syncFrom.SmallGrid;
+
         }
     }
 }

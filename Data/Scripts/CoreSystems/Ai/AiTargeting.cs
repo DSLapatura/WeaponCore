@@ -146,7 +146,7 @@ namespace CoreSystems.Support
                 if (info.IsGrid)
                 {
 
-                    if (!s.TrackGrids || !overRides.Grids || info.FatCount < 2) continue;
+                    if (!s.TrackGrids || !overRides.Grids || info.FatCount < 2 || (!overRides.LargeGrid && info.LargeGrid) || (!overRides.SmallGrid && !info.LargeGrid)) continue;
                     session.CanShoot++;
                     Vector3D newCenter;
                     if (!w.TurretController)
@@ -282,7 +282,7 @@ namespace CoreSystems.Support
                 if (tInfo.IsGrid)
                 {
 
-                    if (!s.TrackGrids || !overRides.Grids || !focusTarget && tInfo.FatCount < 2 || Obstruction(ref tInfo, ref targetPos, p)) continue;
+                    if (!s.TrackGrids || !overRides.Grids || !focusTarget && tInfo.FatCount < 2 || Obstruction(ref tInfo, ref targetPos, p) || (!overRides.LargeGrid && tInfo.LargeGrid) || (!overRides.SmallGrid && !tInfo.LargeGrid)) continue;
 
                     if (!AcquireBlock(s, ai, target, tInfo, weaponPos, null, ReAcquire, ref waterSphere, ref info.Random, null, !focusTarget, overRides)) continue;
                     acquired = true;
@@ -499,7 +499,7 @@ namespace CoreSystems.Support
                     if (info.IsGrid)
                     {
 
-                        if (!s.TrackGrids || !overRides.Grids || !focusTarget && info.FatCount < 2) continue;
+                        if (!s.TrackGrids || !overRides.Grids || (!overRides.LargeGrid && info.LargeGrid) || (!overRides.SmallGrid && !info.LargeGrid) || !focusTarget && info.FatCount < 2) continue;
                         session.CanShoot++;
                         Vector3D newCenter;
                         if (!w.TurretController && !w.RotorTurretTracking)

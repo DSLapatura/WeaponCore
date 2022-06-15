@@ -248,6 +248,28 @@ namespace CoreSystems.Control
 
             Weapon.WeaponComponent.RequestSetValue(comp, "Unowned", newValue, comp.Session.PlayerId);
         }
+        internal static void TerminalActionToggleLargeGrid(IMyTerminalBlock blk)
+        {
+            var comp = blk?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+                return;
+
+            var newBool = !comp.Data.Repo.Values.Set.Overrides.LargeGrid;
+            var newValue = newBool ? 1 : 0;
+
+            Weapon.WeaponComponent.RequestSetValue(comp, "LargeGrid", newValue, comp.Session.PlayerId);
+        }
+        internal static void TerminalActionToggleSmallGrid(IMyTerminalBlock blk)
+        {
+            var comp = blk?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+                return;
+
+            var newBool = !comp.Data.Repo.Values.Set.Overrides.SmallGrid;
+            var newValue = newBool ? 1 : 0;
+
+            Weapon.WeaponComponent.RequestSetValue(comp, "SmallGrid", newValue, comp.Session.PlayerId);
+        }
 
         internal static void TerminalActionToggleFocusTargets(IMyTerminalBlock blk)
         {
@@ -522,6 +544,25 @@ namespace CoreSystems.Control
             var comp = blk.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
             if (comp.Data.Repo.Values.Set.Overrides.Unowned)
+                sb.Append(Localization.GetText("ActionStateOn"));
+            else
+                sb.Append(Localization.GetText("ActionStateOff"));
+        }
+
+        internal static void LargeGridWriter(IMyTerminalBlock blk, StringBuilder sb)
+        {
+            var comp = blk.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
+            if (comp.Data.Repo.Values.Set.Overrides.LargeGrid)
+                sb.Append(Localization.GetText("ActionStateOn"));
+            else
+                sb.Append(Localization.GetText("ActionStateOff"));
+        }
+        internal static void SmallGridWriter(IMyTerminalBlock blk, StringBuilder sb)
+        {
+            var comp = blk.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
+            if (comp.Data.Repo.Values.Set.Overrides.SmallGrid)
                 sb.Append(Localization.GetText("ActionStateOn"));
             else
                 sb.Append(Localization.GetText("ActionStateOff"));

@@ -547,6 +547,14 @@ namespace CoreSystems.Platform
                     case "Override":
                         o.Override = enabled;
                         break;
+                    case "LargeGrid":
+                        o.LargeGrid = enabled;
+                        clearTargets = true;
+                        break;
+                    case "SmallGrid":
+                        o.SmallGrid = enabled;
+                        clearTargets = true;
+                        break;
                 }
 
                 ResetCompState(comp, playerId, clearTargets, resetState);
