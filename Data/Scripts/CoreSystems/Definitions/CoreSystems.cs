@@ -255,7 +255,7 @@ namespace CoreSystems.Support
             LockOnFocus = false;
 
             MaxReloads = Values.HardPoint.Loading.MaxReloads > 0 ? Values.HardPoint.Loading.MaxReloads : int.MaxValue;
-            MaxActiveProjectiles = Values.HardPoint.Loading.MaxActiveProjectiles;
+            MaxActiveProjectiles = Values.HardPoint.Loading.MaxActiveProjectiles > 0 ? Values.HardPoint.Loading.MaxActiveProjectiles : int.MaxValue;
 
             SuppressFire = Values.HardPoint.Ai.SuppressFire;
             PartType = Values.HardPoint.HardWare.Type;

@@ -340,7 +340,7 @@ namespace CoreSystems.Support
                 DroneCount = 0;
 
                 var rootConstruct = ai.Construct.RootAi.Construct;
-                if (rootConstruct.DroneCount != 0 && ai.Session.Tick - rootConstruct.LastDroneTick > 200)
+                if (rootConstruct.DroneCount != 0 && ai.Session.Tick - rootConstruct.LastDroneTick > 30) //Was 200, dropped for faster updates on current threats
                     rootConstruct.DroneCleanup();
             }
 
@@ -496,7 +496,7 @@ namespace CoreSystems.Support
                 else sphereDistance -= myRadius;
                 DistSqr = sphereDistance * sphereDistance;
 
-                Drone = (VelLenSqr > 100 || Approaching && DistSqr < 90000) && detectInfo.SuspectedDrone;
+                Drone = (VelLenSqr > 100 || Approaching && DistSqr < 1000000) && detectInfo.SuspectedDrone;
 
                 if (Drone && OffenseRating < 10)
                     OffenseRating = 10;

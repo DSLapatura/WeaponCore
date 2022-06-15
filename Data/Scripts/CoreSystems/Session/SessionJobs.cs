@@ -355,6 +355,7 @@ namespace CoreSystems
                     var warHead = 0;
                     var working = 0;
                     var functional = 0;
+                    var controlblock = 0;
                     for (int j = 0; j < allFat.Count; j++)
                     {
                         var fat = allFat[j];
@@ -424,7 +425,8 @@ namespace CoreSystems
 
 
                     gridMap.MyCubeBocks.ApplyAdditions();
-                    gridMap.SuspectedDrone = warHead > 0 || powerProducers > 0 && thrusters > 0 && gyros > 0;
+                    gridMap.SuspectedDrone = warHead > 0 || powerProducers > 0 && thrusters > 0;
+
                     gridMap.Trash = terminals == 0;
                     gridMap.Powered = working > 0;
                     gridMap.PowerCheckTick = Tick;
