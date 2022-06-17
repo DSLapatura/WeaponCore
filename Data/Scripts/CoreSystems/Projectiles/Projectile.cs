@@ -479,7 +479,7 @@ namespace CoreSystems.Projectiles
             {
                 if (s.DroneStat == Launch && Info.DistanceTraveled * Info.DistanceTraveled >= aConst.SmartsDelayDistSqr && Info.Target.CoreIsCube && parentEnt != null)//Check for LOS & delaytrack after launch
                 {
-                    var lineCheck = new LineD(Position, Position + (Info.Direction * 10000f), 10000f);
+                    var lineCheck = new LineD(Position, LockedTarget ? OriginTargetPos : Position + (Info.Direction * 10000f));
                     var startTrack = !new MyOrientedBoundingBoxD(parentEnt.PositionComp.LocalAABB, parentEnt.PositionComp.WorldMatrixRef).Intersects(ref lineCheck).HasValue;
                     if (startTrack) s.DroneStat = Transit;
                 }
@@ -988,9 +988,10 @@ namespace CoreSystems.Projectiles
                     break;
                 case Escape:
                     var metersInSideOrbit = MyUtils.GetSmallestDistanceToSphere(ref Position, ref orbitSphereClose);
+                    Log.Line($"Meters inside orbit: {metersInSideOrbit}");
                     if (metersInSideOrbit < 0)
                     {
-                        var futurePos = (Position + (TravelMagnitude * Math.Abs(metersInSideOrbit)));
+                        var futurePos = (Position + (TravelMagnitude * Math.Abs(metersInSideOrbit*0.5)));
                         var dirToFuturePos = Vector3D.Normalize(futurePos - orbitSphereClose.Center);
                         var futureSurfacePos = orbitSphereClose.Center + (dirToFuturePos * orbitSphereClose.Radius);
                         droneNavTarget = Vector3D.Normalize(futureSurfacePos - Position);
@@ -1222,7 +1223,7 @@ namespace CoreSystems.Projectiles
             var startTrack = Info.SmartReady || Info.Target.CoreParent == null || Info.Target.CoreParent.MarkedForClose;
 
             if (!startTrack && Info.DistanceTraveled * Info.DistanceTraveled >= aConst.SmartsDelayDistSqr) {
-                var lineCheck = new LineD(Position, Position + (Info.Direction * 10000f), 10000f);
+                var lineCheck = new LineD(Position, LockedTarget ? OriginTargetPos : Position + (Info.Direction * 10000f));
                 startTrack = !new MyOrientedBoundingBoxD(Info.Target.CoreParent.PositionComp.LocalAABB, Info.Target.CoreParent.PositionComp.WorldMatrixRef).Intersects(ref lineCheck).HasValue;
             }
 
