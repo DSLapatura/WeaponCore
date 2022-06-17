@@ -350,12 +350,9 @@ namespace CoreSystems
                     var terminals = 0;
                     var tStatus = gridMap.Targeting == null || gridMap.Targeting.AllowScanning;
                     var thrusters = 0;
-                    var gyros = 0;
                     var powerProducers = 0;
                     var warHead = 0;
                     var working = 0;
-                    var functional = 0;
-                    var controlblock = 0;
                     for (int j = 0; j < allFat.Count; j++)
                     {
                         var fat = allFat[j];
@@ -367,7 +364,6 @@ namespace CoreSystems
                             if (fat.IsWorking)
                                 ++working;
 
-                            ++functional;
 
                             var cockpit = fat as MyCockpit;
                             var decoy = fat as IMyDecoy;
@@ -413,7 +409,6 @@ namespace CoreSystems
                             else if (fat is MyGyro || cockpit != null && cockpit.EnableShipControl)
                             {
                                 newTypeMap[Steering].Add(fat);
-                                gyros++;
                             }
 
                             else if (fat is MyJumpDrive) newTypeMap[Jumping].Add(fat);
