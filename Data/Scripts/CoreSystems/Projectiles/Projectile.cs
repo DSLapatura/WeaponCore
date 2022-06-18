@@ -575,7 +575,7 @@ namespace CoreSystems.Projectiles
                         }
                         else if (s.DroneMsn == DroneMission.Rtb || s.DroneMsn == DroneMission.Defend)
                         {
-                            if (hasParent)
+                            if (hasParent && tasks.FriendId == 0)
                             {
                                 s.NavTargetBound = parentEnt.PositionComp.WorldVolume;
                                 s.NavTargetEnt = parentEnt;
@@ -988,7 +988,6 @@ namespace CoreSystems.Projectiles
                     break;
                 case Escape:
                     var metersInSideOrbit = MyUtils.GetSmallestDistanceToSphere(ref Position, ref orbitSphereClose);
-                    Log.Line($"Meters inside orbit: {metersInSideOrbit}");
                     if (metersInSideOrbit < 0)
                     {
                         var futurePos = (Position + (TravelMagnitude * Math.Abs(metersInSideOrbit*0.5)));
