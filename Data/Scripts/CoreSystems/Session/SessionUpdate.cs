@@ -757,7 +757,7 @@ namespace CoreSystems
                 var w = ShootingWeapons[i];
                 var invalidWeapon = w.Comp.CoreEntity.MarkedForClose || w.Comp.Ai == null || w.Comp.Ai.Concealed || w.Comp.Ai.TopEntity.MarkedForClose || w.Comp.Platform.State != CorePlatform.PlatformState.Ready;
                 var smartTimer = w.ActiveAmmoDef.AmmoDef.Trajectory.Guidance == Smart && (QCount == w.ShortLoadId && (w.Target.HasTarget || w.LockOnFireState) && Tick - w.LastSmartLosCheck > 240 || Tick - w.LastSmartLosCheck > 1200);
-                var quickSkip = invalidWeapon || w.Comp.IsBlock && smartTimer && !w.SmartLos() || w.PauseShoot || (w.ProtoWeaponAmmo.CurrentAmmo == 0 && w.ClientMakeUpShots == 0) && w.ActiveAmmoDef.AmmoDef.Const.Reloadable;
+                var quickSkip = invalidWeapon || w.Comp.IsBlock && smartTimer && !w.SmartLos() || w.PauseShoot || w.LiveDrones >= w.System.MaxActiveProjectiles || (w.ProtoWeaponAmmo.CurrentAmmo == 0 && w.ClientMakeUpShots == 0) && w.ActiveAmmoDef.AmmoDef.Const.Reloadable;
                 if (quickSkip) continue;
 
                 w.Shoot();
