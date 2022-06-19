@@ -575,7 +575,7 @@ namespace CoreSystems.Projectiles
                         }
                         else if (s.DroneMsn == DroneMission.Rtb || s.DroneMsn == DroneMission.Defend)
                         {
-                            if (hasParent)
+                            if (hasParent && tasks.FriendId == 0)
                             {
                                 s.NavTargetBound = parentEnt.PositionComp.WorldVolume;
                                 s.NavTargetEnt = parentEnt;

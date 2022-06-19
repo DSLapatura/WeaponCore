@@ -81,7 +81,7 @@ namespace CoreSystems.Control
             
             AddListBoxNoAction<T>(session, "Friend", "Friend", "Friend list", BlockUi.FriendFill, BlockUi.FriendSelect, IsDrone, 1, true, true);
             AddListBoxNoAction<T>(session, "Enemy", "Enemy", "Enemy list", BlockUi.EnemyFill, BlockUi.EnemySelect, IsDrone, 1, true, true);
-            AddListBoxNoAction<T>(session, "Position", "Position", "Position list", BlockUi.PositionFill, BlockUi.PositionSelect, IsDrone, 1, true, true);
+            //AddListBoxNoAction<T>(session, "Position", "Position", "Position list", BlockUi.PositionFill, BlockUi.PositionSelect, IsDrone, 1, true, true); Suppressed for now as it's inop
 
 
             Separator<T>(session, "WC_sep5", HasTracking);
