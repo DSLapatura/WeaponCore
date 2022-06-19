@@ -509,14 +509,13 @@ namespace CoreSystems.Support
 
             internal void Clean()
             {
-                if(TotalEffect>0)
+                if (TotalEffect > 0)
                 {
                     PlayerMap player;
-                    var playerName = "PlayerNotFound";
-                    Data.Ai.Session.Players.TryGetValue(Data.Ai.ImyGridEntity.BigOwners[0], out player);
-                    if (player.Player.DisplayName != null) playerName = player.Player.DisplayName;
+                    var playerName = Data.Ai.Session.Players.TryGetValue(Data.Ai.ImyGridEntity.BigOwners[0], out player) ? player.Player.DisplayName ?? string.Empty : string.Empty;
                     Log.Stats($"{Data.Ai.ImyGridEntity.DisplayName}, {playerName}, {(long)TotalEffect}, {TotalPrimaryEffect}, {TotalAOEEffect}, {TotalShieldEffect}, {TotalProjectileEffect}", "griddmgstats");
                 }
+
                 if (WeaponGroups.Count > 0)
                     CleanWeaponGroups(RootAi.Session);
 
