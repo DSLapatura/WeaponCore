@@ -441,21 +441,25 @@ namespace CoreSystems.Projectiles
                 DynTrees.UnregisterProjectile(this);
 
             var target = Info.Target;
-            CoreComponent comp;
             var dmgTotal = Info.DamageDoneAOE + Info.DamageDonePri + Info.DamageDoneShld + Info.DamageDoneProj;
-            if (dmgTotal > 0 && Info.Ai?.Construct.RootAi != null && target.CoreEntity != null && !Info.Ai.MarkedForClose && !target.CoreEntity.MarkedForClose && Info.Ai.CompBase.TryGetValue(target.CoreEntity, out comp))
+
+            if (dmgTotal > 0 && Info.Ai?.Construct.RootAi != null && target.CoreEntity != null && !Info.Ai.MarkedForClose && !target.CoreEntity.MarkedForClose)
             {
-                Info.Ai.Construct.RootAi.Construct.TotalEffect += dmgTotal;
+                var comp = Info.Weapon.Comp;
+                var construct = Info.Ai.Construct.RootAi.Construct;
+                construct.TotalEffect += dmgTotal;
                 comp.TotalEffect += dmgTotal;
                 comp.TotalPrimaryEffect += Info.DamageDonePri;
                 comp.TotalAOEEffect += Info.DamageDoneAOE;
                 comp.TotalShieldEffect += Info.DamageDoneShld;
                 comp.TotalProjectileEffect += Info.DamageDoneProj;
-                Info.Ai.Construct.RootAi.Construct.TotalPrimaryEffect += Info.DamageDonePri;
-                Info.Ai.Construct.RootAi.Construct.TotalAOEEffect += Info.DamageDoneAOE;
-                Info.Ai.Construct.RootAi.Construct.TotalShieldEffect += Info.DamageDoneShld;
-                Info.Ai.Construct.RootAi.Construct.TotalProjectileEffect += Info.DamageDoneProj;
+                construct.TotalPrimaryEffect += Info.DamageDonePri;
+                construct.TotalAOEEffect += Info.DamageDoneAOE;
+                construct.TotalShieldEffect += Info.DamageDoneShld;
+                construct.TotalProjectileEffect += Info.DamageDoneProj;
             }
+
+            if (aConst.IsDrone) Info.Weapon.LiveDrones--;
 
             if (aConst.ProjectileSync && session.MpActive && session.IsServer)
                 SyncProjectile(ProtoWeaponProSync.ProSyncState.Alive);
