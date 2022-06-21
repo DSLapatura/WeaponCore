@@ -48,7 +48,7 @@ namespace CoreSystems.Support
                 using (ent.Pin())
                 {
 
-                    if (ent is MyVoxelBase || ent.Physics == null || ent is MyFloatingObject || ent.MarkedForClose || !ent.InScene || ent.IsPreview || ent.Physics.IsPhantom) continue;
+                    if (ent is MyVoxelBase || ent.Physics == null || ent is MyFloatingObject || ent.MarkedForClose || !ent.InScene || ent.IsPreview || ent.Physics.IsPhantom || ((uint)ent.Flags & 0x1000000) > 0) continue;
                     var grid = ent as MyCubeGrid;
 
                     GridMap gridMap = null;
