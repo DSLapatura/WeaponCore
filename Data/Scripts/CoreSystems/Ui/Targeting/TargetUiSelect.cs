@@ -367,7 +367,6 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                 var dist1 = ray.Intersects(entVolume);
                 if (dist1 < closestDist1)
                 {
-                    //if (dist1 > 500 && ((uint)hit.Flags & 0x1000000) > 0) continue;
                     closestDist1 = dist1.Value;
                     closestEnt = hit;
                 }
