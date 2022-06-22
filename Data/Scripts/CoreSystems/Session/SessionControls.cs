@@ -163,6 +163,9 @@ namespace CoreSystems
             CreateCustomActions<T>.CreateSelectFriend(session);
             CreateCustomActions<T>.CreateSelectEnemy(session);
             //CreateCustomActions<T>.CreateSelectPosition(session); Suppressed for now as it's inop
+            CreateCustomActions<T>.CreateLargeGrid(session);
+            CreateCustomActions<T>.CreateSmallGrid(session);
+
         }
 
         internal static void CreateTurretControllerActions<T>(Session session) where T : IMyTerminalBlock

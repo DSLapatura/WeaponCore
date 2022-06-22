@@ -450,7 +450,7 @@ namespace CoreSystems.Support
             PrimeEntityPool = Models(ammo.AmmoDef, wDef, out PrimeModel, out TriggerModel, out ModelPath);
 
             Energy(ammo, system, wDef, out EnergyAmmo, out MustCharge, out Reloadable, out EnergyCost, out EnergyMagSize, out ChargSize, out BurstMode, out HasShotReloadDelay, out PowerPerTick);
-            Sound(ammo, system, session, out HitSound, out HitSoundPair, out AmmoTravelSound, out TravelSoundPair, out ShotSound, out ShotSoundPair, out DetonationSound, out DetSoundPair, out HitSoundDistSqr, out AmmoTravelSoundDistSqr, out AmmoSoundMaxDistSqr, 
+            Sound(ammo, system, session, out HitSound, out HitSoundPair, out AmmoTravelSound, out TravelSoundPair, out ShotSound, out ShotSoundPair, out DetonationSound, out DetSoundPair, out HitSoundDistSqr, out AmmoTravelSoundDistSqr, out AmmoSoundMaxDistSqr,
                 out ShotSoundDistSqr, out DetonationSoundDistSqr, out ShotSoundStr, out VoxelSound, out VoxelSoundPair, out FloatingSound, out FloatingSoundPair, out PlayerSound, out PlayerSoundPair, out ShieldSound, out ShieldSoundPair);
 
             MagazineSize = EnergyAmmo ? EnergyMagSize : MagazineDef.Capacity;

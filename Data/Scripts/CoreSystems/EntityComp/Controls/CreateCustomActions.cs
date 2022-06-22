@@ -330,6 +330,34 @@ namespace CoreSystems.Control
             session.CustomActions.Add(action);
         }
 
+        public static void CreateLargeGrid(Session session)
+        {
+            var action = MyAPIGateway.TerminalControls.CreateAction<T>("LargeGrid");
+            action.Icon = @"Textures\GUI\Icons\Actions\Toggle.dds";
+            action.Name = new StringBuilder("Target Large Grids");
+            action.Action = CustomActions.TerminalActionToggleLargeGrid;
+            action.Writer = CustomActions.LargeGridWriter;
+            action.Enabled = TerminalHelpers.HasTracking;
+            action.ValidForGroups = true;
+
+            MyAPIGateway.TerminalControls.AddAction<T>(action);
+            session.CustomActions.Add(action);
+        }
+
+        public static void CreateSmallGrid(Session session)
+        {
+            var action = MyAPIGateway.TerminalControls.CreateAction<T>("SmallGrid");
+            action.Icon = @"Textures\GUI\Icons\Actions\Toggle.dds";
+            action.Name = new StringBuilder("Target Small Grids");
+            action.Action = CustomActions.TerminalActionToggleSmallGrid;
+            action.Writer = CustomActions.SmallGridWriter;
+            action.Enabled = TerminalHelpers.HasTracking;
+            action.ValidForGroups = true;
+
+            MyAPIGateway.TerminalControls.AddAction<T>(action);
+            session.CustomActions.Add(action);
+        }
+
         public static void CreateFocusTargets(Session session)
         {
             var action = MyAPIGateway.TerminalControls.CreateAction<T>("FocusTargets");

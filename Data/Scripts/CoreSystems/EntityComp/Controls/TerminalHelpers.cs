@@ -67,6 +67,11 @@ namespace CoreSystems.Control
 
             AddOnOffSwitchNoAction<T>(session, "Repel", Localization.GetText("TerminalRepelTitle"), Localization.GetText("TerminalRepelTooltip"), BlockUi.GetRepel, BlockUi.RequestSetRepel, true, HasTracking);
 
+            AddOnOffSwitchNoAction<T>(session, "LargeGrid", "Large Grid", "Target large grids", BlockUi.GetLargeGrid, BlockUi.RequestSetLargeGrid, true, HasTracking);
+
+            AddOnOffSwitchNoAction<T>(session, "SmallGrid", "Small Grid", "Target small grids", BlockUi.GetSmallGrid, BlockUi.RequestSetSmallGrid, true, HasTracking);
+
+
             Separator<T>(session, "WC_sep3", IsTrue);
 
             AddWeaponBurstCountSliderRange<T>(session, "Burst Count", Localization.GetText("TerminalBurstShotsTitle"), Localization.GetText("TerminalBurstShotsTooltip"), BlockUi.GetBurstCount, BlockUi.RequestSetBurstCount, CanBurstIsNotBomb, BlockUi.GetMinBurstCount, BlockUi.GetMaxBurstCount, true);
