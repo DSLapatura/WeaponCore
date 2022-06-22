@@ -122,7 +122,7 @@ namespace CoreSystems.Support
 
             internal double TotalEffect;
             internal long TotalPrimaryEffect;
-            internal long TotalAOEEffect;
+            internal long TotalAoeEffect;
             internal long TotalShieldEffect;
             internal long TotalProjectileEffect;
             internal double PreviousTotalEffect;
@@ -511,9 +511,13 @@ namespace CoreSystems.Support
             {
                 if (TotalEffect > 0)
                 {
-                    PlayerMap player;
-                    var playerName = Data.Ai.Session.Players.TryGetValue(Data.Ai.ImyGridEntity.BigOwners[0], out player) ? player.Player.DisplayName ?? string.Empty : string.Empty;
-                    Log.Stats($"{Data.Ai.ImyGridEntity.DisplayName}, {playerName}, {(long)TotalEffect}, {TotalPrimaryEffect}, {TotalAOEEffect}, {TotalShieldEffect}, {TotalProjectileEffect}", "griddmgstats");
+                    try
+                    {
+                        PlayerMap player;
+                        var playerName = Ai.Session.Players.TryGetValue(Ai.AiOwner, out player) ? player.Player.DisplayName ?? string.Empty : string.Empty;
+                        Log.Stats($"{Ai.TopEntity?.DisplayName}, {playerName}, {(long)TotalEffect}, {TotalPrimaryEffect}, {TotalAoeEffect}, {TotalShieldEffect}, {TotalProjectileEffect}", "griddmgstats");
+                    }
+                    catch (Exception ex) { Log.Line($"Exception in ConstructClean: {ex}", null, true); }
                 }
 
                 if (WeaponGroups.Count > 0)
@@ -525,7 +529,7 @@ namespace CoreSystems.Support
                 AverageEffect = 0;
                 TotalEffect = 0;
                 TotalPrimaryEffect = 0;
-                TotalAOEEffect = 0;
+                TotalAoeEffect = 0;
                 TotalShieldEffect = 0;
                 TotalProjectileEffect = 0;
                 PreviousTotalEffect = 0;

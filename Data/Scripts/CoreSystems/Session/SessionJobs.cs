@@ -33,6 +33,8 @@ namespace CoreSystems
         public int MostBlocks;
         public bool SuspectedDrone;
         public bool Powered;
+        public bool Warheads;
+
 
         internal void Clean()
         {
@@ -46,6 +48,7 @@ namespace CoreSystems
             LastControllerTick = 0;
             SuspectedDrone = false;
             Powered = false;
+            Warheads = false;
         }
     }
 
@@ -353,6 +356,8 @@ namespace CoreSystems
                     var powerProducers = 0;
                     var warHead = 0;
                     var working = 0;
+                    var remote = 0;
+                    var program = 0;
                     for (int j = 0; j < allFat.Count; j++)
                     {
                         var fat = allFat[j];
@@ -369,6 +374,11 @@ namespace CoreSystems
                             var decoy = fat as IMyDecoy;
                             var bomb = fat as IMyWarhead;
                             var upgrade = fat as IMyUpgradeModule;
+                            var remoteControl = fat as MyRemoteControl;
+                            var programBlock = fat as IMyProgrammableBlock;
+
+                            if (programBlock != null)
+                                ++program;
 
                             if (decoy != null)
                             {
@@ -400,7 +410,13 @@ namespace CoreSystems
 
                                 newTypeMap[Offense].Add(fat);
                             }
-                            else if (upgrade != null || fat is IMyRadioAntenna  || fat is IMyLaserAntenna || fat is MyRemoteControl || fat is IMyShipToolBase || fat is IMyMedicalRoom || fat is IMyCameraBlock) newTypeMap[Utility].Add(fat);
+                            else if (upgrade != null || fat is IMyRadioAntenna || fat is IMyLaserAntenna || remoteControl != null || fat is IMyShipToolBase || fat is IMyMedicalRoom || fat is IMyCameraBlock)
+                            {
+                                if (remoteControl != null)
+                                    ++remote;
+
+                                newTypeMap[Utility].Add(fat);
+                            }
                             else if (fat is MyThrust)
                             {
                                 newTypeMap[Thrust].Add(fat);
@@ -420,11 +436,12 @@ namespace CoreSystems
 
 
                     gridMap.MyCubeBocks.ApplyAdditions();
-                    gridMap.SuspectedDrone = warHead > 0 || powerProducers > 0 && thrusters > 0;
+                    gridMap.SuspectedDrone = !grid.IsStatic && (terminals < 20 && (warHead > 0 || remote > 0 || program > 0) || !((IMyCubeGrid)grid).ControlSystem.IsControlled && (powerProducers > 0 && thrusters > 0 && working > 0));
 
                     gridMap.Trash = terminals == 0;
                     gridMap.Powered = working > 0;
                     gridMap.PowerCheckTick = Tick;
+                    gridMap.Warheads = warHead > 0;
 
                     var gridBlocks = grid.BlocksCount;
 

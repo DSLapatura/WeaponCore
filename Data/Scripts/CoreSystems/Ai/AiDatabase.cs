@@ -85,26 +85,8 @@ namespace CoreSystems.Support
                         if (Session.Tick - gridMap.PowerCheckTick > 600)
                             Session.CheckGridPowerState(grid, gridMap);
 
-                        var loneWarhead = false;
-                        var hostileDrone = false;
-                        if (fatCount <= 20)
-                        { // possible debris
+                        var loneWarhead = gridMap.Warheads && fatCount == 1;
 
-                            var valid = false;
-                            for (int j = 0; j < fatCount; j++)
-                            {
-                                var fat = allFat[j];
-                                var warhead = fat is IMyWarhead;
-                                if (warhead || fat.IsWorking)
-                                {
-                                    hostileDrone = warhead || gridMap.SuspectedDrone;
-                                    loneWarhead = warhead && fatCount == 1;
-                                    valid = true;
-                                    break;
-                                }
-                            }
-                            if (!valid) continue;
-                        }
                         int partCount;
                         Ai targetAi;
                         if (Session.EntityAIs.TryGetValue(grid, out targetAi))
@@ -116,7 +98,7 @@ namespace CoreSystems.Support
                         else
                             partCount = gridMap.MostBlocks;
 
-                        NewEntities.Add(new DetectInfo(Session, ent, entInfo, partCount, !loneWarhead ? fatCount : 2, hostileDrone, loneWarhead));// bump warhead to 2 fatblocks so its not ignored by targeting
+                        NewEntities.Add(new DetectInfo(Session, ent, entInfo, partCount, !loneWarhead ? fatCount : 2, gridMap.SuspectedDrone, loneWarhead));// bump warhead to 2 fatblocks so its not ignored by targeting
                         ValidGrids.Add(ent);
                     }
                     else NewEntities.Add(new DetectInfo(Session, ent, entInfo, 1, 0, false, false));

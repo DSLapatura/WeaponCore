@@ -454,7 +454,7 @@ namespace CoreSystems.Projectiles
                 comp.TotalShieldEffect += Info.DamageDoneShld;
                 comp.TotalProjectileEffect += Info.DamageDoneProj;
                 construct.TotalPrimaryEffect += Info.DamageDonePri;
-                construct.TotalAOEEffect += Info.DamageDoneAOE;
+                construct.TotalAoeEffect += Info.DamageDoneAOE;
                 construct.TotalShieldEffect += Info.DamageDoneShld;
                 construct.TotalProjectileEffect += Info.DamageDoneProj;
             }
