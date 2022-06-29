@@ -1123,10 +1123,22 @@ namespace CoreSystems
                                     if (slimmax != slimmin)//Block larger than 1x1x1
                                     {
                                         var hitblkbound = new BoundingBoxI(slimmin, slimmax);
-                                        var rootHitPosbound = new BoundingBoxI(rootHitPos, rootHitPos);
-                                        rootHitPosbound.IntersectWith(ref hitblkbound);
+                                        var rootHitPosbound = new BoundingBoxI(rootHitPos, rootHitPos);//Direct hit on non1x1x1 block
+                                        if (hitblkbound.Contains(rootHitPosbound) == ContainmentType.Contains)
+                                        {
+                                            rootHitPosbound.IntersectWith(ref hitblkbound);
+                                        }
+                                        else //Find first point of non1x1x1 to inflate from
+                                        {
+                                            while (hitblkbound.Contains(rootHitPosbound) == ContainmentType.Disjoint)
+                                            {
+                                                rootHitPosbound.Inflate(1);
+                                            }
+                                        }
                                         rootHitPosbound.Inflate(1);
-                                        if (rootHitPosbound.Contains(vector3I) == ContainmentType.Contains)
+
+
+                                    if (rootHitPosbound.Contains(vector3I) == ContainmentType.Contains)
                                         {
                                             distArray.Add(slim);
                                             foundSomething = true;

@@ -52,7 +52,7 @@ namespace CoreSystems.Platform
 
                         w.ProtoWeaponAmmo = Repo.Ammos[i];
 
-                        if (w.ProtoWeaponAmmo.CurrentAmmo > 0) w.Reload.StartId++; //If weapon is loaded on world init, start counter at 1
+                        if (w.ProtoWeaponAmmo.CurrentAmmo > 0 && w.Reload.LifetimeLoads == 0) w.Reload.LifetimeLoads++; //If weapon is loaded on world init, start counter at 1
 
                         if (Comp.Session.IsServer)
                         {
