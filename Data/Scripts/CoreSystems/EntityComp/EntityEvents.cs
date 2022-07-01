@@ -87,7 +87,7 @@ namespace CoreSystems.Support
 
                     if (CoreInventory == null)
                     {
-                        if (TypeSpecific != CompTypeSpecific.Control)
+                        if (TypeSpecific != CompTypeSpecific.Control && !IsBomb)
                             Log.Line("BlockInventory is null");
                     }
                     else

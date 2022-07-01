@@ -57,7 +57,6 @@ namespace CoreSystems.Platform
 
                 ShootTick = tick + TicksPerShot;
                 LastShootTick = tick;
-                
                 if (!IsShooting) StartShooting();
 
                 if (Comp.Ai.VelocityUpdateTick != tick) {
@@ -285,7 +284,7 @@ namespace CoreSystems.Platform
                 _muzzlesToFire.Clear();
                 _nextVirtual = _nextVirtual + 1 < System.Values.HardPoint.Loading.BarrelsPerShot ? _nextVirtual + 1 : 0;
 
-                if (s.IsServer && selfDamage > 0)
+                if (s.IsServer && selfDamage > 0 && !Comp.IsBomb)
                 {
                     if (Comp.IsBlock)
                     {

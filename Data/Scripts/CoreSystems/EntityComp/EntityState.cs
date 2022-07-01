@@ -96,7 +96,7 @@ namespace CoreSystems.Support
         internal void ForceClose(object o)
         {
             var subtypeId = o as string;
-            Log.Line($"closing: {subtypeId} - critical:{CloseCondition}");
+            if (TypeSpecific != CompTypeSpecific.Phantom) Log.Line($"closing: {subtypeId} - critical:{CloseCondition}");
             CloseCondition = true;
             MyEntities.SendCloseRequest(CoreEntity);
         }

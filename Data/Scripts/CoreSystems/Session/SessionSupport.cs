@@ -985,7 +985,7 @@ namespace CoreSystems
                 return null;
             }
 
-            Log.Line($"phantom entityId 1: {ent.EntityId} - flags:{ent.Flags}");
+            //Log.Line($"phantom entityId 1: {ent.EntityId} - flags:{ent.Flags}");
 
             string model = null;
             if (ModelMaps.TryGetValue(phantomType, out model) || parent != null || sync) 

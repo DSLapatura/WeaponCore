@@ -3,6 +3,7 @@ using CoreSystems.Platform;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI.Weapons;
 using VRage.Game.Entity;
+using VRage.Game.ModAPI.Interfaces;
 using VRage.Game.ObjectBuilders.Definitions;
 using static CoreSystems.Support.Ai;
 namespace CoreSystems.Support
@@ -103,7 +104,7 @@ namespace CoreSystems.Support
 
                                     if (w.InCharger)
                                         w.ExitCharger = true;
-                                    if (w.CriticalReaction)
+                                    if (w.CriticalReaction && w.Comp.Slim.IsDestroyed)                                  
                                         w.CriticalOnDestruction();
                                 }
                             }
