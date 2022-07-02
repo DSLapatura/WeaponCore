@@ -215,7 +215,7 @@ namespace CoreSystems.Platform
                 }
             }
 
-            var invalidStates = ProtoWeaponAmmo.CurrentAmmo != 0 || Loading || calledFromReload || Reload.WaitForClient || Reload.StartId >= System.MaxReloads;
+            var invalidStates = ProtoWeaponAmmo.CurrentAmmo != 0 || Loading || calledFromReload || Reload.WaitForClient || (System.MaxReloads > 0 && Reload.LifetimeLoads >= System.MaxReloads);
             return !invalidStates && ServerReload();
         }
 
@@ -234,6 +234,7 @@ namespace CoreSystems.Platform
 
             ++Reload.StartId;
             ++ClientStartId;
+            ++Reload.LifetimeLoads;
 
             if (!ActiveAmmoDef.AmmoDef.Const.EnergyAmmo) {
 

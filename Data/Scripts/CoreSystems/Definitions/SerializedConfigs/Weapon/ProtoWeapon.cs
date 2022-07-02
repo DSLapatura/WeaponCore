@@ -193,6 +193,7 @@ namespace CoreSystems
         [ProtoMember(5)] public bool WaitForClient; //don't save
         [ProtoMember(6)] public int AmmoTypeId; //save
         [ProtoMember(7)] public int CurrentMags; // save
+        [ProtoMember(8)] public int LifetimeLoads; // save
 
         public void Sync(Weapon w, ProtoWeaponReload sync, bool force)
         {
@@ -206,6 +207,7 @@ namespace CoreSystems
 
                 StartId = sync.StartId;
                 EndId = sync.EndId;
+                LifetimeLoads = sync.LifetimeLoads;
 
                 MagsLoaded = sync.MagsLoaded;
                 

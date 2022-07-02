@@ -230,6 +230,7 @@ namespace CoreSystems.Platform
             if ((force || Comp.Data.Repo.Values.Set.Overrides.Armed) && !Comp.CloseCondition)
             {
                 Comp.CloseCondition = true;
+                //Temporarily set Comp.Entity.Parent as a destroyed block does not properly spawn a phantom
                 Comp.Session.CreatePhantomEntity(Comp.SubtypeName, 3600, true, 1, System.Values.HardPoint.HardWare.CriticalReaction.AmmoRound, CoreComponent.Trigger.Once, null, Comp.CoreEntity, false, false, Comp.Ai.AiOwner);
             }
         }
