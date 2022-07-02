@@ -436,7 +436,7 @@ namespace CoreSystems
 
 
                     gridMap.MyCubeBocks.ApplyAdditions();
-                    gridMap.SuspectedDrone = !grid.IsStatic && (terminals < 20 && (warHead > 0 || remote > 0 || program > 0) || !((IMyCubeGrid)grid).ControlSystem.IsControlled && (powerProducers > 0 && thrusters > 0 && working > 0));
+                    gridMap.SuspectedDrone = !grid.IsStatic && (terminals < 20 && (warHead > 0 || working > 0 && (remote > 0 || program > 0)) || !((IMyCubeGrid)grid).ControlSystem.IsControlled && (powerProducers > 0 && thrusters > 0 && working > 0));
 
                     gridMap.Trash = terminals == 0;
                     gridMap.Powered = working > 0;

@@ -426,7 +426,7 @@ namespace CoreSystems
         internal bool AuthorConnected;
         internal readonly HashSet<ulong> BlackListedPlayers = new HashSet<ulong>()
         {
-            76561198339035377, // king_of_draconia for harassing modders and users of mods and making false claims to steam about wc.
+            //76561198339035377 -- suspended by request, king_of_draconia for harassing modders and users of mods and making false claims to steam about wc.
         };
 
         internal readonly HashSet<ulong> JokePlayerList = new HashSet<ulong>()
