@@ -441,7 +441,7 @@ namespace CoreSystems.Projectiles
                 DynTrees.UnregisterProjectile(this);
 
             var target = Info.Target;
-            var dmgTotal = Info.DamageDoneAOE + Info.DamageDonePri + Info.DamageDoneShld + Info.DamageDoneProj;
+            var dmgTotal = Info.DamageDoneAoe + Info.DamageDonePri + Info.DamageDoneShld + Info.DamageDoneProj;
 
             if (dmgTotal > 0 && Info.Ai?.Construct.RootAi != null && target.CoreEntity != null && !Info.Ai.MarkedForClose && !target.CoreEntity.MarkedForClose)
             {
@@ -450,11 +450,11 @@ namespace CoreSystems.Projectiles
                 construct.TotalEffect += dmgTotal;
                 comp.TotalEffect += dmgTotal;
                 comp.TotalPrimaryEffect += Info.DamageDonePri;
-                comp.TotalAOEEffect += Info.DamageDoneAOE;
+                comp.TotalAOEEffect += Info.DamageDoneAoe;
                 comp.TotalShieldEffect += Info.DamageDoneShld;
                 comp.TotalProjectileEffect += Info.DamageDoneProj;
                 construct.TotalPrimaryEffect += Info.DamageDonePri;
-                construct.TotalAoeEffect += Info.DamageDoneAOE;
+                construct.TotalAoeEffect += Info.DamageDoneAoe;
                 construct.TotalShieldEffect += Info.DamageDoneShld;
                 construct.TotalProjectileEffect += Info.DamageDoneProj;
             }

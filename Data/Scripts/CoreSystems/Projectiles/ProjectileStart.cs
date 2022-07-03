@@ -71,7 +71,6 @@ namespace CoreSystems.Projectiles
                 info.Weapon.WeaponCache.VirutalId = t != Kind.Virtual ? -1 : info.Weapon.WeaponCache.VirutalId;
                 info.Origin = t != Kind.Client ? t != Kind.Virtual ? muzzle.Position : w.MyPivotPos : gen.Origin;
                 info.Direction = t != Kind.Client ? t != Kind.Virtual ? gen.Direction : w.MyPivotFwd : gen.Direction;
-                info.TargetOverridden = repo.Values.Set.Overrides.Override;
 
                 if (t == Kind.Client && !aConst.IsBeamWeapon) 
                     p.Velocity = gen.Velocity;
@@ -232,7 +231,7 @@ namespace CoreSystems.Projectiles
                         var condition1 = cubeTarget == null && targetAi.TopEntity.EntityId == target.TopEntityId;
                         var condition2 = targetAi.AiType == Ai.AiTypes.Grid && (targetAi.GridEntity.IsStatic || cubeTarget != null && targetAi.GridEntity.IsSameConstructAs(cubeTarget.CubeGrid));
                         Ai.TargetInfo tInfo;
-                        var condition3 = !condition1 && !condition2 && cubeTarget != null && !notSmart && targetSphere.Contains(cubeTarget.CubeGrid.PositionComp.WorldVolume) != ContainmentType.Disjoint && (!targetAi.Targets.TryGetValue(cubeTarget.CubeGrid, out tInfo) || tInfo.EntInfo.Relationship != MyRelationsBetweenPlayerAndBlock.Neutral);
+                        var condition3 = !condition1 && !condition2 && cubeTarget != null && !notSmart && targetSphere.Contains(cubeTarget.CubeGrid.PositionComp.WorldVolume) != ContainmentType.Disjoint && !targetAi.Targets.TryGetValue(cubeTarget.CubeGrid, out tInfo);
                         var validAi = !notSmart && (condition1 || condition2 || condition3);
 
                         if (dumbAdd || validAi)

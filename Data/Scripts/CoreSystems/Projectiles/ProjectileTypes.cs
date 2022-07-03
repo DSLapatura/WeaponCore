@@ -58,7 +58,7 @@ namespace CoreSystems.Support
         internal double TracerLength;
         internal double MaxTrajectory;
         internal long DamageDonePri;
-        internal long DamageDoneAOE;
+        internal long DamageDoneAoe;
         internal long DamageDoneShld;
         internal long DamageDoneProj;
         internal float ShotFade;
@@ -80,7 +80,6 @@ namespace CoreSystems.Support
         internal float ShieldBypassMod = 1f;
 
         internal MatrixD TriggerMatrix = MatrixD.Identity;
-        internal bool TargetOverridden;
 
         internal void InitVirtual(Weapon weapon, AmmoDef ammodef, MyEntity primeEntity, MyEntity triggerEntity, Weapon.Muzzle muzzle, double maxTrajectory, float shotFade)
         {
@@ -176,7 +175,7 @@ namespace CoreSystems.Support
             Age = 0;
             SyncId = -1;
             DamageDonePri = 0;
-            DamageDoneAOE = 0;
+            DamageDoneAoe = 0;
             DamageDoneShld = 0;
             DamageDoneProj = 0;
             ProjectileDisplacement = 0;

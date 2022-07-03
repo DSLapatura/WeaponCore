@@ -749,7 +749,7 @@ namespace CoreSystems
                     DamageBlockCache[l].Clear();
                 if (showHits && !detActive && hasAoe) Log.Line($"BBH: RootBlock {rootBlock} hit, AOE dmg: {aoeDmgTally} Blocks Splashed: {aoeHits} Blocks Killed: {destroyed} ");
                 if (showHits && detActive && aoeDmgTally>0) Log.Line($"EOL: RootBlock {rootBlock} hit, AOE dmg: {aoeDmgTally} Blocks Splashed: {aoeHits} Blocks Killed: {destroyed} ");
-                if (aoeDmgTally > 0) t.DamageDoneAOE += (long)aoeDmgTally;
+                if (aoeDmgTally > 0) t.DamageDoneAoe += (long)aoeDmgTally;
             }
 
             //stuff I still haven't looked at yet
