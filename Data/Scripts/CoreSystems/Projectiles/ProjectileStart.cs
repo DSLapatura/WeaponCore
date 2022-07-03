@@ -188,10 +188,16 @@ namespace CoreSystems.Projectiles
             for (int i = 0; i < AddTargets.Count; i++)
             {
                 var p = AddTargets[i];
-                for (int t = 0; t < p.Info.Ai.TargetAis.Count; t++)
+                var info = p.Info;
+                var overrides = info.Weapon.Comp.Data.Repo.Values.Set.Overrides;
+                var ai = info.Ai;
+                var target = info.Target;
+                var ammoDef = info.AmmoDef;
+
+                for (int t = 0; t < ai.TargetAis.Count; t++)
                 {
 
-                    var targetAi = p.Info.Ai.TargetAis[t];
+                    var targetAi = ai.TargetAis[t];
 
                     if (targetAi.PointDefense)
                     {
@@ -199,19 +205,19 @@ namespace CoreSystems.Projectiles
                         targetSphere.Radius *= 3;
                         bool dumbAdd = false;
 
-                        var notSmart = p.Info.AmmoDef.Trajectory.Guidance == GuidanceType.None || p.Info.TargetOverridden;
+                        var notSmart = ammoDef.Trajectory.Guidance == GuidanceType.None || overrides.Override;
                         if (notSmart)
                         {
-                            if (Vector3.Dot(p.Info.Direction, p.Info.Origin - targetAi.TopEntity.PositionComp.WorldMatrixRef.Translation) < 0)
+                            if (Vector3.Dot(info.Direction, info.Origin - targetAi.TopEntity.PositionComp.WorldMatrixRef.Translation) < 0)
                             {
-                                var testRay = new RayD(p.Info.Origin, p.Info.Direction);
+                                var testRay = new RayD(info.Origin, info.Direction);
                                 var quickCheck = Vector3D.IsZero(targetAi.GridVel, 0.025) && targetSphere.Intersects(testRay) != null;
 
                                 if (!quickCheck)
                                 {
-                                    var deltaPos = targetSphere.Center - p.Info.Origin;
-                                    var deltaVel = targetAi.GridVel - p.Info.Ai.GridVel;
-                                    var timeToIntercept = MathFuncs.Intercept(deltaPos, deltaVel, p.Info.AmmoDef.Const.DesiredProjectileSpeed);
+                                    var deltaPos = targetSphere.Center - info.Origin;
+                                    var deltaVel = targetAi.GridVel - ai.GridVel;
+                                    var timeToIntercept = MathFuncs.Intercept(deltaPos, deltaVel, ammoDef.Const.DesiredProjectileSpeed);
                                     var predictedPos = targetSphere.Center + (float)timeToIntercept * deltaVel;
                                     targetSphere.Center = predictedPos;
                                 }
@@ -221,12 +227,12 @@ namespace CoreSystems.Projectiles
                             }
                         }
 
-                        var cubeTarget = p.Info.Target.TargetEntity as MyCubeBlock;
+                        var cubeTarget = target.TargetEntity as MyCubeBlock;
 
-                        var condition1 = cubeTarget == null && targetAi.TopEntity.EntityId == p.Info.Target.TopEntityId;
+                        var condition1 = cubeTarget == null && targetAi.TopEntity.EntityId == target.TopEntityId;
                         var condition2 = targetAi.AiType == Ai.AiTypes.Grid && (targetAi.GridEntity.IsStatic || cubeTarget != null && targetAi.GridEntity.IsSameConstructAs(cubeTarget.CubeGrid));
-                        Ai.TargetInfo info;
-                        var condition3 = !condition1 && !condition2 && cubeTarget != null && !notSmart && targetSphere.Contains(cubeTarget.CubeGrid.PositionComp.WorldVolume) != ContainmentType.Disjoint && (!targetAi.Targets.TryGetValue(cubeTarget.CubeGrid, out info) || info.EntInfo.Relationship != MyRelationsBetweenPlayerAndBlock.Neutral);
+                        Ai.TargetInfo tInfo;
+                        var condition3 = !condition1 && !condition2 && cubeTarget != null && !notSmart && targetSphere.Contains(cubeTarget.CubeGrid.PositionComp.WorldVolume) != ContainmentType.Disjoint && (!targetAi.Targets.TryGetValue(cubeTarget.CubeGrid, out tInfo) || tInfo.EntInfo.Relationship != MyRelationsBetweenPlayerAndBlock.Neutral);
                         var validAi = !notSmart && (condition1 || condition2 || condition3);
 
                         if (dumbAdd || validAi)
