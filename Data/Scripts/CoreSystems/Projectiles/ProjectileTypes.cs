@@ -80,6 +80,7 @@ namespace CoreSystems.Support
         internal float ShieldBypassMod = 1f;
 
         internal MatrixD TriggerMatrix = MatrixD.Identity;
+        internal bool TargetOverridden;
 
         internal void InitVirtual(Weapon weapon, AmmoDef ammodef, MyEntity primeEntity, MyEntity triggerEntity, Weapon.Muzzle muzzle, double maxTrajectory, float shotFade)
         {

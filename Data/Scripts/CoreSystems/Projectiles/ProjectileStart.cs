@@ -1,4 +1,6 @@
 ﻿using CoreSystems.Support;
+using Sandbox.Game.Entities;
+using VRage.Game;
 using VRageMath;
 using static CoreSystems.Support.NewProjectile;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.TrajectoryDef;
@@ -69,7 +71,8 @@ namespace CoreSystems.Projectiles
                 info.Weapon.WeaponCache.VirutalId = t != Kind.Virtual ? -1 : info.Weapon.WeaponCache.VirutalId;
                 info.Origin = t != Kind.Client ? t != Kind.Virtual ? muzzle.Position : w.MyPivotPos : gen.Origin;
                 info.Direction = t != Kind.Client ? t != Kind.Virtual ? gen.Direction : w.MyPivotFwd : gen.Direction;
-                
+                info.TargetOverridden = repo.Values.Set.Overrides.Override;
+
                 if (t == Kind.Client && !aConst.IsBeamWeapon) 
                     p.Velocity = gen.Velocity;
                 
@@ -189,38 +192,53 @@ namespace CoreSystems.Projectiles
                 {
 
                     var targetAi = p.Info.Ai.TargetAis[t];
-                    var addProjectile = p.Info.AmmoDef.Trajectory.Guidance != GuidanceType.None && targetAi.PointDefense;
-                    if (!addProjectile && targetAi.PointDefense)
+
+                    if (targetAi.PointDefense)
                     {
-                        if (Vector3.Dot(p.Info.Direction, p.Info.Origin - targetAi.TopEntity.PositionComp.WorldMatrixRef.Translation) < 0)
+                        var targetSphere = targetAi.TopEntity.PositionComp.WorldVolume;
+                        targetSphere.Radius *= 3;
+                        bool dumbAdd = false;
+
+                        var notSmart = p.Info.AmmoDef.Trajectory.Guidance == GuidanceType.None || p.Info.TargetOverridden;
+                        if (notSmart)
                         {
-
-                            var targetSphere = targetAi.TopEntity.PositionComp.WorldVolume;
-                            targetSphere.Radius *= 3;
-                            var testRay = new RayD(p.Info.Origin, p.Info.Direction);
-                            var quickCheck = Vector3D.IsZero(targetAi.GridVel, 0.025) && targetSphere.Intersects(testRay) != null;
-
-                            if (!quickCheck)
+                            if (Vector3.Dot(p.Info.Direction, p.Info.Origin - targetAi.TopEntity.PositionComp.WorldMatrixRef.Translation) < 0)
                             {
-                                var deltaPos = targetSphere.Center - p.Info.Origin;
-                                var deltaVel = targetAi.GridVel - p.Info.Ai.GridVel;
-                                var timeToIntercept = MathFuncs.Intercept(deltaPos, deltaVel, p.Info.AmmoDef.Const.DesiredProjectileSpeed);
-                                var predictedPos = targetSphere.Center + (float)timeToIntercept * deltaVel;
-                                targetSphere.Center = predictedPos;
-                            }
+                                var testRay = new RayD(p.Info.Origin, p.Info.Direction);
+                                var quickCheck = Vector3D.IsZero(targetAi.GridVel, 0.025) && targetSphere.Intersects(testRay) != null;
 
-                            if (quickCheck || targetSphere.Intersects(testRay) != null)
-                                addProjectile = true;
+                                if (!quickCheck)
+                                {
+                                    var deltaPos = targetSphere.Center - p.Info.Origin;
+                                    var deltaVel = targetAi.GridVel - p.Info.Ai.GridVel;
+                                    var timeToIntercept = MathFuncs.Intercept(deltaPos, deltaVel, p.Info.AmmoDef.Const.DesiredProjectileSpeed);
+                                    var predictedPos = targetSphere.Center + (float)timeToIntercept * deltaVel;
+                                    targetSphere.Center = predictedPos;
+                                }
+
+                                if (quickCheck || targetSphere.Intersects(testRay) != null)
+                                    dumbAdd = true;
+                            }
+                        }
+
+                        var cubeTarget = p.Info.Target.TargetEntity as MyCubeBlock;
+
+                        var condition1 = cubeTarget == null && targetAi.TopEntity.EntityId == p.Info.Target.TopEntityId;
+                        var condition2 = targetAi.AiType == Ai.AiTypes.Grid && (targetAi.GridEntity.IsStatic || cubeTarget != null && targetAi.GridEntity.IsSameConstructAs(cubeTarget.CubeGrid));
+                        Ai.TargetInfo info;
+                        var condition3 = !condition1 && !condition2 && cubeTarget != null && !notSmart && targetSphere.Contains(cubeTarget.CubeGrid.PositionComp.WorldVolume) != ContainmentType.Disjoint && (!targetAi.Targets.TryGetValue(cubeTarget.CubeGrid, out info) || info.EntInfo.Relationship != MyRelationsBetweenPlayerAndBlock.Neutral);
+                        var validAi = !notSmart && (condition1 || condition2 || condition3);
+
+                        if (dumbAdd || validAi)
+                        {
+                            targetAi.DeadProjectiles.Remove(p);
+                            targetAi.LiveProjectile.Add(p);
+                            targetAi.LiveProjectileTick = Session.Tick;
+                            targetAi.NewProjectileTick = Session.Tick;
+                            p.Watchers.Add(targetAi);
                         }
                     }
-                    if (addProjectile)
-                    {
-                        targetAi.DeadProjectiles.Remove(p);
-                        targetAi.LiveProjectile.Add(p);
-                        targetAi.LiveProjectileTick = Session.Tick;
-                        targetAi.NewProjectileTick = Session.Tick;
-                        p.Watchers.Add(targetAi);
-                    }
+
                 }
             }
             AddTargets.Clear();
