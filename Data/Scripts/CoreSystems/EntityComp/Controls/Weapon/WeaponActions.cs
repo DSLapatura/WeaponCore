@@ -11,6 +11,19 @@ namespace CoreSystems.Control
     public static partial class CustomActions
     {
         #region Call Actions
+
+        internal static void RequestSetArmed(IMyTerminalBlock blk)
+        {
+            var comp = blk?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+                return;
+
+            var newBool = !comp.Data.Repo.Values.Set.Overrides.Armed;
+            var newValue = newBool ? 1 : 0;
+
+            Weapon.WeaponComponent.RequestSetValue(comp, "Armed", newValue, comp.Session.PlayerId);
+        }
+
         internal static void TerminalActionToggleShoot(IMyTerminalBlock blk)
         {
             var comp = blk?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
@@ -468,6 +481,16 @@ namespace CoreSystems.Control
         #endregion
 
         #region Writters
+
+        internal static void ArmWriter(IMyTerminalBlock blk, StringBuilder sb)
+        {
+            var comp = blk.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
+            if (comp.Data.Repo.Values.Set.Overrides.Armed)
+                sb.Append(Localization.GetText("ActionStateOn"));
+            else
+                sb.Append(Localization.GetText("ActionStateOff"));
+        }
 
         internal static void ShootStateWriter(IMyTerminalBlock blk, StringBuilder sb)
         {

@@ -720,7 +720,7 @@ namespace CoreSystems.Support
             if (AmmoModsFound && _modifierMap[AreaRadStr].HasData())
                 byBlockHitRadius = _modifierMap[AreaRadStr].GetAsDouble;
             else
-                byBlockHitRadius = ammoDef.AreaOfDamage.ByBlockHit.Radius;
+                byBlockHitRadius = ammoDef.AreaOfDamage.ByBlockHit.Enable ? ammoDef.AreaOfDamage.ByBlockHit.Radius : 0;
 
             if (AmmoModsFound && _modifierMap[DetDmgStr].HasData())
                 endOfLifeDamage = _modifierMap[DetDmgStr].GetAsFloat;
@@ -730,7 +730,7 @@ namespace CoreSystems.Support
             if (AmmoModsFound && _modifierMap[DetRadStr].HasData())
                 endOfLifeRadius = _modifierMap[DetRadStr].GetAsFloat;
             else
-                endOfLifeRadius = (float)ammoDef.AreaOfDamage.EndOfLife.Radius;
+                endOfLifeRadius = ammoDef.AreaOfDamage.EndOfLife.Enable ? (float)ammoDef.AreaOfDamage.EndOfLife.Radius : 0;
 
             if (AmmoModsFound && _modifierMap[ByBlockHitMaxAbsorbStr].HasData())
                 aoeMaxAbsorb = _modifierMap[ByBlockHitMaxAbsorbStr].GetAsFloat;

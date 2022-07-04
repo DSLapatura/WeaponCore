@@ -204,7 +204,7 @@ namespace CoreSystems.Projectiles
                         targetSphere.Radius *= 3;
                         bool dumbAdd = false;
 
-                        var notSmart = ammoDef.Trajectory.Guidance == GuidanceType.None || overrides.Override;
+                        var notSmart = ammoDef.Trajectory.Guidance == GuidanceType.None || overrides.Override && p.HadTarget == Projectile.HadTargetState.None;
                         if (notSmart)
                         {
                             if (Vector3.Dot(info.Direction, info.Origin - targetAi.TopEntity.PositionComp.WorldMatrixRef.Translation) < 0)

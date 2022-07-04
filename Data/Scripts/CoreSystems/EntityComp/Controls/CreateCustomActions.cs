@@ -9,6 +9,20 @@ namespace CoreSystems.Control
     public static class CreateCustomActions<T>
     {
 
+        public static void CreateArmReaction(Session session)
+        {
+            var action = MyAPIGateway.TerminalControls.CreateAction<T>("Arm");
+            action.Icon = @"Textures\GUI\Icons\Actions\Toggle.dds";
+            action.Name = new StringBuilder("Arm Critical Reaction");
+            action.Action = CustomActions.RequestSetArmed;
+            action.Writer = CustomActions.ArmWriter;
+            action.Enabled = TerminalHelpers.CanBeArmed;
+            action.ValidForGroups = true;
+
+            MyAPIGateway.TerminalControls.AddAction<T>(action);
+            session.CustomActions.Add(action);
+        }
+
         internal static void CreateShootMode(Session session)
         {
             var action = MyAPIGateway.TerminalControls.CreateAction<T>("WCShootMode");
