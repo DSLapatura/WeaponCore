@@ -201,8 +201,10 @@ namespace CoreSystems.Projectiles
                     if (targetAi.PointDefense)
                     {
                         var targetSphere = targetAi.TopEntity.PositionComp.WorldVolume;
-                        targetSphere.Radius *= 3;
-                        bool dumbAdd = false;
+
+                        targetSphere.Radius = targetSphere.Radius * 3 < 300 ? 300 : targetSphere.Radius * 3;
+
+                        var dumbAdd = false;
 
                         var notSmart = ammoDef.Trajectory.Guidance == GuidanceType.None || overrides.Override && p.HadTarget == Projectile.HadTargetState.None;
                         if (notSmart)

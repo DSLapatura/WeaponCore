@@ -127,7 +127,7 @@ namespace CoreSystems.Projectiles
                     {
 
                         var action = (Session.SafeZoneAction)safeZone.AllowedActions;
-                        if ((action & Session.SafeZoneAction.Damage) == 0)
+                        if ((action & Session.SafeZoneAction.Damage) == 0 || (action & Session.SafeZoneAction.Shooting) == 0)
                         {
 
                             bool intersects;
