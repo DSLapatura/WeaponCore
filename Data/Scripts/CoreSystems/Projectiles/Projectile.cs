@@ -1421,6 +1421,7 @@ namespace CoreSystems.Projectiles
             ChaseAge = Info.Age;
             PickTarget = false;
 
+            var oldTarget = Info.Target.TargetEntity;
             if (HadTarget != HadTargetState.Projectile)
             {
                 if (giveUp || !Ai.ReacquireTarget(this))
@@ -1432,7 +1433,6 @@ namespace CoreSystems.Projectiles
                         if (Info.Target.TargetState == Target.TargetStates.IsEntity)
                             Info.Target.Reset(Info.Ai.Session.Tick, Target.States.ProjectileNewTarget);
                     }
-
                     return false;
                 }
             }
@@ -1450,6 +1450,9 @@ namespace CoreSystems.Projectiles
                     return false;
                 }
             }
+
+            if (Info.AmmoDef.Const.Health > 0 && !Info.AmmoDef.Const.IsBeamWeapon && Info.Target.TargetEntity != null && oldTarget != Info.Target.TargetEntity)
+                Info.Ai.Session.Projectiles.AddProjectileTargets(this);
 
             return true;
         }

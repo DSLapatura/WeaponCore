@@ -182,11 +182,11 @@ namespace CoreSystems.Projectiles
             Session.FragmentsNeedingEntities.Clear();
         }
 
-        internal void AddProjectileTargets() // This calls AI late for fragments need to fix
+        internal void AddProjectileTargets(Projectile reAdd = null) // This also for fragments and readds, not sure if there is better way
         {
-            for (int i = 0; i < AddTargets.Count; i++)
+            for (int i = 0; reAdd == null && i < AddTargets.Count || reAdd != null && i == 0; i++)
             {
-                var p = AddTargets[i];
+                var p = reAdd ?? AddTargets[i];
                 var info = p.Info;
                 var overrides = info.Weapon.Comp.Data.Repo.Values.Set.Overrides;
                 var ai = info.Ai;
@@ -236,7 +236,7 @@ namespace CoreSystems.Projectiles
                         var condition3 = !condition1 && !condition2 && cubeTarget != null && !notSmart && targetSphere.Contains(cubeTarget.CubeGrid.PositionComp.WorldVolume) != ContainmentType.Disjoint && !targetAi.Targets.TryGetValue(cubeTarget.CubeGrid, out tInfo);
                         var validAi = !notSmart && (condition1 || condition2 || condition3);
 
-                        if (dumbAdd || validAi)
+                        if ((dumbAdd || validAi) && (reAdd == null || !targetAi.LiveProjectile.Contains(p)))
                         {
                             targetAi.DeadProjectiles.Remove(p);
                             targetAi.LiveProjectile.Add(p);
