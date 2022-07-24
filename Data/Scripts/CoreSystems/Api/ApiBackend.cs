@@ -382,7 +382,7 @@ namespace CoreSystems.Api
             Ai ai;
             if (shooterGrid != null && _session.EntityToMasterAi.TryGetValue(shooterGrid, out ai))
             {
-                var maxDist = ai.MaxTargetingRangeSqr + target.PositionComp.WorldAABB.Extents.Max();
+                var maxDist = ai.MaxTargetingRange + target.PositionComp.WorldAABB.Extents.Max();
                 if (Vector3D.DistanceSquared(target.PositionComp.WorldMatrixRef.Translation, shooterGrid.PositionComp.WorldMatrixRef.Translation) > (maxDist * maxDist))
                 {
                     return new MyDetectedEntityInfo();
