@@ -1451,7 +1451,7 @@ namespace CoreSystems.Projectiles
                 }
             }
 
-            if (Info.AmmoDef.Const.Health > 0 && !Info.AmmoDef.Const.IsBeamWeapon && Info.Target.TargetEntity != null && oldTarget != Info.Target.TargetEntity)
+            if (Info.AmmoDef.Const.Health > 0 && !Info.AmmoDef.Const.IsBeamWeapon && (Info.Target.TargetState == Target.TargetStates.IsFake || Info.Target.TargetEntity != null && oldTarget != Info.Target.TargetEntity))
                 Info.Ai.Session.Projectiles.AddProjectileTargets(this);
 
             return true;
