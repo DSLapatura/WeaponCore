@@ -132,6 +132,8 @@ namespace CoreSystems
 
             if (!PlayersLoaded && KeenFuckery())
                 PlayersLoaded = true;
+
+            //Api.PbHackDetection();
         }
 
         internal void AddLosCheck(LosDebug debug)

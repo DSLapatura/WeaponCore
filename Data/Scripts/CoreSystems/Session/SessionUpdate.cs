@@ -12,6 +12,7 @@ using static CoreSystems.Support.WeaponDefinition.AmmoDef.TrajectoryDef.Guidance
 using static CoreSystems.ProtoWeaponState;
 using Sandbox.Game.Entities;
 using System;
+using System.Diagnostics;
 using SpaceEngineers.Game.ModAPI;
 
 namespace CoreSystems
@@ -271,9 +272,6 @@ namespace CoreSystems
                         if (trackWeapon == null)
                             continue;
 
-                        //if (topAi.LastAddToRotorTick >= cComp.LastAddTick)
-                        //    cComp.AddThings(topAi);
-
                         Ai.PlayerController pControl;
                         var hasControl = rootConstruct.ControllingPlayers.TryGetValue(PlayerId, out pControl) && pControl.ControlBlock == cComp.CoreEntity;
 
@@ -285,34 +283,6 @@ namespace CoreSystems
 
                         if (cComp.Controller.IsUnderControl)
                         {
-                            /*
-                            if (HandlesInput)
-                            {
-                                var on = cComp.Data.Repo.Values.State.Terminal == On;
-                                var mouseOn = UiInput.ClientInputState.MouseButtonLeft;
-                                if (on && !mouseOn || !on && mouseOn)
-                                {
-                                    if (IsServer)
-                                    {
-                                        cComp.Data.Repo.Values.State.Terminal = mouseOn ? On : Off;
-                                        if (MpActive)
-                                            SendState(cComp);
-                                    }
-                                    else
-                                    {
-                                        SendSetCompBoolRequest(cComp, on, PacketType.ControlOnOff);
-                                    }
-                                }
-                            }
-
-
-                            if (IsServer)
-                            {
-                                var on = cComp.Data.Repo.Values.State.Terminal == On;
-                                if (!cComp.ToolsActive && on || cComp.ToolsActive && !on)
-                                    cComp.ToggleTools(topAi, on);
-                            }
-                            */
                             cComp.RotorsMoving = true;
                             continue;
                         }
@@ -340,30 +310,6 @@ namespace CoreSystems
 
                         if (!cComp.TrackTarget(topAi, cComp.Platform.Control.BaseMap,  cComp.Platform.Control.OtherMap, true, ref desiredDirection))
                             continue;
-                        //cComp.CheckAction1(topAi);
-
-                        /*
-                        foreach (var s in topAi.Stators)
-                        {
-                            var top = s.TopGrid as MyCubeGrid;
-                            Ai otherAi;
-                            if (top != null && EntityAIs.TryGetValue(top, out otherAi))
-                            {
-                                if (otherAi == topAi)
-                                    continue;
-                                if (otherAi.RootFixedWeaponComp.TrackingWeapon.Target.TargetEntity != topAi.RootFixedWeaponComp.TrackingWeapon.Target.TargetEntity)
-                                {
-                                    topAi.RootFixedWeaponComp.TrackingWeapon.Target.CopyTo(otherAi.RootFixedWeaponComp.TrackingWeapon.Target, false);
-                                }
-                                otherAi.RootFixedWeaponComp.TrackingWeapon.MasterComp = cComp;
-                                otherAi.RootFixedWeaponComp.TrackingWeapon.RotorTurretTracking = true;
-                                otherAi.RotorCommandTick = Tick;
-                                otherAi.RotorManualControlId = hasControl ? PlayerId : otherAi.RotorManualControlId != -2 ? -1 : -2;
-
-                                cComp.TrackTarget(otherAi, cComp.Platform.Control.BaseMap, s, false, ref desiredDirection);
-                            }
-                        }
-                        */
                     }
 
                 }
@@ -392,6 +338,11 @@ namespace CoreSystems
                     var overrides = wValues.Set.Overrides;
                     var cMode = overrides.Control;
                     var sMode = overrides.ShootMode;
+                    var cComp = ai.RootFixedWeaponComp?.TrackingWeapon?.MasterComp != null;
+                    var focusTargets = cComp ? ai.RootFixedWeaponComp.TrackingWeapon.MasterComp.Data.Repo.Values.Set.Overrides.FocusTargets : overrides.FocusTargets;
+                    var grids = cComp ? ai.RootFixedWeaponComp.TrackingWeapon.MasterComp.Data.Repo.Values.Set.Overrides.Grids : overrides.Grids;
+                    var overRide = cComp ? ai.RootFixedWeaponComp.TrackingWeapon.MasterComp.Data.Repo.Values.Set.Overrides.Override : overrides.Override;
+                    var projectiles = cComp ? ai.RootFixedWeaponComp.TrackingWeapon.MasterComp.Data.Repo.Values.Set.Overrides.Projectiles : overrides.Projectiles;
 
                     if (HandlesInput) {
 
@@ -516,7 +467,7 @@ namespace CoreSystems
                         ///
                         /// Update Weapon Hud Info
                         /// 
-                        var addWeaponToHud = HandlesInput && (w.HeatPerc >= 0.01 || (w.ShowReload && (w.Loading || w.Reload.WaitForClient)) || (aConst.CanReportTargetStatus && wValues.Set.ReportTarget && !w.Target.HasTarget && overrides.Grids && (wComp.DetectOtherSignals && ai.DetectionInfo.OtherInRange || ai.DetectionInfo.PriorityInRange) && ai.DetectionInfo.TargetInRange(w)));
+                        var addWeaponToHud = HandlesInput && (w.HeatPerc >= 0.01 || (w.ShowReload && (w.Loading || w.Reload.WaitForClient)) || (aConst.CanReportTargetStatus && wValues.Set.ReportTarget && !w.Target.HasTarget && grids && (wComp.DetectOtherSignals && ai.DetectionInfo.OtherInRange || ai.DetectionInfo.PriorityInRange) && ai.DetectionInfo.TargetInRange(w)));
 
                         if (addWeaponToHud && !Session.Config.MinimalHud && ActiveControlBlock != null && ai.SubGridCache.Contains(ActiveControlBlock.CubeGrid)) {
                             HudUi.TexturesToAdd++;
@@ -542,7 +493,7 @@ namespace CoreSystems
                                     w.Target.Reset(Tick, States.Expired);
                                 else if (w.Target.TargetEntity == null && w.Target.Projectile == null && !wComp.FakeMode || wComp.ManualMode && (fakeTargets == null || Tick - fakeTargets.ManualTarget.LastUpdateTick > 120))
                                     w.Target.Reset(Tick, States.Expired, !wComp.ManualMode);
-                                else if (w.Target.TargetEntity != null && (wComp.UserControlled && !w.System.SuppressFire || w.Target.TargetEntity.MarkedForClose || Tick60 && (overrides.FocusTargets && !focus.ValidFocusTarget(w) || Tick60 && !overrides.FocusTargets && !w.TurretController && (aConst.RequiresTarget || w.RotorTurretTracking) && !w.TargetInRange(w.Target.TargetEntity))))
+                                else if (w.Target.TargetEntity != null && (wComp.UserControlled && !w.System.SuppressFire || w.Target.TargetEntity.MarkedForClose || Tick60 && (focusTargets && !focus.ValidFocusTarget(w) || Tick60 && !focusTargets && !w.TurretController && (aConst.RequiresTarget || w.RotorTurretTracking) && !w.TargetInRange(w.Target.TargetEntity))))
                                     w.Target.Reset(Tick, States.Expired);
                                 else if (w.Target.Projectile != null && (!ai.LiveProjectile.Contains(w.Target.Projectile) || w.Target.TargetState == TargetStates.IsProjectile && w.Target.Projectile.State != Projectile.ProjectileState.Alive)) 
                                 {
@@ -574,7 +525,7 @@ namespace CoreSystems
                         else if(w.Target.TargetEntity != null && w.Target.TargetEntity.MarkedForClose || w.DelayedTargetResetTick == Tick && w.TargetData.EntityId == 0 && w.Target.HasTarget)
                             w.Target.Reset(w.System.Session.Tick, States.ServerReset);
 
-                        w.ProjectilesNear = enemyProjectiles && w.System.TrackProjectile && overrides.Projectiles && w.Target.TargetState != TargetStates.IsProjectile && (w.Target.TargetChanged || QCount == w.ShortLoadId);
+                        w.ProjectilesNear = enemyProjectiles && w.System.TrackProjectile && projectiles && w.Target.TargetState != TargetStates.IsProjectile && (w.Target.TargetChanged || QCount == w.ShortLoadId);
 
                         if (wValues.State.Control == ControlMode.Camera && UiInput.MouseButtonPressed)
                             w.Target.TargetPos = Vector3D.Zero;
@@ -613,7 +564,7 @@ namespace CoreSystems
 
                         w.LockOnFireState = shootRequest && (w.System.LockOnFocus && !w.Comp.ModOverride) && construct.Data.Repo.FocusData.HasFocus && focus.FocusInRange(w);
                         var shotReady = canShoot && (shootRequest && (!w.System.LockOnFocus || w.Comp.ModOverride) || w.LockOnFireState);
-                        var shoot = shotReady && ai.CanShoot && (!aConst.RequiresTarget || w.Target.HasTarget || finish || overrides.Override || wComp.ShootManager.Signal == Weapon.ShootManager.Signals.Manual);
+                        var shoot = shotReady && ai.CanShoot && (!aConst.RequiresTarget || w.Target.HasTarget || finish || overRide || wComp.ShootManager.Signal == Weapon.ShootManager.Signals.Manual);
 
                         if (shoot) {
                             

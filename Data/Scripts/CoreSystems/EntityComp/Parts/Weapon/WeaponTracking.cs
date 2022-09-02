@@ -11,7 +11,7 @@ using VRage.Game.ModAPI;
 using VRage.Utils;
 using VRageMath;
 using static CoreSystems.Support.WeaponDefinition.HardPointDef;
-using static CoreSystems.Support.WeaponDefinition.AmmoDef.TrajectoryDef;
+using static CoreSystems.Support.WeaponDefinition.AmmoDef;
 using CollisionLayers = Sandbox.Engine.Physics.MyPhysics.CollisionLayers;
 
 namespace CoreSystems.Platform
@@ -418,7 +418,7 @@ namespace CoreSystems.Platform
             if (baseData.State.Control == ProtoWeaponState.ControlMode.Camera || w.Comp.FakeMode || session.IsServer && baseData.Set.Overrides.Repel && ai.DetectionInfo.DroneInRange && target.IsDrone && (session.AwakeCount == w.Acquire.SlotId || ai.Construct.RootAi.Construct.LastDroneTick == session.Tick) && Ai.SwitchToDrone(w))
                 return true;
 
-            var rayCheckTest = !w.Comp.Session.IsClient && targetLock && baseData.State.Control != ProtoWeaponState.ControlMode.Camera && (w.ActiveAmmoDef.AmmoDef.Trajectory.Guidance != GuidanceType.Smart && w.ActiveAmmoDef.AmmoDef.Trajectory.Guidance != GuidanceType.DroneAdvanced) && (!w.Casting && session.Tick - w.Comp.LastRayCastTick > 29 || w.System.Values.HardPoint.Other.MuzzleCheck && session.Tick - w.LastMuzzleCheck > 29);
+            var rayCheckTest = !w.Comp.Session.IsClient && targetLock && baseData.State.Control != ProtoWeaponState.ControlMode.Camera && (w.ActiveAmmoDef.AmmoDef.Trajectory.Guidance != TrajectoryDef.GuidanceType.Smart && w.ActiveAmmoDef.AmmoDef.Trajectory.Guidance != TrajectoryDef.GuidanceType.DroneAdvanced) && (!w.Casting && session.Tick - w.Comp.LastRayCastTick > 29 || w.System.Values.HardPoint.Other.MuzzleCheck && session.Tick - w.LastMuzzleCheck > 29);
 
             if (rayCheckTest && !w.RayCheckTest())
                 return false;

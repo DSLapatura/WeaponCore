@@ -10,7 +10,7 @@ using VRage.Game.ModAPI;
 using VRage.Utils;
 using VRageMath;
 using static CoreSystems.Support.DroneStatus;
-using static CoreSystems.Support.WeaponDefinition.AmmoDef.TrajectoryDef;
+using static CoreSystems.Support.WeaponDefinition.AmmoDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.EwarDef.EwarType;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.FragmentDef.TimedSpawnDef;
 
@@ -285,7 +285,7 @@ namespace CoreSystems.Projectiles
             MaxTrajectorySqr = Info.MaxTrajectory * Info.MaxTrajectory;
             if (!Info.IsFragment) StartSpeed = Info.ShooterVel;
 
-            MoveToAndActivate = LockedTarget && !aConst.IsBeamWeapon && guidance == GuidanceType.TravelTo;
+            MoveToAndActivate = LockedTarget && !aConst.IsBeamWeapon && guidance == TrajectoryDef.GuidanceType.TravelTo;
 
             if (MoveToAndActivate)
             {
@@ -1548,7 +1548,7 @@ namespace CoreSystems.Projectiles
             PrevTargetVel = targetVel;
             LockedTarget = true;
 
-            if (Info.AmmoDef.Trajectory.Guidance == GuidanceType.DetectFixed) return;
+            if (Info.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.DetectFixed) return;
             Vector3D.DistanceSquared(ref Info.Origin, ref predictedPos, out DistanceToTravelSqr);
             Info.DistanceTraveled = 0;
             Info.PrevDistanceTraveled = 0;
@@ -1569,7 +1569,7 @@ namespace CoreSystems.Projectiles
             }
             else Velocity = AccelVelocity;
 
-            if (Info.AmmoDef.Trajectory.Guidance == GuidanceType.DetectSmart)
+            if (Info.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.DetectSmart)
             {
 
                 IsSmart = true;
@@ -1695,7 +1695,7 @@ namespace CoreSystems.Projectiles
             LockedTarget = false;
             MineSeeking = true;
 
-            if (Info.AmmoDef.Trajectory.Guidance == GuidanceType.DetectSmart)
+            if (Info.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.DetectSmart)
             {
                 IsSmart = false;
                 SmartSlot = 0;

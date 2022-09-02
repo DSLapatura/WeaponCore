@@ -13,7 +13,7 @@ using VRageMath;
 using static CoreSystems.Support.WeaponDefinition;
 using static CoreSystems.Support.WeaponDefinition.TargetingDef;
 using static CoreSystems.Support.WeaponDefinition.TargetingDef.BlockTypes;
-using static CoreSystems.Support.WeaponDefinition.AmmoDef.TrajectoryDef;
+using static CoreSystems.Support.WeaponDefinition.AmmoDef;
 using static CoreSystems.WeaponRandomGenerator.RandomType;
 using static CoreSystems.WeaponRandomGenerator;
 using CollisionLayers = Sandbox.Engine.Physics.MyPhysics.CollisionLayers;
@@ -59,7 +59,7 @@ namespace CoreSystems.Support
                 if (Weapon.CanShootTarget(w, ref fakeInfo.WorldPosition, fakeInfo.LinearVelocity, fakeInfo.Acceleration, out predictedPos))
                 {
                     w.Target.SetFake(w.Comp.Session.Tick, predictedPos);
-                    if (w.ActiveAmmoDef.AmmoDef.Trajectory.Guidance != GuidanceType.None || !w.MuzzleHitSelf())
+                    if (w.ActiveAmmoDef.AmmoDef.Trajectory.Guidance != TrajectoryDef.GuidanceType.None || !w.MuzzleHitSelf())
                         targetType = TargetType.Other;
                 }
             }

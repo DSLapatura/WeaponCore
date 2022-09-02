@@ -829,7 +829,7 @@ namespace CoreSystems
                 scaledDamage *= fallOffMultipler;
             }
 
-            if (scaledDamage < objHp) info.BaseDamagePool = 0;
+            if (scaledDamage <= objHp) info.BaseDamagePool = 0;
             else
             {
                 var damageLeft = scaledDamage - objHp;

@@ -3,7 +3,7 @@ using Sandbox.Game.Entities;
 using VRage.Game;
 using VRageMath;
 using static CoreSystems.Support.NewProjectile;
-using static CoreSystems.Support.WeaponDefinition.AmmoDef.TrajectoryDef;
+using static CoreSystems.Support.WeaponDefinition.AmmoDef;
 
 namespace CoreSystems.Projectiles
 {
@@ -206,7 +206,7 @@ namespace CoreSystems.Projectiles
 
                         var dumbAdd = false;
 
-                        var notSmart = ammoDef.Trajectory.Guidance == GuidanceType.None || overrides.Override && p.HadTarget == Projectile.HadTargetState.None;
+                        var notSmart = ammoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.None || overrides.Override && p.HadTarget == Projectile.HadTargetState.None;
                         if (notSmart)
                         {
                             if (Vector3.Dot(info.Direction, info.Origin - targetAi.TopEntity.PositionComp.WorldMatrixRef.Translation) < 0)

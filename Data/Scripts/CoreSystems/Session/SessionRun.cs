@@ -53,6 +53,7 @@ namespace CoreSystems
                     return;
 
 
+
                 if (!DelayedHandWeaponsSpawn.IsEmpty)
                     InitDelayedHandWeapons();
 

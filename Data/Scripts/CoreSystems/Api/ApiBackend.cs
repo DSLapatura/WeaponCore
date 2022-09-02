@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections;
+using System.Collections.Immutable;
 using CoreSystems.Platform;
 using CoreSystems.Projectiles;
 using CoreSystems.Support;
@@ -23,8 +25,13 @@ namespace CoreSystems.Api
     {
         private readonly Session _session;
         internal readonly Dictionary<string, Delegate> ModApiMethods;
-        internal IReadOnlyDictionary<string, Delegate> PbApiMethods;
-        
+        internal readonly Dictionary<string, Delegate> PbApiMethods;
+        //private readonly HashSet<Delegate> _delegateCache = new HashSet<Delegate>();
+        //private readonly Dictionary<string, Delegate> _pbDictBackup;
+        private readonly ImmutableDictionary<string, Delegate> _safeDictionary;
+
+        //private bool _wasCorrupted;
+        //private uint _lastChecked;
         internal ApiBackend(Session session)
         {
             _session = session;
@@ -92,12 +99,7 @@ namespace CoreSystems.Api
                 ["SpawnPhantom"] = new Func<string, uint, bool, long, string, int, float?, MyEntity, bool, bool, long, bool, MyEntity>(SpawnPhantom),
                 ["ToggleDamageEvents"] = new Action<Dictionary<MyEntity, MyTuple<Vector3D, Dictionary<MyEntity, List<MyTuple<int, float, Vector3I>>>>>>(ToggleDamageEvents),
             };
-        }
-
-
-        internal void PbInit()
-        {
-            PbApiMethods = new Dictionary<string, Delegate>
+            PbApiMethods = new Dictionary<string, Delegate> // keen bad... ReadOnlyDictionary prohibited 
             {
                 ["GetCoreWeapons"] = new Action<ICollection<MyDefinitionId>>(GetCoreWeapons),
                 ["GetCoreStaticLaunchers"] = new Action<ICollection<MyDefinitionId>>(GetCoreStaticLaunchers),
@@ -142,11 +144,56 @@ namespace CoreSystems.Api
                 ["GetWeaponScope"] = new Func<IMyTerminalBlock, int, MyTuple<Vector3D, Vector3D>>(PbGetWeaponScope),
                 ["IsInRange"] = new Func<IMyTerminalBlock, MyTuple<bool, bool>>(PbIsInRange),
             };
+
+            var builder = ImmutableDictionary.CreateBuilder<string, Delegate>();
+
+            foreach (var whyMe in PbApiMethods)
+            {
+                builder.Add(whyMe.Key, whyMe.Value);
+                //_delegateCache.Add(whyMe.Value);
+            }
+
+            _safeDictionary = builder.ToImmutable();
+
+            //_pbDictBackup = new Dictionary<string, Delegate>(PbApiMethods);
+        }
+
+        /*
+        internal void PbHackDetection()
+        {
+            if (_wasCorrupted || _session.Tick - _lastChecked > 600)
+            {
+                _lastChecked = _session.Tick;
+                foreach (var del in PbApiMethods.Values)
+                {
+                    if (_delegateCache.Contains(del)) continue;
+
+                    RepairPb();
+
+                    _wasCorrupted = true;
+                    break;
+                }
+            }
+        }
+
+
+        internal void RepairPb()
+        {
+            PbApiMethods.Clear();
+            foreach (var pair in _pbDictBackup)
+                PbApiMethods[pair.Key] = pair.Value;
+
+            Log.Line($"Pb dictionary was hacked");
+        }
+        */
+        internal void PbInit()
+        {
             var pb = MyAPIGateway.TerminalControls.CreateProperty<IReadOnlyDictionary<string, Delegate>, Sandbox.ModAPI.IMyTerminalBlock>("WcPbAPI");
-            pb.Getter = b => PbApiMethods;
+            pb.Getter = b => _safeDictionary;
             MyAPIGateway.TerminalControls.AddControl<IMyProgrammableBlock>(pb);
             _session.PbApiInited = true;
         }
+
 
         private void GetObstructions(IMyEntity shooter, ICollection<IMyEntity> collection)
         {

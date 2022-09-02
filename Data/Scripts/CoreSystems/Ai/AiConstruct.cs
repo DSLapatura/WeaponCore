@@ -9,6 +9,8 @@ using VRage.ModAPI;
 using VRage.Utils;
 using VRageMath;
 using static CoreSystems.FocusData;
+using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
+
 namespace CoreSystems.Support
 {
     public partial class Ai
@@ -764,7 +766,8 @@ namespace CoreSystems.Support
                     
                     if (rangeToTarget <= maxRangeSqr && rangeToTarget >= minRangeSqr)
                     {
-                        var overrides = w.Comp.Data.Repo.Values.Set.Overrides;
+                        var overrides = w.Comp.Ai.RootFixedWeaponComp?.TrackingWeapon?.MasterComp != null ? w.Comp.Ai.RootFixedWeaponComp.TrackingWeapon.MasterComp.Data.Repo.Values.Set.Overrides : w.Comp.Data.Repo.Values.Set.Overrides;
+
                         if (overrides.FocusSubSystem && overrides.SubSystem != WeaponDefinition.TargetingDef.BlockTypes.Any && block != null && !w.ValidSubSystemTarget(block, overrides.SubSystem))
                             return false;
 
