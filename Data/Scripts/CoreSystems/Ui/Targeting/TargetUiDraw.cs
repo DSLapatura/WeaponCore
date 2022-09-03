@@ -98,7 +98,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                     dotpos.X *= (float)(screenScale * _session.AspectRatio);
                     dotpos.Y *= (float)screenScale;
                     screenPos = Vector3D.Transform(new Vector3D(dotpos.X, dotpos.Y, -0.1), s.CameraMatrix);
-                    MyTransparentGeometry.AddBillboardOriented(_targetCircle, _reticleColor, screenPos, s.CameraMatrix.Left, s.CameraMatrix.Up, (float)screenScale * 0.075f, BlendTypeEnum.PostPP);
+                    var radius = (float)(screenScale * MarkerSize());
+                    MyTransparentGeometry.AddBillboardOriented(_targetCircle, _reticleColor, screenPos, s.CameraMatrix.Left, s.CameraMatrix.Up, radius, BlendTypeEnum.PostPP);
                 }
 
                 if (_3RdPersonDraw == ThirdPersonModes.DotTarget)
@@ -436,9 +437,55 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                 dotpos.X *= (float)(screenScale * _session.AspectRatio);
                 dotpos.Y *= (float)screenScale;
                 screenPos = Vector3D.Transform(new Vector3D(dotpos.X, dotpos.Y, -0.1), s.CameraMatrix);
-                MyTransparentGeometry.AddBillboardOriented(_targetCircle, Color.White, screenPos, s.CameraMatrix.Left, s.CameraMatrix.Up, (float)screenScale * 0.075f, BlendTypeEnum.PostPP);
 
+                var radius = (float) (screenScale * MarkerSize());
+                MyTransparentGeometry.AddBillboardOriented(_targetCircle, Color.White, screenPos, s.CameraMatrix.Left, s.CameraMatrix.Up, radius, BlendTypeEnum.PostPP);
             }
+        }
+
+        internal void SetHit(List<HitEntity> infoHitList)
+        {
+            var focus = _session.TrackingAi.Construct.Data.Repo.FocusData;
+
+            MyEntity target;
+            if (focus.Target > 0 && MyEntities.TryGetEntityById(focus.Target, out target) && CheckEntityHit(target, infoHitList))
+                    return;
+
+            if (LastSelectedEntity != null)
+                CheckEntityHit(LastSelectedEntity, infoHitList);
+        }
+
+        private bool CheckEntityHit(MyEntity ent, List<HitEntity> infoHitList)
+        {
+            var grid = ent as MyCubeGrid;
+
+            foreach (var hitEnt in infoHitList)
+            {
+                var hitGrid = hitEnt.Entity as MyCubeGrid;
+                if (hitEnt.Entity == ent || grid != null && hitGrid != null && grid.IsSameConstructAs(hitGrid) || hitEnt.EventType == HitEntity.Type.Shield && grid != null && grid.IsSameConstructAs(_session.SApi.MatchEntToShieldFast(hitGrid, true).CubeGrid))
+                {
+                    HitIncrease = FullPulseSize - CircleSize;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private double MarkerSize()
+        {
+            var increase = HitIncrease;
+
+            if (HitIncrease > PulseSize)
+            {
+                HitIncrease = !MyUtils.IsZero(HitIncrease - PulseSize) ? HitIncrease - PulseSize : 0d;
+            }
+            else
+            {
+                HitIncrease = 0d;
+            }
+
+            return CircleSize + increase;
         }
 
         private bool TargetTextStatus(int slot, TargetStatus targetState, float scale, Vector2 localOffset, bool shielded, bool details, out string textStr, out Vector2 textOffset)

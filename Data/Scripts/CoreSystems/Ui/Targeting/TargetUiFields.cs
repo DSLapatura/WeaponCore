@@ -16,6 +16,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
         internal Vector3D AimDirection;
         internal double PointerAdjScale = 0.05f;
         internal double AdjScale;
+        internal double HitIncrease;
         internal bool DrawReticle;
         internal uint ReticleOnSelfTick;
         internal uint MasterUpdateTick;
@@ -40,7 +41,9 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
         private const string ActiveShield = "ActiveShield";
         private const string InactiveNoShield = "InactiveNoShield";
         private const string InactiveShield = "InactiveShield";
-
+        private const double CircleSize = 0.075d;
+        private const double FullPulseSize = 0.1d;
+        private const double PulseSize = 0.003125d;
 
         private readonly MyStringId _reticle = MyStringId.GetOrCompute("TargetReticle");
         private readonly MyStringId _targetCircle = MyStringId.GetOrCompute("DS_ActiveTarget");

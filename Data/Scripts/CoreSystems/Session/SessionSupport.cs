@@ -21,6 +21,7 @@ using VRage.Utils;
 using VRageMath;
 using static CoreSystems.Support.CoreComponent;
 using static CoreSystems.Support.CoreComponent.Trigger;
+
 namespace CoreSystems
 {
     public partial class Session
