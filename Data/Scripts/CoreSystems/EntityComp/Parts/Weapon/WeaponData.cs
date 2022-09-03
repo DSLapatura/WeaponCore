@@ -60,6 +60,7 @@ namespace CoreSystems.Platform
                             w.TargetData = Repo.Values.Targets[i];
                             w.TargetData.WeaponRandom = new WeaponRandomGenerator();
                             w.TargetData.WeaponRandom.Init(w);
+                            w.XorRnd = new XorShiftRandomStruct((ulong) w.TargetData.WeaponRandom.CurrentSeed);
                         }
                         else
                         {
@@ -68,6 +69,7 @@ namespace CoreSystems.Platform
                             w.ClientEndId = w.Reload.EndId;
                             w.TargetData = Repo.Values.Targets[i];
                             w.TargetData.WeaponRandom.Init(w);
+                            w.XorRnd = new XorShiftRandomStruct((ulong)w.TargetData.WeaponRandom.CurrentSeed);
 
 
                             if (w.Reload.AmmoTypeId >= w.System.AmmoTypes.Length)

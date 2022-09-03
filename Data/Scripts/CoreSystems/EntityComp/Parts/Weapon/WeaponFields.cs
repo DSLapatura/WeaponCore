@@ -358,10 +358,8 @@ namespace CoreSystems.Platform
                         if (modifiesCore && (pa.HasMovement || pa.MovesPivotPos))
                         {
                             Comp.AnimationsModifyCoreParts = true;
-                            if (!System.Session.DedicatedServer &&
-                                System.Session.PerformanceWarning.Add(Comp.SubTypeId))
-                                Log.Line(
-                                    $"{Comp.SubtypeName} - {System.PartName} - Animation modifies core subparts, performance impact");
+                            if (!System.Session.DedicatedServer && System.Session.PerformanceWarning.Add(Comp.SubTypeId))
+                                Log.Line($"{Comp.SubtypeName} - {System.PartName} - Animation modifies core subparts, performance impact");
                         }
 
                         comp.AllAnimations.Add(pa);

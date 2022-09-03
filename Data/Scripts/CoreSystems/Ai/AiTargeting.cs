@@ -651,6 +651,7 @@ namespace CoreSystems.Support
 
             if (totalBlocks < lastBlocks) lastBlocks = totalBlocks;
             var deck = GetDeck(ref target.BlockDeck, ref target.BlockPrevDeckLen, 0, totalBlocks, topBlocks, ref xRnd);
+
             var physics = system.Session.Physics;
             var iGrid = topEnt as IMyCubeGrid;
             var gridPhysics = iGrid?.Physics;
