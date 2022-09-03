@@ -9,6 +9,7 @@ using VRage.Game;
 using VRage.Game.Entity;
 using VRage.Utils;
 using VRageMath;
+using static CoreSystems.Support.Ai;
 using BlendTypeEnum = VRageRender.MyBillboard.BlendTypeEnum;
 
 namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
@@ -462,11 +463,21 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             foreach (var hitEnt in infoHitList)
             {
                 var hitGrid = hitEnt.Entity as MyCubeGrid;
-                if (hitEnt.Entity == ent || grid != null && hitGrid != null && grid.IsSameConstructAs(hitGrid) || hitEnt.EventType == HitEntity.Type.Shield && grid != null && grid.IsSameConstructAs(_session.SApi.MatchEntToShieldFast(hitGrid, true).CubeGrid))
+                var bothGrids = grid != null && hitGrid != null;
+
+                var check = hitEnt.Entity == ent || bothGrids && grid.IsSameConstructAs(hitGrid);
+
+                if (!check && hitEnt.EventType == HitEntity.Type.Shield && bothGrids)
                 {
-                    HitIncrease = FullPulseSize - CircleSize;
-                    return true;
+                    var shield = _session.SApi.MatchEntToShieldFast(hitGrid, true); 
+                    if (shield != null)
+                        check = grid.IsSameConstructAs(shield.CubeGrid);
                 }
+
+                if (!check) continue;
+
+                HitIncrease = FullPulseSize - CircleSize;
+                return true;
             }
 
             return false;
