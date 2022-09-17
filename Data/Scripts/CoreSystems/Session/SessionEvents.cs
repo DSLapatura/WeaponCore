@@ -63,8 +63,14 @@ namespace CoreSystems
                             DelayedHandWeaponsSpawn.Enqueue(rifle);
                             return;
                         }
-                        var cubeType = cube != null && (VanillaIds.ContainsKey(cube.BlockDefinition.Id) || PartPlatforms.ContainsKey(cube.BlockDefinition.Id)) || turretController != null;
+
+                        var validVanilla = cube != null && VanillaIds.ContainsKey(cube.BlockDefinition.Id);
+                        if (validVanilla && cube.BlockDefinition.Id.SubtypeId.String == "AutoCannonTurret" && ((IMyModel)cube.Model).AssetName.StartsWith("Models"))
+                            return;
+
+                        var cubeType = cube != null && (validVanilla || PartPlatforms.ContainsKey(cube.BlockDefinition.Id)) || turretController != null;
                         var validType = cubeType;
+
                         if (!validType)
                         {
                             if (turret != null)

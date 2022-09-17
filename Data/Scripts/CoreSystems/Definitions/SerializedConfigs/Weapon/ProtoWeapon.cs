@@ -31,27 +31,34 @@ namespace CoreSystems
             if (Values.Set.Overrides.BurstCount <= 0)
                 Values.Set.Overrides.BurstCount = 1;
 
-            for (int i = 0; i < Ammos.Length; i++)
+            for (int i = 0; i < comp.Collection.Count; i++)
             {
-                var ws = Values.State.Weapons[i];
-                var wr = Values.Reloads[i];
-                var wa = Ammos[i];
-                
                 var we = comp.Collection[i];
 
                 if (comp.DefaultReloads != 0)
                     we.Reload.CurrentMags = comp.DefaultReloads;
-                
-                ws.Heat = 0;
-                ws.Overheated = false;
+            }
 
-
-                if (wr.AmmoTypeId >= we.System.AmmoTypes.Length)
-                    wr.AmmoTypeId = 0;
-
+            for (int i = 0; i < Values.Reloads.Length; i++)
+            {
+                var wr = Values.Reloads[i];
                 wr.StartId = 0;
                 wr.WaitForClient = false;
+                for (int j = 0; j < comp.Collection.Count; j++)
+                {
+                    var we = comp.Collection[j];
+                    if (wr.AmmoTypeId >= we.System.AmmoTypes.Length)
+                        wr.AmmoTypeId = 0;
+                }
             }
+
+            for (int i = 0; i < Values.State.Weapons.Length; i++)
+            {
+                var ws = Values.State.Weapons[i];
+                ws.Heat = 0;
+                ws.Overheated = false;
+            }
+
             ResetCompBaseRevisions();
         }
 
@@ -59,11 +66,13 @@ namespace CoreSystems
         {
             Values.Revision = 0;
             for (int i = 0; i < Ammos.Length; i++)
-            {
-                Values.Targets[i].Revision = 0;
-                Values.Reloads[i].Revision = 0;
                 Ammos[i].Revision = 0;
-            }
+
+            for (int i = 0; i < Values.Targets.Length; i++)
+                Values.Targets[i].Revision = 0;
+
+            for (int i = 0; i < Values.Reloads.Length; i++)
+                Values.Reloads[i].Revision = 0;
         }
     }
 
