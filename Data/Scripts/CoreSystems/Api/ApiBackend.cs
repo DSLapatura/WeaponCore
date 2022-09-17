@@ -1,4 +1,4 @@
-﻿using System;
+using System; 
 using System.Collections.Generic;
 using System.Collections;
 using System.Collections.Immutable;
@@ -98,6 +98,12 @@ namespace CoreSystems.Api
                 ["SetFocusTarget"] = new Func<MyEntity, MyEntity, int, bool>(SetPhantomFocusTarget),
                 ["SpawnPhantom"] = new Func<string, uint, bool, long, string, int, float?, MyEntity, bool, bool, long, bool, MyEntity>(SpawnPhantom),
                 ["ToggleDamageEvents"] = new Action<Dictionary<MyEntity, MyTuple<Vector3D, Dictionary<MyEntity, List<MyTuple<int, float, Vector3I>>>>>>(ToggleDamageEvents),
+
+                //Hakerman's Beam Logic
+                ["IsWeaponShooting"] = new Func<IMyTerminalBlock, int, bool>(IsWeaponShooting),
+                ["GetShotsFired"] = new Func<IMyTerminalBlock, int, int>(GetShotsFired),
+                ["GetMuzzles"] = new Action<IMyTerminalBlock, int, List<MyTuple<Vector3D, Vector3D>>>(GetMuzzles),
+
             };
             PbApiMethods = new Dictionary<string, Delegate> // keen bad... ReadOnlyDictionary prohibited 
             {
@@ -1232,7 +1238,44 @@ namespace CoreSystems.Api
         private void ToggleDamageEvents(Dictionary<MyEntity, MyTuple<Vector3D, Dictionary<MyEntity, List<MyTuple<int, float, Vector3I>>>>> obj)
         {
         }
+        
+        
 
+        private bool IsWeaponShooting(IMyTerminalBlock weaponBlock, int weaponId)
+        {
+            Weapon.WeaponComponent comp = weaponBlock.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (weaponId < comp.Collection.Count)
+            {
+                var w = comp.Collection[weaponId];
 
+                return w.IsShooting;
+            }
+            return false;
+        }
+
+        private int GetShotsFired(IMyTerminalBlock weaponBlock, int weaponId)
+        {
+            Weapon.WeaponComponent comp = weaponBlock.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (weaponId < comp.Collection.Count)
+            {
+                var w = comp.Collection[weaponId];
+
+                return w.ShotsFired;
+            }
+            return -1;
+        }
+
+        private void GetMuzzles(IMyTerminalBlock weaponBlock, int weaponId, List<MyTuple<Vector3D, Vector3D>> output)
+        {
+            Weapon.WeaponComponent comp = weaponBlock.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (weaponId < comp.Collection.Count)
+            {
+                var w = comp.Collection[weaponId];
+                foreach (var m in w.Dummies)
+                {
+                    output.Add(new MyTuple<Vector3D, Vector3D>(m.Info.Position, m.Info.Direction));
+                }
+            }
+        }
     }
 }
