@@ -206,6 +206,11 @@ namespace CoreSystems.Api
             AssignMethod(delegates, "SpawnPhantom", ref _spawnPhantom);
             AssignMethod(delegates, "SetFocusTarget", ref _setPhantomFocusTarget);
 
+            //Hakerman's Beam Logic
+            AssignMethod(delegates, "IsWeaponShooting", ref _isWeaponShooting);
+            AssignMethod(delegates, "GetShotsFired", ref _getShotsFired);
+            AssignMethod(delegates, "GetMuzzles", ref _getMuzzles);
+
             if (getWeaponDefinitions)
             {
                 var byteArrays = new List<byte[]>();
