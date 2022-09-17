@@ -98,6 +98,11 @@ namespace CoreSystems.Api
                 ["SetFocusTarget"] = new Func<MyEntity, MyEntity, int, bool>(SetPhantomFocusTarget),
                 ["SpawnPhantom"] = new Func<string, uint, bool, long, string, int, float?, MyEntity, bool, bool, long, bool, MyEntity>(SpawnPhantom),
                 ["ToggleDamageEvents"] = new Action<Dictionary<MyEntity, MyTuple<Vector3D, Dictionary<MyEntity, List<MyTuple<int, float, Vector3I>>>>>>(ToggleDamageEvents),
+
+                //Hakerman's Beam Logic
+                ["IsWeaponShooting"] = new Func<IMyTerminalBlock, int, bool>(IsWeaponShooting),
+                ["GetShotsFired"] = new Func<IMyTerminalBlock, int, int>(GetShotsFired),
+                ["GetMuzzleInfo"] = new Action<IMyTerminalBlock, int, List<MyTuple<Vector3D, Vector3D, Vector3D, Vector3D, MatrixD, MatrixD>>>(GetMuzzleInfo),
             };
             PbApiMethods = new Dictionary<string, Delegate> // keen bad... ReadOnlyDictionary prohibited 
             {
@@ -1233,6 +1238,54 @@ namespace CoreSystems.Api
         {
         }
 
+        ///
+        /// Hakerman;s Beam Logic
+        /// 
+        
+        private bool IsWeaponShooting(IMyTerminalBlock weaponBlock, int weaponId)
+        {
+            Weapon.WeaponComponent comp = weaponBlock.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (weaponId < comp.Collection.Count)
+            {
+                var w = comp.Collection[weaponId];
+
+                return w.IsShooting;
+            }
+            return false;
+        }
+
+        private int GetShotsFired(IMyTerminalBlock weaponBlock, int weaponId)
+        {
+            Weapon.WeaponComponent comp = weaponBlock.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (weaponId < comp.Collection.Count)
+            {
+                var w = comp.Collection[weaponId];
+
+                return w.ShotsFired;
+            }
+            return -1;
+        }
+
+        /// returns: A list that contains every muzzle's Position, LocalPosition, Direction, UpDirection, ParentMatrix, DummyMatrix
+        private void GetMuzzleInfo(IMyTerminalBlock weaponBlock, int weaponId, List<MyTuple<Vector3D, Vector3D, Vector3D, Vector3D, MatrixD, MatrixD>> output)
+        {
+            Weapon.WeaponComponent comp = weaponBlock.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (weaponId < comp.Collection.Count)
+            {
+                var w = comp.Collection[weaponId];
+                foreach (var m in w.Dummies)
+                {
+                    output.Add(new MyTuple<Vector3D, Vector3D, Vector3D, Vector3D, MatrixD, MatrixD>(
+                        m.Info.Position,
+                        m.Info.LocalPosition,
+                        m.Info.Direction,
+                        m.Info.UpDirection,
+                        m.Info.ParentMatrix,
+                        m.Info.DummyMatrix
+                        ));
+                }
+            }
+        }
 
     }
 }
