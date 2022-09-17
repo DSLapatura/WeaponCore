@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using ProtoBuf;
 using Sandbox.ModAPI;
@@ -12,7 +12,7 @@ namespace CoreSystems.Api
     /// <summary>
     /// https://github.com/sstixrud/CoreSystems/blob/master/BaseData/Scripts/CoreSystems/Api/CoreSystemsApiBlocks.cs
     /// </summary>
-    public partial class WcApi 
+    public partial class WcApi
     {
         private Func<IMyTerminalBlock, IDictionary<string, int>, bool> _getBlockWeaponMap;
         private Func<IMyTerminalBlock, int, MyTuple<bool, bool, bool, IMyEntity>> _getWeaponTarget;
@@ -41,6 +41,11 @@ namespace CoreSystems.Api
         private Func<IMyTerminalBlock, int, Matrix> _getWeaponElevationMatrix;
         private Func<IMyTerminalBlock, IMyEntity, bool, bool, bool> _isTargetValid;
         private Func<IMyTerminalBlock, int, MyTuple<Vector3D, Vector3D>> _getWeaponScope;
+
+        private Func<IMyTerminalBlock, int, bool> _isWeaponShooting;
+        private Func<IMyTerminalBlock, int, int> _getShotsFired;
+        private Action<IMyTerminalBlock, int, List<MyTuple<Vector3D, Vector3D>>> _getMuzzles;
+
 
         public bool GetBlockWeaponMap(IMyTerminalBlock weaponBlock, IDictionary<string, int> collection) =>
             _getBlockWeaponMap?.Invoke(weaponBlock, collection) ?? false;
@@ -110,5 +115,34 @@ namespace CoreSystems.Api
         public bool IsTargetValid(IMyTerminalBlock weapon, IMyEntity target, bool onlyThreats, bool checkRelations) =>
             _isTargetValid?.Invoke(weapon, target, onlyThreats, checkRelations) ?? false;
 
+
+
+
+        /// <summary>
+        /// Gets whether the weapon is shooting, used by Hakerman's Beam Logic
+        /// Unexpected behavior may occur when using this method
+        /// </summary>
+        /// <param name="weaponBlock"></param>
+        /// <param name="weaponId"></param>
+        /// <returns></returns>
+        internal bool IsWeaponShooting(IMyTerminalBlock weaponBlock, int weaponId) => _isWeaponShooting?.Invoke(weaponBlock, weaponId) ?? false;
+
+        /// <summary>
+        /// Gets how many shots the weapon fired, used by Hakerman's Beam Logic
+        /// Unexpected behavior may occur when using this method
+        /// </summary>
+        /// <param name="weaponBlock"></param>
+        /// <param name="weaponId"></param>
+        /// <returns></returns>
+        internal int GetShotsFired(IMyTerminalBlock weaponBlock, int weaponId) => _getShotsFired?.Invoke(weaponBlock, weaponId) ?? -1;
+
+        /// <summary>
+        /// Gets the weapon's muzzles, used by Hakerman's Beam Logic
+        /// Unexpected behavior may occur when using this method
+        /// </summary>
+        /// <param name="weaponBlock"></param>
+        /// <param name="weaponId"></param>
+        /// <returns></returns>
+        internal void GetMuzzles(IMyTerminalBlock weaponBlock, int weaponId, List<MyTuple<Vector3D, Vector3D>> output) => _getMuzzles?.Invoke(weaponBlock, weaponId, output);
     }
 }
