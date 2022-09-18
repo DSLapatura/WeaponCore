@@ -214,11 +214,11 @@ namespace CoreSystems
             GunnerBlackList = true;
             ActiveControlBlock = cube;
             var controlStringLeft = MyAPIGateway.Input.GetControl(MyMouseButtonsEnum.Left).GetGameControlEnum().String;
-            MyVisualScriptLogicProvider.SetPlayerInputBlacklistState(controlStringLeft, PlayerId);
+            CustomBlackListRequestBecauseKeenIsBrainDead(controlStringLeft, PlayerId);
             var controlStringRight = MyAPIGateway.Input.GetControl(MyMouseButtonsEnum.Right).GetGameControlEnum().String;
-            MyVisualScriptLogicProvider.SetPlayerInputBlacklistState(controlStringRight, PlayerId);
+            CustomBlackListRequestBecauseKeenIsBrainDead(controlStringRight, PlayerId);
             var controlStringMenu = MyAPIGateway.Input.GetControl(UiInput.MouseButtonMenu).GetGameControlEnum().String;
-            MyVisualScriptLogicProvider.SetPlayerInputBlacklistState(controlStringMenu, PlayerId);
+            CustomBlackListRequestBecauseKeenIsBrainDead(controlStringMenu, PlayerId);
         }
 
         internal void GunnerRelease(MyCubeBlock cube)
@@ -226,11 +226,11 @@ namespace CoreSystems
             GunnerBlackList = false;
             ActiveControlBlock = null;
             var controlStringLeft = MyAPIGateway.Input.GetControl(MyMouseButtonsEnum.Left).GetGameControlEnum().String;
-            MyVisualScriptLogicProvider.SetPlayerInputBlacklistState(controlStringLeft, PlayerId, true);
+            CustomBlackListRequestBecauseKeenIsBrainDead(controlStringLeft, PlayerId, true);
             var controlStringRight = MyAPIGateway.Input.GetControl(MyMouseButtonsEnum.Right).GetGameControlEnum().String;
-            MyVisualScriptLogicProvider.SetPlayerInputBlacklistState(controlStringRight, PlayerId, true);
+            CustomBlackListRequestBecauseKeenIsBrainDead(controlStringRight, PlayerId, true);
             var controlStringMenu = MyAPIGateway.Input.GetControl(UiInput.MouseButtonMenu).GetGameControlEnum().String;
-            MyVisualScriptLogicProvider.SetPlayerInputBlacklistState(controlStringMenu, PlayerId, true);
+            CustomBlackListRequestBecauseKeenIsBrainDead(controlStringMenu, PlayerId, true);
         }
 
         internal void EntityControlUpdate()

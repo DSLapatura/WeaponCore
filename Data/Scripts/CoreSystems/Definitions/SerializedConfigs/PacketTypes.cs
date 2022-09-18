@@ -58,6 +58,7 @@ namespace CoreSystems
         ControlState,
         ForceReload,
         ControlOnOff,
+        BlackListRequest,
     }
 
     #region packets
@@ -98,6 +99,7 @@ namespace CoreSystems
     [ProtoInclude(38, typeof(ULongUpdatePacket))]
     [ProtoInclude(39, typeof(ControlCompPacket))]
     [ProtoInclude(40, typeof(ControlStatePacket))]
+    [ProtoInclude(41, typeof(BlackListPacket))]
 
     public class Packet
     {
@@ -381,6 +383,20 @@ namespace CoreSystems
         {
             base.CleanUp();
             Data = null;
+        }
+    }
+
+    [ProtoContract]
+    public class BlackListPacket : Packet
+    {
+        [ProtoMember(1)] internal string Data;
+        [ProtoMember(2)] internal bool Enable;
+
+        public override void CleanUp()
+        {
+            base.CleanUp();
+            Data = null;
+            Enable = false;
         }
     }
 

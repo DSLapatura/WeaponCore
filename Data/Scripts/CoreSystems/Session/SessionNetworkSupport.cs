@@ -1313,6 +1313,21 @@ namespace CoreSystems
             }
         }
 
+        internal void SendBlackListRequest(string key, bool enable)
+        {
+            if (IsClient)
+            {
+                PacketsToServer.Add(new BlackListPacket
+                {
+                    EntityId = 0,
+                    SenderId = MultiplayerId,
+                    PType = PacketType.BlackListRequest,
+                    Data = key,
+                    Enable = enable,
+                });
+            }
+        }
+
         internal void RequestToggle(CoreComponent comp, PacketType type)
         {
             if (IsClient)

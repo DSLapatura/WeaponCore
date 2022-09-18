@@ -6,6 +6,7 @@ using CoreSystems.Support;
 using ParallelTasks;
 using Sandbox.Common.ObjectBuilders;
 using Sandbox.Definitions;
+using Sandbox.Game;
 using Sandbox.Game.Entities;
 using Sandbox.Game.EntityComponents;
 using Sandbox.ModAPI;
@@ -559,6 +560,14 @@ namespace CoreSystems
             }
             _pressedKeys.Clear();
             _pressedButtons.Clear();
+        }
+
+        internal void CustomBlackListRequestBecauseKeenIsBrainDead(string key, long playerId, bool enable = false)
+        {
+            if (IsServer)
+                MyVisualScriptLogicProvider.SetPlayerInputBlacklistState(key, playerId, enable);
+            else
+                SendBlackListRequest(key, enable);
         }
 
         private void ChatMessageSet(string message, ref bool sendToOthers)

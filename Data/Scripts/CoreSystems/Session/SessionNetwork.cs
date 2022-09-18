@@ -276,6 +276,11 @@ namespace CoreSystems
                     ServerForceReload(packetObj);
                     break;
                 }
+                case PacketType.BlackListRequest:
+                {
+                    ServerBlackList(packetObj);
+                    break;
+                }
                 case PacketType.ShootSync:
                 {
                     ServerShootSyncs(packetObj);

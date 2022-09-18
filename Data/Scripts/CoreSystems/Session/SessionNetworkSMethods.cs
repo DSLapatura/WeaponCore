@@ -419,6 +419,24 @@ namespace CoreSystems
             return true;
         }
 
+        private bool ServerBlackList(PacketObj data)
+        {
+            var packet = data.Packet;
+            var readyPacket = (BlackListPacket)packet;
+
+
+            if (string.IsNullOrEmpty(readyPacket.Data)) return Error(data, Msg("null blacklist string", string.IsNullOrEmpty(readyPacket.Data)));
+
+            long playerId;
+            if (SteamToPlayer.TryGetValue(packet.SenderId, out playerId))
+            { 
+                CustomBlackListRequestBecauseKeenIsBrainDead(readyPacket.Data, playerId, readyPacket.Enable);
+                data.Report.PacketValid = true;
+            }
+
+            return true;
+        }
+
         private bool ServerShootSyncs(PacketObj data)
         {
 

@@ -312,42 +312,42 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
 
                 if (upKey != null)
                 {
-                    MyVisualScriptLogicProvider.SetPlayerInputBlacklistState(upKey.GetGameControlEnum().String, _session.PlayerId, !activate);
+                    _session.CustomBlackListRequestBecauseKeenIsBrainDead(upKey.GetGameControlEnum().String, _session.PlayerId, !activate);
                 }
                 if (downKey != null)
                 {
-                    MyVisualScriptLogicProvider.SetPlayerInputBlacklistState(downKey.GetGameControlEnum().String, _session.PlayerId, !activate);
+                    _session.CustomBlackListRequestBecauseKeenIsBrainDead(downKey.GetGameControlEnum().String, _session.PlayerId, !activate);
                 }
                 if (leftKey != null)
                 {
-                    MyVisualScriptLogicProvider.SetPlayerInputBlacklistState(leftKey.GetGameControlEnum().String, _session.PlayerId, !activate);
+                    _session.CustomBlackListRequestBecauseKeenIsBrainDead(leftKey.GetGameControlEnum().String, _session.PlayerId, !activate);
                 }
                 if (rightkey != null)
                 {
-                    MyVisualScriptLogicProvider.SetPlayerInputBlacklistState(rightkey.GetGameControlEnum().String, _session.PlayerId, !activate);
+                    _session.CustomBlackListRequestBecauseKeenIsBrainDead(rightkey.GetGameControlEnum().String, _session.PlayerId, !activate);
                 }
                 if (addKey != null)
                 {
-                    MyVisualScriptLogicProvider.SetPlayerInputBlacklistState(addKey.GetGameControlEnum().String, _session.PlayerId, !activate);
+                    _session.CustomBlackListRequestBecauseKeenIsBrainDead(addKey.GetGameControlEnum().String, _session.PlayerId, !activate);
                 }
                 if (subKey != null)
                 {
-                    MyVisualScriptLogicProvider.SetPlayerInputBlacklistState(subKey.GetGameControlEnum().String, _session.PlayerId, !activate);
+                    _session.CustomBlackListRequestBecauseKeenIsBrainDead(subKey.GetGameControlEnum().String, _session.PlayerId, !activate);
                 }
 
                 if (actionKey != null)
                 {
-                    MyVisualScriptLogicProvider.SetPlayerInputBlacklistState(actionKey.GetGameControlEnum().String, _session.PlayerId, !activate);
+                    _session.CustomBlackListRequestBecauseKeenIsBrainDead(actionKey.GetGameControlEnum().String, _session.PlayerId, !activate);
                 }
 
                 if (controlKey != null)
                 {
-                    MyVisualScriptLogicProvider.SetPlayerInputBlacklistState(controlKey.GetGameControlEnum().String, _session.PlayerId, !activate);
+                    _session.CustomBlackListRequestBecauseKeenIsBrainDead(controlKey.GetGameControlEnum().String, _session.PlayerId, !activate);
                 }
 
                 if (detailKey != null)
                 {
-                    MyVisualScriptLogicProvider.SetPlayerInputBlacklistState(detailKey.GetGameControlEnum().String, _session.PlayerId, !activate);
+                    _session.CustomBlackListRequestBecauseKeenIsBrainDead(detailKey.GetGameControlEnum().String, _session.PlayerId, !activate);
                 }
                 BlackListActive1 = activate;
             }
