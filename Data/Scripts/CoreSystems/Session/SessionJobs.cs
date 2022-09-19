@@ -228,7 +228,7 @@ namespace CoreSystems
             foreach (var planet in PlanetMap.Values)
             {
                 WaterData data;
-                if (WaterModAPI.HasWater(planet.EntityId))
+                if (WaterModAPI.HasWater(planet))
                 {
                     if (!WaterMap.TryGetValue(planet.EntityId, out data))
                     {
@@ -236,15 +236,15 @@ namespace CoreSystems
                         WaterMap[planet.EntityId] = data;
                     }
 
-                    var radiusInfo = WaterModAPI.GetPhysical(data.WaterId);
+                    var radiusInfo = WaterModAPI.GetPhysical(planet);
                     data.Center = radiusInfo.Item1;
                     data.Radius = radiusInfo.Item2;
                     data.MinRadius = radiusInfo.Item3;
                     data.MaxRadius = radiusInfo.Item4;
-                    var waveInfo = WaterModAPI.GetWaveData(data.WaterId);
+                    var waveInfo = WaterModAPI.GetWaveData(planet);
                     data.WaveHeight = waveInfo.Item1;
                     data.WaveSpeed = waveInfo.Item2;
-                    var tideInfo = WaterModAPI.GetTideData(data.WaterId);
+                    var tideInfo = WaterModAPI.GetTideData(planet);
                     data.TideHeight = tideInfo.Item1;
                     data.TideSpeed = tideInfo.Item2;
                 }

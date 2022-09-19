@@ -252,11 +252,10 @@ namespace CoreSystems.Projectiles
                                 {
                                     if (water != null)// && !aDef.IgnoreWater)
                                     {
-                                        var waterSphere = new BoundingSphereD(info.MyPlanet.PositionComp.WorldAABB.Center, water.MinRadius);
+                                        var waterSphere = new BoundingSphereD(info.MyPlanet.PositionComp.WorldAABB.Center, info.MyPlanet.MinimumRadius * water.Radius);
 
                                         if (waterSphere.Contains(p.Beam.From) == ContainmentType.Contains && waterSphere.Contains(p.Beam.To) == ContainmentType.Contains) continue;
                                         var estimatedSurfaceDistance = ray.Intersects(waterSphere);
-
                                         if (estimatedSurfaceDistance.HasValue && estimatedSurfaceDistance.Value <= p.Beam.Length && estimatedSurfaceDistance > 0)
                                         {
                                             var estimatedHit = ray.Position + (ray.Direction * estimatedSurfaceDistance.Value);

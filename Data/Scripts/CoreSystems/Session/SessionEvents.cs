@@ -618,7 +618,7 @@ namespace CoreSystems
                             if (EntityAIs.TryGetValue(cube.CubeGrid, out ai))
                             {
                                 CoreComponent comp;
-                                if (IsServer && ai.CompBase.TryGetValue(cube, out comp))
+                                if (ai.CompBase.TryGetValue(cube, out comp))
                                 {
                                     var wComp = comp as Weapon.WeaponComponent;
                                     var cComp = comp as ControlSys.ControlComponent;
