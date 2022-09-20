@@ -252,18 +252,50 @@ namespace CoreSystems.Projectiles
                                 {
                                     if (water != null)// && !aDef.IgnoreWater)
                                     {
-                                        var waterSphere = new BoundingSphereD(info.MyPlanet.PositionComp.WorldAABB.Center, info.MyPlanet.MinimumRadius * water.Radius);
+                                        var waterOuterSphere = new BoundingSphereD(info.MyPlanet.PositionComp.WorldAABB.Center, water.MaxRadius);
+                                        var waterInnerSphere = new BoundingSphereD(info.MyPlanet.PositionComp.WorldAABB.Center, water.MinRadius);
 
-                                        if (waterSphere.Contains(p.Beam.From) == ContainmentType.Contains && waterSphere.Contains(p.Beam.To) == ContainmentType.Contains) continue;
-                                        var estimatedSurfaceDistance = ray.Intersects(waterSphere);
-                                        if (estimatedSurfaceDistance.HasValue && estimatedSurfaceDistance.Value <= p.Beam.Length && estimatedSurfaceDistance > 0)
+                                        var containsCount = 0;
+                                        var outFromContains = waterOuterSphere.Contains(p.Beam.From) == ContainmentType.Contains;
+                                        containsCount += outFromContains ? 1 : 0;
+                                        var outToContains = waterOuterSphere.Contains(p.Beam.To) == ContainmentType.Contains;
+                                        containsCount += outToContains ? 1 : 0;
+
+                                        var inFromContains = waterInnerSphere.Contains(p.Beam.From) == ContainmentType.Contains;
+                                        containsCount += inFromContains ? 1 : 0;
+
+                                        var inToContains = waterInnerSphere.Contains(p.Beam.To) == ContainmentType.Contains;
+                                        containsCount += inToContains ? 1 : 0;
+
+
+                                        if (containsCount > 0 && containsCount != 4)
                                         {
-                                            var estimatedHit = ray.Position + (ray.Direction * estimatedSurfaceDistance.Value);
-                                            voxelHit = estimatedHit;
+                                            var fullIntersect = WaterModAPI.LineIntersectsWater(p.Beam);
+                                            if (fullIntersect > 0)
+                                            {
+                                                var estimatedSurfaceDistance = ray.Intersects(waterInnerSphere) ?? 1;
+
+                                                voxelHit = fullIntersect != 3 ? ray.Position + (ray.Direction * estimatedSurfaceDistance) : p.Beam.To;
+                                                voxelState = VoxelIntersectBranch.PseudoHit2;
+                                                waterHit = true;
+
+                                                var radius = p.Info.AmmoDef.Const.CollisionSize > p.Info.AmmoDef.Const.LargestHitSize ? (float)p.Info.AmmoDef.Const.CollisionSize : (float)p.Info.AmmoDef.Const.LargestHitSize;
+                                                if (radius < 3)
+                                                    radius = 3;
+
+                                                if (fullIntersect != 3)
+                                                    WaterModAPI.CreateSplash(p.Beam.From, radius, true);
+                                            }
+
+                                        }
+                                        else if (containsCount == 4)
+                                        {
+                                            voxelHit = p.Beam.To;
                                             voxelState = VoxelIntersectBranch.PseudoHit2;
                                             waterHit = true;
                                         }
                                     }
+
                                     if (voxelState != VoxelIntersectBranch.PseudoHit2)
                                     {
 
