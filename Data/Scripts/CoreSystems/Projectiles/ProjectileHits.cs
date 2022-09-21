@@ -250,8 +250,10 @@ namespace CoreSystems.Projectiles
 
                                 if (p.LinePlanetCheck)
                                 {
+                                    int waterIntersect = 0;
                                     if (water != null)// && !aDef.IgnoreWater)
                                     {
+
                                         var waterOuterSphere = new BoundingSphereD(info.MyPlanet.PositionComp.WorldAABB.Center, water.MaxRadius);
                                         var waterInnerSphere = new BoundingSphereD(info.MyPlanet.PositionComp.WorldAABB.Center, water.MinRadius);
 
@@ -267,33 +269,24 @@ namespace CoreSystems.Projectiles
                                         var inToContains = waterInnerSphere.Contains(p.Beam.To) == ContainmentType.Contains;
                                         containsCount += inToContains ? 1 : 0;
 
-
                                         if (containsCount > 0 && containsCount != 4)
                                         {
-                                            var fullIntersect = WaterModAPI.LineIntersectsWater(p.Beam);
-                                            if (fullIntersect > 0)
+                                            waterIntersect = WaterModAPI.LineIntersectsWater(p.Beam);
+
+                                            if (p.EnableAv)
+                                                p.Info.AvShot.WaterIntersectType = waterIntersect;
+
+                                            if (waterIntersect > 0 && waterIntersect < 4)
                                             {
                                                 var estimatedSurfaceDistance = ray.Intersects(waterInnerSphere) ?? 1;
 
-                                                voxelHit = fullIntersect != 3 ? ray.Position + (ray.Direction * estimatedSurfaceDistance) : p.Beam.To;
+                                                voxelHit = waterIntersect != 3 ? ray.Position + (ray.Direction * estimatedSurfaceDistance) : p.Beam.To;
                                                 voxelState = VoxelIntersectBranch.PseudoHit2;
                                                 waterHit = true;
-
-                                                var radius = p.Info.AmmoDef.Const.CollisionSize > p.Info.AmmoDef.Const.LargestHitSize ? (float)p.Info.AmmoDef.Const.CollisionSize : (float)p.Info.AmmoDef.Const.LargestHitSize;
-                                                if (radius < 3)
-                                                    radius = 3;
-
-                                                if (fullIntersect != 3)
-                                                    WaterModAPI.CreateSplash(p.Beam.From, radius, true);
                                             }
-
                                         }
-                                        else if (containsCount == 4)
-                                        {
-                                            voxelHit = p.Beam.To;
-                                            voxelState = VoxelIntersectBranch.PseudoHit2;
-                                            waterHit = true;
-                                        }
+                                        else if (p.EnableAv)
+                                            p.Info.AvShot.WaterIntersectType = 0;
                                     }
 
                                     if (voxelState != VoxelIntersectBranch.PseudoHit2)
@@ -323,7 +316,8 @@ namespace CoreSystems.Projectiles
                                                 var estimatedHit = ray.Position + (ray.Direction * estiamtedSurfaceDistance.Value);
                                                 Vector3D.DistanceSquared(ref info.VoxelCache.FirstPlanetHit, ref estimatedHit, out distSqr);
 
-                                                if (distSqr > 625) fullCheck = true;
+                                                if (distSqr > 625)
+                                                    voxelState = VoxelIntersectBranch.DeferFullCheck;
                                                 else
                                                 {
                                                     voxelHit = estimatedHit;
@@ -331,13 +325,18 @@ namespace CoreSystems.Projectiles
                                                 }
                                             }
 
-                                            if (fullCheck)
-                                                voxelState = VoxelIntersectBranch.DeferFullCheck;
-
                                             if (voxelHit.HasValue && Vector3D.DistanceSquared(voxelHit.Value, info.VoxelCache.PlanetSphere.Center) > info.VoxelCache.PlanetSphere.Radius * info.VoxelCache.PlanetSphere.Radius)
                                                 info.VoxelCache.GrowPlanetCache(voxelHit.Value);
                                         }
+                                        
+                                        if (waterIntersect == 4 && (voxelState != VoxelIntersectBranch.PseudoHit2 && voxelState != VoxelIntersectBranch.DeferFullCheck))
+                                        {
+                                            voxelHit = p.Beam.To;
+                                            voxelState = VoxelIntersectBranch.PseudoHit2;
+                                            waterHit = true;
+                                        }
                                     }
+
                                 }
                             }
                             else if (voxelHit == null && info.VoxelCache.MissSphere.Contains(p.Beam.To) == ContainmentType.Disjoint)

@@ -83,7 +83,7 @@ namespace CoreSystems.Support
         internal uint LastTick;
         internal uint LastHit = uint.MaxValue / 2;
         internal int FireCounter;
-        internal bool WaterWasHit;
+        internal int WaterIntersectType;
         internal ParticleState HitParticle;
         internal TracerState Tracer;
         internal TrailState Trail;
@@ -262,7 +262,6 @@ namespace CoreSystems.Support
                 a.EstTravel = a.StepSize * a.LifeTime;
                 a.ShortStepSize = d.ShortStepSize ?? d.StepSize;
                 a.ShortEstTravel = MathHelperD.Clamp((a.EstTravel - a.StepSize) + a.ShortStepSize, 0, double.MaxValue);
-
                 a.VisualLength = d.VisualLength;
                 if (a.SmartOn || aConst.IsBeamWeapon && aConst.ConvergeBeams)
                     a.VisualDir = d.Direction;
@@ -791,7 +790,10 @@ namespace CoreSystems.Support
                 double distToCameraSqr;
                 Vector3D.DistanceSquared(ref Hit.SurfaceHit, ref System.Session.CameraPos, out distToCameraSqr);
 
-                if (Hit.EventType == HitEntity.Type.Water) HitParticleActive = true;//FML... didn't know there was rand for impacts.
+                if (Hit.EventType == HitEntity.Type.Water) 
+                {
+                    HitParticleActive = true;//FML... didn't know there was rand for impacts.
+                }
 
                 if (OnScreen == Screen.Tracer || distToCameraSqr < 360000) {
                     if (HitParticleActive && AmmoDef.Const.HitParticle && !(LastHitShield && !AmmoDef.AmmoGraphics.Particles.Hit.ApplyToShield))
@@ -1203,7 +1205,6 @@ namespace CoreSystems.Support
             HitParticleActive = false;
             MarkForClose = false;
             ProEnded = false;
-            WaterWasHit = false;
             TracerShrinks.Clear();
             GlowSteps.Clear();
             Offsets.Clear();
@@ -1214,6 +1215,8 @@ namespace CoreSystems.Support
             TextureIdx = -1;
             SegMeasureStep = 0;
             TextureLastUpdate = 0;
+            WaterIntersectType = 0;
+
             //
 
             CoreEntity = null;
