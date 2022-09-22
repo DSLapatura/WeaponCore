@@ -76,6 +76,7 @@ namespace CoreSystems.Support
         internal bool ShieldKeepBypass;
         internal bool ShieldInLine;
         internal bool SmartReady;
+        internal uint FirstWaterHitTick;
         internal float ShieldResistMod = 1f;
         internal float ShieldBypassMod = 1f;
 
@@ -168,6 +169,7 @@ namespace CoreSystems.Support
             ShieldInLine = false;
             ShieldKeepBypass = false;
             SmartReady = false;
+            FirstWaterHitTick = 0;
             TriggerGrowthSteps = 0;
             SpawnDepth = 0;
             Frags = 0;

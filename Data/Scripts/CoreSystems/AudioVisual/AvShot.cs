@@ -1215,7 +1215,6 @@ namespace CoreSystems.Support
             TextureIdx = -1;
             SegMeasureStep = 0;
             TextureLastUpdate = 0;
-            WaterIntersectType = 0;
 
             //
 

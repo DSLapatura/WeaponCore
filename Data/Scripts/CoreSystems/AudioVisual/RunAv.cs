@@ -135,7 +135,7 @@ namespace CoreSystems.Support
                         }
                     }
                     //BDC call for drawsplash
-                    if (av.Hit.EventType == HitEntity.Type.Water && av.WaterIntersectType > 0 && av.WaterIntersectType < 4)
+                    if (av.Hit.EventType == HitEntity.Type.Water)
                     {
                         var splashHit = av.Hit.SurfaceHit;//Hopefully we can get a more precise surface intercept or correction?
                         var ammoInfo = av.AmmoDef;
@@ -145,6 +145,7 @@ namespace CoreSystems.Support
 
                         WaterModAPI.CreateSplash(splashHit, radius, true);
                     }
+
                     if (av.Model != AvShot.ModelState.None)
                     {
                         if (av.AmmoEffect != null && av.AmmoDef.Const.AmmoParticle && av.AmmoDef.Const.PrimeModel)

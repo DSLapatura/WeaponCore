@@ -937,12 +937,12 @@ namespace CoreSystems
             var destObj = hitEnt.Entity as MyVoxelBase;
             if (destObj == null || entity == null || !hitEnt.HitPos.HasValue) return;
             var shieldHeal = info.AmmoDef.DamageScales.Shields.Type == ShieldDef.ShieldType.Heal;
-            if ((type == HitEntity.Type.Water && !info.AmmoDef.IgnoreWater) || !info.AmmoDef.Const.VoxelDamage || shieldHeal)
+            if (type == HitEntity.Type.Water || !info.AmmoDef.Const.VoxelDamage || shieldHeal)
             {
-                info.BaseDamagePool = 0;
+                if (type != HitEntity.Type.Water || !info.AmmoDef.IgnoreWater)
+                    info.BaseDamagePool = 0;
                 return;
             }
-            else if (type == HitEntity.Type.Water && info.AmmoDef.IgnoreWater) return;
 
             var directDmgGlobal = Settings.Enforcement.DirectDamageModifer;
             var detDmgGlobal = Settings.Enforcement.AreaDamageModifer;
