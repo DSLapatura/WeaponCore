@@ -1553,7 +1553,6 @@
             <SoftParticleDistanceScale>1</SoftParticleDistanceScale>
             <Texture>Textures\GUI\Icons\ReloadingIcon.dds</Texture>
             <UseAtlas>false</UseAtlas>
-			<Reflectivity>0</Reflectivity>
             <UVOffset>
                 <X>0</X>
                 <Y>0</Y>
