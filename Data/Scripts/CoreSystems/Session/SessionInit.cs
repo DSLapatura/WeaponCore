@@ -226,6 +226,7 @@ namespace CoreSystems
                 for (int i = 0; i < x.Assignments.MountPoints.Length; i++)
                 {
                     var mount = x.Assignments.MountPoints[i];
+
                     var subTypeId = mount.SubtypeId;
                     var muzzlePartId = mount.MuzzlePartId;
                     var weapon = x.HardPoint.HardWare.Type == BlockWeapon || x.HardPoint.HardWare.Type == HandWeapon || x.HardPoint.HardWare.Type == Phantom;
@@ -237,6 +238,7 @@ namespace CoreSystems
 
                     var extraInfo = new MyTuple<string, string, string, string> { Item1 = x.HardPoint.PartName, Item2 = azimuthPartId, Item3 = elevationPartId, Item4 = spinPartId };
                     var tempammo = "";
+
                     for (int y = 0; y < x.Ammos.Length; y++)
                     {
                         var tempammostring = x.Ammos[y].AmmoRound + ", " + x.Ammos[y].BaseDamage + ", " + x.Ammos[y].DamageScales.DamageType.Base + ", " + x.Ammos[y].DamageScales.DamageType.AreaEffect + ", " + x.Ammos[y].DamageScales.DamageType.Detonation + ", " + x.Ammos[y].DamageScales.DamageType.Shield + ", " +
@@ -473,8 +475,13 @@ namespace CoreSystems
                                 CoreSystemsPhantomDefs.Add(defId);
                             break;
                     }
+
+                    if (VanillaSubtypes.Contains(subTypeMap.Key))
+                        w.DefaultLeadGroup = w.TurretAttached ? 0 : VanillaLeadId;
                 }
             }
+
+
             _subTypeMaps.Clear();
             _subTypeIdWeaponDefs.Clear();
         }

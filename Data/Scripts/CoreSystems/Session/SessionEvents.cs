@@ -74,9 +74,10 @@ namespace CoreSystems
                         if (!validType)
                         {
                             if (turret != null)
-                                _vanillaTurretTick = Tick;
+                                VanillaTurretTick = Tick;
                             return;
                         }
+                        Log.Line($"{cube.BlockDefinition.Id.TypeId} - {controllableGun is IMySmallMissileLauncher} - {controllableGun is IMySmallMissileLauncherReload}");
 
                         if (!SorterControls && entity is MyConveyorSorter) {
                             MyAPIGateway.Utilities.InvokeOnGameThread(() => CreateTerminalUi<IMyConveyorSorter>(this));
@@ -91,13 +92,12 @@ namespace CoreSystems
                         else if (!FixedMissileReloadControls && controllableGun is IMySmallMissileLauncherReload) {
                             MyAPIGateway.Utilities.InvokeOnGameThread(() => CreateTerminalUi<IMySmallMissileLauncherReload>(this));
                             FixedMissileReloadControls = true;
-                            FixedMissileControls = true;
                             if (!EarlyInitOver) ControlQueue.Enqueue(typeof(IMySmallMissileLauncherReload));
                         }
                         else if (!FixedMissileControls && controllableGun is IMySmallMissileLauncher) {
                             MyAPIGateway.Utilities.InvokeOnGameThread(() => CreateTerminalUi<IMySmallMissileLauncher>(this));
                             FixedMissileControls = true;
-                            FixedMissileReloadControls = true;
+
                             if (!EarlyInitOver) ControlQueue.Enqueue(typeof(IMySmallMissileLauncher));
                         }
                         else if (!FixedGunControls && controllableGun is IMySmallGatlingGun) {

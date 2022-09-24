@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using CoreSystems.Support;
 using Sandbox.Definitions;
 using Sandbox.ModAPI;
@@ -93,7 +94,7 @@ namespace CoreSystems
                 bool detected = false;
                 foreach (var mount in wepDef.Assignments.MountPoints)
                 {
-                    if (VanillaSubtypeStrings.Contains(mount.SubtypeId))
+                    if (VanillaSubtypes.Contains(mount.SubtypeId))
                     {
                         detected = true;
                         break;

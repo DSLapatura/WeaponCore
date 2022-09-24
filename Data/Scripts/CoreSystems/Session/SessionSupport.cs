@@ -1345,9 +1345,7 @@ namespace CoreSystems
 
 
             foreach (var pair in VanillaCoreIds)
-            {
-                VanillaSubtypeStrings.Add(pair.Key.String);
-            }
+                VanillaSubtypes.Add(pair.Key.String);
 
             VanillaSubpartNames.Add("InteriorTurretBase1");
             VanillaSubpartNames.Add("InteriorTurretBase2");

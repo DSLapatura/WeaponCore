@@ -94,9 +94,17 @@ namespace CoreSystems.Platform
 
                     };
 
-                    if (Comp.Session.IsCreative && Comp.Session.IsServer) {
-                        Repo.Values.Set.Overrides.Neutrals = true;
-                        Repo.Values.Set.Overrides.Biologicals = false;
+                    if (Comp.Session.IsServer) {
+
+                        if (Comp.Session.IsCreative) {
+                            Repo.Values.Set.Overrides.Neutrals = true;
+                            Repo.Values.Set.Overrides.Biologicals = false;
+                        }
+
+                        if (Comp.TypeSpecific == CoreComponent.CompTypeSpecific.VanillaFixed)
+                        {
+                            Repo.Values.Set.Overrides.LeadGroup = Comp.Structure.DefaultLeadGroup;
+                        }
                     }
 
                     for (int i = 0; i < collection.Count; i++)

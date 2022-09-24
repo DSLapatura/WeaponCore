@@ -617,7 +617,7 @@ namespace CoreSystems
                 if (activeTurret)
                     AimingAi.Add(ai);
 
-                if (Tick - _vanillaTurretTick < 3)
+                if (Tick - VanillaTurretTick < 3)
                     ai.ResetMyGridTargeting();
             }
 

@@ -71,10 +71,10 @@ namespace CoreSystems
             if (typeof(T) == typeof(IMyLargeTurretBase) && session.ControlTypeActivated.Contains(typeof(IMyLargeTurretBase)))
                 return true;
 
-            if (typeof(T) == typeof(IMySmallMissileLauncherReload) && (session.ControlTypeActivated.Contains(typeof(IMySmallMissileLauncherReload)) || session.ControlTypeActivated.Contains(typeof(IMySmallMissileLauncher))))
+            if (typeof(T) == typeof(IMySmallMissileLauncherReload) && (session.ControlTypeActivated.Contains(typeof(IMySmallMissileLauncherReload))))
                 return true;
 
-            if (typeof(T) == typeof(IMySmallMissileLauncher) && (session.ControlTypeActivated.Contains(typeof(IMySmallMissileLauncherReload)) || session.ControlTypeActivated.Contains(typeof(IMySmallMissileLauncher))))
+            if (typeof(T) == typeof(IMySmallMissileLauncher) && session.ControlTypeActivated.Contains(typeof(IMySmallMissileLauncher)))
                 return true;
 
             if (typeof(T) == typeof(IMySmallGatlingGun) && session.ControlTypeActivated.Contains(typeof(IMySmallGatlingGun)))

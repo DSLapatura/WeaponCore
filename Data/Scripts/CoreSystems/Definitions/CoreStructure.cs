@@ -51,6 +51,7 @@ namespace CoreSystems.Support
     {
         internal bool TurretAttached;
         internal double MaxLockRange = 10000;
+        internal int DefaultLeadGroup = 0;
         internal WeaponStructure(Session session, KeyValuePair<string, Dictionary<string, MyTuple<string, string, string, string>>> tDef, List<WeaponDefinition> wDefList, string modPath)
         {
             Session = session;

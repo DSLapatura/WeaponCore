@@ -168,6 +168,7 @@ namespace CoreSystems
         internal readonly Dictionary<WeaponDefinition, Dictionary<string, string>> WeaponValuesMap = new Dictionary<WeaponDefinition, Dictionary<string, string>>();
         internal readonly Dictionary<ulong, Projectile> MonitoredProjectiles = new Dictionary<ulong, Projectile>();
         internal readonly Dictionary<int, Dictionary<long, ProtoWeaponProSync>> WeaponProSyncs = new Dictionary<int, Dictionary<long, ProtoWeaponProSync>>();
+
         internal readonly ConcurrentDictionary<long, int> DeferredPlayerLock = new ConcurrentDictionary<long, int>();
         internal readonly HashSet<MyDefinitionId> DefIdsComparer = new HashSet<MyDefinitionId>(MyDefinitionId.Comparer);
         internal readonly HashSet<string> VanillaSubpartNames = new HashSet<string>();
@@ -206,7 +207,7 @@ namespace CoreSystems
         internal readonly HashSet<MyDefinitionId> CoreSystemsRifleDefs = new HashSet<MyDefinitionId>();
         internal readonly HashSet<MyDefinitionId> CoreSystemsPhantomDefs = new HashSet<MyDefinitionId>();
         internal readonly HashSet<ArmorDefinition> CoreSystemsArmorDefs = new HashSet<ArmorDefinition>();
-        internal readonly HashSet<string> VanillaSubtypeStrings = new HashSet<string>();
+        internal readonly HashSet<string> VanillaSubtypes = new HashSet<string>();
         internal readonly HashSet<MyStringHash> PerformanceWarning = new HashSet<MyStringHash>();
 
         internal readonly List<MyCubeGrid> DirtyGridsTmp = new List<MyCubeGrid>(10);
@@ -323,6 +324,8 @@ namespace CoreSystems
         internal uint ClientDestroyBlockTick;
         internal uint ReInitTick;
         internal int WeaponIdCounter;
+        internal int VanillaLeadCounter;
+
         internal int PlayerEventId;
         internal int TargetRequests;
         internal int TargetChecks;
@@ -469,7 +472,7 @@ namespace CoreSystems
         private int _loadCounter = 1;
         private int _shortLoadCounter = 1;
         private uint _lastDrawTick;
-        internal uint _vanillaTurretTick;
+        internal uint VanillaTurretTick;
 
         private bool _paused;
 
@@ -501,6 +504,8 @@ namespace CoreSystems
         }
 
         internal int UniquePartId => WeaponIdCounter++;
+
+        internal int VanillaLeadId => ++VanillaLeadCounter;
 
         internal ulong UniquePhantomId => PhantomIdCounter++;
 
