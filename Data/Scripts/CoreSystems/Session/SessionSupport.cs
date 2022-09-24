@@ -1344,6 +1344,11 @@ namespace CoreSystems
             VanillaCoreIds[smallGat2] = smallGat2Id;
 
 
+            foreach (var pair in VanillaCoreIds)
+            {
+                VanillaSubtypeStrings.Add(pair.Key.String);
+            }
+
             VanillaSubpartNames.Add("InteriorTurretBase1");
             VanillaSubpartNames.Add("InteriorTurretBase2");
             VanillaSubpartNames.Add("MissileTurretBase1");

@@ -54,6 +54,8 @@ namespace CoreSystems
 
         public void AssemblePartDefinitions(WeaponDefinition[] partDefs)
         {
+            if (DuplicateReplacer(partDefs))
+                return;
 
             var subTypes = new HashSet<string>();
             foreach (var wepDef in partDefs)
@@ -81,6 +83,28 @@ namespace CoreSystems
                     }
                 }
             }
+        }
+
+        private int _replacerCount;
+        private bool DuplicateReplacer(WeaponDefinition[] partDefs)
+        {
+            foreach (var wepDef in partDefs)
+            {
+                bool detected = false;
+                foreach (var mount in wepDef.Assignments.MountPoints)
+                {
+                    if (VanillaSubtypeStrings.Contains(mount.SubtypeId))
+                    {
+                        detected = true;
+                        break;
+                    }
+                }
+
+                if (detected)
+                    return _replacerCount++ > 0;
+            }
+
+            return false;
         }
 
         public void AssemblePartDefinitions(UpgradeDefinition[] partDefs)
