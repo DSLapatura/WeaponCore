@@ -246,7 +246,8 @@ namespace CoreSystems
         private readonly HashSet<IMySlimBlock> _destroyedSlims = new HashSet<IMySlimBlock>();
         private readonly HashSet<IMySlimBlock> _destroyedSlimsClient = new HashSet<IMySlimBlock>();
         private readonly Dictionary<IMySlimBlock, float> _slimHealthClient = new Dictionary<IMySlimBlock, float>();
-        
+        private readonly Dictionary<IMySlimBlock, uint> _slimLastDeformTick = new Dictionary<IMySlimBlock, uint>();
+
         private readonly Dictionary<string, Dictionary<string, MyTuple<string, string, string, string>>> _subTypeMaps = new Dictionary<string, Dictionary<string, MyTuple<string, string, string, string>>>();
         private readonly Dictionary<string, List<WeaponDefinition>> _subTypeIdWeaponDefs = new Dictionary<string, List<WeaponDefinition>>();
         private readonly Dictionary<string, List<UpgradeDefinition>> _subTypeIdUpgradeDefs = new Dictionary<string, List<UpgradeDefinition>>();

@@ -140,6 +140,7 @@ namespace CoreSystems.Support
         public readonly int MaxFrags;
         public readonly int FragGroupSize;
         public readonly int FragGroupDelay;
+        public readonly int DeformDelay;
 
         public readonly bool CheckFutureIntersection;
         public readonly bool OverrideTarget;
@@ -444,7 +445,7 @@ namespace CoreSystems.Support
 
             ComputeAmmoPattern(ammo, system, wDef, fragGuidedAmmo, fragAntiSmart, fragTargetOverride, out AntiSmartDetected, out TargetOverrideDetected, out AmmoPattern, out WeaponPatternCount, out FragPatternCount, out GuidedAmmoDetected, out WeaponPattern, out FragmentPattern);
 
-            DamageScales(ammo.AmmoDef, out DamageScaling, out FallOffScaling, out ArmorScaling, out CustomDamageScales, out CustomBlockDefinitionBasesToScales, out SelfDamage, out VoxelDamage, out HealthHitModifier, out VoxelHitModifier);
+            DamageScales(ammo.AmmoDef, out DamageScaling, out FallOffScaling, out ArmorScaling, out CustomDamageScales, out CustomBlockDefinitionBasesToScales, out SelfDamage, out VoxelDamage, out HealthHitModifier, out VoxelHitModifier, out DeformDelay);
             CollisionShape(ammo.AmmoDef, out CollisionIsLine, out CollisionSize, out TracerLength);
             SmartsDelayDistSqr = (CollisionSize * ammo.AmmoDef.Trajectory.Smarts.TrackingDelay) * (CollisionSize * ammo.AmmoDef.Trajectory.Smarts.TrackingDelay);
             PrimeEntityPool = Models(ammo.AmmoDef, wDef, out PrimeModel, out TriggerModel, out ModelPath);
@@ -800,7 +801,7 @@ namespace CoreSystems.Support
             collisionSize = size;
         }
 
-        private void DamageScales(AmmoDef ammoDef, out bool damageScaling, out bool fallOffScaling, out bool armorScaling, out bool customDamageScales, out Dictionary<MyDefinitionBase, float> customBlockDef, out bool selfDamage, out bool voxelDamage, out double healthHitModifer, out double voxelHitModifer)
+        private void DamageScales(AmmoDef ammoDef, out bool damageScaling, out bool fallOffScaling, out bool armorScaling, out bool customDamageScales, out Dictionary<MyDefinitionBase, float> customBlockDef, out bool selfDamage, out bool voxelDamage, out double healthHitModifer, out double voxelHitModifer, out int deformDelay)
         {
             armorScaling = false;
             customDamageScales = false;
@@ -831,6 +832,8 @@ namespace CoreSystems.Support
             var healthHitModiferRaw = AmmoModsFound && _modifierMap[HealthHitModStr].HasData() ? _modifierMap[HealthHitModStr].GetAsDouble : d.HealthHitModifier;
             healthHitModifer = healthHitModiferRaw > 0 ? healthHitModiferRaw : 1;
             voxelHitModifer = d.VoxelHitModifier > 0 ? d.VoxelHitModifier : 1;
+
+            deformDelay = d.Deform.DeformDelay <= 0 ? 30 : d.Deform.DeformDelay;
         }
 
         private void Energy(WeaponSystem.AmmoType ammoPair, WeaponSystem system, WeaponDefinition wDef, out bool energyAmmo, out bool mustCharge, out bool reloadable, out float energyCost, out int energyMagSize, out float chargeSize, out bool burstMode, out bool shotReload, out float requiredPowerPerTick)

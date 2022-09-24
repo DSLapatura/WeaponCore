@@ -4,12 +4,14 @@ using CoreSystems.Projectiles;
 using CoreSystems.Support;
 using Sandbox.Definitions;
 using Sandbox.Game.Entities;
+using Sandbox.Game.Entities.Cube;
 using Sandbox.ModAPI;
 using VRage.Game;
 using VRage.Game.Components;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRage.Game.ModAPI.Interfaces;
+using VRage.Noise.Modifiers;
 using VRage.Utils;
 using VRageMath;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.AreaOfDamageDef;
@@ -114,6 +116,7 @@ namespace CoreSystems
             var damageScale = 1 * directDmgGlobal;
             var distTraveled = info.AmmoDef.Const.IsBeamWeapon ? hitEnt.HitDist ?? info.DistanceTraveled : info.DistanceTraveled;
             var fallOff = info.AmmoDef.Const.FallOffScaling && distTraveled > info.AmmoDef.Const.FallOffDistance;
+
             if (info.AmmoDef.Const.VirtualBeams) damageScale *= info.Weapon.WeaponCache.Hits;
             var damageType = info.AmmoDef.DamageScales.Shields.Type;
             var heal = damageType == ShieldDef.ShieldType.Heal;
@@ -317,6 +320,9 @@ namespace CoreSystems
             var distTraveled = t.AmmoDef.Const.IsBeamWeapon ? hitEnt.HitDist ?? t.DistanceTraveled : t.DistanceTraveled;
 
             var direction = hitEnt.Intersection;
+
+            var deformType = d.Deform.DeformType;
+            var deformDelay = t.AmmoDef.Const.DeformDelay;
 
             //Ammo properties
             var hitMass = t.AmmoDef.Const.Mass;
@@ -684,13 +690,34 @@ namespace CoreSystems
                             //Log.Line($"damage: i:{i} - j:{j} - k:{k} - damage:{scaledDamage} of blockHp:{blockHp} - primary:{primaryDamage} - isRoot:{rootBlock == block} - aoeDepth:{aoeDepth} - detActive:{detActive} - foundBlocks:{foundAoeBlocks}");
                             try
                             {
-                                block.DoDamage(scaledDamage, damageType, sync, null, attackerId);
+                                uint lastDeformTick;
+                                MyCube myCube;
                                 if (!appliedImpulse && primaryDamage && hitMass > 0 && Session.IsServer)
                                 {
+                                    if (deformType == DeformDef.DeformTypes.HitBlock && scaledDamage > 1 && (deformDelay == 0 || !_slimLastDeformTick.TryGetValue(block, out lastDeformTick) || Tick - lastDeformTick >= deformDelay) && grid.TryGetCube(block.Position, out myCube))
+                                    {
+                                        grid.ApplyDestructionDeformation(myCube.CubeBlock, 0f, new MyHitInfo(), attackerId);
+                                        scaledDamage -= 1;
+                                        if (deformDelay > 0)
+                                            _slimLastDeformTick[block] = Tick;
+                                    }
+
                                     appliedImpulse = true;
                                     var speed = !t.AmmoDef.Const.IsBeamWeapon && t.AmmoDef.Const.DesiredProjectileSpeed > 0 ? t.AmmoDef.Const.DesiredProjectileSpeed : 1;
                                     ApplyProjectileForce(grid, grid.GridIntegerToWorld(rootBlock.Position), hitEnt.Intersection.Direction, (hitMass * speed));
                                 }
+
+                                if (Session.IsServer && deformType == DeformDef.DeformTypes.AllDamagedBlocks && scaledDamage > 1 && (deformDelay == 0 || !_slimLastDeformTick.TryGetValue(block, out lastDeformTick) || Tick - lastDeformTick >= deformDelay) && grid.TryGetCube(block.Position, out myCube))
+                                {
+                                    grid.ApplyDestructionDeformation(myCube.CubeBlock, 0f, new MyHitInfo(), attackerId);
+                                    scaledDamage -= 1;
+
+                                    if (deformDelay > 0)
+                                        _slimLastDeformTick[block] = Tick;
+                                }
+
+                                block.DoDamage(scaledDamage, damageType, sync, null, attackerId);
+
                             }
                             catch
                             {
@@ -715,7 +742,6 @@ namespace CoreSystems
                             }
                             else if (block.Integrity - realDmg > 0) _slimHealthClient[block] = (float)(blockHp - realDmg);
                         }
-
                         var endCycle = (!foundAoeBlocks && basePool <= 0) || (!rootStep && (aoeDmgTally >= aoeAbsorb && aoeAbsorb != 0 || aoeDamage <= 0.5d)) || objectsHit >= maxObjects;
                         if (showHits && primaryDamage) Log.Line($"{t.AmmoDef.AmmoRound} Primary Dmg: RootBlock {rootBlock} hit for {scaledDamage} damage of {blockHp} block HP total");
 

@@ -12,6 +12,7 @@ using static CoreSystems.Support.WeaponDefinition.AmmoDef.TrajectoryDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.TrajectoryDef.GuidanceType;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.DamageScaleDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.DamageScaleDef.ShieldDef.ShieldType;
+using static CoreSystems.Support.WeaponDefinition.AmmoDef.DamageScaleDef.DeformDef.DeformTypes;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.AreaOfDamageDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.AreaOfDamageDef.Falloff;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.AreaOfDamageDef.AoeShape;
@@ -131,6 +132,11 @@ namespace Scripts
                     AreaEffect = Kinetic,
                     Detonation = Kinetic,
                     Shield = Kinetic, // Damage against shields is currently all of one type per projectile. Shield Bypass Weapons, always Deal Energy regardless of this line
+                },
+                Deform = new DeformDef
+                {
+                    DeformType = HitBlock,
+                    DeformDelay = 30,
                 },
                 Custom = new CustomScalesDef
                 {
@@ -516,6 +522,11 @@ namespace Scripts
                     Detonation = Kinetic,
                     Shield = Kinetic, // Damage against shields is currently all of one type per projectile. Shield Bypass Weapons, always Deal Energy regardless of this line
                 },
+                Deform = new DeformDef
+                {
+                    DeformType = HitBlock,
+                    DeformDelay = 30,
+                },
                 Custom = new CustomScalesDef
                 {
                     SkipOthers = NoSkip, // Controls how projectile interacts with other blocks in relation to those defined here, NoSkip, Exclusive, Inclusive.
@@ -899,6 +910,11 @@ namespace Scripts
                     AreaEffect = Kinetic,
                     Detonation = Kinetic,
                     Shield = Kinetic, // Damage against shields is currently all of one type per projectile. Shield Bypass Weapons, always Deal Energy regardless of this line
+                },
+                Deform = new DeformDef
+                {
+                    DeformType = HitBlock,
+                    DeformDelay = 30,
                 },
                 Custom = new CustomScalesDef
                 {
@@ -1284,6 +1300,11 @@ namespace Scripts
                     Detonation = Kinetic,
                     Shield = Kinetic, // Damage against shields is currently all of one type per projectile. Shield Bypass Weapons, always Deal Energy regardless of this line
                 },
+                Deform = new DeformDef
+                {
+                    DeformType = HitBlock,
+                    DeformDelay = 30,
+                },
                 Custom = new CustomScalesDef
                 {
                     SkipOthers = NoSkip, // Controls how projectile interacts with other blocks in relation to those defined here, NoSkip, Exclusive, Inclusive.
@@ -1667,6 +1688,11 @@ namespace Scripts
                     AreaEffect = Kinetic,
                     Detonation = Kinetic,
                     Shield = Kinetic, // Damage against shields is currently all of one type per projectile. Shield Bypass Weapons, always Deal Energy regardless of this line
+                },
+                Deform = new DeformDef
+                {
+                    DeformType = HitBlock,
+                    DeformDelay = 30,
                 },
                 Custom = new CustomScalesDef
                 {
@@ -2052,6 +2078,11 @@ namespace Scripts
                     Detonation = Kinetic,
                     Shield = Kinetic, // Damage against shields is currently all of one type per projectile. Shield Bypass Weapons, always Deal Energy regardless of this line
                 },
+                Deform = new DeformDef
+                {
+                    DeformType = HitBlock,
+                    DeformDelay = 30,
+                },
                 Custom = new CustomScalesDef
                 {
                     SkipOthers = NoSkip, // Controls how projectile interacts with other blocks in relation to those defined here, NoSkip, Exclusive, Inclusive.
@@ -2435,6 +2466,11 @@ namespace Scripts
                     AreaEffect = Kinetic,
                     Detonation = Kinetic,
                     Shield = Kinetic, // Damage against shields is currently all of one type per projectile. Shield Bypass Weapons, always Deal Energy regardless of this line
+                },
+                Deform = new DeformDef
+                {
+                    DeformType = HitBlock,
+                    DeformDelay = 30,
                 },
                 Custom = new CustomScalesDef
                 {
@@ -2820,6 +2856,11 @@ namespace Scripts
                     Detonation = Kinetic,
                     Shield = Kinetic, // Damage against shields is currently all of one type per projectile. Shield Bypass Weapons, always Deal Energy regardless of this line
                 },
+                Deform = new DeformDef
+                {
+                    DeformType = HitBlock,
+                    DeformDelay = 30,
+                },
                 Custom = new CustomScalesDef
                 {
                     SkipOthers = NoSkip, // Controls how projectile interacts with other blocks in relation to those defined here, NoSkip, Exclusive, Inclusive.
@@ -3203,6 +3244,11 @@ namespace Scripts
                     AreaEffect = Kinetic,
                     Detonation = Kinetic,
                     Shield = Kinetic, // Damage against shields is currently all of one type per projectile. Shield Bypass Weapons, always Deal Energy regardless of this line
+                },
+                Deform = new DeformDef
+                {
+                    DeformType = HitBlock,
+                    DeformDelay = 30,
                 },
                 Custom = new CustomScalesDef
                 {
