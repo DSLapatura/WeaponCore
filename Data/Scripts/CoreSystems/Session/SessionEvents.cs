@@ -77,7 +77,6 @@ namespace CoreSystems
                                 VanillaTurretTick = Tick;
                             return;
                         }
-                        Log.Line($"{cube.BlockDefinition.Id.TypeId} - {controllableGun is IMySmallMissileLauncher} - {controllableGun is IMySmallMissileLauncherReload}");
 
                         if (!SorterControls && entity is MyConveyorSorter) {
                             MyAPIGateway.Utilities.InvokeOnGameThread(() => CreateTerminalUi<IMyConveyorSorter>(this));

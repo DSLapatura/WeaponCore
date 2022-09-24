@@ -218,6 +218,7 @@ namespace CoreSystems.Support
                 TypeSpecific = CompTypeSpecific.Phantom;
                 Type = CompType.Weapon;
             }
+
             LazyUpdate = Type == CompType.Support || Type == CompType.Upgrade;
             InventoryEntity =(TypeSpecific != CompTypeSpecific.Rifle ? CoreEntity : (MyEntity)((IMyAutomaticRifleGun)CoreEntity).AmmoInventory.Entity);
             CoreInventory = (MyInventory)InventoryEntity.GetInventoryBase();

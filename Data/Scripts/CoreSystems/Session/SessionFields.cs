@@ -324,7 +324,6 @@ namespace CoreSystems
         internal uint ClientDestroyBlockTick;
         internal uint ReInitTick;
         internal int WeaponIdCounter;
-        internal int VanillaLeadCounter;
 
         internal int PlayerEventId;
         internal int TargetRequests;
@@ -442,6 +441,19 @@ namespace CoreSystems
             "LargeProductivityModule", "LargeEffectivenessModule", "LargeEnergyModule",
         };
 
+
+        internal readonly Dictionary<string, int> VanillaLeadGroupMatch = new Dictionary<string, int>()
+        {
+            ["Small Gatling Gun"] = 1,
+            ["Large Missile Launcher"] = 2,
+            ["Small Missile Launcher"] = 2,
+            ["Reloadable Missile Launcher"] = 2,
+            ["Autocannon"] = 3,
+            ["Assault Cannon"] = 3,
+            ["Artillery"] = 3,
+            ["Large Railgun"] = 4,
+        };
+
         [Flags]
         internal enum SafeZoneAction
         {
@@ -504,8 +516,6 @@ namespace CoreSystems
         }
 
         internal int UniquePartId => WeaponIdCounter++;
-
-        internal int VanillaLeadId => ++VanillaLeadCounter;
 
         internal ulong UniquePhantomId => PhantomIdCounter++;
 

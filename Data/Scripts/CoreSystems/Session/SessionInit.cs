@@ -477,7 +477,11 @@ namespace CoreSystems
                     }
 
                     if (VanillaSubtypes.Contains(subTypeMap.Key))
-                        w.DefaultLeadGroup = w.TurretAttached ? 0 : VanillaLeadId;
+                    {
+                        int value;
+                        if (!w.TurretAttached && VanillaLeadGroupMatch.TryGetValue(w.PartSystems[w.PartHashes[w.PrimaryPart]].PartName, out value))
+                            w.DefaultLeadGroup = value;
+                    }
                 }
             }
 
