@@ -1,13 +1,20 @@
 ﻿using System.Collections.Generic;
 using CoreSystems.Platform;
 using Jakaria.API;
+using Sandbox.Game;
 using Sandbox.Game.Entities;
+using Sandbox.Game.Entities.Character;
+using Sandbox.Game.Weapons;
+using Sandbox.ModAPI;
 using VRage.Collections;
 using VRage.Game;
 using VRage.Game.Entity;
+using VRage.Game.ModAPI;
 using VRage.ModAPI;
 using VRage.Utils;
 using VRageMath;
+using VRageRender;
+using VRageRender.Messages;
 
 namespace CoreSystems.Support
 {
@@ -120,7 +127,7 @@ namespace CoreSystems.Support
                         {
                             var pos = Session.Tick - av.Hit.HitTick <= 1 && !MyUtils.IsZero(av.Hit.SurfaceHit) ? av.Hit.SurfaceHit : av.TracerFront;
                             var matrix = MatrixD.CreateTranslation(pos);
-
+  
                             MyParticleEffect hitEffect;
                             if (MyParticlesManager.TryCreateParticleEffect(av.AmmoDef.Const.HitParticleStr, ref matrix, ref pos, uint.MaxValue, out hitEffect))
                             {
@@ -130,10 +137,38 @@ namespace CoreSystems.Support
                                 if (hitEffect.Loop)
                                     hitEffect.Stop();
                             }
-
-
                         }
                     }
+                    if (av.Hit.Entity != null && av.AmmoDef.AmmoGraphics.Decals.MaxAge > 0 && !Vector3D.IsZero(av.Hit.SurfaceHit) && av.AmmoDef.Const.TextureHitMap.Count > 0)
+                    {
+                        MySurfaceImpactEnum surfaceImpact;
+                        MyStringHash materialType;
+                        var beam = new LineD(av.TracerFront + -(av.Direction * av.StepSize), av.TracerFront + (av.Direction * 0.1f));
+                        MyAPIGateway.Projectiles.GetSurfaceAndMaterial(av.Hit.Entity, ref beam, ref av.Hit.SurfaceHit, 0, out surfaceImpact, out materialType);
+
+                        MyStringHash projectileMaterial;
+                        if (av.AmmoDef.Const.TextureHitMap.TryGetValue(materialType, out projectileMaterial))
+                        {
+                            MyStringHash voxelMaterial = MyStringHash.NullOrEmpty;
+                            var voxelBase = av.Hit.Entity as MyVoxelBase;
+                            if (voxelBase != null)
+                            {
+                                Vector3D position = av.Hit.SurfaceHit;
+                                MyVoxelMaterialDefinition materialAt = voxelBase.GetMaterialAt(ref position);
+                                if (materialAt != null)
+                                    voxelMaterial = materialAt.Id.SubtypeId;
+                            }
+
+                            var hitInfo = new MyHitInfo
+                            {
+                                Position = av.Hit.SurfaceHit + (av.Direction * 0.01),
+                                Normal = av.Direction,
+                            };
+
+                            MyDecals.HandleAddDecal(av.Hit.Entity, hitInfo, Vector3.Zero, materialType, projectileMaterial, null, -1, voxelMaterial, false, MyDecalFlags.IgnoreOffScreenDeletion);
+                        }
+                    }
+
                     //BDC call for drawsplash
                     if (av.Hit.EventType == HitEntity.Type.Water)
                     {

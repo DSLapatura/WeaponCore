@@ -701,6 +701,7 @@ namespace CoreSystems.Api
                     [ProtoMember(3)] internal string ModelName;
                     [ProtoMember(4)] internal AmmoParticleDef Particles;
                     [ProtoMember(5)] internal LineDef Lines;
+                    [ProtoMember(6)] internal DecalDef Decals;
 
                     [ProtoContract]
                     public struct AmmoParticleDef
@@ -781,6 +782,21 @@ namespace CoreSystems.Api
                             [ProtoMember(9)] internal string[] Textures;
                             [ProtoMember(10)] internal Texture TextureMode;
 
+                        }
+                    }
+
+                    [ProtoContract]
+                    public struct DecalDef
+                    {
+
+                        [ProtoMember(1)] internal int MaxAge;
+                        [ProtoMember(2)] internal TextureMapDef[] Map;
+
+                        [ProtoContract]
+                        public struct TextureMapDef
+                        {
+                            [ProtoMember(1)] internal string HitMaterial;
+                            [ProtoMember(2)] internal string DecalMaterial;
                         }
                     }
                 }

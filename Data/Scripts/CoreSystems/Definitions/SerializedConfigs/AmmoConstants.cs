@@ -88,6 +88,7 @@ namespace CoreSystems.Support
 
         public readonly MyConcurrentPool<MyEntity> PrimeEntityPool;
         public readonly Dictionary<MyDefinitionBase, float> CustomBlockDefinitionBasesToScales;
+        public readonly Dictionary<MyStringHash, MyStringHash> TextureHitMap = new Dictionary<MyStringHash, MyStringHash>();
         public readonly MySoundPair TravelSoundPair;
         public readonly Stack<int[]> PatternShuffleArray = new Stack<int[]>();
         public readonly MySoundPair ShotSoundPair;
@@ -584,6 +585,12 @@ namespace CoreSystems.Support
                 }
             }
             else trailTextures = new[] { MyStringId.GetOrCompute(ammo.AmmoDef.AmmoGraphics.Lines.Trail.Material) };
+
+            if (ammo.AmmoDef.AmmoGraphics.Decals.Map != null)
+            {
+                foreach (var textureMapDef in ammo.AmmoDef.AmmoGraphics.Decals.Map)
+                    TextureHitMap[MyStringHash.GetOrCompute(textureMapDef.HitMaterial)] = MyStringHash.GetOrCompute(textureMapDef.DecalMaterial);
+            }
         }
 
         private void ComputeSteps(WeaponSystem.AmmoType ammo, out float shotFadeStep, out float trajectoryStep, out bool alwaysDraw)
