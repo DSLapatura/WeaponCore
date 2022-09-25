@@ -323,7 +323,6 @@ namespace CoreSystems
 
             var deformType = d.Deform.DeformType;
             var deformDelay = t.AmmoDef.Const.DeformDelay;
-            deformType = DeformDef.DeformTypes.NoDeform;
             //Ammo properties
             var hitMass = t.AmmoDef.Const.Mass;
 
