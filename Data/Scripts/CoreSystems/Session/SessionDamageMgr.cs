@@ -694,7 +694,7 @@ namespace CoreSystems
                                 MyCube myCube;
                                 if (!appliedImpulse && primaryDamage && hitMass > 0 && Session.IsServer)
                                 {
-                                    if (deformType == DeformDef.DeformTypes.HitBlock && scaledDamage > 1 && (deformDelay == 1 || !_slimLastDeformTick.TryGetValue(block, out lastDeformTick) || Tick - lastDeformTick >= deformDelay) && grid.TryGetCube(block.Position, out myCube))
+                                    if (deformType == DeformDef.DeformTypes.HitBlock && scaledDamage > 1 && block.FatBlock == null && (deformDelay == 1 || !_slimLastDeformTick.TryGetValue(block, out lastDeformTick) || Tick - lastDeformTick >= deformDelay) && grid.TryGetCube(block.Position, out myCube))
                                     {
                                         grid.ApplyDestructionDeformation(myCube.CubeBlock, 0f, new MyHitInfo(), attackerId);
                                         scaledDamage -= 1;
@@ -707,7 +707,7 @@ namespace CoreSystems
                                     ApplyProjectileForce(grid, grid.GridIntegerToWorld(rootBlock.Position), hitEnt.Intersection.Direction, (hitMass * speed));
                                 }
 
-                                if (Session.IsServer && deformType == DeformDef.DeformTypes.AllDamagedBlocks && scaledDamage > 1 && (deformDelay == 1 || !_slimLastDeformTick.TryGetValue(block, out lastDeformTick) || Tick - lastDeformTick >= deformDelay) && grid.TryGetCube(block.Position, out myCube))
+                                if (Session.IsServer && deformType == DeformDef.DeformTypes.AllDamagedBlocks && scaledDamage > 1 && block.FatBlock == null && (deformDelay == 1 || !_slimLastDeformTick.TryGetValue(block, out lastDeformTick) || Tick - lastDeformTick >= deformDelay) && grid.TryGetCube(block.Position, out myCube))
                                 {
                                     grid.ApplyDestructionDeformation(myCube.CubeBlock, 0f, new MyHitInfo(), attackerId);
                                     scaledDamage -= 1;
