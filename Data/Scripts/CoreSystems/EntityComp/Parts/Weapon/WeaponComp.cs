@@ -940,7 +940,7 @@ namespace CoreSystems.Platform
 
                 if (Session.HandlesInput)
                 {
-                    Session.GunnerRelease(Cube);
+                    Session.GunnerRelease();
                 }
             }
         }

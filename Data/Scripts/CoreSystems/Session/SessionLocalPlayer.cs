@@ -152,6 +152,9 @@ namespace CoreSystems
                     }
                 }
 
+                if (TrackingAi != null && GunnerBlackList)
+                    GunnerRelease();
+
                 TrackingAi = null;
                 ActiveCockPit = null;
                 ActiveControlBlock = null;
@@ -221,8 +224,11 @@ namespace CoreSystems
             CustomBlackListRequestBecauseKeenIsBrainDead(controlStringMenu, PlayerId);
         }
 
-        internal void GunnerRelease(MyCubeBlock cube)
+        internal void GunnerRelease()
         {
+            if (!GunnerBlackList)
+                return;
+
             GunnerBlackList = false;
             ActiveControlBlock = null;
             var controlStringLeft = MyAPIGateway.Input.GetControl(MyMouseButtonsEnum.Left).GetGameControlEnum().String;
