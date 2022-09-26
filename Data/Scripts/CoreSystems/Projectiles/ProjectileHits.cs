@@ -233,13 +233,23 @@ namespace CoreSystems.Projectiles
                         Vector3D? voxelHit = null;
                         if (tick - info.VoxelCache.HitRefreshed < 60)
                         {
-                            var cacheDist = ray.Intersects(info.VoxelCache.HitSphere);
+                            var hitSphere = info.VoxelCache.HitSphere;
+                            var cacheDist = ray.Intersects(hitSphere);
                             if (cacheDist.HasValue && cacheDist.Value <= p.Beam.Length)
                             {
-                                var overPenDist = p.Beam.Length - cacheDist.Value;
-                                var extendedDist = overPenDist >= info.VoxelCache.HitSphere.Radius ? info.VoxelCache.HitSphere.Radius : overPenDist;
+                                var sphereRadius = hitSphere.Radius;
+                                var sphereRadiusSqr = sphereRadius * sphereRadius;
 
-                                voxelHit = p.Beam.From + (p.Beam.Direction * (cacheDist.Value + extendedDist));
+                                var overPenDist = p.Beam.Length - cacheDist.Value;
+                                var proposedDist = overPenDist >= sphereRadius ? sphereRadius : overPenDist;
+                                var testPos1 = p.Beam.From + (p.Beam.Direction * (cacheDist.Value + proposedDist));
+                                var testPos2 = p.Beam.From + (p.Beam.Direction * (cacheDist.Value + (proposedDist * 0.5d)));
+
+                                var testPos2DistSqr = Vector3D.DistanceSquared(hitSphere.Center, testPos2);
+                                var testPos1DistSqr = Vector3D.DistanceSquared(hitSphere.Center, testPos1);
+                                var hitPos = testPos2DistSqr < sphereRadiusSqr && testPos2DistSqr < testPos1DistSqr ? testPos2 : testPos1DistSqr < sphereRadiusSqr ? testPos1 : p.Beam.From + (p.Beam.Direction * cacheDist.Value);
+                                
+                                voxelHit = hitPos;
                                 voxelState = VoxelIntersectBranch.PseudoHit1;
                             }
                             else if (cacheDist.HasValue)
@@ -779,7 +789,7 @@ namespace CoreSystems.Projectiles
                 {
                     info.AvShot.LastHitShield = hitEntity.EventType == Shield;
                     info.AvShot.Hit = info.Hit;
-                    if (info.AimedShot && Session.TrackingAi != null && Session.TargetUi.HitIncrease < 0.1d && (info.AmmoDef.Const.FixedFireAmmo || info.Weapon.Comp.Data.Repo.Values.Set.Overrides.Control != ProtoWeaponOverrides.ControlModes.Auto))
+                    if (info.AimedShot && Session.TrackingAi != null && Session.TargetUi.HitIncrease < 0.1d && !info.Weapon.Comp.OnCustomTurret && (info.AmmoDef.Const.FixedFireAmmo || info.Weapon.Comp.Data.Repo.Values.Set.Overrides.Control != ProtoWeaponOverrides.ControlModes.Auto))
                         Session.TargetUi.SetHit(info.HitList);
                 }
 
@@ -925,14 +935,17 @@ namespace CoreSystems.Projectiles
                     hitEnt.Hit = true;
                     dist = hitEnt.HitDist.Value;
                     hitEnt.HitDist = dist;
+                    dist += 1.25;
                 }
                 else if (ent is IMyDestroyableObject)
                 {
 
-                    if (hitEnt.Hit) dist = Vector3D.Distance(hitEnt.Intersection.From, hitEnt.HitPos.Value);
+                    if (hitEnt.Hit)
+                    {
+                        dist = Vector3D.Distance(hitEnt.Intersection.From, hitEnt.HitPos.Value);
+                    }
                     else
                     {
-
                         if (hitEnt.SphereCheck || info.EwarActive && eWarPulse)
                         {
 

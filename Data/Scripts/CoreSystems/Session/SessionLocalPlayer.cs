@@ -170,7 +170,7 @@ namespace CoreSystems
             foreach (var list in LeadGroups)
                 list.Clear();
             
-            if (Settings.Enforcement.DisableLeads || TrackingAi.GridMap?.GroupMap?.Ais == null)
+            if (Settings.Enforcement.DisableLeads)
                 return;
 
             foreach (var ai in TrackingAi.GridMap.GroupMap.Ais)
@@ -180,7 +180,7 @@ namespace CoreSystems
 
                 foreach (var comp in ai.WeaponComps)
                 {
-                    if (comp.CoreEntity == null || comp.CoreEntity.MarkedForClose)
+                    if (comp.CoreEntity == null || comp.CoreEntity.MarkedForClose || comp.OnCustomTurret)
                         continue;
 
                     var collection = comp.TypeSpecific != CoreComponent.CompTypeSpecific.Phantom ? comp.Platform.Weapons : comp.Platform.Phantoms;

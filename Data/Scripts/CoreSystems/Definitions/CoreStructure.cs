@@ -76,7 +76,17 @@ namespace CoreSystems.Support
                 var typeName = w.Value.Item1;
                 WeaponDefinition weaponDef = null;
                 foreach (var def in wDefList)
-                    if (def.HardPoint.PartName == typeName) weaponDef = def;
+                {
+                    if (def.HardPoint.PartName == typeName)
+                    {
+                        weaponDef = def;
+
+                        if (DefaultLeadGroup == 0 && (!def.HardPoint.Ai.TurretAttached || def.HardPoint.Ai.OverrideLeads) && def.HardPoint.Ai.DefaultLeadGroup > 0)
+                        {
+                            DefaultLeadGroup = def.HardPoint.Ai.DefaultLeadGroup;
+                        }
+                    }
+                }
 
                 if (weaponDef == null)
                 {

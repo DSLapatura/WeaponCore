@@ -51,7 +51,7 @@ namespace CoreSystems.Platform
             internal bool HasTracking;
             internal bool HasRequireTarget;
             internal bool HasDrone;
-
+            internal bool OnCustomTurret;
 
             internal WeaponComponent(Session session, MyEntity coreEntity, MyDefinitionId id)
             {

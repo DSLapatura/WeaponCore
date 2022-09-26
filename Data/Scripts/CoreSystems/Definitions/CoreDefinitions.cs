@@ -460,6 +460,7 @@ namespace CoreSystems.Support
                 [ProtoMember(5)] internal bool LockOnFocus;
                 [ProtoMember(6)] internal bool SuppressFire;
                 [ProtoMember(7)] internal bool OverrideLeads;
+                [ProtoMember(8)] internal int DefaultLeadGroup;
             }
 
             [ProtoContract]

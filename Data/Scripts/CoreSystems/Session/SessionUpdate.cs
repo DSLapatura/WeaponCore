@@ -280,7 +280,7 @@ namespace CoreSystems
                         
                         trackWeapon.MasterComp = cComp;
                         trackWeapon.RotorTurretTracking = true;
-
+                        
                         if (cComp.Controller.IsUnderControl)
                         {
                             cComp.RotorsMoving = true;
@@ -338,11 +338,11 @@ namespace CoreSystems
                     var overrides = wValues.Set.Overrides;
                     var cMode = overrides.Control;
                     var sMode = overrides.ShootMode;
-                    var cComp = ai.RootFixedWeaponComp?.TrackingWeapon?.MasterComp != null;
-                    var focusTargets = cComp ? ai.RootFixedWeaponComp.TrackingWeapon.MasterComp.Data.Repo.Values.Set.Overrides.FocusTargets : overrides.FocusTargets;
-                    var grids = cComp ? ai.RootFixedWeaponComp.TrackingWeapon.MasterComp.Data.Repo.Values.Set.Overrides.Grids : overrides.Grids;
-                    var overRide = cComp ? ai.RootFixedWeaponComp.TrackingWeapon.MasterComp.Data.Repo.Values.Set.Overrides.Override : overrides.Override;
-                    var projectiles = cComp ? ai.RootFixedWeaponComp.TrackingWeapon.MasterComp.Data.Repo.Values.Set.Overrides.Projectiles : overrides.Projectiles;
+                    wComp.OnCustomTurret = ai.RootFixedWeaponComp?.TrackingWeapon?.MasterComp != null;
+                    var focusTargets = wComp.OnCustomTurret ? ai.RootFixedWeaponComp.TrackingWeapon.MasterComp.Data.Repo.Values.Set.Overrides.FocusTargets : overrides.FocusTargets;
+                    var grids = wComp.OnCustomTurret ? ai.RootFixedWeaponComp.TrackingWeapon.MasterComp.Data.Repo.Values.Set.Overrides.Grids : overrides.Grids;
+                    var overRide = wComp.OnCustomTurret ? ai.RootFixedWeaponComp.TrackingWeapon.MasterComp.Data.Repo.Values.Set.Overrides.Override : overrides.Override;
+                    var projectiles = wComp.OnCustomTurret ? ai.RootFixedWeaponComp.TrackingWeapon.MasterComp.Data.Repo.Values.Set.Overrides.Projectiles : overrides.Projectiles;
 
                     if (HandlesInput) {
 

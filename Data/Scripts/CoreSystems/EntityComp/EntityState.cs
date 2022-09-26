@@ -28,6 +28,9 @@ namespace CoreSystems.Support
                     NeedsWorldReset = false;
                     break;
             }
+
+            if (Session.HandlesInput)
+                Session.LeadGroupsDirty = true;
         }
 
         private void Startup()

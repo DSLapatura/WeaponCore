@@ -476,15 +476,11 @@ namespace CoreSystems
                             break;
                     }
 
-                    if (VanillaSubtypes.Contains(subTypeMap.Key))
-                    {
-                        int value;
-                        if (!w.TurretAttached && VanillaLeadGroupMatch.TryGetValue(w.PartSystems[w.PartHashes[w.PrimaryPart]].PartName, out value))
-                            w.DefaultLeadGroup = value;
-                    }
+                    int value;
+                    if (w.DefaultLeadGroup == 0 && !w.TurretAttached && VanillaSubtypes.Contains(subTypeMap.Key) && VanillaLeadGroupMatch.TryGetValue(w.PartSystems[w.PartHashes[w.PrimaryPart]].PartName, out value))
+                        w.DefaultLeadGroup = value;
                 }
             }
-
 
             _subTypeMaps.Clear();
             _subTypeIdWeaponDefs.Clear();
