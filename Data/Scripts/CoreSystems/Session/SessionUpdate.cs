@@ -282,12 +282,15 @@ namespace CoreSystems
                         Ai.PlayerController pControl;
                         pControl.ControlBlock = null;
                         var playerControl = rootConstruct.ControllingPlayers.TryGetValue(PlayerId, out pControl);
-                        
+                        var activePlayer = PlayerId == cValues.State.PlayerId && playerControl;
+
+                        var hasControl = activePlayer && pControl.ControlBlock == cComp.CoreEntity;
+                        topAi.RotorManualControlId = hasControl ? PlayerId : topAi.RotorManualControlId != -2 ? -1 : -2;
+
                         if (HandlesInput && (cValues.State.PlayerId == PlayerId || !controlPart.Comp.HasAim && ai.RotorManualControlId == PlayerId))
                         {
                             var overrides = cValues.Set.Overrides;
                             var cMode = cValues.Set.Overrides.Control;
-                            var activePlayer = PlayerId == cValues.State.PlayerId && playerControl;
 
                             var playerAim = activePlayer && cMode != ProtoWeaponOverrides.ControlModes.Auto || pControl.ControlBlock is IMyTurretControlBlock;
                             var track = !InMenu && (playerAim && !UiInput.CameraBlockView || pControl.ControlBlock is IMyTurretControlBlock || UiInput.CameraChannelId > 0 && UiInput.CameraChannelId == overrides.CameraChannel);
@@ -295,9 +298,6 @@ namespace CoreSystems
                             if (cValues.State.TrackingReticle != track)
                                 TrackReticleUpdateCtc(controlPart.Comp, track);
                         }
-
-                        var hasControl = playerControl && pControl.ControlBlock == cComp.CoreEntity;
-                        topAi.RotorManualControlId = hasControl ? PlayerId : topAi.RotorManualControlId != -2 ? -1 : -2;
 
                         if (cComp.Controller.IsUnderControl)
                         {
