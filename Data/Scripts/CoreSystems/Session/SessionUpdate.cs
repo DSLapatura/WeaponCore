@@ -15,6 +15,7 @@ using System;
 using System.Diagnostics;
 using SpaceEngineers.Game.ModAPI;
 using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
+using VRage.Input;
 
 namespace CoreSystems
 {
@@ -273,27 +274,30 @@ namespace CoreSystems
                         if (trackWeapon == null)
                             continue;
 
-                        Ai.PlayerController pControl;
-                        pControl.ControlBlock = null;
-                        var playerControl = rootConstruct.ControllingPlayers.TryGetValue(PlayerId, out pControl);
-                        var hasControl = playerControl && pControl.ControlBlock == cComp.CoreEntity;
-
-                        topAi.RotorManualControlId = hasControl ? PlayerId : topAi.RotorManualControlId != -2 ? -1 : -2;
                         topAi.RotorCommandTick = Tick;
-                        
                         trackWeapon.MasterComp = cComp;
                         trackWeapon.RotorTurretTracking = true;
                         var cValues = controlPart.Comp.Data.Repo.Values;
-                        var overrides = cValues.Set.Overrides;
-                        var cMode = cValues.Set.Overrides.Control;
-                        var activePlayer = PlayerId == cValues.State.PlayerId && playerControl;
 
-
-                        var playerAim = activePlayer && cMode != ProtoWeaponOverrides.ControlModes.Auto || pControl.ControlBlock is IMyTurretControlBlock;
-                        var track = !InMenu && (playerAim && !UiInput.CameraBlockView || pControl.ControlBlock is IMyTurretControlBlock || UiInput.CameraChannelId > 0 && UiInput.CameraChannelId == overrides.CameraChannel);
+                        Ai.PlayerController pControl;
+                        pControl.ControlBlock = null;
+                        var playerControl = rootConstruct.ControllingPlayers.TryGetValue(PlayerId, out pControl);
                         
-                        if (cValues.State.TrackingReticle != track)
-                            TrackReticleUpdateCtc(controlPart.Comp, track);
+                        if (HandlesInput && (cValues.State.PlayerId == PlayerId || !controlPart.Comp.HasAim && ai.RotorManualControlId == PlayerId))
+                        {
+                            var overrides = cValues.Set.Overrides;
+                            var cMode = cValues.Set.Overrides.Control;
+                            var activePlayer = PlayerId == cValues.State.PlayerId && playerControl;
+
+                            var playerAim = activePlayer && cMode != ProtoWeaponOverrides.ControlModes.Auto || pControl.ControlBlock is IMyTurretControlBlock;
+                            var track = !InMenu && (playerAim && !UiInput.CameraBlockView || pControl.ControlBlock is IMyTurretControlBlock || UiInput.CameraChannelId > 0 && UiInput.CameraChannelId == overrides.CameraChannel);
+
+                            if (cValues.State.TrackingReticle != track)
+                                TrackReticleUpdateCtc(controlPart.Comp, track);
+                        }
+
+                        var hasControl = playerControl && pControl.ControlBlock == cComp.CoreEntity;
+                        topAi.RotorManualControlId = hasControl ? PlayerId : topAi.RotorManualControlId != -2 ? -1 : -2;
 
                         if (cComp.Controller.IsUnderControl)
                         {
