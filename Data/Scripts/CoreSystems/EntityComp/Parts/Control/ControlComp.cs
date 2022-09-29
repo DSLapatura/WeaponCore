@@ -9,8 +9,6 @@ using Sandbox.ModAPI;
 using SpaceEngineers.Game.ModAPI;
 using VRage.Game;
 using VRage.Game.Entity;
-using VRage.Game.ModAPI;
-using VRage.Input;
 using VRage.Utils;
 using VRageMath;
 
@@ -105,7 +103,6 @@ namespace CoreSystems.Platform
                 if (Platform.Control.OtherMap != null)
                     Platform.Control.OtherMap.TargetVelocityRad = 0;
             }
-
 
             internal static void RequestSetValue(ControlComponent comp, string setting, int value, long playerId)
             {
@@ -300,11 +297,12 @@ namespace CoreSystems.Platform
                 }
             }
 
-            internal bool TrackTarget(Ai topAi, IMyMotorStator root, IMyMotorStator other, bool isRoot, ref Vector3D desiredDirection)
+            internal bool TrackTarget(Ai topAi, IMyMotorStator root, IMyMotorStator other, bool isRoot, ref Vector3D desiredDirection, ref Vector3D targetPos)
             {
                 var trackingWeapon = isRoot? Platform.Control.TrackingWeapon : topAi.RootFixedWeaponComp.TrackingWeapon;
                 RotorsMoving = true;
-                var targetDistSqr = Vector3D.DistanceSquared(root.PositionComp.WorldAABB.Center, trackingWeapon.Target.TargetEntity.PositionComp.WorldAABB.Center);
+                
+                var targetDistSqr = Vector3D.DistanceSquared(root.PositionComp.WorldAABB.Center, targetPos);
 
                 var epsilon = Session.Tick120 ? 1E-06d : targetDistSqr <= 640000 ? 1E-03d : targetDistSqr <= 3240000 ? 1E-04d : 1E-05d;
 
@@ -409,6 +407,7 @@ namespace CoreSystems.Platform
                 }
                 _lastAction2Tick = Session.Tick;
             }
+
         }
     }
 }

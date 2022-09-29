@@ -4,6 +4,7 @@ using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
 using VRage.Game.Entity;
 using VRageMath;
+using static CoreSystems.Platform.ControlSys;
 
 namespace CoreSystems
 {
@@ -167,15 +168,29 @@ namespace CoreSystems
             var packet = data.Packet;
             var reticlePacket = (BoolUpdatePacket)packet;
             var ent = MyEntities.GetEntityByIdOrDefault(packet.EntityId);
-            var comp = ent?.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
+            var comp = ent?.Components.Get<CoreComponent>() as CoreComponent;
 
             if (comp?.Ai == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return Error(data, Msg("BaseComp", comp != null), Msg("Ai", comp?.Ai != null), Msg("Ai", comp?.Platform.State == CorePlatform.PlatformState.Ready));
 
-            var wValues = comp.Data.Repo.Values;
-            wValues.State.TrackingReticle = reticlePacket.Data;
-            comp.ManualMode = wValues.State.TrackingReticle && wValues.Set.Overrides.Control == ProtoWeaponOverrides.ControlModes.Manual;
 
-            SendState(comp);
+            var wComp = comp as Weapon.WeaponComponent;
+            var cComp = comp as ControlComponent;
+            if (wComp != null)
+            {
+                var wValues = wComp.Data.Repo.Values;
+                wValues.State.TrackingReticle = reticlePacket.Data;
+                comp.ManualMode = wValues.State.TrackingReticle && wValues.Set.Overrides.Control == ProtoWeaponOverrides.ControlModes.Manual;
+
+                SendState(wComp);
+            }
+            else if (cComp != null)
+            {
+                var wValues = cComp.Data.Repo.Values;
+                wValues.State.TrackingReticle = reticlePacket.Data;
+                comp.ManualMode = wValues.State.TrackingReticle && wValues.Set.Overrides.Control == ProtoWeaponOverrides.ControlModes.Manual;
+
+                SendState(cComp);
+            }
 
             data.Report.PacketValid = true;
 

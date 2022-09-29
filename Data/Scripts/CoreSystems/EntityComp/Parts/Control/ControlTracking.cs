@@ -1,100 +1,39 @@
 ﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
 using CoreSystems.Support;
 using Sandbox.ModAPI;
 using VRage.Game;
-using VRage.Game.Entity;
-using VRage.Game.ModAPI;
+using VRage.Game.ObjectBuilders.Components;
 using VRage.Utils;
 using VRageMath;
 namespace CoreSystems.Platform
 {
     public partial class ControlSys : Part
     {
-        internal static bool TrajectoryEstimation(Weapon weapon, out Vector3D targetDirection)
-        {
-            var target = weapon.Target.TargetEntity;
-            if (target?.GetTopMostParent()?.Physics?.LinearVelocity == null)
-            {
-                targetDirection = Vector3D.Zero;
-                return false;
-            }
-
-            var targetPos = target.PositionComp.WorldAABB.Center;
-
-            var shooter = weapon.Comp.FunctionalBlock;
-            var ammoDef = weapon.ActiveAmmoDef.AmmoDef;
-            if (ammoDef.Const.IsBeamWeapon)
-            {
-                targetDirection = Vector3D.Normalize(targetPos - shooter.PositionComp.WorldAABB.Center);
-                return true;
-            }
-
-            var targetVel = target.GetTopMostParent().Physics.LinearVelocity;
-            var shooterVel = shooter.GetTopMostParent().Physics.LinearVelocity;
-
-            var projectileMaxSpeed = ammoDef.Const.DesiredProjectileSpeed;
-            var shooterPos = weapon.MyPivotPos;
-            Vector3D deltaPos = targetPos - shooterPos;
-            Vector3D deltaVel = targetVel - shooterVel;
-            Vector3D deltaPosNorm;
-            if (Vector3D.IsZero(deltaPos)) deltaPosNorm = Vector3D.Zero;
-            else if (Vector3D.IsUnit(ref deltaPos)) deltaPosNorm = deltaPos;
-            else Vector3D.Normalize(ref deltaPos, out deltaPosNorm);
-
-            double closingSpeed;
-            Vector3D.Dot(ref deltaVel, ref deltaPosNorm, out closingSpeed);
-
-            Vector3D closingVel = closingSpeed * deltaPosNorm;
-            Vector3D lateralVel = deltaVel - closingVel;
-            double projectileMaxSpeedSqr = projectileMaxSpeed * projectileMaxSpeed;
-            double ttiDiff = projectileMaxSpeedSqr - lateralVel.LengthSquared();
-
-            if (ttiDiff < 0)
-            {
-                targetDirection = shooter.PositionComp.WorldMatrixRef.Forward;
-                return false;
-            }
-
-            double projectileClosingSpeed = Math.Sqrt(ttiDiff) - closingSpeed;
-
-            double closingDistance;
-            Vector3D.Dot(ref deltaPos, ref deltaPosNorm, out closingDistance);
-
-            double timeToIntercept = closingDistance / projectileClosingSpeed;
-
-            if (timeToIntercept < 0)
-            {
-                targetDirection = shooter.PositionComp.WorldMatrixRef.Forward;
-                return false;
-            }
-
-            targetDirection = Vector3D.Normalize(targetPos + timeToIntercept * (Vector3D)(targetVel - shooterVel * 1) - shooterPos);
-            return true;
-
-        }
-
-        internal static bool TrajectoryEstimation(Ai topAi, ControlSys control, out Vector3D targetDirection, bool force = false)
+        internal static bool TrajectoryEstimation(Ai topAi, ControlSys control, out Vector3D targetDirection, out Vector3D targetPos, bool force = false)
         {
             var weapon = control.TrackingWeapon;
             var ai = weapon.Comp.Ai;
             var session = ai.Session;
             var ammoDef = weapon.ActiveAmmoDef.AmmoDef;
-            var target = weapon.Target.TargetEntity;
-            if (target?.GetTopMostParent()?.Physics?.LinearVelocity == null)
+            var cValues = control.Comp.Data.Repo.Values;
+
+            Ai.FakeTarget.FakeWorldTargetInfo fakeTargetInfo = null;
+            if (cValues.Set.Overrides.Control != ProtoWeaponOverrides.ControlModes.Auto) 
+                control.ValidFakeTargetInfo(cValues.State.PlayerId, out fakeTargetInfo);
+
+
+            if (fakeTargetInfo == null && weapon.Target.TargetEntity?.GetTopMostParent()?.Physics?.LinearVelocity == null)
             {
                 targetDirection = Vector3D.Zero;
+                targetPos = Vector3D.Zero;
                 topAi.RotorTargetPosition = Vector3D.MaxValue;
                 return false;
             }
-
-            var cValues = control.Comp.Data.Repo.Values;
             var maxRangeSqr = (cValues.Set.Range * cValues.Set.Range);
             var scopeInfo = weapon.GetScope.Info;
             var shooterPos = control.OtherMap.Top.PositionComp.WorldAABB.Center;
 
-            var targetPos = target.PositionComp.WorldAABB.Center;
+            targetPos = fakeTargetInfo?.WorldPosition ?? weapon.Target.TargetEntity.PositionComp.WorldAABB.Center;
 
             if (ammoDef.Const.IsBeamWeapon)
             {
@@ -102,8 +41,6 @@ namespace CoreSystems.Platform
                 topAi.RotorTargetPosition = targetPos;
                 return Vector3D.DistanceSquared(targetPos, shooterPos) < maxRangeSqr;
             }
-
-            var targetTopMost = target.GetTopMostParent();
 
             if (ai.VelocityUpdateTick != session.Tick)
             {
@@ -129,7 +66,7 @@ namespace CoreSystems.Platform
             var projectileAccMag = ammoDef.Trajectory.AccelPerSec;
             var gravity = weapon.GravityPoint;
             var basic = MyUtils.IsZero(weapon.GravityPoint);
-            var targetVel = (Vector3D)targetTopMost.Physics.LinearVelocity;
+            var targetVel = (Vector3D)(fakeTargetInfo?.LinearVelocity ?? weapon.Target.TargetEntity.GetTopMostParent().Physics.LinearVelocity);
             Vector3D deltaPos = targetPos - shooterPos;
             Vector3D deltaVel = targetVel - shooterVel;
             Vector3D deltaPosNorm;
@@ -175,6 +112,7 @@ namespace CoreSystems.Platform
                 shooterVelScaleFactor = Math.Min(1, (projectileMaxSpeed - projectileInitSpeed) / projectileAccMag);
 
             Vector3D estimatedImpactPoint = targetPos + timeToIntercept * (targetVel - shooterVel * shooterVelScaleFactor);
+
             if (basic)
             {
                 targetDirection = Vector3D.Normalize(estimatedImpactPoint - shooterPos);
@@ -186,7 +124,8 @@ namespace CoreSystems.Platform
 
             Vector3D projectileVel = shooterVel;
             Vector3D projectilePos = shooterPos;
-            var targetAcc = (Vector3D)targetTopMost.Physics.LinearAcceleration;
+
+            var targetAcc = (Vector3D)(fakeTargetInfo?.Acceleration ?? weapon.Target.TargetEntity.GetTopMostParent().Physics.LinearAcceleration);
 
             Vector3D aimDirectionNorm;
             if (projectileAccelerates)

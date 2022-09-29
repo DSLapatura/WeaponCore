@@ -70,6 +70,19 @@ namespace CoreSystems.Control
             ControlSys.ControlComponent.RequestSetValue(comp, "SubSystems", value, comp.Session.PlayerId);
         }
 
+        internal static void TerminalActionControlModeControl(IMyTerminalBlock blk)
+        {
+            var comp = blk?.Components?.Get<CoreComponent>() as ControlSys.ControlComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+                return;
+
+            var numValue = (int)comp.Data.Repo.Values.Set.Overrides.Control;
+            var value = numValue + 1 <= 2 ? numValue + 1 : 0;
+
+            ControlSys.ControlComponent.RequestSetValue(comp, "ControlModes", value, comp.Session.PlayerId);
+        }
+
+
         internal static void TerminalActionToggleNeutralsControl(IMyTerminalBlock blk)
         {
             var comp = blk?.Components?.Get<CoreComponent>() as ControlSys.ControlComponent;

@@ -10,7 +10,6 @@ namespace CoreSystems.Platform
 {
     public partial class ControlSys : Part
     {
-        internal readonly ControlInfo Info = new ControlInfo();
         internal readonly ControlComponent Comp;
         internal readonly ControlSystem System;
         internal readonly MyStringHash PartHash;
@@ -26,12 +25,6 @@ namespace CoreSystems.Platform
             Comp = comp;
             Init(comp, system, partId);
             PartHash = Comp.Structure.PartHashes[partId];
-        }
-
-        public class RotorMap
-        {
-            internal Ai Ai;
-            internal Dummy Scope;
         }
     }
 }

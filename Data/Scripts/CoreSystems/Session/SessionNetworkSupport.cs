@@ -5,6 +5,7 @@ using Sandbox.ModAPI;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRageMath;
+using static CoreSystems.Platform.ControlSys;
 using static CoreSystems.Support.CoreComponent;
 
 namespace CoreSystems
@@ -1274,6 +1275,30 @@ namespace CoreSystems
             }
         }
 
+        internal void TrackReticleUpdateCtc(ControlComponent comp, bool track)
+        {
+            if (IsClient)
+            {
+                PacketsToServer.Add(new BoolUpdatePacket
+                {
+                    EntityId = comp.CoreEntity.EntityId,
+                    SenderId = MultiplayerId,
+                    PType = PacketType.ReticleUpdate,
+                    Data = track
+                });
+            }
+            else if (HandlesInput)
+            {
+
+                comp.Data.Repo.Values.State.TrackingReticle = track;
+                var wValues = comp.Data.Repo.Values;
+
+                comp.ManualMode = wValues.State.TrackingReticle && wValues.Set.Overrides.Control == ProtoWeaponOverrides.ControlModes.Manual; // needs to be set everywhere dedicated and non-tracking clients receive TrackingReticle or Control updates.
+
+                if (comp.Session.MpActive)
+                    SendComp(comp);
+            }
+        }
 
         internal void SendCountingDownUpdate(Weapon.WeaponComponent comp, bool countingDown)
         {

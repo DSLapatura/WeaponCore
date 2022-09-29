@@ -178,6 +178,7 @@ namespace CoreSystems
             CreateCustomActions<T>.CreateMovementStateControl(session);
             //CreateCustomActions<T>.CreateShootModeControl(session);
             CreateCustomActions<T>.CreateSubSystemsControl(session);
+            CreateCustomActions<T>.CreateControlModesControl(session);
             CreateCustomActions<T>.CreateProjectilesControl(session);
             CreateCustomActions<T>.CreateBiologicalsControl(session);
             CreateCustomActions<T>.CreateMeteorsControl(session);

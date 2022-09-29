@@ -171,9 +171,6 @@
     <Compile Include="Data\Scripts\CoreSystems\EntityComp\Parts\Control\ControlFields.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
-    <Compile Include="Data\Scripts\CoreSystems\EntityComp\Parts\Control\ControlTypes.cs">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Compile>
     <Compile Include="Data\Scripts\CoreSystems\EntityComp\Parts\PartState.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>

@@ -684,6 +684,20 @@ namespace CoreSystems.Control
             session.CustomActions.Add(action);
         }
 
+        public static void CreateControlModesControl(Session session)
+        {
+            var action = MyAPIGateway.TerminalControls.CreateAction<T>("ControlModes");
+            action.Icon = @"Textures\GUI\Icons\Actions\Toggle.dds";
+            action.Name = new StringBuilder(Localization.GetText("ActionControlModes"));
+            action.Action = CustomActions.TerminalActionControlModeControl;
+            action.Writer = CustomActions.ControlStateWriterControl;
+            action.Enabled = TerminalHelpers.CtcIsReady;
+            action.ValidForGroups = true;
+
+            MyAPIGateway.TerminalControls.AddAction<T>(action);
+            session.CustomActions.Add(action);
+        }
+
         public static void CreateNeutralsControl(Session session)
         {
             var action = MyAPIGateway.TerminalControls.CreateAction<T>("Neutrals");

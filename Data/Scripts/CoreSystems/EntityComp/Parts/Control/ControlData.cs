@@ -1,6 +1,8 @@
 ﻿using System;
 using CoreSystems.Support;
 using Sandbox.ModAPI;
+using VRageMath;
+using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace CoreSystems.Platform
 {
@@ -82,6 +84,23 @@ namespace CoreSystems.Platform
                         break;
                 }
             }
+        }
+        internal bool ValidFakeTargetInfo(long playerId, out Ai.FakeTarget.FakeWorldTargetInfo fakeTargetInfo, bool preferPainted = true)
+        {
+            fakeTargetInfo = null;
+            Ai.FakeTargets fakeTargets;
+            if (Comp.Session.PlayerDummyTargets.TryGetValue(playerId, out fakeTargets))
+            {
+                var validManual = Comp.Data.Repo.Values.Set.Overrides.Control == ProtoWeaponOverrides.ControlModes.Manual && Comp.Data.Repo.Values.State.TrackingReticle && fakeTargets.ManualTarget.FakeInfo.WorldPosition != Vector3D.Zero;
+                var validPainter = Comp.Data.Repo.Values.Set.Overrides.Control == ProtoWeaponOverrides.ControlModes.Painter && fakeTargets.PaintedTarget.LocalPosition != Vector3D.Zero;
+                var fakeTarget = validPainter && preferPainted ? fakeTargets.PaintedTarget : validManual ? fakeTargets.ManualTarget : null;
+                if (fakeTarget == null)
+                    return false;
+
+                fakeTargetInfo = fakeTarget.LastInfoTick != Comp.Session.Tick ? fakeTarget.GetFakeTargetInfo(Comp.Ai) : fakeTarget.FakeInfo;
+            }
+
+            return fakeTargetInfo != null;
         }
     }
 }

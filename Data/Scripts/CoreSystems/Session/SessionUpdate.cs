@@ -14,6 +14,7 @@ using Sandbox.Game.Entities;
 using System;
 using System.Diagnostics;
 using SpaceEngineers.Game.ModAPI;
+using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace CoreSystems
 {
@@ -273,20 +274,33 @@ namespace CoreSystems
                             continue;
 
                         Ai.PlayerController pControl;
-                        var hasControl = rootConstruct.ControllingPlayers.TryGetValue(PlayerId, out pControl) && pControl.ControlBlock == cComp.CoreEntity;
+                        pControl.ControlBlock = null;
+                        var playerControl = rootConstruct.ControllingPlayers.TryGetValue(PlayerId, out pControl);
+                        var hasControl = playerControl && pControl.ControlBlock == cComp.CoreEntity;
 
                         topAi.RotorManualControlId = hasControl ? PlayerId : topAi.RotorManualControlId != -2 ? -1 : -2;
                         topAi.RotorCommandTick = Tick;
                         
                         trackWeapon.MasterComp = cComp;
                         trackWeapon.RotorTurretTracking = true;
+                        var cValues = controlPart.Comp.Data.Repo.Values;
+                        var overrides = cValues.Set.Overrides;
+                        var cMode = cValues.Set.Overrides.Control;
+                        var activePlayer = PlayerId == cValues.State.PlayerId && playerControl;
+
+
+                        var playerAim = activePlayer && cMode != ProtoWeaponOverrides.ControlModes.Auto || pControl.ControlBlock is IMyTurretControlBlock;
+                        var track = !InMenu && (playerAim && !UiInput.CameraBlockView || pControl.ControlBlock is IMyTurretControlBlock || UiInput.CameraChannelId > 0 && UiInput.CameraChannelId == overrides.CameraChannel);
                         
+                        if (cValues.State.TrackingReticle != track)
+                            TrackReticleUpdateCtc(controlPart.Comp, track);
+
                         if (cComp.Controller.IsUnderControl)
                         {
                             cComp.RotorsMoving = true;
                             continue;
                         }
-                        
+
                         if (!cComp.Data.Repo.Values.Set.Overrides.AiEnabled || topAi.RootFixedWeaponComp.TrackingWeapon.Comp.CoreEntity.MarkedForClose) {
                             if (cComp.RotorsMoving)
                                 cComp.StopRotors();
@@ -295,10 +309,12 @@ namespace CoreSystems
 
                         var desiredDirection = Vector3D.Zero;
                         var noTarget = false;
+                        var targetPos = Vector3D.Zero;
 
-                        if (controlPart.TrackingWeapon.Target.TargetState != TargetStates.IsEntity)
+                        var validTarget = controlPart.TrackingWeapon.Target.TargetState == TargetStates.IsEntity || controlPart.TrackingWeapon.Target.TargetState == TargetStates.IsFake;
+                        if (!validTarget)
                             noTarget = true;
-                        else if (!ControlSys.TrajectoryEstimation(topAi, controlPart, out desiredDirection, false))
+                        else if (!ControlSys.TrajectoryEstimation(topAi, controlPart, out desiredDirection, out targetPos, false))
                             noTarget = true;
 
                         if (noTarget) {
@@ -308,7 +324,7 @@ namespace CoreSystems
                             continue;
                         }
 
-                        if (!cComp.TrackTarget(topAi, cComp.Platform.Control.BaseMap,  cComp.Platform.Control.OtherMap, true, ref desiredDirection))
+                        if (!cComp.TrackTarget(topAi, cComp.Platform.Control.BaseMap,  cComp.Platform.Control.OtherMap, true, ref desiredDirection, ref targetPos))
                             continue;
                     }
 
@@ -334,11 +350,23 @@ namespace CoreSystems
                     if (wComp.Platform.State != CorePlatform.PlatformState.Ready || wComp.IsDisabled || wComp.IsAsleep || !wComp.IsWorking || wComp.CoreEntity.MarkedForClose || wComp.LazyUpdate && !ai.DbUpdated && Tick > wComp.NextLazyUpdateStart)
                         continue;
 
+                    wComp.OnCustomTurret = ai.RootFixedWeaponComp?.TrackingWeapon?.MasterComp != null;
                     var wValues = wComp.Data.Repo.Values;
                     var overrides = wValues.Set.Overrides;
                     var cMode = overrides.Control;
+                    if (wComp.OnCustomTurret && ai.RootFixedWeaponComp.TrackingWeapon.MasterComp.Data.Repo.Values.Set.Overrides.Control != cMode)
+                        BlockUi.RequestControlMode((IMyTerminalBlock) wComp.Cube, (long) ai.RootFixedWeaponComp.TrackingWeapon.MasterComp.Data.Repo.Values.Set.Overrides.Control);
+
                     var sMode = overrides.ShootMode;
-                    wComp.OnCustomTurret = ai.RootFixedWeaponComp?.TrackingWeapon?.MasterComp != null;
+                    if (wComp.OnCustomTurret)
+                    {
+                        if (wComp.Data.Repo.Values.Set.Overrides.Control != ProtoWeaponOverrides.ControlModes.Manual)
+                        {
+                            //BlockUi.RequestControlMode((IMyTerminalBlock)wComp.Cube, (long)ProtoWeaponOverrides.ControlModes.Manual);
+                            //Log.Line($"set");
+                        }
+                    }
+
                     var focusTargets = wComp.OnCustomTurret ? ai.RootFixedWeaponComp.TrackingWeapon.MasterComp.Data.Repo.Values.Set.Overrides.FocusTargets : overrides.FocusTargets;
                     var grids = wComp.OnCustomTurret ? ai.RootFixedWeaponComp.TrackingWeapon.MasterComp.Data.Repo.Values.Set.Overrides.Grids : overrides.Grids;
                     var overRide = wComp.OnCustomTurret ? ai.RootFixedWeaponComp.TrackingWeapon.MasterComp.Data.Repo.Values.Set.Overrides.Override : overrides.Override;
@@ -374,7 +402,7 @@ namespace CoreSystems
                                 TargetUi.LastManualTick = Tick;
 
                             if (wValues.State.TrackingReticle != track)
-                                wComp.Session.TrackReticleUpdate(wComp, track);
+                                TrackReticleUpdate(wComp, track);
 
                             var active = wComp.ShootManager.ClientToggleCount > wValues.State.ToggleCount || wValues.State.Trigger == On;
                             var turnOn = !active && UiInput.ClientInputState.MouseButtonLeft && playerControl && !InMenu;
@@ -403,6 +431,7 @@ namespace CoreSystems
 
                     wComp.PainterMode = fakeTargets != null && cMode == ProtoWeaponOverrides.ControlModes.Painter && fakeTargets.PaintedTarget.EntityId != 0;
                     wComp.UserControlled = cMode != ProtoWeaponOverrides.ControlModes.Auto || wValues.State.Control == ControlMode.Camera || fakeTargets != null && fakeTargets.PaintedTarget.EntityId != 0;
+                    
                     wComp.FakeMode = wComp.ManualMode || wComp.PainterMode;
 
                     var onConfrimed = wValues.State.Trigger == On && !wComp.ShootManager.FreezeClientShoot && !wComp.ShootManager.WaitingShootResponse && (sMode != Weapon.ShootManager.ShootModes.AiShoot || wComp.ShootManager.Signal == Weapon.ShootManager.Signals.Manual);
