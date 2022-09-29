@@ -358,15 +358,6 @@ namespace CoreSystems
                         BlockUi.RequestControlMode((IMyTerminalBlock) wComp.Cube, (long) ai.RootFixedWeaponComp.TrackingWeapon.MasterComp.Data.Repo.Values.Set.Overrides.Control);
 
                     var sMode = overrides.ShootMode;
-                    if (wComp.OnCustomTurret)
-                    {
-                        if (wComp.Data.Repo.Values.Set.Overrides.Control != ProtoWeaponOverrides.ControlModes.Manual)
-                        {
-                            //BlockUi.RequestControlMode((IMyTerminalBlock)wComp.Cube, (long)ProtoWeaponOverrides.ControlModes.Manual);
-                            //Log.Line($"set");
-                        }
-                    }
-
                     var focusTargets = wComp.OnCustomTurret ? ai.RootFixedWeaponComp.TrackingWeapon.MasterComp.Data.Repo.Values.Set.Overrides.FocusTargets : overrides.FocusTargets;
                     var grids = wComp.OnCustomTurret ? ai.RootFixedWeaponComp.TrackingWeapon.MasterComp.Data.Repo.Values.Set.Overrides.Grids : overrides.Grids;
                     var overRide = wComp.OnCustomTurret ? ai.RootFixedWeaponComp.TrackingWeapon.MasterComp.Data.Repo.Values.Set.Overrides.Override : overrides.Override;
