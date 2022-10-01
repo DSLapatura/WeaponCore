@@ -214,6 +214,9 @@ namespace CoreSystems
 
         internal void GunnerAcquire(MyCubeBlock cube)
         {
+            if (PlayerId == -1)
+                return;
+
             GunnerBlackList = true;
             ActiveControlBlock = cube;
             var controlStringLeft = MyAPIGateway.Input.GetControl(MyMouseButtonsEnum.Left).GetGameControlEnum().String;
@@ -226,7 +229,7 @@ namespace CoreSystems
 
         internal void GunnerRelease()
         {
-            if (!GunnerBlackList)
+            if (!GunnerBlackList || PlayerId == -1)
                 return;
 
             GunnerBlackList = false;

@@ -290,7 +290,7 @@ namespace CoreSystems
 
                 if (!Session.Config.MinimalHud && InGridAiBlock) {
 
-                    if (HudUi.TexturesToAdd > 0 || HudUi.KeepBackground) 
+                    if (!Settings.Enforcement.DisableHudReload && (HudUi.TexturesToAdd > 0 || HudUi.KeepBackground)) 
                         HudUi.DrawTextures();
 
                     if ((UiInput.PlayerCamera || UiInput.FirstPersonView || UiInput.CameraBlockView) && !InMenu && !MyAPIGateway.Gui.IsCursorVisible && PlayerDummyTargets.ContainsKey(PlayerId))

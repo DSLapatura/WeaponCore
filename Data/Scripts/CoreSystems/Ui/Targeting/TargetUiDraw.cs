@@ -354,8 +354,9 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
         private void DrawTarget()
         {
             var s = _session;
+
             var focus = s.TrackingAi.Construct.Data.Repo.FocusData;
-            var detailedHud = !_session.Settings.ClientConfig.MinimalHud;
+            var detailedHud = !s.Settings.ClientConfig.MinimalHud;
             var element = 0;
 
             if (focus.Target <= 0) return;
@@ -366,55 +367,58 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
 
             var collection = detailedHud ? _primaryTargetHuds : _primaryMinimalHuds;
 
-            foreach (var hud in collection.Keys)
+            if (!s.Settings.Enforcement.DisableHudTargetInfo)
             {
-                if ((hud == InactiveShield || hud == InactiveNoShield))
-                    continue;
-
-                if (shielded && (hud == ActiveNoShield || hud == InactiveNoShield))
-                    continue;
-                if (!shielded && (hud == ActiveShield || hud == InactiveShield))
-                    continue;
-
-                Vector3D offset;
-                Vector2 localOffset;
-
-                float scale;
-                float screenScale;
-                float fontScale;
-                MyStringId textureName;
-                var hudInfo = collection[hud];
-                hudInfo.GetTextureInfo(s, out textureName, out scale, out screenScale, out fontScale, out offset, out localOffset);
-
-                var color = Color.White;
-                var lockColor = Color.White;
-
-                //var hudOpacity = MathHelper.Clamp(_session.UIHudOpacity, 0.25f, 1f);
-                
-                switch (lockMode)
+                foreach (var hud in collection.Keys)
                 {
-                    case FocusData.LockModes.None:
-                        lockColor = Color.White;
-                        break;
-                    case FocusData.LockModes.Locked:
-                        lockColor = Color.White;
-                        break;
-                }
-                MyTransparentGeometry.AddBillboardOriented(textureName, color, offset, s.CameraMatrix.Left, s.CameraMatrix.Up, screenScale, BlendTypeEnum.PostPP);
-                for (int j = 0; j < 11; j++)
-                {
-                    string text;
-                    Vector2 textOffset;
-                    if (TargetTextStatus(j, targetState, scale, localOffset, shielded, detailedHud, out text, out textOffset))
+                    if ((hud == InactiveShield || hud == InactiveNoShield))
+                        continue;
+
+                    if (shielded && (hud == ActiveNoShield || hud == InactiveNoShield))
+                        continue;
+                    if (!shielded && (hud == ActiveShield || hud == InactiveShield))
+                        continue;
+
+                    Vector3D offset;
+                    Vector2 localOffset;
+
+                    float scale;
+                    float screenScale;
+                    float fontScale;
+                    MyStringId textureName;
+                    var hudInfo = collection[hud];
+                    hudInfo.GetTextureInfo(s, out textureName, out scale, out screenScale, out fontScale, out offset, out localOffset);
+
+                    var color = Color.White;
+                    var lockColor = Color.White;
+
+                    //var hudOpacity = MathHelper.Clamp(_session.UIHudOpacity, 0.25f, 1f);
+
+                    switch (lockMode)
                     {
-                        var textColor = j != 10 ? Color.White : lockColor;
-                        var fontSize = (float)Math.Round(21 * fontScale, 2);
-                        var fontHeight = 0.75f;
-                        var fontAge = -1;
-                        var fontJustify = Hud.Hud.Justify.None;
-                        var fontType = Hud.Hud.FontType.Shadow;
-                        var elementId = 3000 + element++;
-                        s.HudUi.AddText(text: text, x: textOffset.X, y: textOffset.Y, elementId: elementId, ttl: fontAge, color: textColor, justify: fontJustify, fontType: fontType, fontSize: fontSize, heightScale: fontHeight);
+                        case FocusData.LockModes.None:
+                            lockColor = Color.White;
+                            break;
+                        case FocusData.LockModes.Locked:
+                            lockColor = Color.White;
+                            break;
+                    }
+                    MyTransparentGeometry.AddBillboardOriented(textureName, color, offset, s.CameraMatrix.Left, s.CameraMatrix.Up, screenScale, BlendTypeEnum.PostPP);
+                    for (int j = 0; j < 11; j++)
+                    {
+                        string text;
+                        Vector2 textOffset;
+                        if (TargetTextStatus(j, targetState, scale, localOffset, shielded, detailedHud, out text, out textOffset))
+                        {
+                            var textColor = j != 10 ? Color.White : lockColor;
+                            var fontSize = (float)Math.Round(21 * fontScale, 2);
+                            var fontHeight = 0.75f;
+                            var fontAge = -1;
+                            var fontJustify = Hud.Hud.Justify.None;
+                            var fontType = Hud.Hud.FontType.Shadow;
+                            var elementId = 3000 + element++;
+                            s.HudUi.AddText(text: text, x: textOffset.X, y: textOffset.Y, elementId: elementId, ttl: fontAge, color: textColor, justify: fontJustify, fontType: fontType, fontSize: fontSize, heightScale: fontHeight);
+                        }
                     }
                 }
             }

@@ -148,6 +148,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
             var oldMaxFocusDist = oldSettings.MaxHudFocusDistance;
             var oldDisableAi = oldSettings.DisableAi;
             var oldDisableLeads = oldSettings.DisableLeads;
+            var oldDisableHudReload = oldSettings.DisableHudReload;
+            var oldDisableHudTargetInfo = oldSettings.DisableHudTargetInfo;
 
             Core.Enforcement = new CoreSettings.ServerSettings { Version = Session.ServerCfgVersion };
 
@@ -169,7 +171,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
             Core.Enforcement.MaxHudFocusDistance = oldMaxFocusDist;
             Core.Enforcement.DisableAi = oldDisableAi;
             Core.Enforcement.DisableLeads = oldDisableLeads;
-
+            Core.Enforcement.DisableHudReload = oldDisableHudReload;
+            Core.Enforcement.DisableHudTargetInfo = oldDisableHudTargetInfo;
         }
 
         private void CorruptionCheck(bool write = false)

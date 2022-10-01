@@ -79,8 +79,9 @@ namespace CoreSystems.Settings
             [ProtoMember(14)] public ShipSize[] ShipSizes = { }; //legacy
 
             [ProtoMember(15)] public Modifiers ServerModifiers = new Modifiers(); // legacy
-            [ProtoMember(16)] public bool DisableTargetCycle; 
-
+            [ProtoMember(16)] public bool DisableTargetCycle;
+            [ProtoMember(17)] public bool DisableHudTargetInfo;
+            [ProtoMember(18)] public bool DisableHudReload;
         }
 
         [ProtoContract]

@@ -493,7 +493,7 @@ namespace CoreSystems
                         /// 
                         var addWeaponToHud = HandlesInput && (w.HeatPerc >= 0.01 || (w.ShowReload && (w.Loading || w.Reload.WaitForClient)) || (aConst.CanReportTargetStatus && wValues.Set.ReportTarget && !w.Target.HasTarget && grids && (wComp.DetectOtherSignals && ai.DetectionInfo.OtherInRange || ai.DetectionInfo.PriorityInRange) && ai.DetectionInfo.TargetInRange(w)));
 
-                        if (addWeaponToHud && !Session.Config.MinimalHud && ActiveControlBlock != null && ai.SubGridCache.Contains(ActiveControlBlock.CubeGrid)) {
+                        if (addWeaponToHud && !Session.Config.MinimalHud && !enforcement.DisableHudReload && ActiveControlBlock != null && ai.SubGridCache.Contains(ActiveControlBlock.CubeGrid)) {
                             HudUi.TexturesToAdd++;
                             HudUi.WeaponsToDisplay.Add(w);
                         }

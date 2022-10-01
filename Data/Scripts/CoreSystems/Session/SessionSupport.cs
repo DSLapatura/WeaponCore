@@ -564,9 +564,12 @@ namespace CoreSystems
 
         internal void CustomBlackListRequestBecauseKeenIsBrainDead(string key, long playerId, bool enable = false)
         {
+            if (playerId == -1)
+                return;
+
             if (IsServer)
                 MyVisualScriptLogicProvider.SetPlayerInputBlacklistState(key, playerId, enable);
-            else
+            else if (playerId > 0)
                 SendBlackListRequest(key, enable);
         }
 

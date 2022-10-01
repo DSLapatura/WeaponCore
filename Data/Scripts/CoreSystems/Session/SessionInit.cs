@@ -26,7 +26,7 @@ namespace CoreSystems
             HandlesInput = !IsServer || IsServer && !DedicatedServer;
             IsHost = IsServer && !DedicatedServer && MpActive;
             MpServer = IsHost || DedicatedServer;
-            PlayerId = Session.Player?.IdentityId ?? (DedicatedServer ? 0 : -1);
+            PlayerId = DedicatedServer ? 0 : Session.Player?.IdentityId ?? -1;
 
             if (IsServer || DedicatedServer)
                 MyAPIGateway.Multiplayer.RegisterMessageHandler(ServerPacketId, ProccessServerPacket);
