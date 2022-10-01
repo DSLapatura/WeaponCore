@@ -382,7 +382,7 @@ namespace CoreSystems.Support
                 if (!s.Players.TryGetValue(playerId, out playerMap))
                 {
                     if (s.IsClient && !s.DeferredPlayerLock.ContainsKey(playerId))
-                        s.DeferredPlayerLock[playerId] = 5;
+                        s.DeferredPlayerLock[playerId] = 120;
                 }
                 else if (playerMap.Player.Character != null && playerMap.Player.Character.Components.TryGet(out playerMap.TargetFocus) && playerMap.Player.Character.Components.TryGet(out playerMap.TargetLock))
                 {
@@ -395,7 +395,7 @@ namespace CoreSystems.Support
                 else 
                 {
                     if (s.IsClient && !s.DeferredPlayerLock.ContainsKey(playerId))
-                        s.DeferredPlayerLock[playerId] = 5;
+                        s.DeferredPlayerLock[playerId] = 120;
                 }
                 return false;
             }
