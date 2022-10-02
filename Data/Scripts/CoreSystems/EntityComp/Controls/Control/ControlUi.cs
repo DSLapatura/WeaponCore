@@ -351,5 +351,38 @@ namespace CoreSystems
             var value = newValue ? 1 : 0;
             ControlSys.ControlComponent.RequestSetValue(comp, "Repel", value, comp.Session.PlayerId);
         }
+
+        internal static bool GetSmallGridControl(IMyTerminalBlock block)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as ControlSys.ControlComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return false;
+            return comp.Data.Repo.Values.Set.Overrides.SmallGrid;
+        }
+
+        internal static void RequestSetSmallGridControl(IMyTerminalBlock block, bool newValue)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as ControlSys.ControlComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
+
+            var value = newValue ? 1 : 0;
+            ControlSys.ControlComponent.RequestSetValue(comp, "SmallGrid", value, comp.Session.PlayerId);
+        }
+
+        internal static bool GetLargeGridControl(IMyTerminalBlock block)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as ControlSys.ControlComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return false;
+            return comp.Data.Repo.Values.Set.Overrides.LargeGrid;
+        }
+
+        internal static void RequestSetLargeGridControl(IMyTerminalBlock block, bool newValue)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as ControlSys.ControlComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
+
+            var value = newValue ? 1 : 0;
+            ControlSys.ControlComponent.RequestSetValue(comp, "LargeGrid", value, comp.Session.PlayerId);
+        }
+
     }
 }

@@ -9,7 +9,6 @@ using VRage.ModAPI;
 using VRage.Utils;
 using VRageMath;
 using static CoreSystems.FocusData;
-using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace CoreSystems.Support
 {
@@ -354,7 +353,6 @@ namespace CoreSystems.Support
                     Log.Line($"UpdatePlayerStates gridgroup had no AIs");
                     return;
                 }
-
                 var rootAi = map.Ais[0].Construct.RootAi;
 
                 var rootConstruct = rootAi.Construct;

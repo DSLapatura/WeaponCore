@@ -557,7 +557,7 @@ namespace CoreSystems
         [ProtoMember(28), DefaultValue(Weapon.ShootManager.ShootModes.AiShoot)] public Weapon.ShootManager.ShootModes ShootMode = Weapon.ShootManager.ShootModes.AiShoot;
         [ProtoMember(29)] public int CameraChannel;
         [ProtoMember(30)] public int WeaponGroupId;
-        [ProtoMember(31)] public bool AiEnabled;
+        [ProtoMember(31), DefaultValue(true)] public bool AiEnabled;
         [ProtoMember(32), DefaultValue(true)] public bool LargeGrid = true;
         [ProtoMember(33), DefaultValue(true)] public bool SmallGrid = true;
 

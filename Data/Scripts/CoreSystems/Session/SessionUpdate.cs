@@ -261,7 +261,6 @@ namespace CoreSystems
                         controlPart.OtherMap = controlPart.BaseMap == az ? el : az;
                         var topGrid = controlPart.BaseMap.TopGrid as MyCubeGrid;
                         var otherGrid = controlPart.OtherMap.TopGrid as MyCubeGrid;
-
                         Ai topAi;
                         if (controlPart.BaseMap == null || controlPart.OtherMap == null  || topGrid == null || otherGrid == null || !EntityAIs.TryGetValue(otherGrid, out topAi)) {
                             if (cComp.RotorsMoving)
@@ -278,16 +277,17 @@ namespace CoreSystems
                         trackWeapon.MasterComp = cComp;
                         trackWeapon.RotorTurretTracking = true;
                         var cValues = controlPart.Comp.Data.Repo.Values;
-
+                        var isUnderControl = cComp.Controller.IsUnderControl;
+                        var cPlayerId = cValues.State.PlayerId;
                         Ai.PlayerController pControl;
                         pControl.ControlBlock = null;
-                        var playerControl = rootConstruct.ControllingPlayers.TryGetValue(PlayerId, out pControl);
-                        var activePlayer = PlayerId == cValues.State.PlayerId && playerControl;
+                        var playerControl = rootConstruct.ControllingPlayers.TryGetValue(cPlayerId, out pControl);
+                        var activePlayer = PlayerId == cPlayerId && playerControl;
 
                         var hasControl = activePlayer && pControl.ControlBlock == cComp.CoreEntity;
                         topAi.RotorManualControlId = hasControl ? PlayerId : topAi.RotorManualControlId != -2 ? -1 : -2;
 
-                        if (HandlesInput && (cValues.State.PlayerId == PlayerId || !controlPart.Comp.HasAim && ai.RotorManualControlId == PlayerId))
+                        if (HandlesInput && (cPlayerId == PlayerId || !controlPart.Comp.HasAim && ai.RotorManualControlId == PlayerId))
                         {
                             var overrides = cValues.Set.Overrides;
                             var cMode = cValues.Set.Overrides.Control;
@@ -299,7 +299,7 @@ namespace CoreSystems
                                 TrackReticleUpdateCtc(controlPart.Comp, track);
                         }
 
-                        if (cComp.Controller.IsUnderControl)
+                        if (isUnderControl)
                         {
                             cComp.RotorsMoving = true;
                             continue;
@@ -355,11 +355,11 @@ namespace CoreSystems
                         continue;
 
                     wComp.OnCustomTurret = ai.RootFixedWeaponComp?.TrackingWeapon?.MasterComp != null;
+
+
                     var wValues = wComp.Data.Repo.Values;
                     var overrides = wValues.Set.Overrides;
                     var cMode = overrides.Control;
-                    if (wComp.OnCustomTurret && ai.RootFixedWeaponComp.TrackingWeapon.MasterComp.Data.Repo.Values.Set.Overrides.Control != cMode)
-                        BlockUi.RequestControlMode((IMyTerminalBlock) wComp.Cube, (long) ai.RootFixedWeaponComp.TrackingWeapon.MasterComp.Data.Repo.Values.Set.Overrides.Control);
 
                     var sMode = overrides.ShootMode;
                     var focusTargets = wComp.OnCustomTurret ? ai.RootFixedWeaponComp.TrackingWeapon.MasterComp.Data.Repo.Values.Set.Overrides.FocusTargets : overrides.FocusTargets;
@@ -373,7 +373,18 @@ namespace CoreSystems
                             wComp.ShootManager.RequestShootSync(PlayerId, Weapon.ShootManager.RequestType.Off);
 
                         var isControllingPlayer = wValues.State.PlayerId == PlayerId || !wComp.HasAim && ai.RotorManualControlId == PlayerId;
+
                         if (isControllingPlayer) {
+
+
+                            if (wComp.OnCustomTurret)
+                            {
+                                if (ai.RootFixedWeaponComp.TrackingWeapon.MasterComp.Data.Repo.Values.Set.Overrides.Control != cMode)
+                                    BlockUi.RequestControlMode((IMyTerminalBlock)wComp.Cube, (long)ai.RootFixedWeaponComp.TrackingWeapon.MasterComp.Data.Repo.Values.Set.Overrides.Control);
+
+                                if (ai.RootFixedWeaponComp.TrackingWeapon.MasterComp.Data.Repo.Values.State.PlayerId != wValues.State.PlayerId)
+                                    wComp.TakeOwnerShip();
+                            }
 
                             Ai.PlayerController pControl;
                             pControl.ControlBlock = null;

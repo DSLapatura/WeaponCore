@@ -241,7 +241,7 @@ namespace CoreSystems.Control
 
         internal static void TerminalActionToggleRepelModeControl(IMyTerminalBlock blk)
         {
-            var comp = blk?.Components?.Get<CoreComponent>() as ControlSys.ControlComponent; ;
+            var comp = blk?.Components?.Get<CoreComponent>() as ControlSys.ControlComponent; 
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
                 return;
 
@@ -250,6 +250,30 @@ namespace CoreSystems.Control
 
             ControlSys.ControlComponent.RequestSetValue(comp, "Repel", newValue, comp.Session.PlayerId);
         }
+
+        internal static void TerminalActionToggleLargeGridControl(IMyTerminalBlock blk)
+        {
+            var comp = blk?.Components?.Get<CoreComponent>() as ControlSys.ControlComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+                return;
+
+            var newBool = !comp.Data.Repo.Values.Set.Overrides.LargeGrid;
+            var newValue = newBool ? 1 : 0;
+
+            ControlSys.ControlComponent.RequestSetValue(comp, "LargeGrid", newValue, comp.Session.PlayerId);
+        }
+        internal static void TerminalActionToggleSmallGridControl(IMyTerminalBlock blk)
+        {
+            var comp = blk?.Components?.Get<CoreComponent>() as ControlSys.ControlComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+                return;
+
+            var newBool = !comp.Data.Repo.Values.Set.Overrides.SmallGrid;
+            var newValue = newBool ? 1 : 0;
+
+            ControlSys.ControlComponent.RequestSetValue(comp, "SmallGrid", newValue, comp.Session.PlayerId);
+        }
+
 
         #endregion
 
@@ -397,6 +421,26 @@ namespace CoreSystems.Control
             var comp = blk.Components.Get<CoreComponent>() as ControlSys.ControlComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
             if (comp.Data.Repo.Values.Set.Overrides.Repel)
+                sb.Append(Localization.GetText("ActionStateOn"));
+            else
+                sb.Append(Localization.GetText("ActionStateOff"));
+        }
+
+
+        internal static void LargeGridWriterControl(IMyTerminalBlock blk, StringBuilder sb)
+        {
+            var comp = blk.Components.Get<CoreComponent>() as ControlSys.ControlComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
+            if (comp.Data.Repo.Values.Set.Overrides.LargeGrid)
+                sb.Append(Localization.GetText("ActionStateOn"));
+            else
+                sb.Append(Localization.GetText("ActionStateOff"));
+        }
+        internal static void SmallGridWriterControl(IMyTerminalBlock blk, StringBuilder sb)
+        {
+            var comp = blk.Components.Get<CoreComponent>() as ControlSys.ControlComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
+            if (comp.Data.Repo.Values.Set.Overrides.SmallGrid)
                 sb.Append(Localization.GetText("ActionStateOn"));
             else
                 sb.Append(Localization.GetText("ActionStateOff"));

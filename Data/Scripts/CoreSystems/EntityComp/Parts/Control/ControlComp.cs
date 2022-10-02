@@ -178,6 +178,14 @@ namespace CoreSystems.Platform
                     case "ShootMode":
                         o.ShootMode = (Weapon.ShootManager.ShootModes)v;
                         break;
+                    case "LargeGrid":
+                        o.LargeGrid = enabled;
+                        clearTargets = true;
+                        break;
+                    case "SmallGrid":
+                        o.SmallGrid = enabled;
+                        clearTargets = true;
+                        break;
                 }
 
                 ResetCompState(comp, playerId, clearTargets);

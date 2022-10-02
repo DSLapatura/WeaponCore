@@ -121,6 +121,10 @@ namespace CoreSystems.Control
 
             CtcAddOnOffSwitchNoAction<T>(session, "Repel", Localization.GetText("TerminalRepelTitle"), Localization.GetText("TerminalRepelTooltip"), BlockUi.GetRepelControl, BlockUi.RequestSetRepelControl, true, CtcIsReady);
 
+            CtcAddOnOffSwitchNoAction<T>(session, "LargeGrid", "Large Grid", "Target large grids", BlockUi.GetLargeGridControl, BlockUi.RequestSetLargeGridControl, true, CtcIsReady);
+
+            CtcAddOnOffSwitchNoAction<T>(session, "SmallGrid", "Small Grid", "Target small grids", BlockUi.GetSmallGridControl, BlockUi.RequestSetSmallGridControl, true, CtcIsReady);
+
             Separator<T>(session, "WC_sep3", IsTrue);
 
             CtcAddComboboxNoAction<T>(session, "PickSubSystem", Localization.GetText("TerminalPickSubSystemTitle"), Localization.GetText("TerminalPickSubSystemTooltip"), BlockUi.GetSubSystemControl, BlockUi.RequestSubSystemControl, BlockUi.ListSubSystems, CtcIsReady);

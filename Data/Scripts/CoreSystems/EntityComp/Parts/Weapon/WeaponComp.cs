@@ -444,7 +444,6 @@ namespace CoreSystems.Platform
                 var o = comp.Data.Repo.Values.Set.Overrides;
                 var enabled = v > 0;
                 var clearTargets = false;
-                var resetState = false;
                 switch (setting)
                 {
                     case "MaxSize":
@@ -466,7 +465,6 @@ namespace CoreSystems.Platform
                     case "ControlModes":
                         o.Control = (ProtoWeaponOverrides.ControlModes)v;
                         clearTargets = true;
-                        resetState = true;
                         break;
                     case "FocusSubSystem":
                         o.FocusSubSystem = enabled;
@@ -557,18 +555,17 @@ namespace CoreSystems.Platform
                         break;
                 }
 
-                ResetCompState(comp, playerId, clearTargets, resetState);
+                ResetCompState(comp, playerId, clearTargets);
+
 
                 if (comp.Session.MpActive)
-                {
-                    comp.Data.Repo.Values.State.PlayerId = playerId;
                     comp.Session.SendComp(comp);
-                }
             }
 
-            internal static void ResetCompState(WeaponComponent comp, long playerId, bool resetTarget, bool resetState, Dictionary<string, int> settings = null)
+            internal static void ResetCompState(WeaponComponent comp, long playerId, bool resetTarget, Dictionary<string, int> settings = null)
             {
                 var wValues = comp.Data.Repo.Values;
+                wValues.State.PlayerId = playerId;
 
                 var o = wValues.Set.Overrides;
                 var userControl = o.Control != ProtoWeaponOverrides.ControlModes.Auto;

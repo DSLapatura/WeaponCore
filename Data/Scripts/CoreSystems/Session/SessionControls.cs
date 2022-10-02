@@ -188,6 +188,8 @@ namespace CoreSystems
             CreateCustomActions<T>.CreateMaxSizeControl(session);
             CreateCustomActions<T>.CreateMinSizeControl(session);
             CreateCustomActions<T>.CreateRepelModeControl(session);
+            CreateCustomActions<T>.CreateLargeGridControl(session);
+            CreateCustomActions<T>.CreateSmallGridControl(session);
         }
 
         internal static void CreateCustomActionSetArmorEnhancer<T>(Session session) where T: IMyTerminalBlock

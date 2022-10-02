@@ -901,6 +901,35 @@ namespace CoreSystems.Control
             MyAPIGateway.TerminalControls.AddAction<T>(action);
             session.CustomActions.Add(action);
         }
+
+        public static void CreateLargeGridControl(Session session)
+        {
+            var action = MyAPIGateway.TerminalControls.CreateAction<T>("LargeGrid");
+            action.Icon = @"Textures\GUI\Icons\Actions\Toggle.dds";
+            action.Name = new StringBuilder("Target Large Grids");
+            action.Action = CustomActions.TerminalActionToggleLargeGridControl;
+            action.Writer = CustomActions.LargeGridWriterControl;
+            action.Enabled = TerminalHelpers.CtcIsReady;
+            action.ValidForGroups = true;
+
+            MyAPIGateway.TerminalControls.AddAction<T>(action);
+            session.CustomActions.Add(action);
+        }
+
+        public static void CreateSmallGridControl(Session session)
+        {
+            var action = MyAPIGateway.TerminalControls.CreateAction<T>("SmallGrid");
+            action.Icon = @"Textures\GUI\Icons\Actions\Toggle.dds";
+            action.Name = new StringBuilder("Target Small Grids");
+            action.Action = CustomActions.TerminalActionToggleSmallGridControl;
+            action.Writer = CustomActions.SmallGridWriterControl;
+            action.Enabled = TerminalHelpers.CtcIsReady;
+            action.ValidForGroups = true;
+
+            MyAPIGateway.TerminalControls.AddAction<T>(action);
+            session.CustomActions.Add(action);
+        }
+
         internal static void CreateShootModeControl(Session session)
         {
             var action = MyAPIGateway.TerminalControls.CreateAction<T>("WCShootMode");
