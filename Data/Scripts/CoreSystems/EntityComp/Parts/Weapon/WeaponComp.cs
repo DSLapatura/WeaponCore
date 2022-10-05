@@ -656,8 +656,12 @@ namespace CoreSystems.Platform
                     Session.SendPlayerControlRequest(this, Session.PlayerId, ProtoWeaponState.ControlMode.Ui);
                     return true;
                 }
-                Data.Repo.Values.State.PlayerId = Session.PlayerId;
                 
+                // Pretty sus that this is allowed by client, will be reset by the results of SendPlayerControlRequest tho... 
+                // possible race condition... but may needed due to player taking client control of weapon
+                Data.Repo.Values.State.PlayerId = Session.PlayerId; 
+                                                                    
+
                 if (Session.MpActive)
                     Session.SendState(this);
 

@@ -29,6 +29,7 @@ namespace CoreSystems.Platform
             internal ControlComponent(Session session, MyEntity coreEntity, MyDefinitionId id)
             {
                 Controller = (IMyTurretControlBlock)coreEntity;
+                Controller.AIEnabled = false;
                 //Bellow order is important
                 Data = new ControlCompData(this);
                 Init(session, coreEntity, true, Data, id);

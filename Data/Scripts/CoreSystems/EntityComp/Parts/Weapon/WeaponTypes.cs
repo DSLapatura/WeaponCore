@@ -298,6 +298,8 @@ namespace CoreSystems.Platform
             {
 
                 var state = Comp.Data.Repo.Values.State;
+
+                // Pretty sus that this is allowed by client, possible race condition... likely needed by client side prediction
                 state.PlayerId = playerId;
 
                 if (Comp.Session.IsServer)
