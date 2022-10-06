@@ -1294,7 +1294,6 @@ namespace CoreSystems
                 var wValues = comp.Data.Repo.Values;
 
                 comp.ManualMode = wValues.State.TrackingReticle && wValues.Set.Overrides.Control == ProtoWeaponOverrides.ControlModes.Manual; // needs to be set everywhere dedicated and non-tracking clients receive TrackingReticle or Control updates.
-
                 if (comp.Session.MpActive)
                     SendComp(comp);
             }

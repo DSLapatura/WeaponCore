@@ -113,7 +113,6 @@ namespace CoreSystems.Support
         internal bool DbUpdated;
         internal bool DetectOtherSignals;
         internal bool PointDefense;
-        internal bool SuppressMouseShoot;
         internal bool IsStatic;
         internal bool DbReady;
         internal bool UpdatePowerSources;

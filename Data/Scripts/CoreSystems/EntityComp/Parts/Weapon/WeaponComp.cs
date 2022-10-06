@@ -647,6 +647,7 @@ namespace CoreSystems.Platform
 
             internal bool TakeOwnerShip()
             {
+
                 if (LastOwnerRequestTick > 0 && Session.Tick - LastOwnerRequestTick < 120)
                     return true;
 

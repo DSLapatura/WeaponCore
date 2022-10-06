@@ -45,7 +45,6 @@ namespace CoreSystems.Platform
                     Repo = load;
                     var p = Comp.Platform.Control;
                     p.PartState = Repo.Values.State.Control;
-
                 }
                 else
                 {

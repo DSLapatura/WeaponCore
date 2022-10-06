@@ -459,7 +459,6 @@ namespace CoreSystems.Support
             RotorCommandTick = 0;
             PointDefense = false;
             FadeOut = false;
-            SuppressMouseShoot = false;
             UpdatePowerSources = false;
             DbReady = false;
             AiInit = false;

@@ -319,7 +319,9 @@ namespace CoreSystems
                         if (!validTarget)
                             noTarget = true;
                         else if (!ControlSys.TrajectoryEstimation(topAi, controlPart, out desiredDirection, out targetPos, false))
+                        {
                             noTarget = true;
+                        }
 
                         if (noTarget) {
                             topAi.RotorTargetPosition = Vector3D.MaxValue;;
@@ -372,37 +374,36 @@ namespace CoreSystems
                         if (IsClient && ai.GridMap.LastControllerTick == Tick && wComp.ShootManager.Signal == Weapon.ShootManager.Signals.Manual && (wComp.ShootManager.ClientToggleCount > wValues.State.ToggleCount || wValues.State.Trigger == On) && wValues.State.PlayerId > 0) 
                             wComp.ShootManager.RequestShootSync(PlayerId, Weapon.ShootManager.RequestType.Off);
 
+
+                        if (wComp.OnCustomTurret)
+                        {
+                            var cValues = ai.RootFixedWeaponComp.TrackingWeapon.MasterComp.Data.Repo.Values;
+                            var myPlayerId = cValues.State.PlayerId == PlayerId;
+                            if (myPlayerId)
+                            {
+                                if (cValues.Set.Overrides.Control != overrides.Control)
+                                    BlockUi.RequestControlMode(wComp.TerminalBlock, (long)cValues.Set.Overrides.Control);
+
+                                if (cValues.State.PlayerId != wValues.State.PlayerId)
+                                    wComp.TakeOwnerShip();
+                            }
+                        }
+
                         var isControllingPlayer = wValues.State.PlayerId == PlayerId || !wComp.HasAim && ai.RotorManualControlId == PlayerId;
 
                         if (isControllingPlayer) {
-
-
-                            if (wComp.OnCustomTurret)
-                            {
-                                if (ai.RootFixedWeaponComp.TrackingWeapon.MasterComp.Data.Repo.Values.Set.Overrides.Control != cMode)
-                                    BlockUi.RequestControlMode((IMyTerminalBlock)wComp.Cube, (long)ai.RootFixedWeaponComp.TrackingWeapon.MasterComp.Data.Repo.Values.Set.Overrides.Control);
-
-                                if (ai.RootFixedWeaponComp.TrackingWeapon.MasterComp.Data.Repo.Values.State.PlayerId != wValues.State.PlayerId)
-                                    wComp.TakeOwnerShip();
-                            }
 
                             Ai.PlayerController pControl;
                             pControl.ControlBlock = null;
                             var playerControl = rootConstruct.ControllingPlayers.TryGetValue(wValues.State.PlayerId, out pControl);
                             
                             var activePlayer = PlayerId == wValues.State.PlayerId && playerControl;
+                            var cManual = pControl.ControlBlock is IMyTurretControlBlock;
                             if (!activePlayer && wComp.ShootManager.Signal == Weapon.ShootManager.Signals.MouseControl)
                                 wComp.ShootManager.RequestShootSync(PlayerId, Weapon.ShootManager.RequestType.Off);
 
-                            var playerAim = activePlayer && cMode != ProtoWeaponOverrides.ControlModes.Auto || pControl.ControlBlock is IMyTurretControlBlock;
-                            var track = !InMenu && (playerAim && !UiInput.CameraBlockView || pControl.ControlBlock is IMyTurretControlBlock || UiInput.CameraChannelId > 0 && UiInput.CameraChannelId == overrides.CameraChannel);
-
-                            if (!wComp.HasAim && ai.RotorManualControlId >= 0 && sMode == Weapon.ShootManager.ShootModes.AiShoot && pControl.ControlBlock is IMyTurretControlBlock) {
-                                BlockUi.RequestShootModes(wComp.TerminalBlock, 1);
-                                sMode = overrides.ShootMode;
-                            }
-                            else if (!wComp.HasAim && (ai.RotorTurretAimed || ai.RotorManualControlId == -1 && ai.RotorCommandTick > 0) && sMode != Weapon.ShootManager.ShootModes.AiShoot)
-                                BlockUi.RequestShootModes(wComp.TerminalBlock, 0);
+                            var playerAim = activePlayer && cMode != ProtoWeaponOverrides.ControlModes.Auto || cManual;
+                            var track = !InMenu && (playerAim && !UiInput.CameraBlockView || cManual || UiInput.CameraChannelId > 0 && UiInput.CameraChannelId == overrides.CameraChannel);
 
                             if (cMode == ProtoWeaponOverrides.ControlModes.Manual)
                                 TargetUi.LastManualTick = Tick;
@@ -416,7 +417,7 @@ namespace CoreSystems
 
                             if (sMode == Weapon.ShootManager.ShootModes.AiShoot) {
 
-                                if (!ai.SuppressMouseShoot && (wValues.State.Control == ControlMode.Camera || wComp.ManualMode)) {
+                                if (wValues.State.Control == ControlMode.Camera || wComp.ManualMode || cManual) {
                                     if (turnOn || turnOff) {
                                         wComp.ShootManager.RequestShootSync(PlayerId, turnOn ? Weapon.ShootManager.RequestType.On : Weapon.ShootManager.RequestType.Off, turnOn ? Weapon.ShootManager.Signals.Manual : Weapon.ShootManager.Signals.None);
                                     }
@@ -600,7 +601,6 @@ namespace CoreSystems
                         w.LockOnFireState = shootRequest && (w.System.LockOnFocus && !w.Comp.ModOverride) && construct.Data.Repo.FocusData.HasFocus && focus.FocusInRange(w);
                         var shotReady = canShoot && (shootRequest && (!w.System.LockOnFocus || w.Comp.ModOverride) || w.LockOnFireState);
                         var shoot = shotReady && ai.CanShoot && (!aConst.RequiresTarget || w.Target.HasTarget || finish || overRide || wComp.ShootManager.Signal == Weapon.ShootManager.Signals.Manual);
-
                         if (shoot) {
                             
                             if (w.System.DelayCeaseFire && (autoShot || w.FinishShots))

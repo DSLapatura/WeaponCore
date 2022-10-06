@@ -29,7 +29,7 @@ namespace CoreSystems.Platform
                 topAi.RotorTargetPosition = Vector3D.MaxValue;
                 return false;
             }
-            var maxRangeSqr = (cValues.Set.Range * cValues.Set.Range);
+            var maxRangeSqr = fakeTargetInfo != null ? topAi.Construct.RootAi.MaxTargetingRangeSqr : (cValues.Set.Range * cValues.Set.Range);
             var scopeInfo = weapon.GetScope.Info;
             var shooterPos = control.OtherMap.Top.PositionComp.WorldAABB.Center;
 
