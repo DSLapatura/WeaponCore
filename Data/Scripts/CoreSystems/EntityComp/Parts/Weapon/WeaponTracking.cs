@@ -292,7 +292,6 @@ namespace CoreSystems.Platform
                 if (Vector3D.IsZero(targetLinVel, 5E-03)) targetLinVel = Vector3.Zero;
                 if (Vector3D.IsZero(targetAccel, 5E-03)) targetAccel = Vector3.Zero;
 
-                Vector3D targetDirection;
                 targetPos = TrajectoryEstimation(weapon, targetCenter, targetLinVel, targetAccel, Vector3D.Zero, out validEstimate);
             }
             else
