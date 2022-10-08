@@ -200,6 +200,8 @@ namespace CoreSystems
         internal readonly List<Weapon> AcquireTargets = new List<Weapon>(128);
         internal readonly List<Weapon> HomingWeapons = new List<Weapon>(128);
         internal readonly List<Ai> AimingAi = new List<Ai>(128);
+        internal readonly List<IHitInfo> HitInfoTmpList = new List<IHitInfo>();
+
         internal readonly HashSet<MyDefinitionId> CoreSystemsFixedBlockDefs = new HashSet<MyDefinitionId>();
         internal readonly HashSet<MyDefinitionId> CoreSystemsTurretBlockDefs = new HashSet<MyDefinitionId>();
         internal readonly HashSet<MyDefinitionId> CoreSystemsSupportDefs = new HashSet<MyDefinitionId>();
