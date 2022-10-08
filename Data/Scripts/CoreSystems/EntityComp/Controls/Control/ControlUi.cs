@@ -60,34 +60,6 @@ namespace CoreSystems
 
         }
 
-        internal static float GetGravity(IMyTerminalBlock block)
-        {
-            var comp = block?.Components?.Get<CoreComponent>() as ControlSys.ControlComponent;
-            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return 0;
-            return comp.Data.Repo.Values.Other.GravityOffset;
-        }
-
-        internal static void RequestSetGravity(IMyTerminalBlock block, float newValue)
-        {
-            var comp = block?.Components?.Get<CoreComponent>() as ControlSys.ControlComponent;
-            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
-
-            var value = MathHelper.Clamp(newValue, -0.5f, 0.5f);
-
-            if (!MyUtils.IsEqual(value, comp.Data.Repo.Values.Other.GravityOffset))
-            {
-
-                if (comp.Session.IsServer)
-                {
-                    comp.Data.Repo.Values.Other.GravityOffset = value;
-                    if (comp.Session.MpActive)
-                        comp.Session.SendComp(comp);
-                }
-                else
-                    comp.Session.SendSetCompFloatRequest(comp, value, PacketType.RequestSetGravity);
-            }
-        }
-
         internal static long CtcGetShootModes(IMyTerminalBlock block)
         {
             var comp = block?.Components?.Get<CoreComponent>() as ControlSys.ControlComponent;
@@ -117,17 +89,6 @@ namespace CoreSystems
             new MyTerminalControlComboBoxItem { Key = 2, Value = MyStringId.GetOrCompute($"{(Weapon.ShootManager.ShootModes)2}") },
             new MyTerminalControlComboBoxItem { Key = 3, Value = MyStringId.GetOrCompute($"{(Weapon.ShootManager.ShootModes)3}") },
         };
-
-
-        internal static float GetMinGravity(IMyTerminalBlock block)
-        {
-            return -0.5f;
-        }
-
-        internal static float GetMaxGravity(IMyTerminalBlock block)
-        {
-            return 0.5f;
-        }
 
         internal static float GetMinRangeControl(IMyTerminalBlock block)
         {

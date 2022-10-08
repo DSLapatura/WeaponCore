@@ -139,8 +139,6 @@ namespace CoreSystems.Control
 
             //AddLeadGroupSliderRange<T>(session, "Target Group", Localization.GetText("TerminalTargetGroupTitle"), Localization.GetText("TerminalTargetGroupTooltip"), BlockUi.GetLeadGroup, BlockUi.RequestSetLeadGroup, TargetLead, BlockUi.GetMinLeadGroup, BlockUi.GetMaxLeadGroup, true);
 
-            CtcAddGravitySliderRange<T>(session, "Gravity Offset", Localization.GetText("TerminalGravityTitle"), Localization.GetText("TerminalGravityTooltip"), BlockUi.GetGravity, BlockUi.RequestSetGravity, CtcIsReady, BlockUi.GetMinGravity, BlockUi.GetMaxGravity, true);
-
             Separator<T>(session, "WC_sep4", IsTrue);
         }
 
@@ -568,14 +566,6 @@ namespace CoreSystems.Control
             }
         }
 
-        internal static void SliderGravityWriterRange(IMyTerminalBlock block, StringBuilder builder)
-        {
-
-            var value = Math.Round(BlockUi.GetGravity(block), 2);
-
-            builder.Append(value);
-        }
-
         internal static void SliderLeadGroupWriterRange(IMyTerminalBlock block, StringBuilder builder)
         {
 
@@ -726,27 +716,6 @@ namespace CoreSystems.Control
             c.Getter = getter;
             c.Setter = setter;
             c.Writer = SliderCriticalTimerWriterRange;
-
-            if (minGetter != null)
-                c.SetLimits(minGetter, maxGetter);
-
-            MyAPIGateway.TerminalControls.AddControl<T>(c);
-            session.CustomControls.Add(c);
-
-            return c;
-        }
-
-        internal static IMyTerminalControlSlider CtcAddGravitySliderRange<T>(Session session, string name, string title, string tooltip, Func<IMyTerminalBlock, float> getter, Action<IMyTerminalBlock, float> setter, Func<IMyTerminalBlock, bool> visibleGetter, Func<IMyTerminalBlock, float> minGetter = null, Func<IMyTerminalBlock, float> maxGetter = null, bool group = false) where T : IMyTerminalBlock
-        {
-            var c = MyAPIGateway.TerminalControls.CreateControl<IMyTerminalControlSlider, T>(name);
-
-            c.Title = MyStringId.GetOrCompute(title);
-            c.Tooltip = MyStringId.GetOrCompute(tooltip);
-            c.Enabled = CtcIsReady;
-            c.Visible = visibleGetter;
-            c.Getter = getter;
-            c.Setter = setter;
-            c.Writer = SliderGravityWriterRange;
 
             if (minGetter != null)
                 c.SetLimits(minGetter, maxGetter);

@@ -597,6 +597,8 @@ namespace CoreSystems.Platform
             }
 
             var gravityMultiplier = ammoDef.Const.FeelsGravity && !MyUtils.IsZero(weapon.GravityPoint) ? ammoDef.Const.GravityMultiplier : 0f;
+            bool hasGravity = gravityMultiplier > 1e-6 && !MyUtils.IsZero(weapon.GravityPoint);
+
             var targetMaxSpeed = weapon.Comp.Session.MaxEntitySpeed;
             shooterPos = MyUtils.IsZero(shooterPos) ? weapon.MyPivotPos : shooterPos;
 
@@ -605,6 +607,13 @@ namespace CoreSystems.Platform
             var projectileInitSpeed = ammoDef.Trajectory.AccelPerSec * MyEngineConstants.UPDATE_STEP_SIZE_IN_SECONDS;
             var projectileAccMag = ammoDef.Trajectory.AccelPerSec;
             var basic = weapon.System.Prediction != Prediction.Advanced && !overrideMode || overrideMode && !setAdvOverride;
+            
+            if (basic && weapon.System.Prediction == Prediction.Accurate && hasGravity && ai.InPlanetGravity)
+            {
+                basic = false;
+                skipAccel = true;
+            }
+
             Vector3D deltaPos = targetPos - shooterPos;
             Vector3D deltaVel = targetVel - shooterVel;
             Vector3D deltaPosNorm;
@@ -654,7 +663,6 @@ namespace CoreSystems.Platform
             double maxSpeedSqr = targetMaxSpeed * targetMaxSpeed;
             double shooterVelScaleFactor = 1;
             bool projectileAccelerates = projectileAccMag > 1e-6;
-            bool hasGravity = gravityMultiplier > 1e-6 && !MyUtils.IsZero(weapon.GravityPoint);
 
             if (!basic && projectileAccelerates)
                 shooterVelScaleFactor = Math.Min(1, (projectileMaxSpeed - projectileInitSpeed) / projectileAccMag);
@@ -694,7 +702,8 @@ namespace CoreSystems.Platform
                 projectileVel += aimDirectionNorm * projectileMaxSpeed;
             }
 
-            var count = projectileAccelerates ? 600 : hasGravity ? 320 : 60;
+            var deepSim = projectileAccelerates || hasGravity;
+            var count = deepSim ? 320 : 60;
 
             double dt = Math.Max(MyEngineConstants.UPDATE_STEP_SIZE_IN_SECONDS, timeToIntercept / count); // This can be a const somewhere
             double dtSqr = dt * dt;
@@ -746,7 +755,6 @@ namespace CoreSystems.Platform
             //gravity nonsense for differing elevations
             if (hasGravity && ai.InPlanetGravity)
             {
-
                 var targetAngle = Math.Acos(Vector3D.Dot(weapon.GravityPoint, deltaPos) / (weapon.GravityLength * deltaLength));
                 double elevationDifference;
                 if (targetAngle >= 1.5708) //Target is above weapon

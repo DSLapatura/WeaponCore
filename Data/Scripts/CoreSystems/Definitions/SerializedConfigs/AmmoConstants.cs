@@ -495,10 +495,10 @@ namespace CoreSystems.Support
             DynamicGuidance = ammo.AmmoDef.Trajectory.Guidance != None && ammo.AmmoDef.Trajectory.Guidance != TravelTo && !IsBeamWeapon;
 
             if (CollisionSize > 5 && !session.LocalVersion) Log.Line($"{ammo.AmmoDef.AmmoRound} has large largeCollisionSize: {CollisionSize} meters");
-            if (FeelsGravity && !IsSmart && system.TrackTargets && system.Prediction != Prediction.Advanced && ammo.AmmoDef.Trajectory.MaxTrajectory / ammo.AmmoDef.Trajectory.DesiredSpeed > 0.5f)
+            if (FeelsGravity && !IsSmart && system.TrackTargets && (system.Prediction == Prediction.Off || system.Prediction == Prediction.Basic) && ammo.AmmoDef.Trajectory.MaxTrajectory / ammo.AmmoDef.Trajectory.DesiredSpeed > 0.5f)
             {
                 var flightTime = ammo.AmmoDef.Trajectory.MaxTrajectory / ammo.AmmoDef.Trajectory.DesiredSpeed;
-                Log.Line($"{ammo.AmmoDef.AmmoRound} has {(int)(0.5 * 9.8 * flightTime * flightTime)}m grav drop at 1g.  {system.PartName} needs Advanced aim prediction to account for gravity.");
+                Log.Line($"{ammo.AmmoDef.AmmoRound} has {(int)(0.5 * 9.8 * flightTime * flightTime)}m grav drop at 1g.  {system.PartName} needs Accurate/Advanced aim prediction to account for gravity.");
             }
         }
 
