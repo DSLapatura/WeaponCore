@@ -88,21 +88,7 @@ namespace CoreSystems.Projectiles
                 info.ShotFade = shotFade;
                 p.PredictedTargetPos = wTarget.TargetPos;
 
-                /*
-                if (aConst.FeelsGravity && info.Ai.InPlanetGravity)
-                {
-                    p.Gravity = w.GravityPoint; //Inherit grav value from weapon, which was used for trajectory calcs
-                }
-                */
-
-                if (aConst.FeelsGravity && Session.Tick - w.GravityTick > 60)
-                {
-                    w.GravityTick = Session.Tick;
-                    float interference;
-                    w.GravityPoint = Session.Physics.CalculateNaturalGravityAt(p.Position, out interference);
-                }
-
-                p.Gravity = w.GravityPoint;
+                p.Gravity = aConst.FeelsGravity && info.Ai.InPlanetGravity ? w.GravityPoint : Vector3D.Zero;
 
                 if (t != Kind.Virtual)
                 {

@@ -162,13 +162,6 @@ namespace CoreSystems.Projectiles
 
                     if (aConst.FeelsGravity) {
 
-                        if ((info.Age % 60 == 0 || (p.FakeGravityNear || p.EntitiesNear) && info.Age % 10 == 0) && info.Age > 0) {
-                            float interference;
-                            p.Gravity = Session.Physics.CalculateNaturalGravityAt(p.Position, out interference);
-                            p.FakeGravityNear = !info.InPlanetGravity;
-                            p.EntitiesNear = false;
-                        }
-
                         if (MyUtils.IsValid(p.Gravity) && !MyUtils.IsZero(ref p.Gravity)) {
                             p.Velocity += (p.Gravity * aConst.GravityMultiplier) * Projectile.StepConst;
                             if (!p.IsSmart)

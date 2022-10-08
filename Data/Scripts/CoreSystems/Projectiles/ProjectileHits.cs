@@ -170,7 +170,6 @@ namespace CoreSystems.Projectiles
                                 if (Vector3D.Transform(!shrapnelSpawn ? info.Origin : target.CoreEntity.PositionComp.WorldMatrixRef.Translation, shieldInfo.Value.Item3.Item1).LengthSquared() > 1)
                                 {
 
-                                    p.EntitiesNear = true;
                                     var dist = MathFuncs.IntersectEllipsoid(shieldInfo.Value.Item3.Item1, shieldInfo.Value.Item3.Item2, new RayD(p.Beam.From, p.Beam.Direction));
                                     if (target.TargetState == Target.TargetStates.IsProjectile && Vector3D.Transform(target.Projectile.Position, shieldInfo.Value.Item3.Item1).LengthSquared() <= 1)
                                         projetileInShield = true;
@@ -440,8 +439,6 @@ namespace CoreSystems.Projectiles
                                 hitEntity.EventType = Effect;
                             else
                                 hitEntity.EventType = Field;
-                            
-                            p.EntitiesNear = true;
                         }
                     }
                     else if (destroyable != null)

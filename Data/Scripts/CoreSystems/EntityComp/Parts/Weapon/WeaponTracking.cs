@@ -769,26 +769,31 @@ namespace CoreSystems.Platform
                 var h = elevationDifference;
                 var d = horizontalDistance;
 
-                var angle1Check = (v * v * v * v) - 2 * (v * v) * -h * g - (g * g) * (d * d);
-                var angle2Check = (v * v * v * v) - 2 * (v * v) * -h * g - (g * g) * (d * d);
+                var angleCheck = (v * v * v * v) - 2 * (v * v) * -h * g - (g * g) * (d * d);
+
+                if (angleCheck <= 0)
+                    return estimatedImpactPoint + perpendicularAimOffset + gravityOffset;
 
                 //lord help me
-                var angle1 = angle1Check > 0 ? -Math.Atan((v * v + Math.Sqrt(angle1Check)) / (g * d)) : 1.57;//Higher angle
-                var angle2 = angle2Check > 0 ? -Math.Atan((v * v - Math.Sqrt(angle2Check)) / (g * d)) : 1.57;//Lower angle                //Try angle 2 first (the lower one)
-                bool isTracking;
+                var angleSqrt = Math.Sqrt(angleCheck);
+                var angle1 = -Math.Atan((v * v + angleSqrt) / (g * d));//Higher angle
+                var angle2 = -Math.Atan((v * v - angleSqrt) / (g * d));//Lower angle                //Try angle 2 first (the lower one)
+                
                 var verticalDistance = Math.Tan(angle2) * horizontalDistance; //without below-the-horizon modifier
                 gravityOffset = new Vector3D((verticalDistance + Math.Abs(elevationDifference)) * -gravityNormDir);
+                if (angle1 > 1.57)
+                    return estimatedImpactPoint + perpendicularAimOffset + gravityOffset;
+
                 var targetAimPoint = estimatedImpactPoint + perpendicularAimOffset + gravityOffset;
                 var targetDirection = targetAimPoint - shooterPos;
 
-                if (angle1 < 1.57 && !MathFuncs.WeaponLookAt(weapon, ref targetDirection, deltaLength * deltaLength, false, true, out isTracking)) //Angle 2 obscured, switch to angle 1
+                bool isTracking;
+                if (!MathFuncs.WeaponLookAt(weapon, ref targetDirection, deltaLength * deltaLength, false, true, out isTracking)) //Angle 2 obscured, switch to angle 1
                 {
                     verticalDistance = Math.Tan(angle1) * horizontalDistance;
                     gravityOffset = new Vector3D((verticalDistance + Math.Abs(elevationDifference)) * -gravityNormDir);
                 }
-                //Log.Line($"Angle 1: {MathHelper.ToDegrees(angle1)} Angle 2: {MathHelper.ToDegrees(angle2)} G{g} V{v} H{h} D{d} {Math.Sqrt((v * v * v * v) - 2 * (v * v) * -h * g - (g * g) * (d * d))}");
             }
-            //Log.Line($"Mintime: {minTime} Grav TTI: {gravTTI} TimeToIntercept: {timeToIntercept} perpdist: {perpendicularAimOffset.Length()}");
             return estimatedImpactPoint + perpendicularAimOffset + gravityOffset;
         }
 

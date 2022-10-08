@@ -78,8 +78,6 @@ namespace CoreSystems.Projectiles
         internal bool AtMaxRange;
         internal bool EarlyEnd;
         internal bool LineOrNotModel;
-        internal bool EntitiesNear;
-        internal bool FakeGravityNear;
         internal bool WasTracking;
         internal bool Intersecting;
         internal bool FinalizeIntersection;
@@ -155,13 +153,11 @@ namespace CoreSystems.Projectiles
             ZombieLifeTime = 0;
             LastOffsetTime = 0;
             PruningProxyId = -1;
-            EntitiesNear = false;
             MineSeeking = false;
             MineActivated = false;
             MineTriggered = false;
             LinePlanetCheck = false;
             AtMaxRange = false;
-            FakeGravityNear = false;
             WasTracking = false;
             Intersecting = false;
             Asleep = false;
