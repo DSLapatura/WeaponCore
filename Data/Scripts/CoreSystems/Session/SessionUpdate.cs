@@ -311,14 +311,14 @@ namespace CoreSystems
                             continue;
                         }
 
-                        var desiredDirection = Vector3D.Zero;
-                        var noTarget = false;
-                        var targetPos = Vector3D.Zero;
-
                         var validTarget = controlPart.TrackingWeapon.Target.TargetState == TargetStates.IsEntity || controlPart.TrackingWeapon.Target.TargetState == TargetStates.IsFake;
+
+                        var noTarget = false;
+                        var desiredDirection = Vector3D.Zero;
+                        
                         if (!validTarget)
                             noTarget = true;
-                        else if (!ControlSys.TrajectoryEstimation(topAi, controlPart, out desiredDirection, out targetPos, false))
+                        else if (!ControlSys.TrajectoryEstimation(topAi, controlPart, out desiredDirection))
                         {
                             noTarget = true;
                         }
@@ -330,7 +330,7 @@ namespace CoreSystems
                             continue;
                         }
 
-                        if (!cComp.TrackTarget(topAi, cComp.Platform.Control.BaseMap,  cComp.Platform.Control.OtherMap, true, ref desiredDirection, ref targetPos))
+                        if (!cComp.TrackTarget(topAi, cComp.Platform.Control.BaseMap,  cComp.Platform.Control.OtherMap, true, ref desiredDirection))
                             continue;
                     }
 

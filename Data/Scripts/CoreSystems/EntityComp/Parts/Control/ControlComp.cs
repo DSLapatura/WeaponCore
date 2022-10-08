@@ -306,11 +306,12 @@ namespace CoreSystems.Platform
                 }
             }
 
-            internal bool TrackTarget(Ai topAi, IMyMotorStator root, IMyMotorStator other, bool isRoot, ref Vector3D desiredDirection, ref Vector3D targetPos)
+            internal bool TrackTarget(Ai topAi, IMyMotorStator root, IMyMotorStator other, bool isRoot, ref Vector3D desiredDirection)
             {
                 var trackingWeapon = isRoot? Platform.Control.TrackingWeapon : topAi.RootFixedWeaponComp.TrackingWeapon;
                 RotorsMoving = true;
-                
+
+                var targetPos = topAi.RotorTargetPosition;
                 var targetDistSqr = Vector3D.DistanceSquared(root.PositionComp.WorldAABB.Center, targetPos);
 
                 var epsilon = Session.Tick120 ? 1E-06d : targetDistSqr <= 640000 ? 1E-03d : targetDistSqr <= 3240000 ? 1E-04d : 1E-05d;
@@ -375,7 +376,10 @@ namespace CoreSystems.Platform
 
                 if (rootAngle * rootAngle + subAngle * subAngle < deviationRads * deviationRads)
                 {
-                    topAi.RotorTurretAimed = true;
+                    var scopeInfo = trackingWeapon.GetScope.Info;
+                    var targetDir = targetPos - scopeInfo.Position;
+
+                    topAi.RotorTurretAimed = MathFuncs.IsDotProductWithinTolerance(ref scopeInfo.Direction, ref targetDir, topAi.Session.ApproachDegrees);
                 }
 
                 return true;
