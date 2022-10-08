@@ -304,7 +304,7 @@ namespace CoreSystems.Support
             internal bool ValidSignalExists(Weapon w)
             {
                 var signalInRange = !w.Comp.DetectOtherSignals ? PriorityRangeSqr <= w.MaxTargetDistanceSqr : (OtherRangeSqr <= w.MaxTargetDistanceSqr || PriorityRangeSqr <= w.MaxTargetDistanceSqr);
-                return signalInRange || w.Comp.Ai.Construct.Data.Repo.FocusData.HasFocus || w.Comp.Ai.LiveProjectile.Count > 0 && (w.System.TrackProjectile && w.Comp.Data.Repo.Values.Set.Overrides.Projectiles; 
+                return signalInRange || w.Comp.Ai.Construct.Data.Repo.FocusData.HasFocus || w.Comp.Ai.LiveProjectile.Count > 0 && (w.System.TrackProjectile || w.Comp.OnCustomTurret) && w.Comp.Data.Repo.Values.Set.Overrides.Projectiles; 
             }
 
             internal bool TargetInRange(Weapon w)
