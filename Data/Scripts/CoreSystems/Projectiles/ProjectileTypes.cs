@@ -571,6 +571,7 @@ namespace CoreSystems.Support
                 p.PredictedTargetPos = frag.PredictedTargetPos;
                 info.Direction = frag.Direction;
                 p.StartSpeed = frag.Velocity;
+                p.Gravity = aConst.FeelsGravity && info.Ai.InPlanetGravity ? frag.Weapon.GravityPoint : Vector3D.Zero;
                 info.LockOnFireState = frag.LockOnFireState;
                 info.MaxTrajectory = aConst.MaxTrajectory;
                 info.ShotFade = 0;
