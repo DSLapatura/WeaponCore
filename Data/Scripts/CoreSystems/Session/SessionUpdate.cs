@@ -561,7 +561,7 @@ namespace CoreSystems
                         else if(w.Target.TargetEntity != null && w.Target.TargetEntity.MarkedForClose || w.DelayedTargetResetTick == Tick && w.TargetData.EntityId == 0 && w.Target.HasTarget)
                             w.Target.Reset(w.System.Session.Tick, States.ServerReset);
 
-                        w.ProjectilesNear = enemyProjectiles && w.System.TrackProjectile && projectiles && w.Target.TargetState != TargetStates.IsProjectile && (w.Target.TargetChanged || QCount == w.ShortLoadId);
+                        w.ProjectilesNear = enemyProjectiles && (w.System.TrackProjectile || wComp.OnCustomTurret) && projectiles && w.Target.TargetState != TargetStates.IsProjectile && (w.Target.TargetChanged || QCount == w.ShortLoadId);
 
                         if (wValues.State.Control == ControlMode.Camera && UiInput.MouseButtonPressed)
                             w.Target.TargetPos = Vector3D.Zero;
@@ -705,7 +705,7 @@ namespace CoreSystems
 
                 var acquire = (w.Acquire.IsSleeping && AsleepCount == w.Acquire.SlotId || !w.Acquire.IsSleeping && AwakeCount == w.Acquire.SlotId);
 
-                var seekProjectile = w.ProjectilesNear || w.System.TrackProjectile && overrides.Projectiles && w.BaseComp.Ai.CheckProjectiles;
+                var seekProjectile = w.ProjectilesNear || (w.System.TrackProjectile || w.Comp.OnCustomTurret) && overrides.Projectiles && w.BaseComp.Ai.CheckProjectiles;
                 var checkTime = w.Target.TargetChanged || acquire || seekProjectile || w.FastTargetResetTick == Tick;
                 var ai = w.BaseComp.Ai;
 

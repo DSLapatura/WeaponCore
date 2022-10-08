@@ -36,7 +36,7 @@ namespace CoreSystems.Support
                 w.AimCone.ConeDir = w.MyPivotFwd;
                 w.AimCone.ConeTip = w.BarrelOrigin + (w.MyPivotFwd * w.MuzzleDistToBarrelCenter);
                 var pCount = w.Comp.Ai.LiveProjectile.Count;
-                var shootProjectile = pCount > 0 && w.System.TrackProjectile && overrides.Projectiles;
+                var shootProjectile = pCount > 0 && (w.System.TrackProjectile || w.Comp.OnCustomTurret) && overrides.Projectiles;
                 var projectilesFirst = !attemptReset && shootProjectile && w.System.Values.Targeting.Threats.Length > 0 && w.System.Values.Targeting.Threats[0] == Threat.Projectiles;
                 var onlyCheckProjectile = w.ProjectilesNear && !w.Target.TargetChanged && w.Comp.Session.Count != w.Acquire.SlotId && !attemptReset;
                 if (!projectilesFirst && w.System.TrackTopMostEntities && !onlyCheckProjectile)

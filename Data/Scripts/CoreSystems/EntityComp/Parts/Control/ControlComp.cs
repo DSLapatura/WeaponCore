@@ -43,6 +43,9 @@ namespace CoreSystems.Platform
 
                 if (Session.Tick - Ai.LastDetectEvent > 59)
                 {
+                    if (Data.Repo.Values.Set.Overrides.Projectiles)
+                        Ai.PointDefense = true;
+
                     Ai.LastDetectEvent = Session.Tick;
                     Ai.SleepingComps = 0;
                     Ai.AwakeComps = 0;
@@ -107,6 +110,7 @@ namespace CoreSystems.Platform
 
             internal static void RequestSetValue(ControlComponent comp, string setting, int value, long playerId)
             {
+                comp.Ai.PointDefense = true;
                 if (comp.Session.IsServer)
                 {
                     SetValue(comp, setting, value, playerId);
