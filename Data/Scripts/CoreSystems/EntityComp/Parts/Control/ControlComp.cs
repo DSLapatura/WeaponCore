@@ -26,6 +26,7 @@ namespace CoreSystems.Platform
             internal bool ToolsActive;
             internal uint LastOwnerRequestTick;
             internal uint LastAddTick;
+
             internal ControlComponent(Session session, MyEntity coreEntity, MyDefinitionId id)
             {
                 Controller = (IMyTurretControlBlock)coreEntity;
@@ -384,6 +385,7 @@ namespace CoreSystems.Platform
                     var targetDir = targetPos - scopeInfo.Position;
 
                     topAi.RotorTurretAimed = MathFuncs.IsDotProductWithinTolerance(ref scopeInfo.Direction, ref targetDir, topAi.Session.ApproachDegrees);
+                    trackingWeapon.MasterComp.Platform.Control.IsAimed = topAi.RotorTurretAimed;
                 }
 
                 return true;

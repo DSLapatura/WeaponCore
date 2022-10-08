@@ -259,17 +259,22 @@ namespace CoreSystems.Support
                             FakeInfo.Acceleration = ent.Physics.LinearAcceleration;
                         }
                         else if (Type == FakeType.Painted && EntityId != 0)
+                        {
                             ClearMark(ai.Session.Tick);
+                        }
                     }
                 }
                 else if (Type == FakeType.Painted && EntityId != 0)
+                {
                     ClearMark(ai.Session.Tick);
+                }
 
                 return FakeInfo;
             }
 
             internal void ClearMark(uint tick)
             {
+                Log.Line($"clear mark");
                 EntityId = 0;
                 MissCount = 0;
                 LastInfoTick = 0;

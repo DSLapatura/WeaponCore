@@ -225,7 +225,6 @@ namespace CoreSystems.Support
                 if (Type == CompType.Weapon)
                     ((Weapon.WeaponComponent)this).OnAddedToSceneWeaponTasks(firstRun);
 
-
                 Ai.CompBase[CoreEntity] = this;
 
                 Ai.CompChange(true, this);

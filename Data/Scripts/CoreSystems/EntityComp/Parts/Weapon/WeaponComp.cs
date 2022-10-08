@@ -191,18 +191,12 @@ namespace CoreSystems.Platform
                         Session.AcqManager.Monitor(weapon.Acquire);
                 }
 
-                var expandedMaxTrajectory2 = maxTrajectory2 + Ai.TopEntity.PositionComp.LocalVolume.Radius;
-                if (expandedMaxTrajectory2 > Ai.MaxTargetingRange)
-                {
 
-                    Ai.MaxTargetingRange = MathHelperD.Min(expandedMaxTrajectory2, Session.Settings.Enforcement.MaxHudFocusDistance);
-                    Ai.MaxTargetingRangeSqr = Ai.MaxTargetingRange * Ai.MaxTargetingRange;
-                }
+                ReCalculateMaxTargetingRange(maxTrajectory2);
 
                 Ai.OptimalDps += PeakDps;
                 Ai.EffectiveDps += EffectiveDps;
                 Ai.PerfectDps += PerfectDps;
-
                 VanillaTurretBase?.SetTarget(Vector3D.MaxValue);
 
                 if (firstRun)

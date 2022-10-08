@@ -237,6 +237,7 @@ namespace CoreSystems
                     for (int i = 0; i < ai.ControlComps.Count; i++)
                     {
                         var cComp = ai.ControlComps[i];
+
                         if (cComp.Status != Started)
                             cComp.HealthCheck();
 
@@ -256,6 +257,7 @@ namespace CoreSystems
                             continue;
 
                         var controlPart = cComp.Platform.Control;
+                        controlPart.IsAimed = false;
 
                         controlPart.BaseMap = az.TopGrid == el.CubeGrid ? az : el;
                         controlPart.OtherMap = controlPart.BaseMap == az ? el : az;
@@ -273,9 +275,13 @@ namespace CoreSystems
                         if (trackWeapon == null)
                             continue;
 
+                        if (trackWeapon.Comp.Ai.MaxTargetingRange > ai.MaxTargetingRange)
+                            cComp.ReCalculateMaxTargetingRange(trackWeapon.Comp.Ai.MaxTargetingRange);
+
                         topAi.RotorCommandTick = Tick;
                         trackWeapon.MasterComp = cComp;
                         trackWeapon.RotorTurretTracking = true;
+                        
                         var cValues = controlPart.Comp.Data.Repo.Values;
                         var isUnderControl = cComp.Controller.IsUnderControl;
                         var cPlayerId = cValues.State.PlayerId;
@@ -440,7 +446,6 @@ namespace CoreSystems
                     wComp.UserControlled = cMode != ProtoWeaponOverrides.ControlModes.Auto || wValues.State.Control == ControlMode.Camera || fakeTargets != null && fakeTargets.PaintedTarget.EntityId != 0;
                     
                     wComp.FakeMode = wComp.ManualMode || wComp.PainterMode;
-
                     var onConfrimed = wValues.State.Trigger == On && !wComp.ShootManager.FreezeClientShoot && !wComp.ShootManager.WaitingShootResponse && (sMode != Weapon.ShootManager.ShootModes.AiShoot || wComp.ShootManager.Signal == Weapon.ShootManager.Signals.Manual);
                     var noShootDelay = wComp.ShootManager.ShootDelay == 0 || wComp.ShootManager.ShootDelay != 0 && wComp.ShootManager.ShootDelay-- == 0;
                     var sequenceReady = overrides.WeaponGroupId == 0 || wComp.SequenceReady(rootConstruct);
@@ -590,7 +595,7 @@ namespace CoreSystems
                         var overHeat = w.PartState.Overheated && (w.OverHeatCountDown == 0 || w.OverHeatCountDown != 0 && w.OverHeatCountDown-- == 0);
 
                         var canShoot = !overHeat && !reloading && !w.System.DesignatorWeapon && sequenceReady;
-                        var paintedTarget = wComp.PainterMode && w.Target.TargetState == TargetStates.IsFake && w.Target.IsAligned;
+                        var paintedTarget = wComp.PainterMode && w.Target.TargetState == TargetStates.IsFake && (w.Target.IsAligned || wComp.OnCustomTurret && wComp.Ai.RootFixedWeaponComp.TrackingWeapon.MasterComp.Platform.Control.IsAimed);
                         var autoShot = paintedTarget || w.AiShooting && wValues.State.Trigger == Off;
                         var anyShot = !wComp.ShootManager.FreezeClientShoot && (w.ShootCount > 0 || onConfrimed) && noShootDelay || autoShot && sMode == Weapon.ShootManager.ShootModes.AiShoot;
 

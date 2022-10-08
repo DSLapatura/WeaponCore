@@ -5,6 +5,7 @@ using Sandbox.ModAPI.Weapons;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI.Interfaces;
 using VRage.Game.ObjectBuilders.Definitions;
+using VRageMath;
 using static CoreSystems.Support.Ai;
 namespace CoreSystems.Support
 {
@@ -132,5 +133,18 @@ namespace CoreSystems.Support
             }
             catch (Exception ex) { Log.Line($"Exception in RemoveComp: {ex} - AiNull:{Ai == null} - SessionNull:{Session == null} - CoreEntNull:{CoreEntity == null} - PlatformNull: {Platform == null} - TopEntityNull:{TopEntity == null}", null, true); }
         }
+
+
+        internal void ReCalculateMaxTargetingRange(double maxRange)
+        {
+            var expandedMaxTrajectory2 = maxRange + Ai.TopEntity.PositionComp.LocalVolume.Radius;
+            if (expandedMaxTrajectory2 > Ai.MaxTargetingRange)
+            {
+
+                Ai.MaxTargetingRange = MathHelperD.Min(expandedMaxTrajectory2, Session.Settings.Enforcement.MaxHudFocusDistance);
+                Ai.MaxTargetingRangeSqr = Ai.MaxTargetingRange * Ai.MaxTargetingRange;
+            }
+        }
+
     }
 }
