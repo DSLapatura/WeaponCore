@@ -84,6 +84,7 @@ namespace CoreSystems.Platform
         internal int DelayedCycleId = -1;
         internal List<MyEntity> HeatingParts;
         internal Vector3D GravityPoint;
+        internal Vector3D GravityUnitDir;
         internal Vector3D MyPivotPos;
         internal Vector3D BarrelOrigin;
         internal Vector3D MyPivotFwd;
@@ -173,6 +174,7 @@ namespace CoreSystems.Platform
         internal double MinTargetDistanceBufferSqr;
         internal double MuzzleDistToBarrelCenter;
         internal double ScopeDistToCheckPos;
+        internal double GravityLength;
         internal bool TurretActive;
         internal bool TargetLock;
         internal bool ClientReloading;

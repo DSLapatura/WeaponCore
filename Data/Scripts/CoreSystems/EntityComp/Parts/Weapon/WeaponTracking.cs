@@ -592,6 +592,8 @@ namespace CoreSystems.Platform
                 weapon.GravityTick = session.Tick;
                 float interference;
                 weapon.GravityPoint = session.Physics.CalculateNaturalGravityAt(weapon.MyPivotPos, out interference);
+                weapon.GravityUnitDir = weapon.GravityPoint;
+                weapon.GravityLength = weapon.GravityUnitDir.Normalize();
             }
 
             var gravityMultiplier = ammoDef.Const.FeelsGravity && !MyUtils.IsZero(weapon.GravityPoint) ? ammoDef.Const.GravityMultiplier : 0f;
@@ -602,7 +604,6 @@ namespace CoreSystems.Platform
             var projectileMaxSpeed = ammoDef.Const.DesiredProjectileSpeed;
             var projectileInitSpeed = ammoDef.Trajectory.AccelPerSec * MyEngineConstants.UPDATE_STEP_SIZE_IN_SECONDS;
             var projectileAccMag = ammoDef.Trajectory.AccelPerSec;
-            var gravity = weapon.GravityPoint;
             var basic = weapon.System.Prediction != Prediction.Advanced && !overrideMode || overrideMode && !setAdvOverride;
             Vector3D deltaPos = targetPos - shooterPos;
             Vector3D deltaVel = targetVel - shooterVel;
@@ -715,7 +716,6 @@ namespace CoreSystems.Platform
                         Vector3D targetNormVel;
                         Vector3D.Normalize(ref targetVel, out targetNormVel);
                         targetVel = targetNormVel * targetMaxSpeed;
-
                     }
 
                     targetPos += targetVel * dt;
@@ -746,10 +746,8 @@ namespace CoreSystems.Platform
             //gravity nonsense for differing elevations
             if (hasGravity && ai.InPlanetGravity)
             {
-                var gravityNormDir = gravity;
-                var gravityLength = gravityNormDir.Normalize();
 
-                var targetAngle = Math.Acos(Vector3D.Dot(gravity, deltaPos) / (gravityLength * deltaLength));
+                var targetAngle = Math.Acos(Vector3D.Dot(weapon.GravityPoint, deltaPos) / (weapon.GravityLength * deltaLength));
                 double elevationDifference;
                 if (targetAngle >= 1.5708) //Target is above weapon
                 {
@@ -764,7 +762,7 @@ namespace CoreSystems.Platform
                 var horizontalDistance = Math.Sqrt(deltaLength * deltaLength - elevationDifference * elevationDifference);
                 
                 //Minimized for my sanity
-                var g = -(gravityLength * gravityMultiplier);
+                var g = -(weapon.GravityLength * gravityMultiplier);
                 var v = projectileMaxSpeed;
                 var h = elevationDifference;
                 var d = horizontalDistance;
@@ -780,7 +778,7 @@ namespace CoreSystems.Platform
                 var angle2 = -Math.Atan((v * v - angleSqrt) / (g * d));//Lower angle                //Try angle 2 first (the lower one)
                 
                 var verticalDistance = Math.Tan(angle2) * horizontalDistance; //without below-the-horizon modifier
-                gravityOffset = new Vector3D((verticalDistance + Math.Abs(elevationDifference)) * -gravityNormDir);
+                gravityOffset = new Vector3D((verticalDistance + Math.Abs(elevationDifference)) * -weapon.GravityUnitDir);
                 if (angle1 > 1.57)
                     return estimatedImpactPoint + perpendicularAimOffset + gravityOffset;
 
@@ -791,7 +789,7 @@ namespace CoreSystems.Platform
                 if (!MathFuncs.WeaponLookAt(weapon, ref targetDirection, deltaLength * deltaLength, false, true, out isTracking)) //Angle 2 obscured, switch to angle 1
                 {
                     verticalDistance = Math.Tan(angle1) * horizontalDistance;
-                    gravityOffset = new Vector3D((verticalDistance + Math.Abs(elevationDifference)) * -gravityNormDir);
+                    gravityOffset = new Vector3D((verticalDistance + Math.Abs(elevationDifference)) * -weapon.GravityUnitDir);
                 }
             }
             return estimatedImpactPoint + perpendicularAimOffset + gravityOffset;
