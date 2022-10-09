@@ -41,6 +41,7 @@ namespace CoreSystems
             Tick180 = Tick % 180 == 0;
             Tick300 = Tick % 300 == 0;
             Tick600 = Tick % 600 == 0;
+            Tick1200 = Tick % 1200 == 0;
             Tick1800 = Tick % 1800 == 0;
             Tick3600 = Tick % 3600 == 0;
 
@@ -83,10 +84,6 @@ namespace CoreSystems
                             //MyAPIGateway.Utilities.ShowNotification(message, 10000, "Red");
                         }
                     }
-
-                    if (!string.IsNullOrEmpty(PlayerMessage))
-                        MyAPIGateway.Utilities.ShowNotification(PlayerMessage, 10000);
-
                     ClientCheck = true;
                 }
 
@@ -94,6 +91,11 @@ namespace CoreSystems
             LCount++;
             if (LCount == 129)
                 LCount = 0;
+
+            if (Tick1200 && PlayerStartMessage && !string.IsNullOrEmpty(PlayerMessage)) {
+                PlayerStartMessage = false;
+                MyAPIGateway.Utilities.ShowNotification(PlayerMessage, 15000);
+            }
 
             if (!GameLoaded)
             {
@@ -663,7 +665,7 @@ namespace CoreSystems
                 if (!somethingUpdated)
                 {
                     if (message.Length <= 3)
-                        MyAPIGateway.Utilities.ShowNotification("Valid WeaponCore Commands:\n'/wc remap -- Remap keys'\n'/wc drawlimit 1000' -- Limits total number of projectiles on screen (default unlimited)\n'/wc changehud' to enable moving/resizing of WC Hud\n'/wc setdefaults' -- Resets shield client configs to default values\n'/wc stickypainter' -- Disable Painter LoS checks\n", 10000);
+                        MyAPIGateway.Utilities.ShowNotification("HELPFUL TIPS: https://github.com/sstixrud/WeaponCore/wiki/Player-Tips\nValid WeaponCore Commands:\n'/wc remap -- Remap keys'\n'/wc drawlimit 1000' -- Limits total number of projectiles on screen (default unlimited)\n'/wc changehud' to enable moving/resizing of WC Hud\n'/wc setdefaults' -- Resets shield client configs to default values\n'/wc stickypainter' -- Disable Painter LoS checks\n", 10000);
                     else if (message.StartsWith("/wc remap"))
                         MyAPIGateway.Utilities.ShowNotification("'/wc remap keyboard' -- Remaps control key (default R)\n'/wc remap mouse' -- Remaps menu mouse key (default middle button)\n'/wc remap action' -- Remaps action key (default numpad0)\n'/wc remap info' -- Remaps info key (default decimal key, aka numpad period key)\n'/wc remap next' -- Remaps the Cycle Next Target key (default Page Down)\n'/wc remap prev' -- Remaps the Cycle Previous Target key (default Page Up)\n", 10000, "White");
                 }
@@ -806,7 +808,7 @@ namespace CoreSystems
                         if (VanillaIds.ContainsKey(defId) || PartPlatforms.ContainsKey(defId))
                         {
                             var index = ob.Toolbar.Slots[i].Index;
-                            message += $"*Warning* Vanilla weapon toolbar action detected at position {index + 1}, replace with WeaponCore Group action!\n";
+                            message += $"*Warning* Vanilla weapon toolbar action detected in slot {index + 1}, replace with WeaponCore Group toolbar action!\n";
                         }
                     }
                 }

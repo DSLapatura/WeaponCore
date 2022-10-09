@@ -374,6 +374,7 @@ namespace CoreSystems
         internal bool PurgedAll;
         internal bool InMenu;
         internal int MenuDepth;
+        internal bool PlayerStartMessage;
         internal bool GunnerBlackList;
         internal bool MpActive;
         internal bool IsServer;
@@ -394,6 +395,7 @@ namespace CoreSystems
         internal bool Tick180;
         internal bool Tick300;
         internal bool Tick600;
+        internal bool Tick1200;
         internal bool Tick1800;
         internal bool Tick3600;
         internal bool ShieldMod;

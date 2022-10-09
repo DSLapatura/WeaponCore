@@ -77,7 +77,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
 
             if (VersionChange)
             {
-                Core.Session.PlayerMessage = "You may access WeaponCore client settings with the /wc chat command";
+                Core.Session.PlayerStartMessage = true;
+                Core.Session.PlayerMessage = "You may access WeaponCore client settings with the /wc chat command\n- for helpful tips goto: https://github.com/sstixrud/WeaponCore/wiki/Player-Tips";
             }
         }
 

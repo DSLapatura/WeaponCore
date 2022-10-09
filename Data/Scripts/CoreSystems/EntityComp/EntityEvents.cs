@@ -203,6 +203,11 @@ namespace CoreSystems.Support
             try
             {
                 var comp = ((Weapon.WeaponComponent)this);
+
+                if ((!comp.HasAim || comp.OverrideLeads) && comp.Data.Repo.Values.Set.Overrides.LeadGroup == 0)
+                    stringBuilder.Append("\nWARNING: fixed weapon detected\n")
+                        .Append("  - without a Target Lead Group set!\n\n");
+
                 var status = GetSystemStatus();
 
                 stringBuilder.Append($"{status}\n");
