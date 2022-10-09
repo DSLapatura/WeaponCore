@@ -586,7 +586,7 @@ namespace CoreSystems.Platform
                 ai.VelocityUpdateTick = session.Tick;
             }
 
-            if (ammoDef.Const.FeelsGravity && session.Tick - weapon.GravityTick > 119)
+            if (ammoDef.Const.FeelsGravity && ai.InPlanetGravity && session.Tick - weapon.GravityTick > 119)
             {
                 weapon.GravityTick = session.Tick;
                 float interference;

@@ -200,12 +200,30 @@ namespace CoreSystems.Support
                 prevDeckLen = count;
             }
 
+            var shuffle = cardsToShuffle > 0;
+
+            var splitSize = shuffle && cardsToShuffle <= cardsToSort ? cardsToSort / cardsToShuffle : 0;
+            var startChunk = shuffle && splitSize > 0 ? rng.Range(1, splitSize + 1) : 0;
+
+            var end = startChunk > 0 ? startChunk * cardsToShuffle : cardsToShuffle;
+            var start = startChunk > 0 ? end - cardsToShuffle : 0;
+            
             for (int i = 0; i < count; i++)
             {
-                var j = i < cardsToShuffle ? rng.Range(0, i + 1) : i;
+                int j;
+                if (shuffle && (i >= start && i < end))
+                {
+                    j = rng.Range(0, i + 1);
+                }
+                else
+                {
+                    j = i;
+                }
+
                 deck[i] = deck[j];
                 deck[j] = firstCard + i;
             }
+
             return deck;
         }
 

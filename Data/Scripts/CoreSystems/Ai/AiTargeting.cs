@@ -116,7 +116,7 @@ namespace CoreSystems.Support
             if (session.WaterApiLoaded && !ammoDef.IgnoreWater && ai.InPlanetGravity && ai.MyPlanet != null && session.WaterMap.TryGetValue(ai.MyPlanet.EntityId, out water))
                 waterSphere = new BoundingSphereD(ai.MyPlanet.PositionComp.WorldAABB.Center, water.MinRadius);
             var numOfTargets = ai.SortedTargets.Count;
-            var deck = GetDeck(ref target.TargetDeck, ref target.TargetPrevDeckLen, 0, numOfTargets, ai.DetectionInfo.DroneCount, ref w.TargetData.WeaponRandom.AcquireRandom);
+            var deck = GetDeck(ref target.TargetDeck, ref target.TargetPrevDeckLen,  0, numOfTargets, ai.DetectionInfo.DroneCount, ref w.TargetData.WeaponRandom.AcquireRandom);
 
             for (int i = 0; i < numOfTargets; i++)
             {
@@ -242,7 +242,7 @@ namespace CoreSystems.Support
             var numOfTargets = ai.SortedTargets.Count;
             var hasOffset = offset > 0;
             var adjTargetCount = forceFoci && hasOffset ? offset : numOfTargets + offset;
-            var deck = GetDeck(ref target.TargetDeck, ref target.TargetPrevDeckLen, 0, numOfTargets, p.Info.Weapon.System.Values.Targeting.TopTargets, ref p.Info.Random);
+            var deck = GetDeck(ref target.TargetDeck, ref target.TargetPrevDeckLen,  0, numOfTargets, p.Info.Weapon.System.Values.Targeting.TopTargets, ref p.Info.Random);
 
             for (int i = 0; i < adjTargetCount; i++)
             {
@@ -458,7 +458,7 @@ namespace CoreSystems.Support
             var numOfTargets = ai.SortedTargets.Count;
             var adjTargetCount = forceFoci && hasOffset ? offset : numOfTargets + offset;
 
-            var deck = GetDeck(ref target.TargetDeck, ref target.TargetPrevDeckLen, 0, numOfTargets, w.System.Values.Targeting.TopTargets, ref w.TargetData.WeaponRandom.AcquireRandom);
+            var deck = GetDeck(ref target.TargetDeck, ref target.TargetPrevDeckLen,  0, numOfTargets, w.System.Values.Targeting.TopTargets, ref w.TargetData.WeaponRandom.AcquireRandom);
             try
             {
                 for (int x = 0; x < adjTargetCount; x++)
@@ -653,7 +653,8 @@ namespace CoreSystems.Support
             }
 
             if (totalBlocks < lastBlocks) lastBlocks = totalBlocks;
-            var deck = GetDeck(ref target.BlockDeck, ref target.BlockPrevDeckLen, 0, totalBlocks, topBlocks, ref xRnd);
+
+            var deck = GetDeck(ref target.BlockDeck, ref target.BlockPrevDeckLen,  0, totalBlocks, topBlocks, ref xRnd);
 
             var physics = system.Session.Physics;
             var iGrid = topEnt as IMyCubeGrid;
@@ -1005,7 +1006,7 @@ namespace CoreSystems.Support
             }
 
             var numToRandomize = s.ClosestFirst ? w.System.Values.Targeting.TopTargets : numOfTargets;
-            var deck = GetDeck(ref target.TargetDeck, ref target.TargetPrevDeckLen, 0, numOfTargets, numToRandomize, ref w.TargetData.WeaponRandom.AcquireRandom);
+            var deck = GetDeck(ref target.TargetDeck, ref target.TargetPrevDeckLen,  0, numOfTargets, numToRandomize, ref w.TargetData.WeaponRandom.AcquireRandom);
 
             for (int x = 0; x < numOfTargets; x++)
             {

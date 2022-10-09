@@ -1,4 +1,5 @@
-﻿using CoreSystems.Support;
+﻿using CoreSystems.Platform;
+using CoreSystems.Support;
 using Sandbox.Game.Entities;
 using VRage.Game;
 using VRageMath;
@@ -88,7 +89,17 @@ namespace CoreSystems.Projectiles
                 info.ShotFade = shotFade;
                 p.PredictedTargetPos = wTarget.TargetPos;
 
-                p.Gravity = aConst.FeelsGravity && info.Ai.InPlanetGravity ? w.GravityPoint : Vector3D.Zero;
+                var updateGravity = aConst.FeelsGravity && info.Ai.InPlanetGravity;
+                if (updateGravity && Session.Tick - w.GravityTick > 119)
+                {
+                    w.GravityTick = Session.Tick;
+                    float interference;
+                    w.GravityPoint = Session.Physics.CalculateNaturalGravityAt(w.MyPivotPos, out interference);
+                    w.GravityUnitDir = w.GravityPoint;
+                    w.GravityLength = w.GravityUnitDir.Normalize();
+                }
+
+                p.Gravity = updateGravity ? w.GravityPoint : Vector3D.Zero;
 
                 if (t != Kind.Virtual)
                 {
