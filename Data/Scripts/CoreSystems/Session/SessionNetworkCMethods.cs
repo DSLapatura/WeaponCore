@@ -232,8 +232,7 @@ namespace CoreSystems
             if (comp?.Ai == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return Error(data, Msg($"CompId: {packet.EntityId}", comp != null), Msg("Ai", comp?.Ai != null), Msg("Ai", comp?.Platform.State == CorePlatform.PlatformState.Ready));
             
             comp.Data.Repo.Values.State.Terminal = boolPacket.Data ? CoreComponent.Trigger.On : CoreComponent.Trigger.Off; 
-            Log.Line($"ClientControlOnOff: {boolPacket.Data}");
-            SendComp(comp);
+            SendState(comp);
 
             data.Report.PacketValid = true;
 

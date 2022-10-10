@@ -290,7 +290,7 @@ namespace CoreSystems.Platform
                 Data.Repo.Values.State.PlayerId = Session.PlayerId;
 
                 if (Session.MpActive)
-                    Session.SendComp(this);
+                    Session.SendState(this);
 
                 return true;
             }

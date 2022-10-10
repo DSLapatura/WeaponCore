@@ -119,7 +119,7 @@ namespace CoreSystems
             }
 
             if (syncWeapons)
-                comp.Session.SendComp(comp);
+                comp.Session.SendState(comp);
         }
     }
 
@@ -144,7 +144,7 @@ namespace CoreSystems
 
             Action = action;
             if (comp.Session.MpActive && comp.Session.IsServer && syncCompState)
-                comp.Session.SendComp(comp);
+                comp.Session.SendState(comp);
         }
 
     }
