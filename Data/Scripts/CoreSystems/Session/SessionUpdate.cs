@@ -16,6 +16,7 @@ using System.Diagnostics;
 using SpaceEngineers.Game.ModAPI;
 using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 using VRage.Input;
+using SpaceEngineers.Game.Weapons.Guns;
 
 namespace CoreSystems
 {
@@ -405,12 +406,17 @@ namespace CoreSystems
                             
                             var activePlayer = PlayerId == wValues.State.PlayerId && playerControl;
                             var cManual = pControl.ControlBlock is IMyTurretControlBlock;
+                            var customWeapon = cManual && wComp.OnCustomTurret;
+                            var manualThisWeapon = pControl.ControlBlock == wComp.Cube && wComp.HasAim;
+                            var controllingWeapon = customWeapon || manualThisWeapon;
+                            var validManualModes = (sMode == Weapon.ShootManager.ShootModes.MouseControl || cMode == ProtoWeaponOverrides.ControlModes.Manual);
+                            var manual = (controllingWeapon || validManualModes && (wComp.HasAim || !IdToCompMap.ContainsKey(pControl.EntityId)));
+                            var playerAim = activePlayer && manual;
+                            var track = !InMenu && (playerAim && (!UiInput.CameraBlockView || cManual || manualThisWeapon) || UiInput.CameraChannelId > 0 && UiInput.CameraChannelId == overrides.CameraChannel);
+
                             if (!activePlayer && wComp.ShootManager.Signal == Weapon.ShootManager.Signals.MouseControl)
                                 wComp.ShootManager.RequestShootSync(PlayerId, Weapon.ShootManager.RequestType.Off);
-
-                            var playerAim = activePlayer && cMode != ProtoWeaponOverrides.ControlModes.Auto || cManual;
-                            var track = !InMenu && (playerAim && !UiInput.CameraBlockView || cManual || UiInput.CameraChannelId > 0 && UiInput.CameraChannelId == overrides.CameraChannel);
-
+                            
                             if (cMode == ProtoWeaponOverrides.ControlModes.Manual)
                                 TargetUi.LastManualTick = Tick;
 
@@ -420,19 +426,23 @@ namespace CoreSystems
                             var active = wComp.ShootManager.ClientToggleCount > wValues.State.ToggleCount || wValues.State.Trigger == On;
                             var turnOn = !active && UiInput.ClientInputState.MouseButtonLeft && playerControl && !InMenu;
                             var turnOff = active && (!UiInput.ClientInputState.MouseButtonLeft || InMenu) && Tick5;
-
-                            if (sMode == Weapon.ShootManager.ShootModes.AiShoot) {
-
-                                if (wValues.State.Control == ControlMode.Camera || wComp.ManualMode || cManual) {
-                                    if (turnOn || turnOff) {
+                            
+                            if (sMode == Weapon.ShootManager.ShootModes.AiShoot)
+                            {
+                                if (playerAim)
+                                {
+                                    if (turnOn || turnOff)
+                                    {
                                         wComp.ShootManager.RequestShootSync(PlayerId, turnOn ? Weapon.ShootManager.RequestType.On : Weapon.ShootManager.RequestType.Off, turnOn ? Weapon.ShootManager.Signals.Manual : Weapon.ShootManager.Signals.None);
                                     }
                                 }
-                                else if (wComp.ShootManager.Signal == Weapon.ShootManager.Signals.Manual && active) {
+                                else if (wComp.ShootManager.Signal == Weapon.ShootManager.Signals.Manual && active)
+                                {
                                     wComp.ShootManager.RequestShootSync(PlayerId, Weapon.ShootManager.RequestType.Off);
                                 }
                             }
-                            else if (sMode == Weapon.ShootManager.ShootModes.MouseControl && (turnOn || turnOff)) {
+                            else if (sMode == Weapon.ShootManager.ShootModes.MouseControl && (turnOn && playerAim || turnOff))
+                            {
                                 wComp.ShootManager.RequestShootSync(PlayerId, turnOn ? Weapon.ShootManager.RequestType.On : Weapon.ShootManager.RequestType.Off, Weapon.ShootManager.Signals.MouseControl);
                             }
                         }
@@ -605,7 +615,7 @@ namespace CoreSystems
 
                         w.LockOnFireState = shootRequest && (w.System.LockOnFocus && !w.Comp.ModOverride) && construct.Data.Repo.FocusData.HasFocus && focus.FocusInRange(w);
                         var shotReady = canShoot && (shootRequest && (!w.System.LockOnFocus || w.Comp.ModOverride) || w.LockOnFireState);
-                        var shoot = shotReady && ai.CanShoot && (!aConst.RequiresTarget || w.Target.HasTarget || finish || overRide || wComp.ShootManager.Signal == Weapon.ShootManager.Signals.Manual);
+                        var shoot = shotReady && ai.CanShoot && (!aConst.RequiresTarget || w.Target.HasTarget || finish || overRide || (wComp.ShootManager.Signal == Weapon.ShootManager.Signals.Manual || wComp.ShootManager.Signal == Weapon.ShootManager.Signals.MouseControl));
                         if (shoot) {
                             
                             if (w.System.DelayCeaseFire && (autoShot || w.FinishShots))
