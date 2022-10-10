@@ -280,7 +280,7 @@ namespace CoreSystems
                                 if (grid.RayCastBlocks(startPos, endPos) == null)
                                 {
                                     if (++painted.MissCount > 2)
-                                        painted.ClearMark(Tick);
+                                        painted.ClearMark(Tick, Ai.FakeTarget.MarkClearResons.NoStickyRayFailure);
                                 }
                             }
                         }

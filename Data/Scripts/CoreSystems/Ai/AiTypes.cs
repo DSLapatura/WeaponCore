@@ -1,7 +1,9 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using CoreSystems.Platform;
 using Sandbox.Game.Entities;
+using Sandbox.ModAPI;
 using Sandbox.ModAPI.Ingame;
 using VRage.Collections;
 using VRage.Game;
@@ -170,18 +172,19 @@ namespace CoreSystems.Support
             public readonly FakeType Type;
             public Vector3D LocalPosition;
             public long EntityId;
+            public MyEntity TmpEntity;
             public uint LastUpdateTick;
             public uint LastInfoTick;
             public int MissCount;
 
             internal void Update(Vector3D hitPos, uint tick, MyEntity ent = null, long entId = 0)
             {
-                if ((ent != null || entId != 0 && MyEntities.TryGetEntityById(entId, out ent)) && ent.Physics != null)
+                if ((ent != null && ent.Physics != null || entId != 0 && MyEntities.TryGetEntityById(entId, out ent)) && ent.Physics != null)
                 {
                     var referenceWorldMatrix = ent.PositionComp.WorldMatrixRef;
                     Vector3D referenceWorldPosition = referenceWorldMatrix.Translation;
                     Vector3D worldDirection = hitPos - referenceWorldPosition;
-
+                    TmpEntity = ent;
                     EntityId = ent.EntityId;
                     LocalPosition = Vector3D.TransformNormal(worldDirection, MatrixD.Transpose(referenceWorldMatrix));
                 }
@@ -190,6 +193,7 @@ namespace CoreSystems.Support
                     if (Type == FakeType.Manual)
                         FakeInfo.WorldPosition = hitPos;
 
+                    TmpEntity = null;
                     EntityId = 0;
                     LocalPosition = Vector3D.Zero;
                     FakeInfo.LinearVelocity = Vector3.Zero;
@@ -246,35 +250,41 @@ namespace CoreSystems.Support
 
             internal FakeWorldTargetInfo GetFakeTargetInfo(Ai ai)
             {
-                MyEntity ent;
-                if (EntityId != 0 && (MyEntities.TryGetEntityById(EntityId, out ent) && ent.Physics != null))
+                if (TmpEntity != null && EntityId == TmpEntity.EntityId && TmpEntity.Physics != null && !TmpEntity.MarkedForClose && !TmpEntity.Closed)
                 {
                     if (ai.Session.Tick != LastInfoTick)
                     {
                         LastInfoTick = ai.Session.Tick;
-                        if (Type != FakeType.Painted || ai.Targets.ContainsKey(ent))
+                        if (Type != FakeType.Painted || ai.Targets.ContainsKey(TmpEntity))
                         {
-                            FakeInfo.WorldPosition = Vector3D.Transform(LocalPosition, ent.PositionComp.WorldMatrixRef);
-                            FakeInfo.LinearVelocity = ent.Physics.LinearVelocity;
-                            FakeInfo.Acceleration = ent.Physics.LinearAcceleration;
+                            FakeInfo.WorldPosition = Vector3D.Transform(LocalPosition, TmpEntity.PositionComp.WorldMatrixRef);
+                            FakeInfo.LinearVelocity = TmpEntity.Physics.LinearVelocity;
+                            FakeInfo.Acceleration = TmpEntity.Physics.LinearAcceleration;
                         }
                         else if (Type == FakeType.Painted && EntityId != 0)
                         {
-                            ClearMark(ai.Session.Tick);
+                            ClearMark(ai.Session.Tick, MarkClearResons.PaintSwitchOrNoTargetInDb);
                         }
                     }
                 }
                 else if (Type == FakeType.Painted && EntityId != 0)
                 {
-                    ClearMark(ai.Session.Tick);
+                    ClearMark(ai.Session.Tick, MarkClearResons.NoTarget);
                 }
 
                 return FakeInfo;
             }
 
-            internal void ClearMark(uint tick)
+            internal enum MarkClearResons
             {
-                Log.Line($"clear mark");
+                PaintSwitchOrNoTargetInDb,
+                NoTarget,
+                NoStickyRayFailure,
+            }
+            internal void ClearMark(uint tick, MarkClearResons reason)
+            {
+                Log.Line($"ClearMark: {reason}");
+                TmpEntity = null;
                 EntityId = 0;
                 MissCount = 0;
                 LastInfoTick = 0;
