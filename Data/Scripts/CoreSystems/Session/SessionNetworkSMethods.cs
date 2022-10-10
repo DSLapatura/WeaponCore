@@ -184,7 +184,7 @@ namespace CoreSystems
                 wValues.State.TrackingReticle = reticlePacket.Data;
                 comp.ManualMode = wValues.State.TrackingReticle && wValues.Set.Overrides.Control == ProtoWeaponOverrides.ControlModes.Manual;
 
-                SendState(cComp);
+                SendComp(cComp);
             }
 
             data.Report.PacketValid = true;

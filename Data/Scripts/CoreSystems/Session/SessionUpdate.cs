@@ -17,6 +17,7 @@ using SpaceEngineers.Game.ModAPI;
 using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 using VRage.Input;
 using SpaceEngineers.Game.Weapons.Guns;
+using VRage.Game.Entity;
 
 namespace CoreSystems
 {
@@ -254,8 +255,27 @@ namespace CoreSystems
                         var az = (IMyMotorStator)cComp.Controller.AzimuthRotor;
                         var el = (IMyMotorStator)cComp.Controller.ElevationRotor;
 
+                        var cValues = cComp.Data.Repo.Values;
+
+                        if (MpActive && IsClient)
+                        {
+                            MyEntity rotorEnt;
+                            if (az == null && cValues.Other.Rotor1 > 0 && MyEntities.TryGetEntityById(cValues.Other.Rotor1, out rotorEnt))
+                                az = (IMyMotorStator)rotorEnt;
+
+                            if (el == null && cValues.Other.Rotor2 > 0 && MyEntities.TryGetEntityById(cValues.Other.Rotor2, out rotorEnt))
+                                el = (IMyMotorStator)rotorEnt;
+                        }
+                        
                         if (az == null || el == null)
                             continue;
+
+                        if (MpActive && IsServer && (az.EntityId != cValues.Other.Rotor1 || el.EntityId != cValues.Other.Rotor2))
+                        {
+                            cValues.Other.Rotor1 = az.EntityId;
+                            cValues.Other.Rotor2 = el.EntityId;
+                            SendComp(cComp);
+                        }
 
                         var controlPart = cComp.Platform.Control;
                         controlPart.IsAimed = false;
@@ -283,7 +303,6 @@ namespace CoreSystems
                         trackWeapon.MasterComp = cComp;
                         trackWeapon.RotorTurretTracking = true;
                         
-                        var cValues = controlPart.Comp.Data.Repo.Values;
                         var isUnderControl = cComp.Controller.IsUnderControl;
                         var cPlayerId = cValues.State.PlayerId;
                         Ai.PlayerController pControl;
@@ -293,11 +312,12 @@ namespace CoreSystems
 
                         var hasControl = activePlayer && pControl.ControlBlock == cComp.CoreEntity;
                         topAi.RotorManualControlId = hasControl ? PlayerId : topAi.RotorManualControlId != -2 ? -1 : -2;
+                        var cMode = cValues.Set.Overrides.Control;
+                        var sMode = cValues.Set.Overrides.ShootMode;
 
                         if (HandlesInput && (cPlayerId == PlayerId || !controlPart.Comp.HasAim && ai.RotorManualControlId == PlayerId))
                         {
                             var overrides = cValues.Set.Overrides;
-                            var cMode = cValues.Set.Overrides.Control;
 
                             var playerAim = activePlayer && cMode != ProtoWeaponOverrides.ControlModes.Auto || pControl.ControlBlock is IMyTurretControlBlock;
                             var track = !InMenu && (playerAim && !UiInput.CameraBlockView || pControl.ControlBlock is IMyTurretControlBlock || UiInput.CameraChannelId > 0 && UiInput.CameraChannelId == overrides.CameraChannel);
@@ -376,25 +396,21 @@ namespace CoreSystems
                     var overRide = wComp.OnCustomTurret ? ai.RootFixedWeaponComp.TrackingWeapon.MasterComp.Data.Repo.Values.Set.Overrides.Override : overrides.Override;
                     var projectiles = wComp.OnCustomTurret ? ai.RootFixedWeaponComp.TrackingWeapon.MasterComp.Data.Repo.Values.Set.Overrides.Projectiles : overrides.Projectiles;
 
+
+                    if (IsServer && wComp.OnCustomTurret)
+                    {
+                        var cValues = ai.RootFixedWeaponComp.TrackingWeapon.MasterComp.Data.Repo.Values;
+                        if (cValues.Set.Overrides.Control != overrides.Control)
+                            BlockUi.RequestControlMode(wComp.TerminalBlock, (long)cValues.Set.Overrides.Control);
+
+                        if (cValues.State.PlayerId != wValues.State.PlayerId)
+                            wComp.TakeOwnerShip(cValues.State.PlayerId);
+                    }
+
                     if (HandlesInput) {
 
                         if (IsClient && ai.GridMap.LastControllerTick == Tick && wComp.ShootManager.Signal == Weapon.ShootManager.Signals.Manual && (wComp.ShootManager.ClientToggleCount > wValues.State.ToggleCount || wValues.State.Trigger == On) && wValues.State.PlayerId > 0) 
                             wComp.ShootManager.RequestShootSync(PlayerId, Weapon.ShootManager.RequestType.Off);
-
-
-                        if (wComp.OnCustomTurret)
-                        {
-                            var cValues = ai.RootFixedWeaponComp.TrackingWeapon.MasterComp.Data.Repo.Values;
-                            var myPlayerId = cValues.State.PlayerId == PlayerId;
-                            if (myPlayerId)
-                            {
-                                if (cValues.Set.Overrides.Control != overrides.Control)
-                                    BlockUi.RequestControlMode(wComp.TerminalBlock, (long)cValues.Set.Overrides.Control);
-
-                                if (cValues.State.PlayerId != wValues.State.PlayerId)
-                                    wComp.TakeOwnerShip();
-                            }
-                        }
 
                         var isControllingPlayer = wValues.State.PlayerId == PlayerId || !wComp.HasAim && ai.RotorManualControlId == PlayerId;
 
@@ -585,7 +601,6 @@ namespace CoreSystems
                         /// Queue for target acquire or set to tracking weapon.
                         /// 
                         var seek = wComp.FakeMode && w.Target.TargetState != TargetStates.IsFake || (aConst.RequiresTarget || w.RotorTurretTracking) & !w.Target.HasTarget && !noAmmo && (wComp.DetectOtherSignals && ai.DetectionInfo.OtherInRange || ai.DetectionInfo.PriorityInRange) && (!wComp.UserControlled && !enforcement.DisableAi || wValues.State.Trigger == On);
-                        
                         if (!IsClient && (seek || (aConst.RequiresTarget || w.RotorTurretTracking) && (rootConstruct.TargetResetTick == Tick || w.ProjectilesNear) && !wComp.UserControlled && !enforcement.DisableAi) && !w.AcquiringTarget && wValues.State.Control != ControlMode.Camera)
                         {
                             w.AcquiringTarget = true;

@@ -639,7 +639,7 @@ namespace CoreSystems.Platform
                 }
             }
 
-            internal bool TakeOwnerShip()
+            internal bool TakeOwnerShip(long playerId = long.MaxValue)
             {
 
                 if (LastOwnerRequestTick > 0 && Session.Tick - LastOwnerRequestTick < 120)
@@ -654,7 +654,7 @@ namespace CoreSystems.Platform
                 
                 // Pretty sus that this is allowed by client, will be reset by the results of SendPlayerControlRequest tho... 
                 // possible race condition... but may needed due to player taking client control of weapon
-                Data.Repo.Values.State.PlayerId = Session.PlayerId; 
+                Data.Repo.Values.State.PlayerId = playerId != long.MaxValue ? playerId : Session.PlayerId; 
                                                                     
 
                 if (Session.MpActive)

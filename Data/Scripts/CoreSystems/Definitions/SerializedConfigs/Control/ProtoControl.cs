@@ -119,7 +119,7 @@ namespace CoreSystems
             }
 
             if (syncWeapons)
-                comp.Session.SendState(comp);
+                comp.Session.SendComp(comp);
         }
     }
 
@@ -144,7 +144,7 @@ namespace CoreSystems
 
             Action = action;
             if (comp.Session.MpActive && comp.Session.IsServer && syncCompState)
-                comp.Session.SendState(comp);
+                comp.Session.SendComp(comp);
         }
 
     }
@@ -152,11 +152,16 @@ namespace CoreSystems
     [ProtoContract]
     public class ProtoControlOtherSettings
     {
-        [ProtoMember(1)] public float GravityOffset; 
+        [ProtoMember(1)] public float GravityOffset;
+        [ProtoMember(2)] public long Rotor1;
+        [ProtoMember(3)] public long Rotor2;
+
 
         public void Sync(CoreComponent comp, ProtoControlOtherSettings sync)
         {
             GravityOffset = sync.GravityOffset;
+            Rotor1 = sync.Rotor1;
+            Rotor2 = sync.Rotor2;
         }
     }
 

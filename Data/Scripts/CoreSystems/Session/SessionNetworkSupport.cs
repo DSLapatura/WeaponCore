@@ -370,7 +370,7 @@ namespace CoreSystems
             else Log.Line("SendComp should never be called on Client");
         }
 
-        internal void SendComp(ControlSys.ControlComponent comp)
+        internal void SendComp(ControlComponent comp)
         {
             if (IsServer)
             {

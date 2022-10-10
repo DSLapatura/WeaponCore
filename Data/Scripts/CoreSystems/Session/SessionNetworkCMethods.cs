@@ -233,7 +233,7 @@ namespace CoreSystems
             
             comp.Data.Repo.Values.State.Terminal = boolPacket.Data ? CoreComponent.Trigger.On : CoreComponent.Trigger.Off; 
             Log.Line($"ClientControlOnOff: {boolPacket.Data}");
-            SendState(comp);
+            SendComp(comp);
 
             data.Report.PacketValid = true;
 
