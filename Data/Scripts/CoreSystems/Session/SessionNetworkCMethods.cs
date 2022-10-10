@@ -1,6 +1,7 @@
 ﻿using CoreSystems.Platform;
 using CoreSystems.Support;
 using Sandbox.Game.Entities;
+using VRage.Game.Entity;
 using static CoreSystems.Support.Ai;
 namespace CoreSystems
 {
@@ -346,7 +347,8 @@ namespace CoreSystems
             var myGrid = MyEntities.GetEntityByIdOrDefault(packet.EntityId) as MyCubeGrid;
 
             Ai ai;
-            if (myGrid != null && EntityAIs.TryGetValue(myGrid, out ai))
+            MyEntity pTarget;
+            if (myGrid != null && EntityAIs.TryGetValue(myGrid, out ai) && MyEntities.TryGetEntityById(targetPacket.TargetId, out pTarget, true))
             {
 
                 long playerId;

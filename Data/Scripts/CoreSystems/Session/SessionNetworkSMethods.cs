@@ -111,8 +111,9 @@ namespace CoreSystems
 
             Ai.FakeTargets fakeTargets;
             Ai ai;
+            MyEntity pTarget;
             long playerId;
-            if (EntityAIs.TryGetValue(myGrid, out ai) && SteamToPlayer.TryGetValue(packet.SenderId, out playerId) && PlayerDummyTargets.TryGetValue(playerId, out fakeTargets))
+            if (EntityAIs.TryGetValue(myGrid, out ai) && SteamToPlayer.TryGetValue(packet.SenderId, out playerId) && MyEntities.TryGetEntityById(targetPacket.TargetId, out pTarget, true) && PlayerDummyTargets.TryGetValue(playerId, out fakeTargets))
             {
                 fakeTargets.PaintedTarget.Sync(targetPacket, ai);
                 PacketsToClient.Add(new PacketInfo { Entity = myGrid, Packet = targetPacket });

@@ -231,7 +231,6 @@ namespace CoreSystems.Support
             {
                 if (packet.TargetId == 0)
                 {
-
                     EntityId = 0;
                     LocalPosition = Vector3D.Zero;
                     FakeInfo.WorldPosition = packet.Pos;
@@ -241,6 +240,7 @@ namespace CoreSystems.Support
                 else
                 {
                     EntityId = packet.TargetId;
+                    MyEntities.TryGetEntityById(EntityId, out TmpEntity, true);
                     LocalPosition = packet.Pos;
                 }
                 LastInfoTick = 0;
