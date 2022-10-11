@@ -11,6 +11,18 @@ namespace CoreSystems.Control
     public static partial class CustomActions
     {
         #region Call Actions
+        
+        internal static void TerminalActionToggleShareFireControlControl(IMyTerminalBlock blk)
+        {
+            var comp = blk?.Components?.Get<CoreComponent>() as ControlSys.ControlComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+                return;
+
+            var newBool = !comp.Data.Repo.Values.Set.Overrides.ShareFireControl;
+            var newValue = newBool ? 1 : 0;
+
+            ControlSys.ControlComponent.RequestSetValue(comp, "ShareFireControl", newValue, comp.Session.PlayerId);
+        }
 
         internal static void TerminalActionToggleAiEnabledControl(IMyTerminalBlock blk)
         {
@@ -278,6 +290,16 @@ namespace CoreSystems.Control
         #endregion
 
         #region Writters
+
+        internal static void ShareFireControlWriterControl(IMyTerminalBlock blk, StringBuilder sb)
+        {
+            var comp = blk.Components.Get<CoreComponent>() as ControlSys.ControlComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
+            if (comp.Data.Repo.Values.Set.Overrides.ShareFireControl)
+                sb.Append(Localization.GetText("ActionStateOn"));
+            else
+                sb.Append(Localization.GetText("ActionStateOff"));
+        }
 
         internal static void AiEnabledWriterControl(IMyTerminalBlock blk, StringBuilder sb)
         {

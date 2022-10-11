@@ -17,6 +17,7 @@ namespace CoreSystems.Control
     {
         internal static void AddUiControls<T>(Session session) where T : IMyTerminalBlock
         {
+
             //AddComboboxNoAction<T>(session, "Shoot Mode", Localization.GetText("TerminalShootModeTitle"), Localization.GetText("TerminalShootModeTooltip"), BlockUi.GetShootModes, BlockUi.RequestShootModes, BlockUi.ListShootModesNoBurst, Istrue);
             AddComboboxNoAction<T>(session, "Shoot Mode", Localization.GetText("TerminalShootModeTitle"), Localization.GetText("TerminalShootModeTooltip"), BlockUi.GetShootModes, BlockUi.RequestShootModes, BlockUi.ListShootModes, IsNotBomb);
 
@@ -95,6 +96,8 @@ namespace CoreSystems.Control
 
         internal static void AddTurretControlBlockControls<T>(Session session) where T : IMyTerminalBlock
         {
+            CtcAddOnOffSwitchNoAction<T>(session, "ShareFireControlEnabled", Localization.GetText("TerminalShareFireControlTitle"), Localization.GetText("TerminalShareFireControlTooltip"), BlockUi.GetShareFireControlControl, BlockUi.RequestShareFireControlControl, true, CtcIsReady);
+
             CtcAddOnOffSwitchNoAction<T>(session, "WCAiEnabled", Localization.GetText("TerminalAiEnabledTitle"), Localization.GetText("TerminalAiEnabledTooltip"), BlockUi.GetAiEnabledControl, BlockUi.RequestSetAiEnabledControl, true, CtcIsReady);
 
             Separator<T>(session, "WC_sep2", IsTrue);
@@ -159,6 +162,8 @@ namespace CoreSystems.Control
             AddOnOffSwitchNoAction<T>(session,  "Debug", Localization.GetText("TerminalDebugTitle"), Localization.GetText("TerminalDebugTooltip"), BlockUi.GetDebug, BlockUi.RequestDebug, true, GuidedAmmoNoTurret);
 
             Separator<T>(session, "WC_sep4", IsTrue);
+            AddOnOffSwitchNoAction<T>(session, "ShareFireControlEnabled", Localization.GetText("TerminalShareFireControlTitle"), Localization.GetText("TerminalShareFireControlTooltip"), BlockUi.GetShareFireControl, BlockUi.RequestShareFireControl, true, HasTracking);
+
             AddOnOffSwitchNoAction<T>(session,  "Shoot", Localization.GetText("TerminalShootTitle"), Localization.GetText("TerminalShootTooltip"), BlockUi.GetShoot, BlockUi.RequestSetShoot, true, IsNotBomb);
             AddOnOffSwitchNoAction<T>(session, "Override", Localization.GetText("TerminalOverrideTitle"), Localization.GetText("TerminalOverrideTooltip"), BlockUi.GetOverride, BlockUi.RequestOverride, true, OverrideTarget);
         }

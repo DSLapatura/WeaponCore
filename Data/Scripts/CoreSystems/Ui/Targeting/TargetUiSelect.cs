@@ -15,8 +15,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
     {
         internal void ActivateSelector()
         {
-            if (!_session.TrackingAi.IsGrid || _session.UiInput.FirstPersonView && !_session.UiInput.AltPressed) return;
-            if (MyAPIGateway.Input.IsNewKeyReleased(MyKeys.Control) && !_session.UiInput.FirstPersonView && !_session.UiInput.CameraBlockView)
+            if (!_session.TrackingAi.IsGrid || _session.UiInput.FirstPersonView && !_session.UiInput.TurretBlockView && !_session.UiInput.AltPressed) return;
+            if (MyAPIGateway.Input.IsNewKeyReleased(MyKeys.Control) && !_session.UiInput.FirstPersonView && !_session.UiInput.CameraBlockView && !_session.UiInput.TurretBlockView)
             {
                 switch (_3RdPersonDraw)
                 {
@@ -31,9 +31,12 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                         break;
                 }
             }
+            
+            if (_session.UiInput.TurretBlockView || _session.UiInput.CameraBlockView)
+                _3RdPersonDraw = ThirdPersonModes.DotTarget;
 
             var enableActivator = _3RdPersonDraw == ThirdPersonModes.Crosshair || _session.UiInput.FirstPersonView && _session.UiInput.AltPressed || _session.UiInput.CameraBlockView;
-            if (enableActivator || !_session.UiInput.FirstPersonView && !_session.UiInput.CameraBlockView)
+            if (enableActivator || !_session.UiInput.FirstPersonView && !_session.UiInput.CameraBlockView || _session.UiInput.TurretBlockView)
                 DrawSelector(enableActivator);
         }
 
@@ -50,7 +53,6 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             if (!_cachedTargetPos) InitTargetOffset();
             var cockPit = s.ActiveCockPit;
             Vector3D end;
-
             if (s.UiInput.CameraBlockView)
             {
                 var offetPosition = Vector3D.Transform(PointerOffset, s.CameraMatrix);
@@ -67,7 +69,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             }
             else
             {
-                if (!s.UiInput.AltPressed && ai.IsGrid)
+                if (!s.UiInput.AltPressed && !s.UiInput.TurretBlockView && ai.IsGrid)
                 {
                     AimDirection = cockPit.PositionComp.WorldMatrixRef.Forward;
                     AimPosition = cockPit.PositionComp.WorldAABB.Center;

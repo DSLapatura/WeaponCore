@@ -613,6 +613,7 @@ namespace CoreSystems.Support
             internal long Id;
             internal long EntityId;
             internal uint ChangeTick;
+            internal bool ShareControl;
             internal MyCubeBlock ControlBlock;
         }
 

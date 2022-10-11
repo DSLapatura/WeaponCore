@@ -48,7 +48,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                 _pointerPosition.Y = 0f;
                 InitPointerOffset(0.05);
             }
-            else if (s.UiInput.FirstPersonView)
+            else if (s.UiInput.FirstPersonView || s.UiInput.TurretBlockView)
             {
                 if (!MyUtils.IsZero(_pointerPosition.Y))
                 {
@@ -104,11 +104,15 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                 }
 
                 if (_3RdPersonDraw == ThirdPersonModes.DotTarget)
-                    MyTransparentGeometry.AddBillboardOriented(_whiteDot, _reticleColor, offetPosition, s.CameraMatrix.Left, s.CameraMatrix.Up, (float)PointerAdjScale * 0.35f, BlendTypeEnum.PostPP);
+                {
+                    var scaler = s.UiInput.TurretBlockView ? 0.5f : 0.35f;
+                    MyTransparentGeometry.AddBillboardOriented(_whiteDot, _reticleColor, offetPosition, s.CameraMatrix.Left, s.CameraMatrix.Up, (float)PointerAdjScale * scaler, BlendTypeEnum.PostPP);
+                }
             }
             else if (!enableActivator && _3RdPersonDraw != ThirdPersonModes.None)
             {
-                MyTransparentGeometry.AddBillboardOriented(_whiteDot, _reticleColor, offetPosition, s.CameraMatrix.Left, s.CameraMatrix.Up, (float)PointerAdjScale * 0.35f, BlendTypeEnum.PostPP);
+                var scaler = s.UiInput.TurretBlockView ? 0.5f : 0.35f;
+                MyTransparentGeometry.AddBillboardOriented(_whiteDot, _reticleColor, offetPosition, s.CameraMatrix.Left, s.CameraMatrix.Up, (float)PointerAdjScale * scaler, BlendTypeEnum.PostPP);
             }
 
             DrawReticle = true;

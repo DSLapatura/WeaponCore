@@ -13,6 +13,7 @@ using VRageMath;
 using static CoreSystems.Support.WeaponDefinition.HardPointDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef;
 using CollisionLayers = Sandbox.Engine.Physics.MyPhysics.CollisionLayers;
+using System.Runtime.CompilerServices;
 
 namespace CoreSystems.Platform
 {
@@ -586,7 +587,9 @@ namespace CoreSystems.Platform
                 ai.VelocityUpdateTick = session.Tick;
             }
 
-            if (ammoDef.Const.FeelsGravity && ai.InPlanetGravity && session.Tick - weapon.GravityTick > 119)
+            var updateGravity = ammoDef.Const.FeelsGravity && ai.InPlanetGravity;
+
+            if (updateGravity && session.Tick - weapon.GravityTick > 119)
             {
                 weapon.GravityTick = session.Tick;
                 float interference;
@@ -594,6 +597,8 @@ namespace CoreSystems.Platform
                 weapon.GravityUnitDir = weapon.GravityPoint;
                 weapon.GravityLength = weapon.GravityUnitDir.Normalize();
             }
+            else if (!updateGravity)
+                weapon.GravityPoint = Vector3D.Zero;
 
             var gravityMultiplier = ammoDef.Const.FeelsGravity && !MyUtils.IsZero(weapon.GravityPoint) ? ammoDef.Const.GravityMultiplier : 0f;
             bool hasGravity = gravityMultiplier > 1e-6 && !MyUtils.IsZero(weapon.GravityPoint);
@@ -793,12 +798,18 @@ namespace CoreSystems.Platform
                 var targetDirection = targetAimPoint - shooterPos;
 
                 bool isTracking;
-                if (!MathFuncs.WeaponLookAt(weapon, ref targetDirection, deltaLength * deltaLength, false, true, out isTracking)) //Angle 2 obscured, switch to angle 1
+                if (!weapon.RotorTurretTracking && !MathFuncs.WeaponLookAt(weapon, ref targetDirection, deltaLength * deltaLength, false, true, out isTracking)) //Angle 2 obscured, switch to angle 1
+                {
+                    verticalDistance = Math.Tan(angle1) * horizontalDistance;
+                    gravityOffset = new Vector3D((verticalDistance + Math.Abs(elevationDifference)) * -weapon.GravityUnitDir);
+                }
+                else if (weapon.RotorTurretTracking && !MathFuncs.RotorTurretLookAt(weapon.MasterComp.Platform.Control, ref targetDirection, deltaLength * deltaLength))
                 {
                     verticalDistance = Math.Tan(angle1) * horizontalDistance;
                     gravityOffset = new Vector3D((verticalDistance + Math.Abs(elevationDifference)) * -weapon.GravityUnitDir);
                 }
             }
+
             return estimatedImpactPoint + perpendicularAimOffset + gravityOffset;
         }
 

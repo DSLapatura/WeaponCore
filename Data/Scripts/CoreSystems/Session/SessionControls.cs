@@ -170,6 +170,7 @@ namespace CoreSystems
 
         internal static void CreateTurretControllerActions<T>(Session session) where T : IMyTerminalBlock
         {
+            CreateCustomActions<T>.CreateShareFireControlControl(session);
             CreateCustomActions<T>.CreateAiEnabledControl(session);
             CreateCustomActions<T>.CreateNeutralsControl(session);
             CreateCustomActions<T>.CreateFriendlyControl(session);

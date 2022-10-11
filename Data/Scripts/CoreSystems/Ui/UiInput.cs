@@ -49,6 +49,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
         internal bool PlayerCamera;
         internal bool FirstPersonView;
         internal bool CameraBlockView;
+        internal bool TurretBlockView;
         internal long CameraChannelId;
         internal bool Debug = true;
         internal bool MouseShootWasOn;
@@ -149,8 +150,9 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
                 UiKeyWasPressed = UiKeyPressed;
                 UiKeyPressed = CtrlPressed || AltPressed || ShiftPressed;
                 PlayerCamera = MyAPIGateway.Session.IsCameraControlledObject;
-                FirstPersonView = PlayerCamera && MyAPIGateway.Session.CameraController.IsInFirstPersonView;
-
+                var cameraController = MyAPIGateway.Session.CameraController;
+                FirstPersonView = PlayerCamera && cameraController.IsInFirstPersonView;
+                TurretBlockView = cameraController is IMyLargeTurretBase;
                 CameraBlockView = !PlayerCamera && !FirstPersonView && s.ActiveCameraBlock != null && s.ActiveCameraBlock.IsActive && s.ActiveCameraBlock.IsWorking;
                 if (CameraBlockView && s.ActiveCameraBlock != null)
                     CameraChannelId = s.CameraChannelMappings[s.ActiveCameraBlock];

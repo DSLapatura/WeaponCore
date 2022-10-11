@@ -302,7 +302,6 @@ namespace CoreSystems
             var canDamage = t.DoDamage;
 
             _destroyedSlims.Clear();
-            //_destroyedSlimsClient.Clear();
 
             var directDmgGlobal = Settings.Enforcement.DirectDamageModifer * hitEnt.DamageMulti;
             var areaDmgGlobal = Settings.Enforcement.AreaDamageModifer * hitEnt.DamageMulti;
@@ -345,7 +344,6 @@ namespace CoreSystems
             var blockCount = hitEnt.Blocks.Count;
             var countBlocksAsObjects = t.AmmoDef.ObjectsHit.CountBlocks;
 
-            //Log.Line($"Hit direction from-{grid.WorldToGridScaledLocal(direction.From)}  to-{direction.To}");
 
             //General damage data
 
@@ -369,7 +367,6 @@ namespace CoreSystems
             {
                 if (earlyExit || (basePool <= 0.5d || objectsHit >= maxObjects) && !detRequested)
                 {
-                    //Log.Line($"Early exit:{earlyExit} - basePool:{basePool} - objhit:{objectsHit} - maxObj:{maxObjects} - detRequested:{detRequested}");
                     basePool = 0;
                     break;
                 }
@@ -441,7 +438,6 @@ namespace CoreSystems
                 {
                     detRequested = false;
                     RadiantAoe(ref rootInfo, grid, aoeRadius, aoeDepth, direction, ref maxAoeDistance, out foundAoeBlocks, aoeShape, showHits, out aoeHits);
-                    //Log.Line($"got blocks to distance: {maxAoeDistance} - wasDetonating:{detRequested} - aoeDamage:{aoeDamage}");
                 }
 
                 var blockStages = maxAoeDistance + 1;
@@ -449,11 +445,9 @@ namespace CoreSystems
                 for (int j = 0; j < blockStages; j++)//Loop through blocks "hit" by damage, in groups by range.  J essentially = dist to root
                 {
                     var dbc = DamageBlockCache[j];
-                    //Log.Line($"dist {j}  has {dbc.Count} blocks");
                     if (earlyExit || detActive && detRequested)
                         break;
 
-                    //Log.Line($"i:{i} - j:{j} - currentRadius:{detRequested} - detActive:{detActive} - distance:{maxAoeDistance} - foundBlocks:{foundAoeBlocks} -- (tally:{aoeDmgTally} >= {aoeAbsorb} OR aoeDmt:{aoeDamage} <= 0)");
 
                     var aoeDamageFall = 0d;
                     if (hasAoe || hasDet && detActive)
@@ -610,7 +604,6 @@ namespace CoreSystems
                             t.BaseDamagePool = basePool;
                             detRequested = hasDet;
                             objectsHit++;
-                            //Log.Line($"basePool exhausted: detRequested:{detRequested} - i:{i} - j:{j} - k:{k}");
                         }
                         else if (primaryDamage)
                         {
@@ -686,7 +679,6 @@ namespace CoreSystems
                         //Apply damage
                         if (canDamage)
                         {
-                            //Log.Line($"damage: i:{i} - j:{j} - k:{k} - damage:{scaledDamage} of blockHp:{blockHp} - primary:{primaryDamage} - isRoot:{rootBlock == block} - aoeDepth:{aoeDepth} - detActive:{detActive} - foundBlocks:{foundAoeBlocks}");
                             try
                             {
                                 uint lastDeformTick;

@@ -536,6 +536,9 @@ namespace CoreSystems.Platform
                     case "Debug":
                         o.Debug = enabled;
                         break;
+                    case "ShareFireControl":
+                        o.ShareFireControl = enabled;
+                        break;
                     case "Override":
                         o.Override = enabled;
                         break;

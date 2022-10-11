@@ -405,11 +405,30 @@ namespace CoreSystems
             Weapon.WeaponComponent.RequestSetValue(comp, "Grids", value, comp.Session.PlayerId);
         }
 
+        internal static bool GetShareFireControl(IMyTerminalBlock block)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+            {
+                return false;
+            }
+            return comp.Data.Repo.Values.Set.Overrides.ShareFireControl;
+        }
+
         internal static bool GetShoot(IMyTerminalBlock block)
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return false;
             return comp.Data.Repo.Values.State.Trigger == CoreComponent.Trigger.On;
+        }
+
+        internal static void RequestShareFireControl(IMyTerminalBlock block, bool newValue)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
+
+            var value = newValue ? 1 : 0;
+            Weapon.WeaponComponent.RequestSetValue(comp, "ShareFireControl", value, comp.Session.PlayerId);
         }
 
         internal static void RequestSetShoot(IMyTerminalBlock block, bool newValue)

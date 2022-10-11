@@ -15,12 +15,14 @@ namespace CoreSystems
     {
         [ProtoMember(1)] public ProtoControlComp Values;
 
-        public void ResetToFreshLoadState()
+        public void ResetToFreshLoadState(ControlSys.ControlComponent comp)
         {
             Values.State.TrackingReticle = false;
             var ws = Values.State.Control;
             ws.Heat = 0;
             ws.Overheated = false;
+            Values.Other.Rotor1 = comp.Controller.AzimuthRotor?.EntityId ?? 0;
+            Values.Other.Rotor2 = comp.Controller.ElevationRotor?.EntityId ?? 0;
             ResetCompBaseRevisions();
         }
 

@@ -178,6 +178,9 @@ namespace CoreSystems.Platform
                         o.Neutrals = enabled;
                         clearTargets = true;
                         break;
+                    case "ShareFireControl":
+                        o.ShareFireControl = enabled;
+                        break;
                     case "AiEnabled":
                         o.AiEnabled = enabled;
                         break;

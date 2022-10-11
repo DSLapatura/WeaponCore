@@ -270,11 +270,22 @@ namespace CoreSystems
                         if (az == null || el == null)
                             continue;
 
-                        if (MpActive && IsServer && (az.EntityId != cValues.Other.Rotor1 || el.EntityId != cValues.Other.Rotor2))
+                        if (MpActive && IsServer)
                         {
-                            cValues.Other.Rotor1 = az.EntityId;
-                            cValues.Other.Rotor2 = el.EntityId;
-                            SendComp(cComp);
+                            if (az.EntityId != cValues.Other.Rotor1 || el.EntityId != cValues.Other.Rotor2)
+                            {
+                                cValues.Other.Rotor1 = az.EntityId;
+                                cComp.Controller.AzimuthRotor = az;
+                                cValues.Other.Rotor2 = el.EntityId;
+                                cComp.Controller.ElevationRotor = el;
+                                SendComp(cComp);
+                            }
+                            else if (Tick3600)
+                            {
+                                cComp.Controller.AzimuthRotor = az;
+                                cComp.Controller.ElevationRotor = el;
+                            }
+
                         }
 
                         var controlPart = cComp.Platform.Control;
@@ -351,9 +362,15 @@ namespace CoreSystems
                         }
 
                         if (noTarget) {
-                            topAi.RotorTargetPosition = Vector3D.MaxValue;;
+                            
+                            topAi.RotorTargetPosition = Vector3D.MaxValue;
+
+                            if (IsServer && trackWeapon.Target.HasTarget)
+                                trackWeapon.Target.Reset(Tick, States.ServerReset);
+
                             if (cComp.RotorsMoving)
                                 cComp.StopRotors();
+
                             continue;
                         }
 
@@ -426,7 +443,7 @@ namespace CoreSystems
                             var manualThisWeapon = pControl.ControlBlock == wComp.Cube && wComp.HasAim;
                             var controllingWeapon = customWeapon || manualThisWeapon;
                             var validManualModes = (sMode == Weapon.ShootManager.ShootModes.MouseControl || cMode == ProtoWeaponOverrides.ControlModes.Manual);
-                            var manual = (controllingWeapon || validManualModes && (wComp.HasAim || !IdToCompMap.ContainsKey(pControl.EntityId)));
+                            var manual = (controllingWeapon || pControl.ShareControl && validManualModes && ((wComp.HasAim || wComp.OnCustomTurret) || !IdToCompMap.ContainsKey(pControl.EntityId)));
                             var playerAim = activePlayer && manual;
                             var track = !InMenu && (playerAim && (!UiInput.CameraBlockView || cManual || manualThisWeapon) || UiInput.CameraChannelId > 0 && UiInput.CameraChannelId == overrides.CameraChannel);
 

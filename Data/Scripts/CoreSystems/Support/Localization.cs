@@ -91,6 +91,8 @@ namespace CoreSystems.Support
                         { "TerminalAiEnabledTitle", "Enable AI" },
                         { "TerminalAiEnabledTooltip", "Automatically aim and fire at targets" },
 
+                        { "TerminalShareFireControlTitle", "Share Control" },
+                        { "TerminalShareFireControlTooltip", "Share aim/fire control with other weapons" },
 
                         { "TerminalTargetGroupTitle", "Target Lead Group" },
                         { "TerminalTargetGroupTooltip", "Assign this weapon to target lead group" },
@@ -137,6 +139,7 @@ namespace CoreSystems.Support
                         { "ActionWC_Decrease_LeadGroup", "Previous Lead Group" },
 
                         { "ActionWCAiEnabled", "Enable AI On/Off" },
+                        { "ActionShareFireControl", "Share Control On/Off" },
 
                         { "ActionMask", "Select Mask Type" },
                         { "SystemStatusFault", "[Fault]" },

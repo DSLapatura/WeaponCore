@@ -656,6 +656,21 @@ namespace CoreSystems.Control
 
         // Control Block Actions
 
+        
+        public static void CreateShareFireControlControl(Session session)
+        {
+            var action = MyAPIGateway.TerminalControls.CreateAction<T>("WCShareFireControl");
+            action.Icon = @"Textures\GUI\Icons\Actions\Toggle.dds";
+            action.Name = new StringBuilder(Localization.GetText("ActionShareFireControl"));
+            action.Action = CustomActions.TerminalActionToggleShareFireControlControl;
+            action.Writer = CustomActions.ShareFireControlWriterControl;
+            action.Enabled = TerminalHelpers.CtcIsReady;
+            action.ValidForGroups = true;
+
+            MyAPIGateway.TerminalControls.AddAction<T>(action);
+            session.CustomActions.Add(action);
+        }
+
         public static void CreateAiEnabledControl(Session session)
         {
             var action = MyAPIGateway.TerminalControls.CreateAction<T>("WCAiEnabled");

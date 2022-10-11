@@ -607,12 +607,11 @@ namespace CoreSystems
                             var playerId = enterController.ControllerInfo.ControllingIdentityId;
 
                             gridMap.LastControllerTick = Tick + 1;
-                            var pController = new PlayerController { ControlBlock = cube, Id = playerId, EntityId = cube.EntityId, ChangeTick = Tick };
-                            gridMap.PlayerControllers[playerId] = pController;
 
                             if (gridMap.GroupMap != null)
                                 gridMap.GroupMap.LastControllerTick = Tick + 1;
 
+                            var shareControl = true;
                             Ai ai;
                             if (EntityAIs.TryGetValue(cube.CubeGrid, out ai))
                             {
@@ -622,11 +621,20 @@ namespace CoreSystems
                                     var wComp = comp as Weapon.WeaponComponent;
                                     var cComp = comp as ControlSys.ControlComponent;
                                     if (wComp != null)
+                                    {
+                                        shareControl = wComp.Data.Repo.Values.Set.Overrides.ShareFireControl;
                                         wComp.TookControl(playerId);
+                                    }
                                     else if (cComp != null)
+                                    {
+                                        shareControl = cComp.Data.Repo.Values.Set.Overrides.ShareFireControl;
                                         cComp.TookControl(playerId);
+                                    }
                                 }
                             }
+
+                            var pController = new PlayerController { ControlBlock = cube, Id = playerId, EntityId = cube.EntityId, ChangeTick = Tick, ShareControl = shareControl, };
+                            gridMap.PlayerControllers[playerId] = pController;
                         }
                     }
                 }

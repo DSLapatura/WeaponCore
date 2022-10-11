@@ -541,7 +541,7 @@ namespace CoreSystems
         [ProtoMember(12), DefaultValue(16384)] public int MaxSize = 16384;
         [ProtoMember(13), DefaultValue(MoveModes.Any)] public MoveModes MoveMode = MoveModes.Any;
         [ProtoMember(14), DefaultValue(true)] public bool Grids = true;
-        //[ProtoMember(15), DefaultValue(true)] public bool ArmorShowArea;
+        [ProtoMember(15)] public bool ShareFireControl;
         [ProtoMember(16)] public bool Repel;
         //[ProtoMember(17)] public long CameraChannel;
         [ProtoMember(18)] public bool Debug;

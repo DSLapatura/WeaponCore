@@ -79,7 +79,7 @@ namespace CoreSystems.Platform
                         Load();
                         break;
                     case DataState.Reset:
-                        Repo.ResetToFreshLoadState();
+                        Repo.ResetToFreshLoadState(Comp);
                         break;
                 }
             }
