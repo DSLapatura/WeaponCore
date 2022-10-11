@@ -280,7 +280,7 @@ namespace CoreSystems
                                 cComp.Controller.ElevationRotor = el;
                                 SendComp(cComp);
                             }
-                            else if (Tick3600)
+                            else if (Tick1800)
                             {
                                 cComp.Controller.AzimuthRotor = az;
                                 cComp.Controller.ElevationRotor = el;
@@ -324,8 +324,6 @@ namespace CoreSystems
                         var hasControl = activePlayer && pControl.ControlBlock == cComp.CoreEntity;
                         topAi.RotorManualControlId = hasControl ? PlayerId : topAi.RotorManualControlId != -2 ? -1 : -2;
                         var cMode = cValues.Set.Overrides.Control;
-                        var sMode = cValues.Set.Overrides.ShootMode;
-
                         if (HandlesInput && (cPlayerId == PlayerId || !controlPart.Comp.HasAim && ai.RotorManualControlId == PlayerId))
                         {
                             var overrides = cValues.Set.Overrides;
@@ -446,7 +444,6 @@ namespace CoreSystems
                             var manual = (controllingWeapon || pControl.ShareControl && validManualModes && ((wComp.HasAim || wComp.OnCustomTurret) || !IdToCompMap.ContainsKey(pControl.EntityId)));
                             var playerAim = activePlayer && manual;
                             var track = !InMenu && (playerAim && (!UiInput.CameraBlockView || cManual || manualThisWeapon) || UiInput.CameraChannelId > 0 && UiInput.CameraChannelId == overrides.CameraChannel);
-
                             if (!activePlayer && wComp.ShootManager.Signal == Weapon.ShootManager.Signals.MouseControl)
                                 wComp.ShootManager.RequestShootSync(PlayerId, Weapon.ShootManager.RequestType.Off);
                             

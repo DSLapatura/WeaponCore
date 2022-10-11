@@ -111,7 +111,6 @@ namespace CoreSystems.Platform
 
             internal static void RequestSetValue(ControlComponent comp, string setting, int value, long playerId)
             {
-                comp.Ai.PointDefense = true;
                 if (comp.Session.IsServer)
                 {
                     SetValue(comp, setting, value, playerId);
@@ -263,7 +262,7 @@ namespace CoreSystems.Platform
                     if (Data.Repo != null)
                     {
 
-                        Data.Repo.Values.State.PlayerId = -1;
+                        //Data.Repo.Values.State.PlayerId = -1;
                         Data.Repo.Values.State.Mode = ProtoControlState.ControlMode.Camera;
 
                         if (Session.MpActive)

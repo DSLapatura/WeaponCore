@@ -592,6 +592,7 @@ namespace CoreSystems
             ShootMode = syncFrom.ShootMode;
             WeaponGroupId = syncFrom.WeaponGroupId;
             AiEnabled = syncFrom.AiEnabled;
+            ShareFireControl = syncFrom.ShareFireControl;
             LargeGrid = syncFrom.LargeGrid;
             SmallGrid = syncFrom.SmallGrid;
 
