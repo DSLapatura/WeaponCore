@@ -80,7 +80,7 @@ namespace CoreSystems.Support
 
 
                         { "TerminalSequenceIdTitle", "Weapon Sequence id" },
-                        { "TerminalSequenceIdTooltip", "Assign this weapon a sequence id per block group, used for sequence firing" },
+                        { "TerminalSequenceIdTooltip", "Assign this weapon a unique sequence id per weapon group, used for sequence firing" },
 
                         { "TerminalWeaponGroupIdTitle", "Weapon Group id" },
                         { "TerminalWeaponGroupIdTooltip", "Assign this weapon to a sequence group, used for sequence firing" },
@@ -92,7 +92,7 @@ namespace CoreSystems.Support
                         { "TerminalAiEnabledTooltip", "Automatically aim and fire at targets" },
 
                         { "TerminalShareFireControlTitle", "Share Control" },
-                        { "TerminalShareFireControlTooltip", "Share aim/fire control with other weapons" },
+                        { "TerminalShareFireControlTooltip", "Weapons with manual/painter/mousecontrol enabled will respond when using the Control button above" },
 
                         { "TerminalTargetGroupTitle", "Target Lead Group" },
                         { "TerminalTargetGroupTooltip", "Assign this weapon to target lead group" },

@@ -9,6 +9,7 @@ using VRage.Game.Entity;
 using VRage.ModAPI;
 using VRage.Utils;
 using VRageMath;
+using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace CoreSystems
 {
@@ -694,6 +695,23 @@ namespace CoreSystems
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return 0;
             return comp.Data.Repo.Values.Set.Overrides.SequenceId;
+        }
+
+        internal static bool ValidSequenceId(IMyTerminalBlock block, int testValue)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return false;
+
+            Ai.WeaponGroup group;
+            if (comp.Ai.Construct.RootAi != null && comp.Ai.Construct.RootAi.Construct.WeaponGroups.TryGetValue(comp.Data.Repo.Values.Set.Overrides.WeaponGroupId, out group))
+            {
+                Ai.WeaponSequence seq;
+                if (!group.Sequences.TryGetValue(testValue, out seq) || seq.Weapons.Count == 0 && !seq.Weapons.ContainsKey(comp) || seq.Weapons.Count == 1 && seq.Weapons.ContainsKey(comp))
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         internal static void RequestSetSequenceId(IMyTerminalBlock block, float newValue)

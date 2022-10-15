@@ -423,7 +423,7 @@ namespace CoreSystems.Support
             ArmorCoreActive = session.ArmorCoreActive;
 
             AmmoSkipAccel = ammo.AmmoDef.Trajectory.AccelPerSec <= 0;
-            FeelsGravity = ammo.AmmoDef.Trajectory.GravityMultiplier > 0;
+            FeelsGravity = GravityMultiplier > 0;
             SmartOffsetSqr = ammo.AmmoDef.Trajectory.Smarts.Inaccuracy * ammo.AmmoDef.Trajectory.Smarts.Inaccuracy;
             HasBackKickForce = ammo.AmmoDef.BackKickForce > 0;
             MaxLateralThrust = MathHelperD.Clamp(ammo.AmmoDef.Trajectory.Smarts.MaxLateralThrust, 0.000001, 1);
