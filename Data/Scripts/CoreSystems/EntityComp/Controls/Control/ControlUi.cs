@@ -109,6 +109,21 @@ namespace CoreSystems
             new MyTerminalControlComboBoxItem { Key = 3, Value = MyStringId.GetOrCompute($"{(Weapon.ShootManager.ShootModes)3}") },
         };
 
+
+        internal static bool GetAdvancedControl(IMyTerminalBlock block)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as ControlSys.ControlComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready || comp.Session.Settings?.ClientConfig == null) return false;
+            return comp.Session.Settings.ClientConfig.AdvancedMode;
+        }
+
+        internal static void RequestAdvancedControl(IMyTerminalBlock block, bool newValue)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as ControlSys.ControlComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready || comp.Session.Settings?.ClientConfig == null) return;
+            comp.Session.Settings.ClientConfig.AdvancedMode = !comp.Session.Settings.ClientConfig.AdvancedMode;
+            comp.Session.Settings.VersionControl.UpdateClientCfgFile();
+        }
         internal static float GetMinRangeControl(IMyTerminalBlock block)
         {
             return 0;

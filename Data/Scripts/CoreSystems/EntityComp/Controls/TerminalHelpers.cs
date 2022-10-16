@@ -96,6 +96,7 @@ namespace CoreSystems.Control
 
         internal static void AddTurretControlBlockControls<T>(Session session) where T : IMyTerminalBlock
         {
+            CtcAddCheckboxNoAction<T>(session, "Advanced", Localization.GetText("TerminalAdvancedTitle"), Localization.GetText("TerminalAdvancedTooltip"), BlockUi.GetAdvancedControl, BlockUi.RequestAdvancedControl, true, CtcIsReady);
             CtcAddOnOffSwitchNoAction<T>(session, "ShareFireControlEnabled", Localization.GetText("TerminalShareFireControlTitle"), Localization.GetText("TerminalShareFireControlTooltip"), BlockUi.GetShareFireControlControl, BlockUi.RequestShareFireControlControl, true, CtcIsReady);
 
             CtcAddOnOffSwitchNoAction<T>(session, "WCAiEnabled", Localization.GetText("TerminalAiEnabledTitle"), Localization.GetText("TerminalAiEnabledTooltip"), BlockUi.GetAiEnabledControl, BlockUi.RequestSetAiEnabledControl, true, CtcIsReady);
@@ -908,6 +909,23 @@ namespace CoreSystems.Control
             return c;
         }
 
+
+        internal static IMyTerminalControlCheckbox CtcAddCheckboxNoAction<T>(Session session, string name, string title, string tooltip, Func<IMyTerminalBlock, bool> getter, Action<IMyTerminalBlock, bool> setter, bool allowGroup, Func<IMyTerminalBlock, bool> visibleGetter = null) where T : IMyTerminalBlock
+        {
+            var c = MyAPIGateway.TerminalControls.CreateControl<IMyTerminalControlCheckbox, T>("WC_" + name);
+
+            c.Title = MyStringId.GetOrCompute(title);
+            c.Tooltip = MyStringId.GetOrCompute(tooltip);
+            c.Getter = getter;
+            c.Setter = setter;
+            c.Visible = visibleGetter;
+            c.Enabled = CtcIsReady;
+
+            MyAPIGateway.TerminalControls.AddControl<T>(c);
+            session.CustomControls.Add(c);
+
+            return c;
+        }
 
         internal static IMyTerminalControlOnOffSwitch CtcAddOnOffSwitchNoAction<T>(Session session, string name, string title, string tooltip, Func<IMyTerminalBlock, bool> getter, Action<IMyTerminalBlock, bool> setter, bool allowGroup, Func<IMyTerminalBlock, bool> visibleGetter = null) where T : IMyTerminalBlock
         {
