@@ -158,6 +158,7 @@ namespace CoreSystems
 
 
             MyAPIGateway.TerminalControls.CustomControlGetter += CustomControlHandler;
+            MyAPIGateway.TerminalControls.CustomActionGetter += CustomActionHandler;
         }
 
         private readonly List<CoreStructure> _tmpStructureSorting = new List<CoreStructure>();

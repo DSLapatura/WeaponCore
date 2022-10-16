@@ -652,6 +652,12 @@ namespace CoreSystems
                                 somethingUpdated = true;
                                 MyAPIGateway.Utilities.ShowNotification($"Modify Hud set to: {CanChangeHud}", 10000);
                                 break;
+                            case "advanced":
+                                Settings.ClientConfig.AdvancedMode = !Settings.ClientConfig.AdvancedMode;
+                                somethingUpdated = true;
+                                MyAPIGateway.Utilities.ShowNotification($"Advanced UI set to: {Settings.ClientConfig.AdvancedMode}", 10000);
+                                Settings.VersionControl.UpdateClientCfgFile();
+                                break;
                             case "setdefaults":
                                 Settings.ClientConfig = new CoreSettings.ClientSettings();
                                 somethingUpdated = true;
@@ -665,7 +671,7 @@ namespace CoreSystems
                 if (!somethingUpdated)
                 {
                     if (message.Length <= 3)
-                        MyAPIGateway.Utilities.ShowNotification("HELPFUL TIPS: https://github.com/sstixrud/WeaponCore/wiki/Player-Tips\nValid WeaponCore Commands:\n'/wc remap -- Remap keys'\n'/wc drawlimit 1000' -- Limits total number of projectiles on screen (default unlimited)\n'/wc changehud' to enable moving/resizing of WC Hud\n'/wc setdefaults' -- Resets shield client configs to default values\n'/wc stickypainter' -- Disable Painter LoS checks\n", 10000);
+                        MyAPIGateway.Utilities.ShowNotification("HELPFUL TIPS: https://github.com/sstixrud/WeaponCore/wiki/Player-Tips\nValid WeaponCore Commands:\n'/wc advanced -- Toggle advanced UI features'\n'/wc remap -- Remap keys'\n'/wc drawlimit 1000' -- Limits total number of projectiles on screen (default unlimited)\n'/wc changehud' to enable moving/resizing of WC Hud\n'/wc setdefaults' -- Resets shield client configs to default values\n'/wc stickypainter' -- Disable Painter LoS checks\n", 10000);
                     else if (message.StartsWith("/wc remap"))
                         MyAPIGateway.Utilities.ShowNotification("'/wc remap keyboard' -- Remaps control key (default R)\n'/wc remap mouse' -- Remaps menu mouse key (default middle button)\n'/wc remap action' -- Remaps action key (default numpad0)\n'/wc remap info' -- Remaps info key (default decimal key, aka numpad period key)\n'/wc remap next' -- Remaps the Cycle Next Target key (default Page Down)\n'/wc remap prev' -- Remaps the Cycle Previous Target key (default Page Up)\n", 10000, "White");
                 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Text;
+using CoreSystems.Control;
 using CoreSystems.Platform;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
@@ -204,30 +205,40 @@ namespace CoreSystems.Support
             {
                 var comp = ((Weapon.WeaponComponent)this);
 
-                if ((!comp.HasAim || comp.OverrideLeads) && comp.Data.Repo.Values.Set.Overrides.LeadGroup == 0)
+                if (comp.Data.Repo.Values.Set.Overrides.LeadGroup == 0 && !comp.IsBomb && (!comp.HasTurret && !comp.OverrideLeads || comp.HasTurret && comp.OverrideLeads))
                     stringBuilder.Append("\nWARNING: fixed weapon detected\n")
                         .Append("  - without a Target Lead Group set!\n\n");
 
                 var status = GetSystemStatus();
-
+                var debug = Debug || comp.Data.Repo.Values.Set.Overrides.Debug;
+                var advanced = comp.Session.Settings.ClientConfig.AdvancedMode || debug;
+                
                 stringBuilder.Append($"{status}\n");
 
                 if (HasServerOverrides)
                     stringBuilder.Append("\nWeapon modified by server!\n")
                         .Append("Report issues to server admins.\n");
 
-                stringBuilder.Append($"\n{Localization.GetText("WeaponInfoConstructDPS")}: " + Ai.EffectiveDps.ToString("e2"))
-                    .Append($"\n{Localization.GetText("WeaponInfoPeakDps")}: " + comp.PeakDps.ToString("0.0"))
-                    .Append($"\n{Localization.GetText("WeaponInfoBaseDps")}: " + comp.BaseDps.ToString("0.0"))
-                    .Append($"\n{Localization.GetText("WeaponInfoAreaDps")}: " + comp.AreaDps.ToString("0.0"))
-                    .Append($"\n{Localization.GetText("WeaponInfoExplode")}: " + comp.DetDps.ToString("0.0"))
-                    .Append("\n")
-                    .Append($"\n{Localization.GetText("WeaponTotalEffect")}: " + comp.TotalEffect.ToString("e2"))
-                    .Append($"\n              [ " + Ai.Construct.RootAi?.Construct.TotalEffect.ToString("e2") + " ]")
-                    .Append($"\n{Localization.GetText("WeaponTotalEffectAvgDps")}: " + comp.AverageEffect.ToString("N0") + " - (" + comp.AddEffect.ToString("N0") + ")")
-                    .Append($"\n             [ " + Ai.Construct.RootAi?.Construct.AverageEffect.ToString("N0") + " - (" + Ai.Construct.RootAi?.Construct.AddEffect.ToString("N0") + ") ]");
+                if (advanced)
+                {
+                    stringBuilder.Append($"\n{Localization.GetText("WeaponInfoConstructDPS")}: " + Ai.EffectiveDps.ToString("e2"))
+                        .Append($"\n{Localization.GetText("WeaponInfoPeakDps")}: " + comp.PeakDps.ToString("0.0"))
+                        .Append($"\n{Localization.GetText("WeaponInfoBaseDps")}: " + comp.BaseDps.ToString("0.0"))
+                        .Append($"\n{Localization.GetText("WeaponInfoAreaDps")}: " + comp.AreaDps.ToString("0.0"))
+                        .Append($"\n{Localization.GetText("WeaponInfoExplode")}: " + comp.DetDps.ToString("0.0"))
+                        .Append("\n")
+                        .Append($"\n{Localization.GetText("WeaponTotalEffect")}: " + comp.TotalEffect.ToString("e2"))
+                        .Append($"\n              [ " + Ai.Construct.RootAi?.Construct.TotalEffect.ToString("e2") + " ]")
+                        .Append($"\n{Localization.GetText("WeaponTotalEffectAvgDps")}: " + comp.AverageEffect.ToString("N0") + " - (" + comp.AddEffect.ToString("N0") + ")")
+                        .Append($"\n             [ " + Ai.Construct.RootAi?.Construct.AverageEffect.ToString("N0") + " - (" + Ai.Construct.RootAi?.Construct.AddEffect.ToString("N0") + ") ]");
+                }
+                else
+                {
+                    stringBuilder.Append($"\n{Localization.GetText("WeaponInfoPeakDps")}: " + comp.PeakDps.ToString("0.0"));
+                }
 
-                if (HeatPerSecond > 0)
+
+                if (HeatPerSecond > 0 && advanced)
                     stringBuilder.Append("\n__________________________________" )
                         .Append($"\n{Localization.GetText("WeaponInfoHeatGenerated")}: {HeatPerSecond:0.0} W ({(HeatPerSecond / MaxHeat) :P}/s)")
                         .Append($"\n{Localization.GetText("WeaponInfoHeatDissipated")}: {HeatSinkRate:0.0} W ({(HeatSinkRate / MaxHeat):P}/s)")
@@ -283,7 +294,7 @@ namespace CoreSystems.Support
                         stringBuilder.Append(otherAmmo);
                 }
 
-                if (Debug || comp.Data.Repo.Values.Set.Overrides.Debug)
+                if (advanced)
                 {
                     foreach (var weapon in collection)
                     {

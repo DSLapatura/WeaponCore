@@ -198,6 +198,31 @@ namespace CoreSystems
             CreateCustomActions<T>.CreateArmorShowArea(session);
         }
 
+        private void CustomActionHandler(IMyTerminalBlock block, List<IMyTerminalAction> actions)
+        {
+            var cube = (MyCubeBlock)block;
+            Ai ai;
+            if (EntityAIs.TryGetValue(cube.CubeGrid, out ai))
+            {
+                ai.LastTerminal = block;
+                CoreComponent comp;
+                if (ai.CompBase.TryGetValue(cube, out comp) && comp.Platform.State == CorePlatform.PlatformState.Ready)
+                {
+                    TerminalMon.HandleInputUpdate(comp);
+                    var advanced = Settings.ClientConfig.AdvancedMode;
+                    for (int i = actions.Count - 1; i >= 0; i--)
+                    {
+                        var action = actions[i];
+
+                        if (!advanced && AdvancedActions.Contains(action.Id))
+                        {
+                            actions.RemoveAt(i);
+                        }
+                    }
+                }
+            }
+        }
+        
         private void CustomControlHandler(IMyTerminalBlock block, List<IMyTerminalControl> controls)
         {
             LastTerminal = block;
@@ -211,10 +236,15 @@ namespace CoreSystems
                 if (ai.CompBase.TryGetValue(cube, out comp) && comp.Platform.State == CorePlatform.PlatformState.Ready)
                 {
                     TerminalMon.HandleInputUpdate(comp);
+                    var advanced = Settings.ClientConfig.AdvancedMode;
                     for (int i = controls.Count - 1; i >= 0; i--)
                     {
                         var control = controls[i];
-                        if (control.Id.Equals("Range"))
+                        if (!advanced && AdvancedControls.Contains(control.Id))
+                        {
+                            controls.RemoveAt(i);
+                        }
+                        else if (control.Id.Equals("Range"))
                         {
                             controls.RemoveAt(i);
                         }
@@ -249,28 +279,6 @@ namespace CoreSystems
                     a.Enabled = TerminalHelpers.NotWcOrIsTurret;
                     session.AlteredActions.Add(a);
                 }
-                /*
-                else if (a.Id.Equals("ShootOnce")) {
-
-                    var oldAction = a.Action;
-                    a.Action = blk => {
-
-                        var comp = blk?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-                        if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) {
-                            if (comp == null)
-                                oldAction(blk);
-                            return;
-                        }
-
-                        a.Name.Clear();
-                        a.Name.Append(ShootModeStr);
-                        comp.ShootManager.RequestShootSync(comp.Session.PlayerId);
-                    };
-                    a.Name.Clear();
-                    a.Name.Append(ShootModeStr);
-                    session.AlteredActions.Add(a);
-                }
-                */
                 else if (a.Id.Equals("Shoot")) {
 
                     var oldAction = a.Action;
@@ -413,7 +421,40 @@ namespace CoreSystems
                 //"SelectedToolsList",
                 //"RemoveSelectedTool",
 
-            };
+        };
+
+        private static readonly HashSet<string> AdvancedControls = new HashSet<string>
+        {
+            "WC_ShareFireControlEnabled",
+            "WC_ControlModes",
+            "WC_TrackingMode",
+            "WC_ReportTarget",
+            "WC_FocusFire",
+            "WC_Repel",
+            "Camera Channel",
+            "Weapon Group Id",
+            "Sequence Id",
+            "Burst Delay",
+            "Burst Count",
+        };
+
+        private static readonly HashSet<string> AdvancedActions = new HashSet<string>
+        {
+            "MinSize Decrease",
+            "MinSize Increase",
+            "MaxSize Decrease",
+            "MaxSize Increase",
+            "WC_RepelMode",
+            "WC_Decrease_LeadGroup",
+            "WC_Increase_LeadGroup",
+            "WC_Decrease_CameraChannel",
+            "WC_Increase_CameraChannel",
+            "FocusSubSystem",
+            "FocusTargets",
+            "TrackingMode",
+            "ControlModes",
+
+        };
 
         internal static void AlterControls<T>(Session session) where T : IMyTerminalBlock //  https://github.com/THDigi/ElectronicsPanel/blob/master/Data/Scripts/ElectronicsPanel/ElectronicsPanelMod.cs#L244
         {
@@ -425,6 +466,7 @@ namespace CoreSystems
 
                 var c = controls[i];
                 if (session.AlteredControls.Contains(c)) continue;
+
                 if (!_visibleControls.Contains(c.Id)) {
                     c.Visible = TerminalHelpers.NotWcBlock;
                     session.AlteredControls.Add(c);

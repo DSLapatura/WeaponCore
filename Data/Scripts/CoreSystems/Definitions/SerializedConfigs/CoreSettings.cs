@@ -101,6 +101,7 @@ namespace CoreSystems.Settings
             [ProtoMember(12)] public bool StikcyPainter = true;
             [ProtoMember(13)] public string CycleNextKey = MyKeys.PageDown.ToString();
             [ProtoMember(14)] public string CyclePrevKey = MyKeys.PageUp.ToString();
+            [ProtoMember(15)] public bool AdvancedMode;
         }
     }
 }

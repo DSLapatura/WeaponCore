@@ -101,7 +101,10 @@ namespace CoreSystems.Support
                         { "TerminalCameraCameraChannelTitle", "Camera Channel" },
                         { "TerminalCameraCameraChannelTooltip", "Assign the camera weapon channel to this camera" },
                         { "TerminalDebugTitle", "Debug" },
+
                         { "TerminalDebugTooltip", "Debug On/Off" },
+                        { "TerminalAdvancedTitle", "Advanced Features" },
+                        { "TerminalAdvancedTooltip", "This enables more advanced UI features that tend to be confusing to new users" },
                         { "TerminalShootTitle", "Shoot" },
                         { "TerminalShootTooltip", "Shoot On/Off Toggle, this will be required, replaced by Shoot Mode KeyToggle" },
                         { "ActionStateOn", "On" },

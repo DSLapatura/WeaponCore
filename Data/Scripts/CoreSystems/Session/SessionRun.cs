@@ -397,6 +397,7 @@ namespace CoreSystems
                 MyAPIGateway.Utilities.UnregisterMessageHandler(7771, Handler);
 
                 MyAPIGateway.TerminalControls.CustomControlGetter -= CustomControlHandler;
+                MyAPIGateway.TerminalControls.CustomActionGetter -= CustomActionHandler;
 
                 MyEntities.OnEntityCreate -= OnEntityCreate;
                 MyEntities.OnCloseAll -= OnCloseAll;

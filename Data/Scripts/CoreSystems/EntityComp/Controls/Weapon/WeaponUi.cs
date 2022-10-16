@@ -264,6 +264,21 @@ namespace CoreSystems
             Weapon.WeaponComponent.RequestSetValue(comp, "Neutrals", value, comp.Session.PlayerId);
         }
 
+        internal static bool GetAdvanced(IMyTerminalBlock block)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready || comp.Session.Settings?.ClientConfig == null) return false;
+            return comp.Session.Settings.ClientConfig.AdvancedMode;
+        }
+
+        internal static void RequestAdvanced(IMyTerminalBlock block, bool newValue)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready || comp.Session.Settings?.ClientConfig == null) return;
+            comp.Session.Settings.ClientConfig.AdvancedMode = !comp.Session.Settings.ClientConfig.AdvancedMode;
+            comp.Session.Settings.VersionControl.UpdateClientCfgFile();
+        }
+
         internal static bool GetDebug(IMyTerminalBlock block)
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;

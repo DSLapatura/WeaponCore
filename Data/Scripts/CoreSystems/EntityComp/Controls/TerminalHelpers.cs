@@ -159,6 +159,7 @@ namespace CoreSystems.Control
 
         internal static void CreateGenericControls<T>(Session session) where T : IMyTerminalBlock
         {
+            AddCheckboxNoAction<T>(session, "Advanced", Localization.GetText("TerminalAdvancedTitle"), Localization.GetText("TerminalAdvancedTooltip"), BlockUi.GetAdvanced, BlockUi.RequestAdvanced, true, IsTrue);
             AddOnOffSwitchNoAction<T>(session,  "Debug", Localization.GetText("TerminalDebugTitle"), Localization.GetText("TerminalDebugTooltip"), BlockUi.GetDebug, BlockUi.RequestDebug, true, GuidedAmmoNoTurret);
 
             Separator<T>(session, "WC_sep4", IsTrue);
@@ -333,6 +334,11 @@ namespace CoreSystems.Control
         internal static bool IsTrue(IMyTerminalBlock block)
         {
             return true;
+        }
+
+        internal static bool IsFalse(IMyTerminalBlock block)
+        {
+            return false;
         }
 
         internal static bool WeaponIsReadyAndSorter(IMyTerminalBlock block)

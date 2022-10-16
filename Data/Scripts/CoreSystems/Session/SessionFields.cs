@@ -45,7 +45,7 @@ namespace CoreSystems
         internal const int AwakeBuckets = 60;
         internal const int AsleepBuckets = 180;
         internal const int ServerCfgVersion = 6;
-        internal const int ClientCfgVersion = 7;
+        internal const int ClientCfgVersion = 8;
         internal const string ServerCfgName = "CoreSystemsServer.cfg";
         internal const string ClientCfgName = "CoreSystemsClient.cfg";
         internal volatile bool Inited;

@@ -91,6 +91,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             var manualTarget = ai.Session.PlayerDummyTargets[ai.Session.PlayerId].ManualTarget;
             var paintTarget = ai.Session.PlayerDummyTargets[ai.Session.PlayerId].PaintedTarget;
             var mark = s.UiInput.MouseButtonRightReleased;
+            var advanced = s.Settings.ClientConfig.AdvancedMode;
             MyEntity closestEnt = null;
             _session.Physics.CastRay(AimPosition, end, _hitInfo);
 
@@ -129,7 +130,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                     {
                         if (hitGrid == _firstStageEnt) {
 
-                            if (mark && !checkOnly && ai.Construct.Focus.EntityIsFocused(ai, closestEnt)) {
+                            if (mark  && advanced && !checkOnly && ai.Construct.Focus.EntityIsFocused(ai, closestEnt)) {
                                 paintTarget.Update(hit.Position, s.Tick, closestEnt);
                             }
 
@@ -197,7 +198,9 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                 if (!foundTarget && !checkOnly)
                 {
                     if (mark)
+                    {
                         paintTarget.Update(end, s.Tick);
+                    }
                     else
                         manualTarget.Update(end, s.Tick);
                 }
