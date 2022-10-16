@@ -213,7 +213,7 @@ namespace CoreSystems.Support
                 var debug = Debug || comp.Data.Repo.Values.Set.Overrides.Debug;
                 var advanced = comp.Session.Settings.ClientConfig.AdvancedMode || debug;
                 
-                stringBuilder.Append($"{status}\n");
+                stringBuilder.Append(advanced ? $"{status}\n" : $"{status}");
 
                 if (HasServerOverrides)
                     stringBuilder.Append("\nWeapon modified by server!\n")
@@ -244,12 +244,11 @@ namespace CoreSystems.Support
                         .Append($"\n{Localization.GetText("WeaponInfoHeatDissipated")}: {HeatSinkRate:0.0} W ({(HeatSinkRate / MaxHeat):P}/s)")
                         .Append($"\n{Localization.GetText("WeaponInfoCurrentHeat")}: {CurrentHeat:0.0} J ({(CurrentHeat / MaxHeat):P})");
 
-                stringBuilder.Append("\n__________________________________")
-                    .Append("\n")
+                stringBuilder.Append(advanced ? "\n__________________________________\n" : string.Empty)
                     .Append($"\n{Localization.GetText("WeaponInfoShotsPerSec")}: " + comp.RealShotsPerSec.ToString("0.00") + " (" + comp.ShotsPerSec.ToString("0.00") + ")")
                     .Append($"\n{Localization.GetText("WeaponInfoCurrentDraw")}: " + SinkPower.ToString("0.000") + " MW");
 
-                if (comp.HasEnergyWeapon)
+                if (comp.HasEnergyWeapon && advanced)
                     stringBuilder.Append($"\n{Localization.GetText("WeaponInfoRequiredPower")}: " + Platform.Structure.ActualPeakPowerCombined.ToString("0.00") + " MW");
 
                 stringBuilder.Append($"\n\n{Localization.GetText("WeaponInfoDividerLineWeapon")}");

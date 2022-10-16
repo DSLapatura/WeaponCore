@@ -437,13 +437,13 @@ namespace CoreSystems
                             
                             var activePlayer = PlayerId == wValues.State.PlayerId && playerControl;
                             var cManual = pControl.ControlBlock is IMyTurretControlBlock;
-                            var customWeapon = cManual && wComp.OnCustomTurret;
+                            var customWeapon = cManual && wComp.OnCustomTurret && ai.RootFixedWeaponComp.TrackingWeapon.MasterComp.Cube == pControl.ControlBlock;
                             var manualThisWeapon = pControl.ControlBlock == wComp.Cube && wComp.HasAim;
                             var controllingWeapon = customWeapon || manualThisWeapon;
                             var validManualModes = (sMode == Weapon.ShootManager.ShootModes.MouseControl || cMode == ProtoWeaponOverrides.ControlModes.Manual);
                             var manual = (controllingWeapon || pControl.ShareControl && validManualModes && ((wComp.HasAim || wComp.OnCustomTurret) || !IdToCompMap.ContainsKey(pControl.EntityId)));
                             var playerAim = activePlayer && manual;
-                            var track = !InMenu && (playerAim && (!UiInput.CameraBlockView || cManual || manualThisWeapon) || UiInput.CameraChannelId > 0 && UiInput.CameraChannelId == overrides.CameraChannel);
+                            var track = !InMenu && (playerAim && (!UiInput.CameraBlockView || cManual || controllingWeapon) || UiInput.CameraChannelId > 0 && UiInput.CameraChannelId == overrides.CameraChannel);
                             if (!activePlayer && wComp.ShootManager.Signal == Weapon.ShootManager.Signals.MouseControl)
                                 wComp.ShootManager.RequestShootSync(PlayerId, Weapon.ShootManager.RequestType.Off);
                             

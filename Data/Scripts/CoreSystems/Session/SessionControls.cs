@@ -213,7 +213,6 @@ namespace CoreSystems
                     for (int i = actions.Count - 1; i >= 0; i--)
                     {
                         var action = actions[i];
-
                         if (!advanced && AdvancedActions.Contains(action.Id))
                         {
                             actions.RemoveAt(i);
@@ -425,6 +424,7 @@ namespace CoreSystems
 
         private static readonly HashSet<string> AdvancedControls = new HashSet<string>
         {
+            "WC_Override",
             "WC_ShareFireControlEnabled",
             "WC_ControlModes",
             "WC_TrackingMode",
