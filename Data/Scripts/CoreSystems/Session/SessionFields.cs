@@ -376,6 +376,7 @@ namespace CoreSystems
         internal float LastOptimalDps;
         internal float ServerSimulation;
         internal float ClientSimulation;
+        internal bool TargetInfoKeyLock;
         internal bool MinimalHudOverride;
         internal bool PurgedAll;
         internal bool InMenu;

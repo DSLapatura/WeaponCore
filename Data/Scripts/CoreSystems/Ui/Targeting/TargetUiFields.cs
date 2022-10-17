@@ -37,7 +37,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             Other
         }
 
-        private const string InfoKeyStr = "Details Key: ";
+        private const string InfoKeyStr = "Detail Key: ";
         private const string ActiveNoShield = "ActiveNoShield";
         private const string ActiveShield = "ActiveShield";
         private const string InactiveNoShield = "InactiveNoShield";

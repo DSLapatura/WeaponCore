@@ -371,12 +371,9 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             var shielded = detailedHud && targetState.ShieldHealth >= 0;
 
             var collection = detailedHud ? _primaryTargetHuds : _primaryMinimalHuds;
-
-            var drawAge = s.Tick - s.TargetLastDrawTick;
-
-            s.TargetDrawAge = drawAge > 1200 ? 0 : s.TargetDrawAge + 1;
-            s.TargetLastDrawTick = s.Tick;
             var infoKey = s.UiInput.InfoKey == MyKeys.Decimal ? MyKeys.Delete : s.UiInput.InfoKey;
+            var drawInfo = UpdateKeyInfo(detailedHud);
+
             if (!s.Settings.Enforcement.DisableHudTargetInfo)
             {
                 foreach (var hud in collection.Keys)
@@ -429,7 +426,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                             var fontType = Hud.Hud.FontType.Shadow;
                             var elementId = 3000 + element++;
 
-                            if (!detailedHud && j == 10 && s.TargetDrawAge <= 420)
+                            if (j == 10 && drawInfo)
                             {
                                 textColor = s.Count < 60 ? Color.White : Color.DarkGray;
                                 text = InfoKeyStr + infoKey;
@@ -465,6 +462,19 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                 var radius = (float) (screenScale * MarkerSize());
                 MyTransparentGeometry.AddBillboardOriented(_targetCircle, Color.White, screenPos, s.CameraMatrix.Left, s.CameraMatrix.Up, radius, BlendTypeEnum.PostPP);
             }
+        }
+
+        private bool UpdateKeyInfo(bool detailedHud)
+        {
+            var s = _session;
+            var drawAge = s.Tick - s.TargetLastDrawTick;
+            var infoExpire = 420;
+
+            s.TargetDrawAge = drawAge > infoExpire && !s.TargetInfoKeyLock ? 0 : s.TargetDrawAge + 1;
+            s.TargetLastDrawTick = s.Tick;
+            var drawInfo = !detailedHud && s.TargetDrawAge <= infoExpire;
+            s.TargetInfoKeyLock = !drawInfo;
+            return drawInfo;
         }
 
         internal void SetHit(List<HitEntity> infoHitList)

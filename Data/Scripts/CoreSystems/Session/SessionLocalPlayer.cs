@@ -159,6 +159,7 @@ namespace CoreSystems
                 ActiveCockPit = null;
                 ActiveControlBlock = null;
                 ActiveCameraBlock = null;
+                TargetInfoKeyLock = false;
             }
             return InGridAiBlock;
         }
