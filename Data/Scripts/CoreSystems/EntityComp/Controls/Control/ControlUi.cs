@@ -120,9 +120,12 @@ namespace CoreSystems
         internal static void RequestAdvancedControl(IMyTerminalBlock block, bool newValue)
         {
             var comp = block?.Components?.Get<CoreComponent>() as ControlSys.ControlComponent;
-            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready || comp.Session.Settings?.ClientConfig == null) return;
-            comp.Session.Settings.ClientConfig.AdvancedMode = !comp.Session.Settings.ClientConfig.AdvancedMode;
-            comp.Session.Settings.VersionControl.UpdateClientCfgFile();
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready || comp.Session.Settings?.ClientConfig == null || comp.Session.Tick == comp.Session.AdvancedToggleTick) return;
+            var s = comp.Session;
+            s.AdvancedToggleTick = s.Tick;
+            s.Settings.ClientConfig.AdvancedMode = !s.Settings.ClientConfig.AdvancedMode;
+            s.Settings.VersionControl.UpdateClientCfgFile();
+            comp.Cube.UpdateTerminal();
         }
         internal static float GetMinRangeControl(IMyTerminalBlock block)
         {

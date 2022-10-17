@@ -323,6 +323,7 @@ namespace CoreSystems
         internal string PlayerMessage;
         internal object InitObj = new object();
 
+        internal uint AdvancedToggleTick;
         internal uint Tick;
         internal uint ClientDestroyBlockTick;
         internal uint ReInitTick;
