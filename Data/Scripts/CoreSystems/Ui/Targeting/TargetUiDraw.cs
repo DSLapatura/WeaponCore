@@ -7,6 +7,7 @@ using Sandbox.Game.Entities;
 using VRage;
 using VRage.Game;
 using VRage.Game.Entity;
+using VRage.Input;
 using VRage.Utils;
 using VRageMath;
 using static CoreSystems.Support.Ai;
@@ -371,6 +372,11 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
 
             var collection = detailedHud ? _primaryTargetHuds : _primaryMinimalHuds;
 
+            var drawAge = s.Tick - s.TargetLastDrawTick;
+
+            s.TargetDrawAge = drawAge > 1200 ? 0 : s.TargetDrawAge + 1;
+            s.TargetLastDrawTick = s.Tick;
+            var infoKey = s.UiInput.InfoKey == MyKeys.Decimal ? MyKeys.Delete : s.UiInput.InfoKey;
             if (!s.Settings.Enforcement.DisableHudTargetInfo)
             {
                 foreach (var hud in collection.Keys)
@@ -408,6 +414,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                             break;
                     }
                     MyTransparentGeometry.AddBillboardOriented(textureName, color, offset, s.CameraMatrix.Left, s.CameraMatrix.Up, screenScale, BlendTypeEnum.PostPP);
+
                     for (int j = 0; j < 11; j++)
                     {
                         string text;
@@ -421,7 +428,15 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                             var fontJustify = Hud.Hud.Justify.None;
                             var fontType = Hud.Hud.FontType.Shadow;
                             var elementId = 3000 + element++;
+
+                            if (!detailedHud && j == 10 && s.TargetDrawAge <= 420)
+                            {
+                                textColor = s.Count < 60 ? Color.White : Color.DarkGray;
+                                text = InfoKeyStr + infoKey;
+                            }
+
                             s.HudUi.AddText(text: text, x: textOffset.X, y: textOffset.Y, elementId: elementId, ttl: fontAge, color: textColor, justify: fontJustify, fontType: fontType, fontSize: fontSize, heightScale: fontHeight);
+
                         }
                     }
                 }

@@ -327,6 +327,9 @@ namespace CoreSystems
         internal uint Tick;
         internal uint ClientDestroyBlockTick;
         internal uint ReInitTick;
+        internal uint TargetLastDrawTick;
+
+        internal int TargetDrawAge;
         internal int WeaponIdCounter;
 
         internal int PlayerEventId;
