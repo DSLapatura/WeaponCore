@@ -351,6 +351,7 @@ namespace CoreSystems
         internal int Rays;
         internal int ClientAvLevel;
         internal int SimStepsLastSecond;
+        internal int MenuDepth;
         internal ulong MultiplayerId;
         internal ulong MuzzleIdCounter;
         internal ulong PhantomIdCounter;
@@ -372,9 +373,9 @@ namespace CoreSystems
         internal float LastOptimalDps;
         internal float ServerSimulation;
         internal float ClientSimulation;
+        internal bool MinimalHudOverride;
         internal bool PurgedAll;
         internal bool InMenu;
-        internal int MenuDepth;
         internal bool PlayerStartMessage;
         internal bool GunnerBlackList;
         internal bool MpActive;

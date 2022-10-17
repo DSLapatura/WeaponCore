@@ -178,11 +178,12 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
                 }
             }
 
-            if (!s.InMenu)
+            if (!s.InMenu && s.InGridAiBlock)
             {
                 ActionKeyReleased = MyAPIGateway.Input.IsNewKeyReleased(ActionKey);
                 ActionKeyPressed = MyAPIGateway.Input.IsKeyPress(ActionKey);
-                InfoKeyReleased = MyAPIGateway.Input.IsNewKeyReleased(InfoKey);
+                var altCheck = InfoKey == MyKeys.Decimal;
+                InfoKeyReleased =  MyAPIGateway.Input.IsNewKeyReleased(InfoKey) || altCheck && MyAPIGateway.Input.IsNewKeyReleased(MyKeys.Delete);
                 if (ActionKeyPressed || InfoKeyReleased)
                 {
                     if (!BlackListActive1)
@@ -236,8 +237,16 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
 
                     if (InfoKeyReleased)
                     {
-                        _session.Settings.ClientConfig.MinimalHud = !_session.Settings.ClientConfig.MinimalHud;
-                        _session.Settings.VersionControl.UpdateClientCfgFile();
+                        var set = s.Settings;
+                        if (set.ClientConfig.MinimalHud && !set.ClientConfig.AdvancedMode || set.ClientConfig.AdvancedMode || s.MinimalHudOverride)
+                        {
+                            set.ClientConfig.MinimalHud = !set.ClientConfig.MinimalHud;
+                            set.VersionControl.UpdateClientCfgFile();
+                        }
+                        else if (!set.ClientConfig.AdvancedMode)
+                        {
+                            s.MinimalHudOverride = true;
+                        }
                     }
 
 

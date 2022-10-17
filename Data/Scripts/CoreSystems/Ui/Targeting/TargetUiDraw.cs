@@ -360,7 +360,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             var s = _session;
 
             var focus = s.TrackingAi.Construct.Data.Repo.FocusData;
-            var detailedHud = !s.Settings.ClientConfig.MinimalHud && s.Settings.ClientConfig.AdvancedMode;
+            var detailedHud = !s.Settings.ClientConfig.MinimalHud && (s.Settings.ClientConfig.AdvancedMode || s.MinimalHudOverride);
             var element = 0;
 
             if (focus.Target <= 0) return;
