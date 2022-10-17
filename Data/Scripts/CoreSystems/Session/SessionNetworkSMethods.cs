@@ -440,6 +440,7 @@ namespace CoreSystems
             long playerId;
             if (SteamToPlayer.TryGetValue(packet.SenderId, out playerId))
             {
+                Log.Line($"BlackList: {readyPacket.Data} - pId:{playerId} - enable:{readyPacket.Enable} - invalid:{playerId == -1}");
                 CustomBlackListRequestBecauseKeenIsBrainDead(readyPacket.Data, playerId, readyPacket.Enable);
                 data.Report.PacketValid = true;
             }

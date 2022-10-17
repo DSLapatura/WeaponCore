@@ -598,7 +598,7 @@ namespace CoreSystems
                 var sameGrid = Comp.TopEntity == Comp.Ai.TopEntity;
                 var inTerminalWindow = Session.InMenu && MyAPIGateway.Gui.GetCurrentScreen == MyTerminalPageEnum.ControlPanel;
                 var compReady = Comp.Platform.State == CorePlatform.PlatformState.Ready;
-                var sameTerminalBlock = Session.LastTerminal != null && (Session.LastTerminal.EntityId == Comp.Ai.Data.Repo.ActiveTerminal || Session.IsClient && (Comp.Ai.Data.Repo.ActiveTerminal == 0 || Comp.Ai.Data.Repo.ActiveTerminal == Comp.CoreEntity.EntityId));
+                var sameTerminalBlock = Comp.Ai.LastTerminal != null && (Comp.Ai.LastTerminal.EntityId == Comp.Ai.Data.Repo.ActiveTerminal || Session.IsClient && (Comp.Ai.Data.Repo.ActiveTerminal == 0 || Comp.Ai.Data.Repo.ActiveTerminal == Comp.CoreEntity.EntityId));
                 var isActive = (sameVersion && nothingMarked && sameGrid && compReady && inTerminalWindow && sameTerminalBlock);
                 return isActive;
             }
@@ -607,8 +607,6 @@ namespace CoreSystems
             {
                 if (Active && (Comp != comp || OriginalAiVersion != comp.Ai.Version))
                     Clean();
-
-                Session.LastTerminal = (IMyTerminalBlock)comp.CoreEntity;
 
                 Comp = comp;
 
