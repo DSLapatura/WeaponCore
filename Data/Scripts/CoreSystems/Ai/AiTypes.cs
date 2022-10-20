@@ -219,6 +219,7 @@ namespace CoreSystems.Support
                 else
                 {
                     EntityId = packet.TargetId;
+                    MyEntities.TryGetEntityById(EntityId, out TmpEntity, true);
                     LocalPosition = packet.Pos;
                 }
 
