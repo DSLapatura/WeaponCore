@@ -153,7 +153,7 @@ namespace CoreSystems
                 }
 
                 if (TrackingAi != null && GunnerBlackList)
-                    GunnerRelease();
+                    GunnerRelease(PlayerId);
 
                 TrackingAi = null;
                 ActiveCockPit = null;
@@ -213,11 +213,12 @@ namespace CoreSystems
             return false;
         }
 
-        internal void GunnerAcquire(MyCubeBlock cube)
+        internal void GunnerAcquire(MyCubeBlock cube, long playerId)
         {
             if (PlayerId == -1)
                 return;
 
+            Log.Line($"player: {PlayerId} took control of: {cube.DebugName}");
             GunnerBlackList = true;
             ActiveControlBlock = cube;
             var controlStringLeft = MyAPIGateway.Input.GetControl(MyMouseButtonsEnum.Left).GetGameControlEnum().String;
@@ -228,11 +229,12 @@ namespace CoreSystems
             CustomBlackListRequestBecauseKeenIsBrainDead(controlStringMenu, PlayerId);
         }
 
-        internal void GunnerRelease()
+        internal void GunnerRelease(long playerId)
         {
             if (!GunnerBlackList || PlayerId == -1)
                 return;
 
+            Log.Line($"player: {PlayerId}({playerId}) release control of: {ActiveControlBlock?.DebugName}");
             GunnerBlackList = false;
             ActiveControlBlock = null;
             var controlStringLeft = MyAPIGateway.Input.GetControl(MyMouseButtonsEnum.Left).GetGameControlEnum().String;

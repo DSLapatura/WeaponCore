@@ -918,7 +918,7 @@ namespace CoreSystems.Platform
                 }
 
                 if (Session.HandlesInput)
-                    Session.GunnerAcquire(Cube);
+                    Session.GunnerAcquire(Cube, playerId);
             }
 
             internal void ReleaseControl(long playerId)
@@ -939,7 +939,7 @@ namespace CoreSystems.Platform
 
                 if (Session.HandlesInput)
                 {
-                    Session.GunnerRelease();
+                    Session.GunnerRelease(playerId);
                 }
             }
         }
