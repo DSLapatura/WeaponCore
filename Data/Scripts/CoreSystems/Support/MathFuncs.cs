@@ -428,7 +428,6 @@ namespace CoreSystems.Support
             var secondaryOutsideLimits = desiredAngle < other.LowerLimitRad && desiredAngle + MathHelper.TwoPi > other.UpperLimitRad;
             if (rootOutsideLimits && secondaryOutsideLimits)
             {
-                Log.Line($"Angle outside rotor limits");
                 return false;
             }
 

@@ -114,125 +114,131 @@ namespace CoreSystems.Platform
         
         internal void UpdatePivotPos()
         {
-            if (Comp.Session == null || PosChangedTick == Comp.Session.Tick || Comp.CoreEntity == null || Comp.IsBlock && (AzimuthPart?.Entity?.Parent == null || ElevationPart?.Entity?.Parent == null)  || ElevationPart?.Entity == null || MuzzlePart?.Entity == null || Comp.Platform.State != CorePlatform.PlatformState.Ready) return;
-
-            PosChangedTick = Comp.Session.Tick;
-
-            var justBlock = AzimuthPart.IsBlock && ElevationPart.IsBlock && MuzzlePart.IsBlock;
-            MatrixD azimuthMatrix;
-            MatrixD elevationMatrix;
-            Vector3D weaponCenter;
-            MatrixD azParentMatrix;
-
-            if (!justBlock)
+            try
             {
-                if (!AzimuthPart.IsBlock) {
-                    var aLocalMatrix = AzimuthPart.Entity.PositionComp.LocalMatrixRef;
-                    azParentMatrix = AzimuthPart.Entity.Parent.PositionComp.WorldMatrixRef;
-                    MatrixD.Multiply(ref aLocalMatrix, ref azParentMatrix, out azimuthMatrix);
+                if (Comp.Session == null || PosChangedTick == Comp.Session.Tick || Comp.CoreEntity == null || Comp.IsBlock && (AzimuthPart?.Entity?.Parent == null || ElevationPart?.Entity?.Parent == null) || ElevationPart?.Entity == null || MuzzlePart?.Entity == null || Comp.Platform.State != CorePlatform.PlatformState.Ready) return;
+
+                PosChangedTick = Comp.Session.Tick;
+
+
+                var justBlock = AzimuthPart.IsBlock && ElevationPart.IsBlock && MuzzlePart.IsBlock;
+                MatrixD azimuthMatrix;
+                MatrixD elevationMatrix;
+                Vector3D weaponCenter;
+                MatrixD azParentMatrix;
+
+                if (!justBlock)
+                {
+                    if (!AzimuthPart.IsBlock)
+                    {
+                        var aLocalMatrix = AzimuthPart.Entity.PositionComp.LocalMatrixRef;
+                        azParentMatrix = AzimuthPart.Entity.Parent.PositionComp.WorldMatrixRef;
+                        MatrixD.Multiply(ref aLocalMatrix, ref azParentMatrix, out azimuthMatrix);
+                    }
+                    else
+                    {
+                        azimuthMatrix = Comp.CoreEntity.PositionComp.WorldMatrixRef;
+                        azParentMatrix = azimuthMatrix;
+                    }
+
+                    if (ElevationPart.Entity == AzimuthPart?.Entity)
+                        elevationMatrix = azimuthMatrix;
+                    else if (!ElevationPart.IsBlock)
+                    {
+                        var eLocalMatrix = ElevationPart.Entity.PositionComp.LocalMatrixRef;
+                        var eParent = ElevationPart.Entity.Parent.WorldMatrix;
+                        MatrixD.Multiply(ref eLocalMatrix, ref eParent, out elevationMatrix);
+                    }
+                    else
+                        elevationMatrix = Comp.CoreEntity.PositionComp.WorldMatrixRef;
+
+                    if (MuzzlePart.Entity == AzimuthPart?.Entity)
+                    {
+                        var localCenter = MuzzlePart.Entity.PositionComp.LocalAABB.Center;
+                        Vector3D.Transform(ref localCenter, ref azimuthMatrix, out weaponCenter);
+                    }
+                    else if (MuzzlePart.Entity == ElevationPart.Entity)
+                    {
+                        var localCenter = MuzzlePart.Entity.PositionComp.LocalAABB.Center;
+                        Vector3D.Transform(ref localCenter, ref elevationMatrix, out weaponCenter);
+                    }
+                    else if (!MuzzlePart.IsBlock && MuzzlePart.Entity?.Parent != null)
+                    {
+                        var mLocalMatrix = MuzzlePart.Entity.PositionComp.LocalMatrixRef;
+                        var mParent = MuzzlePart.Entity.Parent.WorldMatrix;
+                        MatrixD muzzleMatrix;
+                        MatrixD.Multiply(ref mLocalMatrix, ref mParent, out muzzleMatrix);
+
+                        var localCenter = MuzzlePart.Entity.PositionComp.LocalAABB.Center;
+                        Vector3D.Transform(ref localCenter, ref muzzleMatrix, out weaponCenter);
+                    }
+                    else
+                        weaponCenter = Comp.CoreEntity.PositionComp.WorldAABB.Center;
                 }
                 else
                 {
                     azimuthMatrix = Comp.CoreEntity.PositionComp.WorldMatrixRef;
                     azParentMatrix = azimuthMatrix;
-                }
-
-                if (ElevationPart.Entity == AzimuthPart.Entity)
                     elevationMatrix = azimuthMatrix;
-                else if (!ElevationPart.IsBlock)
-                {
-                    var eLocalMatrix = ElevationPart.Entity.PositionComp.LocalMatrixRef;
-                    var eParent = ElevationPart.Entity.Parent.WorldMatrix;
-                    MatrixD.Multiply(ref eLocalMatrix, ref eParent, out elevationMatrix);
+                    weaponCenter = Comp.CoreEntity.PositionComp.WorldAABB.Center;
                 }
-                else 
-                    elevationMatrix = Comp.CoreEntity.PositionComp.WorldMatrixRef;
 
-                if (MuzzlePart.Entity == AzimuthPart.Entity)
-                {
-                    var localCenter = MuzzlePart.Entity.PositionComp.LocalAABB.Center;
-                    Vector3D.Transform(ref localCenter, ref azimuthMatrix, out weaponCenter);
-                }
-                else if (MuzzlePart.Entity == ElevationPart.Entity)
-                {
-                    var localCenter = MuzzlePart.Entity.PositionComp.LocalAABB.Center;
-                    Vector3D.Transform(ref localCenter, ref elevationMatrix, out weaponCenter);
-                }
-                else if (!MuzzlePart.IsBlock)
-                {
-                    var mLocalMatrix = MuzzlePart.Entity.PositionComp.LocalMatrixRef;
-                    var mParent = MuzzlePart.Entity.Parent.WorldMatrix;
-                    MatrixD muzzleMatrix;
-                    MatrixD.Multiply(ref mLocalMatrix, ref mParent, out muzzleMatrix);
+                BarrelOrigin = weaponCenter;
+                var centerTestPos = azimuthMatrix.Translation;
+                MyPivotUp = azimuthMatrix.Up;
+                MyPivotFwd = elevationMatrix.Forward;
 
-                    var localCenter = MuzzlePart.Entity.PositionComp.LocalAABB.Center;
-                    Vector3D.Transform(ref localCenter, ref muzzleMatrix, out weaponCenter);
+                if (System.TurretMovement == WeaponSystem.TurretType.ElevationOnly)
+                {
+                    Vector3D forward;
+                    var eLeft = elevationMatrix.Left;
+                    Vector3D.Cross(ref eLeft, ref MyPivotUp, out forward);
+                    WeaponConstMatrix = new MatrixD { Forward = forward, Up = MyPivotUp, Left = elevationMatrix.Left };
                 }
                 else
-                    weaponCenter = Comp.CoreEntity.PositionComp.WorldAABB.Center;
+                {
+                    var forward = !AlternateForward ? azParentMatrix.Forward : Vector3D.TransformNormal(AzimuthInitFwdDir, ref azParentMatrix);
+
+                    Vector3D left;
+                    Vector3D.Cross(ref MyPivotUp, ref forward, out left);
+
+                    WeaponConstMatrix = new MatrixD { Forward = forward, Up = MyPivotUp, Left = left };
+                }
+
+                Vector3D pivotLeft;
+                Vector3D.Cross(ref MyPivotUp, ref MyPivotFwd, out pivotLeft);
+                if (Vector3D.IsZero(pivotLeft))
+                    MyPivotPos = centerTestPos;
+                else
+                {
+                    Vector3D barrelUp;
+                    Vector3D.Cross(ref MyPivotFwd, ref pivotLeft, out barrelUp);
+
+                    var elToMuzzleOrigin = weaponCenter - elevationMatrix.Translation;
+                    var offset = Vector3D.ProjectOnVector(ref elToMuzzleOrigin, ref barrelUp);
+
+                    MyPivotPos = elevationMatrix.Translation + offset;
+                }
+                if (!Vector3D.IsZero(AimOffset))
+                {
+                    var pivotRotMatrix = new MatrixD { Forward = MyPivotFwd, Left = elevationMatrix.Left, Up = elevationMatrix.Up };
+                    Vector3D offSet;
+                    Vector3D.Rotate(ref AimOffset, ref pivotRotMatrix, out offSet);
+
+                    MyPivotPos += offSet;
+                }
+
+                if (!Comp.Debug) return;
+
+                MyCenterTestLine = new LineD(centerTestPos, centerTestPos + (MyPivotUp * 20));
+                MyPivotTestLine = new LineD(MyPivotPos, MyPivotPos - (WeaponConstMatrix.Left * 10));
+                MyBarrelTestLine = new LineD(weaponCenter, weaponCenter + (MyPivotFwd * 16));
+                MyAimTestLine = new LineD(MyPivotPos, MyPivotPos + (MyPivotFwd * 20));
+                AzimuthFwdLine = new LineD(weaponCenter, weaponCenter + (WeaponConstMatrix.Forward * 19));
+                if (Target.HasTarget)
+                    MyShootAlignmentLine = new LineD(MyPivotPos, Target.TargetPos);
             }
-            else
-            {
-                azimuthMatrix = Comp.CoreEntity.PositionComp.WorldMatrixRef;
-                azParentMatrix = azimuthMatrix;
-                elevationMatrix = azimuthMatrix;
-                weaponCenter = Comp.CoreEntity.PositionComp.WorldAABB.Center;
-            }
-
-            BarrelOrigin = weaponCenter;
-            var centerTestPos = azimuthMatrix.Translation;
-            MyPivotUp = azimuthMatrix.Up;
-            MyPivotFwd = elevationMatrix.Forward;
-
-            if (System.TurretMovement == WeaponSystem.TurretType.ElevationOnly)
-            {
-                Vector3D forward;
-                var eLeft = elevationMatrix.Left;
-                Vector3D.Cross(ref eLeft, ref MyPivotUp, out forward);
-                WeaponConstMatrix = new MatrixD { Forward = forward, Up = MyPivotUp, Left = elevationMatrix.Left };
-            }
-            else
-            {
-                var forward = !AlternateForward ? azParentMatrix.Forward : Vector3D.TransformNormal(AzimuthInitFwdDir, ref azParentMatrix);
-
-                Vector3D left;
-                Vector3D.Cross(ref MyPivotUp, ref forward, out left);
-
-                WeaponConstMatrix = new MatrixD { Forward = forward, Up = MyPivotUp, Left = left };
-            }
-
-            Vector3D pivotLeft;
-            Vector3D.Cross(ref MyPivotUp ,ref MyPivotFwd, out pivotLeft);
-            if (Vector3D.IsZero(pivotLeft))
-                MyPivotPos = centerTestPos;
-            else
-            {
-                Vector3D barrelUp;
-                Vector3D.Cross(ref MyPivotFwd, ref pivotLeft, out barrelUp);
-                
-                var elToMuzzleOrigin = weaponCenter - elevationMatrix.Translation;
-                var offset = Vector3D.ProjectOnVector(ref elToMuzzleOrigin, ref barrelUp);
-
-                MyPivotPos = elevationMatrix.Translation + offset;
-            }
-            if (!Vector3D.IsZero(AimOffset))
-            {
-                var pivotRotMatrix = new MatrixD { Forward = MyPivotFwd, Left = elevationMatrix.Left, Up = elevationMatrix.Up };
-                Vector3D offSet;
-                Vector3D.Rotate(ref AimOffset, ref pivotRotMatrix, out offSet);
-
-                MyPivotPos += offSet;
-            }
-
-            if (!Comp.Debug) return;
-
-            MyCenterTestLine = new LineD(centerTestPos, centerTestPos + (MyPivotUp * 20));
-            MyPivotTestLine = new LineD(MyPivotPos, MyPivotPos - (WeaponConstMatrix.Left * 10));
-            MyBarrelTestLine = new LineD(weaponCenter, weaponCenter + (MyPivotFwd * 16));
-            MyAimTestLine = new LineD(MyPivotPos, MyPivotPos + (MyPivotFwd * 20));
-            AzimuthFwdLine = new LineD(weaponCenter, weaponCenter + (WeaponConstMatrix.Forward * 19));
-            if (Target.HasTarget)
-                MyShootAlignmentLine = new LineD(MyPivotPos, Target.TargetPos);
+            catch (Exception ex) { Log.Line($"Exception in UpdateWeaponHeat: {ex} - AzimuthPartNull:{AzimuthPart == null} - azEntNull:{AzimuthPart?.Entity == null} - azParentNull:{AzimuthPart?.Entity?.Parent == null}", null, true); }
         }
 
         internal void UpdateWeaponHeat(object o = null)

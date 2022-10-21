@@ -405,7 +405,7 @@ namespace CoreSystems
                                 if (bomb != null)
                                     warHead++;
 
-                                if (!tStatus && fat is IMyGunBaseUser && !PartPlatforms.ContainsKey(fat.BlockDefinition.Id))
+                                if (!tStatus && fat is IMyGunBaseUser && !PartPlatforms.ContainsKey(fat.BlockDefinition.Id) && gridMap.Targeting != null)
                                     tStatus = gridMap.Targeting.AllowScanning = true;
 
                                 newTypeMap[Offense].Add(fat);
@@ -436,7 +436,9 @@ namespace CoreSystems
 
 
                     gridMap.MyCubeBocks.ApplyAdditions();
-                    gridMap.SuspectedDrone = !grid.IsStatic && (terminals < 20 && (warHead > 0 || working > 0 && (remote > 0 || program > 0)) || !((IMyCubeGrid)grid).ControlSystem.IsControlled && (powerProducers > 0 && thrusters > 0 && working > 0));
+                    var iGrid = (IMyCubeGrid)grid;
+                    var controlled = iGrid.ControlSystem?.IsControlled ?? false;
+                    gridMap.SuspectedDrone = !grid.IsStatic && (terminals < 20 && (warHead > 0 || working > 0 && (remote > 0 || program > 0)) || controlled && (powerProducers > 0 && thrusters > 0 && working > 0));
 
                     gridMap.Trash = terminals == 0;
                     gridMap.Powered = working > 0;
