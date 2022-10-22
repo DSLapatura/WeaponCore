@@ -77,7 +77,7 @@ namespace CoreSystems.Control
 
             AddWeaponBurstCountSliderRange<T>(session, "Burst Count", Localization.GetText("TerminalBurstShotsTitle"), Localization.GetText("TerminalBurstShotsTooltip"), BlockUi.GetBurstCount, BlockUi.RequestSetBurstCount, CanBurstIsNotBomb, BlockUi.GetMinBurstCount, BlockUi.GetMaxBurstCount, true);
             AddWeaponBurstDelaySliderRange<T>(session, "Burst Delay", Localization.GetText("TerminalBurstDelayTitle"), Localization.GetText("TerminalBurstDelayTooltip"), BlockUi.GetBurstDelay, BlockUi.RequestSetBurstDelay, IsNotBomb, BlockUi.GetMinBurstDelay, BlockUi.GetMaxBurstDelay, true);
-            AddWeaponSequenceIdSliderRange<T>(session, "Sequence Id", Localization.GetText("TerminalSequenceIdTitle"), Localization.GetText("TerminalSequenceIdTooltip"), BlockUi.GetSequenceId, BlockUi.RequestSetSequenceId, IsNotBomb, BlockUi.GetMinSequenceId, BlockUi.GetMaxSequenceId, true);
+            AddWeaponSequenceIdSliderRange<T>(session, "Sequence Id", Localization.GetText("TerminalSequenceIdTitle"), Localization.GetText("TerminalSequenceIdTooltip"), BlockUi.GetSequenceId, BlockUi.RequestSetSequenceId, IsNotBomb, BlockUi.GetMinSequenceId, BlockUi.GetMaxSequenceId, false);
             AddWeaponGroupIdIdSliderRange<T>(session, "Weapon Group Id", Localization.GetText("TerminalWeaponGroupIdTitle"), Localization.GetText("TerminalWeaponGroupIdTooltip"), BlockUi.GetWeaponGroupId, BlockUi.RequestSetWeaponGroupId, IsNotBomb, BlockUi.GetMinWeaponGroupId, BlockUi.GetMaxWeaponGroupId, true);
 
             Separator<T>(session, "WC_sep4", IsTrue);
@@ -686,6 +686,7 @@ namespace CoreSystems.Control
             c.Getter = getter;
             c.Setter = setter;
             c.Writer = SliderWeaponSequenceIdWriterRange;
+            c.SupportsMultipleBlocks = group;
 
             if (minGetter != null)
                 c.SetLimits(minGetter, maxGetter);
