@@ -917,7 +917,7 @@ namespace CoreSystems.Platform
 
                 }
 
-                if (Session.HandlesInput)
+                if (Session.HandlesInput && playerId == Session.PlayerId)
                     Session.GunnerAcquire(Cube, playerId);
             }
 
@@ -937,7 +937,7 @@ namespace CoreSystems.Platform
                         Log.Line($"OnPlayerController exit Repo null");
                 }
 
-                if (Session.HandlesInput)
+                if (Session.HandlesInput && playerId == Session.PlayerId)
                 {
                     Session.GunnerRelease(playerId);
                 }

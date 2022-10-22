@@ -218,7 +218,6 @@ namespace CoreSystems
             if (PlayerId == -1)
                 return;
 
-            Log.Line($"player: {PlayerId} took control of: {cube.DebugName}");
             GunnerBlackList = true;
             ActiveControlBlock = cube;
             var controlStringLeft = MyAPIGateway.Input.GetControl(MyMouseButtonsEnum.Left).GetGameControlEnum().String;
@@ -234,7 +233,6 @@ namespace CoreSystems
             if (!GunnerBlackList || PlayerId == -1)
                 return;
 
-            Log.Line($"player: {PlayerId}({playerId}) release control of: {ActiveControlBlock?.DebugName}");
             GunnerBlackList = false;
             ActiveControlBlock = null;
             var controlStringLeft = MyAPIGateway.Input.GetControl(MyMouseButtonsEnum.Left).GetGameControlEnum().String;
