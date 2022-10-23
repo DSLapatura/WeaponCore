@@ -7,6 +7,7 @@ using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRage.Utils;
 using VRageMath;
+using static CoreSystems.Session;
 using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetDef;
 
 namespace CoreSystems.Platform
@@ -20,7 +21,7 @@ namespace CoreSystems.Platform
         private readonly HashSet<string> _muzzlesToFire = new HashSet<string>();
         private readonly HashSet<string> _muzzlesFiring = new HashSet<string>();
         internal readonly Dictionary<int, string> MuzzleIdToName = new Dictionary<int, string>();
-        internal readonly Dictionary<long, ProtoWeaponProSync> WeaponProSyncs = new Dictionary<long, ProtoWeaponProSync>();
+        internal readonly Dictionary<long, ClientProSync> WeaponProSyncs = new Dictionary<long, ClientProSync>();
         internal readonly WeaponFrameCache WeaponCache;
         internal readonly WeaponSystem System;
         internal readonly Target Target;

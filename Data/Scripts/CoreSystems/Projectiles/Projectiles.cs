@@ -126,9 +126,8 @@ namespace CoreSystems.Projectiles
                 ai.ProjectileTicker = Session.Tick;
 
 
-                ProtoWeaponProSync proSync;
-                if (aConst.ProjectileSync && Session.MpActive && Session.IsClient && info.Weapon.WeaponProSyncs.Count > 0 && info.Weapon.WeaponProSyncs.TryGetValue(info.SyncId, out proSync))
-                    p.SyncClientProjectile(p, proSync);
+                if (aConst.ProjectileSync && Session.MpActive && Session.IsClient && info.Weapon.WeaponProSyncs.Count > 0)
+                    p.SyncClientProjectile(p);
 
                 if (p.Asleep)
                 {

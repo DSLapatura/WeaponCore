@@ -9,6 +9,7 @@ using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRage.Utils;
 using VRageMath;
+using static CoreSystems.Session;
 using static CoreSystems.Support.DroneStatus;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.EwarDef.EwarType;
@@ -1952,26 +1953,35 @@ namespace CoreSystems.Projectiles
             session.GlobalProSyncs[Info.Weapon.Comp.CoreEntity] = proSync;
         }
 
-        internal void SyncClientProjectile(Projectile p, ProtoWeaponProSync proSync)
+        internal void SyncClientProjectile(Projectile p)
         {
+
             var target = Info.Target;
             var session = Info.Ai.Session;
             var w = Info.Weapon;
 
-            p.Position = proSync.Position;
-            p.Velocity = proSync.Velocity;
-
-            if (proSync.State == ProtoWeaponProSync.ProSyncState.Dead)
-                p.State = ProjectileState.Destroy;
-
-            MyEntity targetEnt;
-            if (proSync.TargetId > 0 && (target.TargetState != proSync.Type || target.TargetId != proSync.TargetId) && MyEntities.TryGetEntityById(proSync.TargetId, out targetEnt))
+            ClientProSync clientProSync;
+            if (Info.Weapon.WeaponProSyncs.TryGetValue(Info.SyncId, out clientProSync))
             {
-                var topEntId = targetEnt.GetTopMostParent()?.EntityId ?? 0;
-                target.Set(targetEnt, targetEnt.PositionComp.WorldAABB.Center, 0, 0, topEntId);
-            }
+                if (session.Tick - clientProSync.UpdateTick <= 29)
+                {
+                    var proSync = clientProSync.ProSync;
+                    p.Position = proSync.Position;
+                    p.Velocity = proSync.Velocity;
 
-            w.WeaponProSyncs.Remove(Info.SyncId);
+                    if (proSync.State == ProtoWeaponProSync.ProSyncState.Dead)
+                        p.State = ProjectileState.Destroy;
+
+                    MyEntity targetEnt;
+                    if (proSync.TargetId > 0 && (target.TargetState != proSync.Type || target.TargetId != proSync.TargetId) && MyEntities.TryGetEntityById(proSync.TargetId, out targetEnt))
+                    {
+                        var topEntId = targetEnt.GetTopMostParent()?.EntityId ?? 0;
+                        target.Set(targetEnt, targetEnt.PositionComp.WorldAABB.Center, 0, 0, topEntId);
+                    }
+                }
+
+                w.WeaponProSyncs.Remove(Info.SyncId);
+            }
         }
         #endregion
     }

@@ -870,6 +870,12 @@ namespace CoreSystems
             internal float AreaModifer;
         }
 
+        internal struct ClientProSync
+        {
+            internal ProtoWeaponProSync ProSync;
+            internal uint UpdateTick;
+        }
+
         internal struct ResistanceValues
         {
             internal float EnergeticResistance;
