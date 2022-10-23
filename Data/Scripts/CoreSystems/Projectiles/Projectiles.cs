@@ -124,6 +124,12 @@ namespace CoreSystems.Projectiles
                 ++info.Age;
                 ++ai.MyProjectiles;
                 ai.ProjectileTicker = Session.Tick;
+
+
+                ProtoWeaponProSync proSync;
+                if (aConst.ProjectileSync && Session.MpActive && Session.IsClient && info.Weapon.WeaponProSyncs.Count > 0 && info.Weapon.WeaponProSyncs.TryGetValue(info.SyncId, out proSync))
+                    p.SyncClientProjectile(p, proSync);
+
                 if (p.Asleep)
                 {
                     if (p.DeaccelRate > 300 && info.Age % 100 != 0)
@@ -284,8 +290,8 @@ namespace CoreSystems.Projectiles
                 if (aConst.Ewar)
                     p.RunEwar();
 
-                if (aConst.ProjectileSync && Session.MpActive && Session.IsServer && info.Age % 60 == 0)
-                    p.SyncProjectile(ProtoWeaponProSync.ProSyncState.Alive);
+                if (aConst.ProjectileSync && Session.MpActive && Session.IsServer && info.Age >= 59 && (info.Age % 60 == 0 || info.Age - p.ChaseAge == 0))
+                    p.SyncServerProjectile(ProtoWeaponProSync.ProSyncState.Alive);
             }
         }
 

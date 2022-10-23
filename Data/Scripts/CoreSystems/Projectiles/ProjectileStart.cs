@@ -139,10 +139,8 @@ namespace CoreSystems.Projectiles
                         p.Info.Weapon.Monitors[j].Invoke(comp.Cube.EntityId, w.PartId, info.Id, target.TargetId, p.Position, true);
                 }
 
-                if (Session.MpActive && aConst.ProjectileSync) {
+                if (Session.MpActive && aConst.ProjectileSync) 
                     info.SyncId = (long)w.Reload.EndId << 32 | w.ProjectileCounter & 0xFFFFFFFFL;
-                    p.SyncProjectile(ProtoWeaponProSync.ProSyncState.Alive);
-                }
 
             }
             NewProjectiles.Clear();

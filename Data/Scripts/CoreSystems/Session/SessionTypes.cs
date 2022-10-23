@@ -829,10 +829,10 @@ namespace CoreSystems
                     for (int i = h; i < length; i += 1)
                     {
                         var tempValue = list[i];
-                        var temp = list[i].Part.UniqueId;
+                        var temp = list[i].Part.UniquePartId;
 
                         int j;
-                        for (j = i; j >= h && list[j - h].Part.UniqueId > temp; j -= h)
+                        for (j = i; j >= h && list[j - h].Part.UniquePartId > temp; j -= h)
                         {
                             list[j] = list[j - h];
                         }

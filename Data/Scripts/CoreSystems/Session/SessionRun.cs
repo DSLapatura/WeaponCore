@@ -214,7 +214,7 @@ namespace CoreSystems
                     
                     DsUtil.Start("network1");
 
-                    if (WeaponProSyncs.Count > 0)
+                    if (GlobalProSyncs.Count > 0)
                         SendProjectileSyncs();
 
                     if (PacketsToClient.Count > 0 || PrunedPacketsToClient.Count > 0) 

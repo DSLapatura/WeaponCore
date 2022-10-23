@@ -19,7 +19,7 @@ namespace CoreSystems.Platform
         internal uint PartCreatedTick;
         internal uint PartReadyTick;
         internal int ShortLoadId;
-        internal int UniqueId;
+        internal int UniquePartId;
         internal int PartId;
         internal bool IsPrime;
         internal bool Loading;
@@ -38,7 +38,7 @@ namespace CoreSystems.Platform
             PartId = partId;
             IsPrime = partId == comp.Platform.Structure.PrimaryPart;
             Acquire = new PartAcquire(this);
-            UniqueId = comp.Session.UniquePartId;
+            UniquePartId = comp.Session.UniquePartId;
             ShortLoadId = comp.Session.ShortLoadAssigner();
             for (int i = 0; i < BaseComp.Monitors[PartId].Count; i++)
                 Monitors.Add(BaseComp.Monitors[PartId][i]);

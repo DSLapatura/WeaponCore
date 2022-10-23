@@ -103,22 +103,17 @@ namespace CoreSystems
 
         private void SendProjectileSyncs()
         {
-            var packet = new ProjectileSyncPacket();
+            var packet = ProtoWeaponProPacketPool.Count > 0 ? ProtoWeaponProPacketPool.Pop() : new ProjectileSyncPacket { PType = PacketType.ProjectileSyncs };
 
-            foreach (var pSync in WeaponProSyncs)
+            foreach (var pSync in GlobalProSyncs)
             {
-                var wId = pSync.Key;
-                var syncDict = pSync.Value;
-                foreach (var sync in syncDict.Values)
-                {
-                    packet.Data.Add(sync);
-                    ProtoWeaponProSyncPool.Push(sync);
-                }
-                syncDict.Clear();
+                var sync = pSync.Value;
+                packet.Data.Add(sync);
+                ProtoWeaponProSyncPool.Push(sync);
             }
-            WeaponProSyncs.Clear();
 
-            WeaponProSyncs.Clear();
+            GlobalProSyncs.Clear();
+            
             PacketsToClient.Add(new PacketInfo
             {
                 Entity = null,

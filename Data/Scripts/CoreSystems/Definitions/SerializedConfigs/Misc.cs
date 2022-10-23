@@ -79,7 +79,7 @@ namespace CoreSystems
         public void Init(Weapon w)
         {
             if (w.Comp.Session.IsServer)
-                CurrentSeed = int.MaxValue - w.UniqueId;
+                CurrentSeed = int.MaxValue - w.UniquePartId;
 
             TurretRandom = new XorShiftRandomStruct((ulong)CurrentSeed);
             AcquireRandom = new XorShiftRandomStruct((ulong)CurrentSeed);

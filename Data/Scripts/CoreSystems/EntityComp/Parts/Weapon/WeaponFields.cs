@@ -20,7 +20,7 @@ namespace CoreSystems.Platform
         private readonly HashSet<string> _muzzlesToFire = new HashSet<string>();
         private readonly HashSet<string> _muzzlesFiring = new HashSet<string>();
         internal readonly Dictionary<int, string> MuzzleIdToName = new Dictionary<int, string>();
-
+        internal readonly Dictionary<long, ProtoWeaponProSync> WeaponProSyncs = new Dictionary<long, ProtoWeaponProSync>();
         internal readonly WeaponFrameCache WeaponCache;
         internal readonly WeaponSystem System;
         internal readonly Target Target;
@@ -240,9 +240,6 @@ namespace CoreSystems.Platform
             Comp = comp;
             System = system;
             Init(comp, system, partId);
-
-            if (System.Session.MpActive && System.HasProjectileSync)
-                System.Session.WeaponProSyncs[UniqueId] = new Dictionary<long, ProtoWeaponProSync>();
 
             MyStringHash subtype;
             if (comp.Session.VanillaIds.TryGetValue(comp.Id, out subtype)) {

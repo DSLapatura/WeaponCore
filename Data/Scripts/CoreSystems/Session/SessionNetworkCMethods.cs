@@ -1,4 +1,5 @@
-﻿using CoreSystems.Platform;
+﻿using System.Collections.Generic;
+using CoreSystems.Platform;
 using CoreSystems.Support;
 using Sandbox.Game.Entities;
 using VRage.Game.Entity;
@@ -459,22 +460,30 @@ namespace CoreSystems
         private bool ClientProjectileSyncs(PacketObj data)
         {
             var packet = data.Packet;
-            var proSync = (ProjectileSyncPacket)packet;
-            if (proSync.Data == null) return Error(data, Msg("ProSyncData"));
+            var proPacket = (ProjectileSyncPacket)packet;
+            if (proPacket.Data == null) return Error(data, Msg("ProSyncData"));
 
-            for (int i = 0; i < proSync.Data.Count; i++)
+            for (int i = 0; i < proPacket.Data.Count; i++)
             {
-                var sync = proSync.Data[i];
-                var dict = WeaponProSyncs[sync.UniquePartId];
-                var protoWeaponProSync = dict[sync.ProId];
-                protoWeaponProSync.Position = sync.Position;
-                protoWeaponProSync.Velocity = sync.Velocity;
-                protoWeaponProSync.Type = sync.Type;
-                protoWeaponProSync.ProId = sync.ProId;
-                protoWeaponProSync.TargetId = sync.TargetId;
-                protoWeaponProSync.UniquePartId = sync.UniquePartId;
+                var sync = proPacket.Data[i];
+                var ent = MyEntities.GetEntityByIdOrDefault(sync.CoreEntityId);
+                var comp = ent?.Components.Get<CoreComponent>();
+
+                if (comp?.Ai == null || comp.Platform.State != CorePlatform.PlatformState.Ready) 
+                    continue;
+
+                var wComp = comp as Weapon.WeaponComponent;
+                if (wComp != null)
+                {
+                    var collection = comp.TypeSpecific != CoreComponent.CompTypeSpecific.Phantom ? comp.Platform.Weapons : comp.Platform.Phantoms;
+                    var w = collection[sync.PartId];
+
+                    w.WeaponProSyncs[sync.ProId] = sync;
+                    data.Report.PacketValid = true;
+                }
+
             }
-            proSync.CleanUp();
+            proPacket.CleanUp();
             return true;
         }
 

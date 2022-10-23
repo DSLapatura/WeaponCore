@@ -100,6 +100,8 @@ namespace CoreSystems
         internal readonly Stack<MyEntity3DSoundEmitter> Emitters = new Stack<MyEntity3DSoundEmitter>(256);
         internal readonly Stack<VoxelCache> VoxelCachePool = new Stack<VoxelCache>(256);
         internal readonly Stack<ProtoWeaponProSync> ProtoWeaponProSyncPool = new Stack<ProtoWeaponProSync>(256);
+        internal readonly Stack<ProjectileSyncPacket> ProtoWeaponProPacketPool = new Stack<ProjectileSyncPacket>(256);
+
         internal readonly Stack<WeaponSequence> SequencePool = new Stack<WeaponSequence>(32);
         internal readonly Stack<WeaponGroup> GroupPool = new Stack<WeaponGroup>(32);
 
@@ -167,7 +169,7 @@ namespace CoreSystems
         internal readonly Dictionary<WeaponDefinition.AmmoDef, Dictionary<string, string>> AmmoValuesMap = new Dictionary<WeaponDefinition.AmmoDef, Dictionary<string, string>>();
         internal readonly Dictionary<WeaponDefinition, Dictionary<string, string>> WeaponValuesMap = new Dictionary<WeaponDefinition, Dictionary<string, string>>();
         internal readonly Dictionary<ulong, Projectile> MonitoredProjectiles = new Dictionary<ulong, Projectile>();
-        internal readonly Dictionary<int, Dictionary<long, ProtoWeaponProSync>> WeaponProSyncs = new Dictionary<int, Dictionary<long, ProtoWeaponProSync>>();
+        internal readonly Dictionary<MyEntity, ProtoWeaponProSync> GlobalProSyncs = new Dictionary<MyEntity, ProtoWeaponProSync>();
 
         internal readonly ConcurrentDictionary<long, int> DeferredPlayerLock = new ConcurrentDictionary<long, int>();
         internal readonly HashSet<MyDefinitionId> DefIdsComparer = new HashSet<MyDefinitionId>(MyDefinitionId.Comparer);
@@ -527,6 +529,7 @@ namespace CoreSystems
         }
 
         internal int UniquePartId => WeaponIdCounter++;
+
 
         internal ulong UniquePhantomId => PhantomIdCounter++;
 

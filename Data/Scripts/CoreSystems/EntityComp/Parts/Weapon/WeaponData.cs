@@ -48,6 +48,7 @@ namespace CoreSystems.Platform
                         var w = collection[i];
 
                         w.PartState = Repo.Values.State.Weapons[i];
+
                         w.Reload = Repo.Values.Reloads[i];
 
                         w.ProtoWeaponAmmo = Repo.Ammos[i];
@@ -60,7 +61,9 @@ namespace CoreSystems.Platform
                             w.TargetData = Repo.Values.Targets[i];
                             w.TargetData.WeaponRandom = new WeaponRandomGenerator();
                             w.TargetData.WeaponRandom.Init(w);
+
                             w.XorRnd = new XorShiftRandomStruct((ulong) w.TargetData.WeaponRandom.CurrentSeed);
+
                         }
                         else
                         {
@@ -105,6 +108,7 @@ namespace CoreSystems.Platform
                         {
                             Repo.Values.Set.Overrides.LeadGroup = Comp.Structure.DefaultLeadGroup;
                         }
+
                     }
 
                     for (int i = 0; i < collection.Count; i++)
@@ -117,6 +121,7 @@ namespace CoreSystems.Platform
                         if (w != null)
                         {
                             w.PartState = state;
+
                             w.Reload = reload;
                             w.ProtoWeaponAmmo = ammo;
 

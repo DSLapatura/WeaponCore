@@ -137,13 +137,13 @@ namespace CoreSystems.Platform
             Parts.NameToEntity["None"] = Parts.Entity;
             Parts.EntityToName[Parts.Entity] = "None";
 
-            var initState = GetParts();
-
+            GetParts();
+            
             Comp.NeedsWorldMatrix = Comp.TypeSpecific == VanillaTurret || Comp.HasAim || Comp.AnimationsModifyCoreParts || Comp.Entity.NeedsWorldMatrix;
-            return initState;
+            return State;
         }
 
-        private PlatformState GetParts()
+        private void GetParts()
         {
             for (int i = 0; i < Structure.PartHashes.Length; i++)
                 _orderToCreate.Add(i);
@@ -160,26 +160,25 @@ namespace CoreSystems.Platform
             {
                 case CoreStructure.StructureTypes.Weapon:
                     if (WeaponParts() == PlatformState.Invalid)
-                        return State;
+                        return;
                     break;
                 case CoreStructure.StructureTypes.Support:
                     if (SupportParts() == PlatformState.Invalid)
-                        return State;
+                        return;
                     break;
                 case CoreStructure.StructureTypes.Upgrade:
                     if (UpgradeParts() == PlatformState.Invalid)
-                        return State;
+                        return;
                     break;
                 case CoreStructure.StructureTypes.Control:
                     if (ControlParts() == PlatformState.Invalid)
-                        return State;
+                        return;
                     break;
             }
 
             _orderToCreate.Clear();
             State = PlatformState.Inited;
 
-            return State;
         }
 
         private PlatformState WeaponParts()

@@ -122,12 +122,13 @@ namespace CoreSystems
         }
 
         [ProtoMember(1)] public ProSyncState State;
-        [ProtoMember(2)] public TargetTypes Type;
+        [ProtoMember(2)] public Target.TargetStates Type;
         [ProtoMember(3)] public Vector3D Position;
         [ProtoMember(4)] public Vector3 Velocity;
-        [ProtoMember(5)] public int UniquePartId;
+        [ProtoMember(5)] public int PartId;
         [ProtoMember(6)] public long ProId;
         [ProtoMember(7)] public long TargetId;
+        [ProtoMember(8)] public long CoreEntityId;
     }
 
     [ProtoContract]

@@ -10,7 +10,7 @@ using static CoreSystems.Support.WeaponDefinition.TargetingDef;
 
 namespace CoreSystems.Support
 {
-    internal class Target
+    public class Target
     {
         internal readonly List<MyCubeBlock> Top5 = new List<MyCubeBlock>();
         internal States PreviousState = States.NotSet;

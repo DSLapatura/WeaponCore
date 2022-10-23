@@ -458,7 +458,7 @@ namespace CoreSystems.Projectiles
             if (aConst.IsDrone) Info.Weapon.LiveDrones--;
 
             if (aConst.ProjectileSync && session.MpActive && session.IsServer)
-                SyncProjectile(ProtoWeaponProSync.ProSyncState.Alive);
+                SyncServerProjectile(ProtoWeaponProSync.ProSyncState.Dead);
 
             PruningProxyId = -1;
             HadTarget = HadTargetState.None;
@@ -1936,23 +1936,43 @@ namespace CoreSystems.Projectiles
             }
         }
 
-        internal void SyncProjectile(ProtoWeaponProSync.ProSyncState state)
+        internal void SyncServerProjectile(ProtoWeaponProSync.ProSyncState state)
         {
             var target = Info.Target;
             var session = Info.Ai.Session;
             var proSync = session.ProtoWeaponProSyncPool.Count > 0 ? session.ProtoWeaponProSyncPool.Pop() : new ProtoWeaponProSync();
-            proSync.UniquePartId = Info.Weapon.UniqueId;
+            proSync.PartId = Info.Weapon.PartId;
             proSync.State = state;
             proSync.Position = Position;
             proSync.Velocity = Velocity;
             proSync.ProId = Info.SyncId;
             proSync.TargetId = target.TargetId;
-            proSync.Type = target.TargetState == Target.TargetStates.IsEntity ? ProtoWeaponProSync.TargetTypes.Entity : target.TargetState == Target.TargetStates.IsProjectile ? ProtoWeaponProSync.TargetTypes.Projectile : target.TargetState == Target.TargetStates.IsFake ? ProtoWeaponProSync.TargetTypes.Fake : ProtoWeaponProSync.TargetTypes.None;
-            var weaponSync = session.WeaponProSyncs[Info.Weapon.UniqueId];
-
-            weaponSync[Info.SyncId] = proSync;
+            proSync.Type = target.TargetState;
+            proSync.CoreEntityId = Info.Weapon.Comp.CoreEntity.EntityId;
+            session.GlobalProSyncs[Info.Weapon.Comp.CoreEntity] = proSync;
         }
 
+        internal void SyncClientProjectile(Projectile p, ProtoWeaponProSync proSync)
+        {
+            var target = Info.Target;
+            var session = Info.Ai.Session;
+            var w = Info.Weapon;
+
+            p.Position = proSync.Position;
+            p.Velocity = proSync.Velocity;
+
+            if (proSync.State == ProtoWeaponProSync.ProSyncState.Dead)
+                p.State = ProjectileState.Destroy;
+
+            MyEntity targetEnt;
+            if (proSync.TargetId > 0 && (target.TargetState != proSync.Type || target.TargetId != proSync.TargetId) && MyEntities.TryGetEntityById(proSync.TargetId, out targetEnt))
+            {
+                var topEntId = targetEnt.GetTopMostParent()?.EntityId ?? 0;
+                target.Set(targetEnt, targetEnt.PositionComp.WorldAABB.Center, 0, 0, topEntId);
+            }
+
+            w.WeaponProSyncs.Remove(Info.SyncId);
+        }
         #endregion
     }
 }
