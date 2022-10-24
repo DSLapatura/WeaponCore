@@ -126,7 +126,7 @@ namespace CoreSystems.Projectiles
                 ai.ProjectileTicker = Session.Tick;
 
 
-                if (aConst.ProjectileSync && Session.MpActive && Session.IsClient && info.Weapon.WeaponProSyncs.Count > 0)
+                if (aConst.ProjectileSync && Session.IsClient && info.Weapon.WeaponProSyncs.Count > 0)
                     p.SyncClientProjectile(p);
 
                 if (p.Asleep)
@@ -289,7 +289,7 @@ namespace CoreSystems.Projectiles
                 if (aConst.Ewar)
                     p.RunEwar();
 
-                if (aConst.ProjectileSync && Session.MpActive && Session.IsServer && info.Age >= 59 && (info.Age % 60 == 0 || info.Age - p.ChaseAge == 0))
+                if (aConst.ProjectileSync && Session.MpActive && Session.IsServer && info.Age >= 6 && (info.Age % 7 == 0 || info.Age - p.ChaseAge == 0))
                     p.SyncServerProjectile(ProtoWeaponProSync.ProSyncState.Alive);
             }
         }

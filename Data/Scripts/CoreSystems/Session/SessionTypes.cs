@@ -876,6 +876,12 @@ namespace CoreSystems
             internal uint UpdateTick;
         }
 
+        internal struct ClientProSyncDebugLine
+        {
+            internal LineD Line;
+            internal uint CreateTick;
+        }
+
         internal struct ResistanceValues
         {
             internal float EnergeticResistance;

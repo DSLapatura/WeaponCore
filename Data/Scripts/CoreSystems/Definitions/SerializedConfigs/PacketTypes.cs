@@ -137,7 +137,7 @@ namespace CoreSystems
     [ProtoContract]
     public class ProjectileSyncPacket : Packet
     {
-        [ProtoMember(1)] internal List<ProtoWeaponProSync> Data;
+        [ProtoMember(1)] internal List<ProtoWeaponProSync> Data = new List<ProtoWeaponProSync>(64);
 
         public override void CleanUp()
         {

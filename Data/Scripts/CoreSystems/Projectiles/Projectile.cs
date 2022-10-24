@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net.NetworkInformation;
 using CoreSystems.Support;
+using Sandbox.Engine.Multiplayer;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI.Ingame;
 using VRage.Game;
@@ -836,7 +838,7 @@ namespace CoreSystems.Projectiles
                     }
 
                     //debug line draw stuff
-                    if (Info.Weapon.System.WConst.DebugMode)
+                    if (Info.Weapon.System.WConst.DebugMode && !Info.Weapon.System.Session.DedicatedServer)
                     {
                         if (orbitSphere.Center != Vector3D.Zero)
                         {
@@ -1951,34 +1953,68 @@ namespace CoreSystems.Projectiles
             proSync.Type = target.TargetState;
             proSync.CoreEntityId = Info.Weapon.Comp.CoreEntity.EntityId;
             session.GlobalProSyncs[Info.Weapon.Comp.CoreEntity] = proSync;
+            //var pRng = Info.Random.GetSeedVaues();
+            //var wRng = Info.Weapon.XorRnd.GetSeedVaues();
+            //Log.Line($"ProSyn: state:{proSync.State} - targetUpdate:{target.TargetEntity?.EntityId} - targetState:{target.TargetState} - rng:{pRng.Item1}:{pRng.Item2}[{wRng.Item1}:{wRng.Item2}] - pId:{Info.Id}[{Info.SyncId}]({proSync.ProId})");
         }
-
         internal void SyncClientProjectile(Projectile p)
         {
-
             var target = Info.Target;
             var session = Info.Ai.Session;
             var w = Info.Weapon;
-
+            var aConst = Info.AmmoDef.Const;
             ClientProSync clientProSync;
             if (Info.Weapon.WeaponProSyncs.TryGetValue(Info.SyncId, out clientProSync))
             {
-                if (session.Tick - clientProSync.UpdateTick <= 29)
+                if (session.Tick - clientProSync.UpdateTick <= 7)
                 {
                     var proSync = clientProSync.ProSync;
-                    p.Position = proSync.Position;
-                    p.Velocity = proSync.Velocity;
-
-                    if (proSync.State == ProtoWeaponProSync.ProSyncState.Dead)
-                        p.State = ProjectileState.Destroy;
-
-                    MyEntity targetEnt;
-                    if (proSync.TargetId > 0 && (target.TargetState != proSync.Type || target.TargetId != proSync.TargetId) && MyEntities.TryGetEntityById(proSync.TargetId, out targetEnt))
+                    var adjustedDist = Vector3D.Distance(p.Position, proSync.Position);
+                    var adjVel = Vector3D.Distance(p.Velocity, proSync.Velocity);
+                    var threshold = false;
+                    var somethingChanged = false;
+                    if (adjustedDist * adjustedDist > 25)
                     {
-                        var topEntId = targetEnt.GetTopMostParent()?.EntityId ?? 0;
-                        target.Set(targetEnt, targetEnt.PositionComp.WorldAABB.Center, 0, 0, topEntId);
+                        threshold = true;
+                        somethingChanged = true;
+                        p.Position = proSync.Position;
+                        p.Velocity = proSync.Velocity;
+                        Vector3D.Normalize(ref p.Velocity, out Info.Direction);
                     }
+
+                    if (proSync.State == ProtoWeaponProSync.ProSyncState.Dead && p.State != ProjectileState.Dead)
+                    {
+                        somethingChanged = true;
+                        //p.State = ProjectileState.Destroy;
+                    }
+
+                    var targetChanged = false;
+                    MyEntity targetEnt = null;
+                    if (!aConst.IsDrone && proSync.TargetId > 0 && (target.TargetState != proSync.Type || target.TargetId != proSync.TargetId) && MyEntities.TryGetEntityById(proSync.TargetId, out targetEnt))
+                    {
+                        targetChanged = true;
+                        somethingChanged = true;
+                        var topEntId = targetEnt.GetTopMostParent()?.EntityId ?? 0;
+                        //target.Set(targetEnt, targetEnt.PositionComp.WorldAABB.Center, 0, 0, topEntId);
+                    }
+
+                    List<ClientProSyncDebugLine> lines;
+                    if (!Info.Weapon.System.Session.ProSyncLineDebug.TryGetValue(Info.SyncId, out lines))
+                    {
+                        lines = new List<ClientProSyncDebugLine>();
+                        Info.Weapon.System.Session.ProSyncLineDebug[Info.SyncId] = lines;
+                    }
+
+                    var newLine = lines.Count == 0 ? new LineD(proSync.Position - (proSync.Velocity * StepConst), proSync.Position) : new LineD(lines[lines.Count - 1].Line.To, proSync.Position); 
+                    lines.Add(new ClientProSyncDebugLine {CreateTick = Info.Weapon.System.Session.Tick, Line = newLine });
+
+                    var pRng = Info.Random.GetSeedVaues();
+                    var wRng = Info.Weapon.XorRnd.GetSeedVaues();
+                    //Log.Line($"ProSyn: delay:{session.Tick - clientProSync.UpdateTick} - changed:{somethingChanged} - tChanged:{targetChanged} - reqAdjDist:{adjustedDist}({threshold})- adjVel:{adjVel} - state:{proSync.State} - targetUpdate:{targetEnt?.EntityId} - targetState:{p.Info.Target.TargetState} - rng:{pRng.Item1}:{pRng.Item2}[{wRng.Item1}:{wRng.Item2}] - pId:{Info.Id}[{Info.SyncId}]({proSync.ProId})");
                 }
+                else
+                    Log.Line($"Client ProjectileSync Expired: syncDelay:{session.Tick - clientProSync.UpdateTick}");
+
 
                 w.WeaponProSyncs.Remove(Info.SyncId);
             }

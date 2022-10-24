@@ -269,7 +269,7 @@ namespace CoreSystems
                 if (SuppressWc || DedicatedServer || _lastDrawTick == Tick || _paused) return;
                 
 
-                if (DebugLos)
+                if (DebugLos || ProSyncLineDebug.Count > 0)
                     LosDebuging();
                 
                 _lastDrawTick = Tick;

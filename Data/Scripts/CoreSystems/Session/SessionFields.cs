@@ -195,7 +195,7 @@ namespace CoreSystems
         internal readonly List<Weapon> InvRemoveClean = new List<Weapon>();
         internal readonly List<CoreComponent> CompsDelayedInit = new List<CoreComponent>();
         internal readonly List<CoreComponent> CompsDelayedReInit = new List<CoreComponent>();
-
+        internal readonly Dictionary<long, List<ClientProSyncDebugLine>> ProSyncLineDebug = new Dictionary<long, List<ClientProSyncDebugLine>>();
         internal readonly List<CompReAdd> CompReAdds = new List<CompReAdd>();
 
         internal readonly List<Projectile> Hits = new List<Projectile>(16);

@@ -161,6 +161,20 @@ namespace CoreSystems
                     WeaponLosDebugActive.Remove(info.Part);
                 }
             }
+
+            foreach (var p in ProSyncLineDebug)
+            {
+                for (var i = p.Value.Count - 1; i >= 0; i--)
+                {
+                    var info = p.Value[i];
+
+                    DsDebugDraw.DrawLine(info.Line, Color.Green, 0.35f);
+                    if (Tick - info.CreateTick > 7200)
+                    {
+                        p.Value.RemoveAt(i);
+                    }
+                }
+            }
         }
 
         private double _avCpuTime;
