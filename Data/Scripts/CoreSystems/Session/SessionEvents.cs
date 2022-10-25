@@ -125,6 +125,8 @@ namespace CoreSystems
                     }
 
                     cube.AddedToScene += DecoyAddedToScene;
+                    cube.OnClose += DecoyOnClose;
+
                 }
                 else if (camera != null)
                 {
@@ -240,6 +242,12 @@ namespace CoreSystems
         {
             myEntity.OnClose -= CameraOnClose;
             myEntity.AddedToScene -= CameraAddedToScene;
+        }
+
+        private void DecoyOnClose(MyEntity myEntity)
+        {
+            myEntity.OnClose -= DecoyOnClose;
+            myEntity.AddedToScene -= DecoyAddedToScene;
         }
 
         private void CameraAppendingCustomInfo(IMyTerminalBlock term, StringBuilder stringBuilder)
