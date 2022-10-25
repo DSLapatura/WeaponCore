@@ -172,13 +172,11 @@ namespace CoreSystems
     [ProtoContract]
     public class DronePacket : Packet
     {
-        [ProtoMember(1), DefaultValue("")] internal string GroupName = "";
-        [ProtoMember(2), DefaultValue("")] internal string Setting = "";
-        [ProtoMember(3)] internal long Value;
+        [ProtoMember(1), DefaultValue("")] internal string Setting = "";
+        [ProtoMember(2)] internal long Value;
         public override void CleanUp()
         {
             base.CleanUp();
-            GroupName = string.Empty;
             Setting = string.Empty;
             Value = 0;
         }
