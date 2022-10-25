@@ -2013,7 +2013,20 @@ namespace CoreSystems.Projectiles
 
                     var pRng = Info.Random.GetSeedVaues();
                     var wRng = Info.Weapon.XorRnd.GetSeedVaues();
-                    Log.Line($"ProSyn: delay:{session.Tick - clientProSync.UpdateTick} - cOwl:{clientProSync.CurrentOwl} - pOwl:{clientProSync.PreviousOwl} - posUpdate:{posUpdate} - forceKill:{forceKill} - targetChange:{targetChange} - owlDiff:{Vector3D.Distance(Info.PreviousPositions[clientProSync.CurrentOwl < 30 ? (int)clientProSync.CurrentOwl : posSlot], proSync.Position)} - posDiff:{Vector3D.Distance(p.Position, proSync.Position)} - velDiff:{Vector3D.Distance(oldVels, proSync.Velocity)} - state:{proSync.State} - targetUpdate:{targetEnt?.EntityId} - targetState:{p.Info.Target.TargetState} - rng:{pRng.Item1}:{pRng.Item2}[{wRng.Item1}:{wRng.Item2}] - pId:{Info.Id}[{Info.SyncId}]({proSync.ProId})");
+
+                    int checkSlot = posSlot + 1 < 30 ? posSlot + 1 : 0;
+
+                    if (clientProSync.CurrentOwl < 30)
+                    {
+                        if (posSlot - clientProSync.CurrentOwl >= 0)
+                            checkSlot =  posSlot - (int)clientProSync.CurrentOwl;
+                        else
+                        {
+                            checkSlot = (posSlot - (int) clientProSync.CurrentOwl) + 30;
+                        }
+                    }
+
+                    Log.Line($"ProSyn: delay:{session.Tick - clientProSync.UpdateTick} - cOwl:{clientProSync.CurrentOwl} - pOwl:{clientProSync.PreviousOwl} - posUpdate:{posUpdate} - forceKill:{forceKill} - targetChange:{targetChange} - owlDiff:{Vector3D.Distance(Info.PreviousPositions[checkSlot], proSync.Position)} - posDiff:{Vector3D.Distance(p.Position, proSync.Position)} - velDiff:{Vector3D.Distance(oldVels, proSync.Velocity)} - state:{proSync.State} - targetUpdate:{targetEnt?.EntityId} - targetState:{p.Info.Target.TargetState} - rng:{pRng.Item1}:{pRng.Item2}[{wRng.Item1}:{wRng.Item2}] - pId:{Info.Id}[{Info.SyncId}]({proSync.ProId})");
                 }
 
                 w.WeaponProSyncs.Remove(Info.SyncId);
