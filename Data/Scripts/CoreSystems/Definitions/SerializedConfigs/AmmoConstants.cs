@@ -319,7 +319,6 @@ namespace CoreSystems.Support
             AmmoIdxPos = ammoIndex;
             MyInventory.GetItemVolumeAndMass(ammo.AmmoDefinitionId, out MagMass, out MagVolume);
             MagazineDef = MyDefinitionManager.Static.GetAmmoMagazineDefinition(ammo.AmmoDefinitionId);
-            ProjectileSync = ammo.AmmoDef.Synchronize;
 
             IsCriticalReaction = wDef.HardPoint.HardWare.CriticalReaction.Enable;
 
@@ -376,6 +375,7 @@ namespace CoreSystems.Support
             IsSmart = ammo.AmmoDef.Trajectory.Guidance == Smart;
             IsTurretSelectable = !ammo.IsShrapnel && ammo.AmmoDef.HardPointUsable;
 
+            ProjectileSync = ammo.AmmoDef.Synchronize && session.MpActive && (IsDrone || IsSmart);
 
             OverrideTarget = ammo.AmmoDef.Trajectory.Smarts.OverideTarget;
             RequiresTarget = ammo.AmmoDef.Trajectory.Guidance != None && !OverrideTarget || system.TrackTargets;

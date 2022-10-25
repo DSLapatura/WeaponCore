@@ -59,6 +59,8 @@ namespace CoreSystems
         ForceReload,
         ControlOnOff,
         BlackListRequest,
+        RequestDroneSet,
+        PingPong,
     }
 
     #region packets
@@ -100,6 +102,7 @@ namespace CoreSystems
     [ProtoInclude(39, typeof(ControlCompPacket))]
     [ProtoInclude(40, typeof(ControlStatePacket))]
     [ProtoInclude(41, typeof(BlackListPacket))]
+    [ProtoInclude(42, typeof(DronePacket))]
 
     public class Packet
     {
@@ -138,6 +141,8 @@ namespace CoreSystems
     public class ProjectileSyncPacket : Packet
     {
         [ProtoMember(1)] internal List<ProtoWeaponProSync> Data = new List<ProtoWeaponProSync>(64);
+        [ProtoMember(2)] internal uint CurrentOwl;
+        [ProtoMember(3)] internal uint PreviousOwl;
 
         public override void CleanUp()
         {
@@ -158,6 +163,21 @@ namespace CoreSystems
         {
             base.CleanUp();
             Data = null;
+            GroupName = string.Empty;
+            Setting = string.Empty;
+            Value = 0;
+        }
+    }
+
+    [ProtoContract]
+    public class DronePacket : Packet
+    {
+        [ProtoMember(1), DefaultValue("")] internal string GroupName = "";
+        [ProtoMember(2), DefaultValue("")] internal string Setting = "";
+        [ProtoMember(3)] internal long Value;
+        public override void CleanUp()
+        {
+            base.CleanUp();
             GroupName = string.Empty;
             Setting = string.Empty;
             Value = 0;

@@ -874,12 +874,20 @@ namespace CoreSystems
         {
             internal ProtoWeaponProSync ProSync;
             internal uint UpdateTick;
+            internal uint CurrentOwl;
+            internal uint PreviousOwl;
         }
 
         internal struct ClientProSyncDebugLine
         {
             internal LineD Line;
             internal uint CreateTick;
+        }
+
+        internal struct TickLatency
+        {
+            internal uint CurrentLatency;
+            internal uint PreviousLatency;
         }
 
         internal struct ResistanceValues

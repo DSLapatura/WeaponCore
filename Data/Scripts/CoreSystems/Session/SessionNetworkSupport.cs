@@ -6,6 +6,7 @@ using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRageMath;
 using static CoreSystems.Platform.ControlSys;
+using static CoreSystems.Platform.Weapon.ShootManager;
 using static CoreSystems.Support.CoreComponent;
 
 namespace CoreSystems
@@ -116,9 +117,23 @@ namespace CoreSystems
             
             PacketsToClient.Add(new PacketInfo
             {
+                Function = RewriteAddClientLatency,
+                SpecialPlayerId = long.MinValue,
                 Entity = null,
                 Packet = packet,
             });
+        }
+
+        private object RewriteAddClientLatency(object o)
+        {
+            var proSync = (ProjectileSyncPacket)o;
+
+            TickLatency tickLatency;
+            PlayerTickLatency.TryGetValue(proSync.SenderId, out tickLatency);
+            proSync.CurrentOwl = tickLatency.CurrentLatency;
+            proSync.PreviousOwl = tickLatency.PreviousLatency;
+
+            return proSync;
         }
 
         internal void SendConstruct(Ai ai)
@@ -734,6 +749,22 @@ namespace CoreSystems
                 PacketsToServer.Add(new OverRidesPacket
                 {
                     PType = PacketType.OverRidesUpdate,
+                    EntityId = comp.CoreEntity.EntityId,
+                    SenderId = MultiplayerId,
+                    Setting = settings,
+                    Value = value,
+                });
+            }
+            else Log.Line("SendOverRidesClientComp should only be called on clients");
+        }
+
+        internal void SendDroneClientComp(CoreComponent comp, string settings, long value)
+        {
+            if (IsClient)
+            {
+                PacketsToServer.Add(new DronePacket
+                {
+                    PType = PacketType.RequestDroneSet,
                     EntityId = comp.CoreEntity.EntityId,
                     SenderId = MultiplayerId,
                     Setting = settings,
@@ -1359,6 +1390,36 @@ namespace CoreSystems
                 });
             }
             else Log.Line("SendToggle not called on client");
+        }
+
+        private readonly Packet _pingPongPacket = new Packet();
+        internal void PingPong(long serverGameTicks)
+        {
+            _pingPongPacket.EntityId = serverGameTicks;
+
+            if (IsClient)
+            {
+                PacketsToServer.Add(_pingPongPacket);
+            }
+            else if (MpServer)
+            {
+                PacketsToClient.Add(new PacketInfo
+                {
+                    Entity = null,
+                    Packet = _pingPongPacket,
+                });
+            }
+        }
+
+        internal void RecordClientLatency(Packet clientPong)
+        {
+            var rtt = (double)(Session.GameDateTime.Ticks - clientPong.EntityId);
+            var owl = (uint)Math.Round(rtt / 2d, 3);
+
+            TickLatency oldLatency;
+            PlayerTickLatency.TryGetValue(clientPong.SenderId, out oldLatency);
+
+            PlayerTickLatency[clientPong.SenderId] = new TickLatency { CurrentLatency = owl, PreviousLatency = oldLatency.CurrentLatency };
         }
 
         #region Misc Network Methods

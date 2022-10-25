@@ -706,7 +706,6 @@ namespace CoreSystems
 
                     MultiplayerId = MyAPIGateway.Multiplayer.MyId;
 
-
                     if (AuthorIds.Contains(MultiplayerId))
                         AuthorConnected = true;
 
@@ -722,6 +721,9 @@ namespace CoreSystems
                     for (int i = 0; i < players.Count; i++)
                         PlayerConnected(players[i].IdentityId);
                 }
+
+                _pingPongPacket.SenderId = MultiplayerId;
+                _pingPongPacket.PType = PacketType.PingPong;
 
                 return true;
             }

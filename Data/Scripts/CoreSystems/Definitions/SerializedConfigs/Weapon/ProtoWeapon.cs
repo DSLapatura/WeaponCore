@@ -369,11 +369,24 @@ namespace CoreSystems
         public uint UpdatedTick;
         public void Sync(Weapon.WeaponComponent weaponComponent, ProtoWeaponCompTasks sync)
         {
+            var oldEnemyId = EnemyId;
+            var oldFriendId = FriendId;
+            var oldPosition = Position;
+
             EnemyId = sync.EnemyId;
             FriendId = sync.FriendId;
             Position = sync.Position;
             Task = sync.Task;
             Update(weaponComponent);
+
+            if (EnemyId != oldEnemyId)
+                weaponComponent.AssignEnemy(EnemyId, weaponComponent.Data.Repo.Values.State.PlayerId);
+
+            if (FriendId != oldFriendId)
+                weaponComponent.AssignFriend(EnemyId, weaponComponent.Data.Repo.Values.State.PlayerId);
+
+            //if (FriendId != oldFriendId)
+            //    weaponComponent.AssignPoint(Position, weaponComponent.Data.Repo.Values.State.PlayerId);
         }
 
         public void Update(Weapon.WeaponComponent weaponComponent)

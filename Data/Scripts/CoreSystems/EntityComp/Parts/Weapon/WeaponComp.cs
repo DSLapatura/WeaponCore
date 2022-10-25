@@ -9,6 +9,7 @@ using Sandbox.ModAPI.Weapons;
 using VRage.Game;
 using VRage.Game.Entity;
 using VRageMath;
+using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace CoreSystems.Platform
 {
@@ -421,6 +422,44 @@ namespace CoreSystems.Platform
                 }
             }
 
+
+            internal static void RequestDroneSetValue(WeaponComponent comp, string setting, long value, long playerId)
+            {
+                if (comp.Session.IsServer)
+                {
+                    SetDroneValue(comp, setting, value, playerId);
+                }
+                else if (comp.Session.IsClient)
+                {
+                    comp.Session.SendDroneClientComp(comp, setting, value);
+                }
+            }
+
+            internal static void SetDroneValue(WeaponComponent comp, string setting, long entityId, long playerId)
+            {
+                switch (setting)
+                {
+                    case "Friend":
+                    {
+                        if (!comp.AssignFriend(entityId, playerId))
+                            return;
+                        break;
+                    }
+                    case "Enemy":
+                    {
+                        if (!comp.AssignEnemy(entityId, playerId))
+                            return;
+                        break;
+                    }
+                }
+
+                ResetCompState(comp, playerId, true);
+
+
+                if (comp.Session.MpActive)
+                    comp.Session.SendState(comp);
+            }
+
             internal static void RequestSetValue(WeaponComponent comp, string setting, int value, long playerId)
             {
                 if (comp.Session.IsServer)
@@ -666,85 +705,98 @@ namespace CoreSystems.Platform
                 return true;
             }
 
-            internal void RequestFriend()
+            internal bool AssignFriend(long entityId, long callingPlayerId)
             {
-                if (Session.TargetUi.SelectedEntity != null)
-                {
-                    AssignFriend(Session.TargetUi.SelectedEntity);
-                }
-                else 
-                    ClearFriend();
-            }
-
-            internal void RequestEnemy()
-            {
-                var rootAi = Ai.Construct.RootAi;
-                if (Session.TargetUi.SelectedEntity != null || rootAi.Construct.Focus.GetPriorityTarget(rootAi, out Session.TargetUi.SelectedEntity))
-                {
-                    AssignEnemy(Session.TargetUi.SelectedEntity);
-                }
-                else
-                    ClearEnemy();
-            }
-
-            internal void RequestPoint()
-            {
-
-            }
-
-
-            internal void AssignFriend(MyEntity entity)
-            {
-                if (Ai.Targets.ContainsKey(entity))
-                    return;
                 var tasks = Data.Repo.Values.State.Tasks;
-                tasks.FriendId = entity.EntityId;
-                tasks.Task = ProtoWeaponCompTasks.Tasks.Defend;
+
+                MyEntity target;
+                if (!MyEntities.TryGetEntityById(entityId, out target) || Ai.Targets.ContainsKey(target))
+                {
+                    ClearFriend(Session.PlayerId);
+                    return false;
+                }
+
+                if (Session.IsServer)
+                {
+                    tasks.FriendId = target.EntityId;
+                    tasks.Task = ProtoWeaponCompTasks.Tasks.Defend;
+                }
+
                 tasks.Update(this);
 
                 Friends.Clear();
-                Friends.Add(entity);
+                Friends.Add(target);
 
-                SendTargetNotice($"Friend {entity.DisplayName} assigned to {Collection[0].System.ShortName}");
+                if (Session.PlayerId == callingPlayerId)
+                    SendTargetNotice($"Friend {target.DisplayName} assigned to {Collection[0].System.ShortName}");
+
+                return true;
             }
 
-            internal void ClearFriend()
+            internal void ClearFriend(long callingPlayerId)
             {
                 var tasks = Data.Repo.Values.State.Tasks;
-                tasks.FriendId = 0;
-                tasks.Task = ProtoWeaponCompTasks.Tasks.None;
 
-                if (Friends.Count > 0)
+                if (Session.IsServer)
+                {
+                    tasks.FriendId = 0;
+                    tasks.Task = ProtoWeaponCompTasks.Tasks.None;
+
+                    if (Session.MpActive)
+                        Session.SendState(this);
+                }
+
+
+                if (Friends.Count > 0 && Session.PlayerId == callingPlayerId)
                     SendTargetNotice($"Friend {Friends[0].DisplayName} unassigned from {Collection[0].System.ShortName}");
 
                 Friends.Clear();
             }
 
 
-            internal void AssignEnemy(MyEntity entity)
+            internal bool AssignEnemy(long entityId, long callingPlayerId)
             {
-                if (!Ai.Targets.ContainsKey(entity))
-                    return;
 
                 var tasks = Data.Repo.Values.State.Tasks;
-                tasks.EnemyId = entity.EntityId;
-                tasks.Task = ProtoWeaponCompTasks.Tasks.Attack;
+
+                MyEntity target;
+                if (!MyEntities.TryGetEntityById(entityId, out target) || !Ai.Targets.ContainsKey(target))
+                {
+                    ClearEnemy(Session.PlayerId);
+                    return false;
+                }
+
+                if (Session.IsServer)
+                {
+                    tasks.EnemyId = target.EntityId;
+                    tasks.Task = ProtoWeaponCompTasks.Tasks.Attack;
+                }
+
                 tasks.Update(this);
 
                 Enemies.Clear();
-                Enemies.Add(entity);
+                Enemies.Add(target);
 
-                SendTargetNotice($"Enemy {entity.DisplayName} assigned to {Collection[0].System.ShortName}");
+                if (Session.PlayerId == callingPlayerId)
+                    SendTargetNotice($"Enemy {target.DisplayName} assigned to {Collection[0].System.ShortName}");
+
+                return true;
 
             }
 
-            internal void ClearEnemy()
+            internal void ClearEnemy(long callingPlayerId)
             {
                 var tasks = Data.Repo.Values.State.Tasks;
-                tasks.EnemyId = 0;
-                tasks.Task = ProtoWeaponCompTasks.Tasks.None;
+                if (Session.IsServer)
+                {
+                    tasks.EnemyId = 0;
+                    tasks.Task = ProtoWeaponCompTasks.Tasks.None;
 
-                if (Enemies.Count > 0)
+                    if (Session.MpActive)
+                        Session.SendState(this);
+                }
+
+                if (Enemies.Count > 0 && Session.PlayerId == callingPlayerId)
                     SendTargetNotice($"Friend {Enemies[0].DisplayName} unassigned from {Collection[0].System.ShortName}");
 
                 Enemies.Clear();

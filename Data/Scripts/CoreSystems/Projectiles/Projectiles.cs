@@ -289,7 +289,7 @@ namespace CoreSystems.Projectiles
                 if (aConst.Ewar)
                     p.RunEwar();
 
-                if (aConst.ProjectileSync && Session.MpActive && Session.IsServer && info.Age >= 6 && (info.Age % 7 == 0 || info.Age - p.ChaseAge == 0))
+                if (aConst.ProjectileSync && Session.IsServer && info.Age >= 28 && (info.Age % 29 == 0 || info.Age - p.ChaseAge == 0))
                     p.SyncServerProjectile(ProtoWeaponProSync.ProSyncState.Alive);
             }
         }

@@ -478,7 +478,7 @@ namespace CoreSystems
                     var collection = comp.TypeSpecific != CoreComponent.CompTypeSpecific.Phantom ? comp.Platform.Weapons : comp.Platform.Phantoms;
                     var w = collection[sync.PartId];
 
-                    w.WeaponProSyncs[sync.ProId] = new ClientProSync {ProSync = sync, UpdateTick = Tick};
+                    w.WeaponProSyncs[sync.ProId] = new ClientProSync {ProSync = sync, UpdateTick = Tick, CurrentOwl = proPacket.CurrentOwl, PreviousOwl = proPacket.PreviousOwl};
                     data.Report.PacketValid = true;
                 }
 

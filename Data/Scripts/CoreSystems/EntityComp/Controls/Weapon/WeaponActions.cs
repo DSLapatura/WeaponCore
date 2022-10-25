@@ -41,7 +41,10 @@ namespace CoreSystems.Control
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready || comp.Session.DedicatedServer)
                 return;
 
-            comp.RequestFriend();
+            var targetUi = comp.Session.TargetUi;
+
+            var targetId = targetUi.SelectedEntity == null || targetUi.SelectedEntity.MarkedForClose ? 0 : targetUi.SelectedEntity.EntityId;
+            Weapon.WeaponComponent.RequestDroneSetValue(comp, "Friend", targetId, comp.Session.PlayerId);
         }
 
         internal static void TerminalActionEnemy(IMyTerminalBlock blk)
@@ -50,7 +53,10 @@ namespace CoreSystems.Control
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready || comp.Session.DedicatedServer)
                 return;
 
-            comp.RequestEnemy();
+            var targetUi = comp.Session.TargetUi;
+
+            var targetId = targetUi.SelectedEntity == null || targetUi.SelectedEntity.MarkedForClose ? 0 : targetUi.SelectedEntity.EntityId;
+            Weapon.WeaponComponent.RequestDroneSetValue(comp, "Enemy", targetId, comp.Session.PlayerId);
         }
 
         internal static void TerminalActionPosition(IMyTerminalBlock blk)
@@ -59,7 +65,7 @@ namespace CoreSystems.Control
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready || comp.Session.DedicatedServer)
                 return;
 
-            comp.RequestPoint();
+            //Weapon.WeaponComponent.RequestDroneSetValue(comp, "Point", comp.Session.TargetUi.SelectedEntity.EntityId, comp.Session.PlayerId);
         }
 
         internal static void TerminalActionShootOn(IMyTerminalBlock blk)

@@ -9,6 +9,7 @@ using VRage.Game.Entity;
 using VRage.ModAPI;
 using VRage.Utils;
 using VRageMath;
+using WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting;
 using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace CoreSystems
@@ -85,7 +86,7 @@ namespace CoreSystems
                     Log.Line($"{item.Text} - {data.DisplayName}");
                 }
             }
-            comp.ClearFriend();
+            Weapon.WeaponComponent.RequestDroneSetValue(comp, "Friend", 0, comp.Session.PlayerId);
         }
 
         internal static void EnemyFill(IMyTerminalBlock block, List<MyTerminalControlListBoxItem> arg1, List<MyTerminalControlListBoxItem> arg2)
@@ -116,7 +117,7 @@ namespace CoreSystems
                     Log.Line($"{item.Text} - {data.DisplayName}");
                 }
             }
-            comp.ClearEnemy();
+            Weapon.WeaponComponent.RequestDroneSetValue(comp, "Enemy", 0, comp.Session.PlayerId);
         }
 
         internal static void PositionFill(IMyTerminalBlock block, List<MyTerminalControlListBoxItem> arg1, List<MyTerminalControlListBoxItem> arg2)

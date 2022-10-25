@@ -124,7 +124,6 @@ namespace CoreSystems
         internal readonly ConcurrentDictionary<long, PlayerMap> Players = new ConcurrentDictionary<long, PlayerMap>();
         internal readonly ConcurrentDictionary<long, IMyCharacter> Admins = new ConcurrentDictionary<long, IMyCharacter>();
         internal readonly ConcurrentDictionary<IMyCharacter, IMyPlayer> AdminMap = new ConcurrentDictionary<IMyCharacter, IMyPlayer>();
-        internal readonly ConcurrentDictionary<ulong, long> SteamToPlayer = new ConcurrentDictionary<ulong, long>();
         internal readonly ConcurrentDictionary<MyCubeGrid, ConcurrentDictionary<WeaponDefinition.TargetingDef.BlockTypes, ConcurrentCachingList<MyCubeBlock>>> GridToBlockTypeMap = new ConcurrentDictionary<MyCubeGrid, ConcurrentDictionary<WeaponDefinition.TargetingDef.BlockTypes, ConcurrentCachingList<MyCubeBlock>>>();
         internal readonly ConcurrentDictionary<MyInventory, MyConcurrentList<MyPhysicalInventoryItem>> InventoryItems = new ConcurrentDictionary<MyInventory, MyConcurrentList<MyPhysicalInventoryItem>>();
         internal readonly ConcurrentDictionary<MyInventory, ConcurrentDictionary<uint, BetterInventoryItem>> CoreInventoryItems = new ConcurrentDictionary<MyInventory, ConcurrentDictionary<uint, BetterInventoryItem>>();
@@ -139,9 +138,10 @@ namespace CoreSystems
         internal readonly ConcurrentDictionary<long, WaterData> WaterMap = new ConcurrentDictionary<long, WaterData>();
         internal readonly ConcurrentDictionary<long, MyPlanet> PlanetMap = new ConcurrentDictionary<long, MyPlanet>();
         internal readonly ConcurrentDictionary<MyPlanet, long> PlanetTemp = new ConcurrentDictionary<MyPlanet, long>();
-
         internal readonly ConcurrentDictionary<MyCubeGrid, GridMap> DirtyPowerGrids = new ConcurrentDictionary<MyCubeGrid, GridMap>();
         internal readonly ConcurrentDictionary<string, MyObjectBuilder_Checkpoint.ModItem> ModInfo = new ConcurrentDictionary<string, MyObjectBuilder_Checkpoint.ModItem>();
+
+        internal readonly Dictionary<ulong, long> SteamToPlayer = new Dictionary<ulong, long>();
         internal readonly Dictionary<MyStringHash, DamageInfoLog> DmgLog = new Dictionary<MyStringHash, DamageInfoLog>(MyStringHash.Comparer);
         internal readonly Dictionary<IMyGridGroupData, GridGroupMap> GridGroupMap = new Dictionary<IMyGridGroupData, GridGroupMap>();
         internal readonly Dictionary<string, Dictionary<string, WeaponSystem.AmmoType>> AmmoMaps = new Dictionary<string, Dictionary<string, WeaponSystem.AmmoType>>();
@@ -170,6 +170,7 @@ namespace CoreSystems
         internal readonly Dictionary<WeaponDefinition, Dictionary<string, string>> WeaponValuesMap = new Dictionary<WeaponDefinition, Dictionary<string, string>>();
         internal readonly Dictionary<ulong, Projectile> MonitoredProjectiles = new Dictionary<ulong, Projectile>();
         internal readonly Dictionary<MyEntity, ProtoWeaponProSync> GlobalProSyncs = new Dictionary<MyEntity, ProtoWeaponProSync>();
+        internal readonly Dictionary<ulong, TickLatency> PlayerTickLatency = new Dictionary<ulong, TickLatency>();
 
         internal readonly ConcurrentDictionary<long, int> DeferredPlayerLock = new ConcurrentDictionary<long, int>();
         internal readonly HashSet<MyDefinitionId> DefIdsComparer = new HashSet<MyDefinitionId>(MyDefinitionId.Comparer);

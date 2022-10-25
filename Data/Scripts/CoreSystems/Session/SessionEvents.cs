@@ -494,7 +494,9 @@ namespace CoreSystems
                 {
                     long playerId;
 
-                    SteamToPlayer.TryRemove(removedPlayer.Player.SteamUserId, out playerId);
+                    if (SteamToPlayer.TryGetValue(removedPlayer.Player.SteamUserId, out playerId))
+                        SteamToPlayer.Remove(removedPlayer.Player.SteamUserId);
+
                     PlayerEntityIdInRange.Remove(removedPlayer.Player.SteamUserId);
                     PlayerDummyTargets.Remove(playerId);
                     if (PlayerControllerMonitor.Remove(removedPlayer.Player))

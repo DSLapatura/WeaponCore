@@ -61,6 +61,12 @@ namespace CoreSystems
                     return;
                 }
 
+                if (packet.PType == PacketType.PingPong)
+                {
+                    PingPong(packet.EntityId);
+                    return;
+                }
+
                 var packetSize = rawData.Length;
                 var report = Reporter.ReportPool.Get();
                 report.Receiver = NetworkReporter.Report.Received.Client;
@@ -258,6 +264,12 @@ namespace CoreSystems
             var packet = MyAPIGateway.Utilities.SerializeFromBinary<Packet>(rawData);
             if (packet == null) return;
 
+            if (packet.PType == PacketType.PingPong)
+            {
+                RecordClientLatency(packet);
+                return;
+            }
+
             var packetSize = rawData.Length;
 
             var report = Reporter.ReportPool.Get();
@@ -398,6 +410,7 @@ namespace CoreSystems
 
                 var sPlayerId = packetInfo.SpecialPlayerId;
                 var hasRewritePlayer = sPlayerId > 0 && packetInfo.Function != null;
+                var addOwl = sPlayerId == long.MinValue && packetInfo.Function != null;
                 var hasSkipPlayer = !hasRewritePlayer && sPlayerId > 0;
                 var packet = packetInfo.Packet;
                 var bytes = MyAPIGateway.Utilities.SerializeToBinary(packet);
@@ -414,7 +427,7 @@ namespace CoreSystems
                         var skipPlayer = hasSkipPlayer && specialPlayer;
 
                         byte[] bytesRewrite = null;
-                        var rewrite = specialPlayer && hasRewritePlayer;
+                        var rewrite = specialPlayer && hasRewritePlayer || addOwl;
                         if (rewrite)
                             bytesRewrite = MyAPIGateway.Utilities.SerializeToBinary((Packet)packetInfo.Function(packet));
 

@@ -7,6 +7,7 @@ using VRage.Collections;
 using VRage.Game;
 using VRage.Game.Components;
 using VRage.Game.Entity;
+using VRage.Game.ModAPI;
 using VRage.Utils;
 using VRageMath;
 using static Sandbox.Definitions.MyDefinitionManager;
@@ -51,8 +52,6 @@ namespace CoreSystems
             {
                 if (SuppressWc)
                     return;
-
-
 
                 if (!DelayedHandWeaponsSpawn.IsEmpty)
                     InitDelayedHandWeapons();
@@ -130,7 +129,11 @@ namespace CoreSystems
                 if (HomingWeapons.Count > 0)
                     UpdateHomingWeapons();
 
-                if (MpActive) {
+                if (MpActive)
+                {
+                    if (IsServer && Tick30)
+                        PingPong(Session.GameDateTime.Ticks);
+
                     if (PacketsToClient.Count > 0 || PrunedPacketsToClient.Count > 0)
                         ProccessServerPacketsForClients();
                     if (PacketsToServer.Count > 0)
@@ -269,7 +272,7 @@ namespace CoreSystems
                 if (SuppressWc || DedicatedServer || _lastDrawTick == Tick || _paused) return;
                 
 
-                if (DebugLos || ProSyncLineDebug.Count > 0)
+                if (DebugLos || DebugMod)
                     LosDebuging();
                 
                 _lastDrawTick = Tick;
