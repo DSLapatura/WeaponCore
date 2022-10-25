@@ -20,7 +20,7 @@ namespace CoreSystems.Support
         internal readonly Target Target = new Target(null, true);
         internal readonly SmartStorage Storage = new SmartStorage();
         internal readonly List<HitEntity> HitList = new List<HitEntity>(4);
-        internal readonly Vector3D[] PreviousPositions = new Vector3D[30];
+        internal readonly PastProInfo[] PastProInfos = new PastProInfo[30];
 
         internal AvShot AvShot;
         internal Weapon Weapon;
@@ -121,8 +121,8 @@ namespace CoreSystems.Support
 
             if (AmmoDef.Const.ProjectileSync)
             {
-                for (int i = 0; i < PreviousPositions.Length; i++)
-                    PreviousPositions[i] = Vector3D.Zero;
+                for (int i = 0; i < PastProInfos.Length; i++)
+                    PastProInfos[i] =new PastProInfo();
             }
 
             if (usesStorage)
@@ -261,6 +261,12 @@ namespace CoreSystems.Support
         internal Projectile Projectile;
         internal MyVoxelBase Voxel;
         internal VoxelIntersectBranch Branch;
+    }
+
+    internal struct PastProInfo
+    {
+        internal Vector3D Position;
+        internal Vector3D Velocity;
     }
 
     public class HitEntity

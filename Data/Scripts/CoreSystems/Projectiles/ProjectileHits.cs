@@ -725,7 +725,6 @@ namespace CoreSystems.Projectiles
 
                 info.EwarAreaPulse = true;
                 p.DistanceToTravelSqr = info.DistanceTraveled * info.DistanceTraveled;
-                p.PrevVelocity = p.Velocity;
                 p.Velocity = Vector3D.Zero;
                 info.Hit.SurfaceHit = p.Position + info.Direction * info.AmmoDef.Const.EwarTriggerRange;
                 info.Hit.LastHit = info.Hit.SurfaceHit;

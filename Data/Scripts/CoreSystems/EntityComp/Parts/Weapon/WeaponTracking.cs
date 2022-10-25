@@ -282,7 +282,7 @@ namespace CoreSystems.Platform
                     if (target.Projectile != null)
                     {
                         targetLinVel = target.Projectile.Velocity;
-                        targetAccel = target.Projectile.AccelVelocity;
+                        targetAccel = target.Projectile.MaxAccelVelocity;
                     }
                     else if (topMostEnt?.Physics != null)
                     {
@@ -351,7 +351,7 @@ namespace CoreSystems.Platform
                     if (target.Projectile != null)
                     {
                         targetLinVel = target.Projectile.Velocity;
-                        targetAccel = target.Projectile.AccelVelocity;
+                        targetAccel = target.Projectile.MaxAccelVelocity;
                     }
                     else if (topMostEnt?.Physics != null)
                     {

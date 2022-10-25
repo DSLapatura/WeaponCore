@@ -127,12 +127,17 @@ namespace CoreSystems.Projectiles
                 ai.ProjectileTicker = Session.Tick;
 
 
-                if (aConst.ProjectileSync && Session.IsClient)
+                if (aConst.ProjectileSync)
                 {
-                    var posSlot = info.Age % 30;
-                    info.PreviousPositions[posSlot] = p.Position;
-                    if (info.Weapon.WeaponProSyncs.Count > 0)
-                        p.SyncClientProjectile(p, posSlot);
+                    if (Session.IsClient)
+                    {
+                        var posSlot = info.Age % 30;
+                        info.PastProInfos[posSlot] = new PastProInfo {Position = p.Position, Velocity = p.Velocity};
+                        if (info.Weapon.WeaponProSyncs.Count > 0)
+                            p.SyncClientProjectile(p, posSlot);
+                    }
+                    else if (info.Age > 0 && (info.Age % 29 == 0 || info.Age - p.ChaseAge == 0))
+                        p.SyncServerProjectile(ProtoWeaponProSync.ProSyncState.Alive);
                 }
 
                 if (p.Asleep)
@@ -174,6 +179,8 @@ namespace CoreSystems.Projectiles
                     if (aConst.FeelsGravity) {
 
                         if (MyUtils.IsValid(p.Gravity) && !MyUtils.IsZero(ref p.Gravity)) {
+
+                            p.PrevVelocity = p.Velocity;
                             p.Velocity += (p.Gravity * aConst.GravityMultiplier) * Projectile.StepConst;
                             if (!p.IsSmart)
                                 Vector3D.Normalize(ref p.Velocity, out info.Direction);
@@ -214,7 +221,7 @@ namespace CoreSystems.Projectiles
                                 if (distToMax <= stopDist)
                                     accel = false;
 
-                                newVel = accel ? p.Velocity + p.AccelVelocity : p.Velocity - p.AccelVelocity;
+                                newVel = accel ? p.Velocity + p.MaxAccelVelocity : p.Velocity - p.MaxAccelVelocity;
                                 p.VelocityLengthSqr = newVel.LengthSquared();
 
                                 if (accel && p.VelocityLengthSqr > p.MaxSpeedSqr) newVel = info.Direction * p.MaxSpeed;
@@ -224,11 +231,12 @@ namespace CoreSystems.Projectiles
                                 }
                             }
                             else {
-                                newVel = p.Velocity + p.AccelVelocity;
+                                newVel = p.Velocity + p.MaxAccelVelocity;
                                 p.VelocityLengthSqr = newVel.LengthSquared();
                                 if (p.VelocityLengthSqr > p.MaxSpeedSqr) newVel = info.Direction * p.MaxSpeed;
                             }
 
+                            p.PrevVelocity = p.Velocity;
                             p.Velocity = newVel;
                         }
                     }
@@ -294,9 +302,6 @@ namespace CoreSystems.Projectiles
 
                 if (aConst.Ewar)
                     p.RunEwar();
-
-                if (aConst.ProjectileSync && Session.IsServer && info.Age >= 28 && (info.Age % 29 == 0 || info.Age - p.ChaseAge == 0))
-                    p.SyncServerProjectile(ProtoWeaponProSync.ProSyncState.Alive);
             }
         }
 

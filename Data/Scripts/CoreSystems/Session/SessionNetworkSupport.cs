@@ -1413,8 +1413,8 @@ namespace CoreSystems
 
         internal void RecordClientLatency(Packet clientPong)
         {
-            var rtt = (double)(Session.GameDateTime.Ticks - clientPong.EntityId);
-            var owl = (uint)Math.Round(rtt / 2d, 3);
+            var rtt = (double)(Session.GameplayFrameCounter - clientPong.EntityId);
+            var owl = (uint)Math.Max(Math.Round(rtt + 1 / 2d), 2);
 
             TickLatency oldLatency;
             PlayerTickLatency.TryGetValue(clientPong.SenderId, out oldLatency);
