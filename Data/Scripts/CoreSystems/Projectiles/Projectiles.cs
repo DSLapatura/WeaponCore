@@ -10,6 +10,7 @@ using VRage.Library.Threading;
 using VRage.Utils;
 using VRageMath;
 using static CoreSystems.Projectiles.Projectile;
+using static CoreSystems.Session;
 using static CoreSystems.Support.AvShot;
 
 namespace CoreSystems.Projectiles
@@ -126,8 +127,13 @@ namespace CoreSystems.Projectiles
                 ai.ProjectileTicker = Session.Tick;
 
 
-                if (aConst.ProjectileSync && Session.IsClient && info.Weapon.WeaponProSyncs.Count > 0)
-                    p.SyncClientProjectile(p);
+                if (aConst.ProjectileSync && Session.IsClient)
+                {
+                    var posSlot = info.Age % 30;
+                    info.PreviousPositions[posSlot] = p.Position;
+                    if (info.Weapon.WeaponProSyncs.Count > 0)
+                        p.SyncClientProjectile(p, posSlot);
+                }
 
                 if (p.Asleep)
                 {

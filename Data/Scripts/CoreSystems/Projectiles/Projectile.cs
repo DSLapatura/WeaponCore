@@ -829,8 +829,8 @@ namespace CoreSystems.Projectiles
                                 }
                             }
 
-                            if (s.DroneStat== Orbit || s.DroneStat== Return || s.DroneStat== Dock) 
-                                Info.Age -= 1;
+                            //if (s.DroneStat== Orbit || s.DroneStat== Return || s.DroneStat== Dock) 
+                            //    Info.Age -= 1;
                             break;
 
                         default:
@@ -1116,7 +1116,7 @@ namespace CoreSystems.Projectiles
             VelocityLengthSqr = newVel.LengthSquared();
 
             if (VelocityLengthSqr > MaxSpeedSqr || (DeaccelRate <100 && Info.AmmoDef.Const.IsDrone)) newVel = Info.Direction * MaxSpeed*DeaccelRate/100;
-            Velocity = Info.AmmoDef.Const.ProjectileSync ? Vector3D.Round(newVel, 3) : newVel;
+            Velocity = false && Info.AmmoDef.Const.ProjectileSync ? Vector3D.Round(newVel, 3) : newVel;
         }
 
         private void TrackSmartTarget(bool fake)
@@ -1387,7 +1387,7 @@ namespace CoreSystems.Projectiles
                     commandedAccel = Vector3D.Normalize(commandedAccel) * AccelInMetersPerSec;
                 }
 
-                newVel = aConst.ProjectileSync ? Vector3D.Round(Velocity + (commandedAccel * StepConst), 3) : Velocity + (commandedAccel * StepConst);
+                newVel = false && aConst.ProjectileSync ? Vector3D.Round(Velocity + (commandedAccel * StepConst), 3) : Velocity + (commandedAccel * StepConst);
                 var accelDir = commandedAccel / AccelInMetersPerSec;
 
                 AccelDir = accelDir;
@@ -1957,7 +1957,7 @@ namespace CoreSystems.Projectiles
             //var wRng = Info.Weapon.XorRnd.GetSeedVaues();
             //Log.Line($"ProSyn: state:{proSync.State} - targetUpdate:{target.TargetEntity?.EntityId} - targetState:{target.TargetState} - rng:{pRng.Item1}:{pRng.Item2}[{wRng.Item1}:{wRng.Item2}] - pId:{Info.Id}[{Info.SyncId}]({proSync.ProId})");
         }
-        internal void SyncClientProjectile(Projectile p)
+        internal void SyncClientProjectile(Projectile p, int posSlot)
         {
             var target = Info.Target;
             var session = Info.Ai.Session;
@@ -2013,7 +2013,7 @@ namespace CoreSystems.Projectiles
 
                     var pRng = Info.Random.GetSeedVaues();
                     var wRng = Info.Weapon.XorRnd.GetSeedVaues();
-                    Log.Line($"ProSyn: delay:{session.Tick - clientProSync.UpdateTick} - cOwl:{clientProSync.CurrentOwl} - pOwl:{clientProSync.PreviousOwl} - posUpdate:{posUpdate} - forceKill:{forceKill} - targetChange:{targetChange} - posDiff:{Vector3D.Distance(p.Position, proSync.Position)}- velDiff:{Vector3D.Distance(oldVels, proSync.Velocity)} - state:{proSync.State} - targetUpdate:{targetEnt?.EntityId} - targetState:{p.Info.Target.TargetState} - rng:{pRng.Item1}:{pRng.Item2}[{wRng.Item1}:{wRng.Item2}] - pId:{Info.Id}[{Info.SyncId}]({proSync.ProId})");
+                    Log.Line($"ProSyn: delay:{session.Tick - clientProSync.UpdateTick} - cOwl:{clientProSync.CurrentOwl} - pOwl:{clientProSync.PreviousOwl} - posUpdate:{posUpdate} - forceKill:{forceKill} - targetChange:{targetChange} - owlDiff:{Vector3D.Distance(Info.PreviousPositions[clientProSync.CurrentOwl < 30 ? (int)clientProSync.CurrentOwl : posSlot], proSync.Position)} - posDiff:{Vector3D.Distance(p.Position, proSync.Position)} - velDiff:{Vector3D.Distance(oldVels, proSync.Velocity)} - state:{proSync.State} - targetUpdate:{targetEnt?.EntityId} - targetState:{p.Info.Target.TargetState} - rng:{pRng.Item1}:{pRng.Item2}[{wRng.Item1}:{wRng.Item2}] - pId:{Info.Id}[{Info.SyncId}]({proSync.ProId})");
                 }
 
                 w.WeaponProSyncs.Remove(Info.SyncId);

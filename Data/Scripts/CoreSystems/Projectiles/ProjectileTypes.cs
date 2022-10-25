@@ -20,6 +20,7 @@ namespace CoreSystems.Support
         internal readonly Target Target = new Target(null, true);
         internal readonly SmartStorage Storage = new SmartStorage();
         internal readonly List<HitEntity> HitList = new List<HitEntity>(4);
+        internal readonly Vector3D[] PreviousPositions = new Vector3D[30];
 
         internal AvShot AvShot;
         internal Weapon Weapon;
@@ -117,6 +118,12 @@ namespace CoreSystems.Support
 
             Target.Reset(Weapon.System.Session.Tick, Target.States.ProjectileClean);
             HitList.Clear();
+
+            if (AmmoDef.Const.ProjectileSync)
+            {
+                for (int i = 0; i < PreviousPositions.Length; i++)
+                    PreviousPositions[i] = Vector3D.Zero;
+            }
 
             if (usesStorage)
                 Storage.Clean();

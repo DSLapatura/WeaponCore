@@ -245,6 +245,22 @@ namespace CoreSystems
             return true;
         }
 
+        private bool ServerDroneUpdate(PacketObj data)
+        {
+            var packet = data.Packet;
+            var dronePacket = (DronePacket)packet;
+            var ent = MyEntities.GetEntityByIdOrDefault(packet.EntityId, null, true);
+            var comp = ent?.Components.Get<CoreComponent>();
+            if (comp?.Ai == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return Error(data, Msg("BaseComp", comp != null), Msg("Ai", comp?.Ai != null), Msg("Ai", comp?.Platform.State == CorePlatform.PlatformState.Ready));
+
+            var wComp = comp as Weapon.WeaponComponent;
+            if (wComp != null) Weapon.WeaponComponent.RequestDroneSetValue(wComp, dronePacket.Setting, dronePacket.Value, SteamToPlayer[dronePacket.SenderId]);
+
+            data.Report.PacketValid = true;
+
+            return true;
+        }
+
         private bool ServerClientAiExists(PacketObj data)
         {
             var packet = data.Packet;

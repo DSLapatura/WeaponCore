@@ -545,9 +545,9 @@ namespace CoreSystems.Platform
                 FreezeClientShoot = false;
             }
 
-            private static object RewriteShootSyncToServerResponse(object o)
+            private static object RewriteShootSyncToServerResponse(object o1, object o2)
             {
-                var ulongPacket = (ULongUpdatePacket)o;
+                var ulongPacket = (ULongUpdatePacket)o1;
 
                 RequestType type;
                 Signals signal;

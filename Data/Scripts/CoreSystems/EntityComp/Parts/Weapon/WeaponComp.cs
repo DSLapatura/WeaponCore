@@ -427,10 +427,12 @@ namespace CoreSystems.Platform
             {
                 if (comp.Session.IsServer)
                 {
+                    Log.Line($"server drone request: setting:{setting} - value:{value}");
                     SetDroneValue(comp, setting, value, playerId);
                 }
                 else if (comp.Session.IsClient)
                 {
+                    Log.Line($"client drone request: setting:{setting} - value:{value}");
                     comp.Session.SendDroneClientComp(comp, setting, value);
                 }
             }
@@ -708,10 +710,12 @@ namespace CoreSystems.Platform
             internal bool AssignFriend(long entityId, long callingPlayerId)
             {
                 var tasks = Data.Repo.Values.State.Tasks;
-
+                Log.Line($"AssignFriend");
                 MyEntity target;
                 if (!MyEntities.TryGetEntityById(entityId, out target) || Ai.Targets.ContainsKey(target))
                 {
+                    Log.Line($"AssignFriend entity not found");
+
                     ClearFriend(Session.PlayerId);
                     return false;
                 }
@@ -721,6 +725,7 @@ namespace CoreSystems.Platform
                     tasks.FriendId = target.EntityId;
                     tasks.Task = ProtoWeaponCompTasks.Tasks.Defend;
                 }
+                Log.Line($"AssignFriend entity found");
 
                 tasks.Update(this);
 
@@ -758,10 +763,12 @@ namespace CoreSystems.Platform
             {
 
                 var tasks = Data.Repo.Values.State.Tasks;
+                Log.Line($"AssignEnemy");
 
                 MyEntity target;
                 if (!MyEntities.TryGetEntityById(entityId, out target) || !Ai.Targets.ContainsKey(target))
                 {
+                    Log.Line($"AssignEnemy entity not found");
                     ClearEnemy(Session.PlayerId);
                     return false;
                 }
@@ -771,6 +778,7 @@ namespace CoreSystems.Platform
                     tasks.EnemyId = target.EntityId;
                     tasks.Task = ProtoWeaponCompTasks.Tasks.Attack;
                 }
+                Log.Line($"AssignEnemy entity found");
 
                 tasks.Update(this);
 

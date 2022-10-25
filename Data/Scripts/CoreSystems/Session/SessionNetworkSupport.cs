@@ -70,7 +70,7 @@ namespace CoreSystems
         {
             internal MyEntity Entity;
             internal Packet Packet;
-            internal Func<object, object> Function;
+            internal Func<object, object, object> Function;
             internal bool SingleClient;
             internal long SpecialPlayerId;
         }
@@ -124,15 +124,15 @@ namespace CoreSystems
             });
         }
 
-        private object RewriteAddClientLatency(object o)
+        private object RewriteAddClientLatency(object o1, object o2)
         {
-            var proSync = (ProjectileSyncPacket)o;
+            var proSync = (ProjectileSyncPacket)o1;
+            var targetSteamId = (ulong)o2;
 
             TickLatency tickLatency;
-            PlayerTickLatency.TryGetValue(proSync.SenderId, out tickLatency);
+            PlayerTickLatency.TryGetValue(targetSteamId, out tickLatency);
             proSync.CurrentOwl = tickLatency.CurrentLatency;
             proSync.PreviousOwl = tickLatency.PreviousLatency;
-
             return proSync;
         }
 
@@ -1214,7 +1214,7 @@ namespace CoreSystems
             else Log.Line("SendSetFloatRequest should never be called on Non-HandlesInput");
         }
 
-        internal void SendShootRequest(CoreComponent comp, ulong newLong, PacketType type, Func<object, object> function, long requestingPlayerId)
+        internal void SendShootRequest(CoreComponent comp, ulong newLong, PacketType type, Func<object, object, object> function, long requestingPlayerId)
         {
             if (IsClient)
             {

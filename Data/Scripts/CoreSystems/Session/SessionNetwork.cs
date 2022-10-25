@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text;
 using CoreSystems.Support;
 using Sandbox.Game.Entities;
@@ -343,6 +344,11 @@ namespace CoreSystems
                     ServerOverRidesUpdate(packetObj);
                     break;
                 }
+                case PacketType.RequestDroneSet:
+                {
+                    ServerDroneUpdate(packetObj);
+                    break;
+                }
                 case PacketType.ClientReady:
                 {
                         ServerClientReady(packetObj);
@@ -421,7 +427,8 @@ namespace CoreSystems
                     long entityId = packetInfo.Entity?.GetTopMostParent().EntityId ?? -1;
                     foreach (var p in Players.Values)
                     {
-                        var notSender = p.Player.SteamUserId != packet.SenderId;
+                        var steamId = p.Player.SteamUserId;
+                        var notSender = steamId != packet.SenderId;
                         
                         var specialPlayer = sPlayerId == p.PlayerId;
                         var skipPlayer = hasSkipPlayer && specialPlayer;
@@ -429,15 +436,16 @@ namespace CoreSystems
                         byte[] bytesRewrite = null;
                         var rewrite = specialPlayer && hasRewritePlayer || addOwl;
                         if (rewrite)
-                            bytesRewrite = MyAPIGateway.Utilities.SerializeToBinary((Packet)packetInfo.Function(packet));
+                            bytesRewrite = MyAPIGateway.Utilities.SerializeToBinary((Packet)packetInfo.Function(packet, steamId));
 
 
                         var sendPacket = notSender && packetInfo.Entity == null;
                         if (!sendPacket && !skipPlayer && notSender)
                         {
-                            if (PlayerEntityIdInRange.ContainsKey(p.Player.SteamUserId))
+                            HashSet<long> entityIds;
+                            if (PlayerEntityIdInRange.TryGetValue(steamId, out entityIds))
                             {
-                                if (PlayerEntityIdInRange[p.Player.SteamUserId].Contains(entityId)) {
+                                if (entityIds.Contains(entityId)) {
                                     sendPacket = true;
                                 }
                                 else  {
