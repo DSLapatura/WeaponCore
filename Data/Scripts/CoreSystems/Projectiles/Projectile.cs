@@ -1984,10 +1984,10 @@ namespace CoreSystems.Projectiles
 
                     var estimatedDistTraveledToPresent = proSync.Velocity * estimatedStepSize;
                     var clampedEstimatedDistTraveledSqr = Math.Max(estimatedDistTraveledToPresent.LengthSquared(), 25);
-                    var pastClientProPos = Info.PastProInfos[checkSlot];
                     var pastServerProPos = proSync.Position;
-
                     var futurePosition = pastServerProPos + estimatedDistTraveledToPresent;
+
+                    var pastClientProPos = Info.PastProInfos[checkSlot];
 
                     if (Vector3D.DistanceSquared(pastClientProPos, pastServerProPos) > clampedEstimatedDistTraveledSqr)
                     {

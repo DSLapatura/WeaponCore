@@ -26,12 +26,8 @@ namespace CoreSystems.Api
         private readonly Session _session;
         internal readonly Dictionary<string, Delegate> ModApiMethods;
         internal readonly Dictionary<string, Delegate> PbApiMethods;
-        //private readonly HashSet<Delegate> _delegateCache = new HashSet<Delegate>();
-        //private readonly Dictionary<string, Delegate> _pbDictBackup;
         private readonly ImmutableDictionary<string, Delegate> _safeDictionary;
 
-        //private bool _wasCorrupted;
-        //private uint _lastChecked;
         internal ApiBackend(Session session)
         {
             _session = session;
@@ -155,42 +151,12 @@ namespace CoreSystems.Api
             foreach (var whyMe in PbApiMethods)
             {
                 builder.Add(whyMe.Key, whyMe.Value);
-                //_delegateCache.Add(whyMe.Value);
             }
 
             _safeDictionary = builder.ToImmutable();
 
-            //_pbDictBackup = new Dictionary<string, Delegate>(PbApiMethods);
         }
 
-        /*
-        internal void PbHackDetection()
-        {
-            if (_wasCorrupted || _session.Tick - _lastChecked > 600)
-            {
-                _lastChecked = _session.Tick;
-                foreach (var del in PbApiMethods.Values)
-                {
-                    if (_delegateCache.Contains(del)) continue;
-
-                    RepairPb();
-
-                    _wasCorrupted = true;
-                    break;
-                }
-            }
-        }
-
-
-        internal void RepairPb()
-        {
-            PbApiMethods.Clear();
-            foreach (var pair in _pbDictBackup)
-                PbApiMethods[pair.Key] = pair.Value;
-
-            Log.Line($"Pb dictionary was hacked");
-        }
-        */
         internal void PbInit()
         {
             var pb = MyAPIGateway.TerminalControls.CreateProperty<IReadOnlyDictionary<string, Delegate>, Sandbox.ModAPI.IMyTerminalBlock>("WcPbAPI");
@@ -349,7 +315,7 @@ namespace CoreSystems.Api
             SetWeaponTarget((Sandbox.ModAPI.IMyTerminalBlock) arg1, MyEntities.GetEntityById(arg2), arg3);
         }
 
-        private Sandbox.ModAPI.Ingame.MyDetectedEntityInfo PbGetWeaponTarget(object arg1, int arg2)
+        private MyDetectedEntityInfo PbGetWeaponTarget(object arg1, int arg2)
         {
             var block = arg1 as IMyTerminalBlock;
             var target = GetWeaponTarget((Sandbox.ModAPI.IMyTerminalBlock) block, arg2);
@@ -389,7 +355,7 @@ namespace CoreSystems.Api
             Ai ai;
             Ai.TargetInfo info = null;
 
-            if (shooterGrid != null && topTarget != null && _session.EntityToMasterAi.TryGetValue(shooterGrid, out ai) && ai.Targets.TryGetValue(topTarget, out info)) {
+            if (shooterGrid != null && topTarget != null && _session.EntityToMasterAi.TryGetValue(shooterGrid, out ai) && ai.Construct.GetConstructTargetInfo(topTarget, out info)) {
                 relation = info.EntInfo.Relationship;
                 type = info.EntInfo.Type;
                 var maxDist = ai.MaxTargetingRange + shooterGrid.PositionComp.WorldAABB.Extents.Max();
@@ -1257,7 +1223,7 @@ namespace CoreSystems.Api
         private int GetShotsFired(IMyTerminalBlock weaponBlock, int weaponId)
         {
             Weapon.WeaponComponent comp = weaponBlock.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
-            if (weaponId < comp.Collection.Count)
+            if (comp != null && weaponId < comp.Collection.Count)
             {
                 var w = comp.Collection[weaponId];
 

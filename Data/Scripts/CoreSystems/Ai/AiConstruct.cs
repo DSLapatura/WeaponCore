@@ -104,6 +104,8 @@ namespace CoreSystems.Support
             internal readonly Focus Focus = new Focus();
             internal readonly ConstructData Data = new ConstructData();
             internal readonly Dictionary<long, PlayerController> ControllingPlayers = new Dictionary<long, PlayerController>();
+            internal readonly Dictionary<MyEntity, TargetInfo> ConstructTargetInfoCache = new Dictionary<MyEntity, TargetInfo>();
+
             internal readonly HashSet<MyEntity> PreviousTargets = new HashSet<MyEntity>();
             internal readonly RunningAverage DamageAverage = new RunningAverage(10);
             internal readonly Dictionary<int, WeaponGroup> WeaponGroups = new Dictionary<int, WeaponGroup>();
@@ -118,6 +120,7 @@ namespace CoreSystems.Support
             internal uint LastEffectUpdateTick;
             internal uint TargetResetTick;
             internal uint LastRefreshTick;
+            internal uint LastTargetInfoTick;
             internal bool DirtyWeaponGroups;
             internal bool DroneAlert;
 
@@ -432,6 +435,34 @@ namespace CoreSystems.Support
                 }
             }
 
+            internal bool GetConstructTargetInfo(MyEntity target, out TargetInfo targetInfo)
+            {
+                for (int i = 0; i < Ai.GridMap.GroupMap.Ais.Count; i++)
+                {
+                    var ai = Ai.GridMap.GroupMap.Ais[i];
+                    if (ai.TargetsUpdatedTick > LastTargetInfoTick)
+                    {
+                        LastTargetInfoTick = Ai.Session.Tick;
+                        break;
+                    }
+                }
+
+                if (LastTargetInfoTick == Ai.Session.Tick)
+                {
+                    ConstructTargetInfoCache.Clear();
+                    for (int i = 0; i < Ai.GridMap.GroupMap.Ais.Count; i++)
+                    {
+                        var ai = Ai.GridMap.GroupMap.Ais[i];
+                        foreach (var info in ai.Targets)
+                        {
+                            ConstructTargetInfoCache[info.Key] = info.Value;
+                        }
+                    }
+                }
+
+                return ConstructTargetInfoCache.TryGetValue(target, out targetInfo);
+            }
+
             internal void AddWeaponCount(MyStringHash weaponHash, int incrementBy = 1)
             {
                 if (!Counter.ContainsKey(weaponHash))
@@ -535,12 +566,14 @@ namespace CoreSystems.Support
                 PreviousTotalEffect = 0;
                 LastRefreshTick = 0;
                 TargetResetTick = 0;
+                LastTargetInfoTick = 0;
                 DirtyWeaponGroups = false;
                 RootAi = null;
                 LargestAi = null;
                 Counter.Clear();
                 PreviousTargets.Clear();
                 ControllingPlayers.Clear();
+                ConstructTargetInfoCache.Clear();
             }
         }
     }
