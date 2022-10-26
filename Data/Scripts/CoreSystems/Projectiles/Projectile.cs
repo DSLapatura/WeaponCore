@@ -730,7 +730,7 @@ namespace CoreSystems.Projectiles
                                 parentPos = Info.Target.CoreEntity.PositionComp.WorldAABB.Center;
                                 if (parentPos != Vector3D.Zero && s.DroneStat!= Return)
                                 {
-                                    var rtbFlightTime = Vector3D.Distance(Position, parentPos) / MaxSpeed * 60 * 1.05d;//added multiplier to ensure final docking time?
+                                    var rtbFlightTime = Vector3D.Distance(Position, parentPos) / MaxSpeed * 60 * 1.1d;//added multiplier to ensure final docking time?
                                     if ((maxLife > 0 && maxLife - Info.Age <= rtbFlightTime) || (Info.Frags >= aConst.MaxFrags))
                                     {
                                         var rayTestPath = new RayD(Position, Vector3D.Normalize(parentPos - Position));//Check for clear LOS home
@@ -2032,34 +2032,32 @@ namespace CoreSystems.Projectiles
                             Info.Weapon.System.Session.ProSyncLineDebug[Info.SyncId] = lines;
                         }
 
-                        var estimatedDistTraveledToPresenttNoAccel = proSync.Velocity * estimatedStepSize;
-                        var futurePositionNoAccel = pastServerProPos + estimatedDistTraveledToPresenttNoAccel;
+                        var fv = proSync.Velocity;
+                        var edtp = fv * estimatedStepSize;
+                        var fp = pastServerProPos + edtp;
+
 
                         var pastServerLine = lines.Count == 0 ? new LineD(pastServerProPos - (proSync.Velocity * StepConst), pastServerProPos) : new LineD(lines[lines.Count - 1].Line.To, pastServerProPos);
                         var pastClientLine = lines.Count == 0 ? new LineD(pastClientProPos - (pastClientProVel * StepConst), pastClientProPos) : new LineD(lines[lines.Count - 1].Line.To, pastClientProPos);
                         var predictedClientLine = lines.Count == 0 ? new LineD(futurePosition - (futureVelocity * StepConst), futurePosition) : new LineD(lines[lines.Count - 1].Line.To, futurePosition);
-                        var predictedClientLineNoAccel = lines.Count == 0 ? new LineD(futurePositionNoAccel - (proSync.Velocity * StepConst), futurePositionNoAccel) : new LineD(lines[lines.Count - 1].Line.To, futurePositionNoAccel);
+                        var predictedClientLineNoAccel = lines.Count == 0 ? new LineD(fp - (fv * StepConst), fp) : new LineD(lines[lines.Count - 1].Line.To, fp);
 
 
-                        lines.Add(new ClientProSyncDebugLine { CreateTick = Info.Weapon.System.Session.Tick, Line = pastServerLine });
-                        lines.Add(new ClientProSyncDebugLine { CreateTick = Info.Weapon.System.Session.Tick, Line = pastClientLine });
-                        lines.Add(new ClientProSyncDebugLine { CreateTick = Info.Weapon.System.Session.Tick, Line = predictedClientLine });
-                        lines.Add(new ClientProSyncDebugLine { CreateTick = Info.Weapon.System.Session.Tick, Line = predictedClientLineNoAccel });
+                        lines.Add(new ClientProSyncDebugLine { CreateTick = Info.Weapon.System.Session.Tick, Line = pastServerLine, Color = Color.Red});
+                        lines.Add(new ClientProSyncDebugLine { CreateTick = Info.Weapon.System.Session.Tick, Line = pastClientLine, Color = Color.Blue });
+                        lines.Add(new ClientProSyncDebugLine { CreateTick = Info.Weapon.System.Session.Tick, Line = predictedClientLine, Color = Color.White });
+                        lines.Add(new ClientProSyncDebugLine { CreateTick = Info.Weapon.System.Session.Tick, Line = predictedClientLineNoAccel, Color = Color.White });
 
-                    }
-
-                    var totalPastProInfos = Info.PastProInfos.Length;
-                    for (int i = 0; i < totalPastProInfos; i++)
-                    {
-                        if (i == checkSlot || i == checkSlot + 1 || i == checkSlot - 1 ||  i == 0 && checkSlot + 1 >= totalPastProInfos)
+                        var totalPastProInfos = Info.PastProInfos.Length;
+                        for (int i = 0; i < totalPastProInfos; i++)
                         {
-                            Log.Line($"ProSyn: Id:{Info.Id} - age:{Info.Age} - slot:{i} - checkSlot:{checkSlot} - thisSlot:{posSlot} - cOwl:{clientProSync.CurrentOwl} - pOwl:{clientProSync.PreviousOwl} - owlDiff:{Vector3D.Distance(pastClientProPos, proSync.Position)} - posDiff:{Vector3D.Distance(oldPos, proSync.Position)} - velDiff:{Vector3D.Distance(oldVels, proSync.Velocity)} - targetChange:{posUpdate}");
+                            if (i == checkSlot || i == checkSlot + 1 || i == checkSlot - 1 || i == 0 && checkSlot + 1 >= totalPastProInfos)
+                            {
+                                Log.Line($"ProSyn: Id:{Info.Id} - age:{Info.Age} - slot:{i} - checkSlot:{checkSlot} - thisSlot:{posSlot} - cOwl:{clientProSync.CurrentOwl} - pOwl:{clientProSync.PreviousOwl} - owlDiff:{Vector3D.Distance(pastClientProPos, proSync.Position)} - posDiff:{Vector3D.Distance(oldPos, proSync.Position)} - velDiff:{Vector3D.Distance(oldVels, proSync.Velocity)} - targetChange:{posUpdate}");
+                            }
                         }
+                        //Log.Line($"ProSyn: delay:{session.Tick - clientProSync.UpdateTick} - cOwl:{clientProSync.CurrentOwl} - pOwl:{clientProSync.PreviousOwl} - posUpdate:{posUpdate} - forceKill:{forceKill} - targetChange:{targetChange} - owlDiff:{Vector3D.Distance(Info.PreviousPositions[checkSlot], proSync.Position)} - posDiff:{Vector3D.Distance(oldPos, proSync.Position)} - velDiff:{Vector3D.Distance(oldVels, proSync.Velocity)} - state:{proSync.State} - targetUpdate:{targetEnt?.EntityId} - targetState:{p.Info.Target.TargetState} - rng:{pRng.Item1}:{pRng.Item2}[{wRng.Item1}:{wRng.Item2}] - pId:{Info.Id}[{Info.SyncId}]({proSync.ProId})");
                     }
-
-                    //var pRng = Info.Random.GetSeedVaues();
-                    //var wRng = Info.Weapon.XorRnd.GetSeedVaues();
-                    //Log.Line($"ProSyn: delay:{session.Tick - clientProSync.UpdateTick} - cOwl:{clientProSync.CurrentOwl} - pOwl:{clientProSync.PreviousOwl} - posUpdate:{posUpdate} - forceKill:{forceKill} - targetChange:{targetChange} - owlDiff:{Vector3D.Distance(Info.PreviousPositions[checkSlot], proSync.Position)} - posDiff:{Vector3D.Distance(oldPos, proSync.Position)} - velDiff:{Vector3D.Distance(oldVels, proSync.Velocity)} - state:{proSync.State} - targetUpdate:{targetEnt?.EntityId} - targetState:{p.Info.Target.TargetState} - rng:{pRng.Item1}:{pRng.Item2}[{wRng.Item1}:{wRng.Item2}] - pId:{Info.Id}[{Info.SyncId}]({proSync.ProId})");
                 }
 
                 w.WeaponProSyncs.Remove(Info.SyncId);

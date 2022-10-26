@@ -169,24 +169,7 @@ namespace CoreSystems
                     var info = p.Value[i];
                     var colorMod = i % 4;
 
-                    Color lineColor = Color.Black;
-                    switch (colorMod)
-                    {
-                        case 0:
-                            lineColor = Color.Red;
-                            break;
-                        case 1:
-                            lineColor = Color.Blue;
-                            break;
-                        case 2:
-                            lineColor = Color.White;
-                            break;
-                        case 3:
-                            lineColor = Color.Yellow;
-                            break;
-                    }
-
-                    DsDebugDraw.DrawLine(info.Line, lineColor, 0.35f);
+                    DsDebugDraw.DrawLine(info.Line, info.Color, 0.35f);
                     if (Tick - info.CreateTick > 7200)
                     {
                         p.Value.RemoveAt(i);

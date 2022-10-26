@@ -881,6 +881,7 @@ namespace CoreSystems
         internal struct ClientProSyncDebugLine
         {
             internal LineD Line;
+            internal Color Color;
             internal uint CreateTick;
         }
 
