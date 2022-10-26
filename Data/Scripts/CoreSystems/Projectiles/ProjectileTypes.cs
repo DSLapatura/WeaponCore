@@ -490,7 +490,7 @@ namespace CoreSystems.Support
             var target = info.Target;
             var aConst = info.AmmoDef.Const;
             var fragCount = p.Info.AmmoDef.Fragment.Fragments;
-            var syncId = fragCount == 1 && ammoDef.Const.ProjectileSync && aConst.ProjectileSync ? info.SyncId : long.MinValue;
+            var syncId = !timedSpawn && fragCount == 1 && ammoDef.Const.ProjectileSync && aConst.ProjectileSync ? info.SyncId : long.MinValue;
 
             for (int i = 0; i < fragCount; i++)
             {
