@@ -1970,7 +1970,7 @@ namespace CoreSystems.Projectiles
             var w = Info.Weapon;
             var aConst = Info.AmmoDef.Const;
             ClientProSync clientProSync;
-            if (Info.Weapon.WeaponProSyncs.TryGetValue(Info.SyncId, out clientProSync))
+            if (w.WeaponProSyncs.TryGetValue(Info.SyncId, out clientProSync))
             {
                 if (session.Tick - clientProSync.UpdateTick <= 1 && clientProSync.CurrentOwl < 30)
                 {
@@ -2013,13 +2013,13 @@ namespace CoreSystems.Projectiles
                         target.Set(targetEnt, targetEnt.PositionComp.WorldAABB.Center, 0, 0, topEntId);
                     }
 
-                    if (session.DebugMod)
+                    if (w.System.WConst.DebugMode)
                     {
                         List<ClientProSyncDebugLine> lines;
-                        if (!Info.Weapon.System.Session.ProSyncLineDebug.TryGetValue(Info.SyncId, out lines))
+                        if (!w.System.Session.ProSyncLineDebug.TryGetValue(Info.SyncId, out lines))
                         {
                             lines = new List<ClientProSyncDebugLine>();
-                            Info.Weapon.System.Session.ProSyncLineDebug[Info.SyncId] = lines;
+                            w.System.Session.ProSyncLineDebug[Info.SyncId] = lines;
                         }
 
                         var pastServerLine = lines.Count == 0 ? new LineD(pastServerProPos - (proSync.Velocity * StepConst), pastServerProPos) : new LineD(lines[lines.Count - 1].Line.To, pastServerProPos);
