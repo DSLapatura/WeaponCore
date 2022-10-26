@@ -92,10 +92,15 @@ namespace CoreSystems
                         ClientShootSyncs(packetObj);
                         break;
                     }
-                    case PacketType.ProjectileSyncs:
+                    case PacketType.ProjectilePosSyncs:
                     {
-                            ClientProjectileSyncs(packetObj);
+                            ClientProjectilePosSyncs(packetObj);
                             break;
+                    }
+                    case PacketType.ProjectileStateSyncs:
+                    {
+                        ClientProjectileStateSyncs(packetObj);
+                        break;
                     }
                     case PacketType.AimTargetUpdate: 
                     {

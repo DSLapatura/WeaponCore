@@ -103,7 +103,18 @@ namespace CoreSystems
     }
 
     [ProtoContract]
-    public class ProtoWeaponProSync 
+    public class ProtoProPositionSync 
+    {
+        [ProtoMember(1)] public long ProId;
+        [ProtoMember(2)] public ushort PartId;
+        [ProtoMember(3)] public long CoreEntityId;
+        [ProtoMember(4)] public Vector3D Position;
+        [ProtoMember(5)] public Vector3 Velocity;
+    }
+
+
+    [ProtoContract]
+    public class ProtoProStateSync
     {
         public enum ProSyncState
         {
@@ -113,21 +124,15 @@ namespace CoreSystems
             Stored,
         }
 
-        public enum TargetTypes
-        {
-            None,
-            Entity,
-            Projectile,
-            Fake,
-        }
-
-        [ProtoMember(1)] public ProSyncState State;
-        [ProtoMember(2)] public Vector3D Position;
-        [ProtoMember(3)] public Vector3 Velocity;
-        [ProtoMember(5)] public int PartId;
-        [ProtoMember(6)] public long ProId;
-        [ProtoMember(7)] public long TargetId;
-        [ProtoMember(8)] public long CoreEntityId;
+        [ProtoMember(1)] public long ProId;
+        [ProtoMember(2)] public ushort PartId;
+        [ProtoMember(3)] public long CoreEntityId;
+        [ProtoMember(4)] public ProSyncState State;
+        [ProtoMember(5)] public long TargetId;
+        [ProtoMember(6)] public ulong RandomX;
+        [ProtoMember(7)] public ulong RandomY;
+        [ProtoMember(8)] public Vector3D OffsetTarget;
+        [ProtoMember(9)] public Vector3 OffsetDir;
     }
 
     [ProtoContract]

@@ -53,7 +53,8 @@ namespace CoreSystems
         ShootSync,
         EwaredBlocks,
         ClientReady,
-        ProjectileSyncs,
+        ProjectilePosSyncs,
+        ProjectileStateSyncs,
         ControlComp,
         ControlState,
         ForceReload,
@@ -65,12 +66,12 @@ namespace CoreSystems
 
     #region packets
     [ProtoContract]
-    //[ProtoInclude(5, typeof(InputPacket))]
+    [ProtoInclude(5, typeof(ProjectileSyncStatePacket))]
     [ProtoInclude(6, typeof(BoolUpdatePacket))]
     [ProtoInclude(7, typeof(FakeTargetPacket))]
     [ProtoInclude(8, typeof(FocusPacket))]
     [ProtoInclude(9, typeof(WeaponIdPacket))]
-    //[ProtoInclude(10, typeof(MouseInputSyncPacket))]
+    //[ProtoInclude(10, typeof(ProjectileSyncTargetPacket))]
     [ProtoInclude(11, typeof(AiDataPacket))]
     [ProtoInclude(12, typeof(FixedWeaponHitPacket))]
     [ProtoInclude(13, typeof(ProblemReportPacket))]
@@ -97,12 +98,13 @@ namespace CoreSystems
     [ProtoInclude(34, typeof(EwaredBlocksPacket))]
     [ProtoInclude(35, typeof(ClientReadyPacket))]
     [ProtoInclude(36, typeof(PaintedTargetPacket))]
-    [ProtoInclude(37, typeof(ProjectileSyncPacket))]
+    [ProtoInclude(37, typeof(ProjectileSyncPosPacket))]
     [ProtoInclude(38, typeof(ULongUpdatePacket))]
     [ProtoInclude(39, typeof(ControlCompPacket))]
     [ProtoInclude(40, typeof(ControlStatePacket))]
     [ProtoInclude(41, typeof(BlackListPacket))]
     [ProtoInclude(42, typeof(DronePacket))]
+
 
     public class Packet
     {
@@ -138,9 +140,9 @@ namespace CoreSystems
     }
 
     [ProtoContract]
-    public class ProjectileSyncPacket : Packet
+    public class ProjectileSyncPosPacket : Packet
     {
-        [ProtoMember(1)] internal List<ProtoWeaponProSync> Data = new List<ProtoWeaponProSync>(64);
+        [ProtoMember(1)] internal List<ProtoProPositionSync> Data = new List<ProtoProPositionSync>();
         [ProtoMember(2)] internal uint CurrentOwl;
         [ProtoMember(3)] internal uint PreviousOwl;
 
@@ -150,6 +152,20 @@ namespace CoreSystems
             Data.Clear();
         }
     }
+
+
+    [ProtoContract]
+    public class ProjectileSyncStatePacket : Packet
+    {
+        [ProtoMember(1)] internal List<ProtoProStateSync> Data = new List<ProtoProStateSync>();
+
+        public override void CleanUp()
+        {
+            base.CleanUp();
+            Data.Clear();
+        }
+    }
+
 
     [ProtoContract]
     public class OverRidesPacket : Packet

@@ -72,6 +72,12 @@ namespace CoreSystems.Support
             return new MyTuple<ulong, ulong>(_x, _y);
         }
 
+        public void SyncSeed(ulong x, ulong y)
+        {
+            _x = x;
+            _y = y;
+        }
+
         /// <summary>
         ///   Generates a pseudorandom boolean.
         /// </summary>

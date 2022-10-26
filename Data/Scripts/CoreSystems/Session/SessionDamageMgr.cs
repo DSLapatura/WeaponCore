@@ -41,8 +41,8 @@ namespace CoreSystems
                 var pInvalid = (int)p.State > 3;
                 var tInvalid = info.Target.TargetState == Target.TargetStates.IsProjectile && (int)info.Target.Projectile.State > 1;
                 if (tInvalid) info.Target.Reset(Tick, Target.States.ProjectileClean);
+                
                 var skip = pInvalid || tInvalid;
-
 
                 for (int i = 0; i < info.HitList.Count; i++)
                 {

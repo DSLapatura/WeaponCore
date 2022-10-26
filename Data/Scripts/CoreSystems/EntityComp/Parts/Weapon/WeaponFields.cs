@@ -22,6 +22,7 @@ namespace CoreSystems.Platform
         private readonly HashSet<string> _muzzlesFiring = new HashSet<string>();
         internal readonly Dictionary<int, string> MuzzleIdToName = new Dictionary<int, string>();
         internal readonly Dictionary<long, ClientProSync> WeaponProSyncs = new Dictionary<long, ClientProSync>();
+
         internal readonly WeaponFrameCache WeaponCache;
         internal readonly WeaponSystem System;
         internal readonly Target Target;

@@ -126,7 +126,6 @@ namespace CoreSystems.Projectiles
                 ++ai.MyProjectiles;
                 ai.ProjectileTicker = Session.Tick;
 
-
                 if (aConst.ProjectileSync)
                 {
                     if (Session.IsClient)
@@ -134,10 +133,14 @@ namespace CoreSystems.Projectiles
                         var posSlot = info.Age % 30;
                         info.PastProInfos[posSlot] =  p.Position;
                         if (info.Weapon.WeaponProSyncs.Count > 0)
-                            p.SyncClientProjectile(p, posSlot);
+                            p.SyncClientProjectile(posSlot);
                     }
-                    else if (info.Age > 0 && (info.Age % 29 == 0 || info.Age - p.ChaseAge == 0))
-                        p.SyncServerProjectile(ProtoWeaponProSync.ProSyncState.Alive);
+                    else if (info.Age > 0 && info.Age % 29 == 0)
+                    {
+                        p.SyncPosServerProjectile();
+                        if (info.LastProSyncStateAge + 10 > info.Age)
+                            p.SyncStateServerProjectile(ProtoProStateSync.ProSyncState.Alive);
+                    }
                 }
 
                 if (p.Asleep)

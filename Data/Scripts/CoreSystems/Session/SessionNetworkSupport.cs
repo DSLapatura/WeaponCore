@@ -102,18 +102,18 @@ namespace CoreSystems
 
         #region ServerOnly
 
-        private void SendProjectileSyncs()
+        private void SendProjectilePosSyncs()
         {
-            var packet = ProtoWeaponProPacketPool.Count > 0 ? ProtoWeaponProPacketPool.Pop() : new ProjectileSyncPacket { PType = PacketType.ProjectileSyncs };
+            var packet = ProtoWeaponProPosPacketPool.Count > 0 ? ProtoWeaponProPosPacketPool.Pop() : new ProjectileSyncPosPacket { PType = PacketType.ProjectilePosSyncs };
 
-            foreach (var pSync in GlobalProSyncs)
+            foreach (var pSync in GlobalProPosSyncs)
             {
                 var sync = pSync.Value;
                 packet.Data.Add(sync);
-                ProtoWeaponProSyncPool.Push(sync);
+                ProtoWeaponProSyncPosPool.Push(sync);
             }
 
-            GlobalProSyncs.Clear();
+            GlobalProPosSyncs.Clear();
             
             PacketsToClient.Add(new PacketInfo
             {
@@ -124,9 +124,29 @@ namespace CoreSystems
             });
         }
 
+        private void SendProjectileStateSyncs()
+        {
+            var packet = ProtoWeaponProStatePacketPool.Count > 0 ? ProtoWeaponProStatePacketPool.Pop() : new ProjectileSyncStatePacket { PType = PacketType.ProjectileStateSyncs };
+
+            foreach (var pSync in GlobalProStateSyncs)
+            {
+                var sync = pSync.Value;
+                packet.Data.Add(sync);
+                ProtoWeaponProSyncStatePool.Push(sync);
+            }
+
+            GlobalProStateSyncs.Clear();
+
+            PacketsToClient.Add(new PacketInfo
+            {
+                Entity = null,
+                Packet = packet,
+            });
+        }
+
         private object RewriteAddClientLatency(object o1, object o2)
         {
-            var proSync = (ProjectileSyncPacket)o1;
+            var proSync = (ProjectileSyncPosPacket)o1;
             var targetSteamId = (ulong)o2;
 
             TickLatency tickLatency;

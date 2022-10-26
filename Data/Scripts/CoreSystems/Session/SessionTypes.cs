@@ -872,11 +872,14 @@ namespace CoreSystems
 
         internal struct ClientProSync
         {
-            internal ProtoWeaponProSync ProSync;
+            internal ProtoProPositionSync ProPositionSync;
+            internal ProtoProStateSync ProStateSync;
+
             internal uint UpdateTick;
             internal uint CurrentOwl;
             internal uint PreviousOwl;
         }
+
 
         internal struct ClientProSyncDebugLine
         {

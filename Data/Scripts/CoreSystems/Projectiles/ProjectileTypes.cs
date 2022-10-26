@@ -40,7 +40,7 @@ namespace CoreSystems.Support
         internal Hit Hit;
         internal XorShiftRandomStruct Random;
         internal FakeTargets DummyTargets;
-        internal int ProSyncOverCount;
+        internal int ProSyncPosMissCount;
         internal int TriggerGrowthSteps;
         internal int MuzzleId;
         internal int ObjectsHit;
@@ -50,6 +50,7 @@ namespace CoreSystems.Support
         internal int Frags;
         internal int LastFragTime;
         internal int CompSceneVersion;
+        internal int LastProSyncStateAge = int.MinValue;
         internal ulong UniqueMuzzleId;
         internal ulong Id;
         internal long SyncId;
@@ -184,6 +185,7 @@ namespace CoreSystems.Support
             MuzzleId = 0;
             Age = 0;
             SyncId = long.MinValue;
+            LastProSyncStateAge = int.MinValue;
             DamageDonePri = 0;
             DamageDoneAoe = 0;
             DamageDoneShld = 0;
@@ -195,7 +197,7 @@ namespace CoreSystems.Support
             FireCounter = 0;
             UniqueMuzzleId = 0;
             LastFragTime = 0;
-            ProSyncOverCount = 0;
+            ProSyncPosMissCount = 0;
             ClosestDistSqrToTarget = double.MinValue; 
             ShieldResistMod = 1f;
             ShieldBypassMod = 1f;
@@ -516,7 +518,7 @@ namespace CoreSystems.Support
                 frag.OriginUp = info.OriginUp;
                 frag.Random = new XorShiftRandomStruct(info.Random.NextUInt64());
                 frag.DoDamage = info.DoDamage;
-                frag.PredictedTargetPos = p.PredictedTargetPos;
+                frag.PrevTargetPos = p.PrevTargetPos;
                 frag.Velocity = !aConst.FragDropVelocity ? p.Velocity : Vector3D.Zero;
                 frag.LockOnFireState = info.LockOnFireState;
                 frag.IgnoreShield = info.ShieldBypassed && aConst.ShieldDamageBypassMod > 0;
@@ -587,7 +589,7 @@ namespace CoreSystems.Support
                 info.SyncId = frag.SyncId;
                 info.SpawnDepth = frag.Depth;
                 info.BaseDamagePool = aConst.BaseDamage;
-                p.PredictedTargetPos = frag.PredictedTargetPos;
+                p.PrevTargetPos = frag.PrevTargetPos;
                 info.Direction = frag.Direction;
                 p.StartSpeed = frag.Velocity;
                 p.Gravity = aConst.FeelsGravity && info.Ai.InPlanetGravity ? frag.Weapon.GravityPoint : Vector3D.Zero;
@@ -628,7 +630,7 @@ namespace CoreSystems.Support
         public Vector3D OriginUp;
         public Vector3D Direction;
         public Vector3D Velocity;
-        public Vector3D PredictedTargetPos;
+        public Vector3D PrevTargetPos;
         public int MuzzleId;
         public int Depth;
         public XorShiftRandomStruct Random;

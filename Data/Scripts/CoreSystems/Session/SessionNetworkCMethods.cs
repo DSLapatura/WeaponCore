@@ -457,10 +457,10 @@ namespace CoreSystems
 
         }
 
-        private bool ClientProjectileSyncs(PacketObj data)
+        private bool ClientProjectilePosSyncs(PacketObj data)
         {
             var packet = data.Packet;
-            var proPacket = (ProjectileSyncPacket)packet;
+            var proPacket = (ProjectileSyncPosPacket)packet;
             if (proPacket.Data == null) return Error(data, Msg("ProSyncData"));
 
             for (int i = 0; i < proPacket.Data.Count; i++)
@@ -478,7 +478,43 @@ namespace CoreSystems
                     var collection = comp.TypeSpecific != CoreComponent.CompTypeSpecific.Phantom ? comp.Platform.Weapons : comp.Platform.Phantoms;
                     var w = collection[sync.PartId];
 
-                    w.WeaponProSyncs[sync.ProId] = new ClientProSync {ProSync = sync, UpdateTick = Tick, CurrentOwl = proPacket.CurrentOwl, PreviousOwl = proPacket.PreviousOwl};
+                    ClientProSync oldSync;
+                    w.WeaponProSyncs.TryGetValue(sync.ProId, out oldSync);
+                    w.WeaponProSyncs[sync.ProId] = new ClientProSync {ProPositionSync = sync, ProStateSync = oldSync.ProStateSync, UpdateTick = Tick, CurrentOwl = proPacket.CurrentOwl, PreviousOwl = proPacket.PreviousOwl};
+                    
+                    data.Report.PacketValid = true;
+                }
+
+            }
+            proPacket.CleanUp();
+            return true;
+        }
+
+        private bool ClientProjectileStateSyncs(PacketObj data)
+        {
+            var packet = data.Packet;
+            var proPacket = (ProjectileSyncStatePacket)packet;
+            if (proPacket.Data == null) return Error(data, Msg("ProSyncData"));
+
+            for (int i = 0; i < proPacket.Data.Count; i++)
+            {
+                var sync = proPacket.Data[i];
+                var ent = MyEntities.GetEntityByIdOrDefault(sync.CoreEntityId);
+                var comp = ent?.Components.Get<CoreComponent>();
+
+                if (comp?.Ai == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+                    continue;
+
+                var wComp = comp as Weapon.WeaponComponent;
+                if (wComp != null)
+                {
+                    var collection = comp.TypeSpecific != CoreComponent.CompTypeSpecific.Phantom ? comp.Platform.Weapons : comp.Platform.Phantoms;
+                    var w = collection[sync.PartId];
+
+                    ClientProSync oldSync;
+                    w.WeaponProSyncs.TryGetValue(sync.ProId, out oldSync);
+                    w.WeaponProSyncs[sync.ProId] = new ClientProSync { ProPositionSync = oldSync.ProPositionSync, ProStateSync = sync, UpdateTick = Tick, CurrentOwl = oldSync.CurrentOwl, PreviousOwl = oldSync.PreviousOwl };
+
                     data.Report.PacketValid = true;
                 }
 

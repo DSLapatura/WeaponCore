@@ -1,4 +1,5 @@
-﻿using CoreSystems.Platform;
+﻿using System;
+using CoreSystems.Platform;
 using CoreSystems.Support;
 using Sandbox.Game.Entities;
 using VRage.Game;
@@ -87,7 +88,7 @@ namespace CoreSystems.Projectiles
                 }
                 else shotFade = 0;
                 info.ShotFade = shotFade;
-                p.PredictedTargetPos = wTarget.TargetPos;
+                p.PrevTargetPos = wTarget.TargetPos;
 
                 var updateGravity = aConst.FeelsGravity && info.Ai.InPlanetGravity;
                 if (updateGravity && Session.Tick - w.GravityTick > 119)
