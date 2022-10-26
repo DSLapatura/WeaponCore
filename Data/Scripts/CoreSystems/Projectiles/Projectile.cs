@@ -1924,7 +1924,7 @@ namespace CoreSystems.Projectiles
 
                 var projectiles = Info.Ai.Session.Projectiles;
                 var shrapnel = projectiles.ShrapnelPool.Get();
-                shrapnel.Init(this, projectiles.FragmentPool, fragAmmoDef, ref newOrigin, ref pointDir);
+                shrapnel.Init(this, projectiles.FragmentPool, fragAmmoDef, timedSpawn, ref newOrigin, ref pointDir);
                 projectiles.ShrapnelToSpawn.Add(shrapnel);
             }
 

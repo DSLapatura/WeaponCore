@@ -183,7 +183,7 @@ namespace CoreSystems.Support
             Frags = 0;
             MuzzleId = 0;
             Age = 0;
-            SyncId = -1;
+            SyncId = long.MinValue;
             DamageDonePri = 0;
             DamageDoneAoe = 0;
             DamageDoneShld = 0;
@@ -484,19 +484,22 @@ namespace CoreSystems.Support
     internal class Fragments
     {
         internal List<Fragment> Sharpnel = new List<Fragment>();
-        internal void Init(Projectile p, MyConcurrentPool<Fragment> fragPool, AmmoDef ammoDef, ref Vector3D newOrigin, ref Vector3D pointDir)
+        internal void Init(Projectile p, MyConcurrentPool<Fragment> fragPool, AmmoDef ammoDef, bool timedSpawn, ref Vector3D newOrigin, ref Vector3D pointDir)
         {
             var info = p.Info;
             var target = info.Target;
             var aConst = info.AmmoDef.Const;
+            var fragCount = p.Info.AmmoDef.Fragment.Fragments;
+            var syncId = fragCount == 1 && ammoDef.Const.ProjectileSync && aConst.ProjectileSync ? info.SyncId : long.MinValue;
 
-            for (int i = 0; i < p.Info.AmmoDef.Fragment.Fragments; i++)
+            for (int i = 0; i < fragCount; i++)
             {
                 var frag = fragPool.Get();
                 frag.Weapon = info.Weapon;
                 frag.Ai = info.Ai;
                 frag.AmmoDef = ammoDef;
-                
+
+                frag.SyncId = syncId;
                 frag.Depth = info.SpawnDepth + 1;
                 frag.TargetState = target.TargetState;
                 frag.TargetEntity = target.TargetEntity;
@@ -581,6 +584,7 @@ namespace CoreSystems.Support
                 info.OriginUp = frag.OriginUp;
                 info.Random = frag.Random;
                 info.DoDamage = frag.DoDamage;
+                info.SyncId = frag.SyncId;
                 info.SpawnDepth = frag.Depth;
                 info.BaseDamagePool = aConst.BaseDamage;
                 p.PredictedTargetPos = frag.PredictedTargetPos;
@@ -635,6 +639,7 @@ namespace CoreSystems.Support
         public Target.TargetStates TargetState;
         public float Radial;
         internal int SceneVersion;
+        internal long SyncId;
     }
 
     public class VoxelCache
