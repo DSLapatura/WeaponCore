@@ -123,8 +123,7 @@ namespace CoreSystems
 
         [ProtoMember(1)] public ProSyncState State;
         [ProtoMember(2)] public Vector3D Position;
-        [ProtoMember(3)] public Vector3D Velocity;
-        [ProtoMember(4)] public Vector3D Acceleration;
+        [ProtoMember(3)] public Vector3 Velocity;
         [ProtoMember(5)] public int PartId;
         [ProtoMember(6)] public long ProId;
         [ProtoMember(7)] public long TargetId;

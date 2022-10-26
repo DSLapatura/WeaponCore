@@ -132,7 +132,7 @@ namespace CoreSystems.Projectiles
                     if (Session.IsClient)
                     {
                         var posSlot = info.Age % 30;
-                        info.PastProInfos[posSlot] = new PastProInfo {Position = p.Position, Velocity = p.Velocity};
+                        info.PastProInfos[posSlot] =  p.Position;
                         if (info.Weapon.WeaponProSyncs.Count > 0)
                             p.SyncClientProjectile(p, posSlot);
                     }

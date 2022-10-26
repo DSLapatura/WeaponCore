@@ -1123,7 +1123,7 @@ namespace CoreSystems.Projectiles
             if (VelocityLengthSqr > MaxSpeedSqr || (DeaccelRate <100 && Info.AmmoDef.Const.IsDrone)) newVel = Info.Direction * MaxSpeed*DeaccelRate/100;
 
             PrevVelocity = Velocity;
-            Velocity = false && Info.AmmoDef.Const.ProjectileSync ? Vector3D.Round(newVel, 3) : newVel;
+            Velocity = newVel;
         }
 
         private void TrackSmartTarget(bool fake)
@@ -1570,7 +1570,6 @@ namespace CoreSystems.Projectiles
             MaxSpeedSqr = MaxSpeed * MaxSpeed;
             MaxAccelVelocity = (Info.Direction * Info.AmmoDef.Const.DeltaVelocityPerTick);
 
-            PrevVelocity = Velocity;
             if (Info.AmmoDef.Const.AmmoSkipAccel)
             {
                 Velocity = MaxVelocity;
@@ -1958,12 +1957,10 @@ namespace CoreSystems.Projectiles
             proSync.State = state;
             proSync.Position = Position;
             proSync.Velocity = Velocity;
-            proSync.Acceleration = Velocity - PrevVelocity;
             proSync.ProId = Info.SyncId;
             proSync.TargetId = target.TargetId;
             proSync.CoreEntityId = Info.Weapon.Comp.CoreEntity.EntityId;
             session.GlobalProSyncs[Info.Weapon.Comp.CoreEntity] = proSync;
-            //Log.Line($"ProSyn: state:{proSync.State} - targetUpdate:{target.TargetEntity?.EntityId} - targetState:{target.TargetState} - rng:{pRng.Item1}:{pRng.Item2}[{wRng.Item1}:{wRng.Item2}] - pId:{Info.Id}[{Info.SyncId}]({proSync.ProId})");
         }
 
         internal void SyncClientProjectile(Projectile p, int posSlot)
@@ -1981,44 +1978,37 @@ namespace CoreSystems.Projectiles
                     var oldPos = p.Position;
                     var oldVels = p.Velocity;
 
-                    bool posUpdate = false;
                     var checkSlot = posSlot - clientProSync.CurrentOwl >= 0 ? posSlot - (int)clientProSync.CurrentOwl : (posSlot - (int)clientProSync.CurrentOwl) + 30;
 
                     var estimatedStepSize = clientProSync.CurrentOwl * StepConst;
-                    var futureAccelOffset = proSync.Acceleration * estimatedStepSize;
-                    var futureVelocity = proSync.Velocity + futureAccelOffset;
 
-                    var estimatedDistTraveledToPresent = futureVelocity * estimatedStepSize;
+                    var estimatedDistTraveledToPresent = proSync.Velocity * estimatedStepSize;
                     var clampedEstimatedDistTraveledSqr = Math.Max(estimatedDistTraveledToPresent.LengthSquared(), 25);
-
+                    var pastClientProPos = Info.PastProInfos[checkSlot];
                     var pastServerProPos = proSync.Position;
-                    var pastClientProInfo = Info.PastProInfos[checkSlot];
-
-                    var pastClientProPos = pastClientProInfo.Position;
-                    var pastClientProVel = pastClientProInfo.Velocity;
 
                     var futurePosition = pastServerProPos + estimatedDistTraveledToPresent;
 
                     if (Vector3D.DistanceSquared(pastClientProPos, pastServerProPos) > clampedEstimatedDistTraveledSqr)
                     {
-                        posUpdate = true;
-                        p.Position = futurePosition;
-                        p.Velocity = futureVelocity;
-                        Vector3D.Normalize(ref p.Velocity, out Info.Direction);
+                        if (++Info.ProSyncOverCount > 1)
+                        {
+                            Info.ProSyncOverCount = 0;
+                            p.Position = futurePosition;
+                        }
                     }
+                    else
+                        Info.ProSyncOverCount = 0;
 
-                    bool forceKill = false;
+
                     if (proSync.State == ProtoWeaponProSync.ProSyncState.Dead && p.State != ProjectileState.Dead)
                     {
-                        forceKill = true;
                         p.State = ProjectileState.Destroy;
                     }
 
-                    bool targetChange = false;
                     MyEntity targetEnt = null;
                     if (proSync.TargetId > 0 && (target.TargetId != proSync.TargetId) && MyEntities.TryGetEntityById(proSync.TargetId, out targetEnt))
                     {
-                        targetChange = true;
                         var topEntId = targetEnt.GetTopMostParent()?.EntityId ?? 0;
                         target.Set(targetEnt, targetEnt.PositionComp.WorldAABB.Center, 0, 0, topEntId);
                     }
@@ -2032,31 +2022,11 @@ namespace CoreSystems.Projectiles
                             Info.Weapon.System.Session.ProSyncLineDebug[Info.SyncId] = lines;
                         }
 
-                        var fv = proSync.Velocity;
-                        var edtp = fv * estimatedStepSize;
-                        var fp = pastServerProPos + edtp;
-
-
                         var pastServerLine = lines.Count == 0 ? new LineD(pastServerProPos - (proSync.Velocity * StepConst), pastServerProPos) : new LineD(lines[lines.Count - 1].Line.To, pastServerProPos);
-                        var pastClientLine = lines.Count == 0 ? new LineD(pastClientProPos - (pastClientProVel * StepConst), pastClientProPos) : new LineD(lines[lines.Count - 1].Line.To, pastClientProPos);
-                        var predictedClientLine = lines.Count == 0 ? new LineD(futurePosition - (futureVelocity * StepConst), futurePosition) : new LineD(lines[lines.Count - 1].Line.To, futurePosition);
-                        var predictedClientLineNoAccel = lines.Count == 0 ? new LineD(fp - (fv * StepConst), fp) : new LineD(lines[lines.Count - 1].Line.To, fp);
-
 
                         lines.Add(new ClientProSyncDebugLine { CreateTick = Info.Weapon.System.Session.Tick, Line = pastServerLine, Color = Color.Red});
-                        lines.Add(new ClientProSyncDebugLine { CreateTick = Info.Weapon.System.Session.Tick, Line = pastClientLine, Color = Color.Blue });
-                        lines.Add(new ClientProSyncDebugLine { CreateTick = Info.Weapon.System.Session.Tick, Line = predictedClientLine, Color = Color.White });
-                        lines.Add(new ClientProSyncDebugLine { CreateTick = Info.Weapon.System.Session.Tick, Line = predictedClientLineNoAccel, Color = Color.White });
 
-                        var totalPastProInfos = Info.PastProInfos.Length;
-                        for (int i = 0; i < totalPastProInfos; i++)
-                        {
-                            if (i == checkSlot || i == checkSlot + 1 || i == checkSlot - 1 || i == 0 && checkSlot + 1 >= totalPastProInfos)
-                            {
-                                Log.Line($"ProSyn: Id:{Info.Id} - age:{Info.Age} - slot:{i} - checkSlot:{checkSlot} - thisSlot:{posSlot} - cOwl:{clientProSync.CurrentOwl} - pOwl:{clientProSync.PreviousOwl} - owlDiff:{Vector3D.Distance(pastClientProPos, proSync.Position)} - posDiff:{Vector3D.Distance(oldPos, proSync.Position)} - velDiff:{Vector3D.Distance(oldVels, proSync.Velocity)} - targetChange:{posUpdate}");
-                            }
-                        }
-                        //Log.Line($"ProSyn: delay:{session.Tick - clientProSync.UpdateTick} - cOwl:{clientProSync.CurrentOwl} - pOwl:{clientProSync.PreviousOwl} - posUpdate:{posUpdate} - forceKill:{forceKill} - targetChange:{targetChange} - owlDiff:{Vector3D.Distance(Info.PreviousPositions[checkSlot], proSync.Position)} - posDiff:{Vector3D.Distance(oldPos, proSync.Position)} - velDiff:{Vector3D.Distance(oldVels, proSync.Velocity)} - state:{proSync.State} - targetUpdate:{targetEnt?.EntityId} - targetState:{p.Info.Target.TargetState} - rng:{pRng.Item1}:{pRng.Item2}[{wRng.Item1}:{wRng.Item2}] - pId:{Info.Id}[{Info.SyncId}]({proSync.ProId})");
+                        Log.Line($"ProSyn: Id:{Info.Id} - age:{Info.Age} - jumpDist:{Vector3D.Distance(oldPos, p.Position)}[{Vector3D.Distance(oldVels, p.Velocity)}] - posDiff:{Vector3D.Distance(Info.PastProInfos[checkSlot], proSync.Position)} - nVel:{oldVels.Length()} - oVel:{proSync.Velocity.Length()})");
                     }
                 }
 

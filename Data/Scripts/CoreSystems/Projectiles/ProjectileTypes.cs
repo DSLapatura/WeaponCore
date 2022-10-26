@@ -20,7 +20,7 @@ namespace CoreSystems.Support
         internal readonly Target Target = new Target(null, true);
         internal readonly SmartStorage Storage = new SmartStorage();
         internal readonly List<HitEntity> HitList = new List<HitEntity>(4);
-        internal readonly PastProInfo[] PastProInfos = new PastProInfo[30];
+        internal readonly Vector3D[] PastProInfos = new Vector3D[30];
 
         internal AvShot AvShot;
         internal Weapon Weapon;
@@ -40,6 +40,7 @@ namespace CoreSystems.Support
         internal Hit Hit;
         internal XorShiftRandomStruct Random;
         internal FakeTargets DummyTargets;
+        internal int ProSyncOverCount;
         internal int TriggerGrowthSteps;
         internal int MuzzleId;
         internal int ObjectsHit;
@@ -122,7 +123,7 @@ namespace CoreSystems.Support
             if (AmmoDef.Const.ProjectileSync)
             {
                 for (int i = 0; i < PastProInfos.Length; i++)
-                    PastProInfos[i] =new PastProInfo();
+                    PastProInfos[i] = Vector3D.Zero;
             }
 
             if (usesStorage)
@@ -194,6 +195,7 @@ namespace CoreSystems.Support
             FireCounter = 0;
             UniqueMuzzleId = 0;
             LastFragTime = 0;
+            ProSyncOverCount = 0;
             ClosestDistSqrToTarget = double.MinValue; 
             ShieldResistMod = 1f;
             ShieldBypassMod = 1f;

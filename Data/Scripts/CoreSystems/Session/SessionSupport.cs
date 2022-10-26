@@ -167,10 +167,8 @@ namespace CoreSystems
                 for (var i = p.Value.Count - 1; i >= 0; i--)
                 {
                     var info = p.Value[i];
-                    var colorMod = i % 4;
-
                     DsDebugDraw.DrawLine(info.Line, info.Color, 0.35f);
-                    if (Tick - info.CreateTick > 7200)
+                    if (Tick - info.CreateTick > 3600)
                     {
                         p.Value.RemoveAt(i);
                     }
