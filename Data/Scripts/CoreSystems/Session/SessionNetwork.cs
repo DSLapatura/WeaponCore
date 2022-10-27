@@ -94,8 +94,8 @@ namespace CoreSystems
                     }
                     case PacketType.ProjectilePosSyncs:
                     {
-                            ClientProjectilePosSyncs(packetObj);
-                            break;
+                        ClientProjectilePosSyncs(packetObj);
+                        break;
                     }
                     case PacketType.ProjectileStateSyncs:
                     {

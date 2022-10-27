@@ -105,7 +105,7 @@ namespace CoreSystems
 
         private void SendProjectilePosSyncs()
         {
-            var packet = ProtoWeaponProPosPacketPool.Count > 0 ? ProtoWeaponProPosPacketPool.Pop() : new ProjectileSyncPosPacket { PType = PacketType.ProjectilePosSyncs };
+            var packet = ProtoWeaponProPosPacketPool.Count > 0 ? ProtoWeaponProPosPacketPool.Pop() : new ProjectileSyncPosPacket ();
             
             var latencyMonActive = Tick - LastPongTick < 120;
             LastProSyncSendTick = Tick;
@@ -127,6 +127,7 @@ namespace CoreSystems
                 return;
             }
 
+            packet.PType = PacketType.ProjectilePosSyncs;
             PrunedPacketsToClient[packet] = new PacketInfo
             {
                 Function = RewriteAddClientLatency,
@@ -138,7 +139,7 @@ namespace CoreSystems
 
         private void SendProjectileStateSyncs()
         {
-            var packet = ProtoWeaponProStatePacketPool.Count > 0 ? ProtoWeaponProStatePacketPool.Pop() : new ProjectileSyncStatePacket { PType = PacketType.ProjectileStateSyncs };
+            var packet = ProtoWeaponProStatePacketPool.Count > 0 ? ProtoWeaponProStatePacketPool.Pop() : new ProjectileSyncStatePacket ();
             var latencyMonActive = Tick - LastPongTick < 120;
             LastProSyncSendTick = Tick;
 
@@ -154,11 +155,11 @@ namespace CoreSystems
 
             if (!latencyMonActive)
             {
-                Log.Line($"pingpong not ready");
                 ProtoWeaponProStatePacketPool.Push(packet);
                 return;
             }
 
+            packet.PType = PacketType.ProjectileStateSyncs;
             PrunedPacketsToClient[packet] = new PacketInfo
             {
                 Entity = null,

@@ -2047,7 +2047,7 @@ namespace CoreSystems.Projectiles
 
                         lines.Add(new ClientProSyncDebugLine { CreateTick = s.Tick, Line = pastServerLine, Color = Color.Red});
 
-                        Log.Line($"ProSyn: Id:{Info.Id} - age:{Info.Age} - jumpDist:{Vector3D.Distance(oldPos, Position)}[{Vector3D.Distance(oldVels, Velocity)}] - posDiff:{Vector3D.Distance(Info.PastProInfos[checkSlot], proPosSync.Position)} - nVel:{oldVels.Length()} - oVel:{proPosSync.Velocity.Length()})");
+                        Log.Line($"ProSyn: Id:{Info.Id} - age:{Info.Age} - owl:{sync.CurrentOwl} - jumpDist:{Vector3D.Distance(oldPos, Position)}[{Vector3D.Distance(oldVels, Velocity)}] - posDiff:{Vector3D.Distance(Info.PastProInfos[checkSlot], proPosSync.Position)} - nVel:{oldVels.Length()} - oVel:{proPosSync.Velocity.Length()})");
                     }
                 }
 
