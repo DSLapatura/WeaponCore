@@ -2,6 +2,7 @@
 using CoreSystems.Platform;
 using CoreSystems.Support;
 using Sandbox.ModAPI;
+using VRage;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRageMath;
@@ -105,43 +106,64 @@ namespace CoreSystems
         private void SendProjectilePosSyncs()
         {
             var packet = ProtoWeaponProPosPacketPool.Count > 0 ? ProtoWeaponProPosPacketPool.Pop() : new ProjectileSyncPosPacket { PType = PacketType.ProjectilePosSyncs };
+            
+            var latencyMonActive = Tick - LastPongTick < 120;
+            LastProSyncSendTick = Tick;
 
             foreach (var pSync in GlobalProPosSyncs)
             {
                 var sync = pSync.Value;
-                packet.Data.Add(sync);
+                if (latencyMonActive)
+                    packet.Data.Add(sync);
                 ProtoWeaponProSyncPosPool.Push(sync);
             }
 
             GlobalProPosSyncs.Clear();
-            
-            PacketsToClient.Add(new PacketInfo
+
+            if (!latencyMonActive)
+            {
+                Log.Line($"pingpong not ready");
+                ProtoWeaponProPosPacketPool.Push(packet);
+                return;
+            }
+
+            PrunedPacketsToClient[packet] = new PacketInfo
             {
                 Function = RewriteAddClientLatency,
                 SpecialPlayerId = long.MinValue,
-                Entity = null,
                 Packet = packet,
-            });
+                Entity = null,
+            };
         }
 
         private void SendProjectileStateSyncs()
         {
             var packet = ProtoWeaponProStatePacketPool.Count > 0 ? ProtoWeaponProStatePacketPool.Pop() : new ProjectileSyncStatePacket { PType = PacketType.ProjectileStateSyncs };
+            var latencyMonActive = Tick - LastPongTick < 120;
+            LastProSyncSendTick = Tick;
 
             foreach (var pSync in GlobalProStateSyncs)
             {
                 var sync = pSync.Value;
-                packet.Data.Add(sync);
+                if (latencyMonActive)
+                    packet.Data.Add(sync);
                 ProtoWeaponProSyncStatePool.Push(sync);
             }
 
             GlobalProStateSyncs.Clear();
 
-            PacketsToClient.Add(new PacketInfo
+            if (!latencyMonActive)
+            {
+                Log.Line($"pingpong not ready");
+                ProtoWeaponProStatePacketPool.Push(packet);
+                return;
+            }
+
+            PrunedPacketsToClient[packet] = new PacketInfo
             {
                 Entity = null,
                 Packet = packet,
-            });
+            };
         }
 
         private object RewriteAddClientLatency(object o1, object o2)
@@ -1440,6 +1462,7 @@ namespace CoreSystems
             PlayerTickLatency.TryGetValue(clientPong.SenderId, out oldLatency);
 
             PlayerTickLatency[clientPong.SenderId] = new TickLatency { CurrentLatency = owl, PreviousLatency = oldLatency.CurrentLatency };
+            LastPongTick = Tick;
         }
 
         #region Misc Network Methods

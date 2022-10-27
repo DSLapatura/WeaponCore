@@ -478,6 +478,18 @@ namespace CoreSystems
             {
                 switch (pInfo.Packet.PType)
                 {
+                    case PacketType.ProjectilePosSyncs:
+                    {
+                        pInfo.Packet.CleanUp();
+                        ProtoWeaponProPosPacketPool.Push((ProjectileSyncPosPacket)pInfo.Packet);
+                        break;
+                    }
+                    case PacketType.ProjectileStateSyncs:
+                    {
+                        pInfo.Packet.CleanUp();
+                        ProtoWeaponProStatePacketPool.Push((ProjectileSyncStatePacket)pInfo.Packet);
+                        break;
+                    }
                     case PacketType.AiData:
                     {
                         PacketAiPool.Return((AiDataPacket)pInfo.Packet);
