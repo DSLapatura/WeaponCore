@@ -900,7 +900,7 @@ namespace CoreSystems.Projectiles
                         {
                             TrackSmartTarget(fake);
                         }
-                        else if (!SmartRoam(ref targetSphere.Center))
+                        else if (!SmartRoam())
                             return;
                         ComputeSmartVelocity(ref orbitSphere, ref orbitSphereClose, ref targetSphere, ref parentPos, out newVel);
                     }
@@ -958,7 +958,7 @@ namespace CoreSystems.Projectiles
             switch (s.DroneStat)
             {
                 case Transit:
-                    droneNavTarget = Vector3D.Normalize(targetSphere.Center - Position);
+                    droneNavTarget = Vector3D.Normalize(PrevTargetPos - Position);
                     break;
                 case Approach:
                     if (s.DroneMsn == DroneMission.Rtb)//Check for LOS to docking target
@@ -1023,7 +1023,7 @@ namespace CoreSystems.Projectiles
                     break;
 
                 case Kamikaze:
-                    droneNavTarget = Vector3D.Normalize(targetSphere.Center - Position);
+                    droneNavTarget = Vector3D.Normalize(PrevTargetPos - Position);
                     break;
                 case Return:
                     var returnTarget = new Vector3D(parentCubePos + parentCubeOrientation.Forward * orbitSphere.Radius);
@@ -1093,12 +1093,12 @@ namespace CoreSystems.Projectiles
             Vector3D.Normalize(ref newVel, out Info.Direction);
         }
 
-        private bool SmartRoam(ref Vector3D targetSphereCenter)
+        private bool SmartRoam()
         {
             var smarts = Info.AmmoDef.Trajectory.Smarts;
             var roam = smarts.Roam;
             var hadTaret = HadTarget != HadTargetState.None;
-            PrevTargetPos = roam ? targetSphereCenter : Position + (Info.Direction * Info.MaxTrajectory);
+            PrevTargetPos = roam ? PrevTargetPos : Position + (Info.Direction * Info.MaxTrajectory);
 
             if (ZombieLifeTime++ > Info.AmmoDef.Const.TargetLossTime && !smarts.KeepAliveAfterTargetLoss && (smarts.NoTargetExpire || hadTaret))
             {
