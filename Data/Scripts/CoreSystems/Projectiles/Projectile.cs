@@ -1992,10 +1992,16 @@ namespace CoreSystems.Projectiles
             ClientProSync sync;
             if (w.WeaponProSyncs.TryGetValue(Info.SyncId, out sync))
             {
+                if (s.Tick - sync.UpdateTick > 30)
+                {
+                    w.WeaponProSyncs.Remove(Info.SyncId);
+                    return;
+                }
 
                 if (sync.ProStateSync != null && sync.ProStateSync.State == ProtoProStateSync.ProSyncState.Dead)
                 {
                     State = ProjectileState.Destroy;
+                    w.WeaponProSyncs.Remove(Info.SyncId);
                     return;
                 }
 
