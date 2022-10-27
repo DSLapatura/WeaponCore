@@ -359,7 +359,7 @@ namespace CoreSystems
             var detActive = false;
             var earlyExit = false;
             var destroyed = 0;
-            var showHits = t.Weapon.System.WConst.DebugMode;
+            var showHits = t.Weapon.System.WConst.DebugMode && !t.Weapon.Comp.Session.MpActive;
 
             //Main loop (finally)
 

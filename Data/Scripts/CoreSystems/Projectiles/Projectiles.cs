@@ -135,7 +135,7 @@ namespace CoreSystems.Projectiles
                         if (info.Weapon.WeaponProSyncs.Count > 0)
                             p.SyncClientProjectile(posSlot);
                     }
-                    else if (info.Age > 0 && info.Age % 29 == 0)
+                    else if (info.Age > 0 && info.Age % 14 == 0)
                     {
                         p.SyncPosServerProjectile();
                         if (info.LastProSyncStateAge + 10 > info.Age)

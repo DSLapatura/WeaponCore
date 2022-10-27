@@ -1005,7 +1005,7 @@ namespace CoreSystems.Projectiles
                     break;
                
                 case Strafe:
-                    droneNavTarget = Vector3D.Normalize(targetSphere.Center - Position);
+                    droneNavTarget = Vector3D.Normalize(PrevTargetPos - Position);
                     break;
                 case Escape:
                     var metersInSideOrbit = MyUtils.GetSmallestDistanceToSphere(ref Position, ref orbitSphereClose);
@@ -2025,10 +2025,11 @@ namespace CoreSystems.Projectiles
 
                     if (Vector3D.DistanceSquared(pastClientProPos, pastServerProPos) > clampedEstimatedDistTraveledSqr)
                     {
-                        if (++Info.ProSyncPosMissCount > 1)
+                        if (true || ++Info.ProSyncPosMissCount > 1)
                         {
                             Info.ProSyncPosMissCount = 0;
                             Position = futurePosition;
+                            //Velocity = proPosSync.Velocity;
                         }
                     }
                     else
@@ -2074,7 +2075,10 @@ namespace CoreSystems.Projectiles
 
                     if (seed.Item1 != sync.ProStateSync.RandomX || seed.Item2 != sync.ProStateSync.RandomY)
                     {
-                        Info.Random.SyncSeed(seed.Item1, seed.Item2);
+                        var oldX = seed.Item1;
+                        var oldY = seed.Item2;
+
+                        Info.Random.SyncSeed(sync.ProStateSync.RandomX, sync.ProStateSync.RandomY);
 
                         var oldDir = OffsetDir;
                         var oldTarget = OffsetTarget;
@@ -2082,7 +2086,7 @@ namespace CoreSystems.Projectiles
                         OffsetTarget = sync.ProStateSync.OffsetTarget;
 
                         if (w.System.WConst.DebugMode)
-                            Log.Line($"ProSyn: Id:{Info.Id} - age:{Info.Age} - seedReset - oDirDiff:{Vector3D.IsZero(oldDir - OffsetDir, 1E-02d)} - targetDiff:{Vector3D.Distance(oldTarget, OffsetTarget)}");
+                            Log.Line($"seedReset: Id:{Info.Id} - age:{Info.Age} - owl:{sync.CurrentOwl} - stateAge:{Info.Weapon.System.Session.Tick - Info.LastProSyncStateAge} - oDirDiff:{Vector3D.IsZero(oldDir - OffsetDir, 1E-02d)} - x:{oldX}[{sync.ProStateSync.RandomX}] - y{oldY}[{sync.ProStateSync.RandomY}] - targetDiff:{Vector3D.Distance(oldTarget, OffsetTarget)}");
                     }
 
                 }
