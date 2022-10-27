@@ -235,9 +235,13 @@ namespace CoreSystems
         internal readonly List<LosDebug> LosDebugList = new List<LosDebug>(128);
         internal readonly List<MyTuple<IMyPlayer, Vector4, FakeTarget>> ActiveMarks = new List<MyTuple<IMyPlayer, Vector4, FakeTarget>>();
         internal readonly Queue<PartAnimation> ThreadedAnimations = new Queue<PartAnimation>();
-        internal readonly int[] AuthorSettings = new int[6];
         internal readonly List<Weapon>[] LeadGroups = new List<Weapon>[4];
         internal readonly Queue<double> ClientPerfHistory = new Queue<double>(20);
+        internal readonly int[] AuthorSettings = new int[6];
+        internal readonly double[] SmartOffsets = new double[1024];
+        internal readonly double[] OffSetTargetAz = new double[1024];
+        internal readonly double[] OffSetTargetEl = new double[1024];
+
 
         ///
         ///
@@ -317,6 +321,8 @@ namespace CoreSystems
         internal CoreSettings Settings;
         internal TerminalMonitor TerminalMon;
         internal ProblemReport ProblemRep;
+
+        internal XorShiftRandomStruct XorRnd;
 
         internal MatrixD CameraMatrix;
         internal Vector3D CameraPos;
@@ -548,6 +554,7 @@ namespace CoreSystems
 
         public Session()
         {
+            XorRnd = new XorShiftRandomStruct(235211389686413);
             UiInput = new UiInput(this);
             HudUi = new WeaponCore.Data.Scripts.CoreSystems.Ui.Hud.Hud(this);
             TargetUi = new WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting.TargetUi(this);
@@ -580,6 +587,15 @@ namespace CoreSystems
 
             for (int i = 0; i < DamageBlockCache.Length; i++)
                DamageBlockCache[i] = new List<IMySlimBlock>();
+
+            for (int i = 0; i < SmartOffsets.Length; i++)
+                SmartOffsets[i] = XorRnd.NextDouble() * MathHelper.TwoPi;
+
+            for (int i = 0; i < OffSetTargetAz.Length; i++)
+                OffSetTargetAz[i] = (XorRnd.NextDouble() * 1) * 2 * Math.PI;
+
+            for (int i = 0; i < OffSetTargetEl.Length; i++)
+                OffSetTargetEl[i] = ((XorRnd.NextDouble() * 1) * 2 - 1) * 0.5 * Math.PI;
         }
     }
 

@@ -934,13 +934,13 @@ namespace CoreSystems.Projectiles
 
             if (Info.Age % offsetTime == 0 || revOffsetDir)
             {
-                double angle = Info.Random.NextDouble() * MathHelper.TwoPi;
+
+                var mod = Info.Age % 1024;
+                double angle = Info.Ai.Session.SmartOffsets[mod];
                 var up = Vector3D.CalculatePerpendicularVector(Info.Direction);
                 var right = Vector3D.Cross(Info.Direction, up);
                 OffsetDir = Math.Sin(angle) * up + Math.Cos(angle) * right;
                 OffsetDir *= smarts.OffsetRatio;
-                Info.LastProSyncStateAge = Info.Age;
-
             }
 
             commandedAccel += AccelInMetersPerSec * OffsetDir;
@@ -958,7 +958,7 @@ namespace CoreSystems.Projectiles
             switch (s.DroneStat)
             {
                 case Transit:
-                    droneNavTarget = Vector3D.Normalize(PrevTargetPos - Position);
+                    droneNavTarget = Vector3D.Normalize(targetSphere.Center - Position);
                     break;
                 case Approach:
                     if (s.DroneMsn == DroneMission.Rtb)//Check for LOS to docking target
@@ -1380,12 +1380,12 @@ namespace CoreSystems.Projectiles
                 {
                     if ((Info.Age % offsetTime == 0))
                     {
-                        double angle = Info.Random.NextDouble() * MathHelper.TwoPi;
+                        var mod = Info.Age % 1024;
+                        double angle = Info.Ai.Session.SmartOffsets[mod];
                         var up = Vector3D.CalculatePerpendicularVector(Info.Direction);
                         var right = Vector3D.Cross(Info.Direction, up);
                         OffsetDir = Math.Sin(angle) * up + Math.Cos(angle) * right;
                         OffsetDir *= smarts.OffsetRatio;
-                        Info.LastProSyncStateAge = Info.Age;
                     }
 
                     commandedAccel += AccelInMetersPerSec * OffsetDir;
@@ -1411,8 +1411,9 @@ namespace CoreSystems.Projectiles
 
         internal void OffSetTarget(bool roam = false)
         {
-            var randAzimuth = (Info.Random.NextDouble() * 1) * 2 * Math.PI;
-            var randElevation = ((Info.Random.NextDouble() * 1) * 2 - 1) * 0.5 * Math.PI;
+            var mod = Info.Age % 1024;
+            var randAzimuth = Info.Ai.Session.OffSetTargetAz[mod];
+            var randElevation = Info.Ai.Session.OffSetTargetEl[mod];
             var offsetAmount = roam ? 100 : Info.AmmoDef.Trajectory.Smarts.Inaccuracy;
             Vector3D randomDirection;
             Vector3D.CreateFromAzimuthAndElevation(randAzimuth, randElevation, out randomDirection); // this is already normalized
@@ -1420,7 +1421,6 @@ namespace CoreSystems.Projectiles
             if (Info.Age != 0)
             {
                 LastOffsetTime = Info.Age;
-                Info.LastProSyncStateAge = Info.Age;
             }
         }
 
@@ -1466,7 +1466,9 @@ namespace CoreSystems.Projectiles
                 Info.Ai.Session.Projectiles.AddProjectileTargets(this);
 
             if (Info.AmmoDef.Const.ProjectileSync && Info.Weapon.System.Session.IsServer && (Info.Target.TargetState != Target.TargetStates.IsFake || Info.Target.TargetState != Target.TargetStates.IsProjectile))
+            {
                 Info.LastProSyncStateAge = Info.Age;
+            }
 
             return newTarget;
         }
@@ -2025,11 +2027,12 @@ namespace CoreSystems.Projectiles
 
                     if (Vector3D.DistanceSquared(pastClientProPos, pastServerProPos) > clampedEstimatedDistTraveledSqr)
                     {
-                        if (true || ++Info.ProSyncPosMissCount > 1)
+                        if (++Info.ProSyncPosMissCount > 1)
                         {
                             Info.ProSyncPosMissCount = 0;
                             Position = futurePosition;
                             //Velocity = proPosSync.Velocity;
+                            //Vector3D.Normalize(ref Velocity, out Info.Direction);
                         }
                     }
                     else
@@ -2086,7 +2089,7 @@ namespace CoreSystems.Projectiles
                         OffsetTarget = sync.ProStateSync.OffsetTarget;
 
                         if (w.System.WConst.DebugMode)
-                            Log.Line($"seedReset: Id:{Info.Id} - age:{Info.Age} - owl:{sync.CurrentOwl} - stateAge:{Info.Weapon.System.Session.Tick - Info.LastProSyncStateAge} - oDirDiff:{Vector3D.IsZero(oldDir - OffsetDir, 1E-02d)} - x:{oldX}[{sync.ProStateSync.RandomX}] - y{oldY}[{sync.ProStateSync.RandomY}] - targetDiff:{Vector3D.Distance(oldTarget, OffsetTarget)}");
+                            Log.Line($"seedReset: Id:{Info.Id} - age:{Info.Age} - owl:{sync.CurrentOwl} - stateAge:{Info.Age - Info.LastProSyncStateAge} - tId:{sync.ProStateSync.TargetId} - oDirDiff:{Vector3D.IsZero(oldDir - OffsetDir, 1E-02d)} - targetDiff:{Vector3D.Distance(oldTarget, OffsetTarget)} - x:{oldX}[{sync.ProStateSync.RandomX}] - y{oldY}[{sync.ProStateSync.RandomY}]");
                     }
 
                 }
