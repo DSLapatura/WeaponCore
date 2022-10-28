@@ -968,7 +968,9 @@ namespace CoreSystems.Platform
                     if (Data.Repo != null)
                     {
                         Data.Repo.Values.State.PlayerId = playerId;
-                        Data.Repo.Values.State.Control = ProtoWeaponState.ControlMode.Camera;
+                        
+                        if (TypeSpecific != CompTypeSpecific.Rifle)
+                            Data.Repo.Values.State.Control = ProtoWeaponState.ControlMode.Camera;
 
                         if (Session.MpActive)
                             Session.SendComp(this);

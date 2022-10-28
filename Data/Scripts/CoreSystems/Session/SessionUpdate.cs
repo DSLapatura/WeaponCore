@@ -617,6 +617,7 @@ namespace CoreSystems
                         /// Queue for target acquire or set to tracking weapon.
                         /// 
                         var seek = wComp.FakeMode && w.Target.TargetState != TargetStates.IsFake || (aConst.RequiresTarget || w.RotorTurretTracking) & !w.Target.HasTarget && !noAmmo && (wComp.DetectOtherSignals && ai.DetectionInfo.OtherInRange || ai.DetectionInfo.PriorityInRange) && (!wComp.UserControlled && !enforcement.DisableAi || wValues.State.Trigger == On);
+
                         if (!IsClient && (seek || (aConst.RequiresTarget || w.RotorTurretTracking) && (rootConstruct.TargetResetTick == Tick || w.ProjectilesNear) && !wComp.UserControlled && !enforcement.DisableAi) && !w.AcquiringTarget && wValues.State.Control != ControlMode.Camera)
                         {
                             w.AcquiringTarget = true;
