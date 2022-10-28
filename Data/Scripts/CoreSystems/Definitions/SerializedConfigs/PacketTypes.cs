@@ -620,7 +620,7 @@ namespace CoreSystems
     public class FixedWeaponHitPacket : Packet
     {
         [ProtoMember(1)] internal long HitEnt;
-        [ProtoMember(2)] internal Vector3 HitOffset;
+        [ProtoMember(2)] internal Vector3D HitOffset;
         [ProtoMember(3)] internal Vector3 Up;
         [ProtoMember(4)] internal Vector3 Velocity;
         [ProtoMember(5)] internal int MuzzleId;
@@ -632,7 +632,7 @@ namespace CoreSystems
         {
             base.CleanUp();
             HitEnt = 0;
-            HitOffset = Vector3.Zero;
+            HitOffset = Vector3D.Zero;
             Up = Vector3.Zero;
             MuzzleId = 0;
             WeaponId = 0;

@@ -383,12 +383,11 @@ namespace CoreSystems
             var weapon = collection[hitPacket.WeaponId];
             var targetEnt = MyEntities.GetEntityByIdOrDefault(hitPacket.HitEnt);
 
-            if (targetEnt == null) return Error(data, Msg("TargetEnt"));
             var ammoDef = weapon.System.AmmoTypes[hitPacket.AmmoIndex].AmmoDef;
             var muzzle = weapon.Muzzles[hitPacket.MuzzleId];
             var isBeam = ammoDef.Const.IsBeamWeapon;
 
-            var hitOrigin = targetEnt.PositionComp.WorldMatrixRef.Translation - hitPacket.HitOffset;
+            var hitOrigin = targetEnt != null ? targetEnt.PositionComp.WorldMatrixRef.Translation - hitPacket.HitOffset : hitPacket.HitOffset;
             var direction = isBeam ? (Vector3)(hitOrigin - muzzle.Position) : hitPacket.Velocity;
             direction.Normalize();
 

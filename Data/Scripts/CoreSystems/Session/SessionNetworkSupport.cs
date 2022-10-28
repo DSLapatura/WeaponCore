@@ -817,23 +817,25 @@ namespace CoreSystems
             else Log.Line("SendOverRidesClientComp should only be called on clients");
         }
 
-        internal void SendFixedGunHitEvent(MyEntity triggerEntity, MyEntity hitEnt, Vector3 origin, Vector3 velocity, Vector3 up, int muzzleId, int systemId, int ammoIndex, float maxTrajectory)
+        internal void SendFixedGunHitEvent(bool hit, MyEntity triggerEntity, MyEntity hitEnt, Vector3D origin, Vector3 velocity, Vector3 up, int muzzleId, int systemId, int ammoIndex, float maxTrajectory)
         {
-            if (triggerEntity == null || hitEnt == null) return;
+            if (triggerEntity == null || hitEnt == null && hit) return;
 
             var comp = triggerEntity.Components.Get<CoreComponent>();
 
             int weaponId;
             if (comp?.Ai?.TopEntity != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Platform.Structure.HashToId.TryGetValue(systemId, out weaponId))
             {
+                var hitEntId = hitEnt?.EntityId ?? 0;
+                var hitOffset = hitEnt != null ? hitEnt.PositionComp.WorldMatrixRef.Translation - origin : origin;
 
                 PacketsToServer.Add(new FixedWeaponHitPacket
                 {
                     EntityId = triggerEntity.EntityId,
                     SenderId = MultiplayerId,
                     PType = PacketType.FixedWeaponHitEvent,
-                    HitEnt = hitEnt.EntityId,
-                    HitOffset = hitEnt.PositionComp.WorldMatrixRef.Translation - origin,
+                    HitEnt = hitEntId,
+                    HitOffset = hitOffset,
                     Up = up,
                     MuzzleId = muzzleId,
                     WeaponId = weaponId,

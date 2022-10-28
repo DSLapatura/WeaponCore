@@ -495,6 +495,11 @@ namespace CoreSystems.Support
             var fragCount = p.Info.AmmoDef.Fragment.Fragments;
             var syncId = !timedSpawn && fragCount == 1 && ammoDef.Const.ProjectileSync && aConst.ProjectileSync ? info.SyncId : long.MinValue;
 
+            if (info.Ai.Session.IsClient && info.AimedShot && aConst.ClientPredictedAmmo && !info.IsFragment)
+            {
+                Projectiles.Projectiles.SendClientHit(p, false);
+            }
+
             for (int i = 0; i < fragCount; i++)
             {
                 var frag = fragPool.Get();

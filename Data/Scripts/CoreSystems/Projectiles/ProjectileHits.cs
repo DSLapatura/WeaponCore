@@ -18,6 +18,7 @@ using CollisionLayers = Sandbox.Engine.Physics.MyPhysics.CollisionLayers;
 using Jakaria;
 using Jakaria.API;
 using static CoreSystems.Support.AvShot;
+using System.Runtime.CompilerServices;
 
 namespace CoreSystems.Projectiles
 {
@@ -379,7 +380,6 @@ namespace CoreSystems.Projectiles
 
                                     var forwardPos = p.Info.Age != 1 ? p.Beam.From : p.Beam.From + (p.Beam.Direction * Math.Min(grid.GridSizeHalf, info.DistanceTraveled - info.PrevDistanceTraveled));
                                     grid.RayCastCells(forwardPos, p.Beam.To, hitEntity.Vector3ICache, null, true, true);
-                                    Log.Line($"2: {Vector3D.Distance(forwardPos, p.Beam.To)} - {p.Beam.Length} - {p.PruneSphere.Radius} - {p.Info.AmmoDef.Const.CollisionSize} - {p.Info.AmmoDef.Const.CollisionIsLine}");
 
                                     if (hitEntity.Vector3ICache.Count > 0)
                                     {
@@ -648,17 +648,7 @@ namespace CoreSystems.Projectiles
                     {
                         if (Session.IsClient && info.AimedShot && aConst.ClientPredictedAmmo && !info.IsFragment)
                         {
-                            var isBeam = aConst.IsBeamWeapon;
-                            var vel = isBeam ? Vector3D.Zero : !MyUtils.IsZero(p.Velocity) ? p.Velocity : p.PrevVelocity;
-
-                            var firstHitEntity = info.HitList[0];
-                            var hitDist = firstHitEntity.HitDist ?? info.MaxTrajectory;
-                            var distToTarget = aConst.IsBeamWeapon ? hitDist : info.MaxTrajectory - info.DistanceTraveled;
-
-                            var intersectOrigin = isBeam ? new Vector3D(p.Beam.From + (info.Direction * distToTarget)) : p.LastPosition;
-
-                            Session.SendFixedGunHitEvent(info.Target.CoreEntity, info.Hit.Entity, intersectOrigin, vel, info.OriginUp, info.MuzzleId, info.Weapon.System.WeaponIdHash, aConst.AmmoIdxPos, (float)(isBeam ? info.MaxTrajectory : distToTarget));
-                            info.AimedShot = false; //to prevent hits on another grid from triggering again
+                            SendClientHit(p, true);
                         }
                         Session.Hits.Add(p);
                     }
@@ -668,6 +658,24 @@ namespace CoreSystems.Projectiles
                 info.HitList.Clear();
             },stride);
             FinalHitCheck.Clear();
+        }
+
+        internal static void SendClientHit(Projectile p, bool hit)
+        {
+            var info = p.Info;
+            var aConst = p.Info.AmmoDef.Const;
+
+            var isBeam = aConst.IsBeamWeapon;
+            var vel = isBeam ? Vector3D.Zero : !MyUtils.IsZero(p.Velocity) ? p.Velocity : p.PrevVelocity;
+
+            var firstHitEntity = info.HitList[0];
+            var hitDist = hit ? firstHitEntity.HitDist ?? info.MaxTrajectory : info.MaxTrajectory;
+            var distToTarget = aConst.IsBeamWeapon ? hitDist : info.MaxTrajectory - info.DistanceTraveled;
+
+            var intersectOrigin = isBeam ? new Vector3D(p.Beam.From + (info.Direction * distToTarget)) : p.LastPosition;
+
+            info.Ai.Session.SendFixedGunHitEvent(hit, info.Target.CoreEntity, info.Hit.Entity, intersectOrigin, vel, info.OriginUp, info.MuzzleId, info.Weapon.System.WeaponIdHash, aConst.AmmoIdxPos, (float)(isBeam ? info.MaxTrajectory : distToTarget));
+            info.AimedShot = false; //to prevent hits on another grid from triggering again
         }
 
         internal void ProjectileHit(Projectile attacker, Projectile target, bool lineCheck, ref LineD beam)

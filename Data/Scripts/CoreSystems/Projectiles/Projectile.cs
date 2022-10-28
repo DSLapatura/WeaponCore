@@ -1919,7 +1919,6 @@ namespace CoreSystems.Projectiles
                     newOrigin += advOffSet;
                 }
 
-
                 var projectiles = Info.Ai.Session.Projectiles;
                 var shrapnel = projectiles.ShrapnelPool.Get();
                 shrapnel.Init(this, projectiles.FragmentPool, fragAmmoDef, timedSpawn, ref newOrigin, ref pointDir);
