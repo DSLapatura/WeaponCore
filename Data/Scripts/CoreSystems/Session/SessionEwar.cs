@@ -585,7 +585,7 @@ namespace CoreSystems
                 case Emp:
                 case Dot:
                     GridMap gridMap;
-                    if (ai.Session.GridToInfoMap.TryGetValue(targetGrid, out gridMap))
+                    if (ai.Session.TopEntityToInfoMap.TryGetValue(targetGrid, out gridMap))
                         return gridMap.MyCubeBocks;
                     break;
             }

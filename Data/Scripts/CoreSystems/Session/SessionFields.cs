@@ -132,7 +132,7 @@ namespace CoreSystems
         internal readonly ConcurrentDictionary<MyCubeGrid, ConcurrentDictionary<WeaponDefinition.TargetingDef.BlockTypes, ConcurrentCachingList<MyCubeBlock>>> GridToBlockTypeMap = new ConcurrentDictionary<MyCubeGrid, ConcurrentDictionary<WeaponDefinition.TargetingDef.BlockTypes, ConcurrentCachingList<MyCubeBlock>>>();
         internal readonly ConcurrentDictionary<MyInventory, MyConcurrentList<MyPhysicalInventoryItem>> InventoryItems = new ConcurrentDictionary<MyInventory, MyConcurrentList<MyPhysicalInventoryItem>>();
         internal readonly ConcurrentDictionary<MyInventory, ConcurrentDictionary<uint, BetterInventoryItem>> CoreInventoryItems = new ConcurrentDictionary<MyInventory, ConcurrentDictionary<uint, BetterInventoryItem>>();
-        internal readonly ConcurrentDictionary<MyEntity, GridMap> GridToInfoMap = new ConcurrentDictionary<MyEntity, GridMap>();
+        internal readonly ConcurrentDictionary<MyEntity, GridMap> TopEntityToInfoMap = new ConcurrentDictionary<MyEntity, GridMap>();
         internal readonly ConcurrentDictionary<MyInventory, MyConcurrentList<BetterInventoryItem>> ConsumableItemList = new ConcurrentDictionary<MyInventory, MyConcurrentList<BetterInventoryItem>>();
         internal readonly ConcurrentDictionary<MyInventory, int> InventoryMonitors = new ConcurrentDictionary<MyInventory, int>();
         internal readonly ConcurrentDictionary<IMySlimBlock, SupportSys> ProtSupports = new ConcurrentDictionary<IMySlimBlock, SupportSys>();
@@ -238,7 +238,6 @@ namespace CoreSystems
         internal readonly List<Weapon>[] LeadGroups = new List<Weapon>[4];
         internal readonly Queue<double> ClientPerfHistory = new Queue<double>(20);
         internal readonly int[] AuthorSettings = new int[6];
-        internal readonly double[] SmartOffsets = new double[1024];
         internal readonly double[] OffSetTargetAz = new double[1024];
         internal readonly double[] OffSetTargetEl = new double[1024];
 
@@ -588,14 +587,6 @@ namespace CoreSystems
             for (int i = 0; i < DamageBlockCache.Length; i++)
                DamageBlockCache[i] = new List<IMySlimBlock>();
 
-            for (int i = 0; i < SmartOffsets.Length; i++)
-                SmartOffsets[i] = XorRnd.NextDouble() * MathHelper.TwoPi;
-
-            for (int i = 0; i < OffSetTargetAz.Length; i++)
-                OffSetTargetAz[i] = (XorRnd.NextDouble() * 1) * 2 * Math.PI;
-
-            for (int i = 0; i < OffSetTargetEl.Length; i++)
-                OffSetTargetEl[i] = ((XorRnd.NextDouble() * 1) * 2 - 1) * 0.5 * Math.PI;
         }
     }
 

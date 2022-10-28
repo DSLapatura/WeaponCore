@@ -85,7 +85,7 @@ namespace CoreSystems.Support
         internal readonly Session Session;
         internal MyEntity TopEntity;
         internal MyCubeGrid GridEntity;
-        internal GridMap GridMap;
+        internal GridMap TopEntityMap;
         internal IMyCubeGrid ImyGridEntity;
         internal MyCubeBlock PowerBlock;
         internal Weapon.WeaponComponent RootFixedWeaponComp;
@@ -213,8 +213,8 @@ namespace CoreSystems.Support
                 IsGrid = AiType == AiTypes.Grid;
                 DeadSphereRadius = GridEntity?.GridSizeHalf + 0.1 ?? 1.35;
 
-                if (IsGrid)
-                    session.GridToInfoMap.TryGetValue(topEntity, out GridMap);
+                if (AiType != AiTypes.Phantom)
+                    session.TopEntityToInfoMap.TryGetValue(topEntity, out TopEntityMap);
 
                 topEntity.Flags |= (EntityFlags)(1 << 31);
                 Closed = false;

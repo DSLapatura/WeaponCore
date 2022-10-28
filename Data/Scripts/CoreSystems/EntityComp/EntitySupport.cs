@@ -7,6 +7,8 @@ using VRage.Game.ModAPI.Interfaces;
 using VRage.Game.ObjectBuilders.Definitions;
 using VRageMath;
 using static CoreSystems.Support.Ai;
+using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
+
 namespace CoreSystems.Support
 {
     public partial class CoreComponent 
@@ -64,9 +66,12 @@ namespace CoreSystems.Support
                             Ai.OptimalDps -= ((Weapon.WeaponComponent)this).PeakDps;
                             Ai.EffectiveDps -= ((Weapon.WeaponComponent)this).EffectiveDps;
                             Ai.PerfectDps -= ((Weapon.WeaponComponent)this).PerfectDps;
-                            
-                            if (IsBlock)
-                                Constructs.WeaponGroupsMarkDirty(Ai.GridMap.GroupMap);
+
+
+                            if (TypeSpecific == CompTypeSpecific.Rifle)
+                                Session.OnPlayerControl(CoreEntity, null);
+
+                            Constructs.WeaponGroupsMarkDirty(Ai.TopEntityMap.GroupMap);
                         }
 
                         PartCounter wCount;

@@ -325,7 +325,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
         internal void BuildMasterCollections(Ai ai)
         {
             _masterTargets.Clear();
-            var ais = ai.GridMap.GroupMap.Ais;
+            var ais = ai.TopEntityMap.GroupMap.Ais;
             for (int i = 0; i < ais.Count; i++)
             {
 
@@ -335,7 +335,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                     var tInfo = subTargets[j];
                     if (tInfo.Target.MarkedForClose || tInfo.Target is IMyCharacter) continue;
                     GridMap gridMap;
-                    var controlType = tInfo.Drone ? TargetControl.Drone : tInfo.IsGrid && _session.GridToInfoMap.TryGetValue((MyCubeGrid)tInfo.Target, out gridMap) && gridMap.PlayerControllers.Count > 0 ? TargetControl.Player : tInfo.IsGrid && !_session.GridHasPower((MyCubeGrid)tInfo.Target) ? TargetControl.Trash : TargetControl.Other;
+                    var controlType = tInfo.Drone ? TargetControl.Drone : tInfo.IsGrid && _session.TopEntityToInfoMap.TryGetValue((MyCubeGrid)tInfo.Target, out gridMap) && gridMap.PlayerControllers.Count > 0 ? TargetControl.Player : tInfo.IsGrid && !_session.GridHasPower((MyCubeGrid)tInfo.Target) ? TargetControl.Trash : TargetControl.Other;
                     _masterTargets[tInfo.Target] = new MyTuple<float, TargetControl>(tInfo.OffenseRating, controlType);
                     _toPruneMasterDict[tInfo.Target] = tInfo;
                 }

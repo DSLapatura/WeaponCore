@@ -307,7 +307,7 @@ namespace CoreSystems
             {
                 var sessionFields = new Dictionary<string, Func<string>>
                 {
-                    {"HasGridMap", () => (GetComp() != null && Session.GridToInfoMap.ContainsKey(GetComp().TopEntity)).ToString()},
+                    {"HasGridMap", () => (GetComp() != null && Session.TopEntityToInfoMap.ContainsKey(GetComp().TopEntity)).ToString()},
                     {"HasGridAi", () => (GetComp() != null && Session.EntityAIs.ContainsKey(GetComp().TopEntity)).ToString()},
                 };
 
@@ -963,7 +963,7 @@ namespace CoreSystems
 
     public class GridGroupMap
     {
-        public readonly ConcurrentDictionary<MyCubeGrid, Ai> Construct = new ConcurrentDictionary<MyCubeGrid, Ai>();
+        public readonly ConcurrentDictionary<MyEntity, Ai> Construct = new ConcurrentDictionary<MyEntity, Ai>();
         public readonly List<Ai> Ais = new List<Ai>();
         public readonly Session Session;
         public bool Dirty;
@@ -979,15 +979,16 @@ namespace CoreSystems
                 LastControllerTick = s.Tick + 1;
         }
 
-        public void OnGridAdded(IMyGridGroupData newGroup, IMyCubeGrid myCubeGrid, IMyGridGroupData oldGroup)
+        public void OnTopEntityAdded(IMyGridGroupData group1, IMyCubeGrid topEntity, IMyGridGroupData group2) => OnTopEntityAdded(group1, (MyEntity)topEntity, group2);
+
+        public void OnTopEntityAdded(IMyGridGroupData group1, MyEntity topEntity, IMyGridGroupData group2)
         {
-            var grid = (MyCubeGrid) myCubeGrid;
             LastChangeTick = Session.Tick;
             GridMap gridMap;
-            if (Session.GridToInfoMap.TryGetValue(grid, out gridMap))
+            if (Session.TopEntityToInfoMap.TryGetValue(topEntity, out gridMap))
             {
                 gridMap.GroupMap = this;
-                Construct.TryAdd(grid, null);
+                Construct.TryAdd(topEntity, null);
                 if (!Dirty)
                 {
                     Session.GridGroupUpdates.Add(this);
@@ -999,16 +1000,17 @@ namespace CoreSystems
 
         }
 
-        public void OnGridRemoved(IMyGridGroupData oldGroup, IMyCubeGrid myCubeGrid, IMyGridGroupData newGroup)
+        public void OnTopEntityRemoved(IMyGridGroupData group1, IMyCubeGrid topEntity, IMyGridGroupData group2) => OnTopEntityRemoved(group1, (MyEntity)topEntity, group2);
+
+        public void OnTopEntityRemoved(IMyGridGroupData group1, MyEntity topEntity, IMyGridGroupData group2)
         {
-            var grid = (MyCubeGrid)myCubeGrid;
             LastChangeTick = Session.Tick;
 
             GridMap gridMap;
-            if (Session.GridToInfoMap.TryGetValue((MyEntity)myCubeGrid, out gridMap))
+            if (Session.TopEntityToInfoMap.TryGetValue(topEntity, out gridMap))
             {
                 gridMap.GroupMap = this;
-                Construct.Remove(grid);
+                Construct.Remove(topEntity);
                 if (!Dirty)
                 {
                     Session.GridGroupUpdates.Add(this);
@@ -1061,6 +1063,7 @@ namespace CoreSystems
             Construct.Clear();
             Ais.Clear();
         }
+
     }
 
     public class WaterData

@@ -327,9 +327,6 @@ namespace CoreSystems.Projectiles
             }
             else Velocity = StartSpeed + MaxAccelVelocity;
 
-            PrevVelocity = Velocity;
-
-
             if (Info.IsFragment)
                 Vector3D.Normalize(ref Velocity, out Info.Direction);
 
@@ -920,7 +917,6 @@ namespace CoreSystems.Projectiles
 
                 if (VelocityLengthSqr > MaxSpeedSqr) newVel = Info.Direction * 1.05f * MaxSpeed;
                 
-                PrevVelocity = Velocity;
                 Velocity = newVel;
             }
         }
@@ -935,8 +931,7 @@ namespace CoreSystems.Projectiles
             if (Info.Age % offsetTime == 0 || revOffsetDir)
             {
 
-                var mod = Info.Age % 1024;
-                double angle = Info.Ai.Session.SmartOffsets[mod];
+                double angle = Info.Random.NextDouble() * MathHelper.TwoPi;
                 var up = Vector3D.CalculatePerpendicularVector(Info.Direction);
                 var right = Vector3D.Cross(Info.Direction, up);
                 OffsetDir = Math.Sin(angle) * up + Math.Cos(angle) * right;
@@ -1134,7 +1129,6 @@ namespace CoreSystems.Projectiles
 
             if (VelocityLengthSqr > MaxSpeedSqr || (DeaccelRate <100 && Info.AmmoDef.Const.IsDrone)) newVel = Info.Direction * MaxSpeed*DeaccelRate/100;
 
-            PrevVelocity = Velocity;
             Velocity = newVel;
         }
 
@@ -1380,8 +1374,7 @@ namespace CoreSystems.Projectiles
                 {
                     if ((Info.Age % offsetTime == 0))
                     {
-                        var mod = Info.Age % 1024;
-                        double angle = Info.Ai.Session.SmartOffsets[mod];
+                        double angle = Info.Random.NextDouble() * MathHelper.TwoPi;
                         var up = Vector3D.CalculatePerpendicularVector(Info.Direction);
                         var right = Vector3D.Cross(Info.Direction, up);
                         OffsetDir = Math.Sin(angle) * up + Math.Cos(angle) * right;
@@ -1411,9 +1404,8 @@ namespace CoreSystems.Projectiles
 
         internal void OffSetTarget(bool roam = false)
         {
-            var mod = Info.Age % 1024;
-            var randAzimuth = Info.Ai.Session.OffSetTargetAz[mod];
-            var randElevation = Info.Ai.Session.OffSetTargetEl[mod];
+            var randAzimuth = (Info.Random.NextDouble() * 1) * 2 * Math.PI;
+            var randElevation = ((Info.Random.NextDouble() * 1) * 2 - 1) * 0.5 * Math.PI;
             var offsetAmount = roam ? 100 : Info.AmmoDef.Trajectory.Smarts.Inaccuracy;
             Vector3D randomDirection;
             Vector3D.CreateFromAzimuthAndElevation(randAzimuth, randElevation, out randomDirection); // this is already normalized
@@ -1731,6 +1723,7 @@ namespace CoreSystems.Projectiles
             if (Info.AmmoDef.Const.Pulse && !Info.EwarAreaPulse && (VelocityLengthSqr <= 0 || AtMaxRange) && !Info.AmmoDef.Const.IsMine)
             {
                 Info.EwarAreaPulse = true;
+                PrevVelocity = Velocity;
                 Velocity = Vector3D.Zero;
                 DistanceToTravelSqr = Info.DistanceTraveled * Info.DistanceTraveled;
             }
@@ -2030,7 +2023,8 @@ namespace CoreSystems.Projectiles
                         if (++Info.ProSyncPosMissCount > 1)
                         {
                             Info.ProSyncPosMissCount = 0;
-                            Position = futurePosition;
+                            Log.Line($"jump");
+                            //Position = futurePosition;
                             //Velocity = proPosSync.Velocity;
                             //Vector3D.Normalize(ref Velocity, out Info.Direction);
                         }
@@ -2051,7 +2045,7 @@ namespace CoreSystems.Projectiles
 
                         lines.Add(new ClientProSyncDebugLine { CreateTick = s.Tick, Line = pastServerLine, Color = Color.Red});
 
-                        Log.Line($"ProSyn: Id:{Info.Id} - age:{Info.Age} - owl:{sync.CurrentOwl} - jumpDist:{Vector3D.Distance(oldPos, Position)}[{Vector3D.Distance(oldVels, Velocity)}] - posDiff:{Vector3D.Distance(Info.PastProInfos[checkSlot], proPosSync.Position)} - nVel:{oldVels.Length()} - oVel:{proPosSync.Velocity.Length()})");
+                        //Log.Line($"ProSyn: Id:{Info.Id} - age:{Info.Age} - owl:{sync.CurrentOwl} - jumpDist:{Vector3D.Distance(oldPos, Position)}[{Vector3D.Distance(oldVels, Velocity)}] - posDiff:{Vector3D.Distance(Info.PastProInfos[checkSlot], proPosSync.Position)} - nVel:{oldVels.Length()} - oVel:{proPosSync.Velocity.Length()})");
                     }
                 }
 

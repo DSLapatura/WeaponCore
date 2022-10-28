@@ -234,6 +234,7 @@ namespace CoreSystems.Platform
 
             internal void TookControl(long playerId)
             {
+                LastControllingPlayerId = playerId;
                 if (Session.IsServer)
                 {
 
@@ -256,6 +257,7 @@ namespace CoreSystems.Platform
 
             internal void ReleaseControl(long playerId)
             {
+                LastControllingPlayerId = playerId;
                 if (Session.IsServer)
                 {
 

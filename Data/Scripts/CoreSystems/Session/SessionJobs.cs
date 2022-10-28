@@ -341,7 +341,7 @@ namespace CoreSystems
                 ConcurrentDictionary<WeaponDefinition.TargetingDef.BlockTypes, ConcurrentCachingList<MyCubeBlock>> noFatTypeMap;
 
                 GridMap gridMap;
-                if (GridToInfoMap.TryGetValue(grid, out gridMap))
+                if (TopEntityToInfoMap.TryGetValue(grid, out gridMap))
                 {
                     var allFat = gridMap.MyCubeBocks;
                     allFat.ApplyChanges();

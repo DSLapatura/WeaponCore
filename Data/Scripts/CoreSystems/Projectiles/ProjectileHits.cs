@@ -725,6 +725,7 @@ namespace CoreSystems.Projectiles
 
                 info.EwarAreaPulse = true;
                 p.DistanceToTravelSqr = info.DistanceTraveled * info.DistanceTraveled;
+                p.PrevVelocity = p.Velocity;
                 p.Velocity = Vector3D.Zero;
                 info.Hit.SurfaceHit = p.Position + info.Direction * info.AmmoDef.Const.EwarTriggerRange;
                 info.Hit.LastHit = info.Hit.SurfaceHit;
@@ -987,7 +988,7 @@ namespace CoreSystems.Projectiles
             if (fatOnly)
             {
                 GridMap map;
-                if (system.Session.GridToInfoMap.TryGetValue(grid, out map))
+                if (system.Session.TopEntityToInfoMap.TryGetValue(grid, out map))
                 {
                     foreach (var cube in map.MyCubeBocks)
                     {

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.Remoting.Metadata.W3cXsd2001;
 using CoreSystems.Platform;
 using CoreSystems.Settings;
 using CoreSystems.Support;
@@ -940,7 +941,7 @@ namespace CoreSystems
         internal bool GridHasPower(MyCubeGrid grid, GridMap map = null)
         {
             bool state = false;
-            if (map != null || GridToInfoMap.TryGetValue(grid, out map))
+            if (map != null || TopEntityToInfoMap.TryGetValue(grid, out map))
             {
                 var dist = (MyResourceDistributorComponent)((IMyCubeGrid)grid).ResourceDistributor;
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.Remoting.Metadata.W3cXsd2001;
 using CoreSystems.Platform;
 using CoreSystems.Support;
 using Sandbox.Game.Entities;
@@ -80,7 +81,7 @@ namespace CoreSystems
                     GridMap gridMap;
                     if (comp.TopEntity == null)
                         comp.TopEntity = comp.IsBlock ? comp.Cube.CubeGrid : comp.CoreEntity.GetTopMostParent();
-                    if (comp.IsBlock && (!GridToInfoMap.TryGetValue(comp.TopEntity, out gridMap) || gridMap.GroupMap == null) || IsClient && Settings?.Enforcement == null)
+                    if (comp.IsBlock && (!TopEntityToInfoMap.TryGetValue(comp.TopEntity, out gridMap) || gridMap.GroupMap == null) || IsClient && Settings?.Enforcement == null)
                         continue;
 
                     if (ShieldApiLoaded)
@@ -148,7 +149,7 @@ namespace CoreSystems
                     continue;
                 }
 
-                if (reAdd.Comp.IsBlock && !GridToInfoMap.ContainsKey(reAdd.Comp.TopEntity))
+                if (reAdd.Comp.IsBlock && !TopEntityToInfoMap.ContainsKey(reAdd.Comp.TopEntity))
                     continue;
 
                 if (reAdd.Comp.Ai != null && reAdd.Comp.Entity != null) 
@@ -198,7 +199,7 @@ namespace CoreSystems
                     delayed.InReInit = false;
                     CompsDelayedReInit.RemoveAtFast(i);
                 }
-                else if (delayed.Cube.IsFunctional && GridToInfoMap.TryGetValue(delayed.Cube.CubeGrid, out gridMap) && gridMap.GroupMap != null)
+                else if (delayed.Cube.IsFunctional && TopEntityToInfoMap.TryGetValue(delayed.Cube.CubeGrid, out gridMap) && gridMap.GroupMap != null)
                 {
                     CompsDelayedReInit.RemoveAtFast(i);
                     

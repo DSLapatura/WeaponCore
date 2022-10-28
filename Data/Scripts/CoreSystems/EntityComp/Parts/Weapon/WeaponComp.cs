@@ -961,6 +961,7 @@ namespace CoreSystems.Platform
 
             internal void TookControl(long playerId)
             {
+                LastControllingPlayerId = playerId;
                 if (Session.IsServer)
                 {
 
@@ -978,7 +979,7 @@ namespace CoreSystems.Platform
                 }
 
                 if (Session.HandlesInput && playerId == Session.PlayerId)
-                    Session.GunnerAcquire(Cube, playerId);
+                    Session.GunnerAcquire(CoreEntity, playerId);
             }
 
             internal void ReleaseControl(long playerId)
@@ -1001,6 +1002,7 @@ namespace CoreSystems.Platform
                 {
                     Session.GunnerRelease(playerId);
                 }
+                LastControllingPlayerId = 0;
             }
         }
     }

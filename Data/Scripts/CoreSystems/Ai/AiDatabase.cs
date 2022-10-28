@@ -57,7 +57,7 @@ namespace CoreSystems.Support
                         if (AiType == AiTypes.Grid && GridEntity.IsSameConstructAs(grid))
                             continue;
 
-                        if (!Session.GridToInfoMap.TryGetValue(grid, out gridMap) || gridMap.Trash)
+                        if (!Session.TopEntityToInfoMap.TryGetValue(grid, out gridMap) || gridMap.Trash)
                             continue;
                     }
 
@@ -132,7 +132,7 @@ namespace CoreSystems.Support
                     StaticsInRangeTmp.Add(ent);
 
                 GridMap map;
-                if (grid != null && AiType != AiTypes.Phantom && (GridMap.GroupMap.Construct.ContainsKey(grid) || ValidGrids.Contains(ent) || grid.PositionComp.LocalVolume.Radius <= 7.5 || Session.GridToInfoMap.TryGetValue(grid, out map) && map.Trash || grid.BigOwners.Count == 0)) continue;
+                if (grid != null && AiType != AiTypes.Phantom && (TopEntityMap.GroupMap.Construct.ContainsKey(grid) || ValidGrids.Contains(ent) || grid.PositionComp.LocalVolume.Radius <= 7.5 || Session.TopEntityToInfoMap.TryGetValue(grid, out map) && map.Trash || grid.BigOwners.Count == 0)) continue;
 
                 ObstructionsTmp.Add(ent);
             }

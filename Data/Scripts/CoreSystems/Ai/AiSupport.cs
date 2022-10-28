@@ -253,7 +253,7 @@ namespace CoreSystems.Support
         internal void ResetMyGridTargeting()
         {
             GridMap gridMap;
-            if (Session.GridToInfoMap.TryGetValue(TopEntity, out gridMap))
+            if (Session.TopEntityToInfoMap.TryGetValue(TopEntity, out gridMap))
             {
                 if (gridMap.Targeting != null && gridMap.Targeting.AllowScanning)
                 {
@@ -495,7 +495,7 @@ namespace CoreSystems.Support
             LastTerminal = null;
             PowerBlock = null;
             TopEntity = null;
-            GridMap = null;
+            TopEntityMap = null;
             Closed = true;
             CanShoot = true;
             Version++;

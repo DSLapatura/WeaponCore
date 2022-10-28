@@ -158,6 +158,7 @@ namespace CoreSystems
                 TrackingAi = null;
                 ActiveCockPit = null;
                 ActiveControlBlock = null;
+                PlayerHandWeapon = null;
                 ActiveCameraBlock = null;
                 TargetInfoKeyLock = false;
             }
@@ -177,7 +178,7 @@ namespace CoreSystems
             if (Settings.Enforcement.DisableLeads)
                 return;
 
-            foreach (var ai in TrackingAi.GridMap.GroupMap.Ais)
+            foreach (var ai in TrackingAi.TopEntityMap.GroupMap.Ais)
             {
                 if (ai.MarkedForClose)
                     continue;
@@ -213,13 +214,17 @@ namespace CoreSystems
             return false;
         }
 
-        internal void GunnerAcquire(MyCubeBlock cube, long playerId)
+        internal void GunnerAcquire(MyEntity entity, long playerId)
         {
             if (PlayerId == -1)
                 return;
 
             GunnerBlackList = true;
-            ActiveControlBlock = cube;
+            var block = entity as MyCubeBlock;
+            var rifle = entity as IMyAutomaticRifleGun;
+            ActiveControlBlock = block ?? null;
+            PlayerHandWeapon = rifle ?? null;
+
             var controlStringLeft = MyAPIGateway.Input.GetControl(MyMouseButtonsEnum.Left).GetGameControlEnum().String;
             CustomBlackListRequestBecauseKeenIsBrainDead(controlStringLeft, PlayerId);
             var controlStringRight = MyAPIGateway.Input.GetControl(MyMouseButtonsEnum.Right).GetGameControlEnum().String;
@@ -235,6 +240,7 @@ namespace CoreSystems
 
             GunnerBlackList = false;
             ActiveControlBlock = null;
+            PlayerHandWeapon = null;
             var controlStringLeft = MyAPIGateway.Input.GetControl(MyMouseButtonsEnum.Left).GetGameControlEnum().String;
             CustomBlackListRequestBecauseKeenIsBrainDead(controlStringLeft, PlayerId, true);
             var controlStringRight = MyAPIGateway.Input.GetControl(MyMouseButtonsEnum.Right).GetGameControlEnum().String;

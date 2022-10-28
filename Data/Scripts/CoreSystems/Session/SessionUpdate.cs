@@ -13,6 +13,7 @@ using static CoreSystems.ProtoWeaponState;
 using Sandbox.Game.Entities;
 using System;
 using System.Diagnostics;
+using Sandbox.ModAPI.Weapons;
 using SpaceEngineers.Game.ModAPI;
 using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 using VRage.Input;
@@ -62,8 +63,8 @@ namespace CoreSystems
                     continue;
 
 
-                if (ai.AiType == Ai.AiTypes.Grid && (ai.GridMap.GroupMap.LastControllerTick == Tick || ai.GridMap.LastControllerTick == Tick))
-                    Ai.Constructs.UpdatePlayerStates(ai.GridMap.GroupMap);
+                if (ai.AiType == Ai.AiTypes.Grid && (ai.TopEntityMap.GroupMap.LastControllerTick == Tick || ai.TopEntityMap.LastControllerTick == Tick))
+                    Ai.Constructs.UpdatePlayerStates(ai.TopEntityMap.GroupMap);
 
                 if (Tick60 && ai.AiType == Ai.AiTypes.Grid && ai.BlockChangeArea != BoundingBox.Invalid) {
                     ai.BlockChangeArea.Min *= ai.GridEntity.GridSize;
@@ -77,7 +78,7 @@ namespace CoreSystems
 
                 if (rootConstruct.DirtyWeaponGroups)
                 {
-                    Ai.Constructs.RebuildWeaponGroups(rootAi.GridMap.GroupMap);
+                    Ai.Constructs.RebuildWeaponGroups(rootAi.TopEntityMap.GroupMap);
                 }
 
                 if (Tick60 && Tick != rootConstruct.LastEffectUpdateTick && rootConstruct.TotalEffect > rootConstruct.PreviousTotalEffect)
@@ -317,19 +318,19 @@ namespace CoreSystems
                         var isUnderControl = cComp.Controller.IsUnderControl;
                         var cPlayerId = cValues.State.PlayerId;
                         Ai.PlayerController pControl;
-                        pControl.ControlBlock = null;
+                        pControl.ControlEntity = null;
                         var playerControl = rootConstruct.ControllingPlayers.TryGetValue(cPlayerId, out pControl);
                         var activePlayer = PlayerId == cPlayerId && playerControl;
 
-                        var hasControl = activePlayer && pControl.ControlBlock == cComp.CoreEntity;
+                        var hasControl = activePlayer && pControl.ControlEntity == cComp.CoreEntity;
                         topAi.RotorManualControlId = hasControl ? PlayerId : topAi.RotorManualControlId != -2 ? -1 : -2;
                         var cMode = cValues.Set.Overrides.Control;
                         if (HandlesInput && (cPlayerId == PlayerId || !controlPart.Comp.HasAim && ai.RotorManualControlId == PlayerId))
                         {
                             var overrides = cValues.Set.Overrides;
 
-                            var playerAim = activePlayer && cMode != ProtoWeaponOverrides.ControlModes.Auto || pControl.ControlBlock is IMyTurretControlBlock;
-                            var track = !InMenu && (playerAim && !UiInput.CameraBlockView || pControl.ControlBlock is IMyTurretControlBlock || UiInput.CameraChannelId > 0 && UiInput.CameraChannelId == overrides.CameraChannel);
+                            var playerAim = activePlayer && cMode != ProtoWeaponOverrides.ControlModes.Auto || pControl.ControlEntity is IMyTurretControlBlock;
+                            var track = !InMenu && (playerAim && !UiInput.CameraBlockView || pControl.ControlEntity is IMyTurretControlBlock || UiInput.CameraChannelId > 0 && UiInput.CameraChannelId == overrides.CameraChannel);
 
                             if (cValues.State.TrackingReticle != track)
                                 TrackReticleUpdateCtc(controlPart.Comp, track);
@@ -424,7 +425,7 @@ namespace CoreSystems
 
                     if (HandlesInput) {
 
-                        if (IsClient && ai.GridMap.LastControllerTick == Tick && wComp.ShootManager.Signal == Weapon.ShootManager.Signals.Manual && (wComp.ShootManager.ClientToggleCount > wValues.State.ToggleCount || wValues.State.Trigger == On) && wValues.State.PlayerId > 0) 
+                        if (IsClient && ai.TopEntityMap.LastControllerTick == Tick && wComp.ShootManager.Signal == Weapon.ShootManager.Signals.Manual && (wComp.ShootManager.ClientToggleCount > wValues.State.ToggleCount || wValues.State.Trigger == On) && wValues.State.PlayerId > 0) 
                             wComp.ShootManager.RequestShootSync(PlayerId, Weapon.ShootManager.RequestType.Off);
 
                         var isControllingPlayer = wValues.State.PlayerId == PlayerId || !wComp.HasAim && ai.RotorManualControlId == PlayerId;
@@ -432,13 +433,13 @@ namespace CoreSystems
                         if (isControllingPlayer) {
 
                             Ai.PlayerController pControl;
-                            pControl.ControlBlock = null;
+                            pControl.ControlEntity = null;
                             var playerControl = rootConstruct.ControllingPlayers.TryGetValue(wValues.State.PlayerId, out pControl);
                             
                             var activePlayer = PlayerId == wValues.State.PlayerId && playerControl;
-                            var cManual = pControl.ControlBlock is IMyTurretControlBlock;
-                            var customWeapon = cManual && wComp.OnCustomTurret && ai.RootFixedWeaponComp.TrackingWeapon.MasterComp.Cube == pControl.ControlBlock;
-                            var manualThisWeapon = pControl.ControlBlock == wComp.Cube && wComp.HasAim;
+                            var cManual = pControl.ControlEntity is IMyTurretControlBlock;
+                            var customWeapon = cManual && wComp.OnCustomTurret && ai.RootFixedWeaponComp.TrackingWeapon.MasterComp.Cube == pControl.ControlEntity;
+                            var manualThisWeapon = pControl.ControlEntity == wComp.Cube && wComp.HasAim || pControl.ControlEntity is IMyAutomaticRifleGun;
                             var controllingWeapon = customWeapon || manualThisWeapon;
                             var validManualModes = (sMode == Weapon.ShootManager.ShootModes.MouseControl || cMode == ProtoWeaponOverrides.ControlModes.Manual);
                             var manual = (controllingWeapon || pControl.ShareControl && validManualModes && ((wComp.HasAim || wComp.OnCustomTurret) || !IdToCompMap.ContainsKey(pControl.EntityId)));
@@ -456,7 +457,7 @@ namespace CoreSystems
                             var active = wComp.ShootManager.ClientToggleCount > wValues.State.ToggleCount || wValues.State.Trigger == On;
                             var turnOn = !active && UiInput.ClientInputState.MouseButtonLeft && playerControl && !InMenu;
                             var turnOff = active && (!UiInput.ClientInputState.MouseButtonLeft || InMenu) && Tick5;
-                            
+
                             if (sMode == Weapon.ShootManager.ShootModes.AiShoot)
                             {
                                 if (playerAim)
@@ -550,7 +551,7 @@ namespace CoreSystems
                         /// 
                         var addWeaponToHud = HandlesInput && (w.HeatPerc >= 0.01 || (w.ShowReload && (w.Loading || w.Reload.WaitForClient)) || (aConst.CanReportTargetStatus && wValues.Set.ReportTarget && !w.Target.HasTarget && grids && (wComp.DetectOtherSignals && ai.DetectionInfo.OtherInRange || ai.DetectionInfo.PriorityInRange) && ai.DetectionInfo.TargetInRange(w)));
 
-                        if (addWeaponToHud && !Session.Config.MinimalHud && !enforcement.DisableHudReload && ActiveControlBlock != null && ai.SubGridCache.Contains(ActiveControlBlock.CubeGrid)) {
+                        if (addWeaponToHud && !Session.Config.MinimalHud && !enforcement.DisableHudReload && (ActiveControlBlock != null && ai.SubGridCache.Contains(ActiveControlBlock.CubeGrid) || PlayerHandWeapon != null && IdToCompMap.ContainsKey(((IMyGunBaseUser)PlayerHandWeapon).OwnerId))) {
                             HudUi.TexturesToAdd++;
                             HudUi.WeaponsToDisplay.Add(w);
                         }
@@ -645,8 +646,8 @@ namespace CoreSystems
                         w.LockOnFireState = shootRequest && (w.System.LockOnFocus && !w.Comp.ModOverride) && construct.Data.Repo.FocusData.HasFocus && focus.FocusInRange(w);
                         var shotReady = canShoot && (shootRequest && (!w.System.LockOnFocus || w.Comp.ModOverride) || w.LockOnFireState);
                         var shoot = shotReady && ai.CanShoot && (!aConst.RequiresTarget || w.Target.HasTarget || finish || overRide || (wComp.ShootManager.Signal == Weapon.ShootManager.Signals.Manual || wComp.ShootManager.Signal == Weapon.ShootManager.Signals.MouseControl));
+                        
                         if (shoot) {
-                            
                             if (w.System.DelayCeaseFire && (autoShot || w.FinishShots))
                                 w.CeaseFireDelayTick = Tick;
                             ShootingWeapons.Add(w);

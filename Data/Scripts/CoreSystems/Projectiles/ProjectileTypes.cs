@@ -50,6 +50,7 @@ namespace CoreSystems.Support
         internal int Frags;
         internal int LastFragTime;
         internal int CompSceneVersion;
+
         internal int LastProSyncStateAge = int.MinValue;
         internal ulong UniqueMuzzleId;
         internal ulong Id;

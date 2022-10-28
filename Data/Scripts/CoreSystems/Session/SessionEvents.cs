@@ -16,6 +16,7 @@ using SpaceEngineers.Game.ModAPI;
 using VRage.Collections;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
+using VRage.Groups;
 using static CoreSystems.Support.Ai;
 using IMyControllableEntity = VRage.Game.ModAPI.Interfaces.IMyControllableEntity;
 
@@ -38,9 +39,9 @@ namespace CoreSystems
                 {
                     var gridMap = GridMapPool.Get();
                     gridMap.Trash = true;
-                    GridToInfoMap.TryAdd(grid, gridMap);
+                    TopEntityToInfoMap.TryAdd(grid, gridMap);
                     grid.AddedToScene += AddGridToMap;
-                    grid.OnClose += RemoveGridFromMap;
+                    grid.OnClose += RemoveFromMap;
                 }
 
                 if (!PbApiInited && entity is IMyProgrammableBlock) PbActivate = true;
@@ -153,8 +154,8 @@ namespace CoreSystems
             map.Type = groupData.LinkType;
             map.GroupData = groupData;
             //groupData.OnReleased += map.OnReleased;
-            groupData.OnGridAdded += map.OnGridAdded;
-            groupData.OnGridRemoved += map.OnGridRemoved;
+            groupData.OnGridAdded += map.OnTopEntityAdded;
+            groupData.OnGridRemoved += map.OnTopEntityRemoved;
             GridGroupMap[groupData] = map;
         }
 
@@ -167,8 +168,8 @@ namespace CoreSystems
             if (GridGroupMap.TryGetValue(groupData, out map))
             {
                 //groupData.OnReleased -= map.OnReleased;
-                groupData.OnGridAdded -= map.OnGridAdded;
-                groupData.OnGridRemoved -= map.OnGridRemoved;
+                groupData.OnGridAdded -= map.OnTopEntityAdded;
+                groupData.OnGridRemoved -= map.OnTopEntityRemoved;
                 
                 GridGroupMap.Remove(groupData);
                 map.Clean();
@@ -288,7 +289,7 @@ namespace CoreSystems
                 if (grid != null)
                 {
                     GridMap gridMap;
-                    if (GridToInfoMap.TryGetValue(grid, out gridMap))
+                    if (TopEntityToInfoMap.TryGetValue(grid, out gridMap))
                     {
                         var allFat = ConcurrentListPool.Get();
 
@@ -322,14 +323,23 @@ namespace CoreSystems
             catch (Exception ex) { Log.Line($"Exception in GridAddedToScene: {ex}", null, true); }
         }
 
+        private void RemoveFromMap(MyEntity myEntity)
+        {
+            var grid = myEntity as MyCubeGrid;
+            if (grid != null)
+                RemoveGridFromMap(myEntity);
+            else
+                RemoveOtherFromMap(myEntity);
+        }
+
         private void RemoveGridFromMap(MyEntity myEntity)
         {
             var grid = (MyCubeGrid)myEntity;
             GridMap gridMap;
-            if (GridToInfoMap.TryRemove(grid, out gridMap))
+            if (TopEntityToInfoMap.TryRemove(grid, out gridMap))
             {
                 gridMap.Trash = true;
-                grid.OnClose -= RemoveGridFromMap;
+                grid.OnClose -= RemoveFromMap;
                 grid.AddedToScene -= AddGridToMap;
 
                 if (gridMap.MyCubeBocks != null)
@@ -351,13 +361,32 @@ namespace CoreSystems
             else Log.Line($"grid not removed and list not cleaned: marked:{grid.MarkedForClose}({grid.Closed}) - inScene:{grid.InScene}");
         }
 
+        internal void RemoveOtherFromMap(MyEntity myEntity)
+        {
+            GridMap gridMap;
+            if (TopEntityToInfoMap.TryRemove(myEntity, out gridMap))
+            {
+                Log.Line($"RemoveOtherFromMap removed: {myEntity.DebugName}");
+                gridMap.Trash = true;
+                myEntity.OnClose -= RemoveOtherFromMap;
+
+                gridMap.GroupMap.Clean();
+                GridGroupMapPool.Push(gridMap.GroupMap);
+                gridMap.GroupMap = null;
+                
+                GridMapPool.Return(gridMap);
+
+            }
+            else Log.Line($"RemoveOtherFromMap not removed and list not cleaned: {myEntity.DebugName}");
+        }
+
         private void ToGridMap(MyCubeBlock myCubeBlock)
         {
             try
             {
                 var term = myCubeBlock as IMyTerminalBlock;
                 GridMap gridMap;
-                if (term != null && GridToInfoMap.TryGetValue(myCubeBlock.CubeGrid, out gridMap))
+                if (term != null && TopEntityToInfoMap.TryGetValue(myCubeBlock.CubeGrid, out gridMap))
                 {
                     gridMap.MyCubeBocks.Add(myCubeBlock);
                     using (_dityGridLock.Acquire())
@@ -378,7 +407,7 @@ namespace CoreSystems
             {
                 var term = myCubeBlock as IMyTerminalBlock;
                 GridMap gridMap;
-                if (term != null && GridToInfoMap.TryGetValue(myCubeBlock.CubeGrid, out gridMap))
+                if (term != null && TopEntityToInfoMap.TryGetValue(myCubeBlock.CubeGrid, out gridMap))
                 {
                     gridMap.MyCubeBocks.Remove(myCubeBlock);
 
@@ -565,91 +594,104 @@ namespace CoreSystems
             Players[id] = new PlayerMap { Player = player, PlayerId = id, TargetFocus = targetFocus, TargetLock = targetLock };
         }
 
-        private void OnPlayerController(IMyControllableEntity exitController, IMyControllableEntity enterController)
+        internal void OnPlayerControl(MyEntity exitEntity, MyEntity enterEntity)
         {
             try
             {
                 GridMap gridMap;
-                var exitEntity = exitController as MyEntity;
-                if (exitEntity != null && enterController?.ControllerInfo != null)
+
+                var otherExitControl = exitEntity as IMyAutomaticRifleGun;
+                var exitController = exitEntity as IMyControllableEntity;
+                CoreComponent exitComp = null;
+                if (exitController?.ControllerInfo != null || otherExitControl != null && IdToCompMap.TryGetValue(otherExitControl.EntityId, out exitComp))
                 {
                     var cube = exitEntity as MyCubeBlock;
-                    if (cube != null)
+                    var topEnt = cube?.CubeGrid ?? exitComp?.TopEntity;
+
+                    if (topEnt != null && TopEntityToInfoMap.TryGetValue(topEnt, out gridMap))
                     {
-                        if (GridToInfoMap.TryGetValue(cube.CubeGrid, out gridMap))
+                        var controlledEnt = cube ?? exitComp.CoreEntity;
+                        
+                        gridMap.LastControllerTick = Tick + 1;
+
+                        if (gridMap.GroupMap != null)
+                            gridMap.GroupMap.LastControllerTick = Tick + 1;
+                        else if (IsServer)
+                            Log.Line($"OnPlayerController exit gridmap null");
+
+                        Ai ai;
+                        if (EntityAIs.TryGetValue(topEnt, out ai))
                         {
-                            var playerId = enterController.ControllerInfo.ControllingIdentityId;
-                            gridMap.LastControllerTick = Tick + 1;
-                            var removed = gridMap.PlayerControllers.Remove(playerId);
-
-                            if (gridMap.GroupMap != null)
-                                gridMap.GroupMap.LastControllerTick = Tick + 1;
-                            else if (IsServer)
-                                Log.Line($"OnPlayerController exit gridmap null");
-
-                            Ai ai;
-                            if (EntityAIs.TryGetValue(cube.CubeGrid, out ai))
+                            CoreComponent comp;
+                            if (ai.CompBase.TryGetValue(controlledEnt, out comp))
                             {
-                                CoreComponent comp;
-                                if (ai.CompBase.TryGetValue(cube, out comp))
-                                {
-                                    var wComp = comp as Weapon.WeaponComponent;
-                                    var cComp = comp as ControlSys.ControlComponent;
-                                    if (wComp != null)
-                                        wComp.ReleaseControl(playerId);
-                                    else if (cComp != null)
-                                        cComp.ReleaseControl(playerId);
-                                }
+                                var playerId = comp.LastControllingPlayerId;
+                                var removed = gridMap.PlayerControllers.Remove(playerId);
+
+                                var wComp = comp as Weapon.WeaponComponent;
+                                var cComp = comp as ControlSys.ControlComponent;
+                                if (wComp != null)
+                                    wComp.ReleaseControl(playerId);
+                                else if (cComp != null)
+                                    cComp.ReleaseControl(playerId);
                             }
                         }
                     }
                 }
 
-                var enterEntity = enterController as MyEntity;
-                if (enterEntity != null && enterController.ControllerInfo != null)
+
+                var otherEnterControl = enterEntity as IMyAutomaticRifleGun;
+                var enterController = enterEntity as IMyControllableEntity;
+
+                CoreComponent enterComp = null;
+                if (enterController?.ControllerInfo != null || otherEnterControl != null && IdToCompMap.TryGetValue(otherEnterControl.EntityId, out enterComp))
                 {
                     var cube = enterEntity as MyCubeBlock;
+                    var topEnt = cube?.CubeGrid ?? enterComp?.TopEntity;
+                    var playerId = enterComp?.Ai?.AiOwner ?? enterController?.ControllerInfo?.ControllingIdentityId ?? 0;
 
-                    if (cube != null)
+                    if (topEnt != null && playerId != 0 && TopEntityToInfoMap.TryGetValue(topEnt, out gridMap))
                     {
-                        if (GridToInfoMap.TryGetValue(cube.CubeGrid, out gridMap))
+                        var controlledEnt = cube ?? enterEntity;
+
+                        gridMap.LastControllerTick = Tick + 1;
+
+                        if (gridMap.GroupMap != null)
+                            gridMap.GroupMap.LastControllerTick = Tick + 1;
+
+                        var shareControl = true;
+                        Ai ai;
+                        if (EntityAIs.TryGetValue(topEnt, out ai))
                         {
-                            var playerId = enterController.ControllerInfo.ControllingIdentityId;
-
-                            gridMap.LastControllerTick = Tick + 1;
-
-                            if (gridMap.GroupMap != null)
-                                gridMap.GroupMap.LastControllerTick = Tick + 1;
-
-                            var shareControl = true;
-                            Ai ai;
-                            if (EntityAIs.TryGetValue(cube.CubeGrid, out ai))
+                            CoreComponent comp;
+                            if (ai.CompBase.TryGetValue(controlledEnt, out comp))
                             {
-                                CoreComponent comp;
-                                if (ai.CompBase.TryGetValue(cube, out comp))
+                                var wComp = comp as Weapon.WeaponComponent;
+                                var cComp = comp as ControlSys.ControlComponent;
+                                if (wComp != null)
                                 {
-                                    var wComp = comp as Weapon.WeaponComponent;
-                                    var cComp = comp as ControlSys.ControlComponent;
-                                    if (wComp != null)
-                                    {
-                                        shareControl = wComp.Data.Repo.Values.Set.Overrides.ShareFireControl;
-                                        wComp.TookControl(playerId);
-                                    }
-                                    else if (cComp != null)
-                                    {
-                                        shareControl = cComp.Data.Repo.Values.Set.Overrides.ShareFireControl;
-                                        cComp.TookControl(playerId);
-                                    }
+                                    shareControl = wComp.Data.Repo.Values.Set.Overrides.ShareFireControl;
+                                    wComp.TookControl(playerId);
+                                }
+                                else if (cComp != null)
+                                {
+                                    shareControl = cComp.Data.Repo.Values.Set.Overrides.ShareFireControl;
+                                    cComp.TookControl(playerId);
                                 }
                             }
-
-                            var pController = new PlayerController { ControlBlock = cube, Id = playerId, EntityId = cube.EntityId, ChangeTick = Tick, ShareControl = shareControl, };
-                            gridMap.PlayerControllers[playerId] = pController;
                         }
+
+                        var pController = new PlayerController { ControlEntity = controlledEnt, Id = playerId, EntityId = controlledEnt.EntityId, ChangeTick = Tick, ShareControl = shareControl, };
+                        gridMap.PlayerControllers[playerId] = pController;
                     }
                 }
             }
             catch (Exception ex) { Log.Line($"Exception in OnPlayerController: {ex}"); }
+        }
+
+        private void OnPlayerController(IMyControllableEntity exitController, IMyControllableEntity enterController)
+        {
+            OnPlayerControl((MyEntity) exitController, (MyEntity) enterController);
         }
     }
 }

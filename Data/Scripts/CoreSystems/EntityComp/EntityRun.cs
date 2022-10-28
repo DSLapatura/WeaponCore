@@ -96,7 +96,7 @@ namespace CoreSystems.Support
                     Entity.NeedsWorldMatrix = NeedsWorldMatrix;
                     WorldMatrixEnabled = NeedsWorldMatrix;
 
-                    if (IsBlock && !Ai.Session.GridToInfoMap.ContainsKey(Ai.TopEntity))
+                    if (IsBlock && !Ai.Session.TopEntityToInfoMap.ContainsKey(Ai.TopEntity))
                     {
                         Log.Line($"WeaponComp Init did not have GridToInfoMap");
                         Session.CompReAdds.Add(new CompReAdd { Ai = Ai, AiVersion = Ai.Version, AddTick = Ai.Session.Tick, Comp = this });
@@ -122,7 +122,7 @@ namespace CoreSystems.Support
                     {
                         TopEntity = GetTopEntity();
                         GridMap gridMap;
-                        if (checkMap && (!Session.GridToInfoMap.TryGetValue(TopEntity, out gridMap) || gridMap.GroupMap == null)) {
+                        if (checkMap && (!Session.TopEntityToInfoMap.TryGetValue(TopEntity, out gridMap) || gridMap.GroupMap == null)) {
                             
                             if (!InReInit)
                                 Session.CompsDelayedReInit.Add(this);
@@ -196,7 +196,7 @@ namespace CoreSystems.Support
                     Ai.AiInit = true;
                     if (IsBlock)
                     {
-                        var fatList = Session.GridToInfoMap[TopEntity].MyCubeBocks;
+                        var fatList = Session.TopEntityToInfoMap[TopEntity].MyCubeBocks;
 
                         for (int i = 0; i < fatList.Count; i++)
                         {
@@ -250,8 +250,14 @@ namespace CoreSystems.Support
                     }
 
                     if (Ai.AiSpawnTick > Ai.Construct.LastRefreshTick || Ai.Construct.LastRefreshTick == 0)
-                        Ai.GridMap.GroupMap.UpdateAis();
+                        Ai.TopEntityMap.GroupMap.UpdateAis();
                 }
+                else if (Type == CompType.Weapon && Ai.AiSpawnTick > Ai.Construct.LastRefreshTick)
+                {
+                    Ai.TopEntityMap.GroupMap.UpdateAis();
+                    Session.OnPlayerControl(null, CoreEntity);
+                }
+
                 Status = !IsWorking ? Start.Starting : Start.ReInit;
             }
 

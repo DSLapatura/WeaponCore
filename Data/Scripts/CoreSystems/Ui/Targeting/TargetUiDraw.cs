@@ -824,7 +824,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                 GridMap gridMap;
                 if (s.EntityToMasterAi.TryGetValue(grid, out targetAi))
                     partCount = targetAi.Construct.BlockCount;
-                else if (s.GridToInfoMap.TryGetValue(grid, out gridMap))
+                else if (s.TopEntityToInfoMap.TryGetValue(grid, out gridMap))
                     partCount = gridMap.MostBlocks;
             }
 

@@ -163,10 +163,10 @@ namespace CoreSystems
                 controller.ControlledEntityChanged -= OnPlayerController;
             }
 
-            foreach (var map in GridToInfoMap.Keys)
-                RemoveGridFromMap(map);
+            foreach (var ent in TopEntityToInfoMap.Keys)
+                RemoveFromMap(ent);
 
-            GridToInfoMap.Clear();
+            TopEntityToInfoMap.Clear();
             GridMapPool.Clean();
 
             DirtyGridsTmp.Clear();
@@ -353,6 +353,7 @@ namespace CoreSystems
             SoundDefinitions = null;
             ActiveCockPit = null;
             ActiveControlBlock = null;
+            PlayerHandWeapon = null;
             ControlledEntity = null;
             TmpStorage = null;
         }

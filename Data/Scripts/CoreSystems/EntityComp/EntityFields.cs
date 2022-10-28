@@ -63,6 +63,7 @@ namespace CoreSystems.Support
         internal long TotalAOEEffect;
         internal long TotalShieldEffect;
         internal long TotalProjectileEffect;
+        internal long LastControllingPlayerId;
         internal double PreviousTotalEffect;
         internal double AverageEffect;
         internal double AddEffect;
@@ -213,6 +214,17 @@ namespace CoreSystems.Support
                 Type = CompType.Weapon;
                 var rifle = (IMyAutomaticRifleGun)CoreEntity;
                 TopEntity = rifle?.Owner;
+
+                GridMap gridMap;
+                if (TopEntity != null && !Session.TopEntityToInfoMap.TryGetValue(TopEntity, out gridMap))
+                {
+                    gridMap = Session.GridMapPool.Get();
+                    gridMap.Trash = true;
+                    Session.TopEntityToInfoMap.TryAdd(TopEntity, gridMap);
+                    var map = Session.GridGroupMapPool.Count > 0 ? Session.GridGroupMapPool.Pop() : new GridGroupMap(Session);
+                    map.OnTopEntityAdded(null, TopEntity, null);
+                    TopEntity.OnClose += Session.RemoveOtherFromMap;
+                }
             }
             else {
                 TypeSpecific = CompTypeSpecific.Phantom;

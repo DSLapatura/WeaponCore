@@ -135,7 +135,7 @@ namespace CoreSystems.Projectiles
                         if (info.Weapon.WeaponProSyncs.Count > 0)
                             p.SyncClientProjectile(posSlot);
                     }
-                    else if (info.Age > 0 && info.Age % 59 == 0)
+                    else if (info.Age > 0 && info.Age % 29 == 0)
                     {
                         p.SyncPosServerProjectile();
                     }
@@ -184,7 +184,6 @@ namespace CoreSystems.Projectiles
 
                         if (MyUtils.IsValid(p.Gravity) && !MyUtils.IsZero(ref p.Gravity)) {
 
-                            p.PrevVelocity = p.Velocity;
                             p.Velocity += (p.Gravity * aConst.GravityMultiplier) * Projectile.StepConst;
                             if (!p.IsSmart)
                                 Vector3D.Normalize(ref p.Velocity, out info.Direction);
@@ -240,7 +239,6 @@ namespace CoreSystems.Projectiles
                                 if (p.VelocityLengthSqr > p.MaxSpeedSqr) newVel = info.Direction * p.MaxSpeed;
                             }
 
-                            p.PrevVelocity = p.Velocity;
                             p.Velocity = newVel;
                         }
                     }
@@ -310,7 +308,6 @@ namespace CoreSystems.Projectiles
         }
 
         private int _beamCount;
-        private int _maxThread;
         private void CheckHits()
         {
             _beamCount = 0;

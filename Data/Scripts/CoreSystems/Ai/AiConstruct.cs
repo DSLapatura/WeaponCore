@@ -17,13 +17,18 @@ namespace CoreSystems.Support
         public void SubGridChanges()
         {
             SubGridCache.Clear();
-            if (GridMap.GroupMap == null)
+            if (TopEntityMap.GroupMap == null)
             {
                 Log.Line($"GridGroup null");
                 return;
             }
-            foreach (var grid in GridMap.GroupMap.Construct.Keys) {
 
+            foreach (var ent in TopEntityMap.GroupMap.Construct.Keys) {
+
+                var grid = ent as MyCubeGrid;
+                if (grid == null)
+                    continue;
+                    
                 SubGridCache.Add(grid);
                 if (grid == TopEntity || SubGridsRegistered.ContainsKey(grid)) continue;
                 RegisterSubGrid(grid);
@@ -35,7 +40,7 @@ namespace CoreSystems.Support
                 if (sub == TopEntity)
                     continue;
 
-                if (!GridMap.GroupMap.Construct.ContainsKey(sub))
+                if (!TopEntityMap.GroupMap.Construct.ContainsKey(sub))
                     UnRegisterSubGrid(sub);
             }
 
@@ -173,8 +178,8 @@ namespace CoreSystems.Support
                                     leadingAi = subAi;
                             }
                         }
-                        if (Ai.Session.GridToInfoMap.ContainsKey(grid)) {
-                            var blockCount = Ai.Session.GridToInfoMap[grid].MostBlocks;
+                        if (Ai.Session.TopEntityToInfoMap.ContainsKey(grid)) {
+                            var blockCount = Ai.Session.TopEntityToInfoMap[grid].MostBlocks;
                             if (blockCount > leadingBlocks)
                             {
                                 leadingBlocks = blockCount;
@@ -195,9 +200,7 @@ namespace CoreSystems.Support
                     LargestAi = largestAi;
 
                     if (RootAi == null) {
-                        Log.Line($"1 - does this ever get hit?");
 
-                        //Log.Line($"[rootAi is null in Update] - caller:{caller}, forcing rootAi to caller - inGridTarget:{ai.Session.EntityAIs.ContainsKey(ai.TopEntity)} -  myGridMarked:{ai.TopEntity.MarkedForClose} - aiMarked:{ai.MarkedForClose} - inScene:{ai.TopEntity.InScene} - lastClosed:{ai.AiCloseTick} - aiSpawned:{ai.AiSpawnTick} - diff:{ai.AiSpawnTick - ai.AiCloseTick} - sinceSpawn:{ai.Session.Tick - ai.AiSpawnTick} - entId:{ai.TopEntity.EntityId}");
                         RootAi = Ai;
                         LargestAi = Ai;
                         if (Ai.Construct.MaxLockRange > maxLockRange)
@@ -225,8 +228,17 @@ namespace CoreSystems.Support
                 }
 
                 if (RootAi != null) {
-                    foreach (var sub in Ai.SubGridCache)
-                        RootAi.Session.EntityToMasterAi[sub] = RootAi;
+
+                    if (RootAi.AiType != AiTypes.Grid)
+                    {
+                        foreach (var ai in Ai.TopEntityMap.GroupMap.Ais)
+                            RootAi.Session.EntityToMasterAi[ai.TopEntity] = RootAi;
+                    }
+                    else
+                    {
+                        foreach (var sub in Ai.SubGridCache)
+                            RootAi.Session.EntityToMasterAi[sub] = RootAi;
+                    }
                 }
             }
 
@@ -361,10 +373,10 @@ namespace CoreSystems.Support
                 var rootConstruct = rootAi.Construct;
                 var s = rootAi.Session;
                 rootConstruct.ControllingPlayers.Clear();
-                foreach (var sub in rootAi.SubGridCache)
+                foreach (var ai in rootAi.TopEntityMap.GroupMap.Ais)
                 {
                     GridMap gridMap;
-                    if (s.GridToInfoMap.TryGetValue(sub, out gridMap))
+                    if (s.TopEntityToInfoMap.TryGetValue(ai.TopEntity, out gridMap))
                     {
                         foreach (var c in gridMap.PlayerControllers)
                         {
@@ -422,7 +434,7 @@ namespace CoreSystems.Support
             internal static void BuildAiListAndCounters(Ai cAi)
             {
 
-                var ais = cAi.GridMap.GroupMap.Ais;
+                var ais = cAi.TopEntityMap.GroupMap.Ais;
                 for (int i = 0; i < ais.Count; i++) {
 
                     var checkAi = ais[i];
@@ -437,9 +449,9 @@ namespace CoreSystems.Support
 
             internal bool GetConstructTargetInfo(MyEntity target, out TargetInfo targetInfo)
             {
-                for (int i = 0; i < Ai.GridMap.GroupMap.Ais.Count; i++)
+                for (int i = 0; i < Ai.TopEntityMap.GroupMap.Ais.Count; i++)
                 {
-                    var ai = Ai.GridMap.GroupMap.Ais[i];
+                    var ai = Ai.TopEntityMap.GroupMap.Ais[i];
                     if (ai.TargetsUpdatedTick > LastTargetInfoTick)
                     {
                         LastTargetInfoTick = Ai.Session.Tick;
@@ -450,9 +462,9 @@ namespace CoreSystems.Support
                 if (LastTargetInfoTick == Ai.Session.Tick)
                 {
                     ConstructTargetInfoCache.Clear();
-                    for (int i = 0; i < Ai.GridMap.GroupMap.Ais.Count; i++)
+                    for (int i = 0; i < Ai.TopEntityMap.GroupMap.Ais.Count; i++)
                     {
-                        var ai = Ai.GridMap.GroupMap.Ais[i];
+                        var ai = Ai.TopEntityMap.GroupMap.Ais[i];
                         foreach (var info in ai.Targets)
                         {
                             ConstructTargetInfoCache[info.Key] = info.Value;
