@@ -366,7 +366,6 @@ namespace CoreSystems.Projectiles
                             {
                                 if (!isBeam && p.Beam.Length <= grid.GridSize * 2 && !goCritical)
                                 {
-                                    Log.Line("1");
                                     MyCube cube;
                                     if (!(grid.TryGetCube(grid.WorldToGridInteger(p.Position), out cube) && cube.CubeBlock != target.CoreCube.SlimBlock || grid.TryGetCube(grid.WorldToGridInteger(p.LastPosition), out cube) && cube.CubeBlock != target.CoreCube.SlimBlock))
                                     {
