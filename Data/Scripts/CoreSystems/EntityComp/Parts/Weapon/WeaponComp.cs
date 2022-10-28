@@ -109,7 +109,7 @@ namespace CoreSystems.Platform
                     if (TypeSpecific == CompTypeSpecific.Rifle)
                     {
                         Ai.AiOwner = GunBase.OwnerIdentityId;
-                        Ai.SmartHandheld = w.System.HasGuidedAmmo;
+                        Ai.SmartHandheld = w.System.HasGuidedAmmo || true;
                     }
 
                     if (w.TurretAttached) {

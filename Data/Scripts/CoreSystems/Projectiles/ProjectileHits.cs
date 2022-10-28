@@ -364,9 +364,9 @@ namespace CoreSystems.Projectiles
                             hitEntity = HitEntityPool.Get();
                             if (entIsSelf && !selfDamage && !info.SmartReady)
                             {
-
                                 if (!isBeam && p.Beam.Length <= grid.GridSize * 2 && !goCritical)
                                 {
+                                    Log.Line("1");
                                     MyCube cube;
                                     if (!(grid.TryGetCube(grid.WorldToGridInteger(p.Position), out cube) && cube.CubeBlock != target.CoreCube.SlimBlock || grid.TryGetCube(grid.WorldToGridInteger(p.LastPosition), out cube) && cube.CubeBlock != target.CoreCube.SlimBlock))
                                     {
@@ -380,6 +380,7 @@ namespace CoreSystems.Projectiles
 
                                     var forwardPos = p.Info.Age != 1 ? p.Beam.From : p.Beam.From + (p.Beam.Direction * Math.Min(grid.GridSizeHalf, info.DistanceTraveled - info.PrevDistanceTraveled));
                                     grid.RayCastCells(forwardPos, p.Beam.To, hitEntity.Vector3ICache, null, true, true);
+                                    Log.Line($"2: {Vector3D.Distance(forwardPos, p.Beam.To)} - {p.Beam.Length} - {p.PruneSphere.Radius} - {p.Info.AmmoDef.Const.CollisionSize} - {p.Info.AmmoDef.Const.CollisionIsLine}");
 
                                     if (hitEntity.Vector3ICache.Count > 0)
                                     {

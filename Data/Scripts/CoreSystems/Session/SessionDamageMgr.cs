@@ -31,7 +31,6 @@ namespace CoreSystems
 
                 var p = Hits[x];
                 var info = p.Info;
-
                 var maxObjects = info.AmmoDef.Const.MaxObjectsHit;
                 var phantom = info.AmmoDef.BaseDamage <= 0;
 
@@ -47,6 +46,8 @@ namespace CoreSystems
                 for (int i = 0; i < info.HitList.Count; i++)
                 {
                     var hitEnt = info.HitList[i];
+                    Log.Line($"{info.AmmoDef.AmmoRound} - {hitEnt.EventType} - {info.AmmoDef.Ewar.Type} - {info.EwarActive}");
+
                     var hitMax = info.ObjectsHit >= maxObjects;
 
                     var outOfPew = info.BaseDamagePool <= 0 && !(phantom && hitEnt.EventType == HitEntity.Type.Effect);
