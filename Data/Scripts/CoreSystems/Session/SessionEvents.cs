@@ -648,11 +648,8 @@ namespace CoreSystems
                     var cube = enterEntity as MyCubeBlock;
                     var topEnt = cube?.CubeGrid ?? enterComp?.TopEntity;
                     var playerId = enterComp?.Ai?.AiOwner ?? enterController?.ControllerInfo?.ControllingIdentityId ?? 0;
-                    Log.Line($"1");
                     if (topEnt != null && playerId != 0 && TopEntityToInfoMap.TryGetValue(topEnt, out gridMap))
                     {
-                        Log.Line($"2");
-
                         var controlledEnt = cube ?? enterEntity;
 
                         gridMap.LastControllerTick = Tick + 1;
@@ -664,11 +661,9 @@ namespace CoreSystems
                         Ai ai;
                         if (EntityAIs.TryGetValue(topEnt, out ai))
                         {
-                            Log.Line($"3");
                             CoreComponent comp;
                             if (ai.CompBase.TryGetValue(controlledEnt, out comp))
                             {
-                                Log.Line($"4");
                                 var wComp = comp as Weapon.WeaponComponent;
                                 var cComp = comp as ControlSys.ControlComponent;
                                 if (wComp != null)

@@ -83,7 +83,6 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                     end = offetPosition + (AimDirection * ai.MaxTargetingRange);
                 }
             }
-
             var foundTarget = false;
             var possibleTarget = false;
             var rayOnlyHitSelf = false;
@@ -134,8 +133,10 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                                 paintTarget.Update(hit.Position, s.Tick, closestEnt);
                             }
 
-                            if (!checkOnly) 
+                            if (!checkOnly)
+                            {
                                 s.SetTarget(hitGrid, ai, _masterTargets);
+                            }
                             possibleTarget = true;
                         }
 

@@ -189,7 +189,7 @@ namespace CoreSystems
 
                 if (!DedicatedServer && !InMenu) {
                     UpdateLocalAiAndCockpit();
-                    if ((UiInput.PlayerCamera && (ActiveCockPit != null || TrackingAi != null && (TrackingAi.SmartHandheld || true)) || ActiveControlBlock is MyRemoteControl && !UiInput.PlayerCamera || UiInput.CameraBlockView) && PlayerDummyTargets.ContainsKey(PlayerId))
+                    if ((UiInput.PlayerCamera && (ActiveCockPit != null || TrackingAi != null && TrackingAi.SmartHandheld) || ActiveControlBlock is MyRemoteControl && !UiInput.PlayerCamera || UiInput.CameraBlockView) && PlayerDummyTargets.ContainsKey(PlayerId))
                         TargetSelection();
                 }
 

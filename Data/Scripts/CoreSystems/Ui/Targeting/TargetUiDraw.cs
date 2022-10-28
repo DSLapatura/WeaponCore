@@ -803,7 +803,6 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
 
         internal bool GetTargetState(Session s)
         {
-            Log.Line($"test");
             var ai = s.TrackingAi;
             var maxNameLength = 18;
 

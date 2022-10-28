@@ -37,9 +37,12 @@ namespace CoreSystems
                 if (UiInput.MouseButtonRightWasPressed && !TrackingAi.WeaponComps[0].Rifle.GunBase.HasIronSightsActive)
                     TrackingAi.Construct.Focus.RequestReleaseActive(TrackingAi);
 
-                var middle = MyAPIGateway.Input.IsMousePressed(MyMouseButtonsEnum.Middle);
-                if (UiInput.ActionKeyPressed || middle || UiInput.ActionKeyReleased && UiInput.FirstPersonView && TrackingAi.WeaponComps[0].Rifle.GunBase.HasIronSightsActive)
-                    TargetUi.SelectTarget(true, UiInput.ActionKeyPressed || middle);
+                var mouseButtonMiddletNewPressed = MyAPIGateway.Input.IsNewMiddleMousePressed();
+                var mouseButtonMiddleReleased = MyAPIGateway.Input.IsNewMiddleMouseReleased();
+
+                var stageOne = mouseButtonMiddletNewPressed || mouseButtonMiddleReleased && (TargetUi.DrawReticle || UiInput.FirstPersonView);
+                if (stageOne || UiInput.ActionKeyPressed || UiInput.ActionKeyReleased && UiInput.FirstPersonView && TrackingAi.WeaponComps[0].Rifle.GunBase.HasIronSightsActive)
+                    TargetUi.SelectTarget(true, UiInput.ActionKeyPressed || mouseButtonMiddletNewPressed);
 
                 return;
             }
