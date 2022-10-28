@@ -33,6 +33,7 @@ namespace CoreSystems.Support
         {
             try
             {
+
                 ++SceneVersion;
                 base.OnAddedToScene();
 
@@ -252,12 +253,11 @@ namespace CoreSystems.Support
                     if (Ai.AiSpawnTick > Ai.Construct.LastRefreshTick || Ai.Construct.LastRefreshTick == 0)
                         Ai.TopEntityMap.GroupMap.UpdateAis();
                 }
-                else if (Type == CompType.Weapon && Ai.AiSpawnTick > Ai.Construct.LastRefreshTick)
+                else if (Type == CompType.Weapon && (Ai.AiSpawnTick > Ai.Construct.LastRefreshTick || Ai.Construct.LastRefreshTick == 0))
                 {
                     Ai.TopEntityMap.GroupMap.UpdateAis();
                     Session.OnPlayerControl(null, CoreEntity);
                 }
-
                 Status = !IsWorking ? Start.Starting : Start.ReInit;
             }
 

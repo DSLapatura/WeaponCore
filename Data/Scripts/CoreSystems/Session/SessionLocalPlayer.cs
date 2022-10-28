@@ -30,16 +30,16 @@ namespace CoreSystems
             if (!InGridAiBlock) return;
             if (UiInput.AltPressed && UiInput.ShiftReleased || TargetUi.DrawReticle && UiInput.ClientInputState.MouseButtonRight && PlayerDummyTargets[PlayerId].PaintedTarget.EntityId == 0 && !TargetUi.SelectTarget(true, true, true))
                 TrackingAi.Construct.Focus.RequestReleaseActive(TrackingAi);
-
             if (!TrackingAi.IsGrid)
             {
                 if (TrackingAi.WeaponComps.Count == 0) return;
 
-                if (UiInput.MouseButtonRightWasPressed && TrackingAi.SmartHandheld && !TrackingAi.WeaponComps[0].Rifle.GunBase.HasIronSightsActive)
+                if (UiInput.MouseButtonRightWasPressed && !TrackingAi.WeaponComps[0].Rifle.GunBase.HasIronSightsActive)
                     TrackingAi.Construct.Focus.RequestReleaseActive(TrackingAi);
 
-                if (UiInput.ActionKeyPressed || UiInput.ActionKeyReleased && UiInput.FirstPersonView && TrackingAi.SmartHandheld && TrackingAi.WeaponComps[0].Rifle.GunBase.HasIronSightsActive)
-                    TargetUi.SelectTarget(true, UiInput.ActionKeyPressed);
+                var middle = MyAPIGateway.Input.IsMousePressed(MyMouseButtonsEnum.Middle);
+                if (UiInput.ActionKeyPressed || middle || UiInput.ActionKeyReleased && UiInput.FirstPersonView && TrackingAi.WeaponComps[0].Rifle.GunBase.HasIronSightsActive)
+                    TargetUi.SelectTarget(true, UiInput.ActionKeyPressed || middle);
 
                 return;
             }

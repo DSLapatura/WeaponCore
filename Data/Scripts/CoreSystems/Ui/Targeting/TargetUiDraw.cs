@@ -28,6 +28,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             if (ActivateDroneNotice()) DrawDroneNotice();
             
             ActivateSelector();
+
             if (s.CheckTarget(s.TrackingAi) && GetTargetState(s))
             {
                 if (ActivateLeads())
@@ -802,6 +803,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
 
         internal bool GetTargetState(Session s)
         {
+            Log.Line($"test");
             var ai = s.TrackingAi;
             var maxNameLength = 18;
 

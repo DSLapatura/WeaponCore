@@ -45,10 +45,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
         {
             var s = _session;
             var ai = s.TrackingAi;
-
             if (s.Tick - MasterUpdateTick > 300 || MasterUpdateTick < 300 && _masterTargets.Count == 0)
                 BuildMasterCollections(ai);
-
             if (!_cachedPointerPos) InitPointerOffset(0.05);
             if (!_cachedTargetPos) InitTargetOffset();
             var cockPit = s.ActiveCockPit;
@@ -66,6 +64,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                 AimPosition = offetPosition;
                 AimDirection = Vector3D.Normalize(AimPosition - s.CameraPos);
                 end = offetPosition + (AimDirection * ai.MaxTargetingRange);
+
             }
             else
             {
@@ -80,6 +79,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                     var offetPosition = Vector3D.Transform(PointerOffset, s.CameraMatrix);
                     AimPosition = offetPosition;
                     AimDirection = Vector3D.Normalize(AimPosition - s.CameraPos);
+
                     end = offetPosition + (AimDirection * ai.MaxTargetingRange);
                 }
             }

@@ -2023,10 +2023,9 @@ namespace CoreSystems.Projectiles
                         if (++Info.ProSyncPosMissCount > 1)
                         {
                             Info.ProSyncPosMissCount = 0;
-                            Log.Line($"jump");
-                            //Position = futurePosition;
-                            //Velocity = proPosSync.Velocity;
-                            //Vector3D.Normalize(ref Velocity, out Info.Direction);
+                            Position = futurePosition;
+                            Velocity = proPosSync.Velocity;
+                            Vector3D.Normalize(ref Velocity, out Info.Direction);
                         }
                     }
                     else

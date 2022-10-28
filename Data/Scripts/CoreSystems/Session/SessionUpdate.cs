@@ -63,7 +63,7 @@ namespace CoreSystems
                     continue;
 
 
-                if (ai.AiType == Ai.AiTypes.Grid && (ai.TopEntityMap.GroupMap.LastControllerTick == Tick || ai.TopEntityMap.LastControllerTick == Tick))
+                if (ai.AiType != Ai.AiTypes.Phantom && (ai.TopEntityMap.GroupMap.LastControllerTick == Tick || ai.TopEntityMap.LastControllerTick == Tick))
                     Ai.Constructs.UpdatePlayerStates(ai.TopEntityMap.GroupMap);
 
                 if (Tick60 && ai.AiType == Ai.AiTypes.Grid && ai.BlockChangeArea != BoundingBox.Invalid) {
@@ -457,6 +457,7 @@ namespace CoreSystems
                             var active = wComp.ShootManager.ClientToggleCount > wValues.State.ToggleCount || wValues.State.Trigger == On;
                             var turnOn = !active && UiInput.ClientInputState.MouseButtonLeft && playerControl && !InMenu;
                             var turnOff = active && (!UiInput.ClientInputState.MouseButtonLeft || InMenu) && Tick5;
+                                //Log.Line($"test: activePlayer:{activePlayer} - idMatch:{PlayerId == wValues.State.PlayerId} - pControl:{playerControl} - !menu:{!InMenu} - lMouse:{UiInput.ClientInputState.MouseButtonLeft} - turnOn:{turnOn} - manWeapon:{manualThisWeapon} - controlWeapon:{controllingWeapon} - vMode:{validManualModes} - manual:{manual} - track:{track} - cMode:{cMode} - sMode:{sMode} - active:{active} - pid:{wValues.State.PlayerId}");
 
                             if (sMode == Weapon.ShootManager.ShootModes.AiShoot)
                             {
