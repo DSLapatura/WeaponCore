@@ -89,7 +89,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             var rayHitSelf = false;
             var manualTarget = ai.Session.PlayerDummyTargets[ai.Session.PlayerId].ManualTarget;
             var paintTarget = ai.Session.PlayerDummyTargets[ai.Session.PlayerId].PaintedTarget;
-            var mark = s.UiInput.MouseButtonRightReleased;
+            var mark = s.UiInput.MouseButtonRightReleased || ai.SmartHandheld && s.UiInput.MouseButtonMenuReleased;
             var advanced = s.Settings.ClientConfig.AdvancedMode;
             MyEntity closestEnt = null;
             _session.Physics.CastRay(AimPosition, end, _hitInfo);
@@ -248,7 +248,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
 
         internal bool ActivateMarks()
         {
-            return _session.TrackingAi.IsGrid && _session.ActiveMarks.Count > 0;
+            return _session.TrackingAi.AiType != Ai.AiTypes.Phantom && _session.ActiveMarks.Count > 0;
         }
 
         internal bool ActivateLeads()

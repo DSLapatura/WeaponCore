@@ -270,12 +270,15 @@ namespace CoreSystems.Platform
         internal void StartReload()
         {
             Loading = true;
-            if (Comp.Rifle != null) Comp.Rifle.GunBase.HasIronSightsActive = false;
+            if (Comp.Rifle != null)
+                Comp.HandheldReload();
 
             if (!ActiveAmmoDef.AmmoDef.Const.BurstMode && !ActiveAmmoDef.AmmoDef.Const.HasShotReloadDelay && System.Values.HardPoint.Loading.GiveUpAfter)
                 GiveUpTarget();
 
             EventTriggerStateChanged(EventTriggers.Reloading, true);
+
+
 
             if (ActiveAmmoDef.AmmoDef.Const.MustCharge)
                 ChargeReload();

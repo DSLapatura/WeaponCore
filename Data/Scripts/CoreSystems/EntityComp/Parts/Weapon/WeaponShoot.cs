@@ -206,7 +206,7 @@ namespace CoreSystems.Platform
 
                             var ammoPattern = aConst.WeaponPattern ? aConst.AmmoPattern[AmmoShufflePattern[k]] : ActiveAmmoDef.AmmoDef;
 
-                            if (ammoPattern.DecayPerShot == float.MaxValue) selfDamage = float.MaxValue;
+                            if (ammoPattern.DecayPerShot >= float.MaxValue) selfDamage = float.MaxValue;
                             else selfDamage += ammoPattern.DecayPerShot;
 
                             long patternCycle = FireCounter;
@@ -281,6 +281,10 @@ namespace CoreSystems.Platform
 
                 #region Reload and Animation
                 EventTriggerStateChanged(state: EventTriggers.Firing, active: true, muzzles: _muzzlesToFire);
+
+                if (s.HandlesInput && Comp.Rifle != null)
+                    Comp.HandhelShoot();
+
                 _muzzlesToFire.Clear();
                 _nextVirtual = _nextVirtual + 1 < System.Values.HardPoint.Loading.BarrelsPerShot ? _nextVirtual + 1 : 0;
 
@@ -289,7 +293,7 @@ namespace CoreSystems.Platform
                     if (Comp.IsBlock)
                     {
                         IMySlimBlock currCube = Comp.Cube.SlimBlock as IMySlimBlock;
-                        if (selfDamage == float.MaxValue)
+                        if (selfDamage >= float.MaxValue)
                         {
                             currCube.DecreaseMountLevel(currCube.MaxIntegrity, null, true);
                             currCube.ClearConstructionStockpile(null);
@@ -298,7 +302,7 @@ namespace CoreSystems.Platform
                         else currCube.DoDamage(selfDamage, MyDamageType.Grind, true, null, Comp.CoreEntity.EntityId);
                     }
                     else
-                    ((IMyDestroyableObject)Comp.TopEntity as IMyCharacter).DoDamage(selfDamage, MyDamageType.Grind, true, null, Comp.CoreEntity.EntityId);
+                        ((IMyDestroyableObject)Comp.TopEntity as IMyCharacter).DoDamage(selfDamage, MyDamageType.Grind, true, null, Comp.CoreEntity.EntityId);
                 }
 
                 if (ActiveAmmoDef.AmmoDef.Const.HasShotReloadDelay && System.ShotsPerBurst > 0 && ++ShotsFired == System.ShotsPerBurst)

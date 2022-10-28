@@ -326,6 +326,30 @@ namespace CoreSystems.Platform
                 }
             }
 
+            internal void HandheldReload()
+            {
+                Rifle.GunBase.HasIronSightsActive = false;
+
+                if (Session.HandlesInput)
+                {
+                    if (Rifle.CurrentAmmunition > 1)
+                        Rifle.CurrentAmmunition = 0;
+
+                    Rifle.Reload();
+                }
+            }
+
+            internal void HandhelShoot()
+            {
+                if (Session.HandlesInput)
+                {
+                    if (Rifle.GunBase.CurrentAmmo > 1)
+                        Rifle.GunBase.CurrentAmmo = 0;
+
+                    Rifle.Reload();
+                }
+            }
+
             internal void ResetShootState(Trigger action, long playerId)
             {
 

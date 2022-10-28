@@ -37,12 +37,11 @@ namespace CoreSystems
                 if (UiInput.MouseButtonRightWasPressed && !TrackingAi.WeaponComps[0].Rifle.GunBase.HasIronSightsActive)
                     TrackingAi.Construct.Focus.RequestReleaseActive(TrackingAi);
 
-                var mouseButtonMiddletNewPressed = MyAPIGateway.Input.IsNewMiddleMousePressed();
-                var mouseButtonMiddleReleased = MyAPIGateway.Input.IsNewMiddleMouseReleased();
+                var stageOneOrTwo = (UiInput.MouseButtonMenuNewPressed || UiInput.MouseButtonMenuReleased) && TargetUi.DrawReticle 
+                    && UiInput.FirstPersonView && TrackingAi.WeaponComps[0].Rifle.GunBase.HasIronSightsActive;
 
-                var stageOne = mouseButtonMiddletNewPressed || mouseButtonMiddleReleased && (TargetUi.DrawReticle || UiInput.FirstPersonView);
-                if (stageOne || UiInput.ActionKeyPressed || UiInput.ActionKeyReleased && UiInput.FirstPersonView && TrackingAi.WeaponComps[0].Rifle.GunBase.HasIronSightsActive)
-                    TargetUi.SelectTarget(true, UiInput.ActionKeyPressed || mouseButtonMiddletNewPressed);
+                if (stageOneOrTwo)
+                    TargetUi.SelectTarget(true, UiInput.MouseButtonMenuNewPressed);
 
                 return;
             }
@@ -230,8 +229,12 @@ namespace CoreSystems
 
             var controlStringLeft = MyAPIGateway.Input.GetControl(MyMouseButtonsEnum.Left).GetGameControlEnum().String;
             CustomBlackListRequestBecauseKeenIsBrainDead(controlStringLeft, PlayerId);
-            var controlStringRight = MyAPIGateway.Input.GetControl(MyMouseButtonsEnum.Right).GetGameControlEnum().String;
-            CustomBlackListRequestBecauseKeenIsBrainDead(controlStringRight, PlayerId);
+            if (rifle == null)
+            {
+                var controlStringRight = MyAPIGateway.Input.GetControl(MyMouseButtonsEnum.Right).GetGameControlEnum().String;
+                CustomBlackListRequestBecauseKeenIsBrainDead(controlStringRight, PlayerId);
+            }
+
             var controlStringMenu = MyAPIGateway.Input.GetControl(UiInput.MouseButtonMenu).GetGameControlEnum().String;
             CustomBlackListRequestBecauseKeenIsBrainDead(controlStringMenu, PlayerId);
         }

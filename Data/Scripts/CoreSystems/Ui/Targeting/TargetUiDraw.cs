@@ -375,7 +375,10 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             var infoKey = s.UiInput.InfoKey == MyKeys.Decimal ? MyKeys.Delete : s.UiInput.InfoKey;
             var drawInfo = UpdateKeyInfo(detailedHud);
 
-            if (!s.Settings.Enforcement.DisableHudTargetInfo)
+            var handheldHud = s.TrackingAi.SmartHandheld && (s.TrackingAi.WeaponComps[0].Rifle.GunBase.HasIronSightsActive || s.LeadGroupActive);
+            var showHud = !s.Settings.Enforcement.DisableHudTargetInfo && (!s.TrackingAi.SmartHandheld || handheldHud);
+
+            if (showHud)
             {
                 foreach (var hud in collection.Keys)
                 {

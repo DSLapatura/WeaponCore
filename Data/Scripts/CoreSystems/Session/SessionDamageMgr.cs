@@ -46,7 +46,6 @@ namespace CoreSystems
                 for (int i = 0; i < info.HitList.Count; i++)
                 {
                     var hitEnt = info.HitList[i];
-                    Log.Line($"{info.AmmoDef.AmmoRound} - {hitEnt.EventType} - {info.AmmoDef.Ewar.Type} - {info.EwarActive}");
 
                     var hitMax = info.ObjectsHit >= maxObjects;
 

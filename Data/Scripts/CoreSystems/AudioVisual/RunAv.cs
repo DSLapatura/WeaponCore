@@ -456,7 +456,6 @@ namespace CoreSystems.Support
                     if (MyParticlesManager.TryCreateParticleEffect(particles.Name, ref matrix, ref pos, renderId, out newEffect))
                     {
                         newEffect.UserScale = particles.Extras.Scale;
-
                         if (newEffect.Loop)
                         {
                             weapon.Effects1[muzzle.MuzzleId] = newEffect;

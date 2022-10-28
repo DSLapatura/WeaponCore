@@ -18,7 +18,10 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
         internal bool MouseButtonLeftWasPressed;
         internal bool MouseButtonLeftNewPressed;
         internal bool MouseButtonLeftReleased;
+
         internal bool MouseButtonMenuWasPressed;
+        internal bool MouseButtonMenuNewPressed;
+        internal bool MouseButtonMenuReleased;
 
         internal bool MouseButtonRightNewPressed;
         internal bool MouseButtonRightReleased;
@@ -86,14 +89,19 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
             if (s.InGridAiBlock && !s.InMenu)
             {
                 MouseButtonPressed = MyAPIGateway.Input.IsAnyMousePressed();
+
                 MouseButtonLeftNewPressed = MyAPIGateway.Input.IsNewLeftMousePressed();
                 MouseButtonLeftReleased = MyAPIGateway.Input.IsNewLeftMouseReleased();
                 MouseButtonLeftWasPressed = ClientInputState.MouseButtonLeft;
-                MouseButtonMenuWasPressed = ClientInputState.MouseButtonMenu;
+
 
                 MouseButtonRightNewPressed = MyAPIGateway.Input.IsNewRightMousePressed();
                 MouseButtonRightReleased = MyAPIGateway.Input.IsNewRightMouseReleased();
                 MouseButtonRightWasPressed = ClientInputState.MouseButtonRight;
+
+                MouseButtonMenuNewPressed = MyAPIGateway.Input.IsNewMiddleMousePressed();
+                MouseButtonMenuReleased = MyAPIGateway.Input.IsNewMiddleMouseReleased();
+                MouseButtonMenuWasPressed = ClientInputState.MouseButtonMenu;
 
                 WasInMenu = ClientInputState.InMenu;
                 ClientInputState.InMenu = _session.InMenu;

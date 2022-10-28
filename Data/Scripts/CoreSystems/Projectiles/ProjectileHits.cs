@@ -668,8 +668,8 @@ namespace CoreSystems.Projectiles
             var isBeam = aConst.IsBeamWeapon;
             var vel = isBeam ? Vector3D.Zero : !MyUtils.IsZero(p.Velocity) ? p.Velocity : p.PrevVelocity;
 
-            var firstHitEntity = info.HitList[0];
-            var hitDist = hit ? firstHitEntity.HitDist ?? info.MaxTrajectory : info.MaxTrajectory;
+            var firstHitEntity = hit ? info.HitList[0] : null;
+            var hitDist = hit ? firstHitEntity?.HitDist ?? info.MaxTrajectory : info.MaxTrajectory;
             var distToTarget = aConst.IsBeamWeapon ? hitDist : info.MaxTrajectory - info.DistanceTraveled;
 
             var intersectOrigin = isBeam ? new Vector3D(p.Beam.From + (info.Direction * distToTarget)) : p.LastPosition;

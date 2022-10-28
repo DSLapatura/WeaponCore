@@ -325,7 +325,7 @@ namespace CoreSystems.Platform
             var ai = w.Comp.Ai;
 
             Ai.FakeTarget.FakeWorldTargetInfo fakeTargetInfo = null;
-            if (baseData.Set.Overrides.Control != ProtoWeaponOverrides.ControlModes.Auto && w.ValidFakeTargetInfo(baseData.State.PlayerId, out fakeTargetInfo))
+            if (w.Comp.FakeMode && w.ValidFakeTargetInfo(baseData.State.PlayerId, out fakeTargetInfo))
                 targetCenter = fakeTargetInfo.WorldPosition;
             else if (target.TargetState == Target.TargetStates.IsProjectile)
                 targetCenter = target.Projectile?.Position ?? Vector3D.Zero;
