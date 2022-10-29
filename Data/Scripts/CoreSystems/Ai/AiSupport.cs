@@ -486,7 +486,7 @@ namespace CoreSystems.Support
             Data.Clean();
 
             RootFixedWeaponComp = null;
-            RootOtherWeaponComp = null;
+            OnlyWeaponComp = null;
             GridEntity = null;
             ImyGridEntity = null;
             MyShield = null;

@@ -512,12 +512,14 @@ namespace CoreSystems
         [ProtoMember(1)] internal string Message;
         [ProtoMember(2)] internal string Color;
         [ProtoMember(3)] internal int Duration;
+        [ProtoMember(4)] internal bool SoundClick;
 
         public override void CleanUp()
         {
             base.CleanUp();
             Message = string.Empty;
             Color = string.Empty;
+            SoundClick = false;
             Duration = 0;
         }
     }

@@ -111,7 +111,7 @@ namespace CoreSystems.Platform
                     {
                         Ai.AiOwner = GunBase.OwnerIdentityId;
                         Ai.SmartHandheld = w.System.HasGuidedAmmo;
-                        Ai.RootOtherWeaponComp = w.Comp;
+                        Ai.OnlyWeaponComp = w.Comp;
                     }
 
                     if (w.TurretAttached) {
@@ -327,8 +327,6 @@ namespace CoreSystems.Platform
 
             internal void HandheldReload()
             {
-                Rifle.GunBase.HasIronSightsActive = false;
-
                 if (Session.HandlesInput)
                 {
                     if (Rifle.CurrentAmmunition > 1)
@@ -342,6 +340,7 @@ namespace CoreSystems.Platform
             {
                 if (Session.HandlesInput)
                 {
+                    Log.Line($"test");
                     if (Rifle.GunBase.CurrentAmmo > 1)
                         Rifle.GunBase.CurrentAmmo = 0;
 
@@ -522,6 +521,8 @@ namespace CoreSystems.Platform
                         break;
                     case "ControlModes":
                         o.Control = (ProtoWeaponOverrides.ControlModes)v;
+                        if (comp.TypeSpecific == CompTypeSpecific.Rifle)
+                            comp.Session.RequestNotify($"Targeting Mode [{o.Control}]", 3000, "White", playerId, true);
                         clearTargets = true;
                         break;
                     case "FocusSubSystem":

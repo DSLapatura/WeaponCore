@@ -25,37 +25,6 @@ namespace CoreSystems
 {
     public partial class Session
     {
-        internal void TargetSelection()
-        {
-            if (!InGridAiBlock) return;
-            if (UiInput.AltPressed && UiInput.ShiftReleased || TargetUi.DrawReticle && UiInput.ClientInputState.MouseButtonRight && PlayerDummyTargets[PlayerId].PaintedTarget.EntityId == 0 && !TargetUi.SelectTarget(true, true, true))
-                TrackingAi.Construct.Focus.RequestReleaseActive(TrackingAi);
-            
-            if (TrackingAi.AiType == AiTypes.Player)
-            {
-                if (UiInput.MouseButtonMenuReleased && !TrackingAi.RootOtherWeaponComp.Rifle.GunBase.HasIronSightsActive)
-                    TrackingAi.Construct.Focus.RequestReleaseActive(TrackingAi);
-
-                var stageOneOrTwo = (UiInput.MouseButtonMenuNewPressed || UiInput.MouseButtonMenuReleased) && TargetUi.DrawReticle 
-                    && UiInput.FirstPersonView && TrackingAi.RootOtherWeaponComp.Rifle.GunBase.HasIronSightsActive;
-
-                if (stageOneOrTwo)
-                    TargetUi.SelectTarget(true, UiInput.MouseButtonMenuNewPressed);
-
-                return;
-            }
-
-            if (UiInput.MouseButtonRightNewPressed || UiInput.MouseButtonRightReleased && (TargetUi.DrawReticle || UiInput.FirstPersonView))
-                TargetUi.SelectTarget(true, UiInput.MouseButtonRightNewPressed);
-            else if (!Settings.Enforcement.DisableTargetCycle)
-            {
-                if (UiInput.CurrentWheel != UiInput.PreviousWheel && !UiInput.CameraBlockView || UiInput.CycleNextKeyPressed || UiInput.CyclePrevKeyPressed)
-                    TargetUi.SelectNext();
-            }
-
-        }
-
-
         internal bool CheckTarget(Ai ai)
         {
             if (!ai.Construct.Focus.ClientIsFocused(ai)) return false;
@@ -274,14 +243,29 @@ namespace CoreSystems
             TargetUi.ResetCache();
         }
 
+        internal void RequestNotify(string message, int duration, string color = null, long specificPlayerId = 0, bool soundClick = false)
+        {
+            if (specificPlayerId == 0 && !DedicatedServer || specificPlayerId == PlayerId)
+                ShowLocalNotify(message, duration, color, soundClick);
+            else
+                SendClientNotify(specificPlayerId, message, specificPlayerId != 0, color, duration, soundClick);
+            
+        }
+
         private void ShowClientNotify(ClientNotifyPacket notify)
         {
             MyAPIGateway.Utilities.ShowNotification(notify.Message, notify.Duration > 0 ? notify.Duration : 1000, notify.Color == string.Empty ? "White" : notify.Color);
+
+            if (notify.SoundClick)
+                MyVisualScriptLogicProvider.PlayHudSoundLocal();
         }
 
-        internal void ShowLocalNotify(string message, int duration, string color = null)
+        internal void ShowLocalNotify(string message, int duration, string color = null, bool soundClick = false)
         {
             MyAPIGateway.Utilities.ShowNotification(message, duration, string.IsNullOrEmpty(color) ? "White" : color);
+
+            if (soundClick)
+                MyVisualScriptLogicProvider.PlayHudSoundLocal();
         }
 
         private readonly Color _restrictionAreaColor = new Color(128, 0, 128, 96);

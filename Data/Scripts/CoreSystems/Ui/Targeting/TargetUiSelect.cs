@@ -8,6 +8,7 @@ using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRage.Input;
 using VRageMath;
+using static CoreSystems.Support.Ai;
 
 namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
 {
@@ -15,10 +16,9 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
     {
         internal void ActivateSelector()
         {
-            var playerAi = _session.TrackingAi.AiType == Ai.AiTypes.Player;
-            var ironSights = playerAi && _session.TrackingAi.RootOtherWeaponComp.Rifle.GunBase.HasIronSightsActive;
-            if (_session.TrackingAi.AiType == Ai.AiTypes.Phantom || _session.UiInput.FirstPersonView && !_session.UiInput.TurretBlockView && !ironSights && !_session.UiInput.AltPressed) return;
-            if (MyAPIGateway.Input.IsNewKeyReleased(MyKeys.Control) && !_session.UiInput.FirstPersonView && !_session.UiInput.CameraBlockView && !_session.UiInput.TurretBlockView)
+            var s = _session;
+            if (s.TrackingAi.AiType == Ai.AiTypes.Phantom || s.UiInput.FirstPersonView && !s.UiInput.TurretBlockView && !s.UiInput.IronSights && !s.UiInput.AltPressed) return;
+            if (MyAPIGateway.Input.IsNewKeyReleased(MyKeys.Control) && !s.UiInput.FirstPersonView && !s.UiInput.CameraBlockView && !s.UiInput.TurretBlockView)
             {
                 switch (_3RdPersonDraw)
                 {
@@ -34,14 +34,49 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                 }
             }
             
-            if (_session.UiInput.TurretBlockView || _session.UiInput.CameraBlockView)
+            if (s.UiInput.TurretBlockView || s.UiInput.CameraBlockView)
                 _3RdPersonDraw = ThirdPersonModes.DotTarget;
 
-            var enableActivator = _3RdPersonDraw == ThirdPersonModes.Crosshair || _session.UiInput.FirstPersonView && _session.UiInput.AltPressed && !ironSights || _session.UiInput.CameraBlockView;
+            var playerAi = s.TrackingAi.AiType == Ai.AiTypes.Player;
+            var enableActivator = _3RdPersonDraw == ThirdPersonModes.Crosshair || s.UiInput.FirstPersonView && s.UiInput.AltPressed && !s.UiInput.IronSights || s.UiInput.CameraBlockView;
 
-            if (enableActivator || !_session.UiInput.FirstPersonView && !_session.UiInput.CameraBlockView && !playerAi || _session.UiInput.TurretBlockView || ironSights)
+            if (enableActivator || !s.UiInput.FirstPersonView && !s.UiInput.CameraBlockView && !playerAi || s.UiInput.TurretBlockView || s.UiInput.IronSights)
                 DrawSelector(enableActivator);
         }
+
+        internal void TargetSelection()
+        {
+            var s = _session;
+            if (!s.InGridAiBlock) return;
+            var ai = s.TrackingAi;
+
+            if (s.UiInput.AltPressed && s.UiInput.ShiftReleased || DrawReticle && s.UiInput.ClientInputState.MouseButtonRight && s.PlayerDummyTargets[s.PlayerId].PaintedTarget.EntityId == 0 && !SelectTarget(true, true, true))
+                ai.Construct.Focus.RequestReleaseActive(ai);
+
+            if (ai.AiType == AiTypes.Player)
+            {
+                if (s.UiInput.MouseButtonMenuReleased && !ai.OnlyWeaponComp.Rifle.GunBase.HasIronSightsActive)
+                    ai.Construct.Focus.RequestReleaseActive(ai);
+
+                var stageOneOrTwo = (s.UiInput.MouseButtonMenuNewPressed || s.UiInput.MouseButtonMenuReleased) && DrawReticle
+                    && s.UiInput.FirstPersonView && ai.OnlyWeaponComp.Rifle.GunBase.HasIronSightsActive;
+
+                if (stageOneOrTwo)
+                    SelectTarget(true, s.UiInput.MouseButtonMenuNewPressed);
+
+                return;
+            }
+
+            if (s.UiInput.MouseButtonRightNewPressed || s.UiInput.MouseButtonRightReleased && (DrawReticle || s.UiInput.FirstPersonView))
+                SelectTarget(true, s.UiInput.MouseButtonRightNewPressed);
+            else if (!s.Settings.Enforcement.DisableTargetCycle)
+            {
+                if (s.UiInput.CurrentWheel != s.UiInput.PreviousWheel && !s.UiInput.CameraBlockView || s.UiInput.CycleNextKeyPressed || s.UiInput.CyclePrevKeyPressed)
+                    SelectNext();
+            }
+
+        }
+
 
         private MyEntity _firstStageEnt;
         internal bool SelectTarget(bool manualSelect = true, bool firstStage = false, bool checkOnly = false)

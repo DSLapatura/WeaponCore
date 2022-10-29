@@ -705,7 +705,7 @@ namespace CoreSystems
             else Log.Line("SendWeaponReload should never be called on Client");
         }
 
-        internal void SendClientNotify(long id, string message, bool singleClient = false, string color = null, int duration = 0)
+        internal void SendClientNotify(long id, string message, bool singleClient = false, string color = null, int duration = 0, bool soundClick = false)
         {
             ulong senderId = 0;
             PlayerMap player = null;
@@ -724,6 +724,7 @@ namespace CoreSystems
                     Message = message,
                     Color = color,
                     Duration = duration,
+                    SoundClick = soundClick,
                 }
             });
         }

@@ -1,10 +1,12 @@
 ﻿using System;
 using CoreSystems;
+using CoreSystems.Platform;
 using CoreSystems.Support;
 using Sandbox.Game;
 using Sandbox.ModAPI;
 using VRage.Input;
 using VRageMath;
+using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace WeaponCore.Data.Scripts.CoreSystems.Ui
 {
@@ -13,6 +15,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
         internal int PreviousWheel;
         internal int CurrentWheel;
         internal int ShiftTime;
+        internal int MouseMenuTime;
         internal bool MouseButtonPressed;
         internal bool InputChanged;
         internal bool MouseButtonLeftWasPressed;
@@ -26,6 +29,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
         internal bool MouseButtonRightNewPressed;
         internal bool MouseButtonRightReleased;
         internal bool MouseButtonRightWasPressed;
+
+        internal bool IronSights;
         internal bool WasInMenu;
         internal bool WheelForward;
         internal bool WheelBackward;
@@ -80,6 +85,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
             var s = _session;
             WheelForward = false;
             WheelBackward = false;
+            IronSights = false;
             AimRay = new LineD();
             CycleNextKeyPressed = false;
             CyclePrevKeyPressed = false;
@@ -88,6 +94,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
 
             if (s.InGridAiBlock && !s.InMenu)
             {
+                var ai = s.TrackingAi;
                 MouseButtonPressed = MyAPIGateway.Input.IsAnyMousePressed();
 
                 MouseButtonLeftNewPressed = MyAPIGateway.Input.IsNewLeftMousePressed();
@@ -103,7 +110,19 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
                 MouseButtonMenuWasPressed = ClientInputState.MouseButtonMenu;
 
                 WasInMenu = ClientInputState.InMenu;
+
+
                 ClientInputState.InMenu = _session.InMenu;
+
+                IronSights = ai.AiType == Ai.AiTypes.Player && ai.OnlyWeaponComp.Rifle.GunBase.HasIronSightsActive;
+
+                if (MouseButtonMenuWasPressed)
+                {
+                    if (++MouseMenuTime == 90 && IronSights)
+                        UpdateNonBlockControlMode(ai);
+                }
+                else
+                    MouseMenuTime = 0;
 
                 if (MouseButtonPressed)
                 {
@@ -178,7 +197,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
                 CtrlPressed = MyAPIGateway.Input.IsKeyPress(MyKeys.Control);
                 ControlKeyPressed = MyAPIGateway.Input.IsKeyPress(ControlKey);
                 CameraChannelId = 0;
-
+                MouseMenuTime = 0;
                 if (CtrlPressed && ControlKeyPressed && GetAimRay(s, out AimRay) && Debug)
                 {
                     DsDebugDraw.DrawLine(AimRay, Color.Red, 0.1f);
@@ -370,6 +389,14 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
                 BlackListActive1 = activate;
             }
             catch (Exception ex) { Log.Line($"Exception in BlackList1: {ex}"); }
+        }
+
+        private void UpdateNonBlockControlMode(Ai ai)
+        {
+            var notPainter = ai.OnlyWeaponComp.Data.Repo.Values.Set.Overrides.Control != ProtoWeaponOverrides.ControlModes.Painter;
+            var newValue = notPainter ? 2 : 0;
+
+            Weapon.WeaponComponent.RequestSetValue(ai.OnlyWeaponComp, "ControlModes", newValue, _session.PlayerId);
         }
     }
 }

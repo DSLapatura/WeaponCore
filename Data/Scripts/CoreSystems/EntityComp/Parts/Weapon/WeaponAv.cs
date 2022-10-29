@@ -132,7 +132,7 @@ namespace CoreSystems.Platform
 
         internal void EventTriggerStateChanged(EventTriggers state, bool active, HashSet<string> muzzles = null)
         {
-            if (Comp.Data.Repo == null || Comp.Cube == null || Comp.Cube.MarkedForClose || Comp.Ai == null || Comp.Platform.State != CorePlatform.PlatformState.Ready && Comp.Platform.State != CorePlatform.PlatformState.Inited) return;
+            if (Comp.Data.Repo == null || Comp.CoreEntity == null || Comp.CoreEntity.MarkedForClose || Comp.Ai == null || Comp.Platform.State != CorePlatform.PlatformState.Ready && Comp.Platform.State != CorePlatform.PlatformState.Inited) return;
             try
             {
                 var session = Comp.Session;
@@ -140,7 +140,21 @@ namespace CoreSystems.Platform
                 var canPlay = !session.DedicatedServer && 64000000 >= distance; //8km max range, will play regardless of range if it moves PivotPos and is loaded
 
                 if (canPlay)
+                {
                     PlayParticleEvent(state, active, distance, muzzles);
+                    switch (state)
+                    {
+                        case EventTriggers.Firing:
+                            if (Comp.TypeSpecific == CoreComponent.CompTypeSpecific.Rifle)
+                                Comp.HandhelShoot();
+                            break;
+                        case EventTriggers.Reloading:
+                            if (Comp.TypeSpecific == CoreComponent.CompTypeSpecific.Rifle)
+                                Comp.HandheldReload();
+                            break;
+                    }
+                }
+
                 if (!AnimationsSet.ContainsKey(state)) return;
                 if (AnimationDelayTick < Comp.Session.Tick)
                     AnimationDelayTick = Comp.Session.Tick;
@@ -155,9 +169,6 @@ namespace CoreSystems.Platform
                     case EventTriggers.Firing:
                         {
                             var addToFiring = AnimationsSet.ContainsKey(EventTriggers.StopFiring) && state == EventTriggers.Firing;
-
-                            if (canPlay && Comp.TypeSpecific == CoreComponent.CompTypeSpecific.Rifle && state == EventTriggers.Firing)
-                                Comp.HandhelShoot();
 
                             for (int i = 0; i < AnimationsSet[state].Length; i++)
                             {
@@ -265,11 +276,6 @@ namespace CoreSystems.Platform
                     case EventTriggers.BurstReload:
                     case EventTriggers.Reloading:
                         {
-
-
-                            if (canPlay && Comp.TypeSpecific == CoreComponent.CompTypeSpecific.Rifle && state == EventTriggers.Reloading)
-                                Comp.HandheldReload();
-
                             for (int i = 0; i < AnimationsSet[state].Length; i++)
                             {
                                 var animation = AnimationsSet[state][i];

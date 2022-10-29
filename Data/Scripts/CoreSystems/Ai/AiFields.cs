@@ -89,7 +89,7 @@ namespace CoreSystems.Support
         internal IMyCubeGrid ImyGridEntity;
         internal MyCubeBlock PowerBlock;
         internal Weapon.WeaponComponent RootFixedWeaponComp;
-        internal Weapon.WeaponComponent RootOtherWeaponComp;
+        internal Weapon.WeaponComponent OnlyWeaponComp;
         internal MyCubeGrid.MyCubeGridHitInfo GridHitInfo = new MyCubeGrid.MyCubeGridHitInfo();
         internal uint CreatedTick;
         internal Vector3 TopEntityVel;
