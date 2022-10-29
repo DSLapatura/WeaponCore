@@ -8,6 +8,7 @@ using Sandbox.ModAPI;
 using Sandbox.ModAPI.Weapons;
 using VRage.Game;
 using VRage.Game.Entity;
+using VRage.Game.ModAPI;
 using VRageMath;
 using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
@@ -346,7 +347,7 @@ namespace CoreSystems.Platform
                     if (Rifle.GunBase.CurrentAmmo > 1)
                         Rifle.GunBase.CurrentAmmo = 0;
 
-                    Rifle.Reload();
+                    Rifle.Shoot(MyShootActionEnum.PrimaryAction, Vector3D.Zero, null);
                 }
             }
 
