@@ -340,7 +340,6 @@ namespace CoreSystems.Platform
             {
                 if (Session.HandlesInput)
                 {
-                    Log.Line($"test");
                     if (Rifle.GunBase.CurrentAmmo > 1)
                         Rifle.GunBase.CurrentAmmo = 0;
 

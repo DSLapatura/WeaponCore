@@ -50,22 +50,24 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             if (!s.InGridAiBlock) return;
             var ai = s.TrackingAi;
 
-            if (s.UiInput.AltPressed && s.UiInput.ShiftReleased || DrawReticle && s.UiInput.ClientInputState.MouseButtonRight && s.PlayerDummyTargets[s.PlayerId].PaintedTarget.EntityId == 0 && !SelectTarget(true, true, true))
-                ai.Construct.Focus.RequestReleaseActive(ai);
 
             if (ai.AiType == AiTypes.Player)
             {
-                if (s.UiInput.MouseButtonMenuReleased && !ai.OnlyWeaponComp.Rifle.GunBase.HasIronSightsActive)
-                    ai.Construct.Focus.RequestReleaseActive(ai);
-
                 var stageOneOrTwo = (s.UiInput.MouseButtonMenuNewPressed || s.UiInput.MouseButtonMenuReleased) && DrawReticle
-                    && s.UiInput.FirstPersonView && ai.OnlyWeaponComp.Rifle.GunBase.HasIronSightsActive;
+                    && s.UiInput.FirstPersonView && s.UiInput.IronSights;
 
+                bool hitSomething = false;
                 if (stageOneOrTwo)
-                    SelectTarget(true, s.UiInput.MouseButtonMenuNewPressed);
+                    hitSomething = SelectTarget(true, s.UiInput.MouseButtonMenuNewPressed);
+
+                if (s.UiInput.MouseButtonMenuReleased && !hitSomething)
+                    ai.Construct.Focus.RequestReleaseActive(ai);
 
                 return;
             }
+
+            if (s.UiInput.AltPressed && s.UiInput.ShiftReleased || DrawReticle && s.UiInput.ClientInputState.MouseButtonRight && s.PlayerDummyTargets[s.PlayerId].PaintedTarget.EntityId == 0 && !SelectTarget(true, true, true))
+                ai.Construct.Focus.RequestReleaseActive(ai);
 
             if (s.UiInput.MouseButtonRightNewPressed || s.UiInput.MouseButtonRightReleased && (DrawReticle || s.UiInput.FirstPersonView))
                 SelectTarget(true, s.UiInput.MouseButtonRightNewPressed);
@@ -128,7 +130,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             var manualTarget = ai.Session.PlayerDummyTargets[ai.Session.PlayerId].ManualTarget;
             var paintTarget = ai.Session.PlayerDummyTargets[ai.Session.PlayerId].PaintedTarget;
             var mark = s.UiInput.MouseButtonRightReleased || ai.SmartHandheld && s.UiInput.MouseButtonMenuReleased;
-            var advanced = s.Settings.ClientConfig.AdvancedMode;
+
+            var advanced = s.Settings.ClientConfig.AdvancedMode || s.UiInput.IronSights;
             MyEntity closestEnt = null;
             _session.Physics.CastRay(AimPosition, end, _hitInfo);
 
@@ -167,7 +170,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                     {
                         if (hitGrid == _firstStageEnt) {
 
-                            if (mark  && advanced && !checkOnly && ai.Construct.Focus.EntityIsFocused(ai, closestEnt)) {
+                            if (mark && advanced && !checkOnly && ai.Construct.Focus.EntityIsFocused(ai, closestEnt)) {
                                 paintTarget.Update(hit.Position, s.Tick, closestEnt);
                             }
 
