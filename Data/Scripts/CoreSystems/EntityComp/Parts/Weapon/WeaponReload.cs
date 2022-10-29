@@ -271,7 +271,7 @@ namespace CoreSystems.Platform
         {
             Loading = true;
             if (Comp.Rifle != null)
-                Comp.HandheldReload();
+                Comp.Rifle.GunBase.HasIronSightsActive = false;
 
             if (!ActiveAmmoDef.AmmoDef.Const.BurstMode && !ActiveAmmoDef.AmmoDef.Const.HasShotReloadDelay && System.Values.HardPoint.Loading.GiveUpAfter)
                 GiveUpTarget();

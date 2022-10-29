@@ -156,6 +156,9 @@ namespace CoreSystems.Platform
                         {
                             var addToFiring = AnimationsSet.ContainsKey(EventTriggers.StopFiring) && state == EventTriggers.Firing;
 
+                            if (canPlay && Comp.Rifle != null && state == EventTriggers.Firing)
+                                Comp.HandhelShoot();
+
                             for (int i = 0; i < AnimationsSet[state].Length; i++)
                             {
                                 var animation = AnimationsSet[state][i];
@@ -262,6 +265,11 @@ namespace CoreSystems.Platform
                     case EventTriggers.BurstReload:
                     case EventTriggers.Reloading:
                         {
+
+
+                            if (canPlay && Comp.Rifle != null && state == EventTriggers.Reloading)
+                                Comp.HandheldReload();
+
                             for (int i = 0; i < AnimationsSet[state].Length; i++)
                             {
                                 var animation = AnimationsSet[state][i];

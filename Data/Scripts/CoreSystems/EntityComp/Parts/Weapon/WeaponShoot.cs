@@ -282,9 +282,6 @@ namespace CoreSystems.Platform
                 #region Reload and Animation
                 EventTriggerStateChanged(state: EventTriggers.Firing, active: true, muzzles: _muzzlesToFire);
 
-                if (s.HandlesInput && Comp.Rifle != null)
-                    Comp.HandhelShoot();
-
                 _muzzlesToFire.Clear();
                 _nextVirtual = _nextVirtual + 1 < System.Values.HardPoint.Loading.BarrelsPerShot ? _nextVirtual + 1 : 0;
 
