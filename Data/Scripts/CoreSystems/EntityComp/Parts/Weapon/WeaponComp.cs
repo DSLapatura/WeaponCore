@@ -325,23 +325,26 @@ namespace CoreSystems.Platform
                 }
             }
 
-            internal void HandheldReload()
+            internal void HandheldReload(Weapon w, WeaponDefinition.AnimationDef.PartAnimationSetDef.EventTriggers state, bool active)
             {
                 if (Session.HandlesInput)
                 {
-                    if (Rifle.CurrentAmmunition > 1)
+                    if (active && state == WeaponDefinition.AnimationDef.PartAnimationSetDef.EventTriggers.Reloading)
+                    {
                         Rifle.CurrentAmmunition = 0;
-
-                    Rifle.Reload();
+                        Rifle.Reload();
+                    }
+                    else
+                        Rifle.CurrentAmmunition = w.ProtoWeaponAmmo.CurrentAmmo;
                 }
             }
 
-            internal void HandhelShoot()
+            internal void HandhelShoot(Weapon w, WeaponDefinition.AnimationDef.PartAnimationSetDef.EventTriggers state, bool active)
             {
-                if (Session.HandlesInput)
+                if (Session.HandlesInput && active)
                 {
-                    if (Rifle.GunBase.CurrentAmmo > 1)
-                        Rifle.GunBase.CurrentAmmo = 0;
+                    if (Rifle.GunBase.CurrentAmmo < 1)
+                        Rifle.GunBase.CurrentAmmo = 1;
 
                     Rifle.Shoot(MyShootActionEnum.PrimaryAction, Vector3D.Zero, null);
                 }

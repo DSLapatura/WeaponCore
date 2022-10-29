@@ -146,11 +146,13 @@ namespace CoreSystems.Platform
                     {
                         case EventTriggers.Firing:
                             if (Comp.TypeSpecific == CoreComponent.CompTypeSpecific.Rifle)
-                                Comp.HandhelShoot();
+                                Comp.HandhelShoot(this, state, active);
                             break;
                         case EventTriggers.Reloading:
+                        case EventTriggers.NoMagsToLoad:
+                        case EventTriggers.EmptyOnGameLoad:
                             if (Comp.TypeSpecific == CoreComponent.CompTypeSpecific.Rifle)
-                                Comp.HandheldReload();
+                                Comp.HandheldReload(this, state, active);
                             break;
                     }
                 }

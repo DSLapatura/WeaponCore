@@ -7,6 +7,8 @@ using VRage.Collections;
 using VRage.Game;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
+using static CoreSystems.Support.CoreComponent;
+using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace CoreSystems
 {
@@ -207,6 +209,9 @@ namespace CoreSystems
                 }
 
                 part.Reload.CurrentMags = part.BaseComp.TypeSpecific != CoreComponent.CompTypeSpecific.Phantom ? part.BaseComp.CoreInventory.GetItemAmount(part.ActiveAmmoDef.AmmoDefinitionId).ToIntSafe() : int.MaxValue;
+                
+                if (part.Comp.TypeSpecific == CompTypeSpecific.Rifle)
+                    part.Comp.Rifle.CurrentMagazineAmount = part.Reload.CurrentMags;
 
                 InventoryMoveRequestPool.Return(partConsumableToPull);
             }

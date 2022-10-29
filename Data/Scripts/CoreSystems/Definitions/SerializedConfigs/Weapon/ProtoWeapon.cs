@@ -9,6 +9,8 @@ using VRageMath;
 using static CoreSystems.Support.WeaponDefinition.TargetingDef;
 using static CoreSystems.Support.CoreComponent;
 using static CoreSystems.Platform.Weapon.WeaponComponent;
+using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
+
 namespace CoreSystems
 {
     [ProtoContract]
@@ -39,7 +41,12 @@ namespace CoreSystems
                 var we = comp.Collection[i];
 
                 if (comp.DefaultReloads != 0)
+                {
                     we.Reload.CurrentMags = comp.DefaultReloads;
+
+                    if (comp.TypeSpecific == CompTypeSpecific.Rifle)
+                        comp.Rifle.CurrentMagazineAmount = comp.DefaultReloads;
+                }
             }
 
             for (int i = 0; i < Values.Reloads.Length; i++)

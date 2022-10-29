@@ -2,7 +2,10 @@
 using CoreSystems.Support;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
+using static CoreSystems.Support.CoreComponent;
 using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetDef;
+using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
+
 namespace CoreSystems.Platform
 {
     public partial class Weapon 
@@ -22,6 +25,9 @@ namespace CoreSystems.Platform
                 ProposedAmmoId = -1;
                 ProtoWeaponAmmo.CurrentAmmo = 0;
                 Reload.CurrentMags = Comp.TypeSpecific != CoreComponent.CompTypeSpecific.Phantom ? 0 : int.MaxValue;
+
+                if (Comp.TypeSpecific == CoreComponent.CompTypeSpecific.Rifle)
+                    Comp.Rifle.CurrentMagazineAmount = Reload.CurrentMags;
             }
 
             ActiveAmmoDef = System.AmmoTypes[Reload.AmmoTypeId];
@@ -31,6 +37,9 @@ namespace CoreSystems.Platform
 
             if (!ActiveAmmoDef.AmmoDef.Const.EnergyAmmo)
                 Reload.CurrentMags = Comp.TypeSpecific != CoreComponent.CompTypeSpecific.Phantom ? Comp.CoreInventory.GetItemAmount(ActiveAmmoDef.AmmoDefinitionId).ToIntSafe() : int.MaxValue;
+
+            if (Comp.TypeSpecific == CoreComponent.CompTypeSpecific.Rifle)
+                Comp.Rifle.CurrentMagazineAmount = Reload.CurrentMags;
 
             AmmoName = ActiveAmmoDef.AmmoName;
 
@@ -191,6 +200,10 @@ namespace CoreSystems.Platform
                     var freeVolume = System.MaxAmmoVolume - Comp.CurrentInventoryVolume;
                     var spotsFree = (int)(freeVolume / ActiveAmmoDef.AmmoDef.Const.MagVolume);
                     Reload.CurrentMags = Comp.CoreInventory.GetItemAmount(ActiveAmmoDef.AmmoDefinitionId).ToIntSafe();
+                    
+                    if (Comp.TypeSpecific == CompTypeSpecific.Rifle)
+                        Comp.Rifle.CurrentMagazineAmount = Reload.CurrentMags;
+                    
                     CurrentAmmoVolume = Reload.CurrentMags * ActiveAmmoDef.AmmoDef.Const.MagVolume;
 
                     var magsRequested = (int)((System.FullAmmoVolume - CurrentAmmoVolume) / ActiveAmmoDef.AmmoDef.Const.MagVolume);
@@ -345,7 +358,7 @@ namespace CoreSystems.Platform
                     ++Reload.EndId;
                     ClientEndId = Reload.EndId;
 
-                    if (Comp.TypeSpecific == CoreComponent.CompTypeSpecific.Phantom && ActiveAmmoDef.AmmoDef.Const.EnergyAmmo)
+                    if (Comp.TypeSpecific == CompTypeSpecific.Phantom && ActiveAmmoDef.AmmoDef.Const.EnergyAmmo)
                         --Reload.CurrentMags;
 
                     if (System.Session.MpActive) {
