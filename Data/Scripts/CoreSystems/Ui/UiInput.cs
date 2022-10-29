@@ -94,7 +94,6 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
                 MouseButtonLeftReleased = MyAPIGateway.Input.IsNewLeftMouseReleased();
                 MouseButtonLeftWasPressed = ClientInputState.MouseButtonLeft;
 
-
                 MouseButtonRightNewPressed = MyAPIGateway.Input.IsNewRightMousePressed();
                 MouseButtonRightReleased = MyAPIGateway.Input.IsNewRightMouseReleased();
                 MouseButtonRightWasPressed = ClientInputState.MouseButtonRight;

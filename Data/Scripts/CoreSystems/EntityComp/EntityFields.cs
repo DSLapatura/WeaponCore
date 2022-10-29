@@ -5,6 +5,7 @@ using CoreSystems.Platform;
 using Sandbox.Game;
 using Sandbox.Game.Entities;
 using Sandbox.Game.EntityComponents;
+using Sandbox.Game.Weapons;
 using Sandbox.ModAPI;
 using Sandbox.ModAPI.Weapons;
 using SpaceEngineers.Game.ModAPI;
@@ -208,19 +209,19 @@ namespace CoreSystems.Support
 
             }
             else if (CoreEntity is IMyAutomaticRifleGun) {
-                
+
                 MaxIntegrity = 1;
                 TypeSpecific = CompTypeSpecific.Rifle;
                 Type = CompType.Weapon;
                 var rifle = (IMyAutomaticRifleGun)CoreEntity;
-                TopEntity = rifle?.Owner;
-
-                GridMap gridMap;
-                if (TopEntity != null && !Session.TopEntityToInfoMap.TryGetValue(TopEntity, out gridMap))
+                TopEntity = rifle.Owner;
+                
+                TopMap topMap;
+                if (TopEntity != null && !Session.TopEntityToInfoMap.TryGetValue(TopEntity, out topMap))
                 {
-                    gridMap = Session.GridMapPool.Get();
-                    gridMap.Trash = true;
-                    Session.TopEntityToInfoMap.TryAdd(TopEntity, gridMap);
+                    topMap = Session.GridMapPool.Get();
+                    topMap.Trash = true;
+                    Session.TopEntityToInfoMap.TryAdd(TopEntity, topMap);
                     var map = Session.GridGroupMapPool.Count > 0 ? Session.GridGroupMapPool.Pop() : new GridGroupMap(Session);
                     map.OnTopEntityAdded(null, TopEntity, null);
                     TopEntity.OnClose += Session.RemoveOtherFromMap;
@@ -232,8 +233,9 @@ namespace CoreSystems.Support
             }
 
             LazyUpdate = Type == CompType.Support || Type == CompType.Upgrade;
-            InventoryEntity =(TypeSpecific != CompTypeSpecific.Rifle ? CoreEntity : (MyEntity)((IMyAutomaticRifleGun)CoreEntity).AmmoInventory.Entity);
+            InventoryEntity = TypeSpecific != CompTypeSpecific.Rifle ? CoreEntity : (MyEntity)((IMyAutomaticRifleGun)CoreEntity).AmmoInventory.Entity;
             CoreInventory = (MyInventory)InventoryEntity.GetInventoryBase();
+
             HasInventory = InventoryEntity.HasInventory;
             Platform = session.PlatFormPool.Get();
             Platform.Setup(this);

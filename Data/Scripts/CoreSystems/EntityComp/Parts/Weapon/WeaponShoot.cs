@@ -61,7 +61,7 @@ namespace CoreSystems.Platform
 
                 if (Comp.Ai.VelocityUpdateTick != tick) {
                     Comp.Ai.TopEntityVolume.Center = Comp.Ai.TopEntity.PositionComp.WorldVolume.Center;
-                    Comp.Ai.GridVel = Comp.Ai.TopEntity.Physics?.LinearVelocity ?? Vector3D.Zero;
+                    Comp.Ai.TopEntityVel = Comp.Ai.TopEntity.Physics?.LinearVelocity ?? Vector3D.Zero;
                     Comp.Ai.IsStatic = Comp.Ai.TopEntity.Physics?.IsStatic ?? false;
                     Comp.Ai.VelocityUpdateTick = tick;
                 }

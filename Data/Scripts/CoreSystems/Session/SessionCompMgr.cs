@@ -78,10 +78,10 @@ namespace CoreSystems
                         continue;
                     }
 
-                    GridMap gridMap;
+                    TopMap topMap;
                     if (comp.TopEntity == null)
                         comp.TopEntity = comp.IsBlock ? comp.Cube.CubeGrid : comp.CoreEntity.GetTopMostParent();
-                    if (comp.IsBlock && (!TopEntityToInfoMap.TryGetValue(comp.TopEntity, out gridMap) || gridMap.GroupMap == null) || IsClient && Settings?.Enforcement == null)
+                    if (comp.IsBlock && (!TopEntityToInfoMap.TryGetValue(comp.TopEntity, out topMap) || topMap.GroupMap == null) || IsClient && Settings?.Enforcement == null)
                         continue;
 
                     if (ShieldApiLoaded)
@@ -190,7 +190,7 @@ namespace CoreSystems
             for (int i = CompsDelayedReInit.Count - 1; i >= 0; i--)
             {
                 var delayed = CompsDelayedReInit[i];
-                GridMap gridMap = null;
+                TopMap topMap = null;
                 if (forceRemove || !delayed.InReInit || delayed.Entity == null || delayed.Platform == null || delayed.Cube.MarkedForClose || delayed.Platform.State != CorePlatform.PlatformState.Ready)
                 {
                     if (delayed.Platform != null && delayed.Platform.State != CorePlatform.PlatformState.Ready && delayed.InReInit)
@@ -199,7 +199,7 @@ namespace CoreSystems
                     delayed.InReInit = false;
                     CompsDelayedReInit.RemoveAtFast(i);
                 }
-                else if (delayed.Cube.IsFunctional && TopEntityToInfoMap.TryGetValue(delayed.Cube.CubeGrid, out gridMap) && gridMap.GroupMap != null)
+                else if (delayed.Cube.IsFunctional && TopEntityToInfoMap.TryGetValue(delayed.Cube.CubeGrid, out topMap) && topMap.GroupMap != null)
                 {
                     CompsDelayedReInit.RemoveAtFast(i);
                     

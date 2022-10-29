@@ -69,7 +69,7 @@ namespace CoreSystems
         internal readonly MyConcurrentPool<TargetInfo> TargetInfoPool = new MyConcurrentPool<TargetInfo>(256, info => info.Clean());
         internal readonly MyConcurrentPool<WeaponAmmoMoveRequest> InventoryMoveRequestPool = new MyConcurrentPool<WeaponAmmoMoveRequest>(128, invMove => invMove.Clean());
         internal readonly MyConcurrentPool<ConcurrentCachingList<MyCubeBlock>> ConcurrentListPool = new MyConcurrentPool<ConcurrentCachingList<MyCubeBlock>>(100, cList => cList.ClearImmediate());
-        internal readonly MyConcurrentPool<GridMap> GridMapPool = new MyConcurrentPool<GridMap>(128, fatMap => fatMap.Clean());
+        internal readonly MyConcurrentPool<TopMap> GridMapPool = new MyConcurrentPool<TopMap>(128, fatMap => fatMap.Clean());
         internal readonly MyConcurrentPool<PartCounter> PartCountPool = new MyConcurrentPool<PartCounter>(64, count => count.Current = 0);
         internal readonly MyConcurrentPool<List<IMySlimBlock>> SlimPool = new MyConcurrentPool<List<IMySlimBlock>>(128, slim => slim.Clear());
         internal readonly MyConcurrentPool<CorePlatform> PlatFormPool = new MyConcurrentPool<CorePlatform>(256, platform => platform.Clean());
@@ -122,8 +122,8 @@ namespace CoreSystems
 
         internal readonly ConcurrentQueue<DeferedTypeCleaning> BlockTypeCleanUp = new ConcurrentQueue<DeferedTypeCleaning>();
         internal readonly ConcurrentQueue<Type> ControlQueue = new ConcurrentQueue<Type>();
-        internal readonly ConcurrentQueue<IMyAutomaticRifleGun> DelayedHandWeaponsSpawn = new ConcurrentQueue<IMyAutomaticRifleGun>();
 
+        internal readonly ConcurrentDictionary<IMyAutomaticRifleGun, byte> DelayedHandWeaponsSpawn = new ConcurrentDictionary<IMyAutomaticRifleGun, byte>();
         internal readonly ConcurrentDictionary<MyEntity, Ai> EntityToMasterAi = new ConcurrentDictionary<MyEntity, Ai>();
         internal readonly ConcurrentDictionary<MyEntity, Ai> EntityAIs = new ConcurrentDictionary<MyEntity, Ai>();
         internal readonly ConcurrentDictionary<long, PlayerMap> Players = new ConcurrentDictionary<long, PlayerMap>();
@@ -132,7 +132,7 @@ namespace CoreSystems
         internal readonly ConcurrentDictionary<MyCubeGrid, ConcurrentDictionary<WeaponDefinition.TargetingDef.BlockTypes, ConcurrentCachingList<MyCubeBlock>>> GridToBlockTypeMap = new ConcurrentDictionary<MyCubeGrid, ConcurrentDictionary<WeaponDefinition.TargetingDef.BlockTypes, ConcurrentCachingList<MyCubeBlock>>>();
         internal readonly ConcurrentDictionary<MyInventory, MyConcurrentList<MyPhysicalInventoryItem>> InventoryItems = new ConcurrentDictionary<MyInventory, MyConcurrentList<MyPhysicalInventoryItem>>();
         internal readonly ConcurrentDictionary<MyInventory, ConcurrentDictionary<uint, BetterInventoryItem>> CoreInventoryItems = new ConcurrentDictionary<MyInventory, ConcurrentDictionary<uint, BetterInventoryItem>>();
-        internal readonly ConcurrentDictionary<MyEntity, GridMap> TopEntityToInfoMap = new ConcurrentDictionary<MyEntity, GridMap>();
+        internal readonly ConcurrentDictionary<MyEntity, TopMap> TopEntityToInfoMap = new ConcurrentDictionary<MyEntity, TopMap>();
         internal readonly ConcurrentDictionary<MyInventory, MyConcurrentList<BetterInventoryItem>> ConsumableItemList = new ConcurrentDictionary<MyInventory, MyConcurrentList<BetterInventoryItem>>();
         internal readonly ConcurrentDictionary<MyInventory, int> InventoryMonitors = new ConcurrentDictionary<MyInventory, int>();
         internal readonly ConcurrentDictionary<IMySlimBlock, SupportSys> ProtSupports = new ConcurrentDictionary<IMySlimBlock, SupportSys>();
@@ -143,7 +143,7 @@ namespace CoreSystems
         internal readonly ConcurrentDictionary<long, WaterData> WaterMap = new ConcurrentDictionary<long, WaterData>();
         internal readonly ConcurrentDictionary<long, MyPlanet> PlanetMap = new ConcurrentDictionary<long, MyPlanet>();
         internal readonly ConcurrentDictionary<MyPlanet, long> PlanetTemp = new ConcurrentDictionary<MyPlanet, long>();
-        internal readonly ConcurrentDictionary<MyCubeGrid, GridMap> DirtyPowerGrids = new ConcurrentDictionary<MyCubeGrid, GridMap>();
+        internal readonly ConcurrentDictionary<MyCubeGrid, TopMap> DirtyPowerGrids = new ConcurrentDictionary<MyCubeGrid, TopMap>();
         internal readonly ConcurrentDictionary<string, MyObjectBuilder_Checkpoint.ModItem> ModInfo = new ConcurrentDictionary<string, MyObjectBuilder_Checkpoint.ModItem>();
 
         internal readonly Dictionary<ulong, long> SteamToPlayer = new Dictionary<ulong, long>();

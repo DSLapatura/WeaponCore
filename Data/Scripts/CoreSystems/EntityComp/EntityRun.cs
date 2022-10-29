@@ -122,8 +122,8 @@ namespace CoreSystems.Support
                     if (IsBlock)
                     {
                         TopEntity = GetTopEntity();
-                        GridMap gridMap;
-                        if (checkMap && (!Session.TopEntityToInfoMap.TryGetValue(TopEntity, out gridMap) || gridMap.GroupMap == null)) {
+                        TopMap topMap;
+                        if (checkMap && (!Session.TopEntityToInfoMap.TryGetValue(TopEntity, out topMap) || topMap.GroupMap == null)) {
                             
                             if (!InReInit)
                                 Session.CompsDelayedReInit.Add(this);
@@ -253,7 +253,7 @@ namespace CoreSystems.Support
                     if (Ai.AiSpawnTick > Ai.Construct.LastRefreshTick || Ai.Construct.LastRefreshTick == 0)
                         Ai.TopEntityMap.GroupMap.UpdateAis();
                 }
-                else if (Type == CompType.Weapon && (Ai.AiSpawnTick > Ai.Construct.LastRefreshTick || Ai.Construct.LastRefreshTick == 0))
+                else if (TypeSpecific == CompTypeSpecific.Rifle && (Ai.AiSpawnTick > Ai.Construct.LastRefreshTick || Ai.Construct.LastRefreshTick == 0))
                 {
                     Ai.TopEntityMap.GroupMap.UpdateAis();
                     Session.OnPlayerControl(null, CoreEntity);

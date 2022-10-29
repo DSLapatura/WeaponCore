@@ -343,7 +343,6 @@ namespace CoreSystems
                     iPacket.PType = type;
                     iPacket.Data = comp.Data.Repo.Values;
                 }
-
                 PrunedPacketsToClient[comp.Data.Repo.Values] = new PacketInfo
                 {
                     Entity = comp.CoreEntity,

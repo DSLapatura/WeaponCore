@@ -984,10 +984,10 @@ namespace CoreSystems
         public void OnTopEntityAdded(IMyGridGroupData group1, MyEntity topEntity, IMyGridGroupData group2)
         {
             LastChangeTick = Session.Tick;
-            GridMap gridMap;
-            if (Session.TopEntityToInfoMap.TryGetValue(topEntity, out gridMap))
+            TopMap topMap;
+            if (Session.TopEntityToInfoMap.TryGetValue(topEntity, out topMap))
             {
-                gridMap.GroupMap = this;
+                topMap.GroupMap = this;
                 Construct.TryAdd(topEntity, null);
                 if (!Dirty)
                 {
@@ -1006,10 +1006,10 @@ namespace CoreSystems
         {
             LastChangeTick = Session.Tick;
 
-            GridMap gridMap;
-            if (Session.TopEntityToInfoMap.TryGetValue(topEntity, out gridMap))
+            TopMap topMap;
+            if (Session.TopEntityToInfoMap.TryGetValue(topEntity, out topMap))
             {
-                gridMap.GroupMap = this;
+                topMap.GroupMap = this;
                 Construct.Remove(topEntity);
                 if (!Dirty)
                 {

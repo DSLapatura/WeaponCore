@@ -25,6 +25,9 @@ namespace CoreSystems
             Values.State.Trigger = Trigger.Off;
             Values.State.Control = ProtoWeaponState.ControlMode.Ui;
 
+            if (comp.Ai.AiType == Ai.AiTypes.Player)
+                Values.State.PlayerId = comp.Rifle.OwnerIdentityId;
+
             if (comp.DefaultTrigger != Trigger.Off)
                 Values.State.Trigger = comp.DefaultTrigger;
 
@@ -146,6 +149,7 @@ namespace CoreSystems
 
         public void Sync(Weapon.WeaponComponent comp, ProtoWeaponComp sync)
         {
+
             Revision = sync.Revision;
             Set.Sync(comp, sync.Set);
             State.Sync(comp, sync.State);

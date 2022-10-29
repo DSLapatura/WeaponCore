@@ -252,13 +252,13 @@ namespace CoreSystems.Support
 
         internal void ResetMyGridTargeting()
         {
-            GridMap gridMap;
-            if (Session.TopEntityToInfoMap.TryGetValue(TopEntity, out gridMap))
+            TopMap topMap;
+            if (Session.TopEntityToInfoMap.TryGetValue(TopEntity, out topMap))
             {
-                if (gridMap.Targeting != null && gridMap.Targeting.AllowScanning)
+                if (topMap.Targeting != null && topMap.Targeting.AllowScanning)
                 {
                     //Log.Line("grid has allow scanning, disabling");
-                    gridMap.Targeting.AllowScanning = false;
+                    topMap.Targeting.AllowScanning = false;
                 }
             }
         }
@@ -486,6 +486,7 @@ namespace CoreSystems.Support
             Data.Clean();
 
             RootFixedWeaponComp = null;
+            RootOtherWeaponComp = null;
             GridEntity = null;
             ImyGridEntity = null;
             MyShield = null;

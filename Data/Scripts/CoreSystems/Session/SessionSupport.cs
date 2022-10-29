@@ -938,7 +938,7 @@ namespace CoreSystems
             return false;
         }
 
-        internal bool GridHasPower(MyCubeGrid grid, GridMap map = null)
+        internal bool GridHasPower(MyCubeGrid grid, TopMap map = null)
         {
             bool state = false;
             if (map != null || TopEntityToInfoMap.TryGetValue(grid, out map))
@@ -965,7 +965,7 @@ namespace CoreSystems
             DirtyPowerGrids.Clear();
         }
 
-        internal void CheckGridPowerState(MyCubeGrid grid, GridMap map)
+        internal void CheckGridPowerState(MyCubeGrid grid, TopMap map)
         {
             if ((!map.Powered && Tick - map.PowerCheckTick > 600 || map.Powered && Tick - map.PowerCheckTick > 1800))
                 DirtyPowerGrids.TryAdd(grid, map);
@@ -976,7 +976,7 @@ namespace CoreSystems
             try
             {
                 var topmost = w.Target.TargetEntity.GetTopMostParent();
-                var ownerId = w.BaseComp.IsBlock ? w.BaseComp.Cube.OwnerId : w.Comp.GunBase.OwnerId;
+                var ownerId = w.BaseComp.IsBlock ? w.BaseComp.Cube.OwnerId : w.Comp.Ai.AiOwner;
                 Ai.TargetInfo info;
                 if (topmost != null && w.BaseComp.Ai.Construct.RootAi.Construct.PreviousTargets.Add(topmost) && w.BaseComp.Ai.Targets.TryGetValue(topmost, out info))
                 {
@@ -1075,11 +1075,16 @@ namespace CoreSystems
 
         private void InitDelayedHandWeapons()
         {
-            IMyAutomaticRifleGun weapon;
-            while (DelayedHandWeaponsSpawn.TryDequeue(out weapon))
+            foreach (var rifle in DelayedHandWeaponsSpawn.Keys)
             {
-                MyDefinitionId? def = weapon.PhysicalItemId;
-                InitComp((MyEntity)weapon, ref def);
+                if (rifle.AmmoInventory?.Entity == null || rifle.Owner == null)
+                    continue;
+
+                byte value;
+                DelayedHandWeaponsSpawn.TryRemove(rifle, out value);
+
+                MyDefinitionId? def = rifle.PhysicalItemId;
+                InitComp((MyEntity)rifle, ref def);
             }
         }
 

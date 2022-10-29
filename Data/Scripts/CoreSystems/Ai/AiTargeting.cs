@@ -624,8 +624,8 @@ namespace CoreSystems.Support
 
                 if (system.OnlySubSystems || focusSubSystem && subSystem != Any) return false;
             }
-            GridMap gridMap;
-            return system.Session.TopEntityToInfoMap.TryGetValue((MyCubeGrid)info.Target, out gridMap) && gridMap.MyCubeBocks != null && FindRandomBlock(system, ai, target, weaponPos, info, gridMap.MyCubeBocks, w, wRng, type, ref waterSphere, ref xRnd, checkPower);
+            TopMap topMap;
+            return system.Session.TopEntityToInfoMap.TryGetValue((MyCubeGrid)info.Target, out topMap) && topMap.MyCubeBocks != null && FindRandomBlock(system, ai, target, weaponPos, info, topMap.MyCubeBocks, w, wRng, type, ref waterSphere, ref xRnd, checkPower);
         }
 
         private static bool FindRandomBlock(WeaponSystem system, Ai ai, Target target, Vector3D weaponPos, TargetInfo info, ConcurrentCachingList<MyCubeBlock> subSystemList, Weapon w, WeaponRandomGenerator wRng, RandomType type, ref BoundingSphereD waterSphere, ref XorShiftRandomStruct xRnd, bool checkPower = true)

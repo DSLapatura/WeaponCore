@@ -30,15 +30,14 @@ namespace CoreSystems
             if (!InGridAiBlock) return;
             if (UiInput.AltPressed && UiInput.ShiftReleased || TargetUi.DrawReticle && UiInput.ClientInputState.MouseButtonRight && PlayerDummyTargets[PlayerId].PaintedTarget.EntityId == 0 && !TargetUi.SelectTarget(true, true, true))
                 TrackingAi.Construct.Focus.RequestReleaseActive(TrackingAi);
-            if (!TrackingAi.IsGrid)
+            
+            if (TrackingAi.AiType == AiTypes.Player)
             {
-                if (TrackingAi.WeaponComps.Count == 0) return;
-
-                if (UiInput.MouseButtonRightWasPressed && !TrackingAi.WeaponComps[0].Rifle.GunBase.HasIronSightsActive)
+                if (UiInput.MouseButtonMenuReleased && !TrackingAi.RootOtherWeaponComp.Rifle.GunBase.HasIronSightsActive)
                     TrackingAi.Construct.Focus.RequestReleaseActive(TrackingAi);
 
                 var stageOneOrTwo = (UiInput.MouseButtonMenuNewPressed || UiInput.MouseButtonMenuReleased) && TargetUi.DrawReticle 
-                    && UiInput.FirstPersonView && TrackingAi.WeaponComps[0].Rifle.GunBase.HasIronSightsActive;
+                    && UiInput.FirstPersonView && TrackingAi.RootOtherWeaponComp.Rifle.GunBase.HasIronSightsActive;
 
                 if (stageOneOrTwo)
                     TargetUi.SelectTarget(true, UiInput.MouseButtonMenuNewPressed);

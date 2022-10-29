@@ -67,7 +67,6 @@ namespace CoreSystems
                     PingPong(packet.EntityId);
                     return;
                 }
-
                 var packetSize = rawData.Length;
                 var report = Reporter.ReportPool.Get();
                 report.Receiver = NetworkReporter.Report.Received.Client;
@@ -455,8 +454,10 @@ namespace CoreSystems
                                 }
                                 else  {
                                     Ai rootAi;
-                                    var grid = packetInfo.Entity.GetTopMostParent() as MyCubeGrid;
-                                    if (grid != null && EntityToMasterAi.TryGetValue(grid, out rootAi) && PlayerEntityIdInRange[p.Player.SteamUserId].Contains(rootAi.TopEntity.EntityId))
+                                    CoreComponent comp;
+                                    var notGrid = packetInfo.Entity != null && !(packetInfo.Entity is MyCubeBlock);
+                                    var entity = notGrid && IdToCompMap.TryGetValue(packetInfo.Entity.EntityId, out comp) ? comp.TopEntity : packetInfo.Entity.GetTopMostParent();
+                                    if (entity != null && EntityToMasterAi.TryGetValue(entity, out rootAi) && PlayerEntityIdInRange[p.Player.SteamUserId].Contains(rootAi.TopEntity.EntityId))
                                         sendPacket = true;
                                 }
                             }

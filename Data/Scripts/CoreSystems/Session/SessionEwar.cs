@@ -584,9 +584,9 @@ namespace CoreSystems
                     break;
                 case Emp:
                 case Dot:
-                    GridMap gridMap;
-                    if (ai.Session.TopEntityToInfoMap.TryGetValue(targetGrid, out gridMap))
-                        return gridMap.MyCubeBocks;
+                    TopMap topMap;
+                    if (ai.Session.TopEntityToInfoMap.TryGetValue(targetGrid, out topMap))
+                        return topMap.MyCubeBocks;
                     break;
             }
 

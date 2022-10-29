@@ -65,7 +65,7 @@ namespace CoreSystems.Projectiles
                 info.Random = new XorShiftRandomStruct((ulong)(w.TargetData.WeaponRandom.CurrentSeed + (w.Reload.EndId + w.ProjectileCounter++)));
 
                 info.LockOnFireState = (w.LockOnFireState || !aConst.OverrideTarget && wTarget.TargetState == Target.TargetStates.IsEntity);
-                info.ShooterVel = ai.GridVel;
+                info.ShooterVel = ai.TopEntityVel;
 
                 info.OriginUp = t != Kind.Client ? muzzle.UpDirection : gen.OriginUp;
                 info.MaxTrajectory = t != Kind.Client ? aConst.MaxTrajectoryGrows && w.FireCounter < a.Trajectory.MaxTrajectoryTime ? aConst.TrajectoryStep * w.FireCounter : aConst.MaxTrajectory : gen.MaxTrajectory;
@@ -209,12 +209,12 @@ namespace CoreSystems.Projectiles
                             if (Vector3.Dot(info.Direction, info.Origin - targetAi.TopEntity.PositionComp.WorldMatrixRef.Translation) < 0)
                             {
                                 var testRay = new RayD(info.Origin, info.Direction);
-                                var quickCheck = Vector3D.IsZero(targetAi.GridVel, 0.025) && targetSphere.Intersects(testRay) != null;
+                                var quickCheck = Vector3D.IsZero(targetAi.TopEntityVel, 0.025) && targetSphere.Intersects(testRay) != null;
 
                                 if (!quickCheck)
                                 {
                                     var deltaPos = targetSphere.Center - info.Origin;
-                                    var deltaVel = targetAi.GridVel - ai.GridVel;
+                                    var deltaVel = targetAi.TopEntityVel - ai.TopEntityVel;
                                     var timeToIntercept = MathFuncs.Intercept(deltaPos, deltaVel, ammoDef.Const.DesiredProjectileSpeed);
                                     var predictedPos = targetSphere.Center + (float)timeToIntercept * deltaVel;
                                     targetSphere.Center = predictedPos;

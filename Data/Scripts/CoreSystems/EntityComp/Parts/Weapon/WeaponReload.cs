@@ -270,7 +270,7 @@ namespace CoreSystems.Platform
         internal void StartReload()
         {
             Loading = true;
-            if (Comp.Rifle != null)
+            if (Comp.TypeSpecific == CoreComponent.CompTypeSpecific.Rifle)
                 Comp.Rifle.GunBase.HasIronSightsActive = false;
 
             if (!ActiveAmmoDef.AmmoDef.Const.BurstMode && !ActiveAmmoDef.AmmoDef.Const.HasShotReloadDelay && System.Values.HardPoint.Loading.GiveUpAfter)

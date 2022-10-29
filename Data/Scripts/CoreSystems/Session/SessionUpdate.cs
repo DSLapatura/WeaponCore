@@ -90,7 +90,6 @@ namespace CoreSystems
                     else if (Tick60 && rootConstruct.RecentItems.Count > 0)
                         rootConstruct.CheckEmptyWeapons();
                 }
-
                 ///
                 /// Upgrade update section
                 ///
@@ -429,7 +428,6 @@ namespace CoreSystems
                             wComp.ShootManager.RequestShootSync(PlayerId, Weapon.ShootManager.RequestType.Off);
 
                         var isControllingPlayer = wValues.State.PlayerId == PlayerId || !wComp.HasAim && ai.RotorManualControlId == PlayerId;
-
                         if (isControllingPlayer) {
 
                             Ai.PlayerController pControl;
@@ -457,7 +455,6 @@ namespace CoreSystems
                             var active = wComp.ShootManager.ClientToggleCount > wValues.State.ToggleCount || wValues.State.Trigger == On;
                             var turnOn = !active && UiInput.ClientInputState.MouseButtonLeft && playerControl && !InMenu;
                             var turnOff = active && (!UiInput.ClientInputState.MouseButtonLeft || InMenu) && Tick5;
-                                //Log.Line($"test: activePlayer:{activePlayer} - idMatch:{PlayerId == wValues.State.PlayerId} - pControl:{playerControl} - !menu:{!InMenu} - lMouse:{UiInput.ClientInputState.MouseButtonLeft} - turnOn:{turnOn} - manWeapon:{manualThisWeapon} - controlWeapon:{controllingWeapon} - vMode:{validManualModes} - manual:{manual} - track:{track} - cMode:{cMode} - sMode:{sMode} - active:{active} - pid:{wValues.State.PlayerId}");
 
                             if (sMode == Weapon.ShootManager.ShootModes.AiShoot)
                             {
@@ -650,6 +647,7 @@ namespace CoreSystems
                         var shoot = shotReady && ai.CanShoot && (!aConst.RequiresTarget || w.Target.HasTarget || finish || overRide || (wComp.ShootManager.Signal == Weapon.ShootManager.Signals.Manual || wComp.ShootManager.Signal == Weapon.ShootManager.Signals.MouseControl));
                         
                         if (shoot) {
+ 
                             if (w.System.DelayCeaseFire && (autoShot || w.FinishShots))
                                 w.CeaseFireDelayTick = Tick;
                             ShootingWeapons.Add(w);

@@ -15,7 +15,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
     {
         internal void ActivateSelector()
         {
-            if (!_session.TrackingAi.IsGrid || _session.UiInput.FirstPersonView && !_session.UiInput.TurretBlockView && !_session.UiInput.AltPressed) return;
+            var ironSights = _session.TrackingAi.AiType == Ai.AiTypes.Player && _session.TrackingAi.RootOtherWeaponComp.Rifle.GunBase.HasIronSightsActive;
+            if (_session.TrackingAi.AiType == Ai.AiTypes.Phantom || _session.UiInput.FirstPersonView && !_session.UiInput.TurretBlockView && !ironSights && !_session.UiInput.AltPressed) return;
             if (MyAPIGateway.Input.IsNewKeyReleased(MyKeys.Control) && !_session.UiInput.FirstPersonView && !_session.UiInput.CameraBlockView && !_session.UiInput.TurretBlockView)
             {
                 switch (_3RdPersonDraw)
@@ -36,7 +37,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                 _3RdPersonDraw = ThirdPersonModes.DotTarget;
 
             var enableActivator = _3RdPersonDraw == ThirdPersonModes.Crosshair || _session.UiInput.FirstPersonView && _session.UiInput.AltPressed || _session.UiInput.CameraBlockView;
-            if (enableActivator || !_session.UiInput.FirstPersonView && !_session.UiInput.CameraBlockView || _session.UiInput.TurretBlockView)
+
+            if (enableActivator || !_session.UiInput.FirstPersonView && !_session.UiInput.CameraBlockView || _session.UiInput.TurretBlockView || ironSights)
                 DrawSelector(enableActivator);
         }
 
@@ -335,8 +337,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                 {
                     var tInfo = subTargets[j];
                     if (tInfo.Target.MarkedForClose || tInfo.Target is IMyCharacter) continue;
-                    GridMap gridMap;
-                    var controlType = tInfo.Drone ? TargetControl.Drone : tInfo.IsGrid && _session.TopEntityToInfoMap.TryGetValue((MyCubeGrid)tInfo.Target, out gridMap) && gridMap.PlayerControllers.Count > 0 ? TargetControl.Player : tInfo.IsGrid && !_session.GridHasPower((MyCubeGrid)tInfo.Target) ? TargetControl.Trash : TargetControl.Other;
+                    TopMap topMap;
+                    var controlType = tInfo.Drone ? TargetControl.Drone : tInfo.IsGrid && _session.TopEntityToInfoMap.TryGetValue((MyCubeGrid)tInfo.Target, out topMap) && topMap.PlayerControllers.Count > 0 ? TargetControl.Player : tInfo.IsGrid && !_session.GridHasPower((MyCubeGrid)tInfo.Target) ? TargetControl.Trash : TargetControl.Other;
                     _masterTargets[tInfo.Target] = new MyTuple<float, TargetControl>(tInfo.OffenseRating, controlType);
                     _toPruneMasterDict[tInfo.Target] = tInfo;
                 }

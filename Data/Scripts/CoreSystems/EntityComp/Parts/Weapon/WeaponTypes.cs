@@ -5,6 +5,8 @@ using Sandbox.Game.Entities;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRageMath;
+using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
+using WeaponCore.Data.Scripts.CoreSystems.Ui;
 
 namespace CoreSystems.Platform
 {
@@ -220,7 +222,7 @@ namespace CoreSystems.Platform
                 
                 if (isRequestor && Comp.Session.IsClient && request == RequestType.Once && (WaitingShootResponse || FreezeClientShoot || CompletedCycles > 0 || ClientToggleCount > state.ToggleCount || state.Trigger != CoreComponent.Trigger.Off)) 
                     return false;
-                
+
                 if (isRequestor && !ProcessInput(playerId, request, signal) || !MakeReadyToShoot()) {
                     ChangeState(request, playerId, false);
                     return false;
@@ -282,6 +284,7 @@ namespace CoreSystems.Platform
                 }
 
                 var pendingRequest = Comp.IsDisabled || wasToggled || Comp.IsBlock && !Comp.Cube.IsWorking;
+
                 return !pendingRequest;
             }
 
@@ -301,7 +304,6 @@ namespace CoreSystems.Platform
 
                 // Pretty sus that this is allowed by client, possible race condition... likely needed by client side prediction
                 state.PlayerId = playerId;
-
                 if (Comp.Session.IsServer)
                 {
                     switch (request)

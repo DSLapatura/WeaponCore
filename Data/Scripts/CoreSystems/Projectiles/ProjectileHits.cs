@@ -995,7 +995,7 @@ namespace CoreSystems.Projectiles
             var hitPos = sphere.Center;
             if (fatOnly)
             {
-                GridMap map;
+                TopMap map;
                 if (system.Session.TopEntityToInfoMap.TryGetValue(grid, out map))
                 {
                     foreach (var cube in map.MyCubeBocks)

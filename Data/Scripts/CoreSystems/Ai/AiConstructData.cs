@@ -69,9 +69,7 @@ namespace CoreSystems
             }
             else Log.Line("Storage didn't contain ConstructDataGuid");
 
-            if (validData)
-                Repo = load;
-            else Repo = new ConstructDataValues();
+            Repo = validData ? load : new ConstructDataValues();
 
             if (Repo.FocusData == null)
                 Repo.FocusData = new FocusData();

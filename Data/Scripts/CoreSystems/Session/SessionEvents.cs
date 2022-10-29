@@ -61,7 +61,7 @@ namespace CoreSystems
                     lock (InitObj)
                     {
                         if (rifle != null) {
-                            DelayedHandWeaponsSpawn.Enqueue(rifle);
+                            DelayedHandWeaponsSpawn.TryAdd(rifle, byte.MinValue);
                             return;
                         }
 
@@ -288,8 +288,8 @@ namespace CoreSystems
 
                 if (grid != null)
                 {
-                    GridMap gridMap;
-                    if (TopEntityToInfoMap.TryGetValue(grid, out gridMap))
+                    TopMap topMap;
+                    if (TopEntityToInfoMap.TryGetValue(grid, out topMap))
                     {
                         var allFat = ConcurrentListPool.Get();
 
@@ -303,10 +303,10 @@ namespace CoreSystems
                         }
                         allFat.ApplyAdditions();
 
-                        if (grid.Components.TryGet(out gridMap.Targeting))
-                            gridMap.Targeting.AllowScanning = false;
+                        if (grid.Components.TryGet(out topMap.Targeting))
+                            topMap.Targeting.AllowScanning = false;
 
-                        gridMap.MyCubeBocks = allFat;
+                        topMap.MyCubeBocks = allFat;
 
                         grid.OnFatBlockAdded += ToGridMap;
                         grid.OnFatBlockRemoved += FromGridMap;
@@ -335,22 +335,22 @@ namespace CoreSystems
         private void RemoveGridFromMap(MyEntity myEntity)
         {
             var grid = (MyCubeGrid)myEntity;
-            GridMap gridMap;
-            if (TopEntityToInfoMap.TryRemove(grid, out gridMap))
+            TopMap topMap;
+            if (TopEntityToInfoMap.TryRemove(grid, out topMap))
             {
-                gridMap.Trash = true;
+                topMap.Trash = true;
                 grid.OnClose -= RemoveFromMap;
                 grid.AddedToScene -= AddGridToMap;
 
-                if (gridMap.MyCubeBocks != null)
+                if (topMap.MyCubeBocks != null)
                 {
-                    ConcurrentListPool.Return(gridMap.MyCubeBocks);
+                    ConcurrentListPool.Return(topMap.MyCubeBocks);
                     grid.OnFatBlockAdded -= ToGridMap;
                     grid.OnFatBlockRemoved -= FromGridMap;
                 }
 
-                gridMap.GroupMap = null;
-                GridMapPool.Return(gridMap);
+                topMap.GroupMap = null;
+                GridMapPool.Return(topMap);
 
                 using (_dityGridLock.Acquire())
                 {
@@ -363,17 +363,17 @@ namespace CoreSystems
 
         internal void RemoveOtherFromMap(MyEntity myEntity)
         {
-            GridMap gridMap;
-            if (TopEntityToInfoMap.TryRemove(myEntity, out gridMap))
+            TopMap topMap;
+            if (TopEntityToInfoMap.TryRemove(myEntity, out topMap))
             {
-                gridMap.Trash = true;
+                topMap.Trash = true;
                 myEntity.OnClose -= RemoveOtherFromMap;
 
-                gridMap.GroupMap.Clean();
-                GridGroupMapPool.Push(gridMap.GroupMap);
-                gridMap.GroupMap = null;
+                topMap.GroupMap.Clean();
+                GridGroupMapPool.Push(topMap.GroupMap);
+                topMap.GroupMap = null;
                 
-                GridMapPool.Return(gridMap);
+                GridMapPool.Return(topMap);
 
             }
             else Log.Line($"RemoveOtherFromMap not removed and list not cleaned: {myEntity.DebugName}");
@@ -384,10 +384,10 @@ namespace CoreSystems
             try
             {
                 var term = myCubeBlock as IMyTerminalBlock;
-                GridMap gridMap;
-                if (term != null && TopEntityToInfoMap.TryGetValue(myCubeBlock.CubeGrid, out gridMap))
+                TopMap topMap;
+                if (term != null && TopEntityToInfoMap.TryGetValue(myCubeBlock.CubeGrid, out topMap))
                 {
-                    gridMap.MyCubeBocks.Add(myCubeBlock);
+                    topMap.MyCubeBocks.Add(myCubeBlock);
                     using (_dityGridLock.Acquire())
                     {
                         DirtyGridInfos.Add(myCubeBlock.CubeGrid);
@@ -405,10 +405,10 @@ namespace CoreSystems
             try
             {
                 var term = myCubeBlock as IMyTerminalBlock;
-                GridMap gridMap;
-                if (term != null && TopEntityToInfoMap.TryGetValue(myCubeBlock.CubeGrid, out gridMap))
+                TopMap topMap;
+                if (term != null && TopEntityToInfoMap.TryGetValue(myCubeBlock.CubeGrid, out topMap))
                 {
-                    gridMap.MyCubeBocks.Remove(myCubeBlock);
+                    topMap.MyCubeBocks.Remove(myCubeBlock);
 
                     using (_dityGridLock.Acquire())
                     {
@@ -597,7 +597,7 @@ namespace CoreSystems
         {
             try
             {
-                GridMap gridMap;
+                TopMap topMap;
 
                 var otherExitControl = exitEntity as IMyAutomaticRifleGun;
                 var exitController = exitEntity as IMyControllableEntity;
@@ -607,14 +607,14 @@ namespace CoreSystems
                     var cube = exitEntity as MyCubeBlock;
                     var topEnt = cube?.CubeGrid ?? exitComp?.TopEntity;
 
-                    if (topEnt != null && TopEntityToInfoMap.TryGetValue(topEnt, out gridMap))
+                    if (topEnt != null && TopEntityToInfoMap.TryGetValue(topEnt, out topMap))
                     {
                         var controlledEnt = cube ?? exitComp.CoreEntity;
                         
-                        gridMap.LastControllerTick = Tick + 1;
+                        topMap.LastControllerTick = Tick + 1;
 
-                        if (gridMap.GroupMap != null)
-                            gridMap.GroupMap.LastControllerTick = Tick + 1;
+                        if (topMap.GroupMap != null)
+                            topMap.GroupMap.LastControllerTick = Tick + 1;
                         else if (IsServer)
                             Log.Line($"OnPlayerController exit gridmap null");
 
@@ -625,7 +625,7 @@ namespace CoreSystems
                             if (ai.CompBase.TryGetValue(controlledEnt, out comp))
                             {
                                 var playerId = comp.LastControllingPlayerId;
-                                var removed = gridMap.PlayerControllers.Remove(playerId);
+                                var removed = topMap.PlayerControllers.Remove(playerId);
 
                                 var wComp = comp as Weapon.WeaponComponent;
                                 var cComp = comp as ControlSys.ControlComponent;
@@ -648,14 +648,14 @@ namespace CoreSystems
                     var cube = enterEntity as MyCubeBlock;
                     var topEnt = cube?.CubeGrid ?? enterComp?.TopEntity;
                     var playerId = enterComp?.Ai?.AiOwner ?? enterController?.ControllerInfo?.ControllingIdentityId ?? 0;
-                    if (topEnt != null && playerId != 0 && TopEntityToInfoMap.TryGetValue(topEnt, out gridMap))
+                    if (topEnt != null && playerId != 0 && TopEntityToInfoMap.TryGetValue(topEnt, out topMap))
                     {
                         var controlledEnt = cube ?? enterEntity;
 
-                        gridMap.LastControllerTick = Tick + 1;
+                        topMap.LastControllerTick = Tick + 1;
 
-                        if (gridMap.GroupMap != null)
-                            gridMap.GroupMap.LastControllerTick = Tick + 1;
+                        if (topMap.GroupMap != null)
+                            topMap.GroupMap.LastControllerTick = Tick + 1;
 
                         var shareControl = true;
                         Ai ai;
@@ -681,7 +681,7 @@ namespace CoreSystems
 
                         var pController = new PlayerController { ControlEntity = controlledEnt, Id = playerId, EntityId = controlledEnt.EntityId, ChangeTick = Tick, ShareControl = shareControl, };
                         
-                        gridMap.PlayerControllers[playerId] = pController;
+                        topMap.PlayerControllers[playerId] = pController;
                     }
                 }
             }

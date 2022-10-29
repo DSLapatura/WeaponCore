@@ -57,6 +57,7 @@ namespace CoreSystems.Support
 
                 if (Registered) 
                     RegisterEvents(false);
+
                 if (Ai != null) {
 
                     try
@@ -93,7 +94,6 @@ namespace CoreSystems.Support
                         if (Ai.Data.Repo.ActiveTerminal == CoreEntity.EntityId)
                             Ai.Data.Repo.ActiveTerminal = 0;
 
-                        //Ai testAi;
                         if (Ai.CompBase.Remove(CoreEntity))
                         {
                             if (Platform.State == CorePlatform.PlatformState.Ready)
@@ -132,7 +132,7 @@ namespace CoreSystems.Support
                     catch (Exception ex) { Log.Line($"Exception in RemoveComp Inner: {ex} - AiNull:{Ai == null} - SessionNull:{Session == null} - CoreEntNull:{CoreEntity == null} - PlatformNull: {Platform == null} - TopEntityNull:{TopEntity == null}", null, true); }
 
                 }
-                else if (Platform.State != CorePlatform.PlatformState.Delay) Log.Line($"CompRemove: Ai already null - PartState:{Platform.State} - Status:{Status}");
+                else if (Platform.State != CorePlatform.PlatformState.Delay && TypeSpecific != CompTypeSpecific.Rifle) Log.Line($"CompRemove: Ai already null - PartState:{Platform.State} - Status:{Status}");
 
                 LastRemoveFromScene = Session.Tick;
             }

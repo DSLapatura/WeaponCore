@@ -582,8 +582,8 @@ namespace CoreSystems.Platform
             if (ai.VelocityUpdateTick != session.Tick)
             {
                 ai.TopEntityVolume.Center = ai.TopEntity.PositionComp.WorldVolume.Center;
-                ai.GridVel = ai.GridEntity.Physics?.LinearVelocity ?? Vector3D.Zero;
-                ai.IsStatic = ai.GridEntity.Physics?.IsStatic ?? false;
+                ai.TopEntityVel = ai.TopEntity.Physics?.LinearVelocity ?? Vector3D.Zero;
+                ai.IsStatic = ai.TopEntity.Physics?.IsStatic ?? false;
                 ai.VelocityUpdateTick = session.Tick;
             }
 
@@ -606,7 +606,7 @@ namespace CoreSystems.Platform
             var targetMaxSpeed = weapon.Comp.Session.MaxEntitySpeed;
             shooterPos = MyUtils.IsZero(shooterPos) ? weapon.MyPivotPos : shooterPos;
 
-            var shooterVel = (Vector3D)weapon.Comp.Ai.GridVel;
+            var shooterVel = (Vector3D)weapon.Comp.Ai.TopEntityVel;
             var projectileMaxSpeed = ammoDef.Const.DesiredProjectileSpeed;
             var projectileInitSpeed = ammoDef.Trajectory.AccelPerSec * MyEngineConstants.UPDATE_STEP_SIZE_IN_SECONDS;
             var projectileAccMag = ammoDef.Trajectory.AccelPerSec;

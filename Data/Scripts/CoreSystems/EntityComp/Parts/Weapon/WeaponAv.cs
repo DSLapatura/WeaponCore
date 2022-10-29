@@ -156,7 +156,7 @@ namespace CoreSystems.Platform
                         {
                             var addToFiring = AnimationsSet.ContainsKey(EventTriggers.StopFiring) && state == EventTriggers.Firing;
 
-                            if (canPlay && Comp.Rifle != null && state == EventTriggers.Firing)
+                            if (canPlay && Comp.TypeSpecific == CoreComponent.CompTypeSpecific.Rifle && state == EventTriggers.Firing)
                                 Comp.HandhelShoot();
 
                             for (int i = 0; i < AnimationsSet[state].Length; i++)
@@ -267,7 +267,7 @@ namespace CoreSystems.Platform
                         {
 
 
-                            if (canPlay && Comp.Rifle != null && state == EventTriggers.Reloading)
+                            if (canPlay && Comp.TypeSpecific == CoreComponent.CompTypeSpecific.Rifle && state == EventTriggers.Reloading)
                                 Comp.HandheldReload();
 
                             for (int i = 0; i < AnimationsSet[state].Length; i++)

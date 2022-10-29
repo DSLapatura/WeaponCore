@@ -51,13 +51,13 @@ namespace CoreSystems.Support
                     if (ent is MyVoxelBase || ent.Physics == null || ent is MyFloatingObject || ent.MarkedForClose || !ent.InScene || ent.IsPreview || ent.Physics.IsPhantom || ((uint)ent.Flags & 0x1000000) > 0) continue;
                     var grid = ent as MyCubeGrid;
 
-                    GridMap gridMap = null;
+                    TopMap topMap = null;
                     if (grid != null)
                     {
                         if (AiType == AiTypes.Grid && GridEntity.IsSameConstructAs(grid))
                             continue;
 
-                        if (!Session.TopEntityToInfoMap.TryGetValue(grid, out gridMap) || gridMap.Trash)
+                        if (!Session.TopEntityToInfoMap.TryGetValue(grid, out topMap) || topMap.Trash)
                             continue;
                     }
 
@@ -73,19 +73,19 @@ namespace CoreSystems.Support
                             continue;
                     }
 
-                    if (gridMap != null)
+                    if (topMap != null)
                     {
 
-                        var allFat = gridMap.MyCubeBocks;
+                        var allFat = topMap.MyCubeBocks;
                         var fatCount = allFat.Count;
 
                         if (fatCount <= 0)
                             continue;
 
-                        if (Session.Tick - gridMap.PowerCheckTick > 600)
-                            Session.CheckGridPowerState(grid, gridMap);
+                        if (Session.Tick - topMap.PowerCheckTick > 600)
+                            Session.CheckGridPowerState(grid, topMap);
 
-                        var loneWarhead = gridMap.Warheads && fatCount == 1;
+                        var loneWarhead = topMap.Warheads && fatCount == 1;
 
                         int partCount;
                         Ai targetAi;
@@ -96,9 +96,9 @@ namespace CoreSystems.Support
                             partCount = targetAi.Construct.BlockCount;
                         }
                         else
-                            partCount = gridMap.MostBlocks;
+                            partCount = topMap.MostBlocks;
 
-                        NewEntities.Add(new DetectInfo(Session, ent, entInfo, partCount, !loneWarhead ? fatCount : 2, gridMap.SuspectedDrone, loneWarhead));// bump warhead to 2 fatblocks so its not ignored by targeting
+                        NewEntities.Add(new DetectInfo(Session, ent, entInfo, partCount, !loneWarhead ? fatCount : 2, topMap.SuspectedDrone, loneWarhead));// bump warhead to 2 fatblocks so its not ignored by targeting
                         ValidGrids.Add(ent);
                     }
                     else NewEntities.Add(new DetectInfo(Session, ent, entInfo, 1, 0, false, false));
@@ -131,7 +131,7 @@ namespace CoreSystems.Support
                 if (voxel != null || safeZone != null || ent.Physics.IsStatic)
                     StaticsInRangeTmp.Add(ent);
 
-                GridMap map;
+                TopMap map;
                 if (grid != null && AiType != AiTypes.Phantom && (TopEntityMap.GroupMap.Construct.ContainsKey(grid) || ValidGrids.Contains(ent) || grid.PositionComp.LocalVolume.Radius <= 7.5 || Session.TopEntityToInfoMap.TryGetValue(grid, out map) && map.Trash || grid.BigOwners.Count == 0)) continue;
 
                 ObstructionsTmp.Add(ent);

@@ -20,7 +20,7 @@ using static CoreSystems.Platform.ControlSys;
 using static CoreSystems.Support.WeaponDefinition.TargetingDef.BlockTypes;
 namespace CoreSystems
 {
-    public class GridMap
+    public class TopMap
     {
         public readonly Dictionary<long, Ai.PlayerController> PlayerControllers = new Dictionary<long, Ai.PlayerController>();
         public ConcurrentCachingList<MyCubeBlock> MyCubeBocks;
@@ -340,18 +340,18 @@ namespace CoreSystems
 
                 ConcurrentDictionary<WeaponDefinition.TargetingDef.BlockTypes, ConcurrentCachingList<MyCubeBlock>> noFatTypeMap;
 
-                GridMap gridMap;
-                if (TopEntityToInfoMap.TryGetValue(grid, out gridMap))
+                TopMap topMap;
+                if (TopEntityToInfoMap.TryGetValue(grid, out topMap))
                 {
-                    var allFat = gridMap.MyCubeBocks;
+                    var allFat = topMap.MyCubeBocks;
                     allFat.ApplyChanges();
-                    if (gridMap.LastSortTick == 0 || Tick - gridMap.LastSortTick > 600)
+                    if (topMap.LastSortTick == 0 || Tick - topMap.LastSortTick > 600)
                     {
-                        gridMap.LastSortTick = Tick + 1;
+                        topMap.LastSortTick = Tick + 1;
                         allFat.Sort(CubeComparer);
                     }
                     var terminals = 0;
-                    var tStatus = gridMap.Targeting == null || gridMap.Targeting.AllowScanning;
+                    var tStatus = topMap.Targeting == null || topMap.Targeting.AllowScanning;
                     var thrusters = 0;
                     var powerProducers = 0;
                     var warHead = 0;
@@ -405,8 +405,8 @@ namespace CoreSystems
                                 if (bomb != null)
                                     warHead++;
 
-                                if (!tStatus && fat is IMyGunBaseUser && !PartPlatforms.ContainsKey(fat.BlockDefinition.Id) && gridMap.Targeting != null)
-                                    tStatus = gridMap.Targeting.AllowScanning = true;
+                                if (!tStatus && fat is IMyGunBaseUser && !PartPlatforms.ContainsKey(fat.BlockDefinition.Id) && topMap.Targeting != null)
+                                    tStatus = topMap.Targeting.AllowScanning = true;
 
                                 newTypeMap[Offense].Add(fat);
                             }
@@ -435,19 +435,19 @@ namespace CoreSystems
                         type.Value.ApplyAdditions();
 
 
-                    gridMap.MyCubeBocks.ApplyAdditions();
+                    topMap.MyCubeBocks.ApplyAdditions();
                     var iGrid = (IMyCubeGrid)grid;
                     var controlled = iGrid.ControlSystem?.IsControlled ?? false;
-                    gridMap.SuspectedDrone = !grid.IsStatic && (terminals < 20 && (warHead > 0 || working > 0 && (remote > 0 || program > 0)) || controlled && (powerProducers > 0 && thrusters > 0 && working > 0));
+                    topMap.SuspectedDrone = !grid.IsStatic && (terminals < 20 && (warHead > 0 || working > 0 && (remote > 0 || program > 0)) || controlled && (powerProducers > 0 && thrusters > 0 && working > 0));
 
-                    gridMap.Trash = terminals == 0;
-                    gridMap.Powered = working > 0;
-                    gridMap.PowerCheckTick = Tick;
-                    gridMap.Warheads = warHead > 0;
+                    topMap.Trash = terminals == 0;
+                    topMap.Powered = working > 0;
+                    topMap.PowerCheckTick = Tick;
+                    topMap.Warheads = warHead > 0;
 
                     var gridBlocks = grid.BlocksCount;
 
-                    if (gridBlocks > gridMap.MostBlocks) gridMap.MostBlocks = gridBlocks;
+                    if (gridBlocks > topMap.MostBlocks) topMap.MostBlocks = gridBlocks;
 
                     ConcurrentDictionary<WeaponDefinition.TargetingDef.BlockTypes, ConcurrentCachingList<MyCubeBlock>> oldTypeMap;
                     if (GridToBlockTypeMap.TryGetValue(grid, out oldTypeMap))

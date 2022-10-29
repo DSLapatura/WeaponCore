@@ -85,13 +85,14 @@ namespace CoreSystems.Support
         internal readonly Session Session;
         internal MyEntity TopEntity;
         internal MyCubeGrid GridEntity;
-        internal GridMap TopEntityMap;
+        internal TopMap TopEntityMap;
         internal IMyCubeGrid ImyGridEntity;
         internal MyCubeBlock PowerBlock;
         internal Weapon.WeaponComponent RootFixedWeaponComp;
+        internal Weapon.WeaponComponent RootOtherWeaponComp;
         internal MyCubeGrid.MyCubeGridHitInfo GridHitInfo = new MyCubeGrid.MyCubeGridHitInfo();
         internal uint CreatedTick;
-        internal Vector3 GridVel;
+        internal Vector3 TopEntityVel;
         internal IMyGridTerminalSystem TerminalSystem;
         internal IMyTerminalBlock LastTerminal;
         internal MyEntity MyShield;

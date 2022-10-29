@@ -375,10 +375,10 @@ namespace CoreSystems.Support
                 rootConstruct.ControllingPlayers.Clear();
                 foreach (var ai in rootAi.TopEntityMap.GroupMap.Ais)
                 {
-                    GridMap gridMap;
-                    if (s.TopEntityToInfoMap.TryGetValue(ai.TopEntity, out gridMap))
+                    TopMap topMap;
+                    if (s.TopEntityToInfoMap.TryGetValue(ai.TopEntity, out topMap))
                     {
-                        foreach (var c in gridMap.PlayerControllers)
+                        foreach (var c in topMap.PlayerControllers)
                         {
                             rootConstruct.ControllingPlayers[c.Key] = c.Value;
                             UpdatePlayerLockState(rootAi.Session, c.Key);

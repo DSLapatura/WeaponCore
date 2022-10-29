@@ -104,10 +104,7 @@ namespace CoreSystems.Platform
                             Repo.Values.Set.Overrides.Biologicals = false;
                         }
 
-                        if (Comp.TypeSpecific == CoreComponent.CompTypeSpecific.VanillaFixed)
-                        {
-                            Repo.Values.Set.Overrides.LeadGroup = Comp.Structure.DefaultLeadGroup;
-                        }
+                        Repo.Values.Set.Overrides.LeadGroup = Comp.Structure.DefaultLeadGroup;
 
                     }
 

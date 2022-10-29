@@ -53,12 +53,12 @@ namespace CoreSystems
         private bool ClientConstruct(PacketObj data)
         {
             var packet = data.Packet;
-            var myGrid = MyEntities.GetEntityByIdOrDefault(packet.EntityId) as MyCubeGrid;
+            var entity = MyEntities.GetEntityByIdOrDefault(packet.EntityId);
             var cgPacket = (ConstructPacket)packet;
-            if (myGrid == null) return Error(data, Msg($"Grid: {packet.EntityId}"));
+            if (entity == null) return Error(data, Msg($"Entity: {packet.EntityId}"));
 
             Ai ai;
-            if (EntityToMasterAi.TryGetValue(myGrid, out ai)) {
+            if (EntityToMasterAi.TryGetValue(entity, out ai)) {
                 var rootConstruct = ai.Construct.RootAi.Construct;
 
                 rootConstruct.Data.Repo.Sync(rootConstruct, cgPacket.Data);
@@ -67,7 +67,7 @@ namespace CoreSystems
                 data.Report.PacketValid = true;
             }
             else
-                return Error(data, Msg($"GridAi not found, is marked:{myGrid.MarkedForClose}, has root:{EntityToMasterAi.ContainsKey(myGrid)}"));
+                return Error(data, Msg($"Ai not found, is marked:{entity.MarkedForClose}, has root:{EntityToMasterAi.ContainsKey(entity)}"));
 
             return true;
         }
@@ -75,12 +75,12 @@ namespace CoreSystems
         private bool ClientConstructFoci(PacketObj data)
         {
             var packet = data.Packet;
-            var myGrid = MyEntities.GetEntityByIdOrDefault(packet.EntityId) as MyCubeGrid;
+            var entity = MyEntities.GetEntityByIdOrDefault(packet.EntityId);
             var fociPacket = (ConstructFociPacket)packet;
-            if (myGrid == null) return Error(data, Msg($"Grid: {packet.EntityId}"));
+            if (entity == null) return Error(data, Msg($"Entity: {packet.EntityId}"));
 
             Ai ai;
-            if (EntityToMasterAi.TryGetValue(myGrid, out ai))
+            if (EntityToMasterAi.TryGetValue(entity, out ai))
             {
                 var rootConstruct = ai.Construct.RootAi.Construct;
                 rootConstruct.Data.Repo.FocusData.Sync(ai, fociPacket.Data);
@@ -88,7 +88,7 @@ namespace CoreSystems
                 data.Report.PacketValid = true;
             }
             else
-                return Error(data, Msg($"GridAi not found, is marked:{myGrid.MarkedForClose}, has root:{EntityToMasterAi.ContainsKey(myGrid)}"));
+                return Error(data, Msg($"entity not found, is marked:{entity.MarkedForClose}, has root:{EntityToMasterAi.ContainsKey(entity)}"));
 
             return true;
         }
@@ -96,19 +96,19 @@ namespace CoreSystems
         private bool ClientAiDataUpdate(PacketObj data)
         {
             var packet = data.Packet;
-            var myGrid = MyEntities.GetEntityByIdOrDefault(packet.EntityId) as MyCubeGrid;
+            var entity = MyEntities.GetEntityByIdOrDefault(packet.EntityId);
             var aiSyncPacket = (AiDataPacket)packet;
-            if (myGrid == null) return Error(data, Msg($"Grid: {packet.EntityId}"));
+            if (entity == null) return Error(data, Msg($"Entity: {packet.EntityId}"));
 
             Ai ai;
-            if (EntityAIs.TryGetValue(myGrid, out ai)) {
+            if (EntityAIs.TryGetValue(entity, out ai)) {
 
                 ai.Data.Repo.Sync(aiSyncPacket.Data);
 
                 data.Report.PacketValid = true;
             }
             else
-                return Error(data, Msg($"GridAi not found, is marked:{myGrid.MarkedForClose}, has root:{EntityToMasterAi.ContainsKey(myGrid)}"));
+                return Error(data, Msg($"Ai not found, is marked:{entity.MarkedForClose}, has root:{EntityToMasterAi.ContainsKey(entity)}"));
 
             return true;
         }
@@ -314,10 +314,10 @@ namespace CoreSystems
             var packet = data.Packet;
             data.ErrorPacket.NoReprocess = true;
             var targetPacket = (FakeTargetPacket)packet;
-            var myGrid = MyEntities.GetEntityByIdOrDefault(packet.EntityId) as MyCubeGrid;
+            var entity = MyEntities.GetEntityByIdOrDefault(packet.EntityId);
 
             Ai ai;
-            if (myGrid != null && EntityAIs.TryGetValue(myGrid, out ai)) {
+            if (entity != null && EntityAIs.TryGetValue(entity, out ai)) {
 
                 long playerId;
                 if (SteamToPlayer.TryGetValue(packet.SenderId, out playerId)) {
@@ -335,7 +335,7 @@ namespace CoreSystems
                 data.Report.PacketValid = true;
             }
             else
-                return Error(data, Msg($"GridId: {packet.EntityId}", myGrid != null), Msg("Ai"));
+                return Error(data, Msg($"EntityId: {packet.EntityId}", entity != null), Msg("Ai"));
 
             return true;
         }
@@ -345,11 +345,11 @@ namespace CoreSystems
             var packet = data.Packet;
             data.ErrorPacket.NoReprocess = true;
             var targetPacket = (PaintedTargetPacket)packet;
-            var myGrid = MyEntities.GetEntityByIdOrDefault(packet.EntityId) as MyCubeGrid;
+            var entity = MyEntities.GetEntityByIdOrDefault(packet.EntityId);
 
             Ai ai;
             MyEntity pTarget;
-            if (myGrid != null && EntityAIs.TryGetValue(myGrid, out ai) && MyEntities.TryGetEntityById(targetPacket.TargetId, out pTarget, true))
+            if (entity != null && EntityAIs.TryGetValue(entity, out ai) && MyEntities.TryGetEntityById(targetPacket.TargetId, out pTarget, true))
             {
 
                 long playerId;
@@ -370,7 +370,7 @@ namespace CoreSystems
                 data.Report.PacketValid = true;
             }
             else
-                return Error(data, Msg($"GridId: {packet.EntityId}", myGrid != null), Msg("Ai"));
+                return Error(data, Msg($"EntityId: {packet.EntityId}", entity != null), Msg("Ai"));
 
             return true;
         }

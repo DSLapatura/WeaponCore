@@ -24,6 +24,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             SelectedEntity = null;
             DrawReticle = false;
             if (!s.InGridAiBlock && !s.UpdateLocalAiAndCockpit()) return;
+
             if (ActivateMarks()) DrawActiveMarks();
             if (ActivateDroneNotice()) DrawDroneNotice();
             
@@ -41,7 +42,6 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
         private void DrawSelector(bool enableActivator)
         {
             var s = _session;
-
             if (!_cachedPointerPos) InitPointerOffset(0.05);
             if (!_cachedTargetPos) InitTargetOffset();
             var offetPosition = Vector3D.Transform(PointerOffset, _session.CameraMatrix);
@@ -375,7 +375,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             var infoKey = s.UiInput.InfoKey == MyKeys.Decimal ? MyKeys.Delete : s.UiInput.InfoKey;
             var drawInfo = UpdateKeyInfo(detailedHud);
 
-            var handheldHud = s.TrackingAi.SmartHandheld && (s.TrackingAi.WeaponComps[0].Rifle.GunBase.HasIronSightsActive || s.LeadGroupActive);
+            var handheldHud = s.TrackingAi.SmartHandheld && (s.TrackingAi.RootOtherWeaponComp.Rifle.GunBase.HasIronSightsActive || s.LeadGroupActive);
             var showHud = !s.Settings.Enforcement.DisableHudTargetInfo && (!s.TrackingAi.SmartHandheld || handheldHud);
 
             if (showHud)
@@ -765,7 +765,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                 {
 
                     var w = group[i];
-                    if (!w.Comp.Cube.IsWorking || w.Comp.Cube.MarkedForClose || w.Comp.Cube.CubeGrid.MarkedForClose)
+                    var invalid = w.Comp.IsBlock && (!w.Comp.Cube.IsWorking || w.Comp.Cube.MarkedForClose || w.Comp.Cube.CubeGrid.MarkedForClose) || w.Comp.CoreEntity.MarkedForClose || w.Comp.TopEntity.MarkedForClose;
+                    if (invalid)
                         continue;
                     Vector3D predictedPos;
                     bool canHit;
@@ -825,11 +826,11 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             if (grid != null)
             {
                 largeGrid = grid.GridSizeEnum == MyCubeSize.Large;
-                GridMap gridMap;
+                TopMap topMap;
                 if (s.EntityToMasterAi.TryGetValue(grid, out targetAi))
                     partCount = targetAi.Construct.BlockCount;
-                else if (s.TopEntityToInfoMap.TryGetValue(grid, out gridMap))
-                    partCount = gridMap.MostBlocks;
+                else if (s.TopEntityToInfoMap.TryGetValue(grid, out topMap))
+                    partCount = topMap.MostBlocks;
             }
 
             var state = ai.TargetState;

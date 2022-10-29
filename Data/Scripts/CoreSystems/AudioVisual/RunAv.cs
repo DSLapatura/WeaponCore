@@ -418,7 +418,7 @@ namespace CoreSystems.Support
                     avEffect.EndTick = weapon.StopBarrelAvTick;
 
                 var info = weapon.Dummies[muzzle.MuzzleId].Info;
-                var somethingEnded = avEffect.EndTick != 0 && avEffect.EndTick <= Session.Tick || !weapon.PlayTurretAv || info.Entity == null || info.Entity.MarkedForClose || weapon.Comp.Ai == null || weapon.MuzzlePart.Entity?.Parent == null && weapon.Comp.GunBase == null || weapon.Comp.CoreEntity.MarkedForClose || weapon.MuzzlePart.Entity.MarkedForClose;
+                var somethingEnded = avEffect.EndTick != 0 && avEffect.EndTick <= Session.Tick || !weapon.PlayTurretAv || info.Entity == null || info.Entity.MarkedForClose || weapon.Comp.Ai == null || weapon.MuzzlePart.Entity?.Parent == null && weapon.Comp.GunBase == null || weapon.Comp.CoreEntity.MarkedForClose || weapon.MuzzlePart.Entity == null || weapon.MuzzlePart.Entity.MarkedForClose;
 
                 var effectStale = effectExists && (effect.IsEmittingStopped || effect.IsStopped) || !effectExists && ticksAgo > 0;
                 if (effectStale || somethingEnded || !weapon.Comp.IsWorking)
@@ -438,7 +438,7 @@ namespace CoreSystems.Support
                 if (weapon.Comp.Ai.VelocityUpdateTick != weapon.Comp.Session.Tick)
                 {
                     weapon.Comp.Ai.TopEntityVolume.Center = weapon.Comp.Ai.TopEntity.PositionComp.WorldVolume.Center;
-                    weapon.Comp.Ai.GridVel = weapon.Comp.Ai.TopEntity.Physics?.LinearVelocity ?? Vector3D.Zero;
+                    weapon.Comp.Ai.TopEntityVel = weapon.Comp.Ai.TopEntity.Physics?.LinearVelocity ?? Vector3D.Zero;
                     weapon.Comp.Ai.IsStatic = weapon.Comp.Ai.TopEntity.Physics?.IsStatic ?? false;
                     weapon.Comp.Ai.VelocityUpdateTick = weapon.Comp.Session.Tick;
                 }
@@ -493,7 +493,7 @@ namespace CoreSystems.Support
                     av.EndTick = weapon.StopBarrelAvTick;
 
                 var info = weapon.Dummies[muzzle.MuzzleId].Info;
-                var somethingEnded = av.EndTick != 0 && av.EndTick <= Session.Tick || !weapon.PlayTurretAv || info.Entity == null || info.Entity.MarkedForClose || weapon.Comp.Ai == null || weapon.MuzzlePart.Entity?.Parent == null && weapon.Comp.GunBase == null || weapon.Comp.CoreEntity.MarkedForClose || weapon.MuzzlePart.Entity.MarkedForClose;
+                var somethingEnded = av.EndTick != 0 && av.EndTick <= Session.Tick || !weapon.PlayTurretAv || info.Entity == null || info.Entity.MarkedForClose || weapon.Comp.Ai == null || weapon.MuzzlePart.Entity?.Parent == null && weapon.Comp.GunBase == null || weapon.Comp.CoreEntity.MarkedForClose || weapon.MuzzlePart.Entity == null || weapon.MuzzlePart.Entity.MarkedForClose;
 
                 var effectStale = effectExists && (effect.IsEmittingStopped || effect.IsStopped) || !effectExists && ticksAgo > 0;
 
@@ -514,7 +514,7 @@ namespace CoreSystems.Support
                 if (weapon.Comp.Ai.VelocityUpdateTick != weapon.Comp.Session.Tick)
                 {
                     weapon.Comp.Ai.TopEntityVolume.Center = weapon.Comp.Ai.TopEntity.PositionComp.WorldVolume.Center;
-                    weapon.Comp.Ai.GridVel = weapon.Comp.Ai.TopEntity.Physics?.LinearVelocity ?? Vector3D.Zero;
+                    weapon.Comp.Ai.TopEntityVel = weapon.Comp.Ai.TopEntity.Physics?.LinearVelocity ?? Vector3D.Zero;
                     weapon.Comp.Ai.IsStatic = weapon.Comp.Ai.TopEntity.Physics?.IsStatic ?? false;
                     weapon.Comp.Ai.VelocityUpdateTick = weapon.Comp.Session.Tick;
                 }
