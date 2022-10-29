@@ -300,9 +300,10 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                 }
 
                 var textColor = !info.WillHit ? new Vector4(1, 1, 1, 1) : new Vector4(1, 0.025f, 0.025f, 1);
+                var leadChannel = i + 1;
 
-                string textLine1 = (i + 1).ToString();
-                var fontFocusSize = !info.WillHit ? 8 : 11;
+                var textLine1 = string.Concat("  ", leadChannel.ToString());
+                var fontFocusSize = !info.WillHit ? 13 : 15;
                 var fontSize = (float)Math.Round(fontFocusSize * fontScale, 2);
                 var fontHeight = 0.75f;
                 var fontAge = -1;
@@ -340,7 +341,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             dotpos.Y *= lineScale;
             avgLockedScreenPos = Vector3D.Transform(new Vector3D(dotpos.X, dotpos.Y, -0.1), s.CameraMatrix);
 
-            var size = (float)((0.00125f * scale) * s.ScaleFov);
+            var size = (float)((0.00225f * scale) * s.ScaleFov);
             var left = (Vector3)s.CameraMatrix.Left;
             var up = (Vector3)s.CameraMatrix.Up;
             var repColor = new Vector4(1, 1, 1, 1);
