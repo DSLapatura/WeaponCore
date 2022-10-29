@@ -331,11 +331,11 @@ namespace CoreSystems.Platform
                 {
                     if (active && state == WeaponDefinition.AnimationDef.PartAnimationSetDef.EventTriggers.Reloading)
                     {
-                        Rifle.CurrentAmmunition = 0;
+                        Rifle.GunBase.CurrentAmmo = 0;
                         Rifle.Reload();
                     }
                     else
-                        Rifle.CurrentAmmunition = w.ProtoWeaponAmmo.CurrentAmmo;
+                        Rifle.GunBase.CurrentAmmo = w.ProtoWeaponAmmo.CurrentAmmo;
                 }
             }
 

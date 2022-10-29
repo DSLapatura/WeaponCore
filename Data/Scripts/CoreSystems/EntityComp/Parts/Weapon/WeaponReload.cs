@@ -24,10 +24,7 @@ namespace CoreSystems.Platform
                 Reload.AmmoTypeId = ProposedAmmoId;
                 ProposedAmmoId = -1;
                 ProtoWeaponAmmo.CurrentAmmo = 0;
-                Reload.CurrentMags = Comp.TypeSpecific != CoreComponent.CompTypeSpecific.Phantom ? 0 : int.MaxValue;
-
-                if (Comp.TypeSpecific == CoreComponent.CompTypeSpecific.Rifle)
-                    Comp.Rifle.CurrentMagazineAmount = Reload.CurrentMags;
+                Reload.CurrentMags = Comp.TypeSpecific != CompTypeSpecific.Phantom ? 0 : int.MaxValue;
             }
 
             ActiveAmmoDef = System.AmmoTypes[Reload.AmmoTypeId];
@@ -36,10 +33,7 @@ namespace CoreSystems.Platform
             PrepAmmoShuffle();
 
             if (!ActiveAmmoDef.AmmoDef.Const.EnergyAmmo)
-                Reload.CurrentMags = Comp.TypeSpecific != CoreComponent.CompTypeSpecific.Phantom ? Comp.CoreInventory.GetItemAmount(ActiveAmmoDef.AmmoDefinitionId).ToIntSafe() : int.MaxValue;
-
-            if (Comp.TypeSpecific == CoreComponent.CompTypeSpecific.Rifle)
-                Comp.Rifle.CurrentMagazineAmount = Reload.CurrentMags;
+                Reload.CurrentMags = Comp.TypeSpecific != CompTypeSpecific.Phantom ? Comp.CoreInventory.GetItemAmount(ActiveAmmoDef.AmmoDefinitionId).ToIntSafe() : int.MaxValue;
 
             AmmoName = ActiveAmmoDef.AmmoName;
 
@@ -149,6 +143,9 @@ namespace CoreSystems.Platform
         {
             var syncUp = Reload.StartId > ClientStartId;
 
+            if (Comp.Session.HandlesInput && Comp.TypeSpecific == CompTypeSpecific.Rifle && Comp.Rifle.GunBase.CurrentMagazines != Reload.CurrentMags)
+                Comp.Rifle.GunBase.CurrentMagazines = Reload.CurrentMags;
+
             if (!syncUp) {
                 var energyDrainable = ActiveAmmoDef.AmmoDef.Const.EnergyAmmo && Comp.Ai.HasPower;
                 if (Reload.CurrentMags <= 0 && !energyDrainable && ActiveAmmoDef.AmmoDef.Const.Reloadable && !System.DesignatorWeapon && !Loading) {
@@ -200,10 +197,10 @@ namespace CoreSystems.Platform
                     var freeVolume = System.MaxAmmoVolume - Comp.CurrentInventoryVolume;
                     var spotsFree = (int)(freeVolume / ActiveAmmoDef.AmmoDef.Const.MagVolume);
                     Reload.CurrentMags = Comp.CoreInventory.GetItemAmount(ActiveAmmoDef.AmmoDefinitionId).ToIntSafe();
-                    
-                    if (Comp.TypeSpecific == CompTypeSpecific.Rifle)
-                        Comp.Rifle.CurrentMagazineAmount = Reload.CurrentMags;
-                    
+
+                    if (Comp.Session.HandlesInput && Comp.TypeSpecific == CompTypeSpecific.Rifle && Comp.Rifle.GunBase.CurrentMagazines != Reload.CurrentMags)
+                        Comp.Rifle.GunBase.CurrentMagazines = Reload.CurrentMags;
+
                     CurrentAmmoVolume = Reload.CurrentMags * ActiveAmmoDef.AmmoDef.Const.MagVolume;
 
                     var magsRequested = (int)((System.FullAmmoVolume - CurrentAmmoVolume) / ActiveAmmoDef.AmmoDef.Const.MagVolume);
@@ -263,7 +260,10 @@ namespace CoreSystems.Platform
                             Comp.CoreInventory.RemoveItems(magItem.ItemId, Reload.MagsLoaded);
                         }
                         else
-                            Comp.CoreInventory.RemoveItems(ActiveAmmoDef.AmmoDef.Const.AmmoItem.ItemId, Reload.MagsLoaded);
+                        {
+                            var magItem = Comp.TypeSpecific != CompTypeSpecific.Rifle ? ActiveAmmoDef.AmmoDef.Const.AmmoItem : Comp.CoreInventory.FindItem(ActiveAmmoDef.AmmoDefinitionId) ?? ActiveAmmoDef.AmmoDef.Const.AmmoItem;
+                            Comp.CoreInventory.RemoveItems(magItem.ItemId, Reload.MagsLoaded);
+                        }
                     }
                     else if (!isPhantom && Comp.CoreInventory.ItemCount > 0 && Comp.CoreInventory.ContainItems(Reload.MagsLoaded, ActiveAmmoDef.AmmoDef.Const.AmmoItem.Content))
                     {
@@ -384,6 +384,10 @@ namespace CoreSystems.Platform
                     if (ActiveAmmoDef.AmmoDef.Const.SlowFireFixedWeapon && System.Session.PlayerId == Comp.Data.Repo.Values.State.PlayerId)
                         System.Session.SendClientReady(this);
                 }
+
+                if (Comp.Session.HandlesInput && Comp.TypeSpecific == CompTypeSpecific.Rifle && Comp.Rifle.GunBase.CurrentMagazines != Reload.CurrentMags)
+                    Comp.Rifle.GunBase.CurrentMagazines = Reload.CurrentMags;
+
                 TargetData.WeaponRandom.TurretRandom = new XorShiftRandomStruct((ulong)(TargetData.WeaponRandom.CurrentSeed + (Reload.EndId + 1000000)));
                 EventTriggerStateChanged(EventTriggers.Reloading, false);
                 LastLoadedTick = Comp.Session.Tick;

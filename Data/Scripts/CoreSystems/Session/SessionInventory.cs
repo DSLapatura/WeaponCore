@@ -208,10 +208,7 @@ namespace CoreSystems
                     }
                 }
 
-                part.Reload.CurrentMags = part.BaseComp.TypeSpecific != CoreComponent.CompTypeSpecific.Phantom ? part.BaseComp.CoreInventory.GetItemAmount(part.ActiveAmmoDef.AmmoDefinitionId).ToIntSafe() : int.MaxValue;
-                
-                if (part.Comp.TypeSpecific == CompTypeSpecific.Rifle)
-                    part.Comp.Rifle.CurrentMagazineAmount = part.Reload.CurrentMags;
+                part.Reload.CurrentMags = part.BaseComp.TypeSpecific != CompTypeSpecific.Phantom ? part.BaseComp.CoreInventory.GetItemAmount(part.ActiveAmmoDef.AmmoDefinitionId).ToIntSafe() : int.MaxValue;
 
                 InventoryMoveRequestPool.Return(partConsumableToPull);
             }

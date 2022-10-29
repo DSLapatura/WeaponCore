@@ -43,9 +43,6 @@ namespace CoreSystems
                 if (comp.DefaultReloads != 0)
                 {
                     we.Reload.CurrentMags = comp.DefaultReloads;
-
-                    if (comp.TypeSpecific == CompTypeSpecific.Rifle)
-                        comp.Rifle.CurrentMagazineAmount = comp.DefaultReloads;
                 }
             }
 
