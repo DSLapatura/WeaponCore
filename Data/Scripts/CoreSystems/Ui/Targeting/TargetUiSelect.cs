@@ -15,7 +15,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
     {
         internal void ActivateSelector()
         {
-            var ironSights = _session.TrackingAi.AiType == Ai.AiTypes.Player && _session.TrackingAi.RootOtherWeaponComp.Rifle.GunBase.HasIronSightsActive;
+            var playerAi = _session.TrackingAi.AiType == Ai.AiTypes.Player;
+            var ironSights = playerAi && _session.TrackingAi.RootOtherWeaponComp.Rifle.GunBase.HasIronSightsActive;
             if (_session.TrackingAi.AiType == Ai.AiTypes.Phantom || _session.UiInput.FirstPersonView && !_session.UiInput.TurretBlockView && !ironSights && !_session.UiInput.AltPressed) return;
             if (MyAPIGateway.Input.IsNewKeyReleased(MyKeys.Control) && !_session.UiInput.FirstPersonView && !_session.UiInput.CameraBlockView && !_session.UiInput.TurretBlockView)
             {
@@ -36,9 +37,9 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             if (_session.UiInput.TurretBlockView || _session.UiInput.CameraBlockView)
                 _3RdPersonDraw = ThirdPersonModes.DotTarget;
 
-            var enableActivator = _3RdPersonDraw == ThirdPersonModes.Crosshair || _session.UiInput.FirstPersonView && _session.UiInput.AltPressed || _session.UiInput.CameraBlockView;
+            var enableActivator = _3RdPersonDraw == ThirdPersonModes.Crosshair || _session.UiInput.FirstPersonView && _session.UiInput.AltPressed && !ironSights || _session.UiInput.CameraBlockView;
 
-            if (enableActivator || !_session.UiInput.FirstPersonView && !_session.UiInput.CameraBlockView || _session.UiInput.TurretBlockView || ironSights)
+            if (enableActivator || !_session.UiInput.FirstPersonView && !_session.UiInput.CameraBlockView && !playerAi || _session.UiInput.TurretBlockView || ironSights)
                 DrawSelector(enableActivator);
         }
 
