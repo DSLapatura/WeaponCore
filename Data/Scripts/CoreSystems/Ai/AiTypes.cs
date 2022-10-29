@@ -179,7 +179,7 @@ namespace CoreSystems.Support
 
             internal void Update(Vector3D hitPos, uint tick, MyEntity ent = null, long entId = 0)
             {
-                if ((ent != null && ent.Physics != null || entId != 0 && MyEntities.TryGetEntityById(entId, out ent)) && ent.Physics != null)
+                if ((ent?.Physics != null || entId != 0 && MyEntities.TryGetEntityById(entId, out ent)) && ent.Physics != null)
                 {
                     var referenceWorldMatrix = ent.PositionComp.WorldMatrixRef;
                     Vector3D referenceWorldPosition = referenceWorldMatrix.Translation;
