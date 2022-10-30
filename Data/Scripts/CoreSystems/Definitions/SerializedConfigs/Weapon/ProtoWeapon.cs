@@ -30,7 +30,7 @@ namespace CoreSystems
             if (comp.Ai.AiType == Ai.AiTypes.Player)
             {
                 Values.State.PlayerId = comp.Rifle.OwnerIdentityId;
-                Log.Line($"ammo:{comp.Rifle.CurrentAmmunition} - mags:{comp.Rifle.CurrentMagazineAmount} - magAmmo:{comp.Rifle.CurrentMagazineAmmunition}");
+                comp.AmmoStorage(true);
             }
 
             if (comp.DefaultTrigger != Trigger.Off)
@@ -46,11 +46,6 @@ namespace CoreSystems
                 if (comp.DefaultReloads != 0)
                 {
                     we.Reload.CurrentMags = comp.DefaultReloads;
-                }
-
-                if (comp.TypeSpecific == CompTypeSpecific.Rifle)
-                {
-                    we.ProtoWeaponAmmo.CurrentAmmo = comp.Rifle.CurrentMagazineAmmunition;
                 }
             }
 

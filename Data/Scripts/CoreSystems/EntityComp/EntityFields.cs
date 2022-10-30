@@ -12,6 +12,7 @@ using SpaceEngineers.Game.ModAPI;
 using VRage.Game;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
+using VRage.Game.ObjectBuilders;
 using VRage.Utils;
 using VRageMath;
 
@@ -43,6 +44,8 @@ namespace CoreSystems.Support
         internal string PhantomType;
         internal bool LazyUpdate;
         internal MyInventory CoreInventory;
+        internal MyInventory PlayerInventory;
+
         internal CompData BaseData;
 
         internal Ai Ai;
@@ -226,6 +229,7 @@ namespace CoreSystems.Support
                     map.OnTopEntityAdded(null, TopEntity, null);
                     TopEntity.OnClose += Session.RemoveOtherFromMap;
                 }
+
             }
             else {
                 TypeSpecific = CompTypeSpecific.Phantom;
@@ -235,7 +239,7 @@ namespace CoreSystems.Support
             LazyUpdate = Type == CompType.Support || Type == CompType.Upgrade;
             InventoryEntity = TypeSpecific != CompTypeSpecific.Rifle ? CoreEntity : (MyEntity)((IMyAutomaticRifleGun)CoreEntity).AmmoInventory.Entity;
             CoreInventory = (MyInventory)InventoryEntity.GetInventoryBase();
-
+            
             HasInventory = InventoryEntity.HasInventory;
             Platform = session.PlatFormPool.Get();
             Platform.Setup(this);

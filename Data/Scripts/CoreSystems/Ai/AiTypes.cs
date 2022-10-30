@@ -17,6 +17,13 @@ namespace CoreSystems.Support
     public partial class Ai
     {
 
+        internal class WeaponObStorage
+        {
+            public int CurrentMagazineAmmunition;
+            public int CurrentMagazineAmount;
+            public int CurrentAmmunition;
+        }
+
         internal class AiCharger
         {
             internal readonly List<Part> ChargeGroup0 = new List<Part>();

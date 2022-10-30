@@ -1,6 +1,7 @@
 ﻿using System;
 using CoreSystems.Platform;
 using Sandbox.Game.Entities;
+using Sandbox.Game.Weapons;
 using Sandbox.ModAPI.Weapons;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI.Interfaces;
@@ -73,6 +74,7 @@ namespace CoreSystems.Support
                             if (TypeSpecific == CompTypeSpecific.Rifle)
                             {
                                 Session.OnPlayerControl(CoreEntity, null);
+                                wComp.AmmoStorage();
                             }
 
                             Constructs.WeaponGroupsMarkDirty(Ai.TopEntityMap.GroupMap);
@@ -121,7 +123,7 @@ namespace CoreSystems.Support
                         }
                         //else Log.Line($"RemoveComp Weaponbase didn't have my comp: inDelayedStart: {Ai.Session.CompsDelayedInit.Contains(this)} - FoundAi:{Ai.Session.EntityAIs.TryGetValue(TopEntity, out testAi)} - sameAi:{testAi == Ai} - sameTopEntity:{TopEntity == Ai.TopEntity} - inScene:{CoreEntity.InScene} - marked:{CoreEntity.MarkedForClose} - LastRemoveFromScene:{LastRemoveFromScene} - LastAddToScene:{LastAddToScene} - Tick:{Ai.Session.Tick}");
 
-                        if (Ai.CompBase.Count == 0)
+                        if (Ai.CompBase.Count == 0 && TypeSpecific != CompTypeSpecific.Rifle)
                         {
                             Ai ai;
                             Session.EntityAIs.TryRemove(Ai.TopEntity, out ai);

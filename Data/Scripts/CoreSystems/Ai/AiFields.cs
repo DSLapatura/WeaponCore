@@ -6,6 +6,7 @@ using CoreSystems.Projectiles;
 using Sandbox.Game;
 using Sandbox.Game.Entities;
 using Sandbox.Game.EntityComponents;
+using Sandbox.Game.Weapons;
 using Sandbox.ModAPI;
 using VRage;
 using VRage.Game;
@@ -15,6 +16,7 @@ using VRage.ModAPI;
 using VRage.Utils;
 using VRageMath;
 using WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting;
+using static CoreSystems.Platform.Weapon;
 
 namespace CoreSystems.Support
 {
@@ -29,6 +31,7 @@ namespace CoreSystems.Support
         internal readonly Constructs Construct;
         internal readonly FastResourceLock DbLock = new FastResourceLock();
 
+        internal readonly Dictionary<MyObjectBuilder_PhysicalGunObject, WeaponObStorage> WeaponAmmoCountStorage = new Dictionary<MyObjectBuilder_PhysicalGunObject, WeaponObStorage>();
         internal readonly Dictionary<MyEntity, CoreComponent> CompBase = new Dictionary<MyEntity, CoreComponent>();
         internal readonly Dictionary<Weapon.WeaponComponent, int> WeaponIdx = new Dictionary<Weapon.WeaponComponent, int>(32);
         internal readonly Dictionary<Weapon.WeaponComponent, int> WeaponTrackIdx = new Dictionary<Weapon.WeaponComponent, int>(32);

@@ -247,7 +247,7 @@ namespace CoreSystems.Platform
                 var isPhantom = Comp.TypeSpecific == CompTypeSpecific.Phantom;
                 Reload.MagsLoaded = ActiveAmmoDef.AmmoDef.Const.MagsToLoad <= Reload.CurrentMags || Comp.Session.IsCreative ? ActiveAmmoDef.AmmoDef.Const.MagsToLoad : Reload.CurrentMags;
                 
-                if (!Comp.Session.IsCreative && Comp.TypeSpecific != CompTypeSpecific.Rifle)
+                if (!Comp.Session.IsCreative)
                 {
                     if (!isPhantom && Comp.CoreInventory.ItemsCanBeRemoved(Reload.MagsLoaded, ActiveAmmoDef.AmmoDef.Const.AmmoItem))
                     {
