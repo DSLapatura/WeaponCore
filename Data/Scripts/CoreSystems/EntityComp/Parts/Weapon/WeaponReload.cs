@@ -196,7 +196,6 @@ namespace CoreSystems.Platform
                     var freeVolume = System.MaxAmmoVolume - Comp.CurrentInventoryVolume;
                     var spotsFree = (int)(freeVolume / ActiveAmmoDef.AmmoDef.Const.MagVolume);
                     Reload.CurrentMags = Comp.CoreInventory.GetItemAmount(ActiveAmmoDef.AmmoDefinitionId).ToIntSafe();
-
                     CurrentAmmoVolume = Reload.CurrentMags * ActiveAmmoDef.AmmoDef.Const.MagVolume;
 
                     var magsRequested = (int)((System.FullAmmoVolume - CurrentAmmoVolume) / ActiveAmmoDef.AmmoDef.Const.MagVolume);
@@ -257,7 +256,7 @@ namespace CoreSystems.Platform
                         }
                         else
                         {
-                            var magItem = ActiveAmmoDef.AmmoDef.Const.AmmoItem;
+                            var magItem = Comp.TypeSpecific == CompTypeSpecific.Rifle ? Comp.CoreInventory.FindItem(ActiveAmmoDef.AmmoDefinitionId) ?? ActiveAmmoDef.AmmoDef.Const.AmmoItem : ActiveAmmoDef.AmmoDef.Const.AmmoItem;
                             Comp.CoreInventory.RemoveItems(magItem.ItemId, Reload.MagsLoaded);
                         }
                     }

@@ -269,7 +269,6 @@ namespace CoreSystems
             _destroyedSlims.Clear();
             _destroyedSlimsClient.Clear();
             _slimHealthClient.Clear();
-            _slimsSet.Clear();
             _subTypeMaps.Clear();
             _tmpNearByBlocks.Clear();
 

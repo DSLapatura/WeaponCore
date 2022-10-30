@@ -965,6 +965,7 @@ namespace CoreSystems
     {
         public readonly ConcurrentDictionary<MyEntity, Ai> Construct = new ConcurrentDictionary<MyEntity, Ai>();
         public readonly List<Ai> Ais = new List<Ai>();
+        public readonly Dictionary<long, Ai.PlayerController> ControlPlayerRequest = new Dictionary<long, Ai.PlayerController>();
         public readonly Session Session;
         public bool Dirty;
         public GridLinkTypeEnum Type;
@@ -1049,10 +1050,14 @@ namespace CoreSystems
                 Ai.Constructs.WeaponGroupsMarkDirty(this);
             }
 
-
+            ControlPlayerRequest.Clear();
             Dirty = false;
         }
 
+        internal void AddPlayerId()
+        {
+
+        }
 
         public void Clean()
         {
@@ -1062,6 +1067,7 @@ namespace CoreSystems
             Dirty = false;
             Construct.Clear();
             Ais.Clear();
+            ControlPlayerRequest.Clear();
         }
 
     }

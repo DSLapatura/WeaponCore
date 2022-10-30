@@ -18,7 +18,7 @@ namespace CoreSystems.Platform
 {
     public partial class Weapon
     {
-        public class WeaponComponent : CoreComponent
+        public partial class WeaponComponent : CoreComponent
         {
             internal readonly IMyAutomaticRifleGun Rifle;
             internal readonly IMyHandheldGunObject<MyGunBase> GunBase;
@@ -31,8 +31,8 @@ namespace CoreSystems.Platform
             internal readonly List<MyEntity> Friends = new List<MyEntity>();
             internal readonly List<MyEntity> Enemies = new List<MyEntity>();
             internal readonly Dictionary<string, Vector3D> Positions = new Dictionary<string, Vector3D>();
-
             internal readonly int TotalWeapons;
+
             internal Weapon TrackingWeapon;
             internal int DefaultAmmoId;
             internal int DefaultReloads;
@@ -61,8 +61,8 @@ namespace CoreSystems.Platform
             {
                 var cube = coreEntity as MyCubeBlock;
 
-                if (cube != null) {
-
+                if (cube != null) 
+                {
                     var turret = coreEntity as IMyLargeTurretBase;
                     if (turret != null)
                     {
@@ -70,15 +70,9 @@ namespace CoreSystems.Platform
                         VanillaTurretBase.EnableIdleRotation = false;
                     }
                 }
-                else {
-
-                    var gun = coreEntity as IMyAutomaticRifleGun;
-
-                    if (gun != null) {
-                        Rifle = gun;
-                        GunBase = gun;
-                        TopEntity = Rifle.Owner;
-                    }
+                else if (coreEntity is IMyAutomaticRifleGun)
+                {
+                    HandInit((IMyAutomaticRifleGun)coreEntity, out Rifle, out GunBase, out TopEntity);
                 }
 
                 //Bellow order is important
@@ -246,13 +240,13 @@ namespace CoreSystems.Platform
                     Ai.PointDefense = true;
             }
 
-            internal bool SequenceReady(Ai.Constructs rootConstruct)
+            internal bool SequenceReady(Constructs rootConstruct)
             {
                 var wValues = Data.Repo.Values;
                 var overrides = wValues.Set.Overrides;
 
-                Ai.WeaponGroup group;
-                Ai.WeaponSequence sequence;
+                WeaponGroup group;
+                WeaponSequence sequence;
 
                 if (rootConstruct.WeaponGroups.TryGetValue(overrides.WeaponGroupId, out group) && group.OrderSequencesIds[group.SequenceStep] == overrides.SequenceId && group.Sequences.TryGetValue(overrides.SequenceId, out sequence))
                 {
@@ -296,7 +290,7 @@ namespace CoreSystems.Platform
                 return outCount == wCount;
             }
 
-            internal static void SetRange(Weapon.WeaponComponent comp)
+            internal static void SetRange(WeaponComponent comp)
             {
                 foreach (var w in comp.Collection)
                 {
@@ -324,40 +318,6 @@ namespace CoreSystems.Platform
                 {
                     var w = comp.Collection[i];
                     comp.Session.FutureEvents.Schedule(w.SetWeaponDps, null, 1);
-                }
-            }
-
-            internal void HandheldReload(Weapon w, WeaponDefinition.AnimationDef.PartAnimationSetDef.EventTriggers state, bool active)
-            {
-                if (Session.HandlesInput)
-                {
-                    if (active && state == WeaponDefinition.AnimationDef.PartAnimationSetDef.EventTriggers.Reloading)
-                    {
-                        Rifle.CurrentMagazineAmmunition = w.ProtoWeaponAmmo.CurrentAmmo > 0 ? w.ProtoWeaponAmmo.CurrentAmmo : 1;
-                        Log.Line($"reloadActive: wAmmo:{w.ProtoWeaponAmmo.CurrentAmmo} - wcMag:{w.Reload.CurrentMags} - ammo:{Rifle.CurrentAmmunition} - magCurrentAmmo:{Rifle.CurrentMagazineAmmunition} - magAmount:{Rifle.CurrentMagazineAmount}");
-
-                        Rifle.Reload();
-
-                    }
-                    else
-                    {
-                        Rifle.CurrentMagazineAmount = w.Reload.CurrentMags;
-                        Rifle.CurrentMagazineAmmunition = w.ProtoWeaponAmmo.CurrentAmmo > 0 ? w.ProtoWeaponAmmo.CurrentAmmo : 1;
-                        Log.Line($"reloadInactive: wAmmo:{w.ProtoWeaponAmmo.CurrentAmmo} - wcMag:{w.Reload.CurrentMags} - ammo:{Rifle.CurrentAmmunition} - magCurrentAmmo:{Rifle.CurrentMagazineAmmunition} - magAmount:{Rifle.CurrentMagazineAmount}");
-                    }
-                }
-            }
-
-            internal void HandhelShoot(Weapon w, WeaponDefinition.AnimationDef.PartAnimationSetDef.EventTriggers state, bool active)
-            {
-                if (Session.HandlesInput && active)
-                {
-                    Rifle.CurrentMagazineAmmunition = w.ProtoWeaponAmmo.CurrentAmmo > 1 ? w.ProtoWeaponAmmo.CurrentAmmo : 2;
-                    
-                    Rifle.Shoot(MyShootActionEnum.PrimaryAction, Vector3D.Zero, null);
-                    
-                    Rifle.CurrentMagazineAmmunition = w.ProtoWeaponAmmo.CurrentAmmo > 0 ? w.ProtoWeaponAmmo.CurrentAmmo : 1;
-                    Log.Line($"HandhelShoot: wAmmo:{w.ProtoWeaponAmmo.CurrentAmmo} - wcMag:{w.Reload.CurrentMags} - ammo:{Rifle.CurrentAmmunition} - magCurrentAmmo:{Rifle.CurrentMagazineAmmunition} - magAmount:{Rifle.CurrentMagazineAmount}");
                 }
             }
 
@@ -1041,61 +1001,6 @@ namespace CoreSystems.Platform
                     Session.GunnerRelease(playerId);
                 }
                 LastControllingPlayerId = 0;
-            }
-
-            internal void AmmoStorage(bool load = false)
-            {
-
-                foreach (var item in CoreInventory.GetItems())
-                {
-
-                    var physGunOb = item.Content as MyObjectBuilder_PhysicalGunObject;
-
-                    if (physGunOb?.GunEntity != null)
-                    {
-                        WeaponObStorage storage;
-                        var newStorage = false;
-                        if (!Ai.WeaponAmmoCountStorage.TryGetValue(physGunOb, out storage))
-                        {
-                            newStorage = true;
-                            storage = new WeaponObStorage();
-                            Ai.WeaponAmmoCountStorage[physGunOb] = storage;
-                            Log.Line($"creating new storage for: isMe:{physGunOb.GunEntity.EntityId == GunBase.PhysicalObject.GunEntity.EntityId} - {physGunOb.GunEntity.EntityId}[{GunBase.PhysicalObject.GunEntity.EntityId}] - {physGunOb.SubtypeName}");
-                        }
-                        else 
-                            Log.Line($"retrived storage for: {physGunOb.GunEntity.EntityId}[{GunBase.PhysicalObject.GunEntity.EntityId}] - {physGunOb.SubtypeName}");
-
-                        if (physGunOb.GunEntity.EntityId == GunBase.PhysicalObject.GunEntity.EntityId)
-                        {
-                            Log.Line($"ammo:{storage.CurrentAmmunition}[{Rifle.CurrentAmmunition}] - mAmmo:{storage.CurrentMagazineAmmunition}[{Rifle.CurrentMagazineAmmunition}] - mags:{storage.CurrentMagazineAmount}[{Rifle.CurrentMagazineAmount}]");
-
-                            if (!load)
-                            {
-                                storage.CurrentAmmunition = Rifle.CurrentAmmunition;
-                                storage.CurrentMagazineAmmunition = Rifle.CurrentMagazineAmmunition;
-                                storage.CurrentMagazineAmount = Rifle.CurrentMagazineAmount;
-                            }
-                            else if (!newStorage)
-                            {
-                                Rifle.CurrentAmmunition = storage.CurrentAmmunition;
-                                Rifle.CurrentMagazineAmmunition = storage.CurrentMagazineAmmunition;
-                                Rifle.CurrentMagazineAmount = storage.CurrentMagazineAmount;
-                            }
-
-                        }
-
-
-                        /*
-                        var whateverThisIs = physGunOb.GunEntity as IMyObjectBuilder_GunObject<MyObjectBuilder_GunBase>;
-                        if (whateverThisIs != null)
-                        {
-                            var gunbaseOB = whateverThisIs.GetDevice();
-
-                            Log.Line($"{gunbaseOB.RemainingAmmo}");
-                        }
-                        */
-                    }
-                }
             }
         }
     }

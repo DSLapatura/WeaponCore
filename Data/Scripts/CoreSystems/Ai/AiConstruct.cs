@@ -373,6 +373,10 @@ namespace CoreSystems.Support
                 var rootConstruct = rootAi.Construct;
                 var s = rootAi.Session;
                 rootConstruct.ControllingPlayers.Clear();
+
+                foreach (var req in map.ControlPlayerRequest)
+                    rootAi.TopEntityMap.PlayerControllers[req.Key] = req.Value;
+
                 foreach (var ai in rootAi.TopEntityMap.GroupMap.Ais)
                 {
                     TopMap topMap;
