@@ -421,8 +421,10 @@ namespace CoreSystems.Platform
             else if (System.Session.HandlesInput) {
                 
                 var particle = ActiveAmmoDef.AmmoDef.AmmoGraphics.Particles.Eject;
+                var keenStrikesAgain = particle.Offset == Vector3D.MaxValue;
+
                 MyParticleEffect ejectEffect;
-                var matrix = MatrixD.CreateTranslation(eInfo.Position);
+                var matrix = !keenStrikesAgain ? MatrixD.CreateTranslation(eInfo.Position) : MatrixD.CreateWorld(eInfo.Position, eInfo.Direction, eInfo.UpDirection); ;
                 
                 if (MyParticlesManager.TryCreateParticleEffect(particle.Name, ref matrix, ref eInfo.Position, uint.MaxValue, out ejectEffect)) {
                     ejectEffect.UserScale = particle.Extras.Scale;
