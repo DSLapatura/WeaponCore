@@ -44,7 +44,6 @@ namespace CoreSystems.Support
         internal string PhantomType;
         internal bool LazyUpdate;
         internal MyInventory CoreInventory;
-        internal MyInventory PlayerInventory;
 
         internal CompData BaseData;
 

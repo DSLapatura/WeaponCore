@@ -213,6 +213,9 @@
     <Compile Include="Data\Scripts\CoreSystems\EntityComp\Parts\Upgrade\UpgradeTypes.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
+    <Compile Include="Data\Scripts\CoreSystems\EntityComp\Parts\Weapon\WeaponHand.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Compile>
     <Compile Include="Data\Scripts\CoreSystems\EntityComp\Parts\Weapon\WeaponComp.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
