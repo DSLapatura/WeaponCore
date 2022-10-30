@@ -107,7 +107,6 @@ namespace CoreSystems
             {
                 if (entity.MarkedForClose)
                     return null;
-
                 CoreStructure c;
                 if (id.HasValue && PartPlatforms.TryGetValue(id.Value, out c))
                 {

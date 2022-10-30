@@ -64,13 +64,16 @@ namespace CoreSystems.Support
                     {
                         if (Type == CompType.Weapon)
                         {
-                            Ai.OptimalDps -= ((Weapon.WeaponComponent)this).PeakDps;
-                            Ai.EffectiveDps -= ((Weapon.WeaponComponent)this).EffectiveDps;
-                            Ai.PerfectDps -= ((Weapon.WeaponComponent)this).PerfectDps;
+                            var wComp = ((Weapon.WeaponComponent) this);
+                            Ai.OptimalDps -= wComp.PeakDps;
+                            Ai.EffectiveDps -= wComp.EffectiveDps;
+                            Ai.PerfectDps -= wComp.PerfectDps;
 
 
                             if (TypeSpecific == CompTypeSpecific.Rifle)
+                            {
                                 Session.OnPlayerControl(CoreEntity, null);
+                            }
 
                             Constructs.WeaponGroupsMarkDirty(Ai.TopEntityMap.GroupMap);
                         }

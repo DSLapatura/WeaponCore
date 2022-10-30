@@ -331,11 +331,18 @@ namespace CoreSystems.Platform
                 {
                     if (active && state == WeaponDefinition.AnimationDef.PartAnimationSetDef.EventTriggers.Reloading)
                     {
-                        Rifle.GunBase.CurrentAmmo = 0;
+                        Rifle.CurrentMagazineAmmunition = w.ProtoWeaponAmmo.CurrentAmmo;
+                        Rifle.CurrentMagazineAmount = w.Reload.CurrentMags;
                         Rifle.Reload();
+
+                        Log.Line($"reloadActive: wAmmo:{w.ProtoWeaponAmmo.CurrentAmmo} - wcMag:{w.Reload.CurrentMags} - ammo:{Rifle.CurrentAmmunition} - magCurrentAmmo:{Rifle.CurrentMagazineAmmunition} - magAmount:{Rifle.CurrentMagazineAmount}");
                     }
                     else
-                        Rifle.GunBase.CurrentAmmo = w.ProtoWeaponAmmo.CurrentAmmo;
+                    {
+                        Rifle.CurrentMagazineAmmunition = w.ProtoWeaponAmmo.CurrentAmmo;
+                        Rifle.CurrentMagazineAmount = w.Reload.CurrentMags;
+                        Log.Line($"reloadInactive: wAmmo:{w.ProtoWeaponAmmo.CurrentAmmo} - wcMag:{w.Reload.CurrentMags} - ammo:{Rifle.CurrentAmmunition} - magCurrentAmmo:{Rifle.CurrentMagazineAmmunition} - magAmount:{Rifle.CurrentMagazineAmount}");
+                    }
                 }
             }
 
@@ -343,10 +350,10 @@ namespace CoreSystems.Platform
             {
                 if (Session.HandlesInput && active)
                 {
-                    if (Rifle.GunBase.CurrentAmmo < 1)
-                        Rifle.GunBase.CurrentAmmo = 1;
-
                     Rifle.Shoot(MyShootActionEnum.PrimaryAction, Vector3D.Zero, null);
+                    Rifle.CurrentMagazineAmmunition = w.ProtoWeaponAmmo.CurrentAmmo;
+                    Rifle.CurrentMagazineAmount = w.Reload.CurrentMags;
+                    Log.Line($"HandhelShoot: wAmmo:{w.ProtoWeaponAmmo.CurrentAmmo} - wcMag:{w.Reload.CurrentMags} - ammo:{Rifle.CurrentAmmunition} - magCurrentAmmo:{Rifle.CurrentMagazineAmmunition} - magAmount:{Rifle.CurrentMagazineAmount}");
                 }
             }
 

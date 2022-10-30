@@ -1,6 +1,7 @@
 ﻿using System;
 using CoreSystems.Support;
 using Sandbox.ModAPI;
+using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace CoreSystems.Platform
 {
