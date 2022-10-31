@@ -126,7 +126,9 @@ namespace CoreSystems.Support
                         if (av.OnScreen != AvShot.Screen.None)
                         {
                             var pos = Session.Tick - av.Hit.HitTick <= 1 && !MyUtils.IsZero(av.Hit.SurfaceHit) ? av.Hit.SurfaceHit : av.TracerFront;
-                            var matrix = MatrixD.CreateTranslation(pos);
+                            var particle = av.AmmoDef.AmmoGraphics.Particles.Hit;
+                            var keenStrikesAgain = particle.Offset == Vector3D.MaxValue;
+                            var matrix = !keenStrikesAgain ? MatrixD.CreateTranslation(pos) : MatrixD.CreateWorld(pos, av.VisualDir, av.OriginUp);
   
                             MyParticleEffect hitEffect;
                             if (MyParticlesManager.TryCreateParticleEffect(av.AmmoDef.Const.HitParticleStr, ref matrix, ref pos, uint.MaxValue, out hitEffect))
