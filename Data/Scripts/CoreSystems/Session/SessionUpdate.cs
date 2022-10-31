@@ -302,7 +302,7 @@ namespace CoreSystems
                             continue;
                         }
 
-                        var trackWeapon = topAi.RootFixedWeaponComp?.TrackingWeapon;
+                        var trackWeapon = topAi.RootFixedWeaponComp?.PrimaryWeapon;
                         controlPart.TrackingWeapon = trackWeapon;
                         if (trackWeapon == null)
                             continue;
@@ -341,7 +341,7 @@ namespace CoreSystems
                             continue;
                         }
 
-                        if (!cComp.Data.Repo.Values.Set.Overrides.AiEnabled || topAi.RootFixedWeaponComp.TrackingWeapon.Comp.CoreEntity.MarkedForClose) {
+                        if (!cComp.Data.Repo.Values.Set.Overrides.AiEnabled || topAi.RootFixedWeaponComp.PrimaryWeapon.Comp.CoreEntity.MarkedForClose) {
                             if (cComp.RotorsMoving)
                                 cComp.StopRotors();
                             continue;
@@ -398,7 +398,7 @@ namespace CoreSystems
                     if (wComp.Platform.State != CorePlatform.PlatformState.Ready || wComp.IsDisabled || wComp.IsAsleep || !wComp.IsWorking || wComp.CoreEntity.MarkedForClose || wComp.LazyUpdate && !ai.DbUpdated && Tick > wComp.NextLazyUpdateStart)
                         continue;
 
-                    wComp.OnCustomTurret = ai.RootFixedWeaponComp?.TrackingWeapon?.MasterComp != null;
+                    wComp.OnCustomTurret = ai.RootFixedWeaponComp?.PrimaryWeapon?.MasterComp != null;
 
 
                     var wValues = wComp.Data.Repo.Values;
@@ -406,15 +406,15 @@ namespace CoreSystems
                     var cMode = overrides.Control;
 
                     var sMode = overrides.ShootMode;
-                    var focusTargets = wComp.OnCustomTurret ? ai.RootFixedWeaponComp.TrackingWeapon.MasterComp.Data.Repo.Values.Set.Overrides.FocusTargets : overrides.FocusTargets;
-                    var grids = wComp.OnCustomTurret ? ai.RootFixedWeaponComp.TrackingWeapon.MasterComp.Data.Repo.Values.Set.Overrides.Grids : overrides.Grids;
-                    var overRide = wComp.OnCustomTurret ? ai.RootFixedWeaponComp.TrackingWeapon.MasterComp.Data.Repo.Values.Set.Overrides.Override : overrides.Override;
-                    var projectiles = wComp.OnCustomTurret ? ai.RootFixedWeaponComp.TrackingWeapon.MasterComp.Data.Repo.Values.Set.Overrides.Projectiles : overrides.Projectiles;
+                    var focusTargets = wComp.OnCustomTurret ? ai.RootFixedWeaponComp.PrimaryWeapon.MasterComp.Data.Repo.Values.Set.Overrides.FocusTargets : overrides.FocusTargets;
+                    var grids = wComp.OnCustomTurret ? ai.RootFixedWeaponComp.PrimaryWeapon.MasterComp.Data.Repo.Values.Set.Overrides.Grids : overrides.Grids;
+                    var overRide = wComp.OnCustomTurret ? ai.RootFixedWeaponComp.PrimaryWeapon.MasterComp.Data.Repo.Values.Set.Overrides.Override : overrides.Override;
+                    var projectiles = wComp.OnCustomTurret ? ai.RootFixedWeaponComp.PrimaryWeapon.MasterComp.Data.Repo.Values.Set.Overrides.Projectiles : overrides.Projectiles;
 
 
                     if (IsServer && wComp.OnCustomTurret)
                     {
-                        var cValues = ai.RootFixedWeaponComp.TrackingWeapon.MasterComp.Data.Repo.Values;
+                        var cValues = ai.RootFixedWeaponComp.PrimaryWeapon.MasterComp.Data.Repo.Values;
                         if (cValues.Set.Overrides.Control != overrides.Control)
                             BlockUi.RequestControlMode(wComp.TerminalBlock, (long)cValues.Set.Overrides.Control);
 
@@ -436,7 +436,7 @@ namespace CoreSystems
                             
                             var activePlayer = PlayerId == wValues.State.PlayerId && playerControl;
                             var cManual = pControl.ControlEntity is IMyTurretControlBlock;
-                            var customWeapon = cManual && wComp.OnCustomTurret && ai.RootFixedWeaponComp.TrackingWeapon.MasterComp.Cube == pControl.ControlEntity;
+                            var customWeapon = cManual && wComp.OnCustomTurret && ai.RootFixedWeaponComp.PrimaryWeapon.MasterComp.Cube == pControl.ControlEntity;
                             var manualThisWeapon = pControl.ControlEntity == wComp.Cube && wComp.HasAim || pControl.ControlEntity is IMyAutomaticRifleGun;
                             var controllingWeapon = customWeapon || manualThisWeapon;
                             var validManualModes = (sMode == Weapon.ShootManager.ShootModes.MouseControl || cMode == ProtoWeaponOverrides.ControlModes.Manual);
@@ -587,9 +587,9 @@ namespace CoreSystems
                                     {
                                         if (!w.System.TrackTargets) 
                                         {
-                                            var trackingWeaponIsFake = wComp.TrackingWeapon.Target.TargetState == TargetStates.IsFake;
+                                            var trackingWeaponIsFake = wComp.PrimaryWeapon.Target.TargetState == TargetStates.IsFake;
                                             var thisWeaponIsFake = w.Target.TargetState == TargetStates.IsFake;
-                                            if ((wComp.TrackingWeapon.Target.Projectile != w.Target.Projectile || w.Target.TargetState == TargetStates.IsProjectile && w.Target.Projectile.State != Projectile.ProjectileState.Alive || wComp.TrackingWeapon.Target.TargetEntity != w.Target.TargetEntity || trackingWeaponIsFake != thisWeaponIsFake))
+                                            if ((wComp.PrimaryWeapon.Target.Projectile != w.Target.Projectile || w.Target.TargetState == TargetStates.IsProjectile && w.Target.Projectile.State != Projectile.ProjectileState.Alive || wComp.PrimaryWeapon.Target.TargetEntity != w.Target.TargetEntity || trackingWeaponIsFake != thisWeaponIsFake))
                                                 w.Target.Reset(Tick, States.Expired);
                                             else
                                                 w.TargetLock = true;
@@ -634,7 +634,7 @@ namespace CoreSystems
                         var overHeat = w.PartState.Overheated && (w.OverHeatCountDown == 0 || w.OverHeatCountDown != 0 && w.OverHeatCountDown-- == 0);
 
                         var canShoot = !overHeat && !reloading && !w.System.DesignatorWeapon && sequenceReady;
-                        var paintedTarget = wComp.PainterMode && w.Target.TargetState == TargetStates.IsFake && (w.Target.IsAligned || wComp.OnCustomTurret && wComp.Ai.RootFixedWeaponComp.TrackingWeapon.MasterComp.Platform.Control.IsAimed);
+                        var paintedTarget = wComp.PainterMode && w.Target.TargetState == TargetStates.IsFake && (w.Target.IsAligned || wComp.OnCustomTurret && wComp.Ai.RootFixedWeaponComp.PrimaryWeapon.MasterComp.Platform.Control.IsAimed);
                         var autoShot = paintedTarget || w.AiShooting && wValues.State.Trigger == Off;
                         var anyShot = !wComp.ShootManager.FreezeClientShoot && (w.ShootCount > 0 || onConfrimed) && noShootDelay || autoShot && sMode == Weapon.ShootManager.ShootModes.AiShoot;
 
@@ -758,9 +758,9 @@ namespace CoreSystems
 
                     if (seekProjectile || comp.Data.Repo.Values.State.TrackingReticle || (comp.DetectOtherSignals && ai.DetectionInfo.OtherInRange || ai.DetectionInfo.PriorityInRange) && ai.DetectionInfo.ValidSignalExists(w))
                     {
-                        if (comp.TrackingWeapon != null && comp.TrackingWeapon.System.DesignatorWeapon && comp.TrackingWeapon != w && comp.TrackingWeapon.Target.HasTarget) {
+                        if (comp.PrimaryWeapon != null && comp.PrimaryWeapon.System.DesignatorWeapon && comp.PrimaryWeapon != w && comp.PrimaryWeapon.Target.HasTarget) {
 
-                            var topMost = comp.TrackingWeapon.Target.TargetEntity?.GetTopMostParent();
+                            var topMost = comp.PrimaryWeapon.Target.TargetEntity?.GetTopMostParent();
                             Ai.AcquireTarget(w, false, topMost, overrides);
                         }
                         else

@@ -33,7 +33,7 @@ namespace CoreSystems.Platform
             internal readonly Dictionary<string, Vector3D> Positions = new Dictionary<string, Vector3D>();
             internal readonly int TotalWeapons;
 
-            internal Weapon TrackingWeapon;
+            internal Weapon PrimaryWeapon;
             internal int DefaultAmmoId;
             internal int DefaultReloads;
             internal int MaxAmmoCount;

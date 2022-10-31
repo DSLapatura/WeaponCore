@@ -317,7 +317,7 @@ namespace CoreSystems.Platform
 
             internal bool TrackTarget(Ai topAi, IMyMotorStator root, IMyMotorStator other, bool isRoot, ref Vector3D desiredDirection)
             {
-                var trackingWeapon = isRoot? Platform.Control.TrackingWeapon : topAi.RootFixedWeaponComp.TrackingWeapon;
+                var trackingWeapon = isRoot? Platform.Control.TrackingWeapon : topAi.RootFixedWeaponComp.PrimaryWeapon;
                 RotorsMoving = true;
 
                 var targetPos = topAi.RotorTargetPosition;
@@ -398,7 +398,7 @@ namespace CoreSystems.Platform
             private uint _lastAction1Tick;
             internal void CheckAction1(Ai topAi)
             {
-                var w = topAi.RootFixedWeaponComp.TrackingWeapon;
+                var w = topAi.RootFixedWeaponComp.PrimaryWeapon;
                 var target = w.Target;
                 Vector3D targetPos;
                 if (target.HasTarget && target.HasTarget && target.ChangeTick > _lastAction1Tick && Weapon.TargetAligned(w, target, out targetPos))

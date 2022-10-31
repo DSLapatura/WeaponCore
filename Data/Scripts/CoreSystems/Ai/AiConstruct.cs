@@ -813,7 +813,7 @@ namespace CoreSystems.Support
                     
                     if (rangeToTarget <= maxRangeSqr && rangeToTarget >= minRangeSqr)
                     {
-                        var overrides = w.Comp.Ai.RootFixedWeaponComp?.TrackingWeapon?.MasterComp != null ? w.Comp.Ai.RootFixedWeaponComp.TrackingWeapon.MasterComp.Data.Repo.Values.Set.Overrides : w.Comp.Data.Repo.Values.Set.Overrides;
+                        var overrides = w.Comp.Ai.RootFixedWeaponComp?.PrimaryWeapon?.MasterComp != null ? w.Comp.Ai.RootFixedWeaponComp.PrimaryWeapon.MasterComp.Data.Repo.Values.Set.Overrides : w.Comp.Data.Repo.Values.Set.Overrides;
 
                         if (overrides.FocusSubSystem && overrides.SubSystem != WeaponDefinition.TargetingDef.BlockTypes.Any && block != null && !w.ValidSubSystemTarget(block, overrides.SubSystem))
                             return false;

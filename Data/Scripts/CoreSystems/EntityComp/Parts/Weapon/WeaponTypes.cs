@@ -25,7 +25,7 @@ namespace CoreSystems.Platform
             {
                 Weapon.Casting = false;
                 Weapon.PauseShoot = false;
-                var masterWeapon = Weapon.System.TrackTargets ? Weapon : Weapon.Comp.TrackingWeapon;
+                var masterWeapon = Weapon.System.TrackTargets ? Weapon : Weapon.Comp.PrimaryWeapon;
                 var ignoreTargets = Weapon.Target.TargetState == Target.TargetStates.IsProjectile || Weapon.Target.TargetEntity is IMyCharacter;
                 var scope = Weapon.GetScope;
                 var trackingCheckPosition = scope.CachedPos;

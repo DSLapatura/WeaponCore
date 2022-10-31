@@ -25,7 +25,7 @@ namespace CoreSystems.Platform
                 weapon.UpdatePivotPos();
 
             var prediction = weapon.System.Values.HardPoint.AimLeadingPrediction;
-            var trackingWeapon = weapon.TurretController ? weapon : weapon.Comp.TrackingWeapon;
+            var trackingWeapon = weapon.TurretController ? weapon : weapon.Comp.PrimaryWeapon;
             if (Vector3D.IsZero(targetLinVel, 5E-03)) targetLinVel = Vector3.Zero;
             if (Vector3D.IsZero(targetAccel, 5E-03)) targetAccel = Vector3.Zero;
 
@@ -120,7 +120,7 @@ namespace CoreSystems.Platform
 
             var vel = target.Physics.LinearVelocity;
             var accel = target.Physics.LinearAcceleration;
-            var trackingWeapon = weapon.TurretController || weapon.Comp.TrackingWeapon == null ? weapon : weapon.Comp.TrackingWeapon;
+            var trackingWeapon = weapon.TurretController || weapon.Comp.PrimaryWeapon == null ? weapon : weapon.Comp.PrimaryWeapon;
 
             var box = target.PositionComp.LocalAABB;
             var obb = new MyOrientedBoundingBoxD(box, target.PositionComp.WorldMatrixRef);
@@ -183,7 +183,7 @@ namespace CoreSystems.Platform
                 weapon.UpdatePivotPos();
 
             var prediction = weapon.System.Values.HardPoint.AimLeadingPrediction;
-            var trackingWeapon = weapon.TurretController ? weapon : weapon.Comp.TrackingWeapon;
+            var trackingWeapon = weapon.TurretController ? weapon : weapon.Comp.PrimaryWeapon;
 
             if (Vector3D.IsZero(targetLinVel, 5E-03)) targetLinVel = Vector3.Zero;
             if (Vector3D.IsZero(targetAccel, 5E-03)) targetAccel = Vector3.Zero;
@@ -816,7 +816,7 @@ namespace CoreSystems.Platform
         public void ManualShootRayCallBack(IHitInfo hitInfo)
         {
             Casting = false;
-            var masterWeapon = System.TrackTargets ? this : Comp.TrackingWeapon;
+            var masterWeapon = System.TrackTargets ? this : Comp.PrimaryWeapon;
 
             var grid = hitInfo.HitEntity as MyCubeGrid;
             if (grid != null)
@@ -903,7 +903,7 @@ namespace CoreSystems.Platform
             }
 
             var tick = Comp.Session.Tick;
-            var masterWeapon = System.TrackTargets || Comp.TrackingWeapon == null ? this : Comp.TrackingWeapon;
+            var masterWeapon = System.TrackTargets || Comp.PrimaryWeapon == null ? this : Comp.PrimaryWeapon;
 
             if (System.Values.HardPoint.Other.MuzzleCheck)
             {

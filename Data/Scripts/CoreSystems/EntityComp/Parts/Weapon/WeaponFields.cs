@@ -326,10 +326,10 @@ namespace CoreSystems.Platform
             AimingTolerance = Math.Cos(toleranceInRadians);
 
             if (Comp.Platform.Structure.PrimaryPart == partId)
-                comp.TrackingWeapon = this;
+                comp.PrimaryWeapon = this;
 
             if (TurretAttached && !System.TrackTargets)
-                Target = comp.TrackingWeapon.Target;
+                Target = comp.PrimaryWeapon.Target;
             else Target = new Target(this, true);
 
             _numOfMuzzles = System.Muzzles.Length;
@@ -406,10 +406,10 @@ namespace CoreSystems.Platform
             var hasHardPointSound = false;
             if (TurretController)
             {
-                if (System.Values.HardPoint.Ai.PrimaryTracking && comp.TrackingWeapon == null)
-                    comp.TrackingWeapon = this;
+                if (System.Values.HardPoint.Ai.PrimaryTracking && comp.PrimaryWeapon == null)
+                    comp.PrimaryWeapon = this;
 
-                if (AvCapable && System.HardPointRotationSound && (comp.TrackingWeapon == this || !System.Values.HardPoint.Ai.PrimaryTracking))
+                if (AvCapable && System.HardPointRotationSound && (comp.PrimaryWeapon == this || !System.Values.HardPoint.Ai.PrimaryTracking))
                 {
                     hasHardPointSound = true;
                     HardPointEmitter = System.Session.Emitters.Count > 0 ? System.Session.Emitters.Pop() : new MyEntity3DSoundEmitter(null);

@@ -27,13 +27,16 @@ namespace CoreSystems.Platform
 
             private void KeenGiveModdersSomeMoreLove()
             {
-                Session.FutureEvents.Schedule(ForceAmmoMagSet, null, 0);
+                Session.FutureEvents.Schedule(ForceAmmoValues, null, 0);
             }
 
-            private void ForceAmmoMagSet(object o)
+            private void ForceAmmoValues(object o)
             {
-                Rifle.CurrentMagazineAmount = TrackingWeapon.Reload.CurrentMags;
-                Rifle.CurrentMagazineAmmunition = TrackingWeapon.ProtoWeaponAmmo.CurrentAmmo + TrackingWeapon.ClientMakeUpShots;
+                if (Rifle.CurrentMagazineAmount != PrimaryWeapon.Reload.CurrentMags)
+                    Rifle.CurrentMagazineAmount = PrimaryWeapon.Reload.CurrentMags;
+
+                if (Rifle.CurrentMagazineAmmunition != PrimaryWeapon.ProtoWeaponAmmo.CurrentAmmo + PrimaryWeapon.ClientMakeUpShots)
+                    Rifle.CurrentMagazineAmmunition = PrimaryWeapon.ProtoWeaponAmmo.CurrentAmmo + PrimaryWeapon.ClientMakeUpShots;
 
             }
 
@@ -87,17 +90,23 @@ namespace CoreSystems.Platform
                         if (!Ai.WeaponAmmoCountStorage.TryGetValue(physGunOb, out storage))
                         {
                             newStorage = true;
-                            storage = new WeaponObStorage();
+
+                            Rifle.CurrentMagazineAmount = PrimaryWeapon.Reload.CurrentMags;
+                            storage = new WeaponObStorage
+                            {
+                                CurrentAmmunition = Rifle.CurrentAmmunition,
+                                CurrentMagazineAmmunition = Rifle.CurrentMagazineAmmunition,
+                                CurrentMagazineAmount = Rifle.CurrentMagazineAmount
+                            };
+
                             Ai.WeaponAmmoCountStorage[physGunOb] = storage;
-                            Log.Line($"creating new storage for: isMe:{physGunOb.GunEntity.EntityId == GunBase.PhysicalObject.GunEntity.EntityId} - {physGunOb.GunEntity.EntityId}[{GunBase.PhysicalObject.GunEntity.EntityId}] - {physGunOb.SubtypeName}");
+                            Log.Line($"creating new storage for: loading:{load} - isMe:{physGunOb.GunEntity.EntityId == GunBase.PhysicalObject.GunEntity.EntityId} - {physGunOb.GunEntity.EntityId}[{GunBase.PhysicalObject.GunEntity.EntityId}] - {physGunOb.SubtypeName}");
                         }
                         else
-                            Log.Line($"retrived storage for: {physGunOb.GunEntity.EntityId}[{GunBase.PhysicalObject.GunEntity.EntityId}] - {physGunOb.SubtypeName}");
+                            Log.Line($"retrived storage for: loading:{load} - {physGunOb.GunEntity.EntityId}[{GunBase.PhysicalObject.GunEntity.EntityId}] - {physGunOb.SubtypeName}");
 
                         if (physGunOb.GunEntity.EntityId == GunBase.PhysicalObject.GunEntity.EntityId)
                         {
-                            Log.Line($"ammo:{storage.CurrentAmmunition}[{Rifle.CurrentAmmunition}] - mAmmo:{storage.CurrentMagazineAmmunition}[{Rifle.CurrentMagazineAmmunition}] - mags:{storage.CurrentMagazineAmount}[{Rifle.CurrentMagazineAmount}]");
-
                             if (!load)
                             {
                                 storage.CurrentAmmunition = Rifle.CurrentAmmunition;
@@ -108,8 +117,11 @@ namespace CoreSystems.Platform
                             {
                                 Rifle.CurrentAmmunition = storage.CurrentAmmunition;
                                 Rifle.CurrentMagazineAmmunition = storage.CurrentMagazineAmmunition;
+                                PrimaryWeapon.ProtoWeaponAmmo.CurrentAmmo = storage.CurrentMagazineAmmunition;
                                 Rifle.CurrentMagazineAmount = storage.CurrentMagazineAmount;
                             }
+
+                            Log.Line($"ammo[s:{storage.CurrentAmmunition} r:{Rifle.CurrentAmmunition} w:{PrimaryWeapon.ProtoWeaponAmmo.CurrentAmmo}] - mAmmo[s:{storage.CurrentMagazineAmmunition} r:{Rifle.CurrentMagazineAmmunition}] - mags[s:{storage.CurrentMagazineAmount} r:{Rifle.CurrentMagazineAmount} w:{PrimaryWeapon.Reload.CurrentMags}]");
 
                         }
 
