@@ -1019,8 +1019,9 @@ namespace CoreSystems.Support
 
                     if (a.Const.CustomDetParticle || System.Session.Av.ExplosionReady)
                     {
-                        var matrix = MatrixD.CreateTranslation(pos);
-
+                        var particle = AmmoDef.AmmoGraphics.Particles.Hit;
+                        var keenStrikesAgain = particle.Offset == Vector3D.MaxValue;
+                        var matrix = !keenStrikesAgain ? MatrixD.CreateTranslation(pos) : MatrixD.CreateWorld(pos, VisualDir, OriginUp);
                         MyParticleEffect detEffect;
                         if (MyParticlesManager.TryCreateParticleEffect(a.Const.DetParticleStr, ref matrix, ref pos, uint.MaxValue, out detEffect))
                         {

@@ -5,6 +5,7 @@ using CoreSystems.Support;
 using Sandbox.Definitions;
 using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Cube;
+using Sandbox.Game.Weapons;
 using Sandbox.ModAPI;
 using VRage.Game;
 using VRage.Game.Components;
@@ -1266,6 +1267,26 @@ namespace CoreSystems
                     var hit = (MyEntity)hitInfo.HitEntity;
                     var hitPoint = hitInfo.Position + (hitEnt.Intersection.Direction * 0.1f);
                     var rayHitTarget = box.Contains(hitPoint) != ContainmentType.Disjoint && hit == block.CubeGrid;
+                    return rayHitTarget;
+                }
+            }
+            return false;
+        }
+
+        private bool RayAccuracyCheck(HitEntity hitEnt, IMyCharacter character)
+        {
+            var box = character.PositionComp.WorldAABB;
+            var ray = new RayD(ref hitEnt.Intersection.From, ref hitEnt.Intersection.Direction);
+            var rayHit = ray.Intersects(box);
+            if (rayHit != null)
+            {
+                var hitPos = hitEnt.Intersection.From + (hitEnt.Intersection.Direction * (rayHit.Value - 0.1f));
+                IHitInfo hitInfo;
+                if (Physics.CastRay(hitPos, hitEnt.Intersection.To, out hitInfo, 15))
+                {
+                    var hit = (MyEntity)hitInfo.HitEntity;
+                    var hitPoint = hitInfo.Position + (hitEnt.Intersection.Direction * 0.1f);
+                    var rayHitTarget = box.Contains(hitPoint) != ContainmentType.Disjoint && hit == character;
                     return rayHitTarget;
                 }
             }
