@@ -599,7 +599,6 @@ namespace CoreSystems
             try
             {
                 TopMap topMap;
-
                 var otherExitControl = exitEntity as IMyAutomaticRifleGun;
                 var exitController = exitEntity as IMyControllableEntity;
                 CoreComponent exitComp = null;
@@ -610,14 +609,26 @@ namespace CoreSystems
 
                     if (topEnt != null && TopEntityToInfoMap.TryGetValue(topEnt, out topMap))
                     {
+
                         var controlledEnt = cube ?? exitComp.CoreEntity;
-                        
                         topMap.LastControllerTick = Tick + 1;
 
-                        if (topMap.GroupMap != null)
-                            topMap.GroupMap.LastControllerTick = Tick + 1;
-                        else if (IsServer)
-                            Log.Line($"OnPlayerController exit gridmap null");
+                        long playerId;
+                        if (topMap.ControlEntityPlayerMap.TryGetValue(controlledEnt, out playerId))
+                        {
+                            var topMapPlayerRemoved = topMap.PlayerControllers.Remove(playerId);
+                            if (topMap.GroupMap != null)
+                            {
+                                topMap.GroupMap.LastControllerTick = Tick + 1;
+                                if (cube != null)
+                                {
+                                    var pController = new PlayerController { ControlEntity = controlledEnt, Id = playerId, EntityId = controlledEnt.EntityId, ChangeTick = Tick, LastChangeReason = PlayerController.ChangeType.Remove };
+                                    topMap.GroupMap.ControlPlayerRequest[playerId] = pController;
+                                }
+                            }
+                            else if (IsServer)
+                                Log.Line($"OnPlayerController exit gridmap null");
+                        }
 
                         Ai ai;
                         if (EntityAIs.TryGetValue(topEnt, out ai))
@@ -625,15 +636,13 @@ namespace CoreSystems
                             CoreComponent comp;
                             if (ai.CompBase.TryGetValue(controlledEnt, out comp))
                             {
-                                var playerId = comp.LastControllingPlayerId;
-                                var removed = topMap.PlayerControllers.Remove(playerId);
-
+                                var lastPlayerId = comp.LastControllingPlayerId;
                                 var wComp = comp as Weapon.WeaponComponent;
                                 var cComp = comp as ControlSys.ControlComponent;
                                 if (wComp != null)
-                                    wComp.ReleaseControl(playerId);
+                                    wComp.ReleaseControl(lastPlayerId);
                                 else if (cComp != null)
-                                    cComp.ReleaseControl(playerId);
+                                    cComp.ReleaseControl(lastPlayerId);
                             }
                         }
                     }
@@ -648,16 +657,12 @@ namespace CoreSystems
                 {
                     var cube = enterEntity as MyCubeBlock;
                     var topEnt = cube?.CubeGrid ?? enterComp?.TopEntity;
-                    var playerId = enterComp?.Ai?.AiOwner ?? enterController?.ControllerInfo?.ControllingIdentityId ?? 0;
+                    var playerId = enterController?.ControllerInfo?.ControllingIdentityId ?? enterComp?.Ai?.AiOwner ?? 0;
                     if (topEnt != null && playerId != 0 && TopEntityToInfoMap.TryGetValue(topEnt, out topMap))
                     {
-                        var controlledEnt = cube ?? enterEntity;
-
-                        topMap.LastControllerTick = Tick + 1;
-                        if (topMap.GroupMap != null)
-                            topMap.GroupMap.LastControllerTick = Tick + 1;
-
                         var shareControl = true;
+                        var controlledEnt = cube ?? enterEntity;
+                        
                         Ai ai;
                         if (EntityAIs.TryGetValue(topEnt, out ai))
                         {
@@ -679,10 +684,16 @@ namespace CoreSystems
                             }
                         }
 
-
-                        var pController = new PlayerController { ControlEntity = controlledEnt, Id = playerId, EntityId = controlledEnt.EntityId, ChangeTick = Tick, ShareControl = shareControl, };
-                        topMap.GroupMap.ControlPlayerRequest[playerId] = pController;
+                        var pController = new PlayerController { ControlEntity = controlledEnt, Id = playerId, EntityId = controlledEnt.EntityId, ChangeTick = Tick, ShareControl = shareControl, LastChangeReason = PlayerController.ChangeType.Add};
+                        topMap.LastControllerTick = Tick + 1;
                         topMap.PlayerControllers[playerId] = pController;
+                        topMap.ControlEntityPlayerMap[controlledEnt] = playerId;
+
+                        if (topMap.GroupMap != null && cube != null)
+                        {
+                            topMap.GroupMap.LastControllerTick = Tick + 1;
+                            topMap.GroupMap.ControlPlayerRequest[playerId] = pController;
+                        }
                     }
                 }
             }

@@ -23,6 +23,7 @@ namespace CoreSystems
     public class TopMap
     {
         public readonly Dictionary<long, Ai.PlayerController> PlayerControllers = new Dictionary<long, Ai.PlayerController>();
+        public readonly Dictionary<MyEntity, long> ControlEntityPlayerMap = new Dictionary<MyEntity, long>();
         public ConcurrentCachingList<MyCubeBlock> MyCubeBocks;
         public MyGridTargeting Targeting;
         public GridGroupMap GroupMap;
@@ -39,6 +40,7 @@ namespace CoreSystems
         internal void Clean()
         {
             PlayerControllers.Clear();
+            ControlEntityPlayerMap.Clear();
             Targeting = null;
             GroupMap = null;
             MyCubeBocks = null;

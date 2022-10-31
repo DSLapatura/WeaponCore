@@ -966,6 +966,7 @@ namespace CoreSystems
         public readonly ConcurrentDictionary<MyEntity, Ai> Construct = new ConcurrentDictionary<MyEntity, Ai>();
         public readonly List<Ai> Ais = new List<Ai>();
         public readonly Dictionary<long, Ai.PlayerController> ControlPlayerRequest = new Dictionary<long, Ai.PlayerController>();
+
         public readonly Session Session;
         public bool Dirty;
         public GridLinkTypeEnum Type;

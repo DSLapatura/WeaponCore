@@ -618,11 +618,18 @@ namespace CoreSystems.Support
 
         public struct PlayerController
         {
+            public enum ChangeType
+            {
+                Add,
+                Remove,
+            }
+
             internal long Id;
             internal long EntityId;
             internal uint ChangeTick;
             internal bool ShareControl;
             internal MyEntity ControlEntity;
+            internal ChangeType LastChangeReason;
         }
 
         public struct PlayerControllerEntity

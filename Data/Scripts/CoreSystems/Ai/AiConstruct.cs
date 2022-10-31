@@ -374,8 +374,14 @@ namespace CoreSystems.Support
                 var s = rootAi.Session;
                 rootConstruct.ControllingPlayers.Clear();
 
+
                 foreach (var req in map.ControlPlayerRequest)
-                    rootAi.TopEntityMap.PlayerControllers[req.Key] = req.Value;
+                {
+                    if (req.Value.LastChangeReason == PlayerController.ChangeType.Add)
+                        rootAi.TopEntityMap.PlayerControllers[req.Key] = req.Value;
+                    else if (req.Value.LastChangeReason == PlayerController.ChangeType.Remove)
+                        rootAi.TopEntityMap.PlayerControllers.Remove(req.Key);
+                }
 
                 foreach (var ai in rootAi.TopEntityMap.GroupMap.Ais)
                 {
