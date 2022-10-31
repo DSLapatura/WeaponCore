@@ -253,7 +253,7 @@ namespace CoreSystems.Support
                     if (Ai.AiSpawnTick > Ai.Construct.LastRefreshTick || Ai.Construct.LastRefreshTick == 0)
                         Ai.TopEntityMap.GroupMap.UpdateAis();
                 }
-                else if (TypeSpecific == CompTypeSpecific.Rifle && (Ai.AiSpawnTick > Ai.Construct.LastRefreshTick || Ai.Construct.LastRefreshTick == 0))
+                else if (TypeSpecific == CompTypeSpecific.Rifle)
                 {
                     Ai.TopEntityMap.GroupMap.UpdateAis();
                     Session.OnPlayerControl(null, CoreEntity);

@@ -605,14 +605,11 @@ namespace CoreSystems
                 CoreComponent exitComp = null;
                 if (exitController?.ControllerInfo != null || otherExitControl != null && IdToCompMap.TryGetValue(otherExitControl.EntityId, out exitComp))
                 {
-                    Log.Line($"exit1: {exitEntity.DebugName}");
                     var cube = exitEntity as MyCubeBlock;
                     var topEnt = cube?.CubeGrid ?? exitComp?.TopEntity;
 
                     if (topEnt != null && TopEntityToInfoMap.TryGetValue(topEnt, out topMap))
                     {
-                        Log.Line($"exit2 {exitEntity.DebugName}");
-
                         var controlledEnt = cube ?? exitComp.CoreEntity;
                         
                         topMap.LastControllerTick = Tick + 1;
@@ -625,13 +622,9 @@ namespace CoreSystems
                         Ai ai;
                         if (EntityAIs.TryGetValue(topEnt, out ai))
                         {
-                            Log.Line($"exit3 {exitEntity.DebugName}");
-
                             CoreComponent comp;
                             if (ai.CompBase.TryGetValue(controlledEnt, out comp))
                             {
-                                Log.Line($"exit4 {exitEntity.DebugName}");
-
                                 var playerId = comp.LastControllingPlayerId;
                                 var removed = topMap.PlayerControllers.Remove(playerId);
 
@@ -658,8 +651,6 @@ namespace CoreSystems
                     var playerId = enterComp?.Ai?.AiOwner ?? enterController?.ControllerInfo?.ControllingIdentityId ?? 0;
                     if (topEnt != null && playerId != 0 && TopEntityToInfoMap.TryGetValue(topEnt, out topMap))
                     {
-                        Log.Line($"enter2: {enterEntity.DebugName} - groupUpdateNeeded:{topMap.GroupMap.Construct.ContainsKey(topEnt)} - {topMap.GroupMap.Ais.Count} - {enterComp != null} - {playerId} - {enterController?.ControllerInfo?.ControllingIdentityId}");
-                     
                         var controlledEnt = cube ?? enterEntity;
 
                         topMap.LastControllerTick = Tick + 1;
