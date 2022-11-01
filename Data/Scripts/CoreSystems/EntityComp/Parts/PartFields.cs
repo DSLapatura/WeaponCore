@@ -7,7 +7,7 @@ namespace CoreSystems.Platform
 {
     public partial class Part
     {
-        internal readonly List<Action<long, int, ulong, long, Vector3D, bool>> Monitors = new List<Action<long, int, ulong, long, Vector3D, bool>>();
+        //internal readonly List<Action<long, int, ulong, long, Vector3D, bool>> Monitors = new List<Action<long, int, ulong, long, Vector3D, bool>>();
 
         internal CoreComponent BaseComp;
         internal CoreSystem CoreSystem;
@@ -40,8 +40,8 @@ namespace CoreSystems.Platform
             Acquire = new PartAcquire(this);
             UniquePartId = comp.Session.UniquePartId;
             ShortLoadId = comp.Session.ShortLoadAssigner();
-            for (int i = 0; i < BaseComp.Monitors[PartId].Count; i++)
-                Monitors.Add(BaseComp.Monitors[PartId][i]);
+            //for (int i = 0; i < BaseComp.Monitors[PartId].Count; i++)
+            //    Monitors.Add(BaseComp.Monitors[PartId][i]);
         }
 
 

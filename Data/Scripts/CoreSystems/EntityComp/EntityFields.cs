@@ -25,7 +25,7 @@ namespace CoreSystems.Support
         internal List<Action<long, int, ulong, long, Vector3D, bool>>[] Monitors;
         internal bool InControlPanel => MyAPIGateway.Gui.GetCurrentScreen == MyTerminalPageEnum.ControlPanel;
         internal readonly RunningAverage DamageAverage = new RunningAverage(10);
-
+        internal readonly List<long> DamageHandlerRegistrants = new List<long>();
 
         internal bool InventoryInited;
         internal CompType Type;

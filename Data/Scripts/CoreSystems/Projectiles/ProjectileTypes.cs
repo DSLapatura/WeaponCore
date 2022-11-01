@@ -13,6 +13,8 @@ using static CoreSystems.Support.HitEntity.Type;
 using static CoreSystems.Support.WeaponDefinition;
 using static CoreSystems.Support.Ai;
 using CollisionLayers = Sandbox.Engine.Physics.MyPhysics.CollisionLayers;
+using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
+
 namespace CoreSystems.Support
 {
     public class ProInfo
@@ -112,9 +114,10 @@ namespace CoreSystems.Support
 
         internal void Clean(bool usesStorage = false)
         {
-            if (Weapon.Monitors?.Count > 0) {
-                for (int i = 0; i < Weapon.Monitors.Count; i++)
-                    Weapon.Monitors[i].Invoke(Target.CoreEntity.EntityId, Weapon.PartId,Id, Target.TargetId, Hit.LastHit, false);
+            var monitor = Weapon.Comp.Monitors[Weapon.PartId];
+            if (monitor.Count > 0) {
+                for (int i = 0; i < monitor.Count; i++)
+                    monitor[i].Invoke(Target.CoreEntity.EntityId, Weapon.PartId, Id, Target.TargetId, Hit.LastHit, false);
 
                 Weapon.System.Session.MonitoredProjectiles.Remove(Id);
             }
@@ -137,7 +140,6 @@ namespace CoreSystems.Support
                 {
                     Weapon.System.Session.UniqueMuzzleId = VoxelCache;
                 }
-                else Log.Line("HasFragment voxelcache return failure");
             }
 
             if (PrimeEntity != null)

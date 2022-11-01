@@ -116,6 +116,15 @@ namespace CoreSystems.Support
                     var ammo = weaponDef.Ammos[i];
                     if (!shrapnelNames.Contains(ammo.Fragment.AmmoRound) && !string.IsNullOrEmpty(ammo.Fragment.AmmoRound))
                         shrapnelNames.Add(ammo.Fragment.AmmoRound);
+                    if (ammo.Pattern.Mode == AmmoDef.PatternDef.PatternModes.Both || ammo.Pattern.Mode == AmmoDef.PatternDef.PatternModes.Fragment)
+                    {
+                        foreach (var name in ammo.Pattern.Patterns) 
+                        {
+                            if (!shrapnelNames.Contains(name) && !string.IsNullOrEmpty(name))
+                                shrapnelNames.Add(name);
+                        }
+                    }
+
                 }
 
                 var weaponAmmo = new WeaponSystem.AmmoType[weaponDef.Ammos.Length];

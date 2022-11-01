@@ -59,6 +59,8 @@ namespace CoreSystems.Projectiles
                 var selfDamage = aConst.SelfDamage;
                 var ignoreVoxels = aDef.IgnoreVoxels;
                 var isGrid = ai.AiType == Ai.AiTypes.Grid;
+                var beamLen = p.Beam.Length;
+                var beamLenSqr = beamLen * beamLen;
 
                 //New Obb, have fun!
                 var lastpos = p.LastPosition;
@@ -282,21 +284,30 @@ namespace CoreSystems.Projectiles
                                     {
                                         var surfacePos = info.MyPlanet.GetClosestSurfacePointGlobal(ref p.Position);
                                         var planetCenter = info.MyPlanet.PositionComp.WorldAABB.Center;
+                                        var prevEndPointToSurface = p.EndPointToSurfaceSqr;
+                                        Vector3D.DistanceSquared(ref surfacePos, ref p.Position, out p.EndPointToSurfaceSqr);
+
                                         double surfaceToCenter;
                                         Vector3D.DistanceSquared(ref surfacePos, ref planetCenter, out surfaceToCenter);
-                                        double endPointToCenter;
-                                        Vector3D.DistanceSquared(ref p.Position, ref planetCenter, out endPointToCenter);
-                                        double startPointToCenter;
-                                        Vector3D.DistanceSquared(ref info.Origin, ref planetCenter, out startPointToCenter);
+                                        double posToCenter;
+                                        Vector3D.DistanceSquared(ref p.Position, ref planetCenter, out posToCenter);
+                                        double startPosToCenter;
+                                        Vector3D.DistanceSquared(ref info.Origin, ref planetCenter, out startPosToCenter);
 
-                                        var prevEndPointToCenter = p.PrevEndPointToCenterSqr;
-                                        Vector3D.DistanceSquared(ref surfacePos, ref p.Position, out p.PrevEndPointToCenterSqr);
-                                        if (surfaceToCenter > endPointToCenter || p.PrevEndPointToCenterSqr <= (p.Beam.Length * p.Beam.Length) || endPointToCenter > startPointToCenter && prevEndPointToCenter > p.DistanceToTravelSqr || surfaceToCenter > Vector3D.DistanceSquared(planetCenter, p.LastPosition))
+                                        var distToSurfaceLessThanProLengthSqr = p.EndPointToSurfaceSqr <= beamLenSqr;
+                                        var pastSurfaceDistMoreThanToTravel = prevEndPointToSurface > p.DistanceToTravelSqr;
+
+                                        var surfacePosAboveEndpoint = surfaceToCenter > posToCenter;
+                                        var posMovingCloserToCenter = posToCenter > startPosToCenter;
+
+                                        var isThisRight = posMovingCloserToCenter && pastSurfaceDistMoreThanToTravel;
+
+                                        if (surfacePosAboveEndpoint || distToSurfaceLessThanProLengthSqr || isThisRight || surfaceToCenter > Vector3D.DistanceSquared(planetCenter, p.LastPosition))
                                         {
                                             var estiamtedSurfaceDistance = ray.Intersects(info.VoxelCache.PlanetSphere);
                                             var fullCheck = info.VoxelCache.PlanetSphere.Contains(p.Info.Origin) != ContainmentType.Disjoint || !estiamtedSurfaceDistance.HasValue;
 
-                                            if (!fullCheck && estiamtedSurfaceDistance.HasValue && (estiamtedSurfaceDistance.Value <= p.Beam.Length || info.VoxelCache.PlanetSphere.Radius < 1))
+                                            if (!fullCheck && estiamtedSurfaceDistance.HasValue && (estiamtedSurfaceDistance.Value <= beamLen || info.VoxelCache.PlanetSphere.Radius < 1))
                                             {
 
                                                 double distSqr;

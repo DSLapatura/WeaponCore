@@ -38,7 +38,7 @@ namespace CoreSystems.Projectiles
 
                 info.Id = Session.Projectiles.CurrentProjectileId++;
                 info.Weapon = w;
-                info.CompSceneVersion = w.Comp.SceneVersion;
+                info.CompSceneVersion = comp.SceneVersion;
                 info.Ai = comp.Ai;
                 info.AimedShot = aimed;
                 info.AmmoDef = a;
@@ -71,7 +71,7 @@ namespace CoreSystems.Projectiles
                 info.MaxTrajectory = t != Kind.Client ? aConst.MaxTrajectoryGrows && w.FireCounter < a.Trajectory.MaxTrajectoryTime ? aConst.TrajectoryStep * w.FireCounter : aConst.MaxTrajectory : gen.MaxTrajectory;
                 info.MuzzleId = t != Kind.Virtual ? muzzle.MuzzleId : -1;
                 info.UniqueMuzzleId = muzzle.UniqueId;
-                info.Weapon.WeaponCache.VirutalId = t != Kind.Virtual ? -1 : info.Weapon.WeaponCache.VirutalId;
+                w.WeaponCache.VirutalId = t != Kind.Virtual ? -1 : w.WeaponCache.VirutalId;
                 info.Origin = t != Kind.Client ? t != Kind.Virtual ? muzzle.Position : w.MyPivotPos : gen.Origin;
                 info.Direction = t != Kind.Client ? t != Kind.Virtual ? gen.Direction : w.MyPivotFwd : gen.Direction;
 
@@ -113,19 +113,19 @@ namespace CoreSystems.Projectiles
                 }
                 else
                 {
-                    info.Weapon.WeaponCache.VirtualHit = false;
-                    info.Weapon.WeaponCache.Hits = 0;
-                    info.Weapon.WeaponCache.HitEntity.Entity = null;
+                    w.WeaponCache.VirtualHit = false;
+                    w.WeaponCache.Hits = 0;
+                    w.WeaponCache.HitEntity.Entity = null;
                     for (int j = 0; j < virts.Count; j++)
                     {
                         var v = virts[j];
                         p.VrPros.Add(v.Info);
-                        if (!a.Const.RotateRealBeam) info.Weapon.WeaponCache.VirutalId = 0;
+                        if (!a.Const.RotateRealBeam) w.WeaponCache.VirutalId = 0;
                         else if (v.Rotate)
                         {
                             info.Origin = v.Muzzle.Position;
                             info.Direction = v.Muzzle.Direction;
-                            info.Weapon.WeaponCache.VirutalId = v.VirtualId;
+                            w.WeaponCache.VirutalId = v.VirtualId;
                         }
                     }
                     virts.Clear();
@@ -134,11 +134,12 @@ namespace CoreSystems.Projectiles
                 Session.Projectiles.ActiveProjetiles.Add(p);
                 p.Start();
 
-                if (info.Weapon.Monitors?.Count > 0)
+                var monitor = comp.Monitors[w.PartId];
+                if (monitor.Count > 0)
                 {
                     Session.MonitoredProjectiles[p.Info.Id] = p;
-                    for (int j = 0; j < info.Weapon.Monitors.Count; j++)
-                        p.Info.Weapon.Monitors[j].Invoke(comp.Cube.EntityId, w.PartId, info.Id, target.TargetId, p.Position, true);
+                    for (int j = 0; j < monitor.Count; j++)
+                        monitor[j].Invoke(comp.Cube.EntityId, w.PartId, info.Id, target.TargetId, p.Position, true);
                 }
 
                 if (aConst.ProjectileSync) 

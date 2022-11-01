@@ -29,6 +29,7 @@ using VRage.Utils;
 using VRage.Voxels;
 using VRageMath;
 using WeaponCore.Data.Scripts.CoreSystems.Ui;
+using static CoreSystems.Api.WcApi;
 using static CoreSystems.Support.Ai;
 
 namespace CoreSystems
@@ -176,8 +177,8 @@ namespace CoreSystems
         internal readonly Dictionary<ulong, Projectile> MonitoredProjectiles = new Dictionary<ulong, Projectile>();
         internal readonly Dictionary<MyEntity, ProtoProPositionSync> GlobalProPosSyncs = new Dictionary<MyEntity, ProtoProPositionSync>();
         internal readonly Dictionary<MyEntity, ProtoProStateSync> GlobalProStateSyncs = new Dictionary<MyEntity, ProtoProStateSync>();
-
         internal readonly Dictionary<ulong, TickLatency> PlayerTickLatency = new Dictionary<ulong, TickLatency>();
+        internal readonly Dictionary<long, DamageEventRegRequest> DamageHandlerRegistrants = new Dictionary<long, DamageEventRegRequest>();
 
         internal readonly ConcurrentDictionary<long, int> DeferredPlayerLock = new ConcurrentDictionary<long, int>();
         internal readonly HashSet<MyDefinitionId> DefIdsComparer = new HashSet<MyDefinitionId>(MyDefinitionId.Comparer);
@@ -211,6 +212,7 @@ namespace CoreSystems
         internal readonly List<Weapon> HomingWeapons = new List<Weapon>(128);
         internal readonly List<Ai> AimingAi = new List<Ai>(128);
         internal readonly List<IHitInfo> HitInfoTmpList = new List<IHitInfo>();
+        internal readonly List<DamageEventRegRequest> SystemWideDamageRegistrants = new List<DamageEventRegRequest>();
 
         internal readonly HashSet<MyDefinitionId> CoreSystemsFixedBlockDefs = new HashSet<MyDefinitionId>();
         internal readonly HashSet<MyDefinitionId> CoreSystemsTurretBlockDefs = new HashSet<MyDefinitionId>();

@@ -597,6 +597,23 @@ namespace CoreSystems.Support
                 ControllingPlayers.Clear();
                 ConstructTargetInfoCache.Clear();
             }
+
+            public void RegisterModFromDamageHandler(long modId) => RegisterModFromDamageHandler(modId, true);
+            public void UnregisterModFromDamageHandler(long modId) => RegisterModFromDamageHandler(modId, false);
+
+            public void RegisterModFromDamageHandler(long modId, bool add)
+            {
+                foreach (var ai in RootAi.TopEntityMap.GroupMap.Ais)
+                {
+                    foreach (var comp in ai.CompBase.Values)
+                    {
+                        if (add)
+                            comp.DamageHandlerRegistrants.Add(modId);
+                        else
+                            comp.DamageHandlerRegistrants.Remove(modId);
+                    }
+                }
+            }
         }
     }
 

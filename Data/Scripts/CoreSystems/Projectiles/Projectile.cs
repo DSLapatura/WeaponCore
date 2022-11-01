@@ -56,7 +56,7 @@ namespace CoreSystems.Projectiles
         internal double MaxSpeedSqr;
         internal double MaxSpeed;
         internal double MaxTrajectorySqr;
-        internal double PrevEndPointToCenterSqr;
+        internal double EndPointToSurfaceSqr;
         internal float DesiredSpeed;
         internal int DeaccelRate;
         internal int ChaseAge;
@@ -164,7 +164,7 @@ namespace CoreSystems.Projectiles
             EndStep = 0;
             Info.PrevDistanceTraveled = 0;
             Info.DistanceTraveled = 0;
-            PrevEndPointToCenterSqr = double.MaxValue;
+            EndPointToSurfaceSqr = double.MaxValue;
             var trajectory = ammoDef.Trajectory;
             var guidance = trajectory.Guidance;
 

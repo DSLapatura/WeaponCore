@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using ProtoBuf;
 using Sandbox.ModAPI;
 using VRage;
-using VRage.Game;
 using VRage.ModAPI;
 using VRageMath;
 
@@ -34,8 +32,7 @@ namespace CoreSystems.Api
         private Func<IMyTerminalBlock, bool> _hasCoreWeapon;
         private Func<IMyTerminalBlock, int, string> _getActiveAmmo;
         private Action<IMyTerminalBlock, int, string> _setActiveAmmo;
-        private Action<IMyTerminalBlock, int, Action<long, int, ulong, long, Vector3D, bool>> _monitorProjectile; // Legacy use base version
-        private Action<IMyTerminalBlock, int, Action<long, int, ulong, long, Vector3D, bool>> _unMonitorProjectile; // Legacy use base version
+
         private Func<IMyTerminalBlock, long> _getPlayerController;
         private Func<IMyTerminalBlock, int, Matrix> _getWeaponAzimuthMatrix;
         private Func<IMyTerminalBlock, int, Matrix> _getWeaponElevationMatrix;
@@ -95,12 +92,6 @@ namespace CoreSystems.Api
 
         public void SetActiveAmmo(IMyTerminalBlock weapon, int weaponId, string ammoType) =>
             _setActiveAmmo?.Invoke(weapon, weaponId, ammoType);
-
-        public void MonitorProjectileCallback(IMyTerminalBlock weapon, int weaponId, Action<long, int, ulong, long, Vector3D, bool> action) =>
-            _monitorProjectile?.Invoke(weapon, weaponId, action);
-
-        public void UnMonitorProjectileCallback(IMyTerminalBlock weapon, int weaponId, Action<long, int, ulong, long, Vector3D, bool> action) =>
-            _unMonitorProjectile?.Invoke(weapon, weaponId, action);
 
         public long GetPlayerController(IMyTerminalBlock weapon) => _getPlayerController?.Invoke(weapon) ?? -1;
 

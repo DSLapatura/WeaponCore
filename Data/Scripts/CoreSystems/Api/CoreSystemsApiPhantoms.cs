@@ -1,14 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using CoreSystems.Support;
-using ProtoBuf;
-using Sandbox.ModAPI;
 using VRage;
-using VRage.Game;
-using VRage.ModAPI;
 using VRageMath;
-using CoreSystems.Api;
 using VRage.Game.Entity;
 
 namespace CoreSystems.Api

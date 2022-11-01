@@ -616,6 +616,7 @@ namespace CoreSystems
                         long playerId;
                         if (topMap.ControlEntityPlayerMap.TryGetValue(controlledEnt, out playerId))
                         {
+                            topMap.ControlEntityPlayerMap.Remove(controlledEnt);
                             var topMapPlayerRemoved = topMap.PlayerControllers.Remove(playerId);
                             if (topMap.GroupMap != null)
                             {

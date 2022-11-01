@@ -1,12 +1,19 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using CoreSystems.Support;
 using ProtoBuf;
+using Sandbox.Game.Debugging;
+using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
 using VRage;
+using VRage.Collections;
 using VRage.Game;
 using VRage.Game.Entity;
+using VRage.Library.Collections;
 using VRage.ModAPI;
 using VRageMath;
+using static CoreSystems.Api.WcApi.DamageHandlerHelper;
 
 namespace CoreSystems.Api
 {
@@ -39,6 +46,9 @@ namespace CoreSystems.Api
         private Func<ulong, MyTuple<Vector3D, Vector3D, float, float, long, string>> _getProjectileState;
         private Action<MyEntity, int, Action<long, int, ulong, long, Vector3D, bool>> _addProjectileMonitor;
         private Action<MyEntity, int, Action<long, int, ulong, long, Vector3D, bool>> _removeProjectileMonitor;
+        private Action<IMyTerminalBlock, int, Action<long, int, ulong, long, Vector3D, bool>> _monitorProjectile; // Legacy use base version
+        private Action<IMyTerminalBlock, int, Action<long, int, ulong, long, Vector3D, bool>> _unMonitorProjectile; // Legacy use base version
+        private Action<long, int, List<MyEntity>, Action<ListReader<MyTuple<long, long, int, MyEntity, MyEntity, ListReader<MyTuple<Vector3D, object, float>>>>>> _registerDamageEvent;
 
         public void GetAllWeaponDefinitions(IList<byte[]> collection) => _getAllWeaponDefinitions?.Invoke(collection);
         public void GetAllCoreWeapons(ICollection<MyDefinitionId> collection) => _getCoreWeapons?.Invoke(collection);
@@ -78,6 +88,13 @@ namespace CoreSystems.Api
         // block/grid, Threat, Other 
         public MyTuple<bool, bool> IsInRange(IMyEntity entity) =>
             _isInRange?.Invoke(entity) ?? new MyTuple<bool, bool>();
+
+
+        // register for damage events
+        public void RegisterDamageEvent(long modId, int type, List<MyEntity> entities, Action<ListReader<MyTuple<long, long, int, MyEntity, MyEntity, ListReader<MyTuple<Vector3D, object, float>>>>> callback)
+        {
+            _registerDamageEvent?.Invoke(modId, type, entities, callback);
+        }
 
 
         private const long Channel = 67549756549;
@@ -239,6 +256,92 @@ namespace CoreSystems.Api
                 throw new Exception(
                     $"{GetType().Name} :: Delegate {name} is not type {typeof(T)}, instead it's: {del.GetType()}");
         }
+
+        internal class DamageHandlerHelper
+        {
+            public void YourCallBackFunction(List<ProjectileHitTick> list)
+            {
+                // Your code goes here
+                //
+                // Once this function completes the data in the list will be deleted... if you need to use the data in this list
+                // after this function completes make a copy of it.
+                //
+            }
+
+
+            /// Don't touch anything below this line
+            public void RegisterForDamage(long modId, EventType type, List<MyEntity> listOfWeaponsAndOrGrids)
+            {
+                _wcApi.RegisterDamageEvent(modId, (int) type, listOfWeaponsAndOrGrids, DefaultCallBack);
+            }
+
+            private void DefaultCallBack(ListReader<MyTuple<long, long, int, MyEntity, MyEntity, ListReader<MyTuple<Vector3D, object, float>>>> listReader)
+            {
+                YourCallBackFunction(ProcessEvents(listReader));
+                CleanUpEvents();
+            }
+
+            private readonly List<ProjectileHitTick> _convertedObjects = new List<ProjectileHitTick>();
+            private readonly Stack<List<ProjectileHitTick.ProHit>> _hitPool = new Stack<List<ProjectileHitTick.ProHit>>(256);
+
+            private List<ProjectileHitTick> ProcessEvents(ListReader<MyTuple<long, long, int, MyEntity, MyEntity, ListReader<MyTuple<Vector3D, object, float>>>> projectiles)
+            {
+                foreach (var p in projectiles)
+                {
+                    var hits = _hitPool.Count > 0 ? _hitPool.Pop() : new List<ProjectileHitTick.ProHit>();
+
+                    foreach (var hitObj in p.Item6)
+                    {
+                        hits.Add(new ProjectileHitTick.ProHit { HitPosition = hitObj.Item1, ObjectHit = hitObj.Item2, Damage = hitObj.Item3 });
+                    }
+                    _convertedObjects.Add(new ProjectileHitTick { ProId = p.Item1, PlayerId = p.Item2, WeaponId = p.Item3, WeaponEntity = p.Item4, WeaponParent = p.Item5, ObjectsHit = hits });
+                }
+
+                return _convertedObjects;
+            }
+
+            private void CleanUpEvents()
+            {
+                foreach (var p in _convertedObjects)
+                {
+                    p.ObjectsHit.Clear();
+                    _hitPool.Push(p.ObjectsHit);
+                }
+                _convertedObjects.Clear();
+            }
+
+            public struct ProjectileHitTick
+            {
+                public long ProId;
+                public long PlayerId;
+                public int WeaponId;
+                public MyEntity WeaponEntity;
+                public MyEntity WeaponParent;
+                public List<ProHit> ObjectsHit;
+
+                public struct ProHit
+                {
+                    public Vector3D HitPosition; // To == first hit, From = projectile start position this frame
+                    public object ObjectHit; // block, player, etc... 
+                    public float Damage;
+                }
+            }
+
+
+            private readonly WcApi _wcApi;
+            public DamageHandlerHelper(WcApi wcApi)
+            {
+                _wcApi = wcApi;
+            }
+
+            public enum EventType
+            {
+                Unregister,
+                SystemWideDamageEvents,
+                ListOfWeaponsOrConstructs, // Only need to specify one Topentity/Construct to enable for whole network/subgrids
+            }
+        }
+
     }
 
 }

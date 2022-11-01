@@ -18,6 +18,8 @@ using static CoreSystems.Support.CoreComponent.Trigger;
 using static CoreSystems.Platform.CorePlatform.PlatformState;
 using IMyProgrammableBlock = Sandbox.ModAPI.Ingame.IMyProgrammableBlock;
 using IMyTerminalBlock = Sandbox.ModAPI.Ingame.IMyTerminalBlock;
+using static CoreSystems.Api.WcApi;
+using System.Collections.ObjectModel;
 
 namespace CoreSystems.Api
 {
@@ -1253,5 +1255,64 @@ namespace CoreSystems.Api
             }
         }
 
+
+        // Calling ModID, DamageEventRegRequest byte stream
+        private void RegisterForDamageEvents(long modId, byte[] request)
+        {
+            var newEventRequest = MyAPIGateway.Utilities.SerializeFromBinary<DamageEventRegRequest>(request);
+            if (newEventRequest != null)
+            {
+
+                _session.DamageHandlerRegistrants.Remove(newEventRequest.ModId);
+
+                for (int i = 0; i < _session.SystemWideDamageRegistrants.Count; i++)
+                {
+                    if (_session.SystemWideDamageRegistrants[i].ModId == newEventRequest.ModId)
+                        _session.SystemWideDamageRegistrants.RemoveAt(i);
+                }
+
+                DamageEventRegRequest oldEventReq;
+                if (_session.DamageHandlerRegistrants.TryGetValue(newEventRequest.ModId, out oldEventReq))
+                {
+                    foreach (var pId in oldEventReq.EntitiesToRegister)
+                    {
+                        MyEntity entity;
+                        if (MyEntities.TryGetEntityById(pId, out entity))
+                        {
+                            Ai oldRootAi;
+                            CoreComponent cComp;
+                            if (_session.EntityToMasterAi.TryGetValue(entity, out oldRootAi))
+                                oldRootAi.Construct.UnregisterModFromDamageHandler(oldEventReq.ModId);
+                            else if (_session.IdToCompMap.TryGetValue(entity.EntityId, out cComp))
+                                cComp.DamageHandlerRegistrants.Remove(oldEventReq.ModId);
+                        }
+                    }
+                }
+
+                if (newEventRequest.Type == DamageEventRegRequest.EventType.Unregister)
+                    return;
+
+                _session.DamageHandlerRegistrants[modId] = newEventRequest;
+
+                if (newEventRequest.Type == DamageEventRegRequest.EventType.SystemWideDamageEvents) {
+                    _session.SystemWideDamageRegistrants.Add(newEventRequest);
+                    return;
+                }
+
+                foreach (var pId in newEventRequest.EntitiesToRegister)
+                {
+                    MyEntity entity;
+                    if (MyEntities.TryGetEntityById(pId, out entity))
+                    {
+                        Ai oldRootAi;
+                        CoreComponent cComp;
+                        if (_session.EntityToMasterAi.TryGetValue(entity, out oldRootAi))
+                            oldRootAi.Construct.RegisterModFromDamageHandler(newEventRequest.ModId);
+                        else if (_session.IdToCompMap.TryGetValue(entity.EntityId, out cComp))
+                            cComp.DamageHandlerRegistrants.Add(newEventRequest.ModId);
+                    }
+                }
+            }
+        }
     }
 }
