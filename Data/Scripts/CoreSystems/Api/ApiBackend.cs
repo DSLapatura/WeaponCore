@@ -15,10 +15,9 @@ using VRage.Game.ModAPI;
 using VRage.ModAPI;
 using VRageMath;
 using static CoreSystems.Platform.CorePlatform.PlatformState;
-using IMyProgrammableBlock = Sandbox.ModAPI.Ingame.IMyProgrammableBlock;
-using IMyTerminalBlock = Sandbox.ModAPI.Ingame.IMyTerminalBlock;
 using VRage.Collections;
 using static CoreSystems.Api.WcApi.DamageHandlerHelper;
+using static CoreSystems.Settings.CoreSettings.ServerSettings;
 
 namespace CoreSystems.Api
 {
@@ -35,6 +34,10 @@ namespace CoreSystems.Api
 
             ModApiMethods = new Dictionary<string, Delegate>
             {
+                ["UnMonitorProjectile"] = new Action<Sandbox.ModAPI.IMyTerminalBlock, int, Action<long, int, ulong, long, Vector3D, bool>>(UnMonitorProjectileCallbackLegacy),
+                ["MonitorProjectile"] = new Action<Sandbox.ModAPI.IMyTerminalBlock, int, Action<long, int, ulong, long, Vector3D, bool>>(MonitorProjectileCallbackLegacy),
+                ["GetBlockWeaponMap"] = new Func<Sandbox.ModAPI.IMyTerminalBlock, IDictionary<string, int>, bool>(GetBlockWeaponMap),
+
                 ["GetAllWeaponDefinitions"] = new Action<IList<byte[]>>(GetAllWeaponDefinitions),
                 ["GetCoreWeapons"] = new Action<ICollection<MyDefinitionId>>(GetCoreWeapons),
                 ["GetCoreStaticLaunchers"] = new Action<ICollection<MyDefinitionId>>(GetCoreStaticLaunchers),
@@ -42,48 +45,91 @@ namespace CoreSystems.Api
                 ["GetCorePhantoms"] = new Action<ICollection<MyDefinitionId>>(GetCorePhantoms),
                 ["GetCoreRifles"] = new Action<ICollection<MyDefinitionId>>(GetCoreRifles),
                 ["GetCoreArmors"] = new Action<IList<byte[]>>(GetCoreArmors),
-                ["GetBlockWeaponMap"] = new Func<Sandbox.ModAPI.IMyTerminalBlock, IDictionary<string, int>, bool>(GetBlockWeaponMap),
-                ["GetProjectilesLockedOn"] = new Func<IMyEntity, MyTuple<bool, int, int>>(GetProjectilesLockedOn),
-                ["GetSortedThreats"] = new Action<IMyEntity, ICollection<MyTuple<IMyEntity, float>>>(GetSortedThreats),
-                ["GetObstructions"] = new Action<IMyEntity, ICollection<IMyEntity>>(GetObstructions),
-                ["GetAiFocus"] = new Func<IMyEntity, int, IMyEntity>(GetAiFocus),
-                ["SetAiFocus"] = new Func<IMyEntity, IMyEntity, int, bool>(SetAiFocus),
-                ["GetWeaponTarget"] = new Func<Sandbox.ModAPI.IMyTerminalBlock, int, MyTuple<bool, bool, bool, IMyEntity>>(GetWeaponTarget),
-                ["SetWeaponTarget"] = new Action<Sandbox.ModAPI.IMyTerminalBlock, IMyEntity, int>(SetWeaponTarget),
-                ["FireWeaponOnce"] = new Action<Sandbox.ModAPI.IMyTerminalBlock, bool, int>(FireWeaponBurst),
-                ["ToggleWeaponFire"] = new Action<Sandbox.ModAPI.IMyTerminalBlock, bool, bool, int>(ToggleWeaponFire),
-                ["IsWeaponReadyToFire"] = new Func<Sandbox.ModAPI.IMyTerminalBlock, int, bool, bool, bool>(IsWeaponReadyToFire),
-                ["GetMaxWeaponRange"] = new Func<Sandbox.ModAPI.IMyTerminalBlock,int, float>(GetMaxWeaponRange),
-                ["GetTurretTargetTypes"] = new Func<Sandbox.ModAPI.IMyTerminalBlock, ICollection<string>, int, bool>(GetTurretTargetTypes),
-                ["SetTurretTargetTypes"] = new Action<Sandbox.ModAPI.IMyTerminalBlock, ICollection<string>, int>(SetTurretTargetTypes),
-                ["SetBlockTrackingRange"] = new Action<Sandbox.ModAPI.IMyTerminalBlock, float>(SetBlockTrackingRange),
-                ["IsTargetAligned"] = new Func<Sandbox.ModAPI.IMyTerminalBlock, IMyEntity, int, bool>(IsTargetAligned),
-                ["IsTargetAlignedExtended"] = new Func<Sandbox.ModAPI.IMyTerminalBlock, IMyEntity, int, MyTuple<bool, Vector3D?>>(IsTargetAlignedExtended),
-                ["CanShootTarget"] = new Func<Sandbox.ModAPI.IMyTerminalBlock, IMyEntity, int, bool>(CanShootTarget),
-                ["GetPredictedTargetPosition"] = new Func<Sandbox.ModAPI.IMyTerminalBlock, IMyEntity, int, Vector3D?>(GetPredictedTargetPosition),
-                ["GetHeatLevel"] = new Func<Sandbox.ModAPI.IMyTerminalBlock, float>(GetHeatLevel),
-                ["GetCurrentPower"] = new Func<Sandbox.ModAPI.IMyTerminalBlock, float>(GetCurrentPower),
+               
                 ["GetMaxPower"] = new Func<MyDefinitionId, float>(GetMaxPower),
-                ["DisableRequiredPower"] = new Action<Sandbox.ModAPI.IMyTerminalBlock>(ModOverride),
-                ["HasGridAi"] = new Func<IMyEntity, bool>(HasGridAi),
-                ["HasCoreWeapon"] = new Func<Sandbox.ModAPI.IMyTerminalBlock, bool>(HasCoreWeapon),
-                ["GetOptimalDps"] = new Func<IMyEntity, float>(GetOptimalDps),
-                ["GetActiveAmmo"] = new Func<Sandbox.ModAPI.IMyTerminalBlock, int, string>(GetActiveAmmo),
-                ["SetActiveAmmo"] = new Action<Sandbox.ModAPI.IMyTerminalBlock, int, string>(SetActiveAmmo),
                 ["RegisterProjectileAdded"] = new Action<Action<Vector3, float>>(RegisterProjectileAddedCallback),
                 ["UnRegisterProjectileAdded"] = new Action<Action<Vector3, float>>(UnRegisterProjectileAddedCallback),
-                ["UnMonitorProjectile"] = new Action<Sandbox.ModAPI.IMyTerminalBlock, int, Action<long, int, ulong, long, Vector3D, bool>>(UnMonitorProjectileCallbackLegacy),
-                ["MonitorProjectile"] = new Action<Sandbox.ModAPI.IMyTerminalBlock, int, Action<long, int, ulong, long, Vector3D, bool>>(MonitorProjectileCallbackLegacy),
                 ["RemoveMonitorProjectile"] = new Action<MyEntity, int, Action<long, int, ulong, long, Vector3D, bool>>(UnMonitorProjectileCallback),
                 ["AddMonitorProjectile"] = new Action<MyEntity, int, Action<long, int, ulong, long, Vector3D, bool>>(MonitorProjectileCallback),
                 ["GetProjectileState"] = new Func<ulong, MyTuple<Vector3D, Vector3D, float, float, long, string>>(GetProjectileState),
-                ["GetConstructEffectiveDps"] = new Func<IMyEntity, float>(GetConstructEffectiveDps),
-                ["GetPlayerController"] = new Func<Sandbox.ModAPI.IMyTerminalBlock, long>(GetPlayerController),
-                ["GetWeaponAzimuthMatrix"] = new Func<Sandbox.ModAPI.IMyTerminalBlock, int, Matrix>(GetWeaponAzimuthMatrix),
-                ["GetWeaponElevationMatrix"] = new Func<Sandbox.ModAPI.IMyTerminalBlock, int, Matrix>(GetWeaponElevationMatrix),
-                ["IsTargetValid"] = new Func<Sandbox.ModAPI.IMyTerminalBlock, IMyEntity, bool, bool, bool>(IsTargetValid),
-                ["GetWeaponScope"] = new Func<Sandbox.ModAPI.IMyTerminalBlock, int, MyTuple<Vector3D, Vector3D>>(GetWeaponScope),
-                ["IsInRange"] = new Func<IMyEntity, MyTuple<bool, bool>>(IsInRange),
+
+
+                // Entity converted
+                ["ToggleInfiniteAmmoBase"] = new Func<MyEntity, bool>(ToggleInfiniteResources),
+                ["GetProjectilesLockedOnBase"] = new Func<MyEntity, MyTuple<bool, int, int>>(GetProjectilesLockedOn),
+                ["GetProjectilesLockedOn"] = new Func<IMyEntity, MyTuple<bool, int, int>>(GetProjectilesLockedOnLegacy),
+                ["SetAiFocusBase"] = new Func<MyEntity, MyEntity, int, bool>(SetAiFocus),
+                ["SetAiFocus"] = new Func<IMyEntity, IMyEntity, int, bool>(SetAiFocusLegacy),
+                ["GetShotsFiredBase"] = new Func<MyEntity, int, int>(GetShotsFired),
+                ["GetShotsFired"] = new Func<Sandbox.ModAPI.IMyTerminalBlock, int, int>(GetShotsFiredLegacy),
+                ["GetMuzzleInfoBase"] = new Action<MyEntity, int, List<MyTuple<Vector3D, Vector3D, Vector3D, Vector3D, MatrixD, MatrixD>>>(GetMuzzleInfo),
+                ["GetMuzzleInfo"] = new Action<Sandbox.ModAPI.IMyTerminalBlock, int, List<MyTuple<Vector3D, Vector3D, Vector3D, Vector3D, MatrixD, MatrixD>>>(GetMuzzleInfoLegacy),
+                ["IsWeaponShootingBase"] = new Func<MyEntity, int, bool>(IsWeaponShooting),
+                ["IsWeaponShooting"] = new Func<Sandbox.ModAPI.IMyTerminalBlock, int, bool>(IsWeaponShootingLegacy),
+                ["IsTargetValidBase"] = new Func<MyEntity, MyEntity, bool, bool, bool>(IsTargetValid),
+                ["IsTargetValid"] = new Func<Sandbox.ModAPI.IMyTerminalBlock, IMyEntity, bool, bool, bool>(IsTargetValidLegacy),
+                ["GetWeaponScopeBase"] = new Func<MyEntity, int, MyTuple<Vector3D, Vector3D>>(GetWeaponScope),
+                ["GetWeaponScope"] = new Func<Sandbox.ModAPI.IMyTerminalBlock, int, MyTuple<Vector3D, Vector3D>>(GetWeaponScopeLegacy),
+                ["GetCurrentPowerBase"] = new Func<MyEntity, float>(GetCurrentPower),
+                ["GetCurrentPower"] = new Func<Sandbox.ModAPI.IMyTerminalBlock, float>(GetCurrentPowerLegacy),
+                ["DisableRequiredPowerBase"] = new Action<MyEntity>(ModOverride),
+                ["DisableRequiredPower"] = new Action<Sandbox.ModAPI.IMyTerminalBlock>(ModOverrideLegacy),
+                ["HasCoreWeaponBase"] = new Func<MyEntity, bool>(HasCoreWeapon),
+                ["HasCoreWeapon"] = new Func<Sandbox.ModAPI.IMyTerminalBlock, bool>(HasCoreWeaponLegacy),
+                ["GetActiveAmmoBase"] = new Func<MyEntity, int, string>(GetActiveAmmo),
+                ["GetActiveAmmo"] = new Func<Sandbox.ModAPI.IMyTerminalBlock, int, string>(GetActiveAmmoLegacy),
+                ["SetActiveAmmoBase"] = new Action<MyEntity, int, string>(SetActiveAmmo),
+                ["SetActiveAmmo"] = new Action<Sandbox.ModAPI.IMyTerminalBlock, int, string>(SetActiveAmmoLegacy),
+                ["GetPlayerControllerBase"] = new Func<MyEntity, long>(GetPlayerController),
+                ["GetPlayerController"] = new Func<Sandbox.ModAPI.IMyTerminalBlock, long>(GetPlayerControllerLegacy),
+                ["IsTargetAlignedBase"] = new Func<MyEntity, MyEntity, int, bool>(IsTargetAligned),
+                ["IsTargetAligned"] = new Func<Sandbox.ModAPI.IMyTerminalBlock, IMyEntity, int, bool>(IsTargetAlignedLegacy),
+                ["IsTargetAlignedExtendedBase"] = new Func<MyEntity, MyEntity, int, MyTuple<bool, Vector3D?>>(IsTargetAlignedExtended),
+                ["IsTargetAlignedExtended"] = new Func<Sandbox.ModAPI.IMyTerminalBlock, IMyEntity, int, MyTuple<bool, Vector3D?>>(IsTargetAlignedExtendedLegacy),
+                ["CanShootTargetBase"] = new Func<MyEntity, MyEntity, int, bool>(CanShootTarget),
+                ["CanShootTarget"] = new Func<Sandbox.ModAPI.IMyTerminalBlock, IMyEntity, int, bool>(CanShootTargetLegacy),
+                ["GetPredictedTargetPositionBase"] = new Func<MyEntity, MyEntity, int, Vector3D?>(GetPredictedTargetPosition),
+                ["GetPredictedTargetPosition"] = new Func<Sandbox.ModAPI.IMyTerminalBlock, IMyEntity, int, Vector3D?>(GetPredictedTargetPositionLegacy),
+                ["GetHeatLevelBase"] = new Func<MyEntity, float>(GetHeatLevel),
+                ["GetHeatLevel"] = new Func<Sandbox.ModAPI.IMyTerminalBlock, float>(GetHeatLevelLegacy),
+                ["GetMaxWeaponRangeBase"] = new Func<MyEntity, int, float>(GetMaxWeaponRange),
+                ["GetMaxWeaponRange"] = new Func<Sandbox.ModAPI.IMyTerminalBlock, int, float>(GetMaxWeaponRangeLegacy),
+                ["GetTurretTargetTypesBase"] = new Func<MyEntity, ICollection<string>, int, bool>(GetTurretTargetTypes),
+                ["GetTurretTargetTypes"] = new Func<Sandbox.ModAPI.IMyTerminalBlock, ICollection<string>, int, bool>(GetTurretTargetTypesLegacy),
+                ["SetTurretTargetTypesBase"] = new Action<MyEntity, ICollection<string>, int>(SetTurretTargetTypes),
+                ["SetTurretTargetTypes"] = new Action<Sandbox.ModAPI.IMyTerminalBlock, ICollection<string>, int>(SetTurretTargetTypesLegacy),
+                ["SetBlockTrackingRangeBase"] = new Action<MyEntity, float>(SetBlockTrackingRange),
+                ["SetBlockTrackingRange"] = new Action<Sandbox.ModAPI.IMyTerminalBlock, float>(SetBlockTrackingRangeLegacy),
+                ["FireWeaponOnceBase"] = new Action<MyEntity, bool, int>(FireWeaponBurst),
+                ["FireWeaponOnce"] = new Action<Sandbox.ModAPI.IMyTerminalBlock, bool, int>(FireWeaponBurstLegacy),
+                ["ToggleWeaponFireBase"] = new Action<MyEntity, bool, bool, int>(ToggleWeaponFire),
+                ["ToggleWeaponFire"] = new Action<Sandbox.ModAPI.IMyTerminalBlock, bool, bool, int>(ToggleWeaponFireLegacy),
+                ["IsWeaponReadyToFireBase"] = new Func<MyEntity, int, bool, bool, bool>(IsWeaponReadyToFire),
+                ["IsWeaponReadyToFire"] = new Func<Sandbox.ModAPI.IMyTerminalBlock, int, bool, bool, bool>(IsWeaponReadyToFireLegacy),
+                ["GetWeaponTargetBase"] = new Func<MyEntity, int, MyTuple<bool, bool, bool, MyEntity>>(GetWeaponTarget),
+                ["GetWeaponTarget"] = new Func<Sandbox.ModAPI.IMyTerminalBlock, int, MyTuple<bool, bool, bool, IMyEntity>>(GetWeaponTargetLegacy),
+                ["SetWeaponTargetBase"] = new Action<MyEntity, MyEntity, int>(SetWeaponTarget),
+                ["SetWeaponTarget"] = new Action<Sandbox.ModAPI.IMyTerminalBlock, IMyEntity, int>(SetWeaponTargetLegacy),
+                ["GetWeaponAzimuthMatrixBase"] = new Func<MyEntity, int, Matrix>(GetWeaponAzimuthMatrix),
+                ["GetWeaponAzimuthMatrix"] = new Func<Sandbox.ModAPI.IMyTerminalBlock, int, Matrix>(GetWeaponAzimuthMatrixLegacy),
+                ["GetWeaponElevationMatrixBase"] = new Func<MyEntity, int, Matrix>(GetWeaponElevationMatrix),
+                ["GetWeaponElevationMatrix"] = new Func<Sandbox.ModAPI.IMyTerminalBlock, int, Matrix>(GetWeaponElevationMatrixLegacy),
+                ["GetSortedThreatsBase"] = new Action<MyEntity, ICollection<MyTuple<MyEntity, float>>>(GetSortedThreats),
+                ["GetSortedThreats"] = new Action<IMyEntity, ICollection<MyTuple<IMyEntity, float>>>(GetSortedThreatsLegacy),
+                ["GetObstructionsBase"] = new Action<MyEntity, ICollection<MyEntity>>(GetObstructions),
+                ["GetObstructions"] = new Action<IMyEntity, ICollection<IMyEntity>>(GetObstructionsLegacy),
+                ["GetOptimalDps"] = new Func<MyEntity, float>(GetOptimalDps),
+                ["GetOptimalDps"] = new Func<IMyEntity, float>(GetOptimalDpsLegacy),
+                ["HasGridAiBase"] = new Func<MyEntity, bool>(HasGridAi),
+                ["HasGridAi"] = new Func<IMyEntity, bool>(HasGridAiLegacy),
+                ["GetAiFocusBase"] = new Func<MyEntity, int, MyEntity>(GetAiFocus),
+                ["SetAiFocusBase"] = new Func<MyEntity, MyEntity, int, bool>(SetAiFocus),
+                ["GetAiFocus"] = new Func<IMyEntity, int, IMyEntity>(GetAiFocusLegacy),
+                ["IsInRangeBase"] = new Func<MyEntity, MyTuple<bool, bool>>(IsInRange),
+                ["IsInRange"] = new Func<IMyEntity, MyTuple<bool, bool>>(IsInRangeLegacy),
+                ["GetConstructEffectiveDpsBase"] = new Func<MyEntity, float>(GetConstructEffectiveDps),
+                ["GetConstructEffectiveDps"] = new Func<IMyEntity, float>(GetConstructEffectiveDpsLegacy),
+
 
                 // Phantoms
                 ["GetTargetAssessment"] = new Func<MyEntity, MyEntity, int, bool, bool, MyTuple<bool, bool, Vector3D?>>(GetPhantomTargetAssessment),
@@ -96,11 +142,10 @@ namespace CoreSystems.Api
                 ["SpawnPhantom"] = new Func<string, uint, bool, long, string, int, float?, MyEntity, bool, bool, long, bool, MyEntity>(SpawnPhantom),
                 ["ToggleDamageEvents"] = new Action<Dictionary<MyEntity, MyTuple<Vector3D, Dictionary<MyEntity, List<MyTuple<int, float, Vector3I>>>>>>(ToggleDamageEvents),
 
-                //Hakerman's Beam Logic
-                ["IsWeaponShooting"] = new Func<IMyTerminalBlock, int, bool>(IsWeaponShooting),
-                ["GetShotsFired"] = new Func<IMyTerminalBlock, int, int>(GetShotsFired),
-                ["GetMuzzleInfo"] = new Action<IMyTerminalBlock, int, List<MyTuple<Vector3D, Vector3D, Vector3D, Vector3D, MatrixD, MatrixD>>>(GetMuzzleInfo),
+
                 ["DamageHandler"] = new Action<long, int, Action<ListReader<MyTuple<ulong, long, int, MyEntity, MyEntity, ListReader<MyTuple<Vector3D, object, float>>>>>>(RegisterForDamageEvents),
+                ["EventMonitor"] = new Action<MyEntity, int, Action<int, bool>>(EventMonitorCallback),
+
 
             };
             PbApiMethods = new Dictionary<string, Delegate> // keen bad... ReadOnlyDictionary prohibited 
@@ -108,45 +153,45 @@ namespace CoreSystems.Api
                 ["GetCoreWeapons"] = new Action<ICollection<MyDefinitionId>>(GetCoreWeapons),
                 ["GetCoreStaticLaunchers"] = new Action<ICollection<MyDefinitionId>>(GetCoreStaticLaunchers),
                 ["GetCoreTurrets"] = new Action<ICollection<MyDefinitionId>>(GetCoreTurrets),
-                ["GetBlockWeaponMap"] = new Func<IMyTerminalBlock, IDictionary<string, int>, bool>(PbGetBlockWeaponMap),
+                ["GetBlockWeaponMap"] = new Func<Sandbox.ModAPI.Ingame.IMyTerminalBlock, IDictionary<string, int>, bool>(PbGetBlockWeaponMap),
                 ["GetProjectilesLockedOn"] = new Func<long, MyTuple<bool, int, int>>(PbGetProjectilesLockedOn),
-                ["GetSortedThreats"] = new Action<IMyTerminalBlock, IDictionary<MyDetectedEntityInfo, float>>(PbGetSortedThreats),
-                ["GetObstructions"] = new Action<IMyTerminalBlock, ICollection<MyDetectedEntityInfo>>(PbGetObstructions),
+                ["GetSortedThreats"] = new Action<Sandbox.ModAPI.Ingame.IMyTerminalBlock, IDictionary<MyDetectedEntityInfo, float>>(PbGetSortedThreats),
+                ["GetObstructions"] = new Action<Sandbox.ModAPI.Ingame.IMyTerminalBlock, ICollection<MyDetectedEntityInfo>>(PbGetObstructions),
                 ["GetAiFocus"] = new Func<long, int, MyDetectedEntityInfo>(PbGetAiFocus),
-                ["SetAiFocus"] = new Func<IMyTerminalBlock, long, int, bool>(PbSetAiFocus),
-                ["GetWeaponTarget"] = new Func<IMyTerminalBlock, int, MyDetectedEntityInfo>(PbGetWeaponTarget),
-                ["SetWeaponTarget"] = new Action<IMyTerminalBlock, long, int>(PbSetWeaponTarget),
-                ["FireWeaponOnce"] = new Action<IMyTerminalBlock, bool, int>(PbFireWeaponBurst),
-                ["ToggleWeaponFire"] = new Action<IMyTerminalBlock, bool, bool, int>(PbToggleWeaponFire),
-                ["IsWeaponReadyToFire"] = new Func<IMyTerminalBlock, int, bool, bool, bool>(PbIsWeaponReadyToFire),
-                ["GetMaxWeaponRange"] = new Func<IMyTerminalBlock, int, float>(PbGetMaxWeaponRange),
-                ["GetTurretTargetTypes"] = new Func<IMyTerminalBlock, ICollection<string>, int, bool>(PbGetTurretTargetTypes),
-                ["SetTurretTargetTypes"] = new Action<IMyTerminalBlock, ICollection<string>, int>(PbSetTurretTargetTypes),
-                ["SetBlockTrackingRange"] = new Action<IMyTerminalBlock, float>(PbSetBlockTrackingRange),
-                ["IsTargetAligned"] = new Func<IMyTerminalBlock, long, int, bool>(PbIsTargetAligned),
-                ["IsTargetAlignedExtended"] = new Func<IMyTerminalBlock, long, int, MyTuple<bool, Vector3D?>>(PbIsTargetAlignedExtended),
-                ["CanShootTarget"] = new Func<IMyTerminalBlock, long, int, bool>(PbCanShootTarget),
-                ["GetPredictedTargetPosition"] = new Func<IMyTerminalBlock, long, int, Vector3D?>(PbGetPredictedTargetPosition),
-                ["GetHeatLevel"] = new Func<IMyTerminalBlock, float>(PbGetHeatLevel),
-                ["GetCurrentPower"] = new Func<IMyTerminalBlock, float>(PbGetCurrentPower),
+                ["SetAiFocus"] = new Func<Sandbox.ModAPI.Ingame.IMyTerminalBlock, long, int, bool>(PbSetAiFocus),
+                ["GetWeaponTarget"] = new Func<Sandbox.ModAPI.Ingame.IMyTerminalBlock, int, MyDetectedEntityInfo>(PbGetWeaponTarget),
+                ["SetWeaponTarget"] = new Action<Sandbox.ModAPI.Ingame.IMyTerminalBlock, long, int>(PbSetWeaponTarget),
+                ["FireWeaponOnce"] = new Action<Sandbox.ModAPI.Ingame.IMyTerminalBlock, bool, int>(PbFireWeaponBurst),
+                ["ToggleWeaponFire"] = new Action<Sandbox.ModAPI.Ingame.IMyTerminalBlock, bool, bool, int>(PbToggleWeaponFire),
+                ["IsWeaponReadyToFire"] = new Func<Sandbox.ModAPI.Ingame.IMyTerminalBlock, int, bool, bool, bool>(PbIsWeaponReadyToFire),
+                ["GetMaxWeaponRange"] = new Func<Sandbox.ModAPI.Ingame.IMyTerminalBlock, int, float>(PbGetMaxWeaponRange),
+                ["GetTurretTargetTypes"] = new Func<Sandbox.ModAPI.Ingame.IMyTerminalBlock, ICollection<string>, int, bool>(PbGetTurretTargetTypes),
+                ["SetTurretTargetTypes"] = new Action<Sandbox.ModAPI.Ingame.IMyTerminalBlock, ICollection<string>, int>(PbSetTurretTargetTypes),
+                ["SetBlockTrackingRange"] = new Action<Sandbox.ModAPI.Ingame.IMyTerminalBlock, float>(PbSetBlockTrackingRange),
+                ["IsTargetAligned"] = new Func<Sandbox.ModAPI.Ingame.IMyTerminalBlock, long, int, bool>(PbIsTargetAligned),
+                ["IsTargetAlignedExtended"] = new Func<Sandbox.ModAPI.Ingame.IMyTerminalBlock, long, int, MyTuple<bool, Vector3D?>>(PbIsTargetAlignedExtended),
+                ["CanShootTarget"] = new Func<Sandbox.ModAPI.Ingame.IMyTerminalBlock, long, int, bool>(PbCanShootTarget),
+                ["GetPredictedTargetPosition"] = new Func<Sandbox.ModAPI.Ingame.IMyTerminalBlock, long, int, Vector3D?>(PbGetPredictedTargetPosition),
+                ["GetHeatLevel"] = new Func<Sandbox.ModAPI.Ingame.IMyTerminalBlock, float>(PbGetHeatLevel),
+                ["GetCurrentPower"] = new Func<Sandbox.ModAPI.Ingame.IMyTerminalBlock, float>(PbGetCurrentPower),
                 ["GetMaxPower"] = new Func<MyDefinitionId, float>(GetMaxPower),
                 ["HasGridAi"] = new Func<long, bool>(PbHasGridAi),
-                ["HasCoreWeapon"] = new Func<IMyTerminalBlock, bool>(PbHasCoreWeapon),
+                ["HasCoreWeapon"] = new Func<Sandbox.ModAPI.Ingame.IMyTerminalBlock, bool>(PbHasCoreWeapon),
                 ["GetOptimalDps"] = new Func<long, float>(PbGetOptimalDps),
-                ["GetActiveAmmo"] = new Func<IMyTerminalBlock, int, string>(PbGetActiveAmmo),
-                ["SetActiveAmmo"] = new Action<IMyTerminalBlock, int, string>(PbSetActiveAmmo),
+                ["GetActiveAmmo"] = new Func<Sandbox.ModAPI.Ingame.IMyTerminalBlock, int, string>(PbGetActiveAmmo),
+                ["SetActiveAmmo"] = new Action<Sandbox.ModAPI.Ingame.IMyTerminalBlock, int, string>(PbSetActiveAmmo),
                 ["RegisterProjectileAdded"] = new Action<Action<Vector3, float>>(RegisterProjectileAddedCallback),
                 ["UnRegisterProjectileAdded"] = new Action<Action<Vector3, float>>(UnRegisterProjectileAddedCallback),
-                ["UnMonitorProjectile"] = new Action<IMyTerminalBlock, int, Action<long, int, ulong, long, Vector3D, bool>>(PbUnMonitorProjectileCallback),
-                ["MonitorProjectile"] = new Action<IMyTerminalBlock, int, Action<long, int, ulong, long, Vector3D, bool>>(PbMonitorProjectileCallback),
+                ["UnMonitorProjectile"] = new Action<Sandbox.ModAPI.Ingame.IMyTerminalBlock, int, Action<long, int, ulong, long, Vector3D, bool>>(PbUnMonitorProjectileCallback),
+                ["MonitorProjectile"] = new Action<Sandbox.ModAPI.Ingame.IMyTerminalBlock, int, Action<long, int, ulong, long, Vector3D, bool>>(PbMonitorProjectileCallback),
                 ["GetProjectileState"] = new Func<ulong, MyTuple<Vector3D, Vector3D, float, float, long, string>>(GetProjectileState),
                 ["GetConstructEffectiveDps"] = new Func<long, float>(PbGetConstructEffectiveDps),
-                ["GetPlayerController"] = new Func<IMyTerminalBlock, long>(PbGetPlayerController),
-                ["GetWeaponAzimuthMatrix"] = new Func<IMyTerminalBlock, int, Matrix>(PbGetWeaponAzimuthMatrix),
-                ["GetWeaponElevationMatrix"] = new Func<IMyTerminalBlock, int, Matrix>(PbGetWeaponElevationMatrix),
-                ["IsTargetValid"] = new Func<IMyTerminalBlock, long, bool, bool, bool>(PbIsTargetValid),
-                ["GetWeaponScope"] = new Func<IMyTerminalBlock, int, MyTuple<Vector3D, Vector3D>>(PbGetWeaponScope),
-                ["IsInRange"] = new Func<IMyTerminalBlock, MyTuple<bool, bool>>(PbIsInRange),
+                ["GetPlayerController"] = new Func<Sandbox.ModAPI.Ingame.IMyTerminalBlock, long>(PbGetPlayerController),
+                ["GetWeaponAzimuthMatrix"] = new Func<Sandbox.ModAPI.Ingame.IMyTerminalBlock, int, Matrix>(PbGetWeaponAzimuthMatrix),
+                ["GetWeaponElevationMatrix"] = new Func<Sandbox.ModAPI.Ingame.IMyTerminalBlock, int, Matrix>(PbGetWeaponElevationMatrix),
+                ["IsTargetValid"] = new Func<Sandbox.ModAPI.Ingame.IMyTerminalBlock, long, bool, bool, bool>(PbIsTargetValid),
+                ["GetWeaponScope"] = new Func<Sandbox.ModAPI.Ingame.IMyTerminalBlock, int, MyTuple<Vector3D, Vector3D>>(PbGetWeaponScope),
+                ["IsInRange"] = new Func<Sandbox.ModAPI.Ingame.IMyTerminalBlock, MyTuple<bool, bool>>(PbIsInRange),
             };
 
             var builder = ImmutableDictionary.CreateBuilder<string, Delegate>();
@@ -160,16 +205,17 @@ namespace CoreSystems.Api
 
         }
 
+
         internal void PbInit()
         {
             var pb = MyAPIGateway.TerminalControls.CreateProperty<IReadOnlyDictionary<string, Delegate>, Sandbox.ModAPI.IMyTerminalBlock>("WcPbAPI");
             pb.Getter = b => _safeDictionary;
-            MyAPIGateway.TerminalControls.AddControl<IMyProgrammableBlock>(pb);
+            MyAPIGateway.TerminalControls.AddControl<Sandbox.ModAPI.Ingame.IMyProgrammableBlock>(pb);
             _session.PbApiInited = true;
         }
 
-
-        private void GetObstructions(IMyEntity shooter, ICollection<IMyEntity> collection)
+        private void GetObstructionsLegacy(IMyEntity shooter, ICollection<IMyEntity> collection) => GetObstructions((MyEntity) shooter, (ICollection<MyEntity>) collection);
+        private void GetObstructions(MyEntity shooter, ICollection<MyEntity> collection)
         {
             var grid = shooter?.GetTopMostParent() as MyCubeGrid;
             Ai gridAi;
@@ -180,15 +226,15 @@ namespace CoreSystems.Api
             }
         }
 
-        private readonly ICollection<IMyEntity> _tmpPbGetObstructions = new List<IMyEntity>();
-        private void PbGetObstructions(IMyTerminalBlock shooter, ICollection<MyDetectedEntityInfo> collection)
+        private readonly ICollection<MyEntity> _tmpPbGetObstructions = new List<MyEntity>();
+        private void PbGetObstructions(Sandbox.ModAPI.Ingame.IMyTerminalBlock shooter, ICollection<MyDetectedEntityInfo> collection)
         {
             if (shooter != null && collection != null)
             {
                 collection.Clear();
-                GetObstructions((IMyEntity)shooter, _tmpPbGetObstructions);
+                GetObstructions((MyEntity)shooter, _tmpPbGetObstructions);
                 foreach (var i in _tmpPbGetObstructions)
-                    collection.Add(GetDetailedEntityInfo(new MyTuple<bool, bool, bool, IMyEntity>(true, false, false, i), (MyEntity)shooter));
+                    collection.Add(GetDetailedEntityInfo(new MyTuple<bool, bool, bool, MyEntity>(true, false, false, i), (MyEntity)shooter));
 
                 _tmpPbGetObstructions.Clear();
             }
@@ -201,12 +247,12 @@ namespace CoreSystems.Api
 
         private void PbSetActiveAmmo(object arg1, int arg2, string arg3)
         {
-            SetActiveAmmo((Sandbox.ModAPI.IMyTerminalBlock) arg1, arg2, arg3);
+            SetActiveAmmo((MyEntity) arg1, arg2, arg3);
         }
 
         private string PbGetActiveAmmo(object arg1, int arg2)
         {
-            return GetActiveAmmo((Sandbox.ModAPI.IMyTerminalBlock) arg1, arg2);
+            return GetActiveAmmo((MyEntity) arg1, arg2);
         }
 
         private float PbGetOptimalDps(long arg)
@@ -216,7 +262,7 @@ namespace CoreSystems.Api
 
         private bool PbHasCoreWeapon(object arg)
         {
-            return HasCoreWeapon((Sandbox.ModAPI.IMyTerminalBlock) arg);
+            return HasCoreWeapon((MyEntity) arg);
         }
 
         private bool PbHasGridAi(long arg)
@@ -226,105 +272,105 @@ namespace CoreSystems.Api
 
         private float PbGetCurrentPower(object arg)
         {
-            return GetCurrentPower((Sandbox.ModAPI.IMyTerminalBlock) arg);
+            return GetCurrentPower((MyEntity) arg);
         }
 
         private float PbGetHeatLevel(object arg)
         {
-            return GetHeatLevel((Sandbox.ModAPI.IMyTerminalBlock) arg);
+            return GetHeatLevel((MyEntity) arg);
         }
 
         private Vector3D? PbGetPredictedTargetPosition(object arg1, long arg2, int arg3)
         {
-            var block = arg1 as IMyTerminalBlock;
+            var block = arg1 as Sandbox.ModAPI.Ingame.IMyTerminalBlock;
             var target = MyEntities.GetEntityById(arg2);
             Ai ai;
             if (block != null && target != null && _session.EntityToMasterAi.TryGetValue((MyCubeGrid)block.CubeGrid, out ai) && ai.NoTargetLos.ContainsKey(target))
                 return null;
 
-            return GetPredictedTargetPosition((Sandbox.ModAPI.IMyTerminalBlock) block, target, arg3);
+            return GetPredictedTargetPosition((MyEntity) block, target, arg3);
         }
 
         private bool PbCanShootTarget(object arg1, long arg2, int arg3)
         {
-            var block = arg1 as IMyTerminalBlock;
+            var block = arg1 as Sandbox.ModAPI.Ingame.IMyTerminalBlock;
             var target = MyEntities.GetEntityById(arg2);
             Ai ai;
             if (block != null && target != null && _session.EntityToMasterAi.TryGetValue((MyCubeGrid)block.CubeGrid, out ai) && ai.NoTargetLos.ContainsKey(target))
                 return false;
 
-            return CanShootTarget((Sandbox.ModAPI.IMyTerminalBlock) block, target, arg3);
+            return CanShootTarget((MyEntity) block, target, arg3);
         }
 
         private bool PbIsTargetAligned(object arg1, long arg2, int arg3)
         {
-            var block = arg1 as IMyTerminalBlock;
+            var block = arg1 as Sandbox.ModAPI.Ingame.IMyTerminalBlock;
             var target = MyEntities.GetEntityById(arg2);
             Ai ai;
             if (block != null && target != null && _session.EntityToMasterAi.TryGetValue((MyCubeGrid)block.CubeGrid, out ai) && ai.NoTargetLos.ContainsKey(target))
                 return false;
 
-            return IsTargetAligned((Sandbox.ModAPI.IMyTerminalBlock) block, target, arg3);
+            return IsTargetAligned((MyEntity) block, target, arg3);
         }
 
         private MyTuple<bool, Vector3D?> PbIsTargetAlignedExtended(object arg1, long arg2, int arg3)
         {
-            var block = arg1 as IMyTerminalBlock;
+            var block = arg1 as Sandbox.ModAPI.Ingame.IMyTerminalBlock;
             var target = MyEntities.GetEntityById(arg2);
             Ai ai;
             if (block != null && target != null && _session.EntityToMasterAi.TryGetValue((MyCubeGrid)block.CubeGrid, out ai) && ai.NoTargetLos.ContainsKey(target))
                 return new MyTuple<bool, Vector3D?>();
 
-            return IsTargetAlignedExtended((Sandbox.ModAPI.IMyTerminalBlock) block, target, arg3);
+            return IsTargetAlignedExtended((MyEntity) block, target, arg3);
         }
 
         private void PbSetBlockTrackingRange(object arg1, float arg2)
         {
-            SetBlockTrackingRange((Sandbox.ModAPI.IMyTerminalBlock) arg1, arg2);
+            SetBlockTrackingRange((MyEntity) arg1, arg2);
         }
 
         private void PbSetTurretTargetTypes(object arg1, object arg2, int arg3)
         {
-            SetTurretTargetTypes((Sandbox.ModAPI.IMyTerminalBlock) arg1, (ICollection<string>) arg2, arg3);
+            SetTurretTargetTypes((MyEntity) arg1, (ICollection<string>) arg2, arg3);
         }
 
         private bool PbGetTurretTargetTypes(object arg1, object arg2, int arg3)
         {
-            return GetTurretTargetTypes((Sandbox.ModAPI.IMyTerminalBlock) arg1, (ICollection<string>) arg2, arg3);
+            return GetTurretTargetTypes((MyEntity) arg1, (ICollection<string>) arg2, arg3);
         }
 
         private float PbGetMaxWeaponRange(object arg1, int arg2)
         {
-            return GetMaxWeaponRange((Sandbox.ModAPI.IMyTerminalBlock) arg1, arg2);
+            return GetMaxWeaponRange((MyEntity) arg1, arg2);
         }
 
         private bool PbIsWeaponReadyToFire(object arg1, int arg2, bool arg3, bool arg4)
         {
-            return IsWeaponReadyToFire((Sandbox.ModAPI.IMyTerminalBlock) arg1, arg2, arg3, arg4);
+            return IsWeaponReadyToFire((MyEntity) arg1, arg2, arg3, arg4);
         }
 
         private void PbToggleWeaponFire(object arg1, bool arg2, bool arg3, int arg4)
         {
-            ToggleWeaponFire((Sandbox.ModAPI.IMyTerminalBlock) arg1, arg2, arg3, arg4);
+            ToggleWeaponFire((MyEntity) arg1, arg2, arg3, arg4);
         }
 
         private void PbFireWeaponBurst(object arg1, bool arg2, int arg3)
         {
-            FireWeaponBurst((Sandbox.ModAPI.IMyTerminalBlock) arg1, arg2, arg3);
+            FireWeaponBurst((MyEntity) arg1, arg2, arg3);
         }
 
         private void PbSetWeaponTarget(object arg1, long arg2, int arg3)
         {
-            SetWeaponTarget((Sandbox.ModAPI.IMyTerminalBlock) arg1, MyEntities.GetEntityById(arg2), arg3);
+            SetWeaponTarget((MyEntity) arg1, MyEntities.GetEntityById(arg2), arg3);
         }
 
         private MyDetectedEntityInfo PbGetWeaponTarget(object arg1, int arg2)
         {
-            var block = arg1 as IMyTerminalBlock;
-            var target = GetWeaponTarget((Sandbox.ModAPI.IMyTerminalBlock) block, arg2);
+            var block = arg1 as Sandbox.ModAPI.Ingame.IMyTerminalBlock;
+            var target = GetWeaponTarget((MyEntity) block, arg2);
 
             Ai ai;
-            if (block != null && target.Item4 != null && _session.EntityToMasterAi.TryGetValue((MyCubeGrid)block.CubeGrid, out ai) && ai.NoTargetLos.ContainsKey((MyEntity)target.Item4))
+            if (block != null && target.Item4 != null && _session.EntityToMasterAi.TryGetValue((MyCubeGrid)block.CubeGrid, out ai) && ai.NoTargetLos.ContainsKey(target.Item4))
                 return new MyDetectedEntityInfo();
 
             var result = GetDetailedEntityInfo(target, (MyEntity)arg1);
@@ -334,7 +380,7 @@ namespace CoreSystems.Api
 
         private bool PbSetAiFocus(object arg1, long arg2, int arg3)
         {
-            return SetAiFocus((IMyEntity)arg1, MyEntities.GetEntityById(arg2), arg3);
+            return SetAiFocus((MyEntity)arg1, MyEntities.GetEntityById(arg2), arg3);
         }
 
         private MyDetectedEntityInfo PbGetAiFocus(long arg1, int arg2)
@@ -343,11 +389,11 @@ namespace CoreSystems.Api
             return GetEntityInfo(GetAiFocus(shooter, arg2), shooter);
         }
 
-        private MyDetectedEntityInfo GetDetailedEntityInfo(MyTuple<bool, bool, bool, IMyEntity> target, MyEntity shooter)
+        private MyDetectedEntityInfo GetDetailedEntityInfo(MyTuple<bool, bool, bool, MyEntity> target, MyEntity shooter)
         {
             var e = target.Item4;
-            var shooterGrid = shooter.GetTopMostParent() as MyCubeGrid;
-            var topTarget = e?.GetTopMostParent() as MyEntity;
+            var shooterGrid = shooter.GetTopMostParent();
+            var topTarget = e?.GetTopMostParent();
             var block = e as Sandbox.ModAPI.IMyTerminalBlock;
             var player = e as IMyCharacter;
             long entityId = 0;
@@ -392,13 +438,13 @@ namespace CoreSystems.Api
             return new MyDetectedEntityInfo(entityId, name, type, e.PositionComp.WorldAABB.Center, e.PositionComp.WorldMatrixRef, topTarget.Physics.LinearVelocity, relation, e.PositionComp.WorldAABB, _session.Tick);
         }
 
-        private MyDetectedEntityInfo GetEntityInfo(IMyEntity target, MyEntity shooter)
+        private MyDetectedEntityInfo GetEntityInfo(MyEntity target, MyEntity shooter)
         {
             var e = target;
             if (e?.Physics == null)
                 return new MyDetectedEntityInfo();
 
-            var shooterGrid = shooter.GetTopMostParent() as MyCubeGrid;
+            var shooterGrid = shooter.GetTopMostParent();
 
             Ai ai;
             if (shooterGrid != null && _session.EntityToMasterAi.TryGetValue(shooterGrid, out ai))
@@ -434,16 +480,16 @@ namespace CoreSystems.Api
             return new MyDetectedEntityInfo(e.EntityId, name, type, e.PositionComp.WorldAABB.Center, e.PositionComp.WorldMatrixRef, e.Physics.LinearVelocity, relation, e.PositionComp.WorldAABB, _session.Tick);
         }
 
-        private readonly List<MyTuple<IMyEntity, float>> _tmpTargetList = new List<MyTuple<IMyEntity, float>>();
+        private readonly List<MyTuple<MyEntity, float>> _tmpTargetList = new List<MyTuple<MyEntity, float>>();
         private void PbGetSortedThreats(object arg1, object arg2)
         {
-            var shooter = (Sandbox.ModAPI.IMyTerminalBlock)arg1;
+            var shooter = (MyEntity)arg1;
             GetSortedThreats(shooter, _tmpTargetList);
             
             var dict = (IDictionary<MyDetectedEntityInfo, float>) arg2;
             
             foreach (var i in _tmpTargetList)
-                dict[GetDetailedEntityInfo(new MyTuple<bool, bool, bool, IMyEntity>(true, false, false , i.Item1), (MyEntity)shooter)] = i.Item2;
+                dict[GetDetailedEntityInfo(new MyTuple<bool, bool, bool, MyEntity>(true, false, false , i.Item1), (MyEntity)shooter)] = i.Item2;
 
             _tmpTargetList.Clear();
 
@@ -461,38 +507,38 @@ namespace CoreSystems.Api
 
         private long PbGetPlayerController(object arg1)
         {
-            return GetPlayerController((Sandbox.ModAPI.IMyTerminalBlock)arg1);
+            return GetPlayerController((MyEntity)arg1);
         }
 
-        private Matrix PbGetWeaponAzimuthMatrix(IMyTerminalBlock arg1, int arg2)
+        private Matrix PbGetWeaponAzimuthMatrix(Sandbox.ModAPI.Ingame.IMyTerminalBlock arg1, int arg2)
         {
-            return GetWeaponAzimuthMatrix((Sandbox.ModAPI.IMyTerminalBlock)arg1, arg2);
+            return GetWeaponAzimuthMatrix((MyEntity)arg1, arg2);
         }
 
-        private Matrix PbGetWeaponElevationMatrix(IMyTerminalBlock arg1, int arg2)
+        private Matrix PbGetWeaponElevationMatrix(Sandbox.ModAPI.Ingame.IMyTerminalBlock arg1, int arg2)
         {
-            return GetWeaponElevationMatrix((Sandbox.ModAPI.IMyTerminalBlock)arg1, arg2);
+            return GetWeaponElevationMatrix((MyEntity)arg1, arg2);
         }
 
         private bool PbIsTargetValid(Sandbox.ModAPI.Ingame.IMyTerminalBlock arg1, long arg2, bool arg3, bool arg4)
         {
 
-            var block = arg1 as IMyTerminalBlock;
+            var block = arg1;
             var target = MyEntities.GetEntityById(arg2);
             Ai ai;
             if (block != null && target != null && _session.EntityToMasterAi.TryGetValue((MyCubeGrid)block.CubeGrid, out ai) && ai.NoTargetLos.ContainsKey(target))
                 return false;
 
-            return IsTargetValid((Sandbox.ModAPI.IMyTerminalBlock) block, target, arg3, arg4);
+            return IsTargetValid((MyEntity) block, target, arg3, arg4);
         }
 
-        private MyTuple<Vector3D, Vector3D> PbGetWeaponScope(IMyTerminalBlock arg1, int arg2)
+        private MyTuple<Vector3D, Vector3D> PbGetWeaponScope(Sandbox.ModAPI.Ingame.IMyTerminalBlock arg1, int arg2)
         {
-            return GetWeaponScope((Sandbox.ModAPI.IMyTerminalBlock)arg1, arg2);
+            return GetWeaponScope((MyEntity)arg1, arg2);
         }
 
         // Block EntityId, PartId, ProjectileId, LastHitId, LastPos, Start 
-        internal static void PbMonitorProjectileCallback(IMyTerminalBlock weaponBlock, int weaponId, Action<long, int, ulong, long, Vector3D, bool> callback)
+        internal static void PbMonitorProjectileCallback(Sandbox.ModAPI.Ingame.IMyTerminalBlock weaponBlock, int weaponId, Action<long, int, ulong, long, Vector3D, bool> callback)
         {
             var comp = weaponBlock.Components.Get<CoreComponent>();
             if (comp?.Platform != null && comp.Platform.Weapons.Count > weaponId)
@@ -500,7 +546,7 @@ namespace CoreSystems.Api
         }
 
         // Block EntityId, PartId, ProjectileId, LastHitId, LastPos, Start 
-        internal static void PbUnMonitorProjectileCallback(IMyTerminalBlock weaponBlock, int weaponId, Action<long, int, ulong, long, Vector3D, bool> callback)
+        internal static void PbUnMonitorProjectileCallback(Sandbox.ModAPI.Ingame.IMyTerminalBlock weaponBlock, int weaponId, Action<long, int, ulong, long, Vector3D, bool> callback)
         {
             var comp = weaponBlock.Components.Get<CoreComponent>();
             if (comp?.Platform != null && comp.Platform.Weapons.Count > weaponId)
@@ -510,7 +556,7 @@ namespace CoreSystems.Api
         // terminalBlock, Threat, Other, Something 
         private MyTuple<bool, bool> PbIsInRange(object arg1)
         {
-            var tBlock = arg1 as Sandbox.ModAPI.IMyTerminalBlock;
+            var tBlock = arg1 as MyEntity;
             
             return tBlock != null ? IsInRange(MyEntities.GetEntityById(tBlock.EntityId)) : new MyTuple<bool, bool>();
         }
@@ -557,7 +603,8 @@ namespace CoreSystems.Api
                 collection.Add(def);
         }
 
-        internal long GetPlayerController(Sandbox.ModAPI.IMyTerminalBlock weaponBlock)
+        internal long GetPlayerControllerLegacy(IMyEntity weaponBlock) => GetPlayerController((MyEntity) weaponBlock);
+        internal long GetPlayerController(MyEntity weaponBlock)
         {
             var comp = weaponBlock.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp?.Platform != null && comp.Platform.State == Ready)
@@ -566,7 +613,8 @@ namespace CoreSystems.Api
             return -1;
         }
 
-        internal Matrix GetWeaponAzimuthMatrix(Sandbox.ModAPI.IMyTerminalBlock weaponBlock, int weaponId = 0)
+        internal Matrix GetWeaponAzimuthMatrixLegacy(IMyEntity weaponBlock, int weaponId = 0) => GetWeaponAzimuthMatrix((MyEntity) weaponBlock, weaponId);
+        internal Matrix GetWeaponAzimuthMatrix(MyEntity weaponBlock, int weaponId = 0)
         {
             var comp = weaponBlock.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp?.Platform != null && comp.Platform.State == Ready)
@@ -579,7 +627,8 @@ namespace CoreSystems.Api
             return Matrix.Zero;
         }
 
-        internal Matrix GetWeaponElevationMatrix(Sandbox.ModAPI.IMyTerminalBlock weaponBlock, int weaponId = 0)
+        internal Matrix GetWeaponElevationMatrixLegacy(IMyEntity weaponBlock, int weaponId = 0) => GetWeaponElevationMatrix((MyEntity) weaponBlock, weaponId);
+        internal Matrix GetWeaponElevationMatrix(MyEntity weaponBlock, int weaponId = 0)
         {
             var comp = weaponBlock.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp?.Platform != null && comp.Platform.State == Ready)
@@ -590,6 +639,32 @@ namespace CoreSystems.Api
             }
 
             return Matrix.Zero;
+        }
+
+        private bool ToggleInfiniteResources(MyEntity entity)
+        {
+            CoreComponent comp;
+            if (_session.IdToCompMap.TryGetValue(entity.EntityId, out comp))
+            {
+                comp.InfiniteResource = !comp.InfiniteResource;
+                return comp.InfiniteResource;
+            }
+
+            Ai ai;
+            if (_session.EntityToMasterAi.TryGetValue(entity, out ai))
+            {
+                return ai.Construct.GiveAllCompsInfiniteResources();
+            }
+            return false;
+        }
+
+        private void EventMonitorCallback(MyEntity weaponEntity, int weaponId, Action<int, bool> arg3)
+        {
+            /*
+            var comp = weaponEntity.Components.Get<Weapon.WeaponComponent>();
+            if (comp?.Platform != null && comp.Platform.Weapons.Count > weaponId)
+                comp.Monitors[weaponId]?.Add(callback);
+            */
         }
 
         private bool GetBlockWeaponMap(Sandbox.ModAPI.IMyTerminalBlock weaponBlock, IDictionary<string, int> collection)
@@ -608,9 +683,11 @@ namespace CoreSystems.Api
             return false;
         }
 
-        private MyTuple<bool, int, int> GetProjectilesLockedOn(IMyEntity victim)
+        private MyTuple<bool, int, int> GetProjectilesLockedOnLegacy(IMyEntity entity) => GetProjectilesLockedOn((MyEntity) entity);
+        private MyTuple<bool, int, int> GetProjectilesLockedOn(MyEntity entity)
         {
-            var grid = victim.GetTopMostParent() as MyCubeGrid;
+            var victim = (MyEntity)entity;
+            var grid = victim.GetTopMostParent();
             Ai ai;
             MyTuple<bool, int, int> tuple;
             if (grid != null && _session.EntityAIs.TryGetValue(grid, out ai))
@@ -622,77 +699,90 @@ namespace CoreSystems.Api
             return tuple;
         }
 
-        private void GetSortedThreats(IMyEntity shooter, ICollection<MyTuple<IMyEntity, float>> collection)
+        private void GetSortedThreatsLegacy(IMyEntity shooter, ICollection<MyTuple<IMyEntity, float>> collection) => GetSortedThreatsConvert((MyEntity) shooter, collection);
+        private void GetSortedThreatsConvert(MyEntity shooter, object collection) => GetSortedThreats(shooter, (ICollection<MyTuple<MyEntity, float>>) collection);
+
+        private void GetSortedThreats(MyEntity shooter, ICollection<MyTuple<MyEntity, float>> collection)
         {
-            var grid = shooter.GetTopMostParent() as MyCubeGrid;
+            var grid = shooter.GetTopMostParent();
             Ai ai;
             if (grid != null && _session.EntityAIs.TryGetValue(grid, out ai))
             {
                 for (int i = 0; i < ai.SortedTargets.Count; i++)
                 {
                     var targetInfo = ai.SortedTargets[i];
-                    collection.Add(new MyTuple<IMyEntity, float>(targetInfo.Target, targetInfo.OffenseRating));
+                    collection.Add(new MyTuple<MyEntity, float>(targetInfo.Target, targetInfo.OffenseRating));
                 }
             }
         }
 
-        private IMyEntity GetAiFocus(IMyEntity shooter, int priority = 0)
+        private MyEntity GetAiFocusLegacy(IMyEntity shooter, int priority = 0) => GetAiFocus((MyEntity) shooter, priority);
+        private MyEntity GetAiFocus(MyEntity shooter, int priority = 0)
         {
-            var shootingGrid = shooter.GetTopMostParent() as MyCubeGrid;
+            var shootingGrid = shooter.GetTopMostParent();
 
             if (shootingGrid != null)
             {
                 Ai ai;
-                if (_session.EntityToMasterAi.TryGetValue(shootingGrid, out ai))
+                if (_session.EntityToMasterAi.TryGetValue((MyEntity) shootingGrid, out ai))
                     return MyEntities.GetEntityById(ai.Construct.Data.Repo.FocusData.Target);
             }
             return null;
         }
 
-        private bool SetAiFocus(IMyEntity shooter, IMyEntity target, int priority = 0)
+        private bool SetAiFocusLegacy(IMyEntity shooter, IMyEntity target, int priority = 0) => SetAiFocus((MyEntity) shooter, (MyEntity) target, priority);
+        private bool SetAiFocus(MyEntity shooter, MyEntity target, int priority = 0)
         {
-            var shootingGrid = shooter.GetTopMostParent() as MyCubeGrid;
+            var shootingGrid = shooter.GetTopMostParent();
 
             if (shootingGrid != null)
             {
                 Ai ai;
-                if (_session.EntityToMasterAi.TryGetValue(shootingGrid, out ai))
+                if (_session.EntityToMasterAi.TryGetValue((MyEntity) shootingGrid, out ai))
                 {
                     if (!ai.Session.IsServer)
                         return false;
 
-                    ai.Construct.Focus.ReassignTarget((MyEntity)target, ai);
+                    ai.Construct.Focus.ReassignTarget((MyEntity) target, ai);
                     return true;
                 }
             }
             return false;
         }
 
-        private static MyTuple<bool, bool, bool, IMyEntity> GetWeaponTarget(Sandbox.ModAPI.IMyTerminalBlock weaponBlock, int weaponId = 0)
+        private static MyTuple<bool, bool, bool, IMyEntity> GetWeaponTargetLegacy(IMyEntity weaponBlock, int weaponId = 0)
+        {
+            var result = GetWeaponTarget((MyEntity) weaponBlock, weaponId);
+
+            return new MyTuple<bool, bool, bool, IMyEntity>(result.Item1, result.Item2, result.Item3, result.Item4);
+        }
+
+        private static MyTuple<bool, bool, bool, MyEntity> GetWeaponTarget(MyEntity weaponBlock, int weaponId = 0)
         {
             var comp = weaponBlock.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp?.Platform != null && comp.Platform.State == Ready && comp.Platform.Weapons.Count > weaponId)
             {
                 var weapon = comp.Platform.Weapons[weaponId];
                 if (weapon.Target.TargetState == Target.TargetStates.IsFake)
-                    return new MyTuple<bool, bool, bool, IMyEntity>(true, false, true, null);
+                    return new MyTuple<bool, bool, bool, MyEntity>(true, false, true, null);
                 if (weapon.Target.TargetState == Target.TargetStates.IsProjectile)
-                    return new MyTuple<bool, bool, bool, IMyEntity>(true, true, false, null);
-                return new MyTuple<bool, bool, bool, IMyEntity>(weapon.Target.TargetState == Target.TargetStates.IsEntity, false, false, weapon.Target.TargetEntity);
+                    return new MyTuple<bool, bool, bool, MyEntity>(true, true, false, null);
+                return new MyTuple<bool, bool, bool, MyEntity>(weapon.Target.TargetState == Target.TargetStates.IsEntity, false, false, weapon.Target.TargetEntity);
             }
 
-            return new MyTuple<bool, bool, bool, IMyEntity>(false, false, false, null);
+            return new MyTuple<bool, bool, bool, MyEntity>(false, false, false, null);
         }
 
-
-        private static void SetWeaponTarget(Sandbox.ModAPI.IMyTerminalBlock weaponBlock, IMyEntity target, int weaponId = 0)
+        private static void SetWeaponTargetLegacy(IMyEntity weaponBlock, IMyEntity target, int weaponId = 0) => SetWeaponTarget((MyEntity) weaponBlock, (MyEntity) target, weaponId);
+        private static void SetWeaponTarget(MyEntity weaponBlock, MyEntity target, int weaponId = 0)
         {
             var comp = weaponBlock.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp?.Platform != null && comp.Platform.State == Ready && comp.Platform.Weapons.Count > weaponId)
-                Ai.AcquireTarget(comp.Platform.Weapons[weaponId], false, (MyEntity)target);
+                Ai.AcquireTarget(comp.Platform.Weapons[weaponId], false, target);
         }
 
-        private static void FireWeaponBurst(Sandbox.ModAPI.IMyTerminalBlock weaponBlock, bool allWeapons = true, int weaponId = 0)
+        private static void FireWeaponBurstLegacy(IMyEntity weaponBlock, bool allWeapons = true, int weaponId = 0) => FireWeaponBurst((MyEntity) weaponBlock, allWeapons, weaponId);
+        private static void FireWeaponBurst(MyEntity weaponBlock, bool allWeapons = true, int weaponId = 0)
         {
             var comp = weaponBlock.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp?.Platform != null && comp.Platform.State == Ready && comp.Platform.Weapons.Count > weaponId)
@@ -700,8 +790,8 @@ namespace CoreSystems.Api
                 comp.ShootManager.RequestShootSync(comp.Session.PlayerId, Weapon.ShootManager.RequestType.Once, Weapon.ShootManager.Signals.Once);
             }
         }
-
-        private static void ToggleWeaponFire(Sandbox.ModAPI.IMyTerminalBlock weaponBlock, bool on, bool allWeapons = true, int weaponId = 0)
+        private static void ToggleWeaponFireLegacy(IMyEntity weaponBlock, bool on, bool allWeapons = true, int weaponId = 0) => ToggleWeaponFire((MyEntity) weaponBlock,on, allWeapons, weaponId);
+        private static void ToggleWeaponFire(MyEntity weaponBlock, bool on, bool allWeapons = true, int weaponId = 0)
         {
             var comp = weaponBlock.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp?.Platform != null && comp.Platform.State == Ready && comp.Platform.Weapons.Count > weaponId)
@@ -710,8 +800,8 @@ namespace CoreSystems.Api
                 comp.ShootManager.RequestShootSync(0, on ? Weapon.ShootManager.RequestType.On : Weapon.ShootManager.RequestType.Off, Weapon.ShootManager.Signals.On);
             }
         }
-
-        private static bool IsWeaponReadyToFire(Sandbox.ModAPI.IMyTerminalBlock weaponBlock, int weaponId = 0, bool anyWeaponReady = true, bool shotReady = false)
+        private static bool IsWeaponReadyToFireLegacy(IMyEntity weaponBlock, int weaponId = 0, bool anyWeaponReady = true, bool shotReady = false) => IsWeaponReadyToFire((MyEntity) weaponBlock, weaponId, anyWeaponReady, shotReady);
+        private static bool IsWeaponReadyToFire(MyEntity weaponBlock, int weaponId = 0, bool anyWeaponReady = true, bool shotReady = false)
         {
             var comp = weaponBlock.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp?.Platform != null && comp.Platform.State == Ready && comp.Platform.Weapons.Count > weaponId && comp.IsWorking)
@@ -726,8 +816,8 @@ namespace CoreSystems.Api
 
             return false;
         }
-
-        private static float GetMaxWeaponRange(Sandbox.ModAPI.IMyTerminalBlock weaponBlock, int weaponId = 0)
+        private static float GetMaxWeaponRangeLegacy(IMyEntity weaponBlock, int weaponId = 0) => GetMaxWeaponRange((MyEntity) weaponBlock, weaponId);
+        private static float GetMaxWeaponRange(MyEntity weaponBlock, int weaponId = 0)
         {
             var comp = weaponBlock.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp?.Platform != null && comp.Platform.State == Ready && comp.Platform.Weapons.Count > weaponId)
@@ -735,8 +825,8 @@ namespace CoreSystems.Api
 
             return 0f;
         }
-
-        private static bool GetTurretTargetTypes(Sandbox.ModAPI.IMyTerminalBlock weaponBlock, ICollection<string> collection, int weaponId = 0)
+        private static bool GetTurretTargetTypesLegacy(IMyEntity weaponBlock, ICollection<string> collection, int weaponId = 0) => GetTurretTargetTypes((MyEntity) weaponBlock, collection, weaponId);
+        private static bool GetTurretTargetTypes(MyEntity weaponBlock, ICollection<string> collection, int weaponId = 0)
         {
             var comp = weaponBlock.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp?.Platform != null && comp.Platform.State == Ready && comp.Platform.Weapons.Count > weaponId)
@@ -749,12 +839,13 @@ namespace CoreSystems.Api
             return false;
         }
 
-        private static void SetTurretTargetTypes(Sandbox.ModAPI.IMyTerminalBlock weaponBlock, ICollection<string> collection, int weaponId = 0)
+        private static void SetTurretTargetTypesLegacy(IMyEntity weaponBlock, ICollection<string> collection, int weaponId = 0) => SetTurretTargetTypes((MyEntity) weaponBlock, collection, weaponId);
+        private static void SetTurretTargetTypes(MyEntity weaponBlock, ICollection<string> collection, int weaponId = 0)
         {
 
         }
-
-        private static void SetBlockTrackingRange(Sandbox.ModAPI.IMyTerminalBlock weaponBlock, float range)
+        private static void SetBlockTrackingRangeLegacy(IMyEntity weaponBlock, float range) =>SetBlockTrackingRange((MyEntity) weaponBlock, range);
+        private static void SetBlockTrackingRange(MyEntity weaponBlock, float range)
         {
             var comp = weaponBlock.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp?.Platform != null && comp.Platform.State == Ready)
@@ -775,11 +866,11 @@ namespace CoreSystems.Api
                 }
                 range = (float)(maxBlockRange > range ? range : maxBlockRange);
 
-                BlockUi.RequestSetRange(weaponBlock, range);
+                BlockUi.RequestSetRange(weaponBlock as Sandbox.ModAPI.IMyTerminalBlock, range);
             }
         }
-
-        private static bool IsTargetAligned(Sandbox.ModAPI.IMyTerminalBlock weaponBlock, IMyEntity targetEnt, int weaponId)
+        private static bool IsTargetAlignedLegacy(IMyEntity weaponBlock, IMyEntity targetEnt, int weaponId) => IsTargetAligned((MyEntity) weaponBlock, (MyEntity) targetEnt, weaponId);
+        private static bool IsTargetAligned(MyEntity weaponBlock, MyEntity targetEnt, int weaponId)
         {
             var comp = weaponBlock.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp?.Platform != null && comp.Platform.State == Ready && comp.Platform.Weapons.Count > weaponId)
@@ -798,8 +889,8 @@ namespace CoreSystems.Api
             }
             return false;
         }
-
-        private static MyTuple<bool, Vector3D?> IsTargetAlignedExtended(Sandbox.ModAPI.IMyTerminalBlock weaponBlock, IMyEntity targetEnt, int weaponId)
+        private static MyTuple<bool, Vector3D?> IsTargetAlignedExtendedLegacy(IMyEntity weaponBlock, IMyEntity targetEnt, int weaponId) => IsTargetAlignedExtended((MyEntity) weaponBlock, (MyEntity) targetEnt, weaponId);
+        private static MyTuple<bool, Vector3D?> IsTargetAlignedExtended(MyEntity weaponBlock, MyEntity targetEnt, int weaponId)
         {
             var comp = weaponBlock.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp?.Platform != null && comp.Platform.State == Ready && comp.Platform.Weapons.Count > weaponId)
@@ -816,7 +907,8 @@ namespace CoreSystems.Api
             return new MyTuple<bool, Vector3D?>(false, null);
         }
 
-        private static bool CanShootTarget(Sandbox.ModAPI.IMyTerminalBlock weaponBlock, IMyEntity targetEnt, int weaponId)
+        private static bool CanShootTargetLegacy(IMyEntity weaponBlock, IMyEntity targetEnt, int weaponId) => CanShootTarget((MyEntity) weaponBlock, (MyEntity) targetEnt, weaponId);
+        private static bool CanShootTarget(MyEntity weaponBlock, MyEntity targetEnt, int weaponId)
         {
             var comp = weaponBlock.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp?.Platform != null && comp.Platform.State == Ready && comp.Platform.Weapons.Count > weaponId)
@@ -839,7 +931,8 @@ namespace CoreSystems.Api
             return false;
         }
 
-        private static Vector3D? GetPredictedTargetPosition(Sandbox.ModAPI.IMyTerminalBlock weaponBlock, IMyEntity targetEnt, int weaponId)
+        private static Vector3D? GetPredictedTargetPositionLegacy(IMyEntity weaponBlock, IMyEntity targetEnt, int weaponId) => GetPredictedTargetPosition((MyEntity) weaponBlock, (MyEntity) targetEnt, weaponId);
+        private static Vector3D? GetPredictedTargetPosition(MyEntity weaponBlock, MyEntity targetEnt, int weaponId)
         {
             var comp = weaponBlock.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp?.Platform != null && comp.Platform.State == Ready && comp.Platform.Weapons.Count > weaponId)
@@ -854,7 +947,8 @@ namespace CoreSystems.Api
             return null;
         }
 
-        private static float GetHeatLevel(Sandbox.ModAPI.IMyTerminalBlock weaponBlock)
+        private static float GetHeatLevelLegacy(IMyEntity weaponBlock) => GetHeatLevel((MyEntity) weaponBlock);
+        private static float GetHeatLevel(MyEntity weaponBlock)
         {
             var comp = weaponBlock.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp?.Platform != null && comp.Platform.State == Ready && comp.MaxHeat > 0)
@@ -864,7 +958,8 @@ namespace CoreSystems.Api
             return 0f;
         }
 
-        private static float GetCurrentPower(Sandbox.ModAPI.IMyTerminalBlock weaponBlock)
+        private static float GetCurrentPowerLegacy(IMyEntity weaponBlock) => GetCurrentPower((MyEntity) weaponBlock);
+        private static float GetCurrentPower(MyEntity weaponBlock)
         {
             var comp = weaponBlock.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp?.Platform != null && comp.Platform.State == Ready)
@@ -878,7 +973,8 @@ namespace CoreSystems.Api
             return 0f; //Need to implement
         }
 
-        private static void ModOverride(Sandbox.ModAPI.IMyTerminalBlock weaponBlock)
+        private static void ModOverrideLegacy(IMyEntity weaponBlock) => ModOverride((MyEntity) weaponBlock);
+        private static void ModOverride(MyEntity weaponBlock)
         {
             var comp = weaponBlock.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp?.Platform != null && comp.Platform.State == Ready)
@@ -889,19 +985,22 @@ namespace CoreSystems.Api
             }
         }
 
-        private bool HasGridAi(IMyEntity entity)
+        private bool HasGridAiLegacy(IMyEntity entity) => HasGridAi((MyEntity) entity);
+        private bool HasGridAi(MyEntity entity)
         {
-            var grid = entity?.GetTopMostParent() as MyCubeGrid;
+            var grid = entity.GetTopMostParent();
 
             return grid != null && _session.EntityAIs.ContainsKey(grid);
         }
 
-        private static bool HasCoreWeapon(Sandbox.ModAPI.IMyTerminalBlock weaponBlock)
+        private static bool HasCoreWeaponLegacy(IMyEntity weaponBlock) => HasCoreWeapon((MyEntity) weaponBlock);
+        private static bool HasCoreWeapon(MyEntity weaponBlock)
         {
             return weaponBlock.Components.Has<CoreComponent>();
         }
 
-        private float GetOptimalDps(IMyEntity entity)
+        private float GetOptimalDpsLegacy(IMyEntity entity) => GetOptimalDps((MyEntity) entity);
+        private float GetOptimalDps(MyEntity entity)
         {
             var weaponBlock = entity as Sandbox.ModAPI.IMyTerminalBlock;
             if (weaponBlock != null)
@@ -920,7 +1019,8 @@ namespace CoreSystems.Api
             return 0f;
         }
 
-        private static string GetActiveAmmo(Sandbox.ModAPI.IMyTerminalBlock weaponBlock, int weaponId)
+        private static string GetActiveAmmoLegacy(IMyEntity weaponBlock, int weaponId) => GetActiveAmmo((MyEntity) weaponBlock, weaponId);
+        private static string GetActiveAmmo(MyEntity weaponBlock, int weaponId)
         {
             var comp = weaponBlock.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp?.Platform != null && comp.Platform.State == Ready && comp.Platform.Weapons.Count > weaponId)
@@ -929,7 +1029,8 @@ namespace CoreSystems.Api
             return null;
         }
 
-        private static void SetActiveAmmo(Sandbox.ModAPI.IMyTerminalBlock weaponBlock, int weaponId, string ammoTypeStr)
+        private static void SetActiveAmmoLegacy(IMyEntity weaponBlock, int weaponId, string ammoTypeStr) => SetActiveAmmo((MyEntity) weaponBlock, weaponId, ammoTypeStr);
+        private static void SetActiveAmmo(MyEntity weaponBlock, int weaponId, string ammoTypeStr)
         {
             var comp = weaponBlock.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp?.Platform != null && comp.Session.IsServer && comp.Platform.State == Ready && comp.Platform.Weapons.Count > weaponId)
@@ -1008,17 +1109,19 @@ namespace CoreSystems.Api
             return new MyTuple<Vector3D, Vector3D, float, float, long, string>();
         }
 
-        private float GetConstructEffectiveDps(IMyEntity entity)
+        private float GetConstructEffectiveDpsLegacy(IMyEntity entity) => GetConstructEffectiveDps((MyEntity) entity);
+        private float GetConstructEffectiveDps(MyEntity entity)
         {
-            var grid = entity.GetTopMostParent() as MyCubeGrid;
+            var topEntity = entity.GetTopMostParent();
             Ai ai;
-            if (grid != null && _session.EntityToMasterAi.TryGetValue(grid, out ai))
+            if (topEntity != null && _session.EntityToMasterAi.TryGetValue(topEntity, out ai))
                 return ai.EffectiveDps;
 
             return 0;
         }
-        
-        private bool IsTargetValid(Sandbox.ModAPI.IMyTerminalBlock weaponBlock, IMyEntity targetEntity, bool onlyThreats, bool checkRelations)
+
+        private bool IsTargetValidLegacy(IMyEntity weaponBlock, IMyEntity targetEntity, bool onlyThreats, bool checkRelations) => IsTargetValid((MyEntity) weaponBlock, (MyEntity) targetEntity, onlyThreats, checkRelations);
+        private bool IsTargetValid(MyEntity weaponBlock, MyEntity targetEntity, bool onlyThreats, bool checkRelations)
         {
 
             var comp = weaponBlock.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
@@ -1027,7 +1130,7 @@ namespace CoreSystems.Api
                 var ai = comp.Ai;
                 
                 Ai.TargetInfo targetInfo;
-                if (ai.Targets.TryGetValue((MyEntity)targetEntity, out targetInfo)) {
+                if (ai.Targets.TryGetValue(targetEntity, out targetInfo)) {
                     var marked = targetInfo.Target?.MarkedForClose;
                     if (!marked.HasValue || marked.Value)
                         return false;
@@ -1057,7 +1160,8 @@ namespace CoreSystems.Api
             return false;
         }
 
-        internal MyTuple<Vector3D, Vector3D> GetWeaponScope(Sandbox.ModAPI.IMyTerminalBlock weaponBlock, int weaponId)
+        internal MyTuple<Vector3D, Vector3D> GetWeaponScopeLegacy(IMyEntity weaponBlock, int weaponId) => GetWeaponScope((MyEntity) weaponBlock, weaponId);
+        internal MyTuple<Vector3D, Vector3D> GetWeaponScope(MyEntity weaponBlock, int weaponId)
         {
             var comp = weaponBlock.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp?.Platform != null && comp.Platform.State == Ready && comp.Platform.Weapons.Count > weaponId)
@@ -1068,11 +1172,12 @@ namespace CoreSystems.Api
             }
             return new MyTuple<Vector3D, Vector3D>();
         }
-        
+
         // block/grid entityId, Threat, Other 
-        private MyTuple<bool, bool> IsInRange(IMyEntity entity)
+        private MyTuple<bool, bool> IsInRangeLegacy(VRage.ModAPI.IMyEntity entity) => IsInRange((MyEntity) entity);
+        private MyTuple<bool, bool> IsInRange(MyEntity entity)
         {
-            var grid = entity?.GetTopMostParent() as MyCubeGrid;
+            var grid = entity.GetTopMostParent();
             Ai ai;
             if (grid != null && _session.EntityAIs.TryGetValue(grid, out ai))
             {
@@ -1210,8 +1315,8 @@ namespace CoreSystems.Api
         ///
         /// Hakerman;s Beam Logic
         /// 
-        
-        private bool IsWeaponShooting(IMyTerminalBlock weaponBlock, int weaponId)
+        private bool IsWeaponShootingLegacy(IMyEntity weaponBlock, int weaponId) => IsWeaponShooting((MyEntity) weaponBlock, weaponId);
+        private bool IsWeaponShooting(MyEntity weaponBlock, int weaponId)
         {
             Weapon.WeaponComponent comp = weaponBlock.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (weaponId < comp.Collection.Count)
@@ -1222,8 +1327,8 @@ namespace CoreSystems.Api
             }
             return false;
         }
-
-        private int GetShotsFired(IMyTerminalBlock weaponBlock, int weaponId)
+        private int GetShotsFiredLegacy(IMyEntity weaponBlock, int weaponId) => GetShotsFired((MyEntity) weaponBlock, weaponId);
+        private int GetShotsFired(MyEntity weaponBlock, int weaponId)
         {
             Weapon.WeaponComponent comp = weaponBlock.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp != null && weaponId < comp.Collection.Count)
@@ -1236,7 +1341,8 @@ namespace CoreSystems.Api
         }
 
         /// returns: A list that contains every muzzle's Position, LocalPosition, Direction, UpDirection, ParentMatrix, DummyMatrix
-        private void GetMuzzleInfo(IMyTerminalBlock weaponBlock, int weaponId, List<MyTuple<Vector3D, Vector3D, Vector3D, Vector3D, MatrixD, MatrixD>> output)
+        private void GetMuzzleInfoLegacy(IMyEntity weaponBlock, int weaponId, List<MyTuple<Vector3D, Vector3D, Vector3D, Vector3D, MatrixD, MatrixD>> output) => GetMuzzleInfo((MyEntity) weaponBlock, weaponId, output);
+        private void GetMuzzleInfo(MyEntity weaponBlock, int weaponId, List<MyTuple<Vector3D, Vector3D, Vector3D, Vector3D, MatrixD, MatrixD>> output)
         {
             Weapon.WeaponComponent comp = weaponBlock.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (weaponId < comp.Collection.Count)

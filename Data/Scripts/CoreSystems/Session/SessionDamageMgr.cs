@@ -41,6 +41,8 @@ namespace CoreSystems
                 if (!info.DoDamage && IsServer)
                     info.BaseDamagePool = 0;
 
+                info.ProHits?.Clear();
+
                 var pInvalid = (int)p.State > 3;
                 var tInvalid = info.Target.TargetState == Target.TargetStates.IsProjectile && (int)info.Target.Projectile.State > 1;
                 if (tInvalid) info.Target.Reset(Tick, Target.States.ProjectileClean);

@@ -107,7 +107,7 @@ namespace CoreSystems.Platform
 
         internal bool HasAmmo()
         {
-            if (Comp.Session.IsCreative || !ActiveAmmoDef.AmmoDef.Const.Reloadable || System.DesignatorWeapon) {
+            if (Comp.Session.IsCreative || !ActiveAmmoDef.AmmoDef.Const.Reloadable || System.DesignatorWeapon || Comp.InfiniteResource) {
                 NoMagsToLoad = false;
                 return true;
             }

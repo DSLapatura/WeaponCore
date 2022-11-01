@@ -33,23 +33,110 @@ namespace CoreSystems.Api
         private Action<ICollection<MyDefinitionId>> _getCoreRifles;
         private Action<IList<byte[]>> _getCoreArmors;
 
-        private Action<IMyEntity, ICollection<MyTuple<IMyEntity, float>>> _getSortedThreats;
-        private Action<IMyEntity, ICollection<IMyEntity>> _getObstructions;
+        private Action<MyEntity, ICollection<MyTuple<MyEntity, float>>> _getSortedThreats;
+        private Action<MyEntity, ICollection<MyEntity>> _getObstructions;
 
         private Func<MyDefinitionId, float> _getMaxPower;
-        private Func<IMyEntity, MyTuple<bool, int, int>> _getProjectilesLockedOn;
-        private Func<IMyEntity, int, IMyEntity> _getAiFocus;
-        private Func<IMyEntity, IMyEntity, int, bool> _setAiFocus;
-        private Func<IMyEntity, bool> _hasGridAi;
-        private Func<IMyEntity, float> _getOptimalDps;
-        private Func<IMyEntity, float> _getConstructEffectiveDps;
-        private Func<IMyEntity, MyTuple<bool, bool>> _isInRange;
+        private Func<MyEntity, MyTuple<bool, int, int>> _getProjectilesLockedOn;
+        private Func<MyEntity, int, MyEntity> _getAiFocus;
+        private Func<MyEntity, MyEntity, int, bool> _setAiFocus;
+        private Func<MyEntity, bool> _hasGridAi;
+        private Func<MyEntity, float> _getOptimalDps;
+        private Func<MyEntity, float> _getConstructEffectiveDps;
+        private Func<MyEntity, MyTuple<bool, bool>> _isInRange;
         private Func<ulong, MyTuple<Vector3D, Vector3D, float, float, long, string>> _getProjectileState;
         private Action<MyEntity, int, Action<long, int, ulong, long, Vector3D, bool>> _addProjectileMonitor;
         private Action<MyEntity, int, Action<long, int, ulong, long, Vector3D, bool>> _removeProjectileMonitor;
-        private Action<IMyTerminalBlock, int, Action<long, int, ulong, long, Vector3D, bool>> _monitorProjectile; // Legacy use base version
-        private Action<IMyTerminalBlock, int, Action<long, int, ulong, long, Vector3D, bool>> _unMonitorProjectile; // Legacy use base version
+        private Action<MyEntity, int, Action<long, int, ulong, long, Vector3D, bool>> _monitorProjectile; // Legacy use base version
+        private Action<MyEntity, int, Action<long, int, ulong, long, Vector3D, bool>> _unMonitorProjectile; // Legacy use base version
         private Action<long, int, Action<ListReader<MyTuple<long, long, int, MyEntity, MyEntity, ListReader<MyTuple<Vector3D, object, float>>>>>> _registerDamageEvent;
+        private Func<MyEntity, int, MyTuple<bool, bool, bool, MyEntity>> _getWeaponTarget;
+        private Action<MyEntity, MyEntity, int> _setWeaponTarget;
+        private Action<MyEntity, bool, int> _fireWeaponOnce;
+        private Action<MyEntity, bool, bool, int> _toggleWeaponFire;
+        private Func<MyEntity, int, bool, bool, bool> _isWeaponReadyToFire;
+        private Func<MyEntity, int, float> _getMaxWeaponRange;
+        private Func<MyEntity, ICollection<string>, int, bool> _getTurretTargetTypes;
+        private Action<MyEntity, ICollection<string>, int> _setTurretTargetTypes;
+        private Action<MyEntity, float> _setBlockTrackingRange;
+        private Func<MyEntity, MyEntity, int, bool> _isTargetAligned;
+        private Func<MyEntity, MyEntity, int, MyTuple<bool, Vector3D?>> _isTargetAlignedExtended;
+        private Func<MyEntity, MyEntity, int, bool> _canShootTarget;
+        private Func<MyEntity, MyEntity, int, Vector3D?> _getPredictedTargetPos;
+        private Func<MyEntity, float> _getHeatLevel;
+        private Func<MyEntity, float> _currentPowerConsumption;
+        private Action<MyEntity> _disableRequiredPower;
+        private Func<MyEntity, bool> _hasCoreWeapon;
+        private Func<MyEntity, int, string> _getActiveAmmo;
+        private Action<MyEntity, int, string> _setActiveAmmo;
+
+        private Func<MyEntity, long> _getPlayerController;
+        private Func<MyEntity, int, Matrix> _getWeaponAzimuthMatrix;
+        private Func<MyEntity, int, Matrix> _getWeaponElevationMatrix;
+        private Func<MyEntity, MyEntity, bool, bool, bool> _isTargetValid;
+        private Func<MyEntity, int, MyTuple<Vector3D, Vector3D>> _getWeaponScope;
+        private Func<MyEntity, int, bool> _isWeaponShooting;
+        private Func<MyEntity, int, int> _getShotsFired;
+        private Action<MyEntity, int, List<MyTuple<Vector3D, Vector3D, Vector3D, Vector3D, MatrixD, MatrixD>>> _getMuzzleInfo;
+        private Func<MyEntity, bool> _toggoleInfiniteResources;
+        public void SetWeaponTarget(MyEntity weapon, MyEntity target, int weaponId = 0) =>
+            _setWeaponTarget?.Invoke(weapon, target, weaponId);
+
+        public void FireWeaponOnce(MyEntity weapon, bool allWeapons = true, int weaponId = 0) =>
+            _fireWeaponOnce?.Invoke(weapon, allWeapons, weaponId);
+
+        public void ToggleWeaponFire(MyEntity weapon, bool on, bool allWeapons, int weaponId = 0) =>
+            _toggleWeaponFire?.Invoke(weapon, on, allWeapons, weaponId);
+
+        public bool IsWeaponReadyToFire(MyEntity weapon, int weaponId = 0, bool anyWeaponReady = true,
+            bool shootReady = false) =>
+            _isWeaponReadyToFire?.Invoke(weapon, weaponId, anyWeaponReady, shootReady) ?? false;
+
+        public float GetMaxWeaponRange(MyEntity weapon, int weaponId) =>
+            _getMaxWeaponRange?.Invoke(weapon, weaponId) ?? 0f;
+
+        public bool GetTurretTargetTypes(MyEntity weapon, IList<string> collection, int weaponId = 0) =>
+            _getTurretTargetTypes?.Invoke(weapon, collection, weaponId) ?? false;
+
+        public void SetTurretTargetTypes(MyEntity weapon, IList<string> collection, int weaponId = 0) =>
+            _setTurretTargetTypes?.Invoke(weapon, collection, weaponId);
+
+        public void SetBlockTrackingRange(MyEntity weapon, float range) =>
+            _setBlockTrackingRange?.Invoke(weapon, range);
+
+        public bool IsTargetAligned(MyEntity weapon, MyEntity targetEnt, int weaponId) =>
+            _isTargetAligned?.Invoke(weapon, targetEnt, weaponId) ?? false;
+
+        public MyTuple<bool, Vector3D?> IsTargetAlignedExtended(MyEntity weapon, MyEntity targetEnt, int weaponId) =>
+            _isTargetAlignedExtended?.Invoke(weapon, targetEnt, weaponId) ?? new MyTuple<bool, Vector3D?>();
+
+        public bool CanShootTarget(MyEntity weapon, MyEntity targetEnt, int weaponId) =>
+            _canShootTarget?.Invoke(weapon, targetEnt, weaponId) ?? false;
+
+        public Vector3D? GetPredictedTargetPosition(MyEntity weapon, MyEntity targetEnt, int weaponId) =>
+            _getPredictedTargetPos?.Invoke(weapon, targetEnt, weaponId) ?? null;
+
+        public float GetHeatLevel(MyEntity weapon) => _getHeatLevel?.Invoke(weapon) ?? 0f;
+        public float GetCurrentPower(MyEntity weapon) => _currentPowerConsumption?.Invoke(weapon) ?? 0f;
+        public void DisableRequiredPower(MyEntity weapon) => _disableRequiredPower?.Invoke(weapon);
+        public bool HasCoreWeapon(MyEntity weapon) => _hasCoreWeapon?.Invoke(weapon) ?? false;
+
+        public string GetActiveAmmo(MyEntity weapon, int weaponId) =>
+            _getActiveAmmo?.Invoke(weapon, weaponId) ?? null;
+
+        public void SetActiveAmmo(MyEntity weapon, int weaponId, string ammoType) =>
+            _setActiveAmmo?.Invoke(weapon, weaponId, ammoType);
+
+        public long GetPlayerController(MyEntity weapon) => _getPlayerController?.Invoke(weapon) ?? -1;
+
+        public Matrix GetWeaponAzimuthMatrix(MyEntity weapon, int weaponId) =>
+            _getWeaponAzimuthMatrix?.Invoke(weapon, weaponId) ?? Matrix.Zero;
+
+        public Matrix GetWeaponElevationMatrix(MyEntity weapon, int weaponId) =>
+            _getWeaponElevationMatrix?.Invoke(weapon, weaponId) ?? Matrix.Zero;
+
+        public bool IsTargetValid(MyEntity weapon, MyEntity target, bool onlyThreats, bool checkRelations) =>
+            _isTargetValid?.Invoke(weapon, target, onlyThreats, checkRelations) ?? false;
 
         public void GetAllWeaponDefinitions(IList<byte[]> collection) => _getAllWeaponDefinitions?.Invoke(collection);
         public void GetAllCoreWeapons(ICollection<MyDefinitionId> collection) => _getCoreWeapons?.Invoke(collection);
@@ -59,24 +146,24 @@ namespace CoreSystems.Api
         public void GetAllCoreRifles(ICollection<MyDefinitionId> collection) => _getCoreRifles?.Invoke(collection);
         public void GetAllCoreArmors(IList<byte[]> collection) => _getCoreArmors?.Invoke(collection);
 
-        public MyTuple<bool, int, int> GetProjectilesLockedOn(IMyEntity victim) =>
+        public MyTuple<bool, int, int> GetProjectilesLockedOn(MyEntity victim) =>
             _getProjectilesLockedOn?.Invoke(victim) ?? new MyTuple<bool, int, int>();
-        public void GetSortedThreats(IMyEntity shooter, ICollection<MyTuple<IMyEntity, float>> collection) =>
+        public void GetSortedThreats(MyEntity shooter, ICollection<MyTuple<MyEntity, float>> collection) =>
             _getSortedThreats?.Invoke(shooter, collection);
-        public void GetObstructions(IMyEntity shooter, ICollection<IMyEntity> collection) =>
+        public void GetObstructions(MyEntity shooter, ICollection<MyEntity> collection) =>
             _getObstructions?.Invoke(shooter, collection);
-        public IMyEntity GetAiFocus(IMyEntity shooter, int priority = 0) => _getAiFocus?.Invoke(shooter, priority);
-        public bool SetAiFocus(IMyEntity shooter, IMyEntity target, int priority = 0) =>
+        public MyEntity GetAiFocus(MyEntity shooter, int priority = 0) => _getAiFocus?.Invoke(shooter, priority);
+        public bool SetAiFocus(MyEntity shooter, MyEntity target, int priority = 0) =>
             _setAiFocus?.Invoke(shooter, target, priority) ?? false;
-        public MyTuple<bool, bool, bool, IMyEntity> GetWeaponTarget(IMyTerminalBlock weapon, int weaponId = 0) =>
-            _getWeaponTarget?.Invoke(weapon, weaponId) ?? new MyTuple<bool, bool, bool, IMyEntity>();
+        public MyTuple<bool, bool, bool, MyEntity> GetWeaponTarget(MyEntity weapon, int weaponId = 0) =>
+            _getWeaponTarget?.Invoke(weapon, weaponId) ?? new MyTuple<bool, bool, bool, MyEntity>();
         public float GetMaxPower(MyDefinitionId weaponDef) => _getMaxPower?.Invoke(weaponDef) ?? 0f;
-        public bool HasGridAi(IMyEntity entity) => _hasGridAi?.Invoke(entity) ?? false;
-        public float GetOptimalDps(IMyEntity entity) => _getOptimalDps?.Invoke(entity) ?? 0f;
+        public bool HasGridAi(MyEntity entity) => _hasGridAi?.Invoke(entity) ?? false;
+        public float GetOptimalDps(MyEntity entity) => _getOptimalDps?.Invoke(entity) ?? 0f;
         public MyTuple<Vector3D, Vector3D, float, float, long, string> GetProjectileState(ulong projectileId) =>
             _getProjectileState?.Invoke(projectileId) ?? new MyTuple<Vector3D, Vector3D, float, float, long, string>();
-        public float GetConstructEffectiveDps(IMyEntity entity) => _getConstructEffectiveDps?.Invoke(entity) ?? 0f;
-        public MyTuple<Vector3D, Vector3D> GetWeaponScope(IMyTerminalBlock weapon, int weaponId) =>
+        public float GetConstructEffectiveDps(MyEntity entity) => _getConstructEffectiveDps?.Invoke(entity) ?? 0f;
+        public MyTuple<Vector3D, Vector3D> GetWeaponScope(MyEntity weapon, int weaponId) =>
             _getWeaponScope?.Invoke(weapon, weaponId) ?? new MyTuple<Vector3D, Vector3D>();
 
         public void AddProjectileCallback(MyEntity entity, int weaponId, Action<long, int, ulong, long, Vector3D, bool> action) =>
@@ -87,9 +174,46 @@ namespace CoreSystems.Api
 
 
         // block/grid, Threat, Other 
-        public MyTuple<bool, bool> IsInRange(IMyEntity entity) =>
+        public MyTuple<bool, bool> IsInRange(MyEntity entity) =>
             _isInRange?.Invoke(entity) ?? new MyTuple<bool, bool>();
 
+
+        /// <summary>
+        /// Gets whether the weapon is shooting, used by Hakerman's Beam Logic
+        /// Unexpected behavior may occur when using this method
+        /// </summary>
+        /// <param name="weaponBlock"></param>
+        /// <param name="weaponId"></param>
+        /// <returns></returns>
+        internal bool IsWeaponShooting(MyEntity weaponBlock, int weaponId) => _isWeaponShooting?.Invoke(weaponBlock, weaponId) ?? false;
+
+        /// <summary>
+        /// Gets how many shots the weapon fired, used by Hakerman's Beam Logic
+        /// Unexpected behavior may occur when using this method
+        /// </summary>
+        /// <param name="weaponBlock"></param>
+        /// <param name="weaponId"></param>
+        /// <returns></returns>
+        internal int GetShotsFired(MyEntity weaponBlock, int weaponId) => _getShotsFired?.Invoke(weaponBlock, weaponId) ?? -1;
+
+        /// <summary>
+        /// Gets the info of the weapon's all muzzles, used by Hakerman's Beam Logic
+        /// returns: A list that contains every muzzle's Position, LocalPosition, Direction, UpDirection, ParentMatrix, DummyMatrix
+        /// Unexpected behavior may occur when using this method
+        /// </summary>
+        /// <param name="weaponBlock"></param>
+        /// <param name="weaponId"></param>
+        /// <returns></returns>
+        internal void GetMuzzleInfo(MyEntity weaponBlock, int weaponId, List<MyTuple<Vector3D, Vector3D, Vector3D, Vector3D, MatrixD, MatrixD>> output) =>
+            _getMuzzleInfo?.Invoke(weaponBlock, weaponId, output);
+
+        /// <summary>
+        /// Entity can be a weapon or a grid (enables on all subgrids as well)
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <returns></returns>
+        public bool ToggleInfiniteResources(MyEntity entity) =>
+            _toggoleInfiniteResources?.Invoke(entity) ?? false;
 
         // register for damage events
         public void RegisterDamageEvent(long modId, int type, Action<ListReader<MyTuple<long, long, int, MyEntity, MyEntity, ListReader<MyTuple<Vector3D, object, float>>>>> callback)
@@ -228,6 +352,7 @@ namespace CoreSystems.Api
             AssignMethod(delegates, "IsWeaponShooting", ref _isWeaponShooting);
             AssignMethod(delegates, "GetShotsFired", ref _getShotsFired);
             AssignMethod(delegates, "GetMuzzleInfo", ref _getMuzzleInfo);
+            AssignMethod(delegates, "ToggleInfiniteAmmoBase", ref _toggoleInfiniteResources);
 
             // Damage handler
             AssignMethod(delegates, "DamageHandler", ref _registerDamageEvent);

@@ -97,7 +97,15 @@ namespace CoreSystems.Projectiles
             if (Session.IsClient && (Session.CurrentClientEwaredCubes.Count > 0 || Session.ActiveEwarCubes.Count > 0) && (Session.ClientEwarStale || Session.Tick120))
                 Session.SyncClientEwarBlocks();
 
-            if (Session.Hits.Count > 0) Session.ProcessHits();
+            if (Session.Hits.Count > 0)
+            {
+                Session.Api.ProjectileDamageEvents.Clear();
+
+                Session.ProcessHits();
+
+                if (Session.Api.ProjectileDamageEvents.Count > 0)
+                    Session.ProcessDamageHandlerRequests();
+            }
         }
 
         internal void AvUpdate()

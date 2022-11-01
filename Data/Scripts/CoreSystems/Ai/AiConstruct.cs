@@ -128,7 +128,7 @@ namespace CoreSystems.Support
             internal uint LastTargetInfoTick;
             internal bool DirtyWeaponGroups;
             internal bool DroneAlert;
-
+            internal bool InfiniteResources;
             internal double TotalEffect;
             internal long TotalPrimaryEffect;
             internal long TotalAoeEffect;
@@ -613,6 +613,16 @@ namespace CoreSystems.Support
                             comp.DamageHandlerRegistrants.Remove(modId);
                     }
                 }
+            }
+
+            public bool GiveAllCompsInfiniteResources()
+            {
+                InfiniteResources = !InfiniteResources;
+                foreach (var ai in RootAi.TopEntityMap.GroupMap.Ais)
+                    foreach (var comp in ai.CompBase.Values)
+                        comp.InfiniteResource = InfiniteResources;
+
+                return InfiniteResources;
             }
         }
     }
