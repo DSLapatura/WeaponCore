@@ -301,6 +301,7 @@ namespace CoreSystems.Support
         public readonly List<RootBlocks> Blocks = new List<RootBlocks>(16);
         public readonly List<Vector3I> Vector3ICache = new List<Vector3I>(16);
         public MyEntity Entity;
+        public MyEntity ShieldEntity;
         internal Projectile Projectile;
         public ProInfo Info;
         public LineD Intersection;
@@ -319,6 +320,7 @@ namespace CoreSystems.Support
         {
             Vector3ICache.Clear();
             Entity = null;
+            ShieldEntity = null;
             Projectile = null;
             Intersection.Length = 0;
             Intersection.Direction = Vector3D.Zero;

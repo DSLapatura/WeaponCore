@@ -467,6 +467,7 @@ namespace CoreSystems.Projectiles
                             p.FinalizeIntersection = true;
                             hitEntity.Info = info;
                             hitEntity.Entity = hitEnt;
+                            hitEntity.ShieldEntity = ent;
                             hitEntity.Intersection = p.Beam;
                             hitEntity.SphereCheck = !lineCheck;
                             hitEntity.PruneSphere = p.PruneSphere;
