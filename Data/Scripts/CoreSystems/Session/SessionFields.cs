@@ -106,6 +106,7 @@ namespace CoreSystems
 
         internal readonly Stack<ProtoProStateSync> ProtoWeaponProSyncStatePool = new Stack<ProtoProStateSync>(256);
         internal readonly Stack<ProjectileSyncStatePacket> ProtoWeaponProStatePacketPool = new Stack<ProjectileSyncStatePacket>(256);
+        internal readonly Stack<List<MyTuple<Vector3D, object, float>>> ProHitPool = new Stack<List<MyTuple<Vector3D, object, float>>>(256);
 
 
         internal readonly Stack<WeaponSequence> SequencePool = new Stack<WeaponSequence>(32);
@@ -178,7 +179,7 @@ namespace CoreSystems
         internal readonly Dictionary<MyEntity, ProtoProPositionSync> GlobalProPosSyncs = new Dictionary<MyEntity, ProtoProPositionSync>();
         internal readonly Dictionary<MyEntity, ProtoProStateSync> GlobalProStateSyncs = new Dictionary<MyEntity, ProtoProStateSync>();
         internal readonly Dictionary<ulong, TickLatency> PlayerTickLatency = new Dictionary<ulong, TickLatency>();
-        internal readonly Dictionary<long, DamageEventRegRequest> DamageHandlerRegistrants = new Dictionary<long, DamageEventRegRequest>();
+        internal readonly Dictionary<long, DamageHandlerRegistrant> DamageHandlerRegistrants = new Dictionary<long, DamageHandlerRegistrant>();
 
         internal readonly ConcurrentDictionary<long, int> DeferredPlayerLock = new ConcurrentDictionary<long, int>();
         internal readonly HashSet<MyDefinitionId> DefIdsComparer = new HashSet<MyDefinitionId>(MyDefinitionId.Comparer);
@@ -212,7 +213,7 @@ namespace CoreSystems
         internal readonly List<Weapon> HomingWeapons = new List<Weapon>(128);
         internal readonly List<Ai> AimingAi = new List<Ai>(128);
         internal readonly List<IHitInfo> HitInfoTmpList = new List<IHitInfo>();
-        internal readonly List<DamageEventRegRequest> SystemWideDamageRegistrants = new List<DamageEventRegRequest>();
+        internal readonly Dictionary<long, DamageHandlerRegistrant> SystemWideDamageRegistrants = new Dictionary<long, DamageHandlerRegistrant>();
 
         internal readonly HashSet<MyDefinitionId> CoreSystemsFixedBlockDefs = new HashSet<MyDefinitionId>();
         internal readonly HashSet<MyDefinitionId> CoreSystemsTurretBlockDefs = new HashSet<MyDefinitionId>();
@@ -394,6 +395,7 @@ namespace CoreSystems
         internal float LastOptimalDps;
         internal float ServerSimulation;
         internal float ClientSimulation;
+        internal bool GlobalDamageHandlerActive;
         internal bool TargetInfoKeyLock;
         internal bool MinimalHudOverride;
         internal bool PurgedAll;

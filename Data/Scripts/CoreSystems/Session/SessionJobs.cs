@@ -315,6 +315,13 @@ namespace CoreSystems
             }
         }
 
+        internal void ProcessDamageHandlerRequests()
+        {
+            foreach (var pair in SystemWideDamageRegistrants)
+            {
+                pair.Value.CallBack.Invoke(new ListReader<MyTuple<ulong, long, int, MyEntity, MyEntity, ListReader<MyTuple<Vector3D, object, float>>>>(Api.ProjectileDamageEvents));
+            }
+        }
 
         private void UpdateGrids()
         {

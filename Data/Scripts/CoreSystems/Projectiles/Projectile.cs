@@ -170,6 +170,7 @@ namespace CoreSystems.Projectiles
 
             CachedId = Info.MuzzleId == -1 ? Info.Weapon.WeaponCache.VirutalId : Info.MuzzleId;
             if (aConst.DynamicGuidance && session.AntiSmartActive) DynTrees.RegisterProjectile(this);
+            Info.DamageHandlerActive = session.GlobalDamageHandlerActive || Info.Weapon.Comp.DamageHandlerRegistrants.Count > 0;
 
             Info.MyPlanet = Info.Ai.MyPlanet;
             

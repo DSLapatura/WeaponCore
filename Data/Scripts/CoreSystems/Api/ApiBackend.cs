@@ -14,12 +14,11 @@ using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRage.ModAPI;
 using VRageMath;
-using static CoreSystems.Support.CoreComponent.Trigger;
 using static CoreSystems.Platform.CorePlatform.PlatformState;
 using IMyProgrammableBlock = Sandbox.ModAPI.Ingame.IMyProgrammableBlock;
 using IMyTerminalBlock = Sandbox.ModAPI.Ingame.IMyTerminalBlock;
-using static CoreSystems.Api.WcApi;
-using System.Collections.ObjectModel;
+using VRage.Collections;
+using static CoreSystems.Api.WcApi.DamageHandlerHelper;
 
 namespace CoreSystems.Api
 {
@@ -101,6 +100,8 @@ namespace CoreSystems.Api
                 ["IsWeaponShooting"] = new Func<IMyTerminalBlock, int, bool>(IsWeaponShooting),
                 ["GetShotsFired"] = new Func<IMyTerminalBlock, int, int>(GetShotsFired),
                 ["GetMuzzleInfo"] = new Action<IMyTerminalBlock, int, List<MyTuple<Vector3D, Vector3D, Vector3D, Vector3D, MatrixD, MatrixD>>>(GetMuzzleInfo),
+                ["DamageHandler"] = new Action<long, int, Action<ListReader<MyTuple<ulong, long, int, MyEntity, MyEntity, ListReader<MyTuple<Vector3D, object, float>>>>>>(RegisterForDamageEvents),
+
             };
             PbApiMethods = new Dictionary<string, Delegate> // keen bad... ReadOnlyDictionary prohibited 
             {
@@ -1255,63 +1256,28 @@ namespace CoreSystems.Api
             }
         }
 
-
-        // Calling ModID, DamageEventRegRequest byte stream
-        private void RegisterForDamageEvents(long modId, byte[] request)
+        internal List<MyTuple<ulong, long, int, MyEntity, MyEntity, ListReader<MyTuple<Vector3D, object, float>>>> ProjectileDamageEvents = new List<MyTuple<ulong, long, int, MyEntity, MyEntity, ListReader<MyTuple<Vector3D, object, float>>>>();
+        private void RegisterForDamageEvents(long modId, int eventType, Action<ListReader<MyTuple<ulong, long, int, MyEntity, MyEntity, ListReader<MyTuple<Vector3D, object, float>>>>> callback)
         {
-            var newEventRequest = MyAPIGateway.Utilities.SerializeFromBinary<DamageEventRegRequest>(request);
-            if (newEventRequest != null)
+            DamageHandlerRegistrant oldEventReq;
+            if (_session.DamageHandlerRegistrants.TryGetValue(modId, out oldEventReq))
             {
+                _session.DamageHandlerRegistrants.Remove(modId);
+                _session.SystemWideDamageRegistrants.Remove(modId);
+                _session.GlobalDamageHandlerActive = _session.SystemWideDamageRegistrants.Count > 0;
+            }
 
-                _session.DamageHandlerRegistrants.Remove(newEventRequest.ModId);
+            if (eventType == (int)EventType.Unregister)
+                return;
 
-                for (int i = 0; i < _session.SystemWideDamageRegistrants.Count; i++)
-                {
-                    if (_session.SystemWideDamageRegistrants[i].ModId == newEventRequest.ModId)
-                        _session.SystemWideDamageRegistrants.RemoveAt(i);
-                }
+            oldEventReq = oldEventReq ?? new DamageHandlerRegistrant(callback);
 
-                DamageEventRegRequest oldEventReq;
-                if (_session.DamageHandlerRegistrants.TryGetValue(newEventRequest.ModId, out oldEventReq))
-                {
-                    foreach (var pId in oldEventReq.EntitiesToRegister)
-                    {
-                        MyEntity entity;
-                        if (MyEntities.TryGetEntityById(pId, out entity))
-                        {
-                            Ai oldRootAi;
-                            CoreComponent cComp;
-                            if (_session.EntityToMasterAi.TryGetValue(entity, out oldRootAi))
-                                oldRootAi.Construct.UnregisterModFromDamageHandler(oldEventReq.ModId);
-                            else if (_session.IdToCompMap.TryGetValue(entity.EntityId, out cComp))
-                                cComp.DamageHandlerRegistrants.Remove(oldEventReq.ModId);
-                        }
-                    }
-                }
+            _session.DamageHandlerRegistrants[modId] = oldEventReq;
 
-                if (newEventRequest.Type == DamageEventRegRequest.EventType.Unregister)
-                    return;
+            if (eventType == (int)EventType.SystemWideDamageEvents) {
 
-                _session.DamageHandlerRegistrants[modId] = newEventRequest;
-
-                if (newEventRequest.Type == DamageEventRegRequest.EventType.SystemWideDamageEvents) {
-                    _session.SystemWideDamageRegistrants.Add(newEventRequest);
-                    return;
-                }
-
-                foreach (var pId in newEventRequest.EntitiesToRegister)
-                {
-                    MyEntity entity;
-                    if (MyEntities.TryGetEntityById(pId, out entity))
-                    {
-                        Ai oldRootAi;
-                        CoreComponent cComp;
-                        if (_session.EntityToMasterAi.TryGetValue(entity, out oldRootAi))
-                            oldRootAi.Construct.RegisterModFromDamageHandler(newEventRequest.ModId);
-                        else if (_session.IdToCompMap.TryGetValue(entity.EntityId, out cComp))
-                            cComp.DamageHandlerRegistrants.Add(newEventRequest.ModId);
-                    }
-                }
+                _session.GlobalDamageHandlerActive = true;
+                _session.SystemWideDamageRegistrants[modId] = oldEventReq;
             }
         }
     }

@@ -58,7 +58,11 @@ namespace CoreSystems
 
                 if (DeformProtection.Count > 0 && Tick - LastDeform > 0)
                     DeformProtection.Clear();
-                
+
+                if (Api.ProjectileDamageEvents.Count > 0)
+                    Api.ProjectileDamageEvents.Clear();
+
+
                 Timings();
 
                 if (IsClient) {
@@ -258,6 +262,9 @@ namespace CoreSystems
 
                 if (HandlesInput && Tick30)
                     UpdatePlayerPainters();
+
+                if (Api.ProjectileDamageEvents.Count > 0)
+                    ProcessDamageHandlerRequests();
 
                 if (DebugLos && Tick1800) {
                     var averageMisses = RayMissAmounts > 0 ? RayMissAmounts / Rays : 0; 

@@ -5,6 +5,7 @@ using CoreSystems.Projectiles;
 using Sandbox.Engine.Physics;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
+using VRage;
 using VRage.Collections;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
@@ -13,7 +14,6 @@ using static CoreSystems.Support.HitEntity.Type;
 using static CoreSystems.Support.WeaponDefinition;
 using static CoreSystems.Support.Ai;
 using CollisionLayers = Sandbox.Engine.Physics.MyPhysics.CollisionLayers;
-using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace CoreSystems.Support
 {
@@ -23,6 +23,7 @@ namespace CoreSystems.Support
         internal readonly SmartStorage Storage = new SmartStorage();
         internal readonly List<HitEntity> HitList = new List<HitEntity>(4);
         internal readonly Vector3D[] PastProInfos = new Vector3D[30];
+        internal List<MyTuple<Vector3D, object, float>> ProHits;
 
         internal AvShot AvShot;
         internal Weapon Weapon;
@@ -71,6 +72,7 @@ namespace CoreSystems.Support
         internal float BaseDamagePool;
         internal float BaseHealthPool;
         internal float BaseEwarPool;
+        internal bool DamageHandlerActive;
         internal bool IsFragment;
         internal bool EwarAreaPulse;
         internal bool EwarActive;
@@ -120,6 +122,11 @@ namespace CoreSystems.Support
                     monitor[i].Invoke(Target.CoreEntity.EntityId, Weapon.PartId, Id, Target.TargetId, Hit.LastHit, false);
 
                 Weapon.System.Session.MonitoredProjectiles.Remove(Id);
+            }
+
+            if (ProHits != null) {
+                ProHits.Clear();
+                Weapon.System.Session.ProHitPool.Push(ProHits);
             }
 
             Target.Reset(Weapon.System.Session.Tick, Target.States.ProjectileClean);

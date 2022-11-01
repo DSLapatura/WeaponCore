@@ -388,7 +388,6 @@ namespace CoreSystems
                 for (int i = 0; i < ai.WeaponComps.Count; i++) {
 
                     var wComp = ai.WeaponComps[i];
-
                     if (wComp.Status != Started)
                         wComp.HealthCheck();
 

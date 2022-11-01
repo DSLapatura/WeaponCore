@@ -11,10 +11,13 @@ using Sandbox.Game.Entities;
 using Sandbox.Game.EntityComponents;
 using Sandbox.ModAPI;
 using Sandbox.ModAPI.Weapons;
+using VRage;
+using VRage.Collections;
 using VRage.Game;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRageMath;
+using static CoreSystems.Api.WcApi.DamageHandlerHelper;
 using static CoreSystems.Platform.Part;
 
 namespace CoreSystems
@@ -1071,6 +1074,17 @@ namespace CoreSystems
             ControlPlayerRequest.Clear();
         }
 
+    }
+
+
+    public class DamageHandlerRegistrant
+    {
+        public readonly Action<ListReader<MyTuple<ulong, long, int, MyEntity, MyEntity, ListReader<MyTuple<Vector3D, object, float>>>>> CallBack;
+
+        public DamageHandlerRegistrant(Action<ListReader<MyTuple<ulong, long, int, MyEntity, MyEntity, ListReader<MyTuple<Vector3D, object, float>>>>> callback)
+        {
+            CallBack = callback;
+        }
     }
 
     public class WaterData

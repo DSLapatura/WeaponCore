@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using CoreSystems.Api;
 using CoreSystems.Projectiles;
 using CoreSystems.Support;
 using Sandbox.Definitions;
@@ -7,6 +8,8 @@ using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Cube;
 using Sandbox.Game.Weapons;
 using Sandbox.ModAPI;
+using VRage;
+using VRage.Collections;
 using VRage.Game;
 using VRage.Game.Components;
 using VRage.Game.Entity;
@@ -100,6 +103,10 @@ namespace CoreSystems
                     p.State = Projectile.ProjectileState.Depleted;
 
                 info.HitList.Clear();
+
+                if (info.DamageHandlerActive && info.ObjectsHit > 0)
+                    Api.ProjectileDamageEvents.Add(new MyTuple<ulong, long, int, MyEntity, MyEntity, ListReader<MyTuple<Vector3D, object, float>>>(info.Id, info.Weapon.Comp.Data.Repo.Values.State.PlayerId, info.Weapon.PartId, info.Weapon.Comp.CoreEntity, info.Ai.TopEntity, new ListReader<MyTuple<Vector3D, object, float>>(info.ProHits)));
+
             }
             Hits.Clear();
         }
@@ -709,6 +716,11 @@ namespace CoreSystems
                                 }
 
                                 block.DoDamage(scaledDamage, damageType, sync, null, attackerId);
+                                
+                                if (t.DamageHandlerActive) {
+                                    t.ProHits = t.ProHits != null && ProHitPool.Count > 0 ? ProHitPool.Pop() : new List<MyTuple<Vector3D, object, float>>();
+                                    t.ProHits.Add(new MyTuple<Vector3D, object, float>(hitEnt.Intersection.To, block, scaledDamage));
+                                }
 
                             }
                             catch
