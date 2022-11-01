@@ -284,8 +284,8 @@ namespace CoreSystems.Projectiles
                                     {
                                         var surfacePos = info.MyPlanet.GetClosestSurfacePointGlobal(ref p.Position);
                                         var planetCenter = info.MyPlanet.PositionComp.WorldAABB.Center;
-                                        var prevEndPointToSurface = p.EndPointToSurfaceSqr;
-                                        Vector3D.DistanceSquared(ref surfacePos, ref p.Position, out p.EndPointToSurfaceSqr);
+                                        var prevDistanceToSurface = p.DistanceToSurfaceSqr;
+                                        Vector3D.DistanceSquared(ref surfacePos, ref p.Position, out p.DistanceToSurfaceSqr);
 
                                         double surfaceToCenter;
                                         Vector3D.DistanceSquared(ref surfacePos, ref planetCenter, out surfaceToCenter);
@@ -294,8 +294,8 @@ namespace CoreSystems.Projectiles
                                         double startPosToCenter;
                                         Vector3D.DistanceSquared(ref info.Origin, ref planetCenter, out startPosToCenter);
 
-                                        var distToSurfaceLessThanProLengthSqr = p.EndPointToSurfaceSqr <= beamLenSqr;
-                                        var pastSurfaceDistMoreThanToTravel = prevEndPointToSurface > p.DistanceToTravelSqr;
+                                        var distToSurfaceLessThanProLengthSqr = p.DistanceToSurfaceSqr <= beamLenSqr;
+                                        var pastSurfaceDistMoreThanToTravel = prevDistanceToSurface > p.DistanceToTravelSqr;
 
                                         var surfacePosAboveEndpoint = surfaceToCenter > posToCenter;
                                         var posMovingCloserToCenter = posToCenter > startPosToCenter;

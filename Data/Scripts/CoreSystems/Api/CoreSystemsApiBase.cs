@@ -6,7 +6,6 @@ using VRage;
 using VRage.Collections;
 using VRage.Game;
 using VRage.Game.Entity;
-using VRage.ModAPI;
 using VRageMath;
 
 namespace CoreSystems.Api
@@ -45,11 +44,13 @@ namespace CoreSystems.Api
         private Func<MyEntity, float> _getConstructEffectiveDps;
         private Func<MyEntity, MyTuple<bool, bool>> _isInRange;
         private Func<ulong, MyTuple<Vector3D, Vector3D, float, float, long, string>> _getProjectileState;
+        private Action<ulong, MyTuple<bool, Vector3D, Vector3D, float>> _setProjectileState;
+
         private Action<MyEntity, int, Action<long, int, ulong, long, Vector3D, bool>> _addProjectileMonitor;
         private Action<MyEntity, int, Action<long, int, ulong, long, Vector3D, bool>> _removeProjectileMonitor;
         private Action<MyEntity, int, Action<long, int, ulong, long, Vector3D, bool>> _monitorProjectile; // Legacy use base version
         private Action<MyEntity, int, Action<long, int, ulong, long, Vector3D, bool>> _unMonitorProjectile; // Legacy use base version
-        private Action<long, int, Action<ListReader<MyTuple<long, long, int, MyEntity, MyEntity, ListReader<MyTuple<Vector3D, object, float>>>>>> _registerDamageEvent;
+        private Action<long, int, Action<ListReader<MyTuple<ulong, long, int, MyEntity, MyEntity, ListReader<MyTuple<Vector3D, object, float>>>>>> _registerDamageEvent;
         private Func<MyEntity, int, MyTuple<bool, bool, bool, MyEntity>> _getWeaponTarget;
         private Action<MyEntity, MyEntity, int> _setWeaponTarget;
         private Action<MyEntity, bool, int> _fireWeaponOnce;
@@ -79,6 +80,9 @@ namespace CoreSystems.Api
         private Func<MyEntity, int, int> _getShotsFired;
         private Action<MyEntity, int, List<MyTuple<Vector3D, Vector3D, Vector3D, Vector3D, MatrixD, MatrixD>>> _getMuzzleInfo;
         private Func<MyEntity, bool> _toggoleInfiniteResources;
+        private Action<MyEntity, int, Action<int, bool>> _monitorEvents;
+        private Action<MyEntity, int, Action<int, bool>> _unmonitorEvents;
+
         public void SetWeaponTarget(MyEntity weapon, MyEntity target, int weaponId = 0) =>
             _setWeaponTarget?.Invoke(weapon, target, weaponId);
 
@@ -162,6 +166,17 @@ namespace CoreSystems.Api
         public float GetOptimalDps(MyEntity entity) => _getOptimalDps?.Invoke(entity) ?? 0f;
         public MyTuple<Vector3D, Vector3D, float, float, long, string> GetProjectileState(ulong projectileId) =>
             _getProjectileState?.Invoke(projectileId) ?? new MyTuple<Vector3D, Vector3D, float, float, long, string>();
+        /// <summary>
+        /// Set projectile values *Warning* be sure to pass in Vector3D.MinValue or float.MinValue to NOT set that value.
+        /// bool = EndNow
+        /// Vector3D Position
+        /// Vector3D Additive velocity
+        /// float BaseDamagePool
+        /// </summary>
+        /// <param name="projectileId"></param>
+        /// <param name="values"></param>
+        public void SetProjectileState(ulong projectileId, MyTuple<bool, Vector3D, Vector3D, float> values) =>
+            _setProjectileState?.Invoke(projectileId, values);
         public float GetConstructEffectiveDps(MyEntity entity) => _getConstructEffectiveDps?.Invoke(entity) ?? 0f;
         public MyTuple<Vector3D, Vector3D> GetWeaponScope(MyEntity weapon, int weaponId) =>
             _getWeaponScope?.Invoke(weapon, weaponId) ?? new MyTuple<Vector3D, Vector3D>();
@@ -215,8 +230,35 @@ namespace CoreSystems.Api
         public bool ToggleInfiniteResources(MyEntity entity) =>
             _toggoleInfiniteResources?.Invoke(entity) ?? false;
 
-        // register for damage events
-        public void RegisterDamageEvent(long modId, int type, Action<ListReader<MyTuple<long, long, int, MyEntity, MyEntity, ListReader<MyTuple<Vector3D, object, float>>>>> callback)
+        /// <summary>
+        /// Monitor various kind of events, see WcApiDef.WeaponDefinition.AnimationDef.PartAnimationSetDef.EventTriggers for int mapping, bool is for active/inactive
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <param name="partId"></param>
+        /// <param name="action"></param>
+        /// <returns></returns>
+        public void MonitorEvents(MyEntity entity, int partId, Action<int, bool> action) =>
+            _monitorEvents?.Invoke(entity, partId, action);
+
+        /// <summary>
+        /// Monitor various kind of events, see WcApiDef.WeaponDefinition.AnimationDef.PartAnimationSetDef.EventTriggers for int mapping, bool is for active/inactive
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <param name="partId"></param>
+        /// <param name="action"></param>
+        /// <returns></returns>
+        public void UnMonitorEvents(MyEntity entity, int partId, Action<int, bool> action) =>
+            _unmonitorEvents?.Invoke(entity, partId, action);
+
+        /// <summary>
+        /// Monitor all weaponcore damage
+        /// </summary>
+        /// <param name="modId"></param>
+        /// <param name="type"></param>  0 unregister, 1 register
+        /// <param name="callback"></param>  object casts (ulong = projectileId, IMySlimBlock, MyFloatingObject, IMyCharacter, MyVoxelBase, MyPlanet, MyEntity Shield see next line)
+        ///                                  You can detect the shield entity in a performant way by creating a hash check ShieldHash = MyStringHash.GetOrCompute("DefenseShield");
+        ///                                  then use it by Session.ShieldApiLoaded && Session.ShieldHash == ent.DefinitionId?.SubtypeId && ent.Render.Visible;  Visible means shield online
+        public void RegisterDamageEvent(long modId, int type, Action<ListReader<MyTuple<ulong, long, int, MyEntity, MyEntity, ListReader<MyTuple<Vector3D, object, float>>>>> callback)
         {
             _registerDamageEvent?.Invoke(modId, type, callback);
         }
@@ -307,6 +349,8 @@ namespace CoreSystems.Api
             AssignMethod(delegates, "GetConstructEffectiveDps", ref _getConstructEffectiveDps);
             AssignMethod(delegates, "IsInRange", ref _isInRange);
             AssignMethod(delegates, "GetProjectileState", ref _getProjectileState);
+            AssignMethod(delegates, "SetProjectileState", ref _setProjectileState);
+
             AssignMethod(delegates, "AddMonitorProjectile", ref _addProjectileMonitor);
             AssignMethod(delegates, "RemoveMonitorProjectile", ref _removeProjectileMonitor);
 
@@ -353,6 +397,8 @@ namespace CoreSystems.Api
             AssignMethod(delegates, "GetShotsFired", ref _getShotsFired);
             AssignMethod(delegates, "GetMuzzleInfo", ref _getMuzzleInfo);
             AssignMethod(delegates, "ToggleInfiniteAmmoBase", ref _toggoleInfiniteResources);
+            AssignMethod(delegates, "RegisterEventMonitor", ref _monitorEvents);
+            AssignMethod(delegates, "UnRegisterEventMonitor", ref _unmonitorEvents);
 
             // Damage handler
             AssignMethod(delegates, "DamageHandler", ref _registerDamageEvent);
@@ -395,6 +441,9 @@ namespace CoreSystems.Api
                 // Once this function completes the data in the list will be deleted... if you need to use the data in this list
                 // after this function completes make a copy of it.
                 //
+                // This is setup to be easy to use.  If you need more performance modify the Default Callback for your purposes and avoid
+                // copying callbacks into new lists with ProjectileDamageEvent structs.  Note that the ListReader will remain usable for only 1 tick, then it will be cleared by wc.
+                //
                 Log.Line($"custom callback hit");
             }
 
@@ -405,7 +454,7 @@ namespace CoreSystems.Api
                 _wcApi.RegisterDamageEvent(modId, (int) type, DefaultCallBack);
             }
 
-            private void DefaultCallBack(ListReader<MyTuple<long, long, int, MyEntity, MyEntity, ListReader<MyTuple<Vector3D, object, float>>>> listReader)
+            private void DefaultCallBack(ListReader<MyTuple<ulong, long, int, MyEntity, MyEntity, ListReader<MyTuple<Vector3D, object, float>>>> listReader)
             {
                 YourCallBackFunction(ProcessEvents(listReader));
                 CleanUpEvents();
@@ -414,7 +463,7 @@ namespace CoreSystems.Api
             private readonly List<ProjectileDamageEvent> _convertedObjects = new List<ProjectileDamageEvent>();
             private readonly Stack<List<ProjectileDamageEvent.ProHit>> _hitPool = new Stack<List<ProjectileDamageEvent.ProHit>>(256);
 
-            private List<ProjectileDamageEvent> ProcessEvents(ListReader<MyTuple<long, long, int, MyEntity, MyEntity, ListReader<MyTuple<Vector3D, object, float>>>> projectiles)
+            private List<ProjectileDamageEvent> ProcessEvents(ListReader<MyTuple<ulong, long, int, MyEntity, MyEntity, ListReader<MyTuple<Vector3D, object, float>>>> projectiles)
             {
                 foreach (var p in projectiles)
                 {
@@ -442,7 +491,7 @@ namespace CoreSystems.Api
 
             public struct ProjectileDamageEvent
             {
-                public long ProId;
+                public ulong ProId;
                 public long PlayerId;
                 public int WeaponId;
                 public MyEntity WeaponEntity;

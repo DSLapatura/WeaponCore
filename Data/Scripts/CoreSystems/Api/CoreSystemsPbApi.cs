@@ -53,7 +53,8 @@ namespace CoreSystems.Api
         private Func<Sandbox.ModAPI.Ingame.IMyTerminalBlock, long, bool, bool, bool> _isTargetValid;
         private Func<Sandbox.ModAPI.Ingame.IMyTerminalBlock, int, MyTuple<Vector3D, Vector3D>> _getWeaponScope;
         private Func<Sandbox.ModAPI.Ingame.IMyTerminalBlock, MyTuple<bool, bool>> _isInRange;
-
+        private Action<Sandbox.ModAPI.Ingame.IMyTerminalBlock, int, Action<int, bool>> _monitorEvents;
+        private Action<Sandbox.ModAPI.Ingame.IMyTerminalBlock, int, Action<int, bool>> _unmonitorEvents;
         public bool Activate(Sandbox.ModAPI.Ingame.IMyTerminalBlock pbBlock)
         {
             var dict = pbBlock.GetProperty("WcPbAPI")?.As<IReadOnlyDictionary<string, Delegate>>().GetValue(pbBlock);
@@ -106,6 +107,8 @@ namespace CoreSystems.Api
             AssignMethod(delegates, "IsTargetValid", ref _isTargetValid);
             AssignMethod(delegates, "GetWeaponScope", ref _getWeaponScope);
             AssignMethod(delegates, "IsInRange", ref _isInRange);
+            AssignMethod(delegates, "RegisterEventMonitor", ref _monitorEvents);
+            AssignMethod(delegates, "UnRegisterEventMonitor", ref _unmonitorEvents);
             return true;
         }
 
@@ -228,5 +231,11 @@ namespace CoreSystems.Api
         // terminalBlock, Threat, Other, Something 
         public MyTuple<bool, bool> IsInRange(Sandbox.ModAPI.Ingame.IMyTerminalBlock block) =>
             _isInRange?.Invoke(block) ?? new MyTuple<bool, bool>();
+        public void MonitorEvents(Sandbox.ModAPI.Ingame.IMyTerminalBlock entity, int partId, Action<int, bool> action) =>
+            _monitorEvents?.Invoke(entity, partId, action);
+
+        public void UnMonitorEvents(Sandbox.ModAPI.Ingame.IMyTerminalBlock entity, int partId, Action<int, bool> action) =>
+            _unmonitorEvents?.Invoke(entity, partId, action);
+
     }
 }

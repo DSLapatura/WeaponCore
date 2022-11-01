@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections;
 using System.Collections.Immutable;
 using CoreSystems.Platform;
 using CoreSystems.Projectiles;
@@ -17,7 +16,6 @@ using VRageMath;
 using static CoreSystems.Platform.CorePlatform.PlatformState;
 using VRage.Collections;
 using static CoreSystems.Api.WcApi.DamageHandlerHelper;
-using static CoreSystems.Settings.CoreSettings.ServerSettings;
 
 namespace CoreSystems.Api
 {
@@ -144,8 +142,8 @@ namespace CoreSystems.Api
 
 
                 ["DamageHandler"] = new Action<long, int, Action<ListReader<MyTuple<ulong, long, int, MyEntity, MyEntity, ListReader<MyTuple<Vector3D, object, float>>>>>>(RegisterForDamageEvents),
-                ["EventMonitor"] = new Action<MyEntity, int, Action<int, bool>>(EventMonitorCallback),
-
+                ["RegisterEventMonitor"] = new Action<MyEntity, int, Action<int, bool>>(RegisterEventMonitorCallback),
+                ["UnRegisterEventMonitor"] = new Action<MyEntity, int, Action<int, bool>>(UnRegisterEventMonitorCallback),
 
             };
             PbApiMethods = new Dictionary<string, Delegate> // keen bad... ReadOnlyDictionary prohibited 
@@ -185,6 +183,7 @@ namespace CoreSystems.Api
                 ["UnMonitorProjectile"] = new Action<Sandbox.ModAPI.Ingame.IMyTerminalBlock, int, Action<long, int, ulong, long, Vector3D, bool>>(PbUnMonitorProjectileCallback),
                 ["MonitorProjectile"] = new Action<Sandbox.ModAPI.Ingame.IMyTerminalBlock, int, Action<long, int, ulong, long, Vector3D, bool>>(PbMonitorProjectileCallback),
                 ["GetProjectileState"] = new Func<ulong, MyTuple<Vector3D, Vector3D, float, float, long, string>>(GetProjectileState),
+                ["SetProjectileState"] = new Action<ulong, MyTuple<bool, Vector3D, Vector3D, float>>(SetProjectileState),
                 ["GetConstructEffectiveDps"] = new Func<long, float>(PbGetConstructEffectiveDps),
                 ["GetPlayerController"] = new Func<Sandbox.ModAPI.Ingame.IMyTerminalBlock, long>(PbGetPlayerController),
                 ["GetWeaponAzimuthMatrix"] = new Func<Sandbox.ModAPI.Ingame.IMyTerminalBlock, int, Matrix>(PbGetWeaponAzimuthMatrix),
@@ -192,6 +191,8 @@ namespace CoreSystems.Api
                 ["IsTargetValid"] = new Func<Sandbox.ModAPI.Ingame.IMyTerminalBlock, long, bool, bool, bool>(PbIsTargetValid),
                 ["GetWeaponScope"] = new Func<Sandbox.ModAPI.Ingame.IMyTerminalBlock, int, MyTuple<Vector3D, Vector3D>>(PbGetWeaponScope),
                 ["IsInRange"] = new Func<Sandbox.ModAPI.Ingame.IMyTerminalBlock, MyTuple<bool, bool>>(PbIsInRange),
+                ["RegisterEventMonitor"] = new Action<Sandbox.ModAPI.Ingame.IMyTerminalBlock, int, Action<int, bool>>(PbRegisterEventMonitorCallback),
+                ["UnRegisterEventMonitor"] = new Action<Sandbox.ModAPI.Ingame.IMyTerminalBlock, int, Action<int, bool>>(PbUnRegisterEventMonitorCallback),
             };
 
             var builder = ImmutableDictionary.CreateBuilder<string, Delegate>();
@@ -542,7 +543,7 @@ namespace CoreSystems.Api
         {
             var comp = weaponBlock.Components.Get<CoreComponent>();
             if (comp?.Platform != null && comp.Platform.Weapons.Count > weaponId)
-                comp.Monitors[weaponId].Add(callback);
+                comp.ProjectileMonitors[weaponId].Add(callback);
         }
 
         // Block EntityId, PartId, ProjectileId, LastHitId, LastPos, Start 
@@ -550,7 +551,7 @@ namespace CoreSystems.Api
         {
             var comp = weaponBlock.Components.Get<CoreComponent>();
             if (comp?.Platform != null && comp.Platform.Weapons.Count > weaponId)
-                comp.Monitors[weaponId].Remove(callback);
+                comp.ProjectileMonitors[weaponId].Remove(callback);
         }
 
         // terminalBlock, Threat, Other, Something 
@@ -658,13 +659,20 @@ namespace CoreSystems.Api
             return false;
         }
 
-        private void EventMonitorCallback(MyEntity weaponEntity, int weaponId, Action<int, bool> arg3)
+        private void PbRegisterEventMonitorCallback(Sandbox.ModAPI.Ingame.IMyTerminalBlock weaponEntity, int weaponId, Action<int, bool> callBack) => RegisterEventMonitorCallback((MyEntity) weaponEntity, weaponId, callBack);
+        private void RegisterEventMonitorCallback(MyEntity weaponEntity, int weaponId, Action<int, bool> callBack)
         {
-            /*
             var comp = weaponEntity.Components.Get<Weapon.WeaponComponent>();
             if (comp?.Platform != null && comp.Platform.Weapons.Count > weaponId)
-                comp.Monitors[weaponId]?.Add(callback);
-            */
+                comp.EventMonitors[weaponId]?.Add(callBack);
+        }
+
+        private void PbUnRegisterEventMonitorCallback(Sandbox.ModAPI.Ingame.IMyTerminalBlock weaponEntity, int weaponId, Action<int, bool> callBack) => UnRegisterEventMonitorCallback((MyEntity) weaponEntity, weaponId, callBack);
+        private void UnRegisterEventMonitorCallback(MyEntity weaponEntity, int weaponId, Action<int, bool> callBack)
+        {
+            var comp = weaponEntity.Components.Get<Weapon.WeaponComponent>();
+            if (comp?.Platform != null && comp.Platform.Weapons.Count > weaponId)
+                comp.EventMonitors[weaponId]?.Remove(callBack);
         }
 
         private bool GetBlockWeaponMap(Sandbox.ModAPI.IMyTerminalBlock weaponBlock, IDictionary<string, int> collection)
@@ -1088,7 +1096,7 @@ namespace CoreSystems.Api
         {
             var comp = entity.Components.Get<CoreComponent>();
             if (comp?.Platform != null && comp.Platform.Weapons.Count > weaponId)
-                comp.Monitors[weaponId]?.Add(callback);
+                comp.ProjectileMonitors[weaponId]?.Add(callback);
         }
 
         // Block EntityId, PartId, ProjectileId, LastHitId, LastPos, Start 
@@ -1096,17 +1104,48 @@ namespace CoreSystems.Api
         {
             var comp = entity.Components.Get<CoreComponent>();
             if (comp?.Platform != null && comp.Platform.Weapons.Count > weaponId)
-                comp.Monitors[weaponId]?.Remove(callback);
+                comp.ProjectileMonitors[weaponId]?.Remove(callback);
         }
 
-        // POs, Dir, baseDamageLeft, HealthLeft, TargetEntityId, AmmoName 
+        // POs, Velocity, baseDamageLeft, HealthLeft, TargetEntityId, AmmoName 
         private MyTuple<Vector3D, Vector3D, float, float, long, string> GetProjectileState(ulong projectileId)
         {
             Projectile p;
             if (_session.MonitoredProjectiles.TryGetValue(projectileId, out p))
-                return new MyTuple<Vector3D, Vector3D, float, float, long, string>(p.Position, p.Info.Direction, p.Info.BaseDamagePool, p.Info.BaseHealthPool, p.Info.Target.TargetId, p.Info.AmmoDef.AmmoRound);
+                return new MyTuple<Vector3D, Vector3D, float, float, long, string>(p.Position, p.Velocity, p.Info.BaseDamagePool, p.Info.BaseHealthPool, p.Info.Target.TargetId, p.Info.AmmoDef.AmmoRound);
 
             return new MyTuple<Vector3D, Vector3D, float, float, long, string>();
+        }
+
+        // EndEarly, Pos, Additive Velocity, BaseDamagePool 
+        private void SetProjectileState(ulong projectileId, MyTuple<bool, Vector3D, Vector3D, float> adjustments)
+        {
+            Projectile p;
+            if (_session.MonitoredProjectiles.TryGetValue(projectileId, out p))
+            {
+                if (adjustments.Item1)
+                {
+                    p.EarlyEnd = true;
+                    p.DistanceToTravelSqr = (p.Info.DistanceTraveled * p.Info.DistanceTraveled);
+                }
+                else
+                {
+                    if (adjustments.Item2 != Vector3D.MinValue)
+                    {
+                        p.Position = adjustments.Item2;
+                    }
+
+                    if (adjustments.Item3 != Vector3D.MinValue)
+                    {
+                        p.Velocity += adjustments.Item3;
+                    }
+
+                    if (adjustments.Item4 > float.MinValue)
+                    {
+                        p.Info.BaseDamagePool = adjustments.Item4;
+                    }
+                }
+            }
         }
 
         private float GetConstructEffectiveDpsLegacy(IMyEntity entity) => GetConstructEffectiveDps((MyEntity) entity);

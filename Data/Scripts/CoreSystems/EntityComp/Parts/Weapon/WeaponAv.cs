@@ -5,6 +5,8 @@ using VRage.Game;
 using VRageMath;
 using static CoreSystems.Support.PartAnimation;
 using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetDef;
+using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
+
 namespace CoreSystems.Platform
 {
     public partial class Weapon
@@ -155,6 +157,13 @@ namespace CoreSystems.Platform
                                 Comp.HandheldReload(this, state, active);
                             break;
                     }
+                }
+
+                var monitor = Comp.EventMonitors[PartId];
+                if (monitor.Count > 0)
+                {
+                    for (int i = 0; i < monitor.Count; i++)
+                        monitor[i].Invoke((int) state, active);
                 }
 
                 if (!AnimationsSet.ContainsKey(state)) return;

@@ -5,14 +5,12 @@ using CoreSystems.Platform;
 using Sandbox.Game;
 using Sandbox.Game.Entities;
 using Sandbox.Game.EntityComponents;
-using Sandbox.Game.Weapons;
 using Sandbox.ModAPI;
 using Sandbox.ModAPI.Weapons;
 using SpaceEngineers.Game.ModAPI;
 using VRage.Game;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
-using VRage.Game.ObjectBuilders;
 using VRage.Utils;
 using VRageMath;
 
@@ -22,10 +20,11 @@ namespace CoreSystems.Support
     {
         internal readonly List<PartAnimation> AllAnimations = new List<PartAnimation>();
         internal readonly List<int> ConsumableSelectionPartIds = new List<int>();
-        internal List<Action<long, int, ulong, long, Vector3D, bool>>[] Monitors;
+        internal List<Action<long, int, ulong, long, Vector3D, bool>>[] ProjectileMonitors;
+        internal List<Action<int, bool>>[] EventMonitors;
+
         internal bool InControlPanel => MyAPIGateway.Gui.GetCurrentScreen == MyTerminalPageEnum.ControlPanel;
         internal readonly RunningAverage DamageAverage = new RunningAverage(10);
-        internal readonly List<long> DamageHandlerRegistrants = new List<long>();
 
         internal bool InventoryInited;
         internal CompType Type;
@@ -246,9 +245,13 @@ namespace CoreSystems.Support
             IdlePower = Platform.Structure.CombinedIdlePower;
             SinkPower = IdlePower;
 
-            Monitors = new List<Action<long, int, ulong, long, Vector3D, bool>>[Platform.Structure.PartHashes.Length];
-            for (int i = 0; i < Monitors.Length; i++)
-                Monitors[i] = new List<Action<long, int, ulong, long, Vector3D, bool>>();
+            ProjectileMonitors = new List<Action<long, int, ulong, long, Vector3D, bool>>[Platform.Structure.PartHashes.Length];
+            for (int i = 0; i < ProjectileMonitors.Length; i++)
+                ProjectileMonitors[i] = new List<Action<long, int, ulong, long, Vector3D, bool>>();
+
+            EventMonitors = new List<Action<int, bool>>[Platform.Structure.PartHashes.Length];
+            for (int i = 0; i < EventMonitors.Length; i++)
+                EventMonitors[i] = new List<Action<int, bool>>();
 
             PowerGroupId = Session.PowerGroups[Platform.Structure];
             CoreEntity.OnClose += Session.CloseComps;

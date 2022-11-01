@@ -72,7 +72,6 @@ namespace CoreSystems.Support
         internal float BaseDamagePool;
         internal float BaseHealthPool;
         internal float BaseEwarPool;
-        internal bool DamageHandlerActive;
         internal bool IsFragment;
         internal bool EwarAreaPulse;
         internal bool EwarActive;
@@ -116,7 +115,7 @@ namespace CoreSystems.Support
 
         internal void Clean(bool usesStorage = false)
         {
-            var monitor = Weapon.Comp.Monitors[Weapon.PartId];
+            var monitor = Weapon.Comp.ProjectileMonitors[Weapon.PartId];
             if (monitor.Count > 0) {
                 for (int i = 0; i < monitor.Count; i++)
                     monitor[i].Invoke(Target.CoreEntity.EntityId, Weapon.PartId, Id, Target.TargetId, Hit.LastHit, false);

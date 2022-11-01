@@ -232,9 +232,9 @@ namespace CoreSystems
                 CoreComponent comp;
                 if (!entity.Components.TryGet(out comp)) return;
 
-                for (int i = 0; i < comp.Monitors.Length; i++) {
-                    comp.Monitors[i].Clear();
-                    comp.Monitors[i] = null;
+                for (int i = 0; i < comp.ProjectileMonitors.Length; i++) {
+                    comp.ProjectileMonitors[i].Clear();
+                    comp.ProjectileMonitors[i] = null;
                 }
 
                 if (comp.Platform.State == CorePlatform.PlatformState.Ready)

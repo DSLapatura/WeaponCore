@@ -56,7 +56,7 @@ namespace CoreSystems.Projectiles
         internal double MaxSpeedSqr;
         internal double MaxSpeed;
         internal double MaxTrajectorySqr;
-        internal double EndPointToSurfaceSqr;
+        internal double DistanceToSurfaceSqr;
         internal float DesiredSpeed;
         internal int DeaccelRate;
         internal int ChaseAge;
@@ -133,8 +133,16 @@ namespace CoreSystems.Projectiles
             var ammoDef = Info.AmmoDef;
             var aConst = ammoDef.Const;
 
-            if (aConst.FragmentPattern)
-                Info.PatternShuffle = aConst.PatternShuffleArray.Count > 0 ? aConst.PatternShuffleArray.Pop() : new int[aConst.FragPatternCount];
+            if (aConst.FragmentPattern) {
+                if (aConst.PatternShuffleArray.Count > 0)
+                    Info.PatternShuffle = aConst.PatternShuffleArray.Pop();
+                else
+                {
+                    Info.PatternShuffle = new int[aConst.FragPatternCount];
+                    for (int i = 0; i < Info.PatternShuffle.Length; i++)
+                        Info.PatternShuffle[i] = i;
+                }
+            }
 
             OffsetDir = Vector3D.Zero;
             Position = Info.Origin;
@@ -164,13 +172,12 @@ namespace CoreSystems.Projectiles
             EndStep = 0;
             Info.PrevDistanceTraveled = 0;
             Info.DistanceTraveled = 0;
-            EndPointToSurfaceSqr = double.MaxValue;
+            DistanceToSurfaceSqr = double.MaxValue;
             var trajectory = ammoDef.Trajectory;
             var guidance = trajectory.Guidance;
 
             CachedId = Info.MuzzleId == -1 ? Info.Weapon.WeaponCache.VirutalId : Info.MuzzleId;
             if (aConst.DynamicGuidance && session.AntiSmartActive) DynTrees.RegisterProjectile(this);
-            Info.DamageHandlerActive = session.GlobalDamageHandlerActive || Info.Weapon.Comp.DamageHandlerRegistrants.Count > 0;
 
             Info.MyPlanet = Info.Ai.MyPlanet;
             
@@ -189,7 +196,6 @@ namespace CoreSystems.Projectiles
 
             IsSmart = aConst.IsSmart;
             SmartSlot = aConst.IsSmart ? Info.Random.Range(0, 10) : 0;
-
             switch (Info.Target.TargetState)
             {
                 case Target.TargetStates.WasProjectile:
@@ -1889,7 +1895,7 @@ namespace CoreSystems.Projectiles
             var spawn = false;
             for (int i = 0; i < patternIndex; i++)
             {
-                var fragAmmoDef = aConst.FragmentPattern ? aConst.AmmoPattern[Info.PatternShuffle[i] > 0 ? Info.PatternShuffle[i] - 1 : aConst.FragPatternCount-1] : Info.Weapon.System.AmmoTypes[aConst.FragmentId].AmmoDef;
+                var fragAmmoDef = aConst.FragmentPattern ? aConst.AmmoPattern[Info.PatternShuffle[i] > 0 ? Info.PatternShuffle[i] - 1 : aConst.FragPatternCount - 1] : Info.Weapon.System.AmmoTypes[aConst.FragmentId].AmmoDef;
                 Vector3D pointDir;
                 if (!fireOnTarget)
                 {

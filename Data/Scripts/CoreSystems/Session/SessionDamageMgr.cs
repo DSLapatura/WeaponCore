@@ -106,7 +106,7 @@ namespace CoreSystems
 
                 info.HitList.Clear();
 
-                if (info.DamageHandlerActive && info.ObjectsHit > 0)
+                if (GlobalDamageHandlerActive && info.ObjectsHit > 0)
                     Api.ProjectileDamageEvents.Add(new MyTuple<ulong, long, int, MyEntity, MyEntity, ListReader<MyTuple<Vector3D, object, float>>>(info.Id, info.Weapon.Comp.Data.Repo.Values.State.PlayerId, info.Weapon.PartId, info.Weapon.Comp.CoreEntity, info.Ai.TopEntity, new ListReader<MyTuple<Vector3D, object, float>>(info.ProHits)));
 
             }
@@ -258,7 +258,7 @@ namespace CoreSystems
 
             if (hit.HasValue)
             {
-                if (info.DamageHandlerActive) {
+                if (GlobalDamageHandlerActive) {
                     info.ProHits = info.ProHits != null && ProHitPool.Count > 0 ? ProHitPool.Pop() : new List<MyTuple<Vector3D, object, float>>();
                     info.ProHits.Add(new MyTuple<Vector3D, object, float>(hitEnt.Intersection.To, hitEnt.ShieldEntity, (float)scaledDamage));
                 }
@@ -377,7 +377,6 @@ namespace CoreSystems
             var showHits = t.Weapon.System.WConst.DebugMode && !t.Weapon.Comp.Session.MpActive;
 
             //Main loop (finally)
-
             for (int i = 0; i < blockCount; i++)
             {
                 if (earlyExit || (basePool <= 0.5d || objectsHit >= maxObjects) && !detRequested)
@@ -724,7 +723,7 @@ namespace CoreSystems
 
                                 block.DoDamage(scaledDamage, damageType, sync, null, attackerId);
                                 
-                                if (t.DamageHandlerActive) {
+                                if (GlobalDamageHandlerActive) {
                                     t.ProHits = t.ProHits != null && ProHitPool.Count > 0 ? ProHitPool.Pop() : new List<MyTuple<Vector3D, object, float>>();
                                     t.ProHits.Add(new MyTuple<Vector3D, object, float>(hitEnt.Intersection.To, block, scaledDamage));
                                 }
@@ -879,7 +878,7 @@ namespace CoreSystems
 
             if (info.DoDamage)
             {
-                if (info.DamageHandlerActive) {
+                if (GlobalDamageHandlerActive) {
                     info.ProHits = info.ProHits != null && ProHitPool.Count > 0 ? ProHitPool.Pop() : new List<MyTuple<Vector3D, object, float>>();
                     info.ProHits.Add(new MyTuple<Vector3D, object, float>(hitEnt.Intersection.To, hitEnt.Entity, (float)scaledDamage));
                 }
@@ -893,7 +892,7 @@ namespace CoreSystems
             }
         }
 
-        private static void DamageProjectile(HitEntity hitEnt, ProInfo attacker)
+        private void DamageProjectile(HitEntity hitEnt, ProInfo attacker)
         {
             var pTarget = hitEnt.Projectile;
             if (pTarget == null) return;
@@ -936,13 +935,13 @@ namespace CoreSystems
                 pTarget.Info.BaseHealthPool -= scaledDamage;
                 DetonateProjectile(hitEnt, attacker);
             }
-            if (attacker.DamageHandlerActive) {
+            if (GlobalDamageHandlerActive) {
                 attacker.ProHits = attacker.ProHits != null && attacker.Weapon.System.Session.ProHitPool.Count > 0 ? attacker.Weapon.System.Session.ProHitPool.Pop() : new List<MyTuple<Vector3D, object, float>>();
                 attacker.ProHits.Add(new MyTuple<Vector3D, object, float>(hitEnt.Intersection.To, pTarget.Info.Id, scaledDamage));
             }
         }
 
-        private static void DetonateProjectile(HitEntity hitEnt, ProInfo attacker)
+        private void DetonateProjectile(HitEntity hitEnt, ProInfo attacker)
         {
             if (attacker.AmmoDef.Const.EndOfLifeDamage > 0 && attacker.AmmoDef.Const.EndOfLifeAoe && attacker.Age >= attacker.AmmoDef.Const.MinArmingTime)
             {
@@ -974,7 +973,7 @@ namespace CoreSystems
 
                         }
 
-                        if (attacker.DamageHandlerActive) {
+                        if (GlobalDamageHandlerActive) {
                             attacker.ProHits = attacker.ProHits != null && attacker.Weapon.System.Session.ProHitPool.Count > 0 ? attacker.Weapon.System.Session.ProHitPool.Pop() : new List<MyTuple<Vector3D, object, float>>();
                             attacker.ProHits.Add(new MyTuple<Vector3D, object, float>(hitEnt.Intersection.To, hitEnt.Projectile.Info.Id, scaledDamage));
                         }
@@ -1053,7 +1052,7 @@ namespace CoreSystems
                         SUtils.CreateVoxelExplosion(this, dDamage, dRadius, hitEnt.HitPos.Value, hitEnt.Intersection.Direction, info.Target.CoreEntity, destObj, info.AmmoDef, true);
                 }
 
-                if (info.DamageHandlerActive) {
+                if (GlobalDamageHandlerActive) {
                     info.ProHits = info.ProHits != null && info.Weapon.System.Session.ProHitPool.Count > 0 ? info.Weapon.System.Session.ProHitPool.Pop() : new List<MyTuple<Vector3D, object, float>>();
                     info.ProHits.Add(new MyTuple<Vector3D, object, float>(hitEnt.Intersection.To, destObj, 0));
                 }

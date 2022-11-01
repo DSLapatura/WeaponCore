@@ -134,7 +134,7 @@ namespace CoreSystems.Projectiles
                 Session.Projectiles.ActiveProjetiles.Add(p);
                 p.Start();
 
-                var monitor = comp.Monitors[w.PartId];
+                var monitor = comp.ProjectileMonitors[w.PartId];
                 if (monitor.Count > 0)
                 {
                     Session.MonitoredProjectiles[p.Info.Id] = p;
