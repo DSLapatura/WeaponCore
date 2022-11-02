@@ -67,9 +67,9 @@ namespace CoreSystems.Projectiles
                 var curpos = p.Position;
                 var thickness = p.Info.AmmoDef.Const.CollisionSize;
                 var closestFutureDistSqr = double.MaxValue;
-                p.ProjObb.Center = curpos + (curpos - lastpos) * 0.5f;
-                p.ProjObb.Orientation = Quaternion.CreateFromTwoVectors(lastpos, curpos);
-                p.ProjObb.HalfExtent = new Vector3D(p.ProjObb.Orientation.Length() / 2 + thickness, thickness, thickness);
+                //p.ProjObb.Center = curpos + (curpos - lastpos) * 0.5f;
+                //p.ProjObb.Orientation = Quaternion.CreateFromTwoVectors(lastpos, curpos);
+                //p.ProjObb.HalfExtent = new Vector3D(p.ProjObb.Orientation.Length() / 2 + thickness, thickness, thickness);
 
                 WaterData water = null;
                 if (Session.WaterApiLoaded && info.MyPlanet != null)
@@ -83,7 +83,7 @@ namespace CoreSystems.Projectiles
                     var grid = ent as MyCubeGrid;
                     var entIsSelf = grid != null && firingCube != null && (grid == firingCube.CubeGrid || firingCube.CubeGrid.IsSameConstructAs(grid));
 
-                    if (entIsSelf && aConst.IsSmart && !info.SmartReady || ent.MarkedForClose || !ent.InScene || ent == info.MyShield || !isGrid && ent == ai.TopEntity) continue;
+                    if (entIsSelf && aConst.IsSmart && !info.Storage.SmartReady || ent.MarkedForClose || !ent.InScene || ent == info.MyShield || !isGrid && ent == ai.TopEntity) continue;
 
                     var character = ent as IMyCharacter;
                     if (info.EwarActive && character != null && !genericFields) continue;
@@ -374,7 +374,7 @@ namespace CoreSystems.Projectiles
                         {
 
                             hitEntity = HitEntityPool.Get();
-                            if (entIsSelf && !selfDamage && !info.SmartReady)
+                            if (entIsSelf && !selfDamage && !info.Storage.SmartReady)
                             {
                                 if (!isBeam && p.Beam.Length <= grid.GridSize * 2 && !goCritical)
                                 {
@@ -504,21 +504,9 @@ namespace CoreSystems.Projectiles
 
                     var testSphere = p.PruneSphere;
                     testSphere.Radius = hitTolerance;
-                    /*
-                    var targetCapsule = new CapsuleD(p.Position, p.LastPosition, (float) p.Info.Target.Projectile.Info.AmmoDef.Const.CollisionSize / 2);
-                    var dVec = Vector3D.Zero;
-                    var eVec = Vector3.Zero;
-                    */
+
                     if (rayCheck || sphere.Intersects(testSphere))
                     {
-                        /*
-                        var dir = p.Info.Target.Projectile.Position - p.Info.Target.Projectile.LastPosition;
-                        var delta = dir.Normalize();
-                        var radius = p.Info.Target.Projectile.Info.AmmoDef.Const.CollisionSize;
-                        var size = p.Info.Target.Projectile.Info.AmmoDef.Const.CollisionSize;
-                        var obb = new MyOrientedBoundingBoxD((p.Info.Target.Projectile.Position + p.Info.Target.Projectile.LastPosition) / 2, new Vector3(size, size, delta / 2 + radius), Quaternion.CreateFromForwardUp(dir, Vector3D.CalculatePerpendicularVector(dir)));
-                        if (obb.Intersects(ref testSphere))
-                        */
                         ProjectileHit(p, target.Projectile, lineCheck, ref p.Beam);
                     }
                 }
@@ -627,6 +615,7 @@ namespace CoreSystems.Projectiles
             }
             DeferedVoxels.Clear();
         }
+
         internal void FinalizeHits()
         {
             var vhCount = FinalHitCheck.Count;
@@ -769,17 +758,18 @@ namespace CoreSystems.Projectiles
                 if (!checkHit)
                     hitEntity.HitPos = p.Beam.To;
 
+                Vector3D? lastHitVel = Vector3D.Zero;
                 if (hitEntity.EventType == Shield)
                 {
                     var cube = hitEntity.Entity as MyCubeBlock;
                     if (cube?.CubeGrid?.Physics != null)
-                        p.LastHitEntVel = cube.CubeGrid.Physics.LinearVelocity;
+                        lastHitVel = cube.CubeGrid.Physics.LinearVelocity;
                 }
                 else if (hitEntity.Projectile != null)
-                    p.LastHitEntVel = hitEntity.Projectile?.Velocity;
+                    lastHitVel = hitEntity.Projectile?.Velocity;
                 else if (hitEntity.Entity?.Physics != null)
-                    p.LastHitEntVel = hitEntity.Entity?.Physics.LinearVelocity;
-                else p.LastHitEntVel = Vector3.Zero;
+                    lastHitVel = hitEntity.Entity?.Physics.LinearVelocity;
+                else lastHitVel = Vector3D.Zero;
 
                 var grid = hitEntity.Entity as MyCubeGrid;
 
@@ -801,7 +791,7 @@ namespace CoreSystems.Projectiles
                     visualHitPos = hitInfo?.HitEntity != null ? hitInfo.Position : hitEntity.HitPos;
                 }
                 else visualHitPos = hitEntity.HitPos;
-                info.Hit = new Hit { Block = hitBlock, Entity = hitEntity.Entity, EventType = hitEntity.EventType, LastHit = visualHitPos ?? Vector3D.Zero, SurfaceHit = visualHitPos ?? Vector3D.Zero, HitVelocity = p.LastHitEntVel ?? Vector3D.Zero, HitTick = Session.Tick};
+                info.Hit = new Hit { Block = hitBlock, Entity = hitEntity.Entity, EventType = hitEntity.EventType, LastHit = visualHitPos ?? Vector3D.Zero, SurfaceHit = visualHitPos ?? Vector3D.Zero, HitVelocity = lastHitVel ?? Vector3D.Zero, HitTick = Session.Tick};
                 if (p.EnableAv)
                 {
                     info.AvShot.LastHitShield = hitEntity.EventType == Shield;
@@ -921,7 +911,7 @@ namespace CoreSystems.Projectiles
                                     var hitDist = obb.Intersects(ref beam) ?? Vector3D.Distance(beam.From, obb.Center);
                                     var hitPos = beam.From + (beam.Direction * hitDist);
 
-                                    if (hitEnt.SelfHit && !info.SmartReady)
+                                    if (hitEnt.SelfHit && !info.Storage.SmartReady)
                                     {
                                         if (Vector3D.DistanceSquared(hitPos, hitEnt.Info.Origin) <= grid.GridSize * 3)
                                         {

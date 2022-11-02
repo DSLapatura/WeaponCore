@@ -21,9 +21,9 @@ namespace CoreSystems.Support
     {
         internal readonly Target Target = new Target(null, true);
         internal readonly SmartStorage Storage = new SmartStorage();
-        internal readonly List<HitEntity> HitList = new List<HitEntity>(4);
-        internal readonly Vector3D[] PastProInfos = new Vector3D[30];
+        internal readonly List<HitEntity> HitList = new List<HitEntity>();
         internal List<MyTuple<Vector3D, object, float>> ProHits;
+        internal int[] PatternShuffle;
 
         internal AvShot AvShot;
         internal Weapon Weapon;
@@ -34,7 +34,6 @@ namespace CoreSystems.Support
         internal MyPlanet MyPlanet;
         internal MyEntity MyShield;
         internal VoxelCache VoxelCache;
-        internal int[] PatternShuffle;
         internal Vector3D ShooterVel;
         internal Vector3D Origin;
         internal Vector3D OriginUp;
@@ -42,22 +41,17 @@ namespace CoreSystems.Support
         internal Vector3D PrevTargetPos;
         internal Hit Hit;
         internal XorShiftRandomStruct Random;
-        internal FakeTargets DummyTargets;
-        internal int ProSyncPosMissCount;
+        internal int Age;
         internal int TriggerGrowthSteps;
         internal int MuzzleId;
         internal int ObjectsHit;
-        internal int Age;
         internal int FireCounter;
         internal int SpawnDepth;
         internal int Frags;
         internal int LastFragTime;
         internal int CompSceneVersion;
-
-        internal int LastProSyncStateAge = int.MinValue;
         internal ulong UniqueMuzzleId;
         internal ulong Id;
-        internal long SyncId;
         internal double DistanceTraveled;
         internal double PrevDistanceTraveled;
         internal double ProjectileDisplacement;
@@ -78,11 +72,9 @@ namespace CoreSystems.Support
         internal bool LockOnFireState;
         internal bool AimedShot;
         internal bool DoDamage;
-        internal bool InPlanetGravity;
         internal bool ShieldBypassed;
         internal bool ShieldKeepBypass;
         internal bool ShieldInLine;
-        internal bool SmartReady;
         internal uint FirstWaterHitTick;
         internal float ShieldResistMod = 1f;
         internal float ShieldBypassMod = 1f;
@@ -95,7 +87,6 @@ namespace CoreSystems.Support
             Ai = weapon.BaseComp.Ai;
             MyPlanet = weapon.BaseComp.Ai.MyPlanet;
             MyShield = weapon.BaseComp.Ai.MyShield;
-            InPlanetGravity = weapon.BaseComp.Ai.InPlanetGravity;
             AmmoDef = ammodef;
             PrimeEntity = primeEntity;
             TriggerEntity = triggerEntity;
@@ -131,14 +122,9 @@ namespace CoreSystems.Support
             Target.Reset(Weapon.System.Session.Tick, Target.States.ProjectileClean);
             HitList.Clear();
 
-            if (AmmoDef.Const.ProjectileSync)
-            {
-                for (int i = 0; i < PastProInfos.Length; i++)
-                    PastProInfos[i] = Vector3D.Zero;
-            }
 
             if (usesStorage)
-                Storage.Clean();
+                Storage.Clean(AmmoDef.Const.ProjectileSync);
 
             if (IsFragment)
             {
@@ -182,19 +168,15 @@ namespace CoreSystems.Support
             LockOnFireState = false;
             AimedShot = false;
             DoDamage = false;
-            InPlanetGravity = false;
             ShieldBypassed = false;
             ShieldInLine = false;
             ShieldKeepBypass = false;
-            SmartReady = false;
             FirstWaterHitTick = 0;
             TriggerGrowthSteps = 0;
             SpawnDepth = 0;
             Frags = 0;
             MuzzleId = 0;
             Age = 0;
-            SyncId = long.MinValue;
-            LastProSyncStateAge = int.MinValue;
             DamageDonePri = 0;
             DamageDoneAoe = 0;
             DamageDoneShld = 0;
@@ -206,7 +188,6 @@ namespace CoreSystems.Support
             FireCounter = 0;
             UniqueMuzzleId = 0;
             LastFragTime = 0;
-            ProSyncPosMissCount = 0;
             ClosestDistSqrToTarget = double.MinValue; 
             ShieldResistMod = 1f;
             ShieldBypassMod = 1f;
@@ -238,17 +219,40 @@ namespace CoreSystems.Support
     }
     internal class SmartStorage
     {
+        internal readonly Vector3D[] PastProInfos = new Vector3D[30];
+        internal readonly ProNavGuidanceInlined Navigation = new ProNavGuidanceInlined(60);
         internal DroneStatus DroneStat;
         internal DroneMission DroneMsn;
         internal Vector3D TaskPosition;
+        internal FakeTargets DummyTargets;
         internal MyEntity NavTargetEnt;
         internal Target ShootTarget;
         internal BoundingSphereD NavTargetBound;
         internal bool IsFriend;
         internal bool UsesStrafe;
+        internal bool SmartReady;
+        internal bool IsSmart;
+        internal bool MineSeeking;
+        internal bool MineActivated;
+        internal bool MineTriggered;
+        internal bool WasTracking;
+        internal bool PickTarget;
+        internal int ProSyncPosMissCount;
+        internal int LastProSyncStateAge = int.MinValue;
+        internal int ChaseAge;
+        internal int ZombieLifeTime;
+        internal int LastOffsetTime;
+        internal int SmartSlot;
+        internal long SyncId;
 
-        internal void Clean()
+        internal void Clean(bool synced)
         {
+            SyncId = long.MinValue;
+            LastProSyncStateAge = int.MinValue;
+            ProSyncPosMissCount = 0;
+            ChaseAge = 0;
+            ZombieLifeTime = 0;
+            LastOffsetTime = 0;
             DroneStat = DroneStatus.Launch;
             DroneMsn = DroneMission.Attack;
             TaskPosition = Vector3D.Zero;
@@ -257,6 +261,17 @@ namespace CoreSystems.Support
             NavTargetBound = new BoundingSphereD(Vector3D.Zero,0);
             IsFriend = false;
             UsesStrafe = false;
+            SmartReady = false;
+            MineSeeking = false;
+            MineActivated = false;
+            MineTriggered = false;
+            WasTracking = false;
+
+            if (synced) {
+                for (int i = 0; i < PastProInfos.Length; i++)
+                    PastProInfos[i] = Vector3D.Zero;
+            }
+            Navigation.ClearAcceleration();
         }
     }
 
@@ -503,7 +518,7 @@ namespace CoreSystems.Support
             var target = info.Target;
             var aConst = info.AmmoDef.Const;
             var fragCount = p.Info.AmmoDef.Fragment.Fragments;
-            var syncId = !timedSpawn && fragCount == 1 && ammoDef.Const.ProjectileSync && aConst.ProjectileSync ? info.SyncId : long.MinValue;
+            var syncId = !timedSpawn && fragCount == 1 && ammoDef.Const.ProjectileSync && aConst.ProjectileSync ? info.Storage.SyncId : long.MinValue;
 
             if (info.Ai.Session.IsClient && fragCount > 0 && info.AimedShot && aConst.ClientPredictedAmmo && !info.IsFragment)
             {
@@ -602,7 +617,7 @@ namespace CoreSystems.Support
                 info.OriginUp = frag.OriginUp;
                 info.Random = frag.Random;
                 info.DoDamage = frag.DoDamage;
-                info.SyncId = frag.SyncId;
+                info.Storage.SyncId = frag.SyncId;
                 info.SpawnDepth = frag.Depth;
                 info.BaseDamagePool = aConst.BaseDamage;
                 p.PrevTargetPos = frag.PrevTargetPos;

@@ -13,6 +13,8 @@ namespace CoreSystems.Support
     public class Target
     {
         internal readonly List<MyCubeBlock> Top5 = new List<MyCubeBlock>();
+        internal int[] TargetDeck = Array.Empty<int>();
+        internal int[] BlockDeck = Array.Empty<int>();
         internal States PreviousState = States.NotSet;
         internal States CurrentState = States.NotSet;
         internal bool HasTarget;
@@ -31,8 +33,7 @@ namespace CoreSystems.Support
         internal MyEntity ClosestObstacle;
         internal MyCubeBlock CoreCube;
         internal Projectile Projectile;
-        internal int[] TargetDeck = Array.Empty<int>();
-        internal int[] BlockDeck = Array.Empty<int>();
+
         internal int TargetPrevDeckLen;
         internal int BlockPrevDeckLen;
         internal uint ExpiredTick;

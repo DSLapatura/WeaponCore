@@ -202,7 +202,7 @@ namespace CoreSystems.Support
 
             var s = info.Weapon.System;
             var target = info.Target;
-            p.ChaseAge = info.Age;
+            info.Storage.ChaseAge = info.Age;
             var ai = info.Ai;
             var aConst = info.AmmoDef.Const;
             var weaponPos = p.Position;
@@ -307,9 +307,10 @@ namespace CoreSystems.Support
         internal static bool ReAcquireProjectile(Projectile p)
         {
             var info = p.Info;
+            var aConst = info.AmmoDef.Const;
             var s = info.Weapon.System;
             var target = info.Target;
-            p.ChaseAge = info.Age;
+            info.Storage.ChaseAge = info.Age;
             var ai = info.Ai;
             var physics = s.Session.Physics;
             var weaponPos = p.Position;
@@ -355,7 +356,10 @@ namespace CoreSystems.Support
             {
                 var card = deck[x];
                 var lp = collection[card];
-                if (smartOnly && !lp.IsSmart || lockedOnly && !lp.IsSmart || lp.MaxSpeed > s.MaxTargetSpeed || lp.MaxSpeed <= 0 || lp.State != Projectile.ProjectileState.Alive) continue;
+                var lpaConst = lp.Info.AmmoDef.Const;
+                var smart = lpaConst.IsDrone || lpaConst.IsSmart;
+
+                if (smartOnly && !smart || lockedOnly && !smart || lp.MaxSpeed > s.MaxTargetSpeed || lp.MaxSpeed <= 0 || lp.State != Projectile.ProjectileState.Alive) continue;
 
                 var needsCast = false;
                 for (int i = 0; i < ai.Obstructions.Count; i++)
@@ -1012,8 +1016,10 @@ namespace CoreSystems.Support
             {
                 var card = deck[x];
                 var lp = collection[card];
+                var lpaConst = lp.Info.AmmoDef.Const;
+                var smart = lpaConst.IsDrone || lpaConst.IsSmart;
                 var cube = lp.Info.Target.TargetEntity as MyCubeBlock;
-                if (smartOnly && !lp.IsSmart || lockedOnly && (!lp.IsSmart || cube != null && w.Comp.Ai.AiType == AiTypes.Grid && cube.CubeGrid.IsSameConstructAs(w.Comp.Ai.GridEntity)) || lp.MaxSpeed > s.MaxTargetSpeed || lp.MaxSpeed <= 0 || lp.State != Projectile.ProjectileState.Alive || Vector3D.DistanceSquared(lp.Position, weaponPos) > w.MaxTargetDistanceSqr || Vector3D.DistanceSquared(lp.Position, weaponPos) < w.MinTargetDistanceBufferSqr) continue;
+                if (smartOnly && !smart || lockedOnly && (!smart || cube != null && w.Comp.Ai.AiType == AiTypes.Grid && cube.CubeGrid.IsSameConstructAs(w.Comp.Ai.GridEntity)) || lp.MaxSpeed > s.MaxTargetSpeed || lp.MaxSpeed <= 0 || lp.State != Projectile.ProjectileState.Alive || Vector3D.DistanceSquared(lp.Position, weaponPos) > w.MaxTargetDistanceSqr || Vector3D.DistanceSquared(lp.Position, weaponPos) < w.MinTargetDistanceBufferSqr) continue;
 
                 Vector3D predictedPos;
                 if (Weapon.CanShootTarget(w, ref lp.Position, lp.Velocity, lp.MaxAccelVelocity, out predictedPos))

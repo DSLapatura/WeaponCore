@@ -5,17 +5,131 @@ using VRageMath;
 
 namespace CoreSystems.Support
 {
-    internal class ProNavGuidance : RelNavGuidance
-    {
-        public ProNavGuidance(double updatesPerSecond, double missileAcceleration, double navConstant, double navAccelConstant = 0) : base(updatesPerSecond, missileAcceleration, navConstant, navAccelConstant) { }
+    #region MissileGuidanceBase
 
-        protected override Vector3D GetLatax(Vector3D missileToTarget, Vector3D missileToTargetNorm, Vector3D relativeVelocity, Vector3D lateralTargetAcceleration, Vector3D gravityCompensationTerm)
+    internal class ProNavGuidanceInlined 
+    {
+        private readonly double _updatesPerSecond;
+
+        Vector3D? _lastVelocity;
+
+        public ProNavGuidanceInlined(double updatesPerSecond)
         {
-            Vector3D omega = Vector3D.Cross(missileToTarget, relativeVelocity) / Math.Max(missileToTarget.LengthSquared(), 1); //to combat instability at close range
-            return NavConstant * relativeVelocity.Length() * Vector3D.Cross(omega, missileToTargetNorm)
-                   + NavAccelConstant * lateralTargetAcceleration
-                   + gravityCompensationTerm; //normal to LOS
+             _updatesPerSecond = updatesPerSecond;
+
         }
+
+        public void ClearAcceleration()
+        {
+            _lastVelocity = null;
+        }
+
+        public Vector3D Update(Vector3D missilePosition, Vector3D missileVelocity, double missileAcceleration, Vector3D targetPosition, Vector3D targetVelocity, Vector3D? gravity = null, double navConstant = 3, double maxLateralThrustProportion = 0, double navAccelConstant = 0)
+        {
+            Vector3D targetAcceleration = Vector3D.Zero;
+            if (_lastVelocity.HasValue)
+                targetAcceleration = (targetVelocity - _lastVelocity.Value) * _updatesPerSecond;
+            _lastVelocity = targetVelocity;
+
+            Vector3D missileToTarget = targetPosition - missilePosition;
+            Vector3D missileToTargetNorm = Vector3D.Normalize(missileToTarget);
+            Vector3D relativeVelocity = targetVelocity - missileVelocity;
+            Vector3D lateralTargetAcceleration = (targetAcceleration - Vector3D.Dot(targetAcceleration, missileToTargetNorm) * missileToTargetNorm);
+
+            Vector3D omega = Vector3D.Cross(missileToTarget, relativeVelocity) / Math.Max(missileToTarget.LengthSquared(), 1); //to combat instability at close range
+            var lateralAcceleration =  navConstant * relativeVelocity.Length() * Vector3D.Cross(omega, missileToTargetNorm) + navAccelConstant * lateralTargetAcceleration;
+
+            var normalMissileAcceleration = missileToTargetNorm * missileAcceleration;
+            
+            Vector3D pointingVector;
+            if (Vector3D.IsZero(lateralAcceleration))
+                pointingVector = normalMissileAcceleration;
+            else
+            {
+                double maxLateralThrust = missileAcceleration * Math.Min(1, Math.Max(0, maxLateralThrustProportion));
+                if (normalMissileAcceleration.LengthSquared() > maxLateralThrust * maxLateralThrust)
+                {
+                    Vector3D.Normalize(ref normalMissileAcceleration, out normalMissileAcceleration);
+                    normalMissileAcceleration *= maxLateralThrust;
+                }
+
+                var diff = missileAcceleration * missileAcceleration - lateralAcceleration.LengthSquared();
+                pointingVector = diff < 0 ? Vector3D.Normalize(lateralAcceleration) * missileAcceleration : lateralAcceleration + Math.Sqrt(diff) * missileToTargetNorm;
+            }
+
+            if (gravity.HasValue && gravity.Value.LengthSquared() > 1e-3)
+            {
+
+                if (!Vector3D.IsZero(pointingVector))
+                {
+                    var directionNorm = Vector3D.IsUnit(ref pointingVector) ? pointingVector : Vector3D.Normalize(pointingVector);
+                    Vector3D gravityCompensationVec;
+
+                    if (Vector3D.IsZero(gravity.Value) || Vector3D.IsZero(pointingVector))
+                        gravityCompensationVec =  Vector3D.Zero;
+                    else
+                        gravityCompensationVec = (gravity.Value - gravity.Value.Dot(pointingVector) / pointingVector.LengthSquared() * pointingVector);
+
+                    var diffSq = missileAcceleration * missileAcceleration - gravityCompensationVec.LengthSquared();
+                    pointingVector = diffSq < 0 ? pointingVector - gravity.Value : directionNorm * Math.Sqrt(diffSq) + gravityCompensationVec;
+                }
+
+            }
+
+            return pointingVector;
+        }
+    }
+
+
+    internal abstract class MissileGuidanceBase
+    {
+        protected double _deltaTime;
+        protected double _updatesPerSecond;
+
+        Vector3D? _lastVelocity;
+
+        protected MissileGuidanceBase(double updatesPerSecond)
+        {
+            _updatesPerSecond = updatesPerSecond;
+            _deltaTime = 1.0 / _updatesPerSecond;
+        }
+
+        public void ClearAcceleration()
+        {
+            _lastVelocity = null;
+        }
+
+        public Vector3D Update(Vector3D missilePosition, Vector3D missileVelocity, double missileAcceleration, Vector3D targetPosition, Vector3D targetVelocity, Vector3D? gravity = null)
+        {
+            Vector3D targetAcceleration = Vector3D.Zero;
+            if (_lastVelocity.HasValue)
+                targetAcceleration = (targetVelocity - _lastVelocity.Value) * _updatesPerSecond;
+            _lastVelocity = targetVelocity;
+
+            Vector3D pointingVector = GetPointingVector(missilePosition, missileVelocity, missileAcceleration, targetPosition, targetVelocity, targetAcceleration);
+
+            if (gravity.HasValue && gravity.Value.LengthSquared() > 1e-3)
+            {
+                pointingVector = GravityCompensation(missileAcceleration, pointingVector, gravity.Value);
+            }
+            return pointingVector;
+        }
+        
+        public static Vector3D GravityCompensation(double missileAcceleration, Vector3D desiredDirection, Vector3D gravity)
+        {
+            Vector3D directionNorm = MathFuncs.SafeNormalize(desiredDirection);
+            Vector3D gravityCompensationVec = -(MathFuncs.Rejection(gravity, desiredDirection));
+            
+            double diffSq = missileAcceleration * missileAcceleration - gravityCompensationVec.LengthSquared();
+            if (diffSq < 0) // Impossible to hover
+            {
+                return desiredDirection - gravity; // We will sink, but at least approach the target.
+            }
+            
+            return directionNorm * Math.Sqrt(diffSq) + gravityCompensationVec;
+        }
+
+        protected abstract Vector3D GetPointingVector(Vector3D missilePosition, Vector3D missileVelocity, double missileAcceleration, Vector3D targetPosition, Vector3D targetVelocity, Vector3D targetAcceleration);
     }
 
     internal abstract class RelNavGuidance : MissileGuidanceBase
@@ -23,69 +137,100 @@ namespace CoreSystems.Support
         public double NavConstant;
         public double NavAccelConstant;
 
-        protected RelNavGuidance(double updatesPerSecond, double missileAcceleration, double navConstant, double navAccelConstant = 0) : base(updatesPerSecond, missileAcceleration)
+        protected RelNavGuidance(double updatesPerSecond, double navConstant, double navAccelConstant = 0) : base(updatesPerSecond)
         {
             NavConstant = navConstant;
             NavAccelConstant = navAccelConstant;
         }
 
-        protected abstract Vector3D GetLatax(Vector3D missileToTarget, Vector3D missileToTargetNorm, Vector3D relativeVelocity, Vector3D lateralTargetAcceleration, Vector3D gravityCompensationTerm);
+        protected abstract Vector3D GetLatax(Vector3D missileToTarget, Vector3D missileToTargetNorm, Vector3D relativeVelocity, Vector3D lateralTargetAcceleration);
 
-        protected override Vector3D GetPointingVector(Vector3D missilePosition, Vector3D missileVelocity, Vector3D targetPosition, Vector3D targetVelocity, Vector3D targetAcceleration, Vector3D gravity)
+        protected override Vector3D GetPointingVector(Vector3D missilePosition, Vector3D missileVelocity, double missileAcceleration, Vector3D targetPosition, Vector3D targetVelocity, Vector3D targetAcceleration)
         {
             Vector3D missileToTarget = targetPosition - missilePosition;
             Vector3D missileToTargetNorm = Vector3D.Normalize(missileToTarget);
             Vector3D relativeVelocity = targetVelocity - missileVelocity;
             Vector3D lateralTargetAcceleration = (targetAcceleration - Vector3D.Dot(targetAcceleration, missileToTargetNorm) * missileToTargetNorm);
-            Vector3D gravityCompensationTerm = 1.1 * -(gravity - Vector3D.Dot(gravity, missileToTargetNorm) * missileToTargetNorm);
 
-            Vector3D lateralAcceleration = GetLatax(missileToTarget, missileToTargetNorm, relativeVelocity, lateralTargetAcceleration, gravityCompensationTerm);
+            Vector3D lateralAcceleration = GetLatax(missileToTarget, missileToTargetNorm, relativeVelocity, lateralTargetAcceleration);
 
             if (Vector3D.IsZero(lateralAcceleration))
-                return missileToTarget;
+                return missileToTargetNorm * missileAcceleration;
 
-            double diff = MissileAcceleration * MissileAcceleration - lateralAcceleration.LengthSquared();
+            double diff = missileAcceleration * missileAcceleration - lateralAcceleration.LengthSquared();
             if (diff < 0)
-                return lateralAcceleration; //fly parallel to the target
+                return Vector3D.Normalize(lateralAcceleration) * missileAcceleration; //fly parallel to the target
             return lateralAcceleration + Math.Sqrt(diff) * missileToTargetNorm;
         }
     }
 
-    internal abstract class MissileGuidanceBase
+    /// <summary>
+    /// Whip's Proportional Navigation Intercept
+    /// Derived from: https://en.wikipedia.org/wiki/Proportional_navigation
+    /// And: http://www.moddb.com/members/blahdy/blogs/gamedev-introduction-to-proportional-navigation-part-i
+    /// And: http://www.dtic.mil/dtic/tr/fulltext/u2/a556639.pdf
+    /// And: http://nptel.ac.in/courses/101108054/module8/lecture22.pdf
+    /// </summary>
+    internal class ProNavGuidance : RelNavGuidance
     {
-        public double MissileAcceleration;
-        protected double _deltaTime;
-        protected double _updatesPerSecond;
+        public ProNavGuidance(double updatesPerSecond, double navConstant, double navAccelConstant = 0) : base(updatesPerSecond, navConstant, navAccelConstant) { }
 
-        Vector3D _lastVelocity;
-        bool _lastVelocitySet;
-
-        protected MissileGuidanceBase(double updatesPerSecond, double missileAcceleration)
+        protected override Vector3D GetLatax(Vector3D missileToTarget, Vector3D missileToTargetNorm, Vector3D relativeVelocity, Vector3D lateralTargetAcceleration)
         {
-            MissileAcceleration = missileAcceleration;
-            _updatesPerSecond = updatesPerSecond;
-            _deltaTime = 1.0 / _updatesPerSecond;
+            Vector3D omega = Vector3D.Cross(missileToTarget, relativeVelocity) / Math.Max(missileToTarget.LengthSquared(), 1); //to combat instability at close range
+            return NavConstant * relativeVelocity.Length() * Vector3D.Cross(omega, missileToTargetNorm)
+                 + NavAccelConstant * lateralTargetAcceleration;
         }
-
-        public void ClearAcceleration()
-        {
-            _lastVelocitySet = false;
-        }
-
-        public Vector3D Update(Vector3D missilePosition, Vector3D missileVelocity, Vector3D targetPosition, Vector3D targetVelocity, Vector3D? gravity = null)
-        {
-            Vector3D targetAcceleration = Vector3D.Zero;
-            if (!_lastVelocitySet)
-                _lastVelocitySet = true;
-            else
-                targetAcceleration = (targetVelocity - _lastVelocity) * _updatesPerSecond;
-            _lastVelocity = targetVelocity;
-
-            return GetPointingVector(missilePosition, missileVelocity, targetPosition, targetVelocity, targetAcceleration, gravity == null ? Vector3D.Zero : gravity.Value);
-        }
-
-        protected abstract Vector3D GetPointingVector(Vector3D missilePosition, Vector3D missileVelocity, Vector3D targetPosition, Vector3D targetVelocity, Vector3D targetAcceleration, Vector3D gravity);
     }
+
+    internal class WhipNavGuidance : RelNavGuidance
+    {
+        public WhipNavGuidance(double updatesPerSecond, double navConstant, double navAccelConstant = 0) : base(updatesPerSecond, navConstant, navAccelConstant) { }
+
+        protected override Vector3D GetLatax(Vector3D missileToTarget, Vector3D missileToTargetNorm, Vector3D relativeVelocity, Vector3D lateralTargetAcceleration)
+        {
+            Vector3D parallelVelocity = relativeVelocity.Dot(missileToTargetNorm) * missileToTargetNorm; //bootleg vector projection
+            Vector3D normalVelocity = (relativeVelocity - parallelVelocity);
+            return NavConstant * 0.1 * normalVelocity
+                 + NavAccelConstant * lateralTargetAcceleration;
+        }
+    }
+
+    internal class HybridNavGuidance : RelNavGuidance
+    {
+        public HybridNavGuidance(double updatesPerSecond, double navConstant, double navAccelConstant = 0) : base(updatesPerSecond, navConstant, navAccelConstant) { }
+
+        protected override Vector3D GetLatax(Vector3D missileToTarget, Vector3D missileToTargetNorm, Vector3D relativeVelocity, Vector3D lateralTargetAcceleration)
+        {
+            Vector3D omega = Vector3D.Cross(missileToTarget, relativeVelocity) / Math.Max(missileToTarget.LengthSquared(), 1); //to combat instability at close range
+            Vector3D parallelVelocity = relativeVelocity.Dot(missileToTargetNorm) * missileToTargetNorm; //bootleg vector projection
+            Vector3D normalVelocity = (relativeVelocity - parallelVelocity);
+            return NavConstant * (relativeVelocity.Length() * Vector3D.Cross(omega, missileToTargetNorm) + 0.1 * normalVelocity)
+                 + NavAccelConstant * lateralTargetAcceleration;
+        }
+    }
+
+    /// <summary>
+    /// Zero Effort Miss Intercept
+    /// Derived from: https://doi.org/10.2514/1.26948
+    /// </summary>
+    internal class ZeroEffortMissGuidance : RelNavGuidance
+    {
+        public ZeroEffortMissGuidance(double updatesPerSecond, double navConstant) : base(updatesPerSecond, navConstant, 0) { }
+        protected override Vector3D GetLatax(Vector3D missileToTarget, Vector3D missileToTargetNorm, Vector3D relativeVelocity, Vector3D lateralTargetAcceleration)
+        {
+            double distToTarget = Vector3D.Dot(missileToTarget, missileToTargetNorm);
+            double closingSpeed = Vector3D.Dot(relativeVelocity, missileToTargetNorm);
+            // Equation (8) with sign modification to keep time positive and not NaN
+            double tau = distToTarget / Math.Max(1, Math.Abs(closingSpeed));
+            // Equation (6)
+            Vector3D z = missileToTarget + relativeVelocity * tau;
+            // Equation (7)
+            return NavConstant * z / (tau * tau)
+                 + NavAccelConstant * lateralTargetAcceleration;
+        }
+    }
+    #endregion
 
     internal static class MathFuncs
     {

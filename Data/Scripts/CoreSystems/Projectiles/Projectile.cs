@@ -23,6 +23,14 @@ namespace CoreSystems.Projectiles
     internal class Projectile
     {
         internal const float StepConst = MyEngineConstants.PHYSICS_STEP_SIZE_IN_SECONDS;
+
+        internal readonly ProInfo Info = new ProInfo();
+        internal readonly List<MyLineSegmentOverlapResult<MyEntity>> MySegmentList = new List<MyLineSegmentOverlapResult<MyEntity>>();
+        internal readonly List<MyEntity> MyEntityList = new List<MyEntity>();
+        internal readonly List<ProInfo> VrPros = new List<ProInfo>();
+        internal readonly List<Projectile> EwaredProjectiles = new List<Projectile>();
+        internal readonly List<Ai> Watchers = new List<Ai>();
+        internal readonly HashSet<Projectile> Seekers = new HashSet<Projectile>();
         internal ProjectileState State;
         internal EntityState ModelState;
         internal MyEntityQueryType PruneQuery;
@@ -43,12 +51,10 @@ namespace CoreSystems.Projectiles
         internal Vector3D PrevTargetPos;
         internal Vector3D OffsetTarget;
         internal Vector3 PrevTargetVel;
-        internal Vector3? LastHitEntVel;
         internal Vector3 Gravity;
         internal LineD Beam;
-        internal LineD CheckBeam;
         internal BoundingSphereD PruneSphere;
-        internal MyOrientedBoundingBoxD ProjObb;
+        //internal MyOrientedBoundingBoxD ProjObb;
         internal double AccelInMetersPerSec;
         internal double DistanceToTravelSqr;
         internal double VelocityLengthSqr;
@@ -59,27 +65,15 @@ namespace CoreSystems.Projectiles
         internal double DistanceToSurfaceSqr;
         internal float DesiredSpeed;
         internal int DeaccelRate;
-        internal int ChaseAge;
-        internal int EndStep;
-        internal int ZombieLifeTime;
-        internal int LastOffsetTime;
         internal int PruningProxyId = -1;
-        internal int CachedId;
-        internal int NewTargets;
-        internal int SmartSlot;
-        internal bool PickTarget;
+        internal int TargetsSeen;
         internal bool EnableAv;
         internal bool MoveToAndActivate;
         internal bool LockedTarget;
         internal bool LinePlanetCheck;
-        internal bool IsSmart;
-        internal bool MineSeeking;
-        internal bool MineActivated;
-        internal bool MineTriggered;
         internal bool AtMaxRange;
         internal bool EarlyEnd;
         internal bool LineOrNotModel;
-        internal bool WasTracking;
         internal bool Intersecting;
         internal bool FinalizeIntersection;
         internal bool Asleep;
@@ -118,14 +112,6 @@ namespace CoreSystems.Projectiles
             Other,
         }
 
-        internal readonly ProInfo Info = new ProInfo();
-        internal readonly List<MyLineSegmentOverlapResult<MyEntity>> MySegmentList = new List<MyLineSegmentOverlapResult<MyEntity>>();
-        internal readonly List<MyEntity> MyEntityList = new List<MyEntity>();
-        internal readonly List<ProInfo> VrPros = new List<ProInfo>();
-        internal readonly List<Projectile> EwaredProjectiles = new List<Projectile>();
-        internal readonly List<Ai> Watchers = new List<Ai>();
-        internal readonly HashSet<Projectile> Seekers = new HashSet<Projectile>();
-
         #region Start
         internal void Start()
         {
@@ -153,30 +139,22 @@ namespace CoreSystems.Projectiles
             EnableAv = !aConst.VirtualBeams && !session.DedicatedServer && DistanceFromCameraSqr <= session.SyncDistSqr && (probability >= 1 || probability >= MyUtils.GetRandomDouble(0.0f, 1f));
             ModelState = EntityState.None;
             LastEntityPos = Position;
-            LastHitEntVel = null;
             Info.AvShot = null;
             Info.Age = -1;
-            ChaseAge = 0;
-            NewTargets = 0;
-            ZombieLifeTime = 0;
-            LastOffsetTime = 0;
+
+            TargetsSeen = 0;
             PruningProxyId = -1;
-            MineSeeking = false;
-            MineActivated = false;
-            MineTriggered = false;
+
             LinePlanetCheck = false;
             AtMaxRange = false;
-            WasTracking = false;
             Intersecting = false;
             Asleep = false;
-            EndStep = 0;
             Info.PrevDistanceTraveled = 0;
             Info.DistanceTraveled = 0;
             DistanceToSurfaceSqr = double.MaxValue;
             var trajectory = ammoDef.Trajectory;
             var guidance = trajectory.Guidance;
 
-            CachedId = Info.MuzzleId == -1 ? Info.Weapon.WeaponCache.VirutalId : Info.MuzzleId;
             if (aConst.DynamicGuidance && session.AntiSmartActive) DynTrees.RegisterProjectile(this);
 
             Info.MyPlanet = Info.Ai.MyPlanet;
@@ -188,14 +166,13 @@ namespace CoreSystems.Projectiles
                 Info.VoxelCache.PlanetSphere.Center = Info.Ai.ClosestPlanetCenter;
 
             Info.MyShield = Info.Ai.MyShield;
-            Info.InPlanetGravity = Info.Ai.InPlanetGravity;
             Info.Ai.ProjectileTicker = Info.Ai.Session.Tick;
             Info.ObjectsHit = 0;
             Info.BaseHealthPool = aConst.Health;
             Info.BaseEwarPool = aConst.Health;
 
-            IsSmart = aConst.IsSmart;
-            SmartSlot = aConst.IsSmart ? Info.Random.Range(0, 10) : 0;
+            Info.Storage.IsSmart = aConst.IsSmart;
+            Info.Storage.SmartSlot = aConst.IsSmart ? Info.Random.Range(0, 10) : 0;
             switch (Info.Target.TargetState)
             {
                 case Target.TargetStates.WasProjectile:
@@ -300,8 +277,8 @@ namespace CoreSystems.Projectiles
                 OffsetTarget = Vector3D.Zero;
             }
 
-            PickTarget = (aConst.OverrideTarget || Info.Weapon.Comp.ModOverride && !LockedTarget) && Info.Target.TargetState != Target.TargetStates.IsFake;
-            if (PickTarget || LockedTarget && !Info.IsFragment) NewTargets++;
+            Info.Storage.PickTarget = (aConst.OverrideTarget || Info.Weapon.Comp.ModOverride && !LockedTarget) && Info.Target.TargetState != Target.TargetStates.IsFake;
+            if (Info.Storage.PickTarget || LockedTarget && !Info.IsFragment) TargetsSeen++;
             if (!Info.IsFragment) StartSpeed = Info.ShooterVel;
 
             Info.TracerLength = aConst.TracerLength <= Info.MaxTrajectory ? aConst.TracerLength : Info.MaxTrajectory;
@@ -386,7 +363,7 @@ namespace CoreSystems.Projectiles
 
         internal void DestroyProjectile()
         {
-            Info.Hit = new Hit { Block = null, Entity = null, SurfaceHit = Position, LastHit = Position, HitVelocity = Info.InPlanetGravity ? Velocity * 0.33f : Velocity, HitTick = Info.Ai.Session.Tick };
+            Info.Hit = new Hit { Block = null, Entity = null, SurfaceHit = Position, LastHit = Position, HitVelocity = !Vector3D.IsZero(Gravity) ? Velocity * 0.33f : Velocity, HitTick = Info.Ai.Session.Tick };
             if (EnableAv || Info.AmmoDef.Const.VirtualBeams)
             {
                 Info.AvShot.ForceHitParticle = true;
@@ -555,10 +532,10 @@ namespace CoreSystems.Projectiles
                                 }
                                 break;
                             case HadTargetState.Fake:
-                                if (Info.DummyTargets != null)
+                                if (Info.Storage.DummyTargets != null)
                                 {
-                                    var fakeTarget = Info.DummyTargets.PaintedTarget.EntityId != 0 ? Info.DummyTargets.PaintedTarget : Info.DummyTargets.ManualTarget;
-                                    if (fakeTarget == Info.DummyTargets.PaintedTarget)
+                                    var fakeTarget = Info.Storage.DummyTargets.PaintedTarget.EntityId != 0 ? Info.Storage.DummyTargets.PaintedTarget : Info.Storage.DummyTargets.ManualTarget;
+                                    if (fakeTarget == Info.Storage.DummyTargets.PaintedTarget)
                                     {
                                         MyEntities.TryGetEntityById(fakeTarget.EntityId, out s.NavTargetEnt);
                                         if (s.NavTargetEnt.PositionComp.WorldVolume.Radius <= 0)
@@ -889,16 +866,16 @@ namespace CoreSystems.Projectiles
                     if (tracking && s.DroneMsn != DroneMission.Rtb)
                     {
                         var validEntity = Info.Target.TargetState == Target.TargetStates.IsEntity && !Info.Target.TargetEntity.MarkedForClose;
-                        var timeSlot = (Info.Age + SmartSlot) % 30 == 0;
+                        var timeSlot = (Info.Age + s.SmartSlot) % 30 == 0;
                         var hadTarget = HadTarget != HadTargetState.None;
-                        var overMaxTargets = hadTarget && NewTargets > aConst.MaxTargets && aConst.MaxTargets != 0;
+                        var overMaxTargets = hadTarget && TargetsSeen > aConst.MaxTargets && aConst.MaxTargets != 0;
                         var fake = Info.Target.TargetState == Target.TargetStates.IsFake;
                         var validTarget = fake || Info.Target.TargetState == Target.TargetStates.IsProjectile || validEntity && !overMaxTargets;
-                        var seekFirstTarget = !hadTarget && !validTarget && PickTarget && (Info.Age > 120 && timeSlot || Info.Age % 30 == 0 && Info.IsFragment);
-                        var gaveUpChase = !fake && Info.Age - ChaseAge > aConst.MaxChaseTime && hadTarget;
-                        var isZombie = aConst.CanZombie && hadTarget && !fake && !validTarget && ZombieLifeTime > 0 && (ZombieLifeTime + SmartSlot) % 30 == 0;
+                        var seekFirstTarget = !hadTarget && !validTarget && s.PickTarget && (Info.Age > 120 && timeSlot || Info.Age % 30 == 0 && Info.IsFragment);
+                        var gaveUpChase = !fake && Info.Age - s.ChaseAge > aConst.MaxChaseTime && hadTarget;
+                        var isZombie = aConst.CanZombie && hadTarget && !fake && !validTarget && s.ZombieLifeTime > 0 && (s.ZombieLifeTime + s.SmartSlot) % 30 == 0;
                         var seekNewTarget = timeSlot && hadTarget && !validEntity && !overMaxTargets;
-                        var needsTarget = (PickTarget && timeSlot || seekNewTarget || gaveUpChase && validTarget || isZombie || seekFirstTarget);
+                        var needsTarget = (s.PickTarget && timeSlot || seekNewTarget || gaveUpChase && validTarget || isZombie || seekFirstTarget);
 
                         if (needsTarget && NewTarget() || validTarget)
                         {
@@ -1102,13 +1079,13 @@ namespace CoreSystems.Projectiles
             var hadTaret = HadTarget != HadTargetState.None;
             PrevTargetPos = roam ? PrevTargetPos : Position + (Info.Direction * Info.MaxTrajectory);
 
-            if (ZombieLifeTime++ > Info.AmmoDef.Const.TargetLossTime && !smarts.KeepAliveAfterTargetLoss && (smarts.NoTargetExpire || hadTaret))
+            if (Info.Storage.ZombieLifeTime++ > Info.AmmoDef.Const.TargetLossTime && !smarts.KeepAliveAfterTargetLoss && (smarts.NoTargetExpire || hadTaret))
             {
                 DistanceToTravelSqr = Info.DistanceTraveled * Info.DistanceTraveled;
                 EarlyEnd = true;
             }
 
-            if (roam && Info.Age - LastOffsetTime > 300 && hadTaret)
+            if (roam && Info.Age - Info.Storage.LastOffsetTime > 300 && hadTaret)
             {
 
                 double dist;
@@ -1119,7 +1096,7 @@ namespace CoreSystems.Projectiles
                     PrevTargetPos += OffsetTarget;
                 }
             }
-            else if (MineSeeking)
+            else if (Info.Storage.MineSeeking)
             {
                 ResetMine();
                 return false;
@@ -1142,9 +1119,9 @@ namespace CoreSystems.Projectiles
         private void TrackSmartTarget(bool fake)
         {
             var aConst = Info.AmmoDef.Const;
-            if (ZombieLifeTime > 0)
+            if (Info.Storage.ZombieLifeTime > 0)
             {
-                ZombieLifeTime = 0;
+                Info.Storage.ZombieLifeTime = 0;
                 OffSetTarget();
             }
 
@@ -1152,9 +1129,9 @@ namespace CoreSystems.Projectiles
 
             Ai.FakeTarget.FakeWorldTargetInfo fakeTargetInfo = null;
             MyPhysicsComponentBase physics = null;
-            if (fake && Info.DummyTargets != null)
+            if (fake && Info.Storage.DummyTargets != null)
             {
-                var fakeTarget = Info.DummyTargets.PaintedTarget.EntityId != 0 ? Info.DummyTargets.PaintedTarget : Info.DummyTargets.ManualTarget;
+                var fakeTarget = Info.Storage.DummyTargets.PaintedTarget.EntityId != 0 ? Info.Storage.DummyTargets.PaintedTarget : Info.Storage.DummyTargets.ManualTarget;
                 fakeTargetInfo = fakeTarget.LastInfoTick != Info.Ai.Session.Tick ? fakeTarget.GetFakeTargetInfo(Info.Ai) : fakeTarget.FakeInfo;
                 targetPos = fakeTargetInfo.WorldPosition;
                 HadTarget = HadTargetState.Fake;
@@ -1174,10 +1151,10 @@ namespace CoreSystems.Projectiles
             else
                 HadTarget = HadTargetState.Other;
 
-            if (aConst.TargetOffSet && WasTracking)
+            if (aConst.TargetOffSet && Info.Storage.WasTracking)
             {
 
-                if (Info.Age - LastOffsetTime > 300)
+                if (Info.Age - Info.Storage.LastOffsetTime > 300)
                 {
 
                     double dist;
@@ -1213,17 +1190,17 @@ namespace CoreSystems.Projectiles
         private void SmartTargetLoss(Vector3D targetPos)
         {
 
-            if (WasTracking && (Info.Ai.Session.Tick20 || Vector3.Dot(Info.Direction, Position - targetPos) > 0) || !WasTracking)
+            if (Info.Storage.WasTracking && (Info.Ai.Session.Tick20 || Vector3.Dot(Info.Direction, Position - targetPos) > 0) || !Info.Storage.WasTracking)
             {
                 var targetDir = -Info.Direction;
                 var refDir = Vector3D.Normalize(Position - targetPos);
                 if (!MathFuncs.IsDotProductWithinTolerance(ref targetDir, ref refDir, Info.AmmoDef.Const.TargetLossDegree))
                 {
-                    if (WasTracking)
-                        PickTarget = true;
+                    if (Info.Storage.WasTracking)
+                        Info.Storage.PickTarget = true;
                 }
-                else if (!WasTracking)
-                    WasTracking = true;
+                else if (!Info.Storage.WasTracking)
+                    Info.Storage.WasTracking = true;
             }
         }
 
@@ -1231,8 +1208,8 @@ namespace CoreSystems.Projectiles
         {
             Vector3D newVel;
             var aConst = Info.AmmoDef.Const;
-
-            var startTrack = Info.SmartReady || Info.Target.CoreParent == null || Info.Target.CoreParent.MarkedForClose;
+            var s = Info.Storage;
+            var startTrack = Info.Storage.SmartReady || Info.Target.CoreParent == null || Info.Target.CoreParent.MarkedForClose;
 
             if (!startTrack && Info.DistanceTraveled * Info.DistanceTraveled >= aConst.SmartsDelayDistSqr) {
                 var lineCheck = new LineD(Position, LockedTarget ? PrevTargetPos : Position + (Info.Direction * 10000f));
@@ -1241,35 +1218,35 @@ namespace CoreSystems.Projectiles
 
             if (startTrack)
             {
-                Info.SmartReady = true;
+                s.SmartReady = true;
                 var smarts = Info.AmmoDef.Trajectory.Smarts;
                 var fake = Info.Target.TargetState == Target.TargetStates.IsFake;
                 var hadTarget = HadTarget != HadTargetState.None;
 
-                var gaveUpChase = !fake && Info.Age - ChaseAge > aConst.MaxChaseTime && hadTarget;
-                var overMaxTargets = hadTarget && NewTargets > aConst.MaxTargets && aConst.MaxTargets != 0;
+                var gaveUpChase = !fake && Info.Age - s.ChaseAge > aConst.MaxChaseTime && hadTarget;
+                var overMaxTargets = hadTarget && TargetsSeen > aConst.MaxTargets && aConst.MaxTargets != 0;
                 var validEntity = Info.Target.TargetState == Target.TargetStates.IsEntity && !Info.Target.TargetEntity.MarkedForClose;
                 var validTarget = fake || Info.Target.TargetState == Target.TargetStates.IsProjectile || validEntity && !overMaxTargets;
                 var checkTime = HadTarget != HadTargetState.Projectile ? 30 : 10;
-                var isZombie = aConst.CanZombie && hadTarget && !fake && !validTarget && ZombieLifeTime > 0 && (ZombieLifeTime + SmartSlot) % checkTime == 0;
-                var timeSlot = (Info.Age + SmartSlot) % checkTime == 0;
+                var isZombie = aConst.CanZombie && hadTarget && !fake && !validTarget && s.ZombieLifeTime > 0 && (s.ZombieLifeTime + s.SmartSlot) % checkTime == 0;
+                var timeSlot = (Info.Age + s.SmartSlot) % checkTime == 0;
                 var seekNewTarget = timeSlot && hadTarget && !validTarget && !overMaxTargets;
-                var seekFirstTarget = !hadTarget && !validTarget && PickTarget && (Info.Age > 120 && timeSlot || Info.Age % checkTime == 0 && Info.IsFragment);
+                var seekFirstTarget = !hadTarget && !validTarget && s.PickTarget && (Info.Age > 120 && timeSlot || Info.Age % checkTime == 0 && Info.IsFragment);
 
-                if ((PickTarget && timeSlot || seekNewTarget || gaveUpChase && validTarget || isZombie || seekFirstTarget) && NewTarget() || validTarget)
+                if ((s.PickTarget && timeSlot || seekNewTarget || gaveUpChase && validTarget || isZombie || seekFirstTarget) && NewTarget() || validTarget)
                 {
 
-                    if (ZombieLifeTime > 0)
+                    if (s.ZombieLifeTime > 0)
                     {
-                        ZombieLifeTime = 0;
+                        s.ZombieLifeTime = 0;
                         OffSetTarget();
                     }
                     var targetPos = Vector3D.Zero;
 
                     Ai.FakeTarget.FakeWorldTargetInfo fakeTargetInfo = null;
-                    if (fake && Info.DummyTargets != null)
+                    if (fake && s.DummyTargets != null)
                     {
-                        var fakeTarget = Info.DummyTargets.PaintedTarget.EntityId != 0 ? Info.DummyTargets.PaintedTarget : Info.DummyTargets.ManualTarget;
+                        var fakeTarget = s.DummyTargets.PaintedTarget.EntityId != 0 ? s.DummyTargets.PaintedTarget : s.DummyTargets.ManualTarget;
                         fakeTargetInfo = fakeTarget.LastInfoTick != Info.Ai.Session.Tick ? fakeTarget.GetFakeTargetInfo(Info.Ai) : fakeTarget.FakeInfo;
                         targetPos = fakeTargetInfo.WorldPosition;
                         HadTarget = HadTargetState.Fake;
@@ -1287,9 +1264,9 @@ namespace CoreSystems.Projectiles
                     else
                         HadTarget = HadTargetState.Other;
 
-                    if (aConst.TargetOffSet && WasTracking)
+                    if (aConst.TargetOffSet && s.WasTracking)
                     {
-                        if (Info.Age - LastOffsetTime > 300)
+                        if (Info.Age - s.LastOffsetTime > 300)
                         {
                             double dist;
                             Vector3D.DistanceSquared(ref Position, ref targetPos, out dist);
@@ -1312,17 +1289,17 @@ namespace CoreSystems.Projectiles
                     if (aConst.TargetLossDegree > 0 && Vector3D.DistanceSquared(Info.Origin, Position) >= aConst.SmartsDelayDistSqr)
                     {
 
-                        if (WasTracking && (Info.Ai.Session.Tick20 || Vector3.Dot(Info.Direction, Position - targetPos) > 0) || !WasTracking)
+                        if (s.WasTracking && (Info.Ai.Session.Tick20 || Vector3.Dot(Info.Direction, Position - targetPos) > 0) || !s.WasTracking)
                         {
                             var targetDir = -Info.Direction;
                             var refDir = Vector3D.Normalize(Position - targetPos);
                             if (!MathFuncs.IsDotProductWithinTolerance(ref targetDir, ref refDir, aConst.TargetLossDegree))
                             {
-                                if (WasTracking)
-                                    PickTarget = true;
+                                if (s.WasTracking)
+                                    s.PickTarget = true;
                             }
-                            else if (!WasTracking)
-                                WasTracking = true;
+                            else if (!s.WasTracking)
+                                s.WasTracking = true;
                         }
                     }
 
@@ -1333,13 +1310,13 @@ namespace CoreSystems.Projectiles
                     var roam = smarts.Roam;
                     PrevTargetPos = roam ? PrevTargetPos : Position + (Info.Direction * Info.MaxTrajectory);
 
-                    if (ZombieLifeTime++ > aConst.TargetLossTime && !smarts.KeepAliveAfterTargetLoss && (smarts.NoTargetExpire || hadTarget))
+                    if (s.ZombieLifeTime++ > aConst.TargetLossTime && !smarts.KeepAliveAfterTargetLoss && (smarts.NoTargetExpire || hadTarget))
                     {
                         DistanceToTravelSqr = Info.DistanceTraveled * Info.DistanceTraveled;
                         EarlyEnd = true;
                     }
 
-                    if (roam && Info.Age - LastOffsetTime > 300 && hadTarget)
+                    if (roam && Info.Age - s.LastOffsetTime > 300 && hadTarget)
                     {
 
                         double dist;
@@ -1351,19 +1328,23 @@ namespace CoreSystems.Projectiles
                             PrevTargetPos += OffsetTarget;
                         }
                     }
-                    else if (MineSeeking)
+                    else if (s.MineSeeking)
                     {
                         ResetMine();
                         return;
                     }
                 }
 
+                var commandedAccel = s.Navigation.Update(Position, Velocity, AccelInMetersPerSec, PrevTargetPos, PrevTargetVel, Gravity, smarts.Aggressiveness);
+                /*
+
                 var missileToTarget = Vector3D.Normalize(PrevTargetPos - Position);
+                var askewMissileToTarget = missileToTarget + (offset ? OffsetDir : Vector3D.Zero);
                 var relativeVelocity = PrevTargetVel - Velocity;
                 var normalMissileAcceleration = (relativeVelocity - (relativeVelocity.Dot(missileToTarget) * missileToTarget)) * smarts.Aggressiveness;
-
+                
                 Vector3D commandedAccel;
-                if (Vector3D.IsZero(normalMissileAcceleration)) commandedAccel = (missileToTarget * AccelInMetersPerSec);
+                if (Vector3D.IsZero(normalMissileAcceleration)) commandedAccel = (askewMissileToTarget * AccelInMetersPerSec);
                 else
                 {
 
@@ -1373,26 +1354,34 @@ namespace CoreSystems.Projectiles
                         Vector3D.Normalize(ref normalMissileAcceleration, out normalMissileAcceleration);
                         normalMissileAcceleration *= maxLateralThrust;
                     }
-                    commandedAccel = Math.Sqrt(Math.Max(0, AccelInMetersPerSec * AccelInMetersPerSec - normalMissileAcceleration.LengthSquared())) * missileToTarget + normalMissileAcceleration;
+                    commandedAccel = Math.Sqrt(Math.Max(0, AccelInMetersPerSec * AccelInMetersPerSec - normalMissileAcceleration.LengthSquared())) * askewMissileToTarget + normalMissileAcceleration;
                 }
+                */
 
-                var offsetTime = smarts.OffsetTime;
-                if (offsetTime > 0)
+                if (smarts.OffsetTime > 0)
                 {
-                    if ((Info.Age % offsetTime == 0))
+                    if (Info.Age % smarts.OffsetTime == 0)
                     {
-                        double angle = Info.Random.NextDouble() * MathHelper.TwoPi;
+                        var angle = Info.Random.NextDouble() * MathHelper.TwoPi;
                         var up = Vector3D.CalculatePerpendicularVector(Info.Direction);
                         var right = Vector3D.Cross(Info.Direction, up);
                         OffsetDir = Math.Sin(angle) * up + Math.Cos(angle) * right;
                         OffsetDir *= smarts.OffsetRatio;
                     }
 
-                    commandedAccel += AccelInMetersPerSec * OffsetDir;
-                    commandedAccel = Vector3D.Normalize(commandedAccel) * AccelInMetersPerSec;
+                    double dist;
+                    Vector3D.DistanceSquared(ref PrevTargetPos, ref Position, out dist);
+                    var offset = dist > VelocityLengthSqr * 2;
+
+                    if (offset)
+                    {
+                        commandedAccel += AccelInMetersPerSec * OffsetDir;
+                        commandedAccel = Vector3D.Normalize(commandedAccel) * AccelInMetersPerSec;
+                    }
                 }
 
                 newVel = Velocity + (commandedAccel * StepConst);
+                
                 var accelDir = commandedAccel / AccelInMetersPerSec;
 
                 AccelDir = accelDir;
@@ -1419,15 +1408,15 @@ namespace CoreSystems.Projectiles
             OffsetTarget = (randomDirection * offsetAmount);
             if (Info.Age != 0)
             {
-                LastOffsetTime = Info.Age;
+                Info.Storage.LastOffsetTime = Info.Age;
             }
         }
 
         internal bool NewTarget()
         {
-            var giveUp = HadTarget != HadTargetState.None && ++NewTargets > Info.AmmoDef.Const.MaxTargets && Info.AmmoDef.Const.MaxTargets != 0;
-            ChaseAge = Info.Age;
-            PickTarget = false;
+            var giveUp = HadTarget != HadTargetState.None && ++TargetsSeen > Info.AmmoDef.Const.MaxTargets && Info.AmmoDef.Const.MaxTargets != 0;
+            Info.Storage.ChaseAge = Info.Age;
+            Info.Storage.PickTarget = false;
 
             var newTarget = true;
 
@@ -1466,7 +1455,7 @@ namespace CoreSystems.Projectiles
 
             if (Info.AmmoDef.Const.ProjectileSync && Info.Weapon.System.Session.IsServer && (Info.Target.TargetState != Target.TargetStates.IsFake || Info.Target.TargetState != Target.TargetStates.IsProjectile))
             {
-                Info.LastProSyncStateAge = Info.Age;
+                Info.Storage.LastProSyncStateAge = Info.Age;
             }
 
             return newTarget;
@@ -1474,8 +1463,8 @@ namespace CoreSystems.Projectiles
 
         internal void ForceNewTarget()
         {
-            ChaseAge = Info.Age;
-            PickTarget = false;
+            Info.Storage.ChaseAge = Info.Age;
+            Info.Storage.PickTarget = false;
         }
 
         internal bool TrajectoryEstimation(WeaponDefinition.AmmoDef ammoDef, ref Vector3D shooterPos, out Vector3D targetDirection)
@@ -1550,7 +1539,7 @@ namespace CoreSystems.Projectiles
         internal void ActivateMine()
         {
             var ent = Info.Target.TargetEntity;
-            MineActivated = true;
+            Info.Storage.MineActivated = true;
             AtMaxRange = false;
             var targetPos = ent.PositionComp.WorldAABB.Center;
             var deltaPos = targetPos - Position;
@@ -1584,9 +1573,9 @@ namespace CoreSystems.Projectiles
 
             if (Info.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.DetectSmart)
             {
-                IsSmart = true;
+                Info.Storage.IsSmart = true;
 
-                if (IsSmart && Info.AmmoDef.Const.TargetOffSet && LockedTarget)
+                if (Info.AmmoDef.Const.TargetOffSet && LockedTarget)
                 {
                     OffSetTarget();
                 }
@@ -1611,7 +1600,7 @@ namespace CoreSystems.Projectiles
             var inRange = false;
             var activate = false;
             var minDist = double.MaxValue;
-            if (!MineActivated)
+            if (!Info.Storage.MineActivated)
             {
                 MyEntity closestEnt = null;
                 MyGamePruningStructure.GetAllTopMostEntitiesInSphere(ref PruneSphere, MyEntityList, MyEntityQueryType.Dynamic);
@@ -1663,7 +1652,7 @@ namespace CoreSystems.Projectiles
 
             if (minDist <= Info.AmmoDef.Const.CollisionSize) activate = true;
             if (minDist <= detectRadius) inRange = true;
-            if (MineActivated)
+            if (Info.Storage.MineActivated)
             {
                 if (!inRange)
                     TriggerMine(true);
@@ -1685,14 +1674,14 @@ namespace CoreSystems.Projectiles
             }
 
             if (startTimer) DeaccelRate = Info.AmmoDef.Trajectory.Mines.FieldTime;
-            MineTriggered = true;
+            Info.Storage.MineTriggered = true;
         }
 
         internal void ResetMine()
         {
-            if (MineTriggered)
+            if (Info.Storage.MineTriggered)
             {
-                IsSmart = false;
+                Info.Storage.IsSmart = false;
                 Info.DistanceTraveled = double.MaxValue;
                 DeaccelRate = 0;
                 return;
@@ -1702,15 +1691,15 @@ namespace CoreSystems.Projectiles
             DistanceToTravelSqr = MaxTrajectorySqr;
 
             Info.AvShot.Triggered = false;
-            MineTriggered = false;
-            MineActivated = false;
+            Info.Storage.MineTriggered = false;
+            Info.Storage.MineActivated = false;
             LockedTarget = false;
-            MineSeeking = true;
+            Info.Storage.MineSeeking = true;
 
             if (Info.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.DetectSmart)
             {
-                IsSmart = false;
-                SmartSlot = 0;
+                Info.Storage.IsSmart = false;
+                Info.Storage.SmartSlot = 0;
                 OffsetTarget = Vector3D.Zero;
             }
 
@@ -1959,14 +1948,14 @@ namespace CoreSystems.Projectiles
             proSync.PartId = (ushort) Info.Weapon.PartId;
             proSync.Position = Position;
             proSync.Velocity = Velocity;
-            proSync.ProId = Info.SyncId;
+            proSync.ProId = Info.Storage.SyncId;
             proSync.CoreEntityId = Info.Weapon.Comp.CoreEntity.EntityId;
             session.GlobalProPosSyncs[Info.Weapon.Comp.CoreEntity] = proSync;
         }
 
         internal void SyncStateServerProjectile(ProtoProStateSync.ProSyncState state)
         {
-            Info.LastProSyncStateAge = int.MinValue;
+            Info.Storage.LastProSyncStateAge = int.MinValue;
             var target = Info.Target;
             var session = Info.Ai.Session;
             var seed = Info.Random.GetSeedVaues();
@@ -1978,7 +1967,7 @@ namespace CoreSystems.Projectiles
             proSync.RandomY = seed.Item2;
             proSync.OffsetDir = OffsetDir;
             proSync.OffsetTarget = OffsetTarget;
-            proSync.ProId = Info.SyncId;
+            proSync.ProId = Info.Storage.SyncId;
             proSync.TargetId = target.TargetId;
             proSync.CoreEntityId = Info.Weapon.Comp.CoreEntity.EntityId;
             session.GlobalProStateSyncs[Info.Weapon.Comp.CoreEntity] = proSync;
@@ -1991,18 +1980,18 @@ namespace CoreSystems.Projectiles
             var w = Info.Weapon;
 
             ClientProSync sync;
-            if (w.WeaponProSyncs.TryGetValue(Info.SyncId, out sync))
+            if (w.WeaponProSyncs.TryGetValue(Info.Storage.SyncId, out sync))
             {
                 if (s.Tick - sync.UpdateTick > 30)
                 {
-                    w.WeaponProSyncs.Remove(Info.SyncId);
+                    w.WeaponProSyncs.Remove(Info.Storage.SyncId);
                     return;
                 }
 
                 if (sync.ProStateSync != null && sync.ProStateSync.State == ProtoProStateSync.ProSyncState.Dead)
                 {
                     State = ProjectileState.Destroy;
-                    w.WeaponProSyncs.Remove(Info.SyncId);
+                    w.WeaponProSyncs.Remove(Info.Storage.SyncId);
                     return;
                 }
 
@@ -2022,28 +2011,28 @@ namespace CoreSystems.Projectiles
                     var pastServerProPos = proPosSync.Position;
                     var futurePosition = pastServerProPos + estimatedDistTraveledToPresent;
 
-                    var pastClientProPos = Info.PastProInfos[checkSlot];
+                    var pastClientProPos = Info.Storage.PastProInfos[checkSlot];
 
                     if (Vector3D.DistanceSquared(pastClientProPos, pastServerProPos) > clampedEstimatedDistTraveledSqr)
                     {
-                        if (++Info.ProSyncPosMissCount > 1)
+                        if (++Info.Storage.ProSyncPosMissCount > 1)
                         {
-                            Info.ProSyncPosMissCount = 0;
+                            Info.Storage.ProSyncPosMissCount = 0;
                             Position = futurePosition;
                             Velocity = proPosSync.Velocity;
                             Vector3D.Normalize(ref Velocity, out Info.Direction);
                         }
                     }
                     else
-                        Info.ProSyncPosMissCount = 0;
+                        Info.Storage.ProSyncPosMissCount = 0;
 
                     if (w.System.WConst.DebugMode)
                     {
                         List<ClientProSyncDebugLine> lines;
-                        if (!w.System.Session.ProSyncLineDebug.TryGetValue(Info.SyncId, out lines))
+                        if (!w.System.Session.ProSyncLineDebug.TryGetValue(Info.Storage.SyncId, out lines))
                         {
                             lines = new List<ClientProSyncDebugLine>();
-                            w.System.Session.ProSyncLineDebug[Info.SyncId] = lines;
+                            w.System.Session.ProSyncLineDebug[Info.Storage.SyncId] = lines;
                         }
 
                         var pastServerLine = lines.Count == 0 ? new LineD(pastServerProPos - (proPosSync.Velocity * StepConst), pastServerProPos) : new LineD(lines[lines.Count - 1].Line.To, pastServerProPos);
@@ -2088,12 +2077,12 @@ namespace CoreSystems.Projectiles
                         OffsetTarget = sync.ProStateSync.OffsetTarget;
 
                         if (w.System.WConst.DebugMode)
-                            Log.Line($"seedReset: Id:{Info.Id} - age:{Info.Age} - owl:{sync.CurrentOwl} - stateAge:{Info.Age - Info.LastProSyncStateAge} - tId:{sync.ProStateSync.TargetId} - oDirDiff:{Vector3D.IsZero(oldDir - OffsetDir, 1E-02d)} - targetDiff:{Vector3D.Distance(oldTarget, OffsetTarget)} - x:{oldX}[{sync.ProStateSync.RandomX}] - y{oldY}[{sync.ProStateSync.RandomY}]");
+                            Log.Line($"seedReset: Id:{Info.Id} - age:{Info.Age} - owl:{sync.CurrentOwl} - stateAge:{Info.Age - Info.Storage.LastProSyncStateAge} - tId:{sync.ProStateSync.TargetId} - oDirDiff:{Vector3D.IsZero(oldDir - OffsetDir, 1E-02d)} - targetDiff:{Vector3D.Distance(oldTarget, OffsetTarget)} - x:{oldX}[{sync.ProStateSync.RandomX}] - y{oldY}[{sync.ProStateSync.RandomY}]");
                     }
 
                 }
 
-                w.WeaponProSyncs.Remove(Info.SyncId);
+                w.WeaponProSyncs.Remove(Info.Storage.SyncId);
             }
         }
         #endregion

@@ -125,6 +125,7 @@ namespace CoreSystems.Projectiles
             {
                 var p = ActiveProjetiles[i];
                 var info = p.Info;
+                var storage = info.Storage;
                 var aConst = info.AmmoDef.Const;
                 var target = info.Target;
                 var targetEnt = target.TargetEntity;
@@ -139,7 +140,7 @@ namespace CoreSystems.Projectiles
                     if (Session.IsClient)
                     {
                         var posSlot = info.Age % 30;
-                        info.PastProInfos[posSlot] =  p.Position;
+                        storage.PastProInfos[posSlot] =  p.Position;
                         if (info.Weapon.WeaponProSyncs.Count > 0)
                             p.SyncClientProjectile(posSlot);
                     }
@@ -148,7 +149,7 @@ namespace CoreSystems.Projectiles
                         p.SyncPosServerProjectile();
                     }
 
-                    if (info.Age - info.LastProSyncStateAge == 14)
+                    if (info.Age - storage.LastProSyncStateAge == 14)
                         p.SyncStateServerProjectile(ProtoProStateSync.ProSyncState.Alive);
                 }
 
@@ -193,7 +194,7 @@ namespace CoreSystems.Projectiles
                         if (MyUtils.IsValid(p.Gravity) && !MyUtils.IsZero(ref p.Gravity)) {
 
                             p.Velocity += (p.Gravity * aConst.GravityMultiplier) * Projectile.StepConst;
-                            if (!p.IsSmart)
+                            if (!storage.IsSmart)
                                 Vector3D.Normalize(ref p.Velocity, out info.Direction);
                         }
                     }
@@ -219,7 +220,7 @@ namespace CoreSystems.Projectiles
 
                     if (!aConst.AmmoSkipAccel && !info.EwarAreaPulse) {
 
-                        if (p.IsSmart) p.RunSmart();
+                        if (storage.IsSmart) p.RunSmart();
                         else if (aConst.IsDrone) p.RunDrone();
                         else {
                             var accel = true;
@@ -250,7 +251,7 @@ namespace CoreSystems.Projectiles
                             p.Velocity = newVel;
                         }
                     }
-                    else if (p.IsSmart)
+                    else if (storage.IsSmart)
                         p.RunSmart();
                     else if (aConst.IsDrone) 
                         p.RunDrone();
@@ -297,13 +298,13 @@ namespace CoreSystems.Projectiles
 
                     if (info.DistanceTraveled * info.DistanceTraveled >= p.DistanceToTravelSqr) {
 
-                        p.AtMaxRange = !p.MineSeeking;
+                        p.AtMaxRange = !info.Storage.MineSeeking;
                         if (p.DeaccelRate > 0) {
 
                             p.DeaccelRate--;
-                            if (aConst.IsMine && !p.MineSeeking && !p.MineActivated) {
+                            if (aConst.IsMine && !info.Storage.MineSeeking && !info.Storage.MineActivated) {
                                 if (p.EnableAv) info.AvShot.Cloaked = info.AmmoDef.Trajectory.Mines.Cloak;
-                                p.MineSeeking = true;
+                                info.Storage.MineSeeking = true;
                             }
                         }
                     }
@@ -332,6 +333,7 @@ namespace CoreSystems.Projectiles
                     return;
 
                 var info = p.Info;
+                var storage = info.Storage;
                 var ai = info.Ai;
                 var aDef = info.AmmoDef;
                 var aConst = aDef.Const;
@@ -373,7 +375,7 @@ namespace CoreSystems.Projectiles
                 var triggerRange = aConst.EwarTriggerRange > 0 && !info.EwarAreaPulse ? aConst.EwarTriggerRange : 0;
                 var useEwarSphere = (triggerRange > 0 || info.EwarActive) && aConst.Pulse && aConst.EwarType != WeaponDefinition.AmmoDef.EwarDef.EwarType.AntiSmart;
                 p.Beam = useEwarSphere ? new LineD(p.Position + (-info.Direction * aConst.EwarTriggerRange), p.Position + (info.Direction * aConst.EwarTriggerRange)) : new LineD(p.LastPosition, p.Position);
-                p.CheckBeam = p.Info.AmmoDef.Const.CheckFutureIntersection ? new LineD(p.Beam.From, p.Beam.From + (p.Beam.Direction * (p.Beam.Length + p.MaxSpeed+aConst.CollisionSize)), p.Beam.Length + p.MaxSpeed+aConst.CollisionSize) : p.Beam;
+                var checkBeam = p.Info.AmmoDef.Const.CheckFutureIntersection ? new LineD(p.Beam.From, p.Beam.From + (p.Beam.Direction * (p.Beam.Length + p.MaxSpeed+aConst.CollisionSize)), p.Beam.Length + p.MaxSpeed+aConst.CollisionSize) : p.Beam;
                 if (p.DeaccelRate <= 0 && p.State != ProjectileState.OneAndDone && (info.DistanceTraveled * info.DistanceTraveled >= p.DistanceToTravelSqr || info.Age > aConst.MaxLifeTime)) {
 
                     p.PruneSphere.Center = p.Position;
@@ -403,7 +405,7 @@ namespace CoreSystems.Projectiles
 
                 var sphereCheck = false;
 
-                if (p.MineSeeking && !p.MineTriggered)
+                if (storage.MineSeeking && !storage.MineTriggered)
                     p.SeekEnemy();
                 else if (useEwarSphere)
                 {
@@ -432,7 +434,7 @@ namespace CoreSystems.Projectiles
                         
                         if (aConst.DynamicGuidance && p.PruneQuery == MyEntityQueryType.Dynamic && Session.Tick60)
                             p.CheckForNearVoxel(60);
-                        MyGamePruningStructure.GetTopmostEntitiesOverlappingRay(ref p.CheckBeam, p.MySegmentList, p.PruneQuery);
+                        MyGamePruningStructure.GetTopmostEntitiesOverlappingRay(ref checkBeam, p.MySegmentList, p.PruneQuery);
                     }
                 }
                 else
@@ -462,7 +464,7 @@ namespace CoreSystems.Projectiles
                     lock (ValidateHits)
                         ValidateHits.Add(p);
                 }
-                else if (p.MineSeeking && !p.MineTriggered && info.Age - p.ChaseAge > 600)
+                else if (storage.MineSeeking && !storage.MineTriggered && info.Age - storage.ChaseAge > 600)
                 {
                     p.Asleep = true;
                 }

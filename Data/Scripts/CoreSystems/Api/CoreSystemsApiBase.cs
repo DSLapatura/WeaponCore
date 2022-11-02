@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using CoreSystems.Support;
 using Sandbox.ModAPI;
 using VRage;
 using VRage.Collections;
@@ -338,16 +337,16 @@ namespace CoreSystems.Api
             AssignMethod(delegates, "GetCoreArmors", ref _getCoreArmors);
 
             AssignMethod(delegates, "GetBlockWeaponMap", ref _getBlockWeaponMap);
-            AssignMethod(delegates, "GetSortedThreats", ref _getSortedThreats);
-            AssignMethod(delegates, "GetObstructions", ref _getObstructions);
+            AssignMethod(delegates, "GetSortedThreatsBase", ref _getSortedThreats);
+            AssignMethod(delegates, "GetObstructionsBase", ref _getObstructions);
             AssignMethod(delegates, "GetMaxPower", ref _getMaxPower);
-            AssignMethod(delegates, "GetProjectilesLockedOn", ref _getProjectilesLockedOn);
-            AssignMethod(delegates, "GetAiFocus", ref _getAiFocus);
-            AssignMethod(delegates, "SetAiFocus", ref _setAiFocus);
-            AssignMethod(delegates, "HasGridAi", ref _hasGridAi);
-            AssignMethod(delegates, "GetOptimalDps", ref _getOptimalDps);
-            AssignMethod(delegates, "GetConstructEffectiveDps", ref _getConstructEffectiveDps);
-            AssignMethod(delegates, "IsInRange", ref _isInRange);
+            AssignMethod(delegates, "GetProjectilesLockedOnBase", ref _getProjectilesLockedOn);
+            AssignMethod(delegates, "GetAiFocusBase", ref _getAiFocus);
+            AssignMethod(delegates, "SetAiFocusBase", ref _setAiFocus);
+            AssignMethod(delegates, "HasGridAiBase", ref _hasGridAi);
+            AssignMethod(delegates, "GetOptimalDpsBase", ref _getOptimalDps);
+            AssignMethod(delegates, "GetConstructEffectiveDpsBase", ref _getConstructEffectiveDps);
+            AssignMethod(delegates, "IsInRangeBase", ref _isInRange);
             AssignMethod(delegates, "GetProjectileState", ref _getProjectileState);
             AssignMethod(delegates, "SetProjectileState", ref _setProjectileState);
 
@@ -355,32 +354,30 @@ namespace CoreSystems.Api
             AssignMethod(delegates, "RemoveMonitorProjectile", ref _removeProjectileMonitor);
 
             /// block methods
-            AssignMethod(delegates, "GetWeaponTarget", ref _getWeaponTarget);
-            AssignMethod(delegates, "SetWeaponTarget", ref _setWeaponTarget);
-            AssignMethod(delegates, "FireWeaponOnce", ref _fireWeaponOnce);
-            AssignMethod(delegates, "ToggleWeaponFire", ref _toggleWeaponFire);
-            AssignMethod(delegates, "IsWeaponReadyToFire", ref _isWeaponReadyToFire);
-            AssignMethod(delegates, "GetMaxWeaponRange", ref _getMaxWeaponRange);
-            AssignMethod(delegates, "GetTurretTargetTypes", ref _getTurretTargetTypes);
-            AssignMethod(delegates, "SetTurretTargetTypes", ref _setTurretTargetTypes);
-            AssignMethod(delegates, "SetBlockTrackingRange", ref _setBlockTrackingRange);
-            AssignMethod(delegates, "IsTargetAligned", ref _isTargetAligned);
-            AssignMethod(delegates, "IsTargetAlignedExtended", ref _isTargetAlignedExtended);
-            AssignMethod(delegates, "CanShootTarget", ref _canShootTarget);
-            AssignMethod(delegates, "GetPredictedTargetPosition", ref _getPredictedTargetPos);
-            AssignMethod(delegates, "GetHeatLevel", ref _getHeatLevel);
-            AssignMethod(delegates, "GetCurrentPower", ref _currentPowerConsumption);
-            AssignMethod(delegates, "DisableRequiredPower", ref _disableRequiredPower);
-            AssignMethod(delegates, "HasCoreWeapon", ref _hasCoreWeapon);
-            AssignMethod(delegates, "GetActiveAmmo", ref _getActiveAmmo);
-            AssignMethod(delegates, "SetActiveAmmo", ref _setActiveAmmo);
-            AssignMethod(delegates, "MonitorProjectile", ref _monitorProjectile);
-            AssignMethod(delegates, "UnMonitorProjectile", ref _unMonitorProjectile);
-            AssignMethod(delegates, "GetPlayerController", ref _getPlayerController);
-            AssignMethod(delegates, "GetWeaponAzimuthMatrix", ref _getWeaponAzimuthMatrix);
-            AssignMethod(delegates, "GetWeaponElevationMatrix", ref _getWeaponElevationMatrix);
-            AssignMethod(delegates, "IsTargetValid", ref _isTargetValid);
-            AssignMethod(delegates, "GetWeaponScope", ref _getWeaponScope);
+            AssignMethod(delegates, "GetWeaponTargetBase", ref _getWeaponTarget);
+            AssignMethod(delegates, "SetWeaponTargetBase", ref _setWeaponTarget);
+            AssignMethod(delegates, "FireWeaponOnceBase", ref _fireWeaponOnce);
+            AssignMethod(delegates, "ToggleWeaponFireBase", ref _toggleWeaponFire);
+            AssignMethod(delegates, "IsWeaponReadyToFireBase", ref _isWeaponReadyToFire);
+            AssignMethod(delegates, "GetMaxWeaponRangeBase", ref _getMaxWeaponRange);
+            AssignMethod(delegates, "GetTurretTargetTypesBase", ref _getTurretTargetTypes);
+            AssignMethod(delegates, "SetTurretTargetTypesBase", ref _setTurretTargetTypes);
+            AssignMethod(delegates, "SetBlockTrackingRangeBase", ref _setBlockTrackingRange);
+            AssignMethod(delegates, "IsTargetAlignedBase", ref _isTargetAligned);
+            AssignMethod(delegates, "IsTargetAlignedExtendedBase", ref _isTargetAlignedExtended);
+            AssignMethod(delegates, "CanShootTargetBase", ref _canShootTarget);
+            AssignMethod(delegates, "GetPredictedTargetPositionBase", ref _getPredictedTargetPos);
+            AssignMethod(delegates, "GetHeatLevelBase", ref _getHeatLevel);
+            AssignMethod(delegates, "GetCurrentPowerBase", ref _currentPowerConsumption);
+            AssignMethod(delegates, "DisableRequiredPowerBase", ref _disableRequiredPower);
+            AssignMethod(delegates, "HasCoreWeaponBase", ref _hasCoreWeapon);
+            AssignMethod(delegates, "GetActiveAmmoBase", ref _getActiveAmmo);
+            AssignMethod(delegates, "SetActiveAmmoBase", ref _setActiveAmmo);
+            AssignMethod(delegates, "GetPlayerControllerBase", ref _getPlayerController);
+            AssignMethod(delegates, "GetWeaponAzimuthMatrixBase", ref _getWeaponAzimuthMatrix);
+            AssignMethod(delegates, "GetWeaponElevationMatrixBase", ref _getWeaponElevationMatrix);
+            AssignMethod(delegates, "IsTargetValidBase", ref _isTargetValid);
+            AssignMethod(delegates, "GetWeaponScopeBase", ref _getWeaponScope);
 
             //Phantom methods
             AssignMethod(delegates, "GetTargetAssessment", ref _getTargetAssessment);
@@ -393,9 +390,9 @@ namespace CoreSystems.Api
             AssignMethod(delegates, "SetFocusTarget", ref _setPhantomFocusTarget);
 
             //Hakerman's Beam Logic
-            AssignMethod(delegates, "IsWeaponShooting", ref _isWeaponShooting);
-            AssignMethod(delegates, "GetShotsFired", ref _getShotsFired);
-            AssignMethod(delegates, "GetMuzzleInfo", ref _getMuzzleInfo);
+            AssignMethod(delegates, "IsWeaponShootingBase", ref _isWeaponShooting);
+            AssignMethod(delegates, "GetShotsFiredBase", ref _getShotsFired);
+            AssignMethod(delegates, "GetMuzzleInfoBase", ref _getMuzzleInfo);
             AssignMethod(delegates, "ToggleInfiniteAmmoBase", ref _toggoleInfiniteResources);
             AssignMethod(delegates, "RegisterEventMonitor", ref _monitorEvents);
             AssignMethod(delegates, "UnRegisterEventMonitor", ref _unmonitorEvents);
@@ -444,7 +441,6 @@ namespace CoreSystems.Api
                 // This is setup to be easy to use.  If you need more performance modify the Default Callback for your purposes and avoid
                 // copying callbacks into new lists with ProjectileDamageEvent structs.  Note that the ListReader will remain usable for only 1 tick, then it will be cleared by wc.
                 //
-                Log.Line($"custom callback hit");
             }
 
 

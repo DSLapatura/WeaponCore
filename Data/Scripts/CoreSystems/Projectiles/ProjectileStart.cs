@@ -56,9 +56,9 @@ namespace CoreSystems.Projectiles
                 if (t == Kind.Client)
                     target.TargetState = target.TargetEntity != null ? Target.TargetStates.IsEntity : Target.TargetStates.None;
 
-                info.DummyTargets = null;
-                if (comp.FakeMode)
-                    Session.PlayerDummyTargets.TryGetValue(repo.Values.State.PlayerId, out info.DummyTargets);
+                info.Storage.DummyTargets = null;
+                if (comp.FakeMode && (aConst.IsDrone || aConst.IsSmart))
+                    Session.PlayerDummyTargets.TryGetValue(repo.Values.State.PlayerId, out info.Storage.DummyTargets);
 
                 info.BaseDamagePool = aConst.BaseDamage;
 
@@ -143,7 +143,7 @@ namespace CoreSystems.Projectiles
                 }
 
                 if (aConst.ProjectileSync) 
-                    info.SyncId = (long)w.Reload.EndId << 32 | w.ProjectileCounter & 0xFFFFFFFFL;
+                    info.Storage.SyncId = (long)w.Reload.EndId << 32 | w.ProjectileCounter & 0xFFFFFFFFL;
 
             }
             NewProjectiles.Clear();
