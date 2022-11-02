@@ -74,6 +74,8 @@ namespace CoreSystems
             Settings = new CoreSettings(this);
             CounterKeenLogMessage();
 
+            var control = MyAPIGateway.Input.GetGameControl(MyStringId.GetOrCompute("RELOAD"));
+            UiInput.ReloadKey = control.GetKeyboardControl();
             if (IsServer || DedicatedServer)
                 UpdateEnforcement();
 

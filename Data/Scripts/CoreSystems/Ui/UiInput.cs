@@ -5,6 +5,7 @@ using CoreSystems.Support;
 using Sandbox.Game;
 using Sandbox.ModAPI;
 using VRage.Input;
+using VRage.Utils;
 using VRageMath;
 using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
@@ -29,6 +30,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
         internal bool MouseButtonRightNewPressed;
         internal bool MouseButtonRightReleased;
         internal bool MouseButtonRightWasPressed;
+
+        internal bool ReloadKeyReleased;
 
         internal bool IronSights;
         internal bool WasInMenu;
@@ -71,6 +74,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
         internal MyKeys InfoKey;
         internal MyKeys CycleNextKey;
         internal MyKeys CyclePrevKey;
+        internal MyKeys ReloadKey;
 
         internal MyMouseButtonsEnum MouseButtonMenu;
 
@@ -96,7 +100,6 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
             {
                 var ai = s.TrackingAi;
                 MouseButtonPressed = MyAPIGateway.Input.IsAnyMousePressed();
-
                 MouseButtonLeftNewPressed = MyAPIGateway.Input.IsNewLeftMousePressed();
                 MouseButtonLeftReleased = MyAPIGateway.Input.IsNewLeftMouseReleased();
                 MouseButtonLeftWasPressed = ClientInputState.MouseButtonLeft;
@@ -113,8 +116,20 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
 
 
                 ClientInputState.InMenu = _session.InMenu;
+                var playerWeapon = ai.AiType == Ai.AiTypes.Player;
 
-                IronSights = ai.AiType == Ai.AiTypes.Player && ai.OnlyWeaponComp.Rifle.GunBase.HasIronSightsActive;
+                IronSights = playerWeapon && ai.OnlyWeaponComp.Rifle.GunBase.HasIronSightsActive;
+
+                if (playerWeapon && s.GunnerBlackList)
+                {
+
+                    ReloadKeyReleased = MyAPIGateway.Input.IsNewKeyReleased(ReloadKey);
+                    if (ReloadKeyReleased)
+                        ai.OnlyWeaponComp.ForceReload();
+
+                    ShiftReleased = MyAPIGateway.Input.IsNewKeyReleased(MyKeys.LeftShift);
+                    ShiftPressed = MyAPIGateway.Input.IsKeyPress(MyKeys.LeftShift);
+                }   
 
                 if (MouseButtonMenuWasPressed)
                 {

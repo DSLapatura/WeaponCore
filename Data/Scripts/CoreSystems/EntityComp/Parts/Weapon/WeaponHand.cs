@@ -32,6 +32,9 @@ namespace CoreSystems.Platform
 
             private void ForceAmmoValues(object o)
             {
+                if (PrimaryWeapon.Loading)
+                    return;
+
                 if (Rifle.CurrentMagazineAmount != PrimaryWeapon.Reload.CurrentMags)
                     Rifle.CurrentMagazineAmount = PrimaryWeapon.Reload.CurrentMags;
 
@@ -44,6 +47,16 @@ namespace CoreSystems.Platform
             {
                 Rifle.GunBase.OnAmmoAmountChanged -= KeenGiveModdersSomeMoreLove;
                 Rifle.OnMarkForClose -= OnRifleMarkForClose;
+            }
+
+            internal void ForceReload()
+            {
+                if (PrimaryWeapon.Loading || PrimaryWeapon.NoMagsToLoad || PrimaryWeapon.Reload.CurrentMags == 0)
+                    return;
+
+                Rifle.CurrentMagazineAmount = 0;
+                Rifle.CurrentAmmunition = 0;
+                PrimaryWeapon.ServerReload();
             }
 
             internal void HandheldReload(Weapon w, EventTriggers state, bool active)
@@ -59,6 +72,7 @@ namespace CoreSystems.Platform
                     }
                     else
                     {
+                        Session.FutureEvents.Schedule(ForceAmmoValues, null, 15);
                         Log.Line($"reloadInactive: wAmmo:{w.ProtoWeaponAmmo.CurrentAmmo} - wcMag:{w.Reload.CurrentMags} - ammo:{Rifle.CurrentAmmunition} - magCurrentAmmo:{Rifle.CurrentMagazineAmmunition} - magAmount:{Rifle.CurrentMagazineAmount}");
                     }
                 }

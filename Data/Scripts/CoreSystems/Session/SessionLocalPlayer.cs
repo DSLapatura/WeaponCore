@@ -202,6 +202,11 @@ namespace CoreSystems
                 var controlStringRight = MyAPIGateway.Input.GetControl(MyMouseButtonsEnum.Right).GetGameControlEnum().String;
                 CustomBlackListRequestBecauseKeenIsBrainDead(controlStringRight, PlayerId);
             }
+            else
+            {
+                var controlStringR = MyAPIGateway.Input.GetControl(MyKeys.R).GetGameControlEnum().String;
+                CustomBlackListRequestBecauseKeenIsBrainDead(controlStringR, PlayerId);
+            }
 
             var controlStringMenu = MyAPIGateway.Input.GetControl(UiInput.MouseButtonMenu).GetGameControlEnum().String;
             CustomBlackListRequestBecauseKeenIsBrainDead(controlStringMenu, PlayerId);
