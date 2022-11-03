@@ -1335,28 +1335,7 @@ namespace CoreSystems.Projectiles
                     }
                 }
 
-                var commandedAccel = s.Navigation.Update(Position, Velocity, AccelInMetersPerSec, PrevTargetPos, PrevTargetVel, Gravity, smarts.Aggressiveness);
-                /*
-
-                var missileToTarget = Vector3D.Normalize(PrevTargetPos - Position);
-                var askewMissileToTarget = missileToTarget + (offset ? OffsetDir : Vector3D.Zero);
-                var relativeVelocity = PrevTargetVel - Velocity;
-                var normalMissileAcceleration = (relativeVelocity - (relativeVelocity.Dot(missileToTarget) * missileToTarget)) * smarts.Aggressiveness;
-                
-                Vector3D commandedAccel;
-                if (Vector3D.IsZero(normalMissileAcceleration)) commandedAccel = (askewMissileToTarget * AccelInMetersPerSec);
-                else
-                {
-
-                    var maxLateralThrust = AccelInMetersPerSec * Math.Min(1, Math.Max(0, aConst.MaxLateralThrust));
-                    if (normalMissileAcceleration.LengthSquared() > maxLateralThrust * maxLateralThrust)
-                    {
-                        Vector3D.Normalize(ref normalMissileAcceleration, out normalMissileAcceleration);
-                        normalMissileAcceleration *= maxLateralThrust;
-                    }
-                    commandedAccel = Math.Sqrt(Math.Max(0, AccelInMetersPerSec * AccelInMetersPerSec - normalMissileAcceleration.LengthSquared())) * askewMissileToTarget + normalMissileAcceleration;
-                }
-                */
+                var commandedAccel = s.Navigation.Update(Position, Velocity, AccelInMetersPerSec, PrevTargetPos, PrevTargetVel, Gravity, smarts.Aggressiveness, aConst.MaxLateralThrust);
 
                 if (smarts.OffsetTime > 0)
                 {

@@ -139,7 +139,7 @@ namespace CoreSystems.Projectiles
                 {
                     Session.MonitoredProjectiles[p.Info.Id] = p;
                     for (int j = 0; j < monitor.Count; j++)
-                        monitor[j].Invoke(comp.Cube.EntityId, w.PartId, info.Id, target.TargetId, p.Position, true);
+                        monitor[j].Invoke(comp.CoreEntity.EntityId, w.PartId, info.Id, target.TargetId, p.Position, true);
                 }
 
                 if (aConst.ProjectileSync) 

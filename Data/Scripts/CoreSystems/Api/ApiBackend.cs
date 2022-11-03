@@ -127,7 +127,6 @@ namespace CoreSystems.Api
                 ["GetConstructEffectiveDpsBase"] = new Func<MyEntity, float>(GetConstructEffectiveDps),
                 ["GetConstructEffectiveDps"] = new Func<IMyEntity, float>(GetConstructEffectiveDpsLegacy),
 
-
                 // Phantoms
                 ["GetTargetAssessment"] = new Func<MyEntity, MyEntity, int, bool, bool, MyTuple<bool, bool, Vector3D?>>(GetPhantomTargetAssessment),
                 //["GetPhantomInfo"] = new Action<string, ICollection<MyTuple<MyEntity, long, int, float, uint, long>>>(GetPhantomInfo),
@@ -138,8 +137,7 @@ namespace CoreSystems.Api
                 ["SetFocusTarget"] = new Func<MyEntity, MyEntity, int, bool>(SetPhantomFocusTarget),
                 ["SpawnPhantom"] = new Func<string, uint, bool, long, string, int, float?, MyEntity, bool, bool, long, bool, MyEntity>(SpawnPhantom),
                 ["ToggleDamageEvents"] = new Action<Dictionary<MyEntity, MyTuple<Vector3D, Dictionary<MyEntity, List<MyTuple<int, float, Vector3I>>>>>>(ToggleDamageEvents),
-
-
+                ["SetProjectileState"] = new Action<ulong, MyTuple<bool, Vector3D, Vector3D, float>>(SetProjectileState),
                 ["DamageHandler"] = new Action<long, int, Action<ListReader<MyTuple<ulong, long, int, MyEntity, MyEntity, ListReader<MyTuple<Vector3D, object, float>>>>>>(RegisterForDamageEvents),
                 ["RegisterEventMonitor"] = new Action<MyEntity, int, Action<int, bool>>(RegisterEventMonitorCallback),
                 ["UnRegisterEventMonitor"] = new Action<MyEntity, int, Action<int, bool>>(UnRegisterEventMonitorCallback),
@@ -182,7 +180,6 @@ namespace CoreSystems.Api
                 ["UnMonitorProjectile"] = new Action<Sandbox.ModAPI.Ingame.IMyTerminalBlock, int, Action<long, int, ulong, long, Vector3D, bool>>(PbUnMonitorProjectileCallback),
                 ["MonitorProjectile"] = new Action<Sandbox.ModAPI.Ingame.IMyTerminalBlock, int, Action<long, int, ulong, long, Vector3D, bool>>(PbMonitorProjectileCallback),
                 ["GetProjectileState"] = new Func<ulong, MyTuple<Vector3D, Vector3D, float, float, long, string>>(GetProjectileState),
-                ["SetProjectileState"] = new Action<ulong, MyTuple<bool, Vector3D, Vector3D, float>>(SetProjectileState),
                 ["GetConstructEffectiveDps"] = new Func<long, float>(PbGetConstructEffectiveDps),
                 ["GetPlayerController"] = new Func<Sandbox.ModAPI.Ingame.IMyTerminalBlock, long>(PbGetPlayerController),
                 ["GetWeaponAzimuthMatrix"] = new Func<Sandbox.ModAPI.Ingame.IMyTerminalBlock, int, Matrix>(PbGetWeaponAzimuthMatrix),

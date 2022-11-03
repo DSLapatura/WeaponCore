@@ -24,8 +24,8 @@ namespace CoreSystems.Support
             _lastVelocity = null;
         }
 
-        public Vector3D Update(Vector3D missilePosition, Vector3D missileVelocity, double missileAcceleration, Vector3D targetPosition, Vector3D targetVelocity, Vector3D? gravity = null, double navConstant = 3, double maxLateralThrustProportion = 0, double navAccelConstant = 0)
-        {
+        public Vector3D Update(Vector3D missilePosition, Vector3D missileVelocity, double missileAcceleration, Vector3D targetPosition, Vector3D targetVelocity, Vector3D? gravity = null, double navConstant = 3, double maxLateralThrustProportion = 1, double navAccelConstant = 0)
+        { 
             Vector3D targetAcceleration = Vector3D.Zero;
             if (_lastVelocity.HasValue)
                 targetAcceleration = (targetVelocity - _lastVelocity.Value) * _updatesPerSecond;
@@ -39,18 +39,17 @@ namespace CoreSystems.Support
             Vector3D omega = Vector3D.Cross(missileToTarget, relativeVelocity) / Math.Max(missileToTarget.LengthSquared(), 1); //to combat instability at close range
             var lateralAcceleration =  navConstant * relativeVelocity.Length() * Vector3D.Cross(omega, missileToTargetNorm) + navAccelConstant * lateralTargetAcceleration;
 
-            var normalMissileAcceleration = missileToTargetNorm * missileAcceleration;
             
             Vector3D pointingVector;
             if (Vector3D.IsZero(lateralAcceleration))
-                pointingVector = normalMissileAcceleration;
+                pointingVector = missileToTargetNorm * missileAcceleration;
             else
             {
                 double maxLateralThrust = missileAcceleration * Math.Min(1, Math.Max(0, maxLateralThrustProportion));
-                if (normalMissileAcceleration.LengthSquared() > maxLateralThrust * maxLateralThrust)
+                if (lateralAcceleration.LengthSquared() > maxLateralThrust * maxLateralThrust)
                 {
-                    Vector3D.Normalize(ref normalMissileAcceleration, out normalMissileAcceleration);
-                    normalMissileAcceleration *= maxLateralThrust;
+                    Vector3D.Normalize(ref lateralAcceleration, out lateralAcceleration);
+                    lateralAcceleration *= maxLateralThrust;
                 }
 
                 var diff = missileAcceleration * missileAcceleration - lateralAcceleration.LengthSquared();
