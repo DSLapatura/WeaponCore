@@ -1322,7 +1322,54 @@ namespace CoreSystems.Projectiles
                     }
                 }
 
-                var commandedAccel = s.Navigation.Update(Position, Velocity, AccelInMetersPerSec, PrevTargetPos, PrevTargetVel, Gravity, smarts.Aggressiveness, aConst.MaxLateralThrust);
+                Vector3D targetAcceleration = Vector3D.Zero;
+                if (s.Navigation.LastVelocity.HasValue)
+                    targetAcceleration = (PrevTargetVel - s.Navigation.LastVelocity.Value) * 60;
+                s.Navigation.LastVelocity = PrevTargetVel;
+
+                Vector3D missileToTarget = PrevTargetPos - Position;
+                Vector3D missileToTargetNorm = Vector3D.Normalize(missileToTarget);
+                Vector3D relativeVelocity = PrevTargetVel - Velocity;
+                Vector3D lateralTargetAcceleration = (targetAcceleration - Vector3D.Dot(targetAcceleration, missileToTargetNorm) * missileToTargetNorm);
+
+                Vector3D omega = Vector3D.Cross(missileToTarget, relativeVelocity) / Math.Max(missileToTarget.LengthSquared(), 1); //to combat instability at close range
+                var lateralAcceleration = smarts.Aggressiveness * relativeVelocity.Length() * Vector3D.Cross(omega, missileToTargetNorm) + 0 * lateralTargetAcceleration;
+
+                Vector3D commandedAccel;
+                if (Vector3D.IsZero(lateralAcceleration))
+                {
+                    commandedAccel = missileToTargetNorm * AccelInMetersPerSec;
+                }
+                else
+                {
+                    double maxLateralThrust = AccelInMetersPerSec * Math.Min(1, Math.Max(0, aConst.MaxLateralThrust));
+                    if (lateralAcceleration.LengthSquared() > maxLateralThrust * maxLateralThrust)
+                    {
+                        Vector3D.Normalize(ref lateralAcceleration, out lateralAcceleration);
+                        lateralAcceleration *= maxLateralThrust;
+                    }
+
+
+                    var diff = AccelInMetersPerSec * AccelInMetersPerSec - lateralAcceleration.LengthSquared();
+                    commandedAccel = diff < 0 ? Vector3D.Normalize(lateralAcceleration) * AccelInMetersPerSec : lateralAcceleration + Math.Sqrt(diff) * missileToTargetNorm;
+                }
+                if (Gravity.LengthSquared() > 1e-3)
+                {
+
+                    if (!Vector3D.IsZero(commandedAccel))
+                    {
+                        var directionNorm = Vector3D.IsUnit(ref commandedAccel) ? commandedAccel : Vector3D.Normalize(commandedAccel);
+                        Vector3D gravityCompensationVec;
+
+                        if (Vector3D.IsZero(Gravity) || Vector3D.IsZero(commandedAccel))
+                            gravityCompensationVec = Vector3D.Zero;
+                        else
+                            gravityCompensationVec = (Gravity - Gravity.Dot(commandedAccel) / commandedAccel.LengthSquared() * commandedAccel);
+
+                        var diffSq = AccelInMetersPerSec * AccelInMetersPerSec - gravityCompensationVec.LengthSquared();
+                        commandedAccel = diffSq < 0 ? commandedAccel - Gravity : directionNorm * Math.Sqrt(diffSq) + gravityCompensationVec;
+                    }
+                }
 
                 if (smarts.OffsetTime > 0)
                 {

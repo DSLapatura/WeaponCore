@@ -11,7 +11,7 @@ namespace CoreSystems.Support
     {
         private readonly double _updatesPerSecond;
 
-        Vector3D? _lastVelocity;
+        public Vector3D? LastVelocity;
 
         public ProNavGuidanceInlined(double updatesPerSecond)
         {
@@ -21,16 +21,15 @@ namespace CoreSystems.Support
 
         public void ClearAcceleration()
         {
-            Log.Line("test1234");
-            _lastVelocity = null;
+            LastVelocity = null;
         }
 
         public Vector3D Update(Vector3D missilePosition, Vector3D missileVelocity, double missileAcceleration, Vector3D targetPosition, Vector3D targetVelocity, Vector3D? gravity = null, double navConstant = 3, double maxLateralThrustProportion = 1, double navAccelConstant = 0)
         { 
             Vector3D targetAcceleration = Vector3D.Zero;
-            if (_lastVelocity.HasValue)
-                targetAcceleration = (targetVelocity - _lastVelocity.Value) * _updatesPerSecond;
-            _lastVelocity = targetVelocity;
+            if (LastVelocity.HasValue)
+                targetAcceleration = (targetVelocity - LastVelocity.Value) * _updatesPerSecond;
+            LastVelocity = targetVelocity;
 
             Vector3D missileToTarget = targetPosition - missilePosition;
             Vector3D missileToTargetNorm = Vector3D.Normalize(missileToTarget);
