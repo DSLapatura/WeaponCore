@@ -171,8 +171,12 @@ namespace CoreSystems.Projectiles
             Info.BaseHealthPool = aConst.Health;
             Info.BaseEwarPool = aConst.Health;
 
-            Info.Storage.IsSmart = aConst.IsSmart;
-            Info.Storage.SmartSlot = aConst.IsSmart ? Info.Random.Range(0, 10) : 0;
+            if (aConst.IsSmart || aConst.IsDrone)
+            {
+                Info.Storage.IsSmart = aConst.IsSmart;
+                Info.Storage.SmartSlot = Info.Random.Range(0, 10);
+            }
+
             switch (Info.Target.TargetState)
             {
                 case Target.TargetStates.WasProjectile:

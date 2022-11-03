@@ -141,23 +141,22 @@ namespace CoreSystems.Platform
                 var distance = Vector3D.DistanceSquared(session.CameraPos, Comp.CoreEntity.PositionComp.WorldAABB.Center);
                 var canPlay = !session.DedicatedServer && 64000000 >= distance; //8km max range, will play regardless of range if it moves PivotPos and is loaded
 
-                if (canPlay)
+                switch (state)
                 {
-                    PlayParticleEvent(state, active, distance, muzzles);
-                    switch (state)
-                    {
-                        case EventTriggers.Firing:
-                            if (Comp.TypeSpecific == CoreComponent.CompTypeSpecific.Rifle)
-                                Comp.HandhelShoot(this, state, active);
-                            break;
-                        case EventTriggers.Reloading:
-                        case EventTriggers.NoMagsToLoad:
-                        case EventTriggers.EmptyOnGameLoad:
-                            if (Comp.TypeSpecific == CoreComponent.CompTypeSpecific.Rifle)
-                                Comp.HandheldReload(this, state, active);
-                            break;
-                    }
+                    case EventTriggers.Firing:
+                        if (Comp.TypeSpecific == CoreComponent.CompTypeSpecific.Rifle)
+                            Comp.HandhelShoot(this, state, active);
+                        break;
+                    case EventTriggers.Reloading:
+                    case EventTriggers.NoMagsToLoad:
+                    case EventTriggers.EmptyOnGameLoad:
+                        if (Comp.TypeSpecific == CoreComponent.CompTypeSpecific.Rifle)
+                            Comp.HandheldReload(this, state, active);
+                        break;
                 }
+
+                if (canPlay)
+                    PlayParticleEvent(state, active, distance, muzzles);
 
                 var monitor = Comp.EventMonitors[PartId];
                 if (monitor.Count > 0)

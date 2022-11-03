@@ -56,31 +56,34 @@ namespace CoreSystems.Platform
 
                 Rifle.CurrentMagazineAmount = 0;
                 Rifle.CurrentAmmunition = 0;
-                PrimaryWeapon.ServerReload();
+                if (Session.IsServer)
+                {
+                    PrimaryWeapon.ServerReload();
+
+                    if (Session.MpActive)
+                        Session.RequestToggle(this, PacketType.ForceReload);
+                }
             }
 
             internal void HandheldReload(Weapon w, EventTriggers state, bool active)
             {
-                if (Session.HandlesInput)
+                if (active && state == EventTriggers.Reloading)
                 {
-                    if (active && state == EventTriggers.Reloading)
-                    {
-                        Log.Line($"reloadActive: wAmmo:{w.ProtoWeaponAmmo.CurrentAmmo} - wcMag:{w.Reload.CurrentMags} - ammo:{Rifle.CurrentAmmunition} - magCurrentAmmo:{Rifle.CurrentMagazineAmmunition} - magAmount:{Rifle.CurrentMagazineAmount}");
+                    Log.Line($"reloadActive: wAmmo:{w.ProtoWeaponAmmo.CurrentAmmo} - wcMag:{w.Reload.CurrentMags} - ammo:{Rifle.CurrentAmmunition} - magCurrentAmmo:{Rifle.CurrentMagazineAmmunition} - magAmount:{Rifle.CurrentMagazineAmount}");
 
+                    if (Session.IsServer)
                         Rifle.Reload();
-
-                    }
-                    else
-                    {
-                        Session.FutureEvents.Schedule(ForceAmmoValues, null, 15);
-                        Log.Line($"reloadInactive: wAmmo:{w.ProtoWeaponAmmo.CurrentAmmo} - wcMag:{w.Reload.CurrentMags} - ammo:{Rifle.CurrentAmmunition} - magCurrentAmmo:{Rifle.CurrentMagazineAmmunition} - magAmount:{Rifle.CurrentMagazineAmount}");
-                    }
+                }
+                else
+                {
+                    Session.FutureEvents.Schedule(ForceAmmoValues, null, 15);
+                    Log.Line($"reloadInactive: wAmmo:{w.ProtoWeaponAmmo.CurrentAmmo} - wcMag:{w.Reload.CurrentMags} - ammo:{Rifle.CurrentAmmunition} - magCurrentAmmo:{Rifle.CurrentMagazineAmmunition} - magAmount:{Rifle.CurrentMagazineAmount}");
                 }
             }
 
             internal void HandhelShoot(Weapon w, EventTriggers state, bool active)
             {
-                if (Session.HandlesInput && active)
+                if (active)
                 {
                     Log.Line($"HandhelShoot: wAmmo:{w.ProtoWeaponAmmo.CurrentAmmo} - wcMag:{w.Reload.CurrentMags} - ammo:{Rifle.CurrentAmmunition} - magCurrentAmmo:{Rifle.CurrentMagazineAmmunition} - magAmount:{Rifle.CurrentMagazineAmount}");
 
