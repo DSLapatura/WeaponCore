@@ -1042,26 +1042,8 @@ namespace CoreSystems.Projectiles
                     break;
             }
 
-            
-            var missileToTarget = droneNavTarget;
-            var relativeVelocity = PrevTargetVel - Velocity;
-            var normalMissileAcceleration = (relativeVelocity - (relativeVelocity.Dot(missileToTarget) * missileToTarget)) * smarts.Aggressiveness;
+            var commandedAccel = s.Navigation.Update(Position, Velocity, AccelInMetersPerSec, PrevTargetPos, PrevTargetVel, Gravity, smarts.Aggressiveness, Info.AmmoDef.Const.MaxLateralThrust);
 
-            Vector3D commandedAccel;
-            if (Vector3D.IsZero(normalMissileAcceleration)) 
-            {
-                commandedAccel = (missileToTarget * AccelInMetersPerSec);
-            }
-            else
-            {
-                var maxLateralThrust = AccelInMetersPerSec * Math.Min(1, Math.Max(0, Info.AmmoDef.Const.MaxLateralThrust));
-                if (normalMissileAcceleration.LengthSquared() > maxLateralThrust * maxLateralThrust)
-                {
-                    Vector3D.Normalize(ref normalMissileAcceleration, out normalMissileAcceleration);
-                    normalMissileAcceleration *= maxLateralThrust;
-                }
-                commandedAccel = Math.Sqrt(Math.Max(0, AccelInMetersPerSec * AccelInMetersPerSec - normalMissileAcceleration.LengthSquared())) * missileToTarget + normalMissileAcceleration;
-            }
             if (smarts.OffsetTime > 0 && s.DroneStat!= Strafe && s.DroneStat!=Return && s.DroneStat!= Dock) // suppress offsets when strafing or docking
                 OffsetSmartVelocity(ref commandedAccel);
 
