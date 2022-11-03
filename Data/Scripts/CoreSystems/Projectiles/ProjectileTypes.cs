@@ -266,6 +266,8 @@ namespace CoreSystems.Support
             MineActivated = false;
             MineTriggered = false;
             WasTracking = false;
+            IsSmart = false;
+            SmartSlot = 0;
 
             if (synced) {
                 for (int i = 0; i < PastProInfos.Length; i++)

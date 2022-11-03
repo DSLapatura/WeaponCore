@@ -21,6 +21,7 @@ namespace CoreSystems.Support
 
         public void ClearAcceleration()
         {
+            Log.Line("test1234");
             _lastVelocity = null;
         }
 
@@ -42,7 +43,9 @@ namespace CoreSystems.Support
             
             Vector3D pointingVector;
             if (Vector3D.IsZero(lateralAcceleration))
+            {
                 pointingVector = missileToTargetNorm * missileAcceleration;
+            }
             else
             {
                 double maxLateralThrust = missileAcceleration * Math.Min(1, Math.Max(0, maxLateralThrustProportion));
@@ -51,6 +54,7 @@ namespace CoreSystems.Support
                     Vector3D.Normalize(ref lateralAcceleration, out lateralAcceleration);
                     lateralAcceleration *= maxLateralThrust;
                 }
+
 
                 var diff = missileAcceleration * missileAcceleration - lateralAcceleration.LengthSquared();
                 pointingVector = diff < 0 ? Vector3D.Normalize(lateralAcceleration) * missileAcceleration : lateralAcceleration + Math.Sqrt(diff) * missileToTargetNorm;

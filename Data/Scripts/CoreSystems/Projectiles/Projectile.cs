@@ -455,7 +455,7 @@ namespace CoreSystems.Projectiles
             PruningProxyId = -1;
             HadTarget = HadTargetState.None;
             
-            Info.Clean(aConst.IsSmart||aConst.IsDrone);
+            Info.Clean(aConst.IsSmart || aConst.IsDrone);
 
         }
         #endregion
@@ -1195,7 +1195,7 @@ namespace CoreSystems.Projectiles
             Vector3D newVel;
             var aConst = Info.AmmoDef.Const;
             var s = Info.Storage;
-            var startTrack = Info.Storage.SmartReady || Info.Target.CoreParent == null || Info.Target.CoreParent.MarkedForClose;
+            var startTrack = s.SmartReady || Info.Target.CoreParent == null || Info.Target.CoreParent.MarkedForClose;
 
             if (!startTrack && Info.DistanceTraveled * Info.DistanceTraveled >= aConst.SmartsDelayDistSqr) {
                 var lineCheck = new LineD(Position, LockedTarget ? PrevTargetPos : Position + (Info.Direction * 10000f));
@@ -1294,6 +1294,7 @@ namespace CoreSystems.Projectiles
                 else
                 {
                     var roam = smarts.Roam;
+
                     PrevTargetPos = roam ? PrevTargetPos : Position + (Info.Direction * Info.MaxTrajectory);
 
                     if (s.ZombieLifeTime++ > aConst.TargetLossTime && !smarts.KeepAliveAfterTargetLoss && (smarts.NoTargetExpire || hadTarget))
@@ -1664,7 +1665,6 @@ namespace CoreSystems.Projectiles
             if (Info.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.DetectSmart)
             {
                 Info.Storage.IsSmart = false;
-                Info.Storage.SmartSlot = 0;
                 OffsetTarget = Vector3D.Zero;
             }
 
