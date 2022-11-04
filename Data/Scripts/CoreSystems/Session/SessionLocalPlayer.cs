@@ -16,11 +16,7 @@ using VRage.Game.ModAPI;
 using VRage.Input;
 using VRage.Utils;
 using VRageMath;
-using WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting;
 using static CoreSystems.Support.Ai;
-using static CoreSystems.Support.WeaponDefinition.TargetingDef;
-using static CoreSystems.Support.WeaponDefinition.TargetingDef.BlockTypes;
-using static CoreSystems.ProtoWeaponState;
 namespace CoreSystems
 {
     public partial class Session
@@ -37,37 +33,10 @@ namespace CoreSystems
             return ai.Construct.Data.Repo.FocusData.HasFocus;
         }
 
-        internal void SetTarget(MyEntity entity, Ai ai, Dictionary<MyEntity, MyTuple<float, TargetUi.TargetControl>> masterTargets)
+        internal void SetTarget(MyEntity entity, Ai ai)
         {
-
             TrackingAi = ai;
-            ai.Construct.Focus.RequestAddFocus(entity, ai);
-
-            Ai gridAi;
-            TargetArmed = false;
-            var grid = entity as MyCubeGrid;
-            if (grid != null && EntityToMasterAi.TryGetValue(grid, out gridAi))
-            {
-                TargetArmed = true;
-            }
-            else
-            {
-
-                MyTuple<float, TargetUi.TargetControl> targetInfo;
-                if (!masterTargets.TryGetValue(entity, out targetInfo)) return;
-                ConcurrentDictionary<BlockTypes, ConcurrentCachingList<MyCubeBlock>> typeDict;
-
-                var tGrid = entity as MyCubeGrid;
-                if (tGrid != null && GridToBlockTypeMap.TryGetValue(tGrid, out typeDict))
-                {
-
-                    ConcurrentCachingList<MyCubeBlock> fatList;
-                    if (typeDict.TryGetValue(Offense, out fatList))
-                        TargetArmed = fatList.Count > 0;
-                    else TargetArmed = false;
-                }
-                else TargetArmed = false;
-            }
+            ai.Construct.Focus.RequestAddFocus(entity, ai, PlayerId);
         }
 
         internal bool UpdateLocalAiAndCockpit()
@@ -382,13 +351,7 @@ namespace CoreSystems
 
                     var blockId = MyCubeBuilder.Static.CurrentBlockDefinition.Id;
                     var subtypeIdHash = blockId.SubtypeId;
-                    /*
-                    if (!ReplaceVanilla && (LastVanillaWarnTick == 0 || Tick - LastVanillaWarnTick > 600) && VanillaIds.ContainsKey(blockId))
-                    {
-                        ShowLocalNotify("You have not installed a Vanilla Weapon Replacer mod and without one these weapons will not work. You can find one one the steam workshop.", 600 * MyEngineConstants.UPDATE_STEP_SIZE_IN_MILLISECONDS, "Red");
-                        LastVanillaWarnTick = Tick;
-                    }
-                    */
+
                     Ai ai;
                     if (EntityToMasterAi.TryGetValue(grid, out ai))
                     {

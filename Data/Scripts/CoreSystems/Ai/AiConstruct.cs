@@ -5,6 +5,7 @@ using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
 using VRage.Game;
 using VRage.Game.Entity;
+using VRage.Game.ModAPI;
 using VRage.ModAPI;
 using VRage.Utils;
 using VRageMath;
@@ -602,8 +603,11 @@ namespace CoreSystems.Support
             {
                 InfiniteResources = !InfiniteResources;
                 foreach (var ai in RootAi.TopEntityMap.GroupMap.Ais)
+                {
+                    ai.Construct.InfiniteResources = InfiniteResources;
                     foreach (var comp in ai.CompBase.Values)
                         comp.InfiniteResource = InfiniteResources;
+                }
 
                 return InfiniteResources;
             }
@@ -612,6 +616,13 @@ namespace CoreSystems.Support
 
     public class Focus
     {
+        public enum ChangeMode
+        {
+            Add,
+            Release,
+            Lock,
+        }
+
         public long PrevTarget;
         public long OldTarget;
         public LockModes OldLocked;
@@ -640,6 +651,31 @@ namespace CoreSystems.Support
             return false;
         }
 
+
+        internal void ServerChangeFocus(MyEntity target, Ai ai, long playerId, ChangeMode mode, bool apiCalled = false)
+        {
+            if (!apiCalled && playerId != 0 && ai.Session.TargetFocusHandlers.Count > 0)
+            {
+                if (RestrictedTargetFocusHandlers(target, ai, playerId, mode))
+                    return;
+            }
+
+            switch (mode)
+            {
+                case ChangeMode.Add:
+                    ServerAddFocus(target, ai);
+                    break;
+                case ChangeMode.Release:
+                    ServerReleaseActive(ai);
+                    break;
+                case ChangeMode.Lock:
+                    ServerCycleLock(ai);
+                    break;
+            }
+        }
+
+
+
         internal void ServerAddFocus(MyEntity target, Ai ai)
         {
             var session = ai.Session;
@@ -654,10 +690,10 @@ namespace CoreSystems.Support
             ai.Construct.UpdateConstruct(Ai.Constructs.UpdateType.Focus, ChangeDetected(ai));
         }
 
-        internal void RequestAddFocus(MyEntity target, Ai ai)
+        internal void RequestAddFocus(MyEntity target, Ai ai, long playerId)
         {
             if (ai.Session.IsServer)
-                ServerAddFocus(target, ai);
+                ServerChangeFocus(target, ai, playerId, ChangeMode.Add);
             else
                 ai.Session.SendFocusTargetUpdate(ai, target.EntityId);
         }
@@ -676,10 +712,10 @@ namespace CoreSystems.Support
             ai.Construct.UpdateConstruct(Ai.Constructs.UpdateType.Focus, ChangeDetected(ai));
         }
 
-        internal void RequestAddLock(Ai ai)
+        internal void RequestAddLock(Ai ai, long playerId)
         {
             if (ai.Session.IsServer)
-                ServerCycleLock(ai);
+                ServerChangeFocus(null, ai, playerId, ChangeMode.Lock);
             else
                 ai.Session.SendFocusLockUpdate(ai);
         }
@@ -696,7 +732,7 @@ namespace CoreSystems.Support
             ai.Construct.UpdateConstruct(Ai.Constructs.UpdateType.Focus, ChangeDetected(ai));
         }
 
-        internal void RequestReleaseActive(Ai ai)
+        internal void RequestReleaseActive(Ai ai, long sPlayerId)
         {
             if (ai.Session.IsServer)
                 ServerReleaseActive(ai);
@@ -846,6 +882,21 @@ namespace CoreSystems.Support
                     }
                 }
             }
+            return false;
+        }
+
+        private bool RestrictedTargetFocusHandlers(MyEntity target, Ai ai, long playerId, ChangeMode mode)
+        {
+            foreach (var handler in ai.Session.TargetFocusHandlers)
+            {
+                var handledTopEntityId = handler.Key;
+                MyEntity handledTopEntity;
+                MyEntity playerEnt;
+
+                if (MyEntities.TryGetEntityById(handledTopEntityId, out handledTopEntity) && MyEntities.TryGetEntityById(playerId, out playerEnt) && playerEnt is IMyCharacter && ai.TopEntityMap.GroupMap.Construct.ContainsKey(handledTopEntity))
+                    return handler.Value.Invoke(target, (IMyCharacter)playerEnt, handledTopEntityId, (int)mode);
+            }
+
             return false;
         }
     }

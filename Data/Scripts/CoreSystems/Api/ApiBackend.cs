@@ -50,7 +50,12 @@ namespace CoreSystems.Api
                 ["RemoveMonitorProjectile"] = new Action<MyEntity, int, Action<long, int, ulong, long, Vector3D, bool>>(UnMonitorProjectileCallback),
                 ["AddMonitorProjectile"] = new Action<MyEntity, int, Action<long, int, ulong, long, Vector3D, bool>>(MonitorProjectileCallback),
                 ["GetProjectileState"] = new Func<ulong, MyTuple<Vector3D, Vector3D, float, float, long, string>>(GetProjectileState),
+                ["ReleaseAiFocusBase"] = new Func<MyEntity, long, bool>(ReleaseAiFocus),
+                
+                ["TargetFocusHandler"] = new Func<long, bool, Func<MyEntity, IMyCharacter, long, int, bool>, bool>(TargetFocusHandler),
+                ["HudHandler"] = new Func<long, bool, Func<IMyCharacter, long, int, bool>, bool>(HudHandler),
 
+                ["ReleaseAiFocusBase"] = new Func<MyEntity, long, bool>(ReleaseAiFocus),
 
                 // Entity converted
                 ["ToggleInfiniteAmmoBase"] = new Func<MyEntity, bool>(ToggleInfiniteResources),
@@ -143,7 +148,7 @@ namespace CoreSystems.Api
                 ["UnRegisterEventMonitor"] = new Action<MyEntity, int, Action<int, bool>>(UnRegisterEventMonitorCallback),
 
             };
-            PbApiMethods = new Dictionary<string, Delegate> // keen bad... ReadOnlyDictionary prohibited 
+            PbApiMethods = new Dictionary<string, Delegate> 
             {
                 ["GetCoreWeapons"] = new Action<ICollection<MyDefinitionId>>(GetCoreWeapons),
                 ["GetCoreStaticLaunchers"] = new Action<ICollection<MyDefinitionId>>(GetCoreStaticLaunchers),
@@ -154,6 +159,7 @@ namespace CoreSystems.Api
                 ["GetObstructions"] = new Action<Sandbox.ModAPI.Ingame.IMyTerminalBlock, ICollection<MyDetectedEntityInfo>>(PbGetObstructions),
                 ["GetAiFocus"] = new Func<long, int, MyDetectedEntityInfo>(PbGetAiFocus),
                 ["SetAiFocus"] = new Func<Sandbox.ModAPI.Ingame.IMyTerminalBlock, long, int, bool>(PbSetAiFocus),
+                ["ReleaseAiFocus"] = new Func<Sandbox.ModAPI.Ingame.IMyTerminalBlock, long, bool>(PbReleaseAiFocus),
                 ["GetWeaponTarget"] = new Func<Sandbox.ModAPI.Ingame.IMyTerminalBlock, int, MyDetectedEntityInfo>(PbGetWeaponTarget),
                 ["SetWeaponTarget"] = new Action<Sandbox.ModAPI.Ingame.IMyTerminalBlock, long, int>(PbSetWeaponTarget),
                 ["FireWeaponOnce"] = new Action<Sandbox.ModAPI.Ingame.IMyTerminalBlock, bool, int>(PbFireWeaponBurst),
@@ -655,6 +661,38 @@ namespace CoreSystems.Api
             return false;
         }
 
+        // handleEntityId is the EntityId of the grid you want to suppress target focus add/release/lock on.
+        // All grids in that grids subgrid network are affected
+        //
+        // return type controls if the request is allowed to proceed
+        private bool TargetFocusHandler(long handledEntityId, bool unRegister, Func<MyEntity, IMyCharacter, long, int, bool> callback)
+        {
+            if (unRegister)
+                return _session.TargetFocusHandlers.Remove(handledEntityId);
+
+            if (_session.TargetFocusHandlers.ContainsKey(handledEntityId))
+                return false;
+
+            _session.TargetFocusHandlers.Add(handledEntityId, callback);
+            return true;
+        }
+
+        // handleEntityId is the EntityId of the grid you want to suppress hud on.
+        // All grids in that grids subgrid network are affected
+        //
+        // return type determines if this hud element is restricted for player
+        private bool HudHandler(long handledEntityId, bool unRegister, Func<IMyCharacter, long, int, bool> callback)
+        {
+            if (unRegister)
+                return _session.HudHandlers.Remove(handledEntityId);
+
+            if (_session.HudHandlers.ContainsKey(handledEntityId))
+                return false;
+
+            _session.HudHandlers.Add(handledEntityId, callback);
+            return true;
+        }
+
         private void PbRegisterEventMonitorCallback(Sandbox.ModAPI.Ingame.IMyTerminalBlock weaponEntity, int weaponId, Action<int, bool> callBack) => RegisterEventMonitorCallback((MyEntity) weaponEntity, weaponId, callBack);
         private void RegisterEventMonitorCallback(MyEntity weaponEntity, int weaponId, Action<int, bool> callBack)
         {
@@ -728,7 +766,7 @@ namespace CoreSystems.Api
             if (shootingGrid != null)
             {
                 Ai ai;
-                if (_session.EntityToMasterAi.TryGetValue((MyEntity) shootingGrid, out ai))
+                if (_session.EntityToMasterAi.TryGetValue(shootingGrid, out ai))
                     return MyEntities.GetEntityById(ai.Construct.Data.Repo.FocusData.Target);
             }
             return null;
@@ -742,12 +780,32 @@ namespace CoreSystems.Api
             if (shootingGrid != null)
             {
                 Ai ai;
-                if (_session.EntityToMasterAi.TryGetValue((MyEntity) shootingGrid, out ai))
+                if (_session.EntityToMasterAi.TryGetValue(shootingGrid, out ai))
                 {
                     if (!ai.Session.IsServer)
                         return false;
 
-                    ai.Construct.Focus.ReassignTarget((MyEntity) target, ai);
+                    ai.Construct.Focus.ReassignTarget(target, ai);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private bool PbReleaseAiFocus(Sandbox.ModAPI.Ingame.IMyTerminalBlock shooter, long playerId) => ReleaseAiFocus((MyEntity) shooter, playerId);
+        private bool ReleaseAiFocus(MyEntity shooter, long playerId)
+        {
+            var shootingGrid = shooter.GetTopMostParent();
+
+            if (shootingGrid != null)
+            {
+                Ai ai;
+                if (_session.EntityToMasterAi.TryGetValue(shootingGrid, out ai))
+                {
+                    if (!ai.Session.IsServer)
+                        return false;
+
+                    ai.Construct.Focus.RequestReleaseActive(ai, playerId);
                     return true;
                 }
             }

@@ -1353,6 +1353,7 @@ namespace CoreSystems.Projectiles
                     var diff = AccelInMetersPerSec * AccelInMetersPerSec - lateralAcceleration.LengthSquared();
                     commandedAccel = diff < 0 ? Vector3D.Normalize(lateralAcceleration) * AccelInMetersPerSec : lateralAcceleration + Math.Sqrt(diff) * missileToTargetNorm;
                 }
+
                 if (Gravity.LengthSquared() > 1e-3)
                 {
 

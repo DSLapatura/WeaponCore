@@ -99,6 +99,16 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
         internal bool NeedsUpdate = true;
         internal bool AgingTextures;
 
+        internal enum HudMode
+        {
+            Selector,
+            Reload,
+            TargetInfo,
+            Lead,
+            Drone,
+            PainterMarks,
+        }
+
         internal enum FontType
         {
             Mono,

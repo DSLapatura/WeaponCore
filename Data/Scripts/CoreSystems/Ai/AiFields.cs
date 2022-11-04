@@ -33,13 +33,13 @@ namespace CoreSystems.Support
 
         internal readonly Dictionary<MyObjectBuilder_PhysicalGunObject, WeaponObStorage> WeaponAmmoCountStorage = new Dictionary<MyObjectBuilder_PhysicalGunObject, WeaponObStorage>();
         internal readonly Dictionary<MyEntity, CoreComponent> CompBase = new Dictionary<MyEntity, CoreComponent>();
-        internal readonly Dictionary<Weapon.WeaponComponent, int> WeaponIdx = new Dictionary<Weapon.WeaponComponent, int>(32);
-        internal readonly Dictionary<Weapon.WeaponComponent, int> WeaponTrackIdx = new Dictionary<Weapon.WeaponComponent, int>(32);
+        internal readonly Dictionary<WeaponComponent, int> WeaponIdx = new Dictionary<WeaponComponent, int>(32);
+        internal readonly Dictionary<WeaponComponent, int> WeaponTrackIdx = new Dictionary<WeaponComponent, int>(32);
 
         internal readonly Dictionary<Upgrade.UpgradeComponent, int> UpgradeIdx = new Dictionary<Upgrade.UpgradeComponent, int>(32);
         internal readonly Dictionary<SupportSys.SupportComponent, int> SupportIdx = new Dictionary<SupportSys.SupportComponent, int>(32);
         internal readonly Dictionary<ControlSys.ControlComponent, int> ControlIdx = new Dictionary<ControlSys.ControlComponent, int>(32);
-        internal readonly Dictionary<Weapon.WeaponComponent, int> PhantomIdx = new Dictionary<Weapon.WeaponComponent, int>(32);
+        internal readonly Dictionary<WeaponComponent, int> PhantomIdx = new Dictionary<WeaponComponent, int>(32);
 
         internal readonly Dictionary<Vector3I, IMySlimBlock> AddedBlockPositions = new Dictionary<Vector3I, IMySlimBlock>(Vector3I.Comparer);
         internal readonly Dictionary<Vector3I, IMySlimBlock> RemovedBlockPositions = new Dictionary<Vector3I, IMySlimBlock>(Vector3I.Comparer);
@@ -47,7 +47,7 @@ namespace CoreSystems.Support
         internal readonly Dictionary<MyStringHash, PartCounter> PartCounting = new Dictionary<MyStringHash, PartCounter>(MyStringHash.Comparer);
         internal readonly Dictionary<MyEntity, TargetInfo> Targets = new Dictionary<MyEntity, TargetInfo>(32);
         internal readonly Dictionary<long, PlayerControllerEntity> PlayerControl = new Dictionary<long, PlayerControllerEntity>();
-        internal readonly Dictionary<Weapon.WeaponComponent, int> CompWeaponGroups = new Dictionary<Weapon.WeaponComponent, int>();
+        internal readonly Dictionary<WeaponComponent, int> CompWeaponGroups = new Dictionary<WeaponComponent, int>();
         internal readonly ConcurrentDictionary<MyEntity, MyInventory> InventoryMonitor = new ConcurrentDictionary<MyEntity, MyInventory>();
         internal readonly ConcurrentDictionary<MyEntity, uint> NoTargetLos = new ConcurrentDictionary<MyEntity, uint>();
         internal readonly HashSet<MyEntity> ValidGrids = new HashSet<MyEntity>();
@@ -59,12 +59,12 @@ namespace CoreSystems.Support
 
         internal readonly ConcurrentDictionary<MyCubeGrid, byte> SubGridsRegistered = new ConcurrentDictionary<MyCubeGrid, byte>();
 
-        internal readonly List<Weapon.WeaponComponent> TrackingComps = new List<Weapon.WeaponComponent>();
-        internal readonly List<Weapon.WeaponComponent> WeaponComps = new List<Weapon.WeaponComponent>(32);
+        internal readonly List<WeaponComponent> TrackingComps = new List<WeaponComponent>();
+        internal readonly List<WeaponComponent> WeaponComps = new List<WeaponComponent>(32);
         internal readonly List<Upgrade.UpgradeComponent> UpgradeComps = new List<Upgrade.UpgradeComponent>(32);
         internal readonly List<SupportSys.SupportComponent> SupportComps = new List<SupportSys.SupportComponent>(32);
         internal readonly List<ControlSys.ControlComponent> ControlComps = new List<ControlSys.ControlComponent>(32);
-        internal readonly List<Weapon.WeaponComponent> PhantomComps = new List<Weapon.WeaponComponent>(32);
+        internal readonly List<WeaponComponent> PhantomComps = new List<WeaponComponent>(32);
         internal readonly List<Projectile> DeadProjectiles = new List<Projectile>();
         internal readonly List<Ai> TargetAisTmp = new List<Ai>();
         internal readonly List<Shields> NearByShieldsTmp = new List<Shields>();
@@ -91,8 +91,8 @@ namespace CoreSystems.Support
         internal TopMap TopEntityMap;
         internal IMyCubeGrid ImyGridEntity;
         internal MyCubeBlock PowerBlock;
-        internal Weapon.WeaponComponent RootFixedWeaponComp;
-        internal Weapon.WeaponComponent OnlyWeaponComp;
+        internal WeaponComponent RootFixedWeaponComp;
+        internal WeaponComponent OnlyWeaponComp;
         internal MyCubeGrid.MyCubeGridHitInfo GridHitInfo = new MyCubeGrid.MyCubeGridHitInfo();
         internal uint CreatedTick;
         internal Vector3 TopEntityVel;

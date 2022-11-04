@@ -38,6 +38,8 @@ namespace CoreSystems.Api
         private Func<MyEntity, MyTuple<bool, int, int>> _getProjectilesLockedOn;
         private Func<MyEntity, int, MyEntity> _getAiFocus;
         private Func<MyEntity, MyEntity, int, bool> _setAiFocus;
+        private Func<MyEntity, long, bool> _releaseAiFocus;
+
         private Func<MyEntity, bool> _hasGridAi;
         private Func<MyEntity, float> _getOptimalDps;
         private Func<MyEntity, float> _getConstructEffectiveDps;
@@ -158,6 +160,8 @@ namespace CoreSystems.Api
         public MyEntity GetAiFocus(MyEntity shooter, int priority = 0) => _getAiFocus?.Invoke(shooter, priority);
         public bool SetAiFocus(MyEntity shooter, MyEntity target, int priority = 0) =>
             _setAiFocus?.Invoke(shooter, target, priority) ?? false;
+        public bool ReleaseAiFocus(MyEntity shooter, long playerId) =>
+            _releaseAiFocus?.Invoke(shooter, playerId) ?? false;
         public MyTuple<bool, bool, bool, MyEntity> GetWeaponTarget(MyEntity weapon, int weaponId = 0) =>
             _getWeaponTarget?.Invoke(weapon, weaponId) ?? new MyTuple<bool, bool, bool, MyEntity>();
         public float GetMaxPower(MyDefinitionId weaponDef) => _getMaxPower?.Invoke(weaponDef) ?? 0f;
@@ -343,6 +347,7 @@ namespace CoreSystems.Api
             AssignMethod(delegates, "GetProjectilesLockedOnBase", ref _getProjectilesLockedOn);
             AssignMethod(delegates, "GetAiFocusBase", ref _getAiFocus);
             AssignMethod(delegates, "SetAiFocusBase", ref _setAiFocus);
+            AssignMethod(delegates, "ReleaseAiFocusBase", ref _releaseAiFocus);
             AssignMethod(delegates, "HasGridAiBase", ref _hasGridAi);
             AssignMethod(delegates, "GetOptimalDpsBase", ref _getOptimalDps);
             AssignMethod(delegates, "GetConstructEffectiveDpsBase", ref _getConstructEffectiveDps);

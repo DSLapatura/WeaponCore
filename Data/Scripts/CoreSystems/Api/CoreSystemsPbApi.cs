@@ -22,6 +22,7 @@ namespace CoreSystems.Api
         private Action<Sandbox.ModAPI.Ingame.IMyTerminalBlock, ICollection<Sandbox.ModAPI.Ingame.MyDetectedEntityInfo>> _getObstructions;
         private Func<long, int, MyDetectedEntityInfo> _getAiFocus;
         private Func<Sandbox.ModAPI.Ingame.IMyTerminalBlock, long, int, bool> _setAiFocus;
+        private Func<Sandbox.ModAPI.Ingame.IMyTerminalBlock, long, bool> _releaseAiFocus;
         private Func<Sandbox.ModAPI.Ingame.IMyTerminalBlock, int, MyDetectedEntityInfo> _getWeaponTarget;
         private Action<Sandbox.ModAPI.Ingame.IMyTerminalBlock, long, int> _setWeaponTarget;
         private Action<Sandbox.ModAPI.Ingame.IMyTerminalBlock, bool, int> _fireWeaponOnce;
@@ -76,6 +77,7 @@ namespace CoreSystems.Api
             AssignMethod(delegates, "GetObstructions", ref _getObstructions);
             AssignMethod(delegates, "GetAiFocus", ref _getAiFocus);
             AssignMethod(delegates, "SetAiFocus", ref _setAiFocus);
+            AssignMethod(delegates, "ReleaseAiFocus", ref _releaseAiFocus);
             AssignMethod(delegates, "GetWeaponTarget", ref _getWeaponTarget);
             AssignMethod(delegates, "SetWeaponTarget", ref _setWeaponTarget);
             AssignMethod(delegates, "FireWeaponOnce", ref _fireWeaponOnce);
@@ -150,7 +152,8 @@ namespace CoreSystems.Api
 
         public bool SetAiFocus(Sandbox.ModAPI.Ingame.IMyTerminalBlock pBlock, long target, int priority = 0) =>
             _setAiFocus?.Invoke(pBlock, target, priority) ?? false;
-
+        public bool ReleaseAiFocus(Sandbox.ModAPI.Ingame.IMyTerminalBlock pBlock, long playerId) =>
+            _releaseAiFocus?.Invoke(pBlock, playerId) ?? false;
         public MyDetectedEntityInfo? GetWeaponTarget(Sandbox.ModAPI.Ingame.IMyTerminalBlock weapon, int weaponId = 0) =>
             _getWeaponTarget?.Invoke(weapon, weaponId);
 

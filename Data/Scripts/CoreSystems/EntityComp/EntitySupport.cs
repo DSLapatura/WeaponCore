@@ -156,5 +156,23 @@ namespace CoreSystems.Support
             }
         }
 
+
+        internal MatrixD GetWhyKeenTransformedWorldMatrix(MyEntity childEntity, MyEntity topEntity)
+        {
+            var childOffsetWorldMatrix = childEntity.PositionComp.WorldMatrixRef;
+            var parentWorldMatrix = topEntity.PositionComp.WorldMatrixRef;
+
+            return parentWorldMatrix + childOffsetWorldMatrix;
+        }
+
+        internal Vector3D GetWhyKeenTransformedCenter(MyEntity childEntity, MyEntity topEntity)
+        {
+
+            var childOffsetWorldCenter = childEntity.PositionComp.WorldAABB.Center;
+            var parentWorldCenter = topEntity.PositionComp.WorldAABB.Center;
+
+            return parentWorldCenter + childOffsetWorldCenter;
+        }
+
     }
 }

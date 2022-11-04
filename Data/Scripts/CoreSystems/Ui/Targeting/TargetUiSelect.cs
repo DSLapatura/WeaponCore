@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using CoreSystems;
+﻿using CoreSystems;
 using CoreSystems.Support;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
@@ -8,7 +7,6 @@ using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRage.Input;
 using VRageMath;
-using static CoreSystems.Support.Ai;
 
 namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
 {
@@ -50,9 +48,9 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             if (!s.InGridAiBlock) return;
             var ai = s.TrackingAi;
 
-            if (ai.AiType == AiTypes.Player)
+            if (ai.AiType == Ai.AiTypes.Player)
             {
-                FakeTargets fakeTargets;
+                Ai.FakeTargets fakeTargets;
                 if ((s.UiInput.MouseButtonMenuNewPressed || s.UiInput.MouseButtonMenuReleased) && s.PlayerDummyTargets.TryGetValue(s.PlayerId, out fakeTargets))
                 {
                     var painter = fakeTargets.PaintedTarget;
@@ -61,12 +59,12 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                         var newTarget = SelectTarget(true, s.UiInput.MouseButtonMenuNewPressed);
 
                         if (s.UiInput.MouseButtonMenuReleased && painter.EntityId == 0 && !newTarget)
-                            ai.Construct.Focus.RequestReleaseActive(ai);
+                            ai.Construct.Focus.RequestReleaseActive(ai, s.PlayerId);
                     }
                     else if (s.UiInput.MouseButtonMenuReleased && !DrawReticle && !s.UiInput.IronSights && !SelectTarget(true, true, true))
                     {
                         if (painter.EntityId == 0)
-                            ai.Construct.Focus.RequestReleaseActive(ai);
+                            ai.Construct.Focus.RequestReleaseActive(ai, s.PlayerId);
                         else
                             painter.Update(Vector3D.Zero, s.Tick);
                     }
@@ -76,7 +74,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             }
 
             if (s.UiInput.AltPressed && s.UiInput.ShiftReleased || DrawReticle && s.UiInput.ClientInputState.MouseButtonRight && s.PlayerDummyTargets[s.PlayerId].PaintedTarget.EntityId == 0 && !SelectTarget(true, true, true))
-                ai.Construct.Focus.RequestReleaseActive(ai);
+                ai.Construct.Focus.RequestReleaseActive(ai, s.PlayerId);
 
             if (s.UiInput.MouseButtonRightNewPressed || s.UiInput.MouseButtonRightReleased && (DrawReticle || s.UiInput.FirstPersonView))
                 SelectTarget(true, s.UiInput.MouseButtonRightNewPressed);
@@ -184,7 +182,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
 
                             if (!checkOnly)
                             {
-                                s.SetTarget(hitGrid, ai, _masterTargets);
+                                s.SetTarget(hitGrid, ai);
                             }
                             possibleTarget = true;
                         }
@@ -222,7 +220,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                     else
                     {
                         if (!checkOnly && closestEnt == _firstStageEnt)
-                            s.SetTarget(closestEnt, ai, _masterTargets);
+                            s.SetTarget(closestEnt, ai);
 
                         _firstStageEnt = null;
                     }
@@ -294,17 +292,26 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
 
         internal bool ActivateDroneNotice()
         {
-            return _session.TrackingAi.IsGrid && _session.TrackingAi.Construct.DroneAlert;
+            var s = _session;
+            var alert = s.TrackingAi.IsGrid && s.TrackingAi.Construct.DroneAlert;
+            var showAlert = alert && !(s.HudHandlers.Count > 0 && s.HudUi.RestrictHudHandlers(s.TrackingAi, s.PlayerId, Hud.Hud.HudMode.Drone));
+            return showAlert;
         }
 
         internal bool ActivateMarks()
         {
-            return _session.TrackingAi.AiType != Ai.AiTypes.Phantom && _session.ActiveMarks.Count > 0;
+            var s = _session;
+            var mark = s.TrackingAi.AiType != Ai.AiTypes.Phantom && s.ActiveMarks.Count > 0;
+            var showAlert = mark && !(s.HudHandlers.Count > 0 && s.HudUi.RestrictHudHandlers(s.TrackingAi, s.PlayerId, Hud.Hud.HudMode.PainterMarks));
+            return showAlert;
         }
 
         internal bool ActivateLeads()
         {
-            return _session.LeadGroupActive;
+            var s = _session;
+            var leads = s.LeadGroupActive;
+            var showAlert = leads && !(s.HudHandlers.Count > 0 && s.HudUi.RestrictHudHandlers(s.TrackingAi, s.PlayerId, Hud.Hud.HudMode.Lead));
+            return showAlert;
         }
 
         internal void ResetCache()
@@ -356,7 +363,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                 return;
             }
 
-            s.SetTarget(ent, ai, _masterTargets);
+            s.SetTarget(ent, ai);
         }
 
         private bool UpdateCache(uint tick)

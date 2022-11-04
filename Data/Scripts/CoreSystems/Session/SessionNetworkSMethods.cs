@@ -5,6 +5,7 @@ using Sandbox.ModAPI;
 using VRage.Game.Entity;
 using VRageMath;
 using static CoreSystems.Platform.ControlSys;
+using static CoreSystems.Support.Focus;
 
 namespace CoreSystems
 {
@@ -311,18 +312,20 @@ namespace CoreSystems
             if (EntityToMasterAi.TryGetValue(entity, out ai))
             {
                 var target = MyEntities.GetEntityByIdOrDefault(focusPacket.TargetId);
-
+                long playerId;
+                if (!SteamToPlayer.TryGetValue(packet.SenderId, out playerId))
+                    Log.Line($"ServerFocusUpdate could not find playerId, but continuing anyway");
                 switch (packet.PType)
                 {
                     case PacketType.FocusUpdate:
                         if (target != null)
-                            ai.Construct.Focus.ServerAddFocus(target, ai);
+                            ai.Construct.Focus.ServerChangeFocus(target, ai, playerId, ChangeMode.Add); 
                         break;
                     case PacketType.ReleaseActiveUpdate:
-                        ai.Construct.Focus.RequestReleaseActive(ai);
+                        ai.Construct.Focus.ServerChangeFocus(target, ai, playerId, ChangeMode.Release);
                         break;
                     case PacketType.FocusLockUpdate:
-                        ai.Construct.Focus.ServerCycleLock(ai);
+                        ai.Construct.Focus.ServerChangeFocus(target, ai, playerId, ChangeMode.Lock);
                         break;
                 }
 

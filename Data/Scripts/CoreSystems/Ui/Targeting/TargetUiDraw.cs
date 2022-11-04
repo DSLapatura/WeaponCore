@@ -10,7 +10,6 @@ using VRage.Game.Entity;
 using VRage.Input;
 using VRage.Utils;
 using VRageMath;
-using static CoreSystems.Support.Ai;
 using BlendTypeEnum = VRageRender.MyBillboard.BlendTypeEnum;
 
 namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
@@ -83,9 +82,12 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
 
             SelectTarget(manualSelect: false);
 
-            if (s.Tick - _lastDrawTick > 1 && _delay++ < 10) return;
+
+            if (s.Tick - _lastDrawTick > 1 && _delay++ < 10 || s.HudHandlers.Count > 0 && s.HudUi.RestrictHudHandlers(s.TrackingAi, s.PlayerId, Hud.Hud.HudMode.Selector)) return;
+            
             _delay = 0;
             _lastDrawTick = s.Tick;
+            
             if (enableActivator)
                 MyTransparentGeometry.AddBillboardOriented(_reticle, _reticleColor, offetPosition, s.CameraMatrix.Left, s.CameraMatrix.Up, (float)PointerAdjScale, BlendTypeEnum.PostPP);
 
@@ -377,7 +379,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             var drawInfo = UpdateKeyInfo(detailedHud);
 
             var handheldHud = s.TrackingAi.SmartHandheld && (s.UiInput.IronSights || s.LeadGroupActive);
-            var showHud = !s.Settings.Enforcement.DisableHudTargetInfo && (!s.TrackingAi.SmartHandheld || handheldHud);
+            var showHud = !s.Settings.Enforcement.DisableHudTargetInfo && (!s.TrackingAi.SmartHandheld || handheldHud) && !(s.HudHandlers.Count > 0 && s.HudUi.RestrictHudHandlers(_session.TrackingAi, _session.PlayerId, Hud.Hud.HudMode.TargetInfo));
+            
 
             if (showHud)
             {

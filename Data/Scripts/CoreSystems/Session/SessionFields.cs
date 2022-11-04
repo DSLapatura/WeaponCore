@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Security.Policy;
 using CoreSystems.Api;
 using CoreSystems.Platform;
@@ -180,7 +181,8 @@ namespace CoreSystems
         internal readonly Dictionary<MyEntity, ProtoProStateSync> GlobalProStateSyncs = new Dictionary<MyEntity, ProtoProStateSync>();
         internal readonly Dictionary<ulong, TickLatency> PlayerTickLatency = new Dictionary<ulong, TickLatency>();
         internal readonly Dictionary<long, DamageHandlerRegistrant> DamageHandlerRegistrants = new Dictionary<long, DamageHandlerRegistrant>();
-
+        internal readonly Dictionary<long, Func<MyEntity, IMyCharacter, long, int, bool>> TargetFocusHandlers = new Dictionary<long, Func<MyEntity, IMyCharacter, long, int, bool>>();
+        internal readonly Dictionary<long, Func<IMyCharacter, long, int, bool>> HudHandlers = new Dictionary<long, Func<IMyCharacter, long, int, bool>>();
         internal readonly ConcurrentDictionary<long, int> DeferredPlayerLock = new ConcurrentDictionary<long, int>();
         internal readonly HashSet<MyDefinitionId> DefIdsComparer = new HashSet<MyDefinitionId>(MyDefinitionId.Comparer);
         internal readonly HashSet<string> VanillaSubpartNames = new HashSet<string>();
@@ -428,7 +430,6 @@ namespace CoreSystems
         internal bool ReplaceVanilla;
         internal bool ShieldApiLoaded;
         internal bool WaterApiLoaded;
-        internal bool TargetArmed;
         internal bool InGridAiBlock;
         internal bool IsCreative;
         internal bool IsClient;

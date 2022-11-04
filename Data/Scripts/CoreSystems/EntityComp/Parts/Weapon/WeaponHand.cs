@@ -56,13 +56,11 @@ namespace CoreSystems.Platform
 
                 Rifle.CurrentMagazineAmount = 0;
                 Rifle.CurrentAmmunition = 0;
-                if (Session.IsServer)
-                {
-                    PrimaryWeapon.ServerReload();
 
-                    if (Session.MpActive)
-                        Session.RequestToggle(this, PacketType.ForceReload);
-                }
+                if (!Session.IsClient)
+                    PrimaryWeapon.ServerReload();
+                else
+                    Session.RequestToggle(this, PacketType.ForceReload);
             }
 
             internal void HandheldReload(Weapon w, EventTriggers state, bool active)
@@ -156,6 +154,11 @@ namespace CoreSystems.Platform
                 }
             }
 
+            //For reference only (mod profiler overhead)
+            internal MatrixD GetHandTransformedWorldMatrix(MyEntity childEntity, MyEntity topEntity) => GetWhyKeenTransformedWorldMatrix(childEntity, topEntity);
+
+            //For reference only (mod profiler overhead)
+            internal Vector3D GetHandTransformedCenter(MyEntity childEntity, MyEntity topEntity) => GetWhyKeenTransformedCenter(childEntity, topEntity);
         }
     }
 }

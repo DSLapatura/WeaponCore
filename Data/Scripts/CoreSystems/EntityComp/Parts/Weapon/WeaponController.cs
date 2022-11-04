@@ -119,9 +119,10 @@ namespace CoreSystems.Platform
                 if (Comp.Session == null || PosChangedTick == Comp.Session.Tick || Comp.CoreEntity == null || Comp.IsBlock && (AzimuthPart?.Entity?.Parent == null || ElevationPart?.Entity?.Parent == null) || ElevationPart?.Entity == null || MuzzlePart?.Entity == null || Comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
                 PosChangedTick = Comp.Session.Tick;
+                
+                var justBlock = AzimuthPart.IsCoreEntity && ElevationPart.IsCoreEntity && MuzzlePart.IsCoreEntity;
+                var requiresRootWorldOffset = Comp.TypeSpecific == CompTypeSpecific.Rifle && Comp.Session.DedicatedServer;
 
-
-                var justBlock = AzimuthPart.IsBlock && ElevationPart.IsBlock && MuzzlePart.IsBlock;
                 MatrixD azimuthMatrix;
                 MatrixD elevationMatrix;
                 Vector3D weaponCenter;
@@ -129,28 +130,28 @@ namespace CoreSystems.Platform
 
                 if (!justBlock)
                 {
-                    if (!AzimuthPart.IsBlock)
+                    if (!AzimuthPart.IsCoreEntity)
                     {
                         var aLocalMatrix = AzimuthPart.Entity.PositionComp.LocalMatrixRef;
-                        azParentMatrix = AzimuthPart.Entity.Parent.PositionComp.WorldMatrixRef;
+                        azParentMatrix = !requiresRootWorldOffset ? AzimuthPart.Entity.Parent.PositionComp.WorldMatrixRef : Comp.GetWhyKeenTransformedWorldMatrix(AzimuthPart.Entity.Parent, Comp.TopEntity);
                         MatrixD.Multiply(ref aLocalMatrix, ref azParentMatrix, out azimuthMatrix);
                     }
                     else
                     {
-                        azimuthMatrix = Comp.CoreEntity.PositionComp.WorldMatrixRef;
+                        azimuthMatrix = !requiresRootWorldOffset ? Comp.CoreEntity.PositionComp.WorldMatrixRef : Comp.GetWhyKeenTransformedWorldMatrix(Comp.CoreEntity, Comp.TopEntity);
                         azParentMatrix = azimuthMatrix;
                     }
 
                     if (ElevationPart.Entity == AzimuthPart?.Entity)
                         elevationMatrix = azimuthMatrix;
-                    else if (!ElevationPart.IsBlock)
+                    else if (!ElevationPart.IsCoreEntity)
                     {
                         var eLocalMatrix = ElevationPart.Entity.PositionComp.LocalMatrixRef;
                         var eParent = ElevationPart.Entity.Parent.WorldMatrix;
                         MatrixD.Multiply(ref eLocalMatrix, ref eParent, out elevationMatrix);
                     }
                     else
-                        elevationMatrix = Comp.CoreEntity.PositionComp.WorldMatrixRef;
+                        elevationMatrix = !requiresRootWorldOffset ? Comp.CoreEntity.PositionComp.WorldMatrixRef : Comp.GetWhyKeenTransformedWorldMatrix(Comp.CoreEntity, Comp.TopEntity);
 
                     if (MuzzlePart.Entity == AzimuthPart?.Entity)
                     {
@@ -162,7 +163,7 @@ namespace CoreSystems.Platform
                         var localCenter = MuzzlePart.Entity.PositionComp.LocalAABB.Center;
                         Vector3D.Transform(ref localCenter, ref elevationMatrix, out weaponCenter);
                     }
-                    else if (!MuzzlePart.IsBlock && MuzzlePart.Entity?.Parent != null)
+                    else if (!MuzzlePart.IsCoreEntity && MuzzlePart.Entity?.Parent != null)
                     {
                         var mLocalMatrix = MuzzlePart.Entity.PositionComp.LocalMatrixRef;
                         var mParent = MuzzlePart.Entity.Parent.WorldMatrix;
@@ -173,14 +174,14 @@ namespace CoreSystems.Platform
                         Vector3D.Transform(ref localCenter, ref muzzleMatrix, out weaponCenter);
                     }
                     else
-                        weaponCenter = Comp.CoreEntity.PositionComp.WorldAABB.Center;
+                        weaponCenter = !requiresRootWorldOffset ? Comp.CoreEntity.PositionComp.WorldAABB.Center : Comp.GetWhyKeenTransformedCenter(Comp.CoreEntity, Comp.TopEntity);
                 }
                 else
                 {
-                    azimuthMatrix = Comp.CoreEntity.PositionComp.WorldMatrixRef;
+                    azimuthMatrix = !requiresRootWorldOffset ? Comp.CoreEntity.PositionComp.WorldMatrixRef : Comp.GetWhyKeenTransformedWorldMatrix(Comp.CoreEntity, Comp.TopEntity);
                     azParentMatrix = azimuthMatrix;
                     elevationMatrix = azimuthMatrix;
-                    weaponCenter = Comp.CoreEntity.PositionComp.WorldAABB.Center;
+                    weaponCenter = !requiresRootWorldOffset ? Comp.CoreEntity.PositionComp.WorldAABB.Center : Comp.GetWhyKeenTransformedCenter(Comp.CoreEntity, Comp.TopEntity);
                 }
 
                 BarrelOrigin = weaponCenter;

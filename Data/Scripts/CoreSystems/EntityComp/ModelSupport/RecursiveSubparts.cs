@@ -34,7 +34,6 @@ namespace CoreSystems.Support
 
         internal void Clean(MyEntity myEntity)
         {
-            //GetEnumerator().Dispose(); // Don't this this is needed?
             _subparts.Clear();
             _tmp1.Clear();
             NameToEntity.Clear();
@@ -67,7 +66,6 @@ namespace CoreSystems.Support
                         continue;
                     _tmp1.Clear();
                     ((IMyEntity)query).Model.GetDummies(_tmp1);
-                    //Log.Line($"next part: {((IMyEntity)query).Model.AssetName}");
                     foreach (var kv in _tmp1)
                     {
                         if (kv.Key.StartsWith("subpart_", StringComparison.Ordinal))

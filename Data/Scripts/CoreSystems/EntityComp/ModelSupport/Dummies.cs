@@ -3,6 +3,8 @@ using CoreSystems.Platform;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRageMath;
+using static CoreSystems.Support.CoreComponent;
+using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace CoreSystems.Support
 {
@@ -64,12 +66,12 @@ namespace CoreSystems.Support
             for (var i = 0; i < _path.Length - 1; i++)
             {
                 MyEntitySubpart part;
-                if (_cachedSubpart.TryGetSubpart(_path[i], out part))
+                if (_cachedSubpart != null && _cachedSubpart.TryGetSubpart(_path[i], out part))
                     _cachedSubpart = part;
                 else
                 {
                     _tmp2.Clear();
-                    ((IMyModel)_cachedSubpart.Model)?.GetDummies(_tmp2);
+                    ((IMyModel) _cachedSubpart?.Model)?.GetDummies(_tmp2);
                     _failed = true;
                     return;
                 }
@@ -124,7 +126,9 @@ namespace CoreSystems.Support
                 var localPos = dummyMatrix.Translation;
                 var localDir = dummyMatrix.Forward;
                 var localUpDir = dummyMatrix.Up;
-                var partWorldMatrix = _cachedSubpart.PositionComp.WorldMatrixRef;
+
+                var requiresRootWorldOffset = _part != null && _part.BaseComp.TypeSpecific == CompTypeSpecific.Rifle && _part.BaseComp.Session.DedicatedServer;
+                var partWorldMatrix = !requiresRootWorldOffset ? _cachedSubpart.PositionComp.WorldMatrixRef : _part.BaseComp.GetWhyKeenTransformedWorldMatrix(_cachedSubpart, _part.BaseComp.TopEntity);
 
                 Vector3D.Transform(ref localPos, ref partWorldMatrix, out CachedPos);
                 Vector3D.TransformNormal(ref localDir, ref partWorldMatrix, out CachedDir);

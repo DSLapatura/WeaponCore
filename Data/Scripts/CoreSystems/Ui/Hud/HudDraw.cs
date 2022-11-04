@@ -4,6 +4,7 @@ using CoreSystems.Support;
 using VRage.Game;
 using VRage.Utils;
 using VRageMath;
+using WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting;
 
 namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
 {
@@ -38,6 +39,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
             }
 
             AddTextAndTextures();
+
             DrawHudOnce();
 
 
@@ -80,10 +82,12 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
 
         private void DrawHudOnce()
         {
+            var restrict = _session.HudHandlers.Count > 0 &&  _session.HudUi.RestrictHudHandlers(_session.TrackingAi, _session.PlayerId, HudMode.Reload);
+
             foreach (var textureToDraw in _drawList)
             {
 
-                if (textureToDraw.UvDraw)
+                if (textureToDraw.UvDraw && !restrict)
                 {
 
                     MyQuadD quad;
@@ -99,7 +103,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
                         MyTransparentGeometry.AddTriangleBillboard(quad.Point0, quad.Point3, quad.Point2, Vector3.Zero, Vector3.Zero, Vector3.Zero, textureToDraw.P0, textureToDraw.P2, textureToDraw.P3, textureToDraw.Material, 0, textureToDraw.Position, textureToDraw.Blend);
                     }
                 }
-                else
+                else if (!restrict)
                 {
                     textureToDraw.Position = Vector3D.Transform(textureToDraw.Position, _cameraWorldMatrix);
                     MyTransparentGeometry.AddBillboardOriented(textureToDraw.Material, textureToDraw.Color, textureToDraw.Position, _cameraWorldMatrix.Left, _cameraWorldMatrix.Up, textureToDraw.Height, textureToDraw.Blend);

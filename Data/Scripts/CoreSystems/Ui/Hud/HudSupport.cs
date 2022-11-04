@@ -2,8 +2,12 @@
 using System.Collections.Generic;
 using CoreSystems.Platform;
 using CoreSystems.Support;
+using Sandbox.Game.Entities;
+using VRage.Game.Entity;
+using VRage.Game.ModAPI;
 using VRage.Utils;
 using VRageMath;
+using static WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting.TargetUi;
 
 namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
 {
@@ -52,6 +56,21 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
 
             _symbolWidth = ((_heatWidth + _padding) * aspectScale);
             _bgColor = new Vector4(1f, 1f, 1f, 0f);
+        }
+
+        internal bool RestrictHudHandlers(Ai ai, long playerId, HudMode mode)
+        {
+            foreach (var handler in ai.Session.HudHandlers)
+            {
+                var handledTopEntityId = handler.Key;
+                MyEntity handledTopEntity;
+                MyEntity playerEnt;
+
+                if (MyEntities.TryGetEntityById(handledTopEntityId, out handledTopEntity) && MyEntities.TryGetEntityById(playerId, out playerEnt) && playerEnt is IMyCharacter && ai.TopEntityMap.GroupMap.Construct.ContainsKey(handledTopEntity))
+                    return handler.Value.Invoke((IMyCharacter)playerEnt, handledTopEntityId, (int)mode);
+            }
+
+            return false;
         }
 
         internal void AddText(string text, float x, float y, long elementId, int ttl, Vector4 color, Justify justify = Justify.None, FontType fontType = FontType.Shadow, float fontSize = 10f, float heightScale = 0.65f)
