@@ -509,6 +509,9 @@ namespace CoreSystems
                             continue;
                         }
 
+                        if (ai.AiType == Ai.AiTypes.Player && DedicatedServer)
+                            SendHandDebugInfo(w);
+
                         if (w.AvCapable && Tick20) {
                             var avWasEnabled = w.PlayTurretAv;
                             double distSqr;

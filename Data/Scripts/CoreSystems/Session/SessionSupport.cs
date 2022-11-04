@@ -852,6 +852,22 @@ namespace CoreSystems
             }
         }
 
+        private void DrawHandDebug(HandWeaponDebug handWeaponDebug)
+        {
+            var playerObb = new MyOrientedBoundingBoxD(handWeaponDebug.PlayerBox, handWeaponDebug.PlayerWorldMatrix);
+            DsDebugDraw.DrawBox(playerObb, Color.Blue);
+
+            var rifleObb = new MyOrientedBoundingBoxD(handWeaponDebug.RifleBox, handWeaponDebug.RifleWorldMatrix);
+            DsDebugDraw.DrawBox(rifleObb, Color.Red);
+
+            var azObb = new MyOrientedBoundingBoxD(handWeaponDebug.AzBox, handWeaponDebug.AzWorldMatrix);
+            DsDebugDraw.DrawBox(azObb, Color.Yellow);
+
+            var muzzleLine =  new LineD(handWeaponDebug.MuzzlePos, handWeaponDebug.MuzzlePos + (handWeaponDebug.MuzzleDir * 1));
+
+            DsDebugDraw.DrawLine(muzzleLine.From, muzzleLine.To, Color.Green, 0.5);
+        }
+
         private static void CounterKeenLogMessage(bool console = true)
         {
             var message = "\n***\n    [CoreSystems] Ignore log messages from keen stating 'Mod CoreSystems is accessing physics from parallel threads'\n     CS is using a thread safe parallel.for, not a parallel task\n***";

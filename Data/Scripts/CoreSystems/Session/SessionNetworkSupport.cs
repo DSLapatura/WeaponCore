@@ -74,6 +74,7 @@ namespace CoreSystems
             internal Func<object, object, object> Function;
             internal bool SingleClient;
             internal long SpecialPlayerId;
+            internal bool Unreliable;
         }
 
         internal class ErrorPacket
@@ -102,6 +103,32 @@ namespace CoreSystems
         #endregion
 
         #region ServerOnly
+
+        private readonly HandWeaponDebug _handDebugPacket = new HandWeaponDebug { PType = PacketType.HandWeaponDebug, SenderId = 0};
+        private void SendHandDebugInfo(Weapon weapon)
+        {
+            PlayerMap player;
+            if (Players.TryGetValue(weapon.Comp.Data.Repo.Values.State.PlayerId, out player))
+            {
+                _handDebugPacket.AzWorldMatrix = weapon.AzimuthPart.Entity.Parent.PositionComp.WorldMatrixRef;
+                _handDebugPacket.AzBox = weapon.AzimuthPart.Entity.Parent.PositionComp.LocalAABB;
+                _handDebugPacket.RifleWorldMatrix = weapon.Comp.CoreEntity.PositionComp.WorldMatrixRef;
+                _handDebugPacket.RifleBox = weapon.Comp.CoreEntity.PositionComp.LocalAABB;
+                _handDebugPacket.PlayerWorldMatrix = weapon.Comp.TopEntity.PositionComp.WorldMatrixRef;
+                _handDebugPacket.PlayerBox = weapon.Comp.TopEntity.PositionComp.LocalAABB;
+                _handDebugPacket.MuzzlePos = weapon.Muzzles[0].Position;
+                _handDebugPacket.MuzzleDir = weapon.Muzzles[0].Direction;
+
+                _handDebugPacket.SenderId = player.Player.SteamUserId;
+
+                PacketsToClient.Add(new PacketInfo
+                {
+                    SingleClient = true,
+                    Unreliable = true,
+                    Packet = _handDebugPacket
+                });
+            }
+        }
 
         private void SendProjectilePosSyncs()
         {

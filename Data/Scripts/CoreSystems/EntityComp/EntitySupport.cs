@@ -162,7 +162,7 @@ namespace CoreSystems.Support
             var childOffsetWorldMatrix = childEntity.PositionComp.WorldMatrixRef;
             var parentWorldMatrix = topEntity.PositionComp.WorldMatrixRef;
 
-            return parentWorldMatrix + childOffsetWorldMatrix;
+            return parentWorldMatrix * childOffsetWorldMatrix;
         }
 
         internal Vector3D GetWhyKeenTransformedCenter(MyEntity childEntity, MyEntity topEntity)

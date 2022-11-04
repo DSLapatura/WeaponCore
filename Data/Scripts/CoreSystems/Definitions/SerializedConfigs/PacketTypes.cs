@@ -62,6 +62,7 @@ namespace CoreSystems
         BlackListRequest,
         RequestDroneSet,
         PingPong,
+        HandWeaponDebug,
     }
 
     #region packets
@@ -104,6 +105,7 @@ namespace CoreSystems
     [ProtoInclude(40, typeof(ControlStatePacket))]
     [ProtoInclude(41, typeof(BlackListPacket))]
     [ProtoInclude(42, typeof(DronePacket))]
+    [ProtoInclude(43, typeof(HandWeaponDebug))]
 
 
     public class Packet
@@ -136,6 +138,25 @@ namespace CoreSystems
         public override int GetHashCode()
         {
             return (EntityId.GetHashCode() + PType.GetHashCode() + SenderId.GetHashCode());
+        }
+    }
+
+    [ProtoContract]
+    public class HandWeaponDebug : Packet
+    {
+        [ProtoMember(1)] internal MatrixD PlayerWorldMatrix;
+        [ProtoMember(2)] internal MatrixD RifleWorldMatrix;
+        [ProtoMember(3)] internal MatrixD AzWorldMatrix;
+        [ProtoMember(4)] internal BoundingBox PlayerBox;
+        [ProtoMember(5)] internal BoundingBox RifleBox;
+        [ProtoMember(6)] internal BoundingBox AzBox;
+        [ProtoMember(7)] internal Vector3D MuzzlePos;
+        [ProtoMember(8)] internal Vector3D MuzzleDir;
+
+
+        public override void CleanUp()
+        {
+            base.CleanUp();
         }
     }
 

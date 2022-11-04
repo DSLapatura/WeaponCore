@@ -96,6 +96,11 @@ namespace CoreSystems
                         ClientProjectilePosSyncs(packetObj);
                         break;
                     }
+                    case PacketType.HandWeaponDebug:
+                    {
+                        ClientHandDebug(packetObj);
+                        break;
+                    }
                     case PacketType.ProjectileStateSyncs:
                     {
                         ClientProjectileStateSyncs(packetObj);
@@ -423,9 +428,10 @@ namespace CoreSystems
                 var addOwl = sPlayerId == long.MinValue && packetInfo.Function != null;
                 var hasSkipPlayer = !hasRewritePlayer && sPlayerId > 0;
                 var packet = packetInfo.Packet;
+                var unreliable = packetInfo.Unreliable;
                 var bytes = MyAPIGateway.Utilities.SerializeToBinary(packet);
                 if (packetInfo.SingleClient)
-                    MyModAPIHelper.MyMultiplayer.Static.SendMessageTo(ClientPacketId, bytes, packet.SenderId, true);
+                    MyModAPIHelper.MyMultiplayer.Static.SendMessageTo(ClientPacketId, bytes, packet.SenderId, !unreliable);
                 else
                 {
                     long entityId = packetInfo.Entity?.GetTopMostParent().EntityId ?? -1;
@@ -464,7 +470,7 @@ namespace CoreSystems
                         }
 
                         if (sendPacket)
-                            MyModAPIHelper.MyMultiplayer.Static.SendMessageTo(ClientPacketId, !rewrite ? bytes : bytesRewrite, p.Player.SteamUserId, true);
+                            MyModAPIHelper.MyMultiplayer.Static.SendMessageTo(ClientPacketId, !rewrite ? bytes : bytesRewrite, p.Player.SteamUserId, unreliable);
                     }
                 }
             }

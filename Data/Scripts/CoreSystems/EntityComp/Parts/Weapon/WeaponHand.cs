@@ -92,13 +92,11 @@ namespace CoreSystems.Platform
 
             internal void AmmoStorage(bool load = false)
             {
-
                 foreach (var item in CoreInventory.GetItems())
                 {
-
                     var physGunOb = item.Content as MyObjectBuilder_PhysicalGunObject;
 
-                    if (physGunOb?.GunEntity != null)
+                    if (physGunOb?.GunEntity != null && physGunOb.GunEntity.EntityId == GunBase.PhysicalObject.GunEntity.EntityId)
                     {
                         WeaponObStorage storage;
                         var newStorage = false;
@@ -120,25 +118,22 @@ namespace CoreSystems.Platform
                         else
                             Log.Line($"retrived storage for: loading:{load} - {physGunOb.GunEntity.EntityId}[{GunBase.PhysicalObject.GunEntity.EntityId}] - {physGunOb.SubtypeName}");
 
-                        if (physGunOb.GunEntity.EntityId == GunBase.PhysicalObject.GunEntity.EntityId)
+                        if (!load)
                         {
-                            if (!load)
-                            {
-                                storage.CurrentAmmunition = Rifle.CurrentAmmunition;
-                                storage.CurrentMagazineAmmunition = Rifle.CurrentMagazineAmmunition;
-                                storage.CurrentMagazineAmount = Rifle.CurrentMagazineAmount;
-                            }
-                            else if (!newStorage)
-                            {
-                                Rifle.CurrentAmmunition = storage.CurrentAmmunition;
-                                Rifle.CurrentMagazineAmmunition = storage.CurrentMagazineAmmunition;
-                                PrimaryWeapon.ProtoWeaponAmmo.CurrentAmmo = storage.CurrentMagazineAmmunition;
-                                Rifle.CurrentMagazineAmount = storage.CurrentMagazineAmount;
-                            }
-
-                            Log.Line($"ammo[s:{storage.CurrentAmmunition} r:{Rifle.CurrentAmmunition} w:{PrimaryWeapon.ProtoWeaponAmmo.CurrentAmmo}] - mAmmo[s:{storage.CurrentMagazineAmmunition} r:{Rifle.CurrentMagazineAmmunition}] - mags[s:{storage.CurrentMagazineAmount} r:{Rifle.CurrentMagazineAmount} w:{PrimaryWeapon.Reload.CurrentMags}]");
-
+                            storage.CurrentAmmunition = Rifle.CurrentAmmunition;
+                            storage.CurrentMagazineAmmunition = Rifle.CurrentMagazineAmmunition;
+                            storage.CurrentMagazineAmount = Rifle.CurrentMagazineAmount;
                         }
+                        else if (!newStorage)
+                        {
+                            Rifle.CurrentAmmunition = storage.CurrentAmmunition;
+                            Rifle.CurrentMagazineAmmunition = storage.CurrentMagazineAmmunition;
+                            PrimaryWeapon.ProtoWeaponAmmo.CurrentAmmo = storage.CurrentMagazineAmmunition;
+                            Rifle.CurrentMagazineAmount = storage.CurrentMagazineAmount;
+                        }
+
+                        Log.Line($"ammo[s:{storage.CurrentAmmunition} r:{Rifle.CurrentAmmunition} w:{PrimaryWeapon.ProtoWeaponAmmo.CurrentAmmo}] - mAmmo[s:{storage.CurrentMagazineAmmunition} r:{Rifle.CurrentMagazineAmmunition}] - mags[s:{storage.CurrentMagazineAmount} r:{Rifle.CurrentMagazineAmount} w:{PrimaryWeapon.Reload.CurrentMags}]");
+
 
 
                         /*

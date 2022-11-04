@@ -443,7 +443,6 @@ namespace CoreSystems
         }
 
         // Unmanaged state changes below this point
-
         private bool ClientSentReport(PacketObj data)
         {
             var packet = data.Packet;
@@ -455,6 +454,17 @@ namespace CoreSystems
 
             return true;
 
+        }
+
+        private bool ClientHandDebug(PacketObj data)
+        {
+            var packet = data.Packet;
+            var debugPacket = (HandWeaponDebug)packet;
+            if (debugPacket == null) return Error(data, Msg("HandDebug"));
+            {
+                DrawHandDebug(debugPacket);
+            }
+            return true;
         }
 
         private bool ClientProjectilePosSyncs(PacketObj data)
