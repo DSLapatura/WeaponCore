@@ -122,7 +122,6 @@ namespace CoreSystems
         [ProtoMember(5)] public Vector3 Velocity;
     }
 
-
     [ProtoContract]
     public class ProtoProStateSync
     {

@@ -104,28 +104,27 @@ namespace CoreSystems
 
         #region ServerOnly
 
-        private readonly HandWeaponDebug _handDebugPacket = new HandWeaponDebug { PType = PacketType.HandWeaponDebug, SenderId = 0};
+        internal readonly HandWeaponDebugPacket HandDebugPacketPacket = new HandWeaponDebugPacket {PType = PacketType.HandWeaponDebug};
         private void SendHandDebugInfo(Weapon weapon)
         {
+            HandDebugPacketPacket.PlayerWorldMatrix = weapon.Comp.TopEntity.PositionComp.WorldMatrixRef;
+            HandDebugPacketPacket.PlayerBox = weapon.Comp.TopEntity.PositionComp.LocalAABB;
+            HandDebugPacketPacket.RifleBox = weapon.Comp.Rifle.PositionComp.LocalAABB;
+            HandDebugPacketPacket.RifleWorldMatrix = weapon.Comp.Rifle.PositionComp.WorldMatrixRef * weapon.Comp.TopEntity.PositionComp.WorldMatrixRef;
+            HandDebugPacketPacket.MuzzlePos = weapon.Dummies[0].Info.Position;
+            HandDebugPacketPacket.MuzzleDir = weapon.Dummies[0].Info.Direction;
+            HandDebugPacketPacket.OffsetWorldPosition = weapon.Comp.Rifle.GunBase.GetMuzzleLocalPosition() + weapon.Comp.TopEntity.PositionComp.WorldAABB.Center;
+
             PlayerMap player;
             if (Players.TryGetValue(weapon.Comp.Data.Repo.Values.State.PlayerId, out player))
             {
-                _handDebugPacket.AzWorldMatrix = weapon.AzimuthPart.Entity.Parent.PositionComp.WorldMatrixRef;
-                _handDebugPacket.AzBox = weapon.AzimuthPart.Entity.Parent.PositionComp.LocalAABB;
-                _handDebugPacket.RifleWorldMatrix = weapon.Comp.CoreEntity.PositionComp.WorldMatrixRef;
-                _handDebugPacket.RifleBox = weapon.Comp.CoreEntity.PositionComp.LocalAABB;
-                _handDebugPacket.PlayerWorldMatrix = weapon.Comp.TopEntity.PositionComp.WorldMatrixRef;
-                _handDebugPacket.PlayerBox = weapon.Comp.TopEntity.PositionComp.LocalAABB;
-                _handDebugPacket.MuzzlePos = weapon.Muzzles[0].Position;
-                _handDebugPacket.MuzzleDir = weapon.Muzzles[0].Direction;
-
-                _handDebugPacket.SenderId = player.Player.SteamUserId;
+                HandDebugPacketPacket.SenderId = player.Player.SteamUserId;
 
                 PacketsToClient.Add(new PacketInfo
                 {
                     SingleClient = true,
                     Unreliable = true,
-                    Packet = _handDebugPacket
+                    Packet = HandDebugPacketPacket
                 });
             }
         }

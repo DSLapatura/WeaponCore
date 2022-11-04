@@ -3,6 +3,7 @@ using CoreSystems.Platform;
 using CoreSystems.Support;
 using Sandbox.Game.Entities;
 using VRage.Game.Entity;
+using static CoreSystems.Session;
 using static CoreSystems.Support.Ai;
 namespace CoreSystems
 {
@@ -459,11 +460,12 @@ namespace CoreSystems
         private bool ClientHandDebug(PacketObj data)
         {
             var packet = data.Packet;
-            var debugPacket = (HandWeaponDebug)packet;
+            var debugPacket = (HandWeaponDebugPacket)packet;
             if (debugPacket == null) return Error(data, Msg("HandDebug"));
             {
                 DrawHandDebug(debugPacket);
             }
+            data.Report.PacketValid = true;
             return true;
         }
 

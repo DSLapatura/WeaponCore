@@ -150,10 +150,10 @@ namespace CoreSystems.Platform
             }
 
             //For reference only (mod profiler overhead)
-            internal MatrixD GetHandTransformedWorldMatrix(MyEntity childEntity, MyEntity topEntity) => GetWhyKeenTransformedWorldMatrix(childEntity, topEntity);
+            internal MatrixD GetHandTransformedWorldMatrix(MyEntity childEntity, MyEntity topEntity) => GetWhyKeenTransformedWorldMatrix((IMyAutomaticRifleGun)childEntity, topEntity);
 
             //For reference only (mod profiler overhead)
-            internal Vector3D GetHandTransformedCenter(MyEntity childEntity, MyEntity topEntity) => GetWhyKeenTransformedCenter(childEntity, topEntity);
+            internal Vector3D GetHandTransformedCenter(MyEntity childEntity, MyEntity topEntity) => GetWhyKeenTransformedCenter((IMyAutomaticRifleGun) childEntity, topEntity);
         }
     }
 }

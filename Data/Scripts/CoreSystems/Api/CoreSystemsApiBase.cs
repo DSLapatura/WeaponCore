@@ -15,13 +15,6 @@ namespace CoreSystems.Api
     /// </summary>
     public partial class WcApi
     {
-        private readonly DamageHandlerHelper _damageHelper;
-
-        public WcApi()
-        {
-            _damageHelper = new DamageHandlerHelper(this);
-        }
-
         private bool _apiInit;
 
         private Action<IList<byte[]>> _getAllWeaponDefinitions;

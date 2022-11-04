@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using CoreSystems.Platform;
+using Sandbox.ModAPI.Weapons;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRageMath;
@@ -128,7 +129,7 @@ namespace CoreSystems.Support
                 var localUpDir = dummyMatrix.Up;
 
                 var requiresRootWorldOffset = _part != null && _part.BaseComp.TypeSpecific == CompTypeSpecific.Rifle && _part.BaseComp.Session.DedicatedServer;
-                var partWorldMatrix = !requiresRootWorldOffset ? _cachedSubpart.PositionComp.WorldMatrixRef : _part.BaseComp.GetWhyKeenTransformedWorldMatrix(_cachedSubpart, _part.BaseComp.TopEntity);
+                var partWorldMatrix = !requiresRootWorldOffset ? _cachedSubpart.PositionComp.WorldMatrixRef : _part.BaseComp.GetWhyKeenTransformedWorldMatrixDummy((IMyAutomaticRifleGun)_cachedSubpart, _part.BaseComp.TopEntity);
 
                 Vector3D.Transform(ref localPos, ref partWorldMatrix, out CachedPos);
                 Vector3D.TransformNormal(ref localDir, ref partWorldMatrix, out CachedDir);

@@ -133,12 +133,13 @@ namespace CoreSystems.Platform
                     if (!AzimuthPart.IsCoreEntity)
                     {
                         var aLocalMatrix = AzimuthPart.Entity.PositionComp.LocalMatrixRef;
-                        azParentMatrix = !requiresRootWorldOffset ? AzimuthPart.Entity.Parent.PositionComp.WorldMatrixRef : Comp.GetWhyKeenTransformedWorldMatrix(AzimuthPart.Entity.Parent, Comp.TopEntity);
+                        azParentMatrix = AzimuthPart.Entity.Parent.PositionComp.WorldMatrixRef;
+
                         MatrixD.Multiply(ref aLocalMatrix, ref azParentMatrix, out azimuthMatrix);
                     }
                     else
                     {
-                        azimuthMatrix = !requiresRootWorldOffset ? Comp.CoreEntity.PositionComp.WorldMatrixRef : Comp.GetWhyKeenTransformedWorldMatrix(Comp.CoreEntity, Comp.TopEntity);
+                        azimuthMatrix = !requiresRootWorldOffset ? Comp.CoreEntity.PositionComp.WorldMatrixRef : Comp.GetWhyKeenTransformedWorldMatrix(Comp.Rifle, Comp.TopEntity);
                         azParentMatrix = azimuthMatrix;
                     }
 
@@ -151,7 +152,7 @@ namespace CoreSystems.Platform
                         MatrixD.Multiply(ref eLocalMatrix, ref eParent, out elevationMatrix);
                     }
                     else
-                        elevationMatrix = !requiresRootWorldOffset ? Comp.CoreEntity.PositionComp.WorldMatrixRef : Comp.GetWhyKeenTransformedWorldMatrix(Comp.CoreEntity, Comp.TopEntity);
+                        elevationMatrix = !requiresRootWorldOffset ? Comp.CoreEntity.PositionComp.WorldMatrixRef : Comp.GetWhyKeenTransformedWorldMatrix(Comp.Rifle, Comp.TopEntity);
 
                     if (MuzzlePart.Entity == AzimuthPart?.Entity)
                     {
@@ -174,14 +175,14 @@ namespace CoreSystems.Platform
                         Vector3D.Transform(ref localCenter, ref muzzleMatrix, out weaponCenter);
                     }
                     else
-                        weaponCenter = !requiresRootWorldOffset ? Comp.CoreEntity.PositionComp.WorldAABB.Center : Comp.GetWhyKeenTransformedCenter(Comp.CoreEntity, Comp.TopEntity);
+                        weaponCenter = !requiresRootWorldOffset ? Comp.CoreEntity.PositionComp.WorldAABB.Center : Comp.GetWhyKeenTransformedCenter(Comp.Rifle, Comp.TopEntity);
                 }
                 else
                 {
-                    azimuthMatrix = !requiresRootWorldOffset ? Comp.CoreEntity.PositionComp.WorldMatrixRef : Comp.GetWhyKeenTransformedWorldMatrix(Comp.CoreEntity, Comp.TopEntity);
+                    azimuthMatrix = !requiresRootWorldOffset ? Comp.CoreEntity.PositionComp.WorldMatrixRef : Comp.GetWhyKeenTransformedWorldMatrix(Comp.Rifle, Comp.TopEntity);
                     azParentMatrix = azimuthMatrix;
                     elevationMatrix = azimuthMatrix;
-                    weaponCenter = !requiresRootWorldOffset ? Comp.CoreEntity.PositionComp.WorldAABB.Center : Comp.GetWhyKeenTransformedCenter(Comp.CoreEntity, Comp.TopEntity);
+                    weaponCenter = !requiresRootWorldOffset ? Comp.CoreEntity.PositionComp.WorldAABB.Center : Comp.GetWhyKeenTransformedCenter(Comp.Rifle, Comp.TopEntity);
                 }
 
                 BarrelOrigin = weaponCenter;

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.Remoting.Metadata.W3cXsd2001;
 using CoreSystems.Platform;
 using Sandbox.Game.Entities;
 using Sandbox.Game.Weapons;
@@ -156,23 +157,36 @@ namespace CoreSystems.Support
             }
         }
 
-
-        internal MatrixD GetWhyKeenTransformedWorldMatrix(MyEntity childEntity, MyEntity topEntity)
+        internal MatrixD GetWhyKeenTransformedWorldMatrixDummy(IMyAutomaticRifleGun childEntity, MyEntity topEntity)
         {
             var childOffsetWorldMatrix = childEntity.PositionComp.WorldMatrixRef;
             var parentWorldMatrix = topEntity.PositionComp.WorldMatrixRef;
+            //var before = parentWorldMatrix * childOffsetWorldMatrix;
+            childOffsetWorldMatrix.Translation = childEntity.GunBase.GetMuzzleLocalPosition();
+            var newMatrix = parentWorldMatrix * childOffsetWorldMatrix;
+            //Log.Line($"GetWhyKeenTransformedWorldMatrixDummy: after:{newMatrix.Translation} - before:{before.Translation}");
+            return newMatrix;
+        }
+
+        internal MatrixD GetWhyKeenTransformedWorldMatrix(IMyAutomaticRifleGun childEntity, MyEntity topEntity)
+        {
+            var childOffsetWorldMatrix = childEntity.PositionComp.WorldMatrixRef;
+            var parentWorldMatrix = topEntity.PositionComp.WorldMatrixRef;
+            childOffsetWorldMatrix.Translation = childEntity.GunBase.GetMuzzleLocalPosition();
 
             return parentWorldMatrix * childOffsetWorldMatrix;
         }
 
-        internal Vector3D GetWhyKeenTransformedCenter(MyEntity childEntity, MyEntity topEntity)
+        internal Vector3D GetWhyKeenTransformedCenter(IMyAutomaticRifleGun childEntity, MyEntity topEntity)
         {
 
-            var childOffsetWorldCenter = childEntity.PositionComp.WorldAABB.Center;
+            var childOffsetWorldCenter = childEntity.GunBase.GetMuzzleLocalPosition();
             var parentWorldCenter = topEntity.PositionComp.WorldAABB.Center;
 
             return parentWorldCenter + childOffsetWorldCenter;
         }
+
+
 
     }
 }

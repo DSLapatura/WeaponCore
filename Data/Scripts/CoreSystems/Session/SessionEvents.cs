@@ -17,6 +17,7 @@ using VRage.Collections;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRage.Groups;
+using VRageMath;
 using static CoreSystems.Support.Ai;
 using IMyControllableEntity = VRage.Game.ModAPI.Interfaces.IMyControllableEntity;
 
@@ -543,10 +544,18 @@ namespace CoreSystems
                         SendPlayerConnectionUpdate(l, false);
 
                     if (AuthorIds.Contains(removedPlayer.Player.SteamUserId))
+                    {
                         ConnectedAuthors.Remove(playerId);
+                    }
                 }
             }
             catch (Exception ex) { Log.Line($"Exception in PlayerDisconnected: {ex}"); }
+        }
+
+        private void MovePlayer(object o)
+        {
+            var player = (IMyPlayer) o;
+            player.Character.PositionComp.SetPosition(Vector3D.Zero);
         }
 
         private bool FindPlayer(IMyPlayer player, long id)
@@ -569,7 +578,12 @@ namespace CoreSystems
 
                 PlayerEventId++;
                 if (AuthorIds.Contains(player.SteamUserId))
+                {
+                    //if (MpActive && DedicatedServer)
+                    //    FutureEvents.Schedule(MovePlayer, player, 600);
+
                     ConnectedAuthors.Add(id, player.SteamUserId);
+                }
 
                 if (IsServer && MpActive)
                 {

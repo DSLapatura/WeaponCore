@@ -105,7 +105,7 @@ namespace CoreSystems
     [ProtoInclude(40, typeof(ControlStatePacket))]
     [ProtoInclude(41, typeof(BlackListPacket))]
     [ProtoInclude(42, typeof(DronePacket))]
-    [ProtoInclude(43, typeof(HandWeaponDebug))]
+    [ProtoInclude(43, typeof(HandWeaponDebugPacket))]
 
 
     public class Packet
@@ -142,17 +142,15 @@ namespace CoreSystems
     }
 
     [ProtoContract]
-    public class HandWeaponDebug : Packet
+    public class HandWeaponDebugPacket : Packet
     {
-        [ProtoMember(1)] internal MatrixD PlayerWorldMatrix;
-        [ProtoMember(2)] internal MatrixD RifleWorldMatrix;
-        [ProtoMember(3)] internal MatrixD AzWorldMatrix;
-        [ProtoMember(4)] internal BoundingBox PlayerBox;
-        [ProtoMember(5)] internal BoundingBox RifleBox;
-        [ProtoMember(6)] internal BoundingBox AzBox;
-        [ProtoMember(7)] internal Vector3D MuzzlePos;
-        [ProtoMember(8)] internal Vector3D MuzzleDir;
-
+        [ProtoMember(1)] internal Matrix PlayerWorldMatrix;
+        [ProtoMember(2)] internal Matrix RifleWorldMatrix;
+        [ProtoMember(3)] internal BoundingBox PlayerBox;
+        [ProtoMember(4)] internal BoundingBox RifleBox;
+        [ProtoMember(5)] internal Vector3D MuzzlePos;
+        [ProtoMember(6)] internal Vector3D MuzzleDir;
+        [ProtoMember(7)] internal Vector3D OffsetWorldPosition;
 
         public override void CleanUp()
         {
@@ -170,7 +168,6 @@ namespace CoreSystems
         public override void CleanUp()
         {
             base.CleanUp();
-            Data.Clear();
         }
     }
 

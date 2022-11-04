@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net.Sockets;
 using System.Runtime.Remoting.Metadata.W3cXsd2001;
 using CoreSystems.Platform;
 using CoreSystems.Settings;
@@ -852,20 +853,20 @@ namespace CoreSystems
             }
         }
 
-        private void DrawHandDebug(HandWeaponDebug handWeaponDebug)
+        private void DrawHandDebug(HandWeaponDebugPacket handWeaponDebugPacket)
         {
-            var playerObb = new MyOrientedBoundingBoxD(handWeaponDebug.PlayerBox, handWeaponDebug.PlayerWorldMatrix);
-            DsDebugDraw.DrawBox(playerObb, Color.Blue);
+            //var playerObb = new MyOrientedBoundingBoxD(handWeaponDebugPacket.PlayerBox, handWeaponDebugPacket.PlayerWorldMatrix);
+            //DsDebugDraw.DrawBox(playerObb, Color.Blue);
 
-            var rifleObb = new MyOrientedBoundingBoxD(handWeaponDebug.RifleBox, handWeaponDebug.RifleWorldMatrix);
+            var rifleObb = new MyOrientedBoundingBoxD(handWeaponDebugPacket.RifleBox, handWeaponDebugPacket.RifleWorldMatrix);
             DsDebugDraw.DrawBox(rifleObb, Color.Red);
 
-            var azObb = new MyOrientedBoundingBoxD(handWeaponDebug.AzBox, handWeaponDebug.AzWorldMatrix);
-            DsDebugDraw.DrawBox(azObb, Color.Yellow);
+            var muzzleLine1 =  new LineD(handWeaponDebugPacket.MuzzlePos, handWeaponDebugPacket.MuzzlePos + (handWeaponDebugPacket.MuzzleDir * 3));
+            var muzzleLine2 = new LineD(handWeaponDebugPacket.OffsetWorldPosition, handWeaponDebugPacket.OffsetWorldPosition + (handWeaponDebugPacket.MuzzleDir * 3));
 
-            var muzzleLine =  new LineD(handWeaponDebug.MuzzlePos, handWeaponDebug.MuzzlePos + (handWeaponDebug.MuzzleDir * 1));
+            DsDebugDraw.DrawLine(muzzleLine1.From, muzzleLine1.To, Color.Green, 0.1f);
+            DsDebugDraw.DrawLine(muzzleLine2.From, muzzleLine1.To, Color.Blue, 0.1f);
 
-            DsDebugDraw.DrawLine(muzzleLine.From, muzzleLine.To, Color.Green, 0.5f);
         }
 
         private static void CounterKeenLogMessage(bool console = true)

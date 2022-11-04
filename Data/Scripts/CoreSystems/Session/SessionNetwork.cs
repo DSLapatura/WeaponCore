@@ -428,10 +428,10 @@ namespace CoreSystems
                 var addOwl = sPlayerId == long.MinValue && packetInfo.Function != null;
                 var hasSkipPlayer = !hasRewritePlayer && sPlayerId > 0;
                 var packet = packetInfo.Packet;
-                var unreliable = packetInfo.Unreliable;
+                var reliable = !packetInfo.Unreliable;
                 var bytes = MyAPIGateway.Utilities.SerializeToBinary(packet);
                 if (packetInfo.SingleClient)
-                    MyModAPIHelper.MyMultiplayer.Static.SendMessageTo(ClientPacketId, bytes, packet.SenderId, !unreliable);
+                    MyModAPIHelper.MyMultiplayer.Static.SendMessageTo(ClientPacketId, bytes, packet.SenderId, reliable);
                 else
                 {
                     long entityId = packetInfo.Entity?.GetTopMostParent().EntityId ?? -1;
@@ -470,7 +470,7 @@ namespace CoreSystems
                         }
 
                         if (sendPacket)
-                            MyModAPIHelper.MyMultiplayer.Static.SendMessageTo(ClientPacketId, !rewrite ? bytes : bytesRewrite, p.Player.SteamUserId, unreliable);
+                            MyModAPIHelper.MyMultiplayer.Static.SendMessageTo(ClientPacketId, !rewrite ? bytes : bytesRewrite, p.Player.SteamUserId, reliable);
                     }
                 }
             }
