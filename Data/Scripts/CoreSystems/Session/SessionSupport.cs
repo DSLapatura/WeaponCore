@@ -865,7 +865,7 @@ namespace CoreSystems
 
             var muzzleLine =  new LineD(handWeaponDebug.MuzzlePos, handWeaponDebug.MuzzlePos + (handWeaponDebug.MuzzleDir * 1));
 
-            DsDebugDraw.DrawLine(muzzleLine.From, muzzleLine.To, Color.Green, 0.5);
+            DsDebugDraw.DrawLine(muzzleLine.From, muzzleLine.To, Color.Green, 0.5f);
         }
 
         private static void CounterKeenLogMessage(bool console = true)
