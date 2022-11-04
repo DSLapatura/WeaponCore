@@ -411,7 +411,6 @@ namespace CoreSystems.Support
                 else if (playerMap.Player.Character != null && playerMap.Player.Character.Components.TryGet(out playerMap.TargetFocus) && playerMap.Player.Character.Components.TryGet(out playerMap.TargetLock))
                 {
                     playerMap.TargetFocusDef.AngularToleranceFromCrosshair = 25;
-                    //playerMap.TargetFocusDef.FocusSearchMaxDistance = !setDefault ? RootAi.Construct.MaxLockRange : 2000;
                     playerMap.TargetFocusDef.FocusSearchMaxDistance = 0; //temp
                     playerMap.TargetFocus.Init(playerMap.TargetFocusDef);
                     return true;

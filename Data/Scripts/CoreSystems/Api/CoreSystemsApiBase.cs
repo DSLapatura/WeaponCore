@@ -5,6 +5,7 @@ using VRage;
 using VRage.Collections;
 using VRage.Game;
 using VRage.Game.Entity;
+using VRage.Game.ModAPI;
 using VRageMath;
 
 namespace CoreSystems.Api
@@ -31,6 +32,10 @@ namespace CoreSystems.Api
         private Action<ICollection<MyDefinitionId>> _getCoreRifles;
         private Action<IList<byte[]>> _getCoreArmors;
 
+        private Action<long, int, Action<ListReader<MyTuple<ulong, long, int, MyEntity, MyEntity, ListReader<MyTuple<Vector3D, object, float>>>>>> _registerDamageEvent;
+        private Func<long, bool, Func<MyEntity, IMyCharacter, long, int, bool>, bool> _targetFocusHandler;
+        private Func<long, bool, Func<IMyCharacter, long, int, bool>, bool> _hudHandler;
+
         private Action<MyEntity, ICollection<MyTuple<MyEntity, float>>> _getSortedThreats;
         private Action<MyEntity, ICollection<MyEntity>> _getObstructions;
 
@@ -49,9 +54,6 @@ namespace CoreSystems.Api
 
         private Action<MyEntity, int, Action<long, int, ulong, long, Vector3D, bool>> _addProjectileMonitor;
         private Action<MyEntity, int, Action<long, int, ulong, long, Vector3D, bool>> _removeProjectileMonitor;
-        private Action<MyEntity, int, Action<long, int, ulong, long, Vector3D, bool>> _monitorProjectile; // Legacy use base version
-        private Action<MyEntity, int, Action<long, int, ulong, long, Vector3D, bool>> _unMonitorProjectile; // Legacy use base version
-        private Action<long, int, Action<ListReader<MyTuple<ulong, long, int, MyEntity, MyEntity, ListReader<MyTuple<Vector3D, object, float>>>>>> _registerDamageEvent;
         private Func<MyEntity, int, MyTuple<bool, bool, bool, MyEntity>> _getWeaponTarget;
         private Action<MyEntity, MyEntity, int> _setWeaponTarget;
         private Action<MyEntity, bool, int> _fireWeaponOnce;
@@ -266,6 +268,70 @@ namespace CoreSystems.Api
             _registerDamageEvent?.Invoke(modId, type, callback);
         }
 
+        /// <summary>
+        /// This allows you to determine when and if a player can modify the current target focus on a player/grid/phantonm. Use only on server
+        /// </summary>
+        /// <param name="handledEntityId"> is the player/grid/phantom you want to control the target focus for, applies to subgrids as well</param>
+        /// <param name="unregister"> be sure to unregister when you no longer want to receive callbacks</param>
+        public void TargetFocushandler(long handledEntityId, bool unregister)
+        {
+            _targetFocusHandler(handledEntityId, unregister, TargetFocusCallback);
+        }
+
+        /// <summary>
+        /// This callback fires whenever a player attempts to modify the target focus
+        /// </summary>
+        /// <param name="target"></param>
+        /// <param name="requestingCharacter"></param>
+        /// <param name="handledEntityId"></param>
+        /// <param name="modeCode"></param>
+        /// <returns></returns>
+        private bool TargetFocusCallback(MyEntity target, IMyCharacter requestingCharacter, long handledEntityId, int modeCode)
+        {
+            var mode = (ChangeMode)modeCode;
+
+            return true;
+        }
+
+        public enum ChangeMode
+        {
+            Add,
+            Release,
+            Lock,
+        }
+        /// <summary>
+        ///  Enables you to allow/deny hud draw requests.  Do not use this on dedicated server.
+        /// </summary>
+        /// <param name="handledEntityId"></param>
+        /// <param name="unregister"></param>
+        public void Hudhandler(long handledEntityId, bool unregister)
+        {
+            _hudHandler?.Invoke(handledEntityId, unregister, HudCallback);
+        }
+
+        /// <summary>
+        /// This callback fires whenever the hud tries to update
+        /// </summary>
+        /// <param name="requestingCharacter"></param>
+        /// <param name="handledEntityId"></param>
+        /// <param name="modeCode"></param>
+        /// <returns></returns>
+        private bool HudCallback(IMyCharacter requestingCharacter, long handledEntityId, int modeCode)
+        {
+            var mode = (HudMode)modeCode;
+
+            return true;
+        }
+
+        internal enum HudMode
+        {
+            Selector,
+            Reload,
+            TargetInfo,
+            Lead,
+            Drone,
+            PainterMarks,
+        }
 
         private const long Channel = 67549756549;
         private bool _getWeaponDefinitions;
@@ -357,6 +423,9 @@ namespace CoreSystems.Api
 
             AssignMethod(delegates, "AddMonitorProjectile", ref _addProjectileMonitor);
             AssignMethod(delegates, "RemoveMonitorProjectile", ref _removeProjectileMonitor);
+
+            AssignMethod(delegates, "TargetFocusHandler", ref _targetFocusHandler);
+            AssignMethod(delegates, "HudHandler", ref _hudHandler);
 
             /// block methods
             AssignMethod(delegates, "GetWeaponTargetBase", ref _getWeaponTarget);
