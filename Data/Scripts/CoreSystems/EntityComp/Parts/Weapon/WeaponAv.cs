@@ -159,7 +159,7 @@ namespace CoreSystems.Platform
                     PlayParticleEvent(state, active, distance, muzzles);
 
                 var monitor = Comp.EventMonitors[PartId];
-                if (monitor.Count > 0)
+                if (monitor?.Count > 0)
                 {
                     for (int i = 0; i < monitor.Count; i++)
                         monitor[i].Invoke((int) state, active);

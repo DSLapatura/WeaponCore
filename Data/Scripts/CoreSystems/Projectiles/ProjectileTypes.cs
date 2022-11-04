@@ -107,7 +107,7 @@ namespace CoreSystems.Support
         internal void Clean(bool usesStorage = false)
         {
             var monitor = Weapon.Comp.ProjectileMonitors[Weapon.PartId];
-            if (monitor.Count > 0) {
+            if (monitor?.Count > 0) {
                 for (int i = 0; i < monitor.Count; i++)
                     monitor[i].Invoke(Target.CoreEntity.EntityId, Weapon.PartId, Id, Target.TargetId, Hit.LastHit, false);
 
