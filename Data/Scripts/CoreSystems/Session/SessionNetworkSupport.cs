@@ -113,7 +113,6 @@ namespace CoreSystems
             HandDebugPacketPacket.RifleWorldMatrix = weapon.Comp.Rifle.PositionComp.WorldMatrixRef * weapon.Comp.TopEntity.PositionComp.WorldMatrixRef;
             HandDebugPacketPacket.MuzzlePos = weapon.Dummies[0].Info.Position;
             HandDebugPacketPacket.MuzzleDir = weapon.Dummies[0].Info.Direction;
-            HandDebugPacketPacket.OffsetWorldPosition = weapon.Comp.Rifle.GunBase.GetMuzzleLocalPosition() + weapon.Comp.TopEntity.PositionComp.WorldAABB.Center;
 
             PlayerMap player;
             if (Players.TryGetValue(weapon.Comp.Data.Repo.Values.State.PlayerId, out player))

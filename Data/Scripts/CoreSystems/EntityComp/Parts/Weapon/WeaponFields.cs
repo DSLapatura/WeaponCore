@@ -72,7 +72,6 @@ namespace CoreSystems.Platform
         internal uint ShootTick;
         internal uint LastShootTick;
         internal uint TicksPerShot;
-        internal uint PosChangedTick;
         internal uint ElevationTick;
         internal uint AzimuthTick;
         internal uint FastTargetResetTick;
@@ -84,6 +83,7 @@ namespace CoreSystems.Platform
         internal int ShotsFired;
         internal int MiddleMuzzleIndex;
         internal int DelayedCycleId = -1;
+        internal int PosChangedTick = -1;
         internal List<MyEntity> HeatingParts;
         internal Vector3D GravityPoint;
         internal Vector3D GravityUnitDir;

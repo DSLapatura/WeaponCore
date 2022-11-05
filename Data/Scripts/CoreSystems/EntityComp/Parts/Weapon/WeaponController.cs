@@ -116,9 +116,9 @@ namespace CoreSystems.Platform
         {
             try
             {
-                if (Comp.Session == null || PosChangedTick == Comp.Session.Tick || Comp.CoreEntity == null || Comp.IsBlock && (AzimuthPart?.Entity?.Parent == null || ElevationPart?.Entity?.Parent == null) || ElevationPart?.Entity == null || MuzzlePart?.Entity == null || Comp.Platform.State != CorePlatform.PlatformState.Ready) return;
+                if (Comp.Session == null || PosChangedTick == Comp.Session.SimulationCount || Comp.CoreEntity == null || Comp.IsBlock && (AzimuthPart?.Entity?.Parent == null || ElevationPart?.Entity?.Parent == null) || ElevationPart?.Entity == null || MuzzlePart?.Entity == null || Comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
-                PosChangedTick = Comp.Session.Tick;
+                PosChangedTick = Comp.Session.SimulationCount;
                 
                 var justBlock = AzimuthPart.IsCoreEntity && ElevationPart.IsCoreEntity && MuzzlePart.IsCoreEntity;
                 var requiresRootWorldOffset = Comp.TypeSpecific == CompTypeSpecific.Rifle && Comp.Session.DedicatedServer;
@@ -139,7 +139,7 @@ namespace CoreSystems.Platform
                     }
                     else
                     {
-                        azimuthMatrix = !requiresRootWorldOffset ? Comp.CoreEntity.PositionComp.WorldMatrixRef : Comp.GetWhyKeenTransformedWorldMatrix(Comp.Rifle, Comp.TopEntity);
+                        azimuthMatrix = !requiresRootWorldOffset ? Comp.CoreEntity.PositionComp.WorldMatrixRef : Comp.GetWhyKeenTransformedWorldMatrix();
                         azParentMatrix = azimuthMatrix;
                     }
 
@@ -152,7 +152,7 @@ namespace CoreSystems.Platform
                         MatrixD.Multiply(ref eLocalMatrix, ref eParent, out elevationMatrix);
                     }
                     else
-                        elevationMatrix = !requiresRootWorldOffset ? Comp.CoreEntity.PositionComp.WorldMatrixRef : Comp.GetWhyKeenTransformedWorldMatrix(Comp.Rifle, Comp.TopEntity);
+                        elevationMatrix = !requiresRootWorldOffset ? Comp.CoreEntity.PositionComp.WorldMatrixRef : Comp.GetWhyKeenTransformedWorldMatrix();
 
                     if (MuzzlePart.Entity == AzimuthPart?.Entity)
                     {
@@ -175,14 +175,14 @@ namespace CoreSystems.Platform
                         Vector3D.Transform(ref localCenter, ref muzzleMatrix, out weaponCenter);
                     }
                     else
-                        weaponCenter = !requiresRootWorldOffset ? Comp.CoreEntity.PositionComp.WorldAABB.Center : Comp.GetWhyKeenTransformedCenter(Comp.Rifle, Comp.TopEntity);
+                        weaponCenter = !requiresRootWorldOffset ? Comp.CoreEntity.PositionComp.WorldAABB.Center : Comp.CharacterPosComp.LogicalPositionWorld;
                 }
                 else
                 {
-                    azimuthMatrix = !requiresRootWorldOffset ? Comp.CoreEntity.PositionComp.WorldMatrixRef : Comp.GetWhyKeenTransformedWorldMatrix(Comp.Rifle, Comp.TopEntity);
+                    azimuthMatrix = !requiresRootWorldOffset ? Comp.CoreEntity.PositionComp.WorldMatrixRef : Comp.GetWhyKeenTransformedWorldMatrix();
                     azParentMatrix = azimuthMatrix;
                     elevationMatrix = azimuthMatrix;
-                    weaponCenter = !requiresRootWorldOffset ? Comp.CoreEntity.PositionComp.WorldAABB.Center : Comp.GetWhyKeenTransformedCenter(Comp.Rifle, Comp.TopEntity);
+                    weaponCenter = !requiresRootWorldOffset ? Comp.CoreEntity.PositionComp.WorldAABB.Center : Comp.CharacterPosComp.LogicalPositionWorld;
                 }
 
                 BarrelOrigin = weaponCenter;
@@ -229,6 +229,16 @@ namespace CoreSystems.Platform
 
                     MyPivotPos += offSet;
                 }
+
+                Comp.Session.HandDebugPacketPacket.CenterTestLineFrom = centerTestPos;
+                Comp.Session.HandDebugPacketPacket.CenterTestLineTo = centerTestPos + (MyPivotUp * 20);
+                Comp.Session.HandDebugPacketPacket.PivotTestLineFrom = MyPivotPos;
+                Comp.Session.HandDebugPacketPacket.PivotTestLineTo = MyPivotPos - (WeaponConstMatrix.Left * 10);
+                Comp.Session.HandDebugPacketPacket.BarrelTestLineFrom = weaponCenter;
+                Comp.Session.HandDebugPacketPacket.AimTestLineFrom = MyPivotPos;
+                Comp.Session.HandDebugPacketPacket.AimTestLineTo = MyPivotPos + (MyPivotFwd * 20);
+                Comp.Session.HandDebugPacketPacket.AzimuthFwdLineTo = weaponCenter;
+                Comp.Session.HandDebugPacketPacket.AzimuthFwdLineFrom = weaponCenter + (WeaponConstMatrix.Forward * 19);
 
                 if (!Comp.Debug) return;
 

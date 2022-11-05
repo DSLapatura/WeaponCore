@@ -15,10 +15,7 @@ using static CoreSystems.Support.HitEntity.Type;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.EwarDef.EwarType;
 using static CoreSystems.Support.DeferedVoxels;
 using CollisionLayers = Sandbox.Engine.Physics.MyPhysics.CollisionLayers;
-using Jakaria;
 using Jakaria.API;
-using static CoreSystems.Support.AvShot;
-using System.Runtime.CompilerServices;
 
 namespace CoreSystems.Projectiles
 {

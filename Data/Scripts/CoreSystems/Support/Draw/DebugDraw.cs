@@ -91,7 +91,7 @@ namespace CoreSystems.Support
         {
             var box = new BoundingBoxD(-obb.HalfExtent, obb.HalfExtent);
             var wm = MatrixD.CreateFromTransformScale(obb.Orientation, obb.Center, Vector3D.One);
-            MySimpleObjectDraw.DrawTransparentBox(ref wm, ref box, ref color, MySimpleObjectRasterizer.Wireframe, 4, 0.025f, MyStringId.GetOrCompute("Square"), MyStringId.GetOrCompute("Square"));
+            MySimpleObjectDraw.DrawTransparentBox(ref wm, ref box, ref color, MySimpleObjectRasterizer.Solid, 1);
         }
 
         public static void DrawAABB(MatrixD worldMatrix, BoundingBoxD localbox, Color color, MySimpleObjectRasterizer raster = MySimpleObjectRasterizer.Wireframe, float thickness = 0.01f)

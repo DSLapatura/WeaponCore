@@ -21,7 +21,7 @@ namespace CoreSystems.Platform
     {
         internal static bool CanShootTarget(Weapon weapon, ref Vector3D targetCenter, Vector3D targetLinVel, Vector3D targetAccel, out Vector3D targetPos, bool checkSelfHit = false, MyEntity target = null)
         {
-            if (weapon.PosChangedTick != weapon.Comp.Session.Tick)
+            if (weapon.PosChangedTick != weapon.Comp.Session.SimulationCount)
                 weapon.UpdatePivotPos();
 
             var prediction = weapon.System.Values.HardPoint.AimLeadingPrediction;
@@ -115,7 +115,7 @@ namespace CoreSystems.Platform
 
         internal static void LeadTarget(Weapon weapon, MyEntity target, out Vector3D targetPos, out bool couldHit, out bool willHit)
         {
-            if (weapon.PosChangedTick != weapon.Comp.Session.Tick)
+            if (weapon.PosChangedTick != weapon.Comp.Session.SimulationCount)
                 weapon.UpdatePivotPos();
 
             var vel = target.Physics.LinearVelocity;
@@ -179,7 +179,7 @@ namespace CoreSystems.Platform
 
         internal static bool CanShootTargetObb(Weapon weapon, MyEntity entity, Vector3D targetLinVel, Vector3D targetAccel, out Vector3D targetPos)
         {   
-            if (weapon.PosChangedTick != weapon.Comp.Session.Tick)
+            if (weapon.PosChangedTick != weapon.Comp.Session.SimulationCount)
                 weapon.UpdatePivotPos();
 
             var prediction = weapon.System.Values.HardPoint.AimLeadingPrediction;
@@ -245,7 +245,7 @@ namespace CoreSystems.Platform
         internal static bool TargetAligned(Weapon weapon, Target target, out Vector3D targetPos)
         {
 
-            if (weapon.PosChangedTick != weapon.Comp.Session.Tick)
+            if (weapon.PosChangedTick != weapon.Comp.Session.SimulationCount)
                 weapon.UpdatePivotPos();
 
             Vector3 targetLinVel = Vector3.Zero;
@@ -378,7 +378,7 @@ namespace CoreSystems.Platform
             var locked = true;
             var isTracking = false;
 
-            if (readyToTrack && w.PosChangedTick != w.Comp.Session.Tick)
+            if (readyToTrack && w.PosChangedTick != w.Comp.Session.SimulationCount)
                     w.UpdatePivotPos();
 
             if (readyToTrack && baseData.State.Control != ProtoWeaponState.ControlMode.Camera)
@@ -479,7 +479,7 @@ namespace CoreSystems.Platform
             Comp.Data.Repo.Values.Set.Overrides.Debug = false;
             PauseShoot = false;
             LastSmartLosCheck = Comp.Ai.Session.Tick;
-            if (PosChangedTick != System.Session.Tick)
+            if (PosChangedTick != System.Session.SimulationCount)
                 UpdatePivotPos();
             var info = GetScope.Info;
 
@@ -552,7 +552,7 @@ namespace CoreSystems.Platform
 
         internal void SmartLosDebug()
         {
-            if (PosChangedTick != System.Session.Tick)
+            if (PosChangedTick != System.Session.SimulationCount)
                 UpdatePivotPos();
 
             var info = GetScope.Info;
@@ -874,7 +874,7 @@ namespace CoreSystems.Platform
         }
         private bool RayCheckTest()
         {
-            if (PosChangedTick != Comp.Session.Tick)
+            if (PosChangedTick != Comp.Session.SimulationCount)
                 UpdatePivotPos();
 
             var scopeInfo = GetScope.Info;

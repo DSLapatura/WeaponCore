@@ -794,7 +794,7 @@ namespace CoreSystems.Support
         internal bool FocusInRange(Weapon w)
         {
 
-            if (w.PosChangedTick != w.Comp.Session.Tick)
+            if (w.PosChangedTick != w.Comp.Session.SimulationCount)
                 w.UpdatePivotPos();
 
             var fd = w.Comp.Ai.Construct.Data.Repo.FocusData;
@@ -838,7 +838,7 @@ namespace CoreSystems.Support
             var targets = w.Comp.Ai.Construct.Data.Repo.FocusData?.Target;
 
             var targetEnt = w.Target.TargetEntity;
-            if (w.PosChangedTick != w.Comp.Session.Tick)
+            if (w.PosChangedTick != w.Comp.Session.SimulationCount)
                 w.UpdatePivotPos();
 
             if (targets != null && targetEnt != null)

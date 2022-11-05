@@ -2,19 +2,15 @@
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using System.Security.Policy;
 using CoreSystems.Api;
 using CoreSystems.Platform;
 using CoreSystems.Projectiles;
 using CoreSystems.Settings;
 using CoreSystems.Support;
-using Jakaria;
 using Jakaria.API;
 using ParallelTasks;
 using Sandbox.Game;
 using Sandbox.Game.Entities;
-using Sandbox.Game.EntityComponents;
 using Sandbox.ModAPI;
 using Sandbox.ModAPI.Interfaces.Terminal;
 using Sandbox.ModAPI.Weapons;
@@ -30,7 +26,6 @@ using VRage.Utils;
 using VRage.Voxels;
 using VRageMath;
 using WeaponCore.Data.Scripts.CoreSystems.Ui;
-using static CoreSystems.Api.WcApi;
 using static CoreSystems.Support.Ai;
 
 namespace CoreSystems
@@ -353,6 +348,7 @@ namespace CoreSystems
         internal int TargetDrawAge;
         internal int WeaponIdCounter;
 
+        internal int SimulationCount;
         internal int PlayerEventId;
         internal int TargetRequests;
         internal int TargetChecks;

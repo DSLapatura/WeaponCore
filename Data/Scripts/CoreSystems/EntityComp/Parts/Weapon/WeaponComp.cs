@@ -1,18 +1,14 @@
 ﻿using System.Collections.Generic;
 using CoreSystems.Support;
-using Jakaria;
 using Jakaria.API;
 using Sandbox.Game.Entities;
+using Sandbox.Game.Entities.Character.Components;
 using Sandbox.Game.Weapons;
 using Sandbox.ModAPI;
 using Sandbox.ModAPI.Weapons;
 using VRage.Game;
 using VRage.Game.Entity;
-using VRage.Game.ModAPI;
-using VRage.Game.ObjectBuilders;
 using VRageMath;
-using static CoreSystems.Support.Ai;
-using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace CoreSystems.Platform
 {
@@ -23,6 +19,7 @@ namespace CoreSystems.Platform
             internal readonly IMyAutomaticRifleGun Rifle;
             internal readonly IMyHandheldGunObject<MyGunBase> GunBase;
             internal readonly IMyLargeTurretBase VanillaTurretBase;
+            internal readonly MyCharacterWeaponPositionComponent CharacterPosComp;
             internal Trigger DefaultTrigger;
             internal readonly ShootManager ShootManager;
             internal readonly WeaponCompData Data;
@@ -72,7 +69,7 @@ namespace CoreSystems.Platform
                 }
                 else if (coreEntity is IMyAutomaticRifleGun)
                 {
-                    HandInit((IMyAutomaticRifleGun)coreEntity, out Rifle, out GunBase, out TopEntity);
+                    HandInit((IMyAutomaticRifleGun)coreEntity, out Rifle, out CharacterPosComp, out GunBase, out TopEntity);
                 }
 
                 //Bellow order is important
@@ -240,13 +237,13 @@ namespace CoreSystems.Platform
                     Ai.PointDefense = true;
             }
 
-            internal bool SequenceReady(Constructs rootConstruct)
+            internal bool SequenceReady(Ai.Constructs rootConstruct)
             {
                 var wValues = Data.Repo.Values;
                 var overrides = wValues.Set.Overrides;
 
-                WeaponGroup group;
-                WeaponSequence sequence;
+                Ai.WeaponGroup group;
+                Ai.WeaponSequence sequence;
 
                 if (rootConstruct.WeaponGroups.TryGetValue(overrides.WeaponGroupId, out group) && group.OrderSequencesIds[group.SequenceStep] == overrides.SequenceId && group.Sequences.TryGetValue(overrides.SequenceId, out sequence))
                 {

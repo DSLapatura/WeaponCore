@@ -14,7 +14,7 @@ namespace CoreSystems.Platform
         {
             try
             {
-                if (PosChangedTick != Comp.Session.Tick)
+                if (PosChangedTick != Comp.Session.SimulationCount)
                     UpdatePivotPos();
 
                 if (Comp.UserControlled) {

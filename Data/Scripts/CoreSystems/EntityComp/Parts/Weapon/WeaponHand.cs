@@ -1,7 +1,7 @@
 ﻿using CoreSystems.Support;
 using Sandbox.Game.Entities;
+using Sandbox.Game.Entities.Character.Components;
 using Sandbox.Game.Weapons;
-using Sandbox.ModAPI;
 using Sandbox.ModAPI.Weapons;
 using VRage.Game;
 using VRage.Game.Entity;
@@ -16,11 +16,13 @@ namespace CoreSystems.Platform
     {
         public partial class WeaponComponent 
         {
-            private void HandInit(IMyAutomaticRifleGun gun, out IMyAutomaticRifleGun rifle, out IMyHandheldGunObject<MyGunBase> gunBase, out MyEntity topEntity)
+            private void HandInit(IMyAutomaticRifleGun gun, out IMyAutomaticRifleGun rifle, out MyCharacterWeaponPositionComponent characterPosComp, out IMyHandheldGunObject<MyGunBase> gunBase, out MyEntity topEntity)
             {
                 rifle = gun;
                 gunBase = gun;
                 topEntity = Rifle.Owner;
+                characterPosComp = gun.Owner.Components.Get<MyCharacterWeaponPositionComponent>();
+
                 gun.GunBase.OnAmmoAmountChanged += KeenGiveModdersSomeMoreLove;
                 gun.OnMarkForClose += OnRifleMarkForClose;
             }
@@ -86,7 +88,7 @@ namespace CoreSystems.Platform
                     Log.Line($"HandhelShoot: wAmmo:{w.ProtoWeaponAmmo.CurrentAmmo} - wcMag:{w.Reload.CurrentMags} - ammo:{Rifle.CurrentAmmunition} - magCurrentAmmo:{Rifle.CurrentMagazineAmmunition} - magAmount:{Rifle.CurrentMagazineAmount}");
 
                     Rifle.Shoot(MyShootActionEnum.PrimaryAction, Vector3D.Zero, null);
-
+                    MyCharacterWeaponPositionComponent positionComponent = w.Comp.Rifle.Owner.Components.Get<MyCharacterWeaponPositionComponent>();
                 }
             }
 
@@ -149,11 +151,29 @@ namespace CoreSystems.Platform
                 }
             }
 
-            //For reference only (mod profiler overhead)
-            internal MatrixD GetHandTransformedWorldMatrix(MyEntity childEntity, MyEntity topEntity) => GetWhyKeenTransformedWorldMatrix((IMyAutomaticRifleGun)childEntity, topEntity);
+            internal void GetHandWeaponDummyInfo(out Vector3D position, out Vector3D direction, out Vector3D upDir, out Vector3D localPos)
+            {
+                position = CharacterPosComp.LogicalPositionWorld;
+                direction = CharacterPosComp.LogicalOrientationWorld;
+                upDir = TopEntity.PositionComp.WorldMatrixRef.Up;
+                localPos = CharacterPosComp.LogicalPositionLocalSpace;
+            }
 
-            //For reference only (mod profiler overhead)
-            internal Vector3D GetHandTransformedCenter(MyEntity childEntity, MyEntity topEntity) => GetWhyKeenTransformedCenter((IMyAutomaticRifleGun) childEntity, topEntity);
+            internal MatrixD GetWhyKeenTransformedWorldMatrix()
+            {
+                var childOffsetWorldMatrix = Rifle.PositionComp.WorldMatrixRef;
+                var parentWorldMatrix = TopEntity.PositionComp.WorldMatrixRef;
+                parentWorldMatrix.Translation = CharacterPosComp.LogicalPositionWorld;
+
+                return parentWorldMatrix * childOffsetWorldMatrix;
+            }
+
+            internal Vector3D GetWhyKeenTransformedCenter(IMyAutomaticRifleGun childEntity, MyEntity topEntity)
+            {
+                return CharacterPosComp.LogicalPositionWorld;
+            }
+
+
         }
     }
 }

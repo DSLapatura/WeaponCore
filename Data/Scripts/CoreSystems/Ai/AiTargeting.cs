@@ -28,7 +28,7 @@ namespace CoreSystems.Support
         {
             var targetType = TargetType.None;
 
-            if (w.PosChangedTick != w.Comp.Session.Tick) 
+            if (w.PosChangedTick != w.Comp.Session.SimulationCount) 
                 w.UpdatePivotPos();
 
             FakeTarget.FakeWorldTargetInfo fakeInfo = null;

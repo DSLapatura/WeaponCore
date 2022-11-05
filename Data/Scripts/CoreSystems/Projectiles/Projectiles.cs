@@ -193,7 +193,7 @@ namespace CoreSystems.Projectiles
 
                         if (MyUtils.IsValid(p.Gravity) && !MyUtils.IsZero(ref p.Gravity)) {
 
-                            p.Velocity += (p.Gravity * aConst.GravityMultiplier) * Projectile.StepConst;
+                            p.Velocity += p.Gravity * Projectile.StepConst;
                             if (!storage.IsSmart)
                                 Vector3D.Normalize(ref p.Velocity, out info.Direction);
                         }
@@ -302,7 +302,7 @@ namespace CoreSystems.Projectiles
                         if (p.DeaccelRate > 0) {
 
                             p.DeaccelRate--;
-                            if (aConst.IsMine && !info.Storage.MineSeeking && !info.Storage.MineActivated) {
+                            if (aConst.IsMine && !info.Storage.MineSeeking && !info.Storage.StageOne) {
                                 if (p.EnableAv) info.AvShot.Cloaked = info.AmmoDef.Trajectory.Mines.Cloak;
                                 info.Storage.MineSeeking = true;
                             }
@@ -405,7 +405,7 @@ namespace CoreSystems.Projectiles
 
                 var sphereCheck = false;
 
-                if (storage.MineSeeking && !storage.MineTriggered)
+                if (storage.MineSeeking && !storage.StageTwo)
                     p.SeekEnemy();
                 else if (useEwarSphere)
                 {
@@ -464,7 +464,7 @@ namespace CoreSystems.Projectiles
                     lock (ValidateHits)
                         ValidateHits.Add(p);
                 }
-                else if (storage.MineSeeking && !storage.MineTriggered && info.Age - storage.ChaseAge > 600)
+                else if (storage.MineSeeking && !storage.StageTwo && info.Age - storage.ChaseAge > 600)
                 {
                     p.Asleep = true;
                 }

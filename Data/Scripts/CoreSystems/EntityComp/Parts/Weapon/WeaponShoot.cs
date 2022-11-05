@@ -52,7 +52,7 @@ namespace CoreSystems.Platform
                         return;
                 }
 
-                if (PosChangedTick != Comp.Session.Tick)
+                if (PosChangedTick != Comp.Session.SimulationCount)
                     UpdatePivotPos();
 
                 ShootTick = tick + TicksPerShot;

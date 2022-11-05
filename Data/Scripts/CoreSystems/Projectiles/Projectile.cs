@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Net.NetworkInformation;
-using System.Runtime.CompilerServices;
 using CoreSystems.Support;
-using Sandbox.Engine.Multiplayer;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI.Ingame;
 using VRage.Game;
@@ -38,7 +35,6 @@ namespace CoreSystems.Projectiles
         internal HadTargetState HadTarget;
         internal Vector3D AccelDir;
         internal Vector3D Position;
-        internal Vector3D OffsetDir;
         internal Vector3D LastPosition;
         internal Vector3D StartSpeed;
         internal Vector3D Velocity;
@@ -130,9 +126,9 @@ namespace CoreSystems.Projectiles
                 }
             }
 
-            OffsetDir = Vector3D.Zero;
             Position = Info.Origin;
             AccelDir = Info.Direction;
+
             var cameraStart = session.CameraPos;
             Vector3D.DistanceSquared(ref cameraStart, ref Info.Origin, out DistanceFromCameraSqr);
             var probability = ammoDef.AmmoGraphics.VisualProbability;
@@ -912,9 +908,10 @@ namespace CoreSystems.Projectiles
         private void OffsetSmartVelocity(ref Vector3D commandedAccel)
         {
             var smarts = Info.AmmoDef.Trajectory.Smarts;
+            var s = Info.Storage;
             var offsetTime = smarts.OffsetTime;
             var revCmdAccel = -commandedAccel / AccelInMetersPerSec;
-            var revOffsetDir = MyUtils.IsZero(OffsetDir.X - revCmdAccel.X, 1E-03f) && MyUtils.IsZero(OffsetDir.Y - revCmdAccel.Y, 1E-03f) && MyUtils.IsZero(OffsetDir.Z - revCmdAccel.Z, 1E-03f);
+            var revOffsetDir = MyUtils.IsZero(s.RandOffsetDir.X - revCmdAccel.X, 1E-03f) && MyUtils.IsZero(s.RandOffsetDir.Y - revCmdAccel.Y, 1E-03f) && MyUtils.IsZero(Info.Storage.RandOffsetDir.Z - revCmdAccel.Z, 1E-03f);
 
             if (Info.Age % offsetTime == 0 || revOffsetDir)
             {
@@ -922,11 +919,11 @@ namespace CoreSystems.Projectiles
                 double angle = Info.Random.NextDouble() * MathHelper.TwoPi;
                 var up = Vector3D.CalculatePerpendicularVector(Info.Direction);
                 var right = Vector3D.Cross(Info.Direction, up);
-                OffsetDir = Math.Sin(angle) * up + Math.Cos(angle) * right;
-                OffsetDir *= smarts.OffsetRatio;
+                s.RandOffsetDir = Math.Sin(angle) * up + Math.Cos(angle) * right;
+                s.RandOffsetDir *= smarts.OffsetRatio;
             }
 
-            commandedAccel += AccelInMetersPerSec * OffsetDir;
+            commandedAccel += AccelInMetersPerSec * s.RandOffsetDir;
             commandedAccel = Vector3D.Normalize(commandedAccel) * AccelInMetersPerSec;
         }
 
@@ -1333,7 +1330,7 @@ namespace CoreSystems.Projectiles
                 Vector3D lateralTargetAcceleration = (targetAcceleration - Vector3D.Dot(targetAcceleration, missileToTargetNorm) * missileToTargetNorm);
 
                 Vector3D omega = Vector3D.Cross(missileToTarget, relativeVelocity) / Math.Max(missileToTarget.LengthSquared(), 1); //to combat instability at close range
-                var lateralAcceleration = smarts.Aggressiveness * relativeVelocity.Length() * Vector3D.Cross(omega, missileToTargetNorm) + 0 * lateralTargetAcceleration;
+                var lateralAcceleration = 10 * relativeVelocity.Length() * Vector3D.Cross(omega, missileToTargetNorm) + 0 * lateralTargetAcceleration;
 
                 Vector3D commandedAccel;
                 if (Vector3D.IsZero(lateralAcceleration))
@@ -1379,8 +1376,8 @@ namespace CoreSystems.Projectiles
                         var angle = Info.Random.NextDouble() * MathHelper.TwoPi;
                         var up = Vector3D.CalculatePerpendicularVector(Info.Direction);
                         var right = Vector3D.Cross(Info.Direction, up);
-                        OffsetDir = Math.Sin(angle) * up + Math.Cos(angle) * right;
-                        OffsetDir *= smarts.OffsetRatio;
+                        s.RandOffsetDir = Math.Sin(angle) * up + Math.Cos(angle) * right;
+                        s.RandOffsetDir *= smarts.OffsetRatio;
                     }
 
                     double dist;
@@ -1389,9 +1386,34 @@ namespace CoreSystems.Projectiles
 
                     if (offset)
                     {
-                        commandedAccel += AccelInMetersPerSec * OffsetDir;
+                        commandedAccel += AccelInMetersPerSec * s.RandOffsetDir;
                         commandedAccel = Vector3D.Normalize(commandedAccel) * AccelInMetersPerSec;
                     }
+                }
+
+                if (true)
+                {
+                    var originEnd = Info.Origin + (Info.OriginFwd * Info.MaxTrajectory);
+                    var distFromLine = MyUtils.GetPointLineDistance(ref Info.Origin, ref originEnd, ref Position);
+                    var offset = false;
+                    if (distFromLine < 500 && !s.StageOne)
+                    {
+                        offset = true;
+                        var angle = 2 * MathHelper.TwoPi;
+                        var up = Vector3D.CalculatePerpendicularVector(Info.OriginUp);
+                        var right = Vector3D.Cross(Info.OriginFwd, up);
+                        s.RandOffsetDir = Math.Sin(angle) * up + Math.Cos(angle) * right;
+                        s.RandOffsetDir *= 10;
+                    }
+                    else
+                        s.StageOne = true;
+
+                    if (offset)
+                    {
+                        commandedAccel += AccelInMetersPerSec * s.RandOffsetDir;
+                        commandedAccel = Vector3D.Normalize(commandedAccel) * AccelInMetersPerSec;
+                    }
+
                 }
 
                 newVel = Velocity + (commandedAccel * StepConst);
@@ -1553,7 +1575,7 @@ namespace CoreSystems.Projectiles
         internal void ActivateMine()
         {
             var ent = Info.Target.TargetEntity;
-            Info.Storage.MineActivated = true;
+            Info.Storage.StageOne = true;
             AtMaxRange = false;
             var targetPos = ent.PositionComp.WorldAABB.Center;
             var deltaPos = targetPos - Position;
@@ -1614,7 +1636,7 @@ namespace CoreSystems.Projectiles
             var inRange = false;
             var activate = false;
             var minDist = double.MaxValue;
-            if (!Info.Storage.MineActivated)
+            if (!Info.Storage.StageOne)
             {
                 MyEntity closestEnt = null;
                 MyGamePruningStructure.GetAllTopMostEntitiesInSphere(ref PruneSphere, MyEntityList, MyEntityQueryType.Dynamic);
@@ -1666,7 +1688,7 @@ namespace CoreSystems.Projectiles
 
             if (minDist <= Info.AmmoDef.Const.CollisionSize) activate = true;
             if (minDist <= detectRadius) inRange = true;
-            if (Info.Storage.MineActivated)
+            if (Info.Storage.StageOne)
             {
                 if (!inRange)
                     TriggerMine(true);
@@ -1688,12 +1710,12 @@ namespace CoreSystems.Projectiles
             }
 
             if (startTimer) DeaccelRate = Info.AmmoDef.Trajectory.Mines.FieldTime;
-            Info.Storage.MineTriggered = true;
+            Info.Storage.StageTwo = true;
         }
 
         internal void ResetMine()
         {
-            if (Info.Storage.MineTriggered)
+            if (Info.Storage.StageTwo)
             {
                 Info.Storage.IsSmart = false;
                 Info.DistanceTraveled = double.MaxValue;
@@ -1705,8 +1727,8 @@ namespace CoreSystems.Projectiles
             DistanceToTravelSqr = MaxTrajectorySqr;
 
             Info.AvShot.Triggered = false;
-            Info.Storage.MineTriggered = false;
-            Info.Storage.MineActivated = false;
+            Info.Storage.StageTwo = false;
+            Info.Storage.StageOne = false;
             LockedTarget = false;
             Info.Storage.MineSeeking = true;
 
@@ -1978,7 +2000,7 @@ namespace CoreSystems.Projectiles
             proSync.State = state;
             proSync.RandomX = seed.Item1;
             proSync.RandomY = seed.Item2;
-            proSync.OffsetDir = OffsetDir;
+            proSync.OffsetDir = Info.Storage.RandOffsetDir;
             proSync.OffsetTarget = OffsetTarget;
             proSync.ProId = Info.Storage.SyncId;
             proSync.TargetId = target.TargetId;
@@ -2084,13 +2106,13 @@ namespace CoreSystems.Projectiles
 
                         Info.Random.SyncSeed(sync.ProStateSync.RandomX, sync.ProStateSync.RandomY);
 
-                        var oldDir = OffsetDir;
+                        var oldDir = Info.Storage.RandOffsetDir;
                         var oldTarget = OffsetTarget;
-                        OffsetDir = sync.ProStateSync.OffsetDir;
+                        Info.Storage.RandOffsetDir = sync.ProStateSync.OffsetDir;
                         OffsetTarget = sync.ProStateSync.OffsetTarget;
 
                         if (w.System.WConst.DebugMode)
-                            Log.Line($"seedReset: Id:{Info.Id} - age:{Info.Age} - owl:{sync.CurrentOwl} - stateAge:{Info.Age - Info.Storage.LastProSyncStateAge} - tId:{sync.ProStateSync.TargetId} - oDirDiff:{Vector3D.IsZero(oldDir - OffsetDir, 1E-02d)} - targetDiff:{Vector3D.Distance(oldTarget, OffsetTarget)} - x:{oldX}[{sync.ProStateSync.RandomX}] - y{oldY}[{sync.ProStateSync.RandomY}]");
+                            Log.Line($"seedReset: Id:{Info.Id} - age:{Info.Age} - owl:{sync.CurrentOwl} - stateAge:{Info.Age - Info.Storage.LastProSyncStateAge} - tId:{sync.ProStateSync.TargetId} - oDirDiff:{Vector3D.IsZero(oldDir - Info.Storage.RandOffsetDir, 1E-02d)} - targetDiff:{Vector3D.Distance(oldTarget, OffsetTarget)} - x:{oldX}[{sync.ProStateSync.RandomX}] - y{oldY}[{sync.ProStateSync.RandomY}]");
                     }
 
                 }

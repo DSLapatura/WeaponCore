@@ -52,7 +52,6 @@ namespace CoreSystems.Projectiles
                 target.TargetEntity = t != Kind.Client ? wTarget.TargetEntity : gen.TargetEnt;
 
                 target.TargetState = wTarget.TargetState;
-
                 if (t == Kind.Client)
                     target.TargetState = target.TargetEntity != null ? Target.TargetStates.IsEntity : Target.TargetStates.None;
 
@@ -74,6 +73,7 @@ namespace CoreSystems.Projectiles
                 w.WeaponCache.VirutalId = t != Kind.Virtual ? -1 : w.WeaponCache.VirutalId;
                 info.Origin = t != Kind.Client ? t != Kind.Virtual ? muzzle.Position : w.MyPivotPos : gen.Origin;
                 info.Direction = t != Kind.Client ? t != Kind.Virtual ? gen.Direction : w.MyPivotFwd : gen.Direction;
+                info.OriginFwd = info.Direction;
 
                 if (t == Kind.Client && !aConst.IsBeamWeapon) 
                     p.Velocity = gen.Velocity;
@@ -101,7 +101,7 @@ namespace CoreSystems.Projectiles
                     w.GravityLength = w.GravityUnitDir.Normalize();
                 }
 
-                p.Gravity = updateGravity ? w.GravityPoint : Vector3D.Zero;
+                p.Gravity = updateGravity ? w.GravityPoint * aConst.GravityMultiplier : Vector3D.Zero;
 
                 if (t != Kind.Virtual)
                 {

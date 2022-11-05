@@ -124,16 +124,22 @@ namespace CoreSystems.Support
                     UpdatePhantom();
 
                 var dummyMatrix = _cachedDummyMatrix ?? MatrixD.Identity;
+                var requiresHandWeaponOffsets = _part != null && _part.BaseComp.TypeSpecific == CompTypeSpecific.Rifle && _part.BaseComp.Session.DedicatedServer;
                 var localPos = dummyMatrix.Translation;
                 var localDir = dummyMatrix.Forward;
                 var localUpDir = dummyMatrix.Up;
+                var partWorldMatrix = _cachedSubpart.PositionComp.WorldMatrixRef;
 
-                var requiresRootWorldOffset = _part != null && _part.BaseComp.TypeSpecific == CompTypeSpecific.Rifle && _part.BaseComp.Session.DedicatedServer;
-                var partWorldMatrix = !requiresRootWorldOffset ? _cachedSubpart.PositionComp.WorldMatrixRef : _part.BaseComp.GetWhyKeenTransformedWorldMatrixDummy((IMyAutomaticRifleGun)_cachedSubpart, _part.BaseComp.TopEntity);
-
-                Vector3D.Transform(ref localPos, ref partWorldMatrix, out CachedPos);
-                Vector3D.TransformNormal(ref localDir, ref partWorldMatrix, out CachedDir);
-                Vector3D.TransformNormal(ref localUpDir, ref partWorldMatrix, out CachedUpDir);
+                if (requiresHandWeaponOffsets) {
+                    var wComp = (Weapon.WeaponComponent) _part.BaseComp;
+                    wComp.GetHandWeaponDummyInfo(out CachedPos, out CachedDir, out CachedUpDir, out localPos);
+                }
+                else
+                {
+                    Vector3D.Transform(ref localPos, ref partWorldMatrix, out CachedPos);
+                    Vector3D.TransformNormal(ref localDir, ref partWorldMatrix, out CachedDir);
+                    Vector3D.TransformNormal(ref localUpDir, ref partWorldMatrix, out CachedUpDir);
+                }
 
                 _info.Position = CachedPos;
                 _info.LocalPosition = localPos;

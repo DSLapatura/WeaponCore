@@ -853,20 +853,28 @@ namespace CoreSystems
             }
         }
 
-        private void DrawHandDebug(HandWeaponDebugPacket handWeaponDebugPacket)
+        private void DrawHandDebug(HandWeaponDebugPacket hDebug)
         {
-            //var playerObb = new MyOrientedBoundingBoxD(handWeaponDebugPacket.PlayerBox, handWeaponDebugPacket.PlayerWorldMatrix);
+            var playerObb = new MyOrientedBoundingBoxD(hDebug.PlayerBox, hDebug.PlayerWorldMatrix);
             //DsDebugDraw.DrawBox(playerObb, Color.Blue);
 
-            var rifleObb = new MyOrientedBoundingBoxD(handWeaponDebugPacket.RifleBox, handWeaponDebugPacket.RifleWorldMatrix);
+            var rifleObb = new MyOrientedBoundingBoxD(hDebug.RifleBox, hDebug.RifleWorldMatrix);
             DsDebugDraw.DrawBox(rifleObb, Color.Red);
 
-            var muzzleLine1 =  new LineD(handWeaponDebugPacket.MuzzlePos, handWeaponDebugPacket.MuzzlePos + (handWeaponDebugPacket.MuzzleDir * 3));
-            var muzzleLine2 = new LineD(handWeaponDebugPacket.OffsetWorldPosition, handWeaponDebugPacket.OffsetWorldPosition + (handWeaponDebugPacket.MuzzleDir * 3));
+            var muzzleLine1 =  new LineD(hDebug.MuzzlePos, hDebug.MuzzlePos + (hDebug.MuzzleDir * 3));
 
             DsDebugDraw.DrawLine(muzzleLine1.From, muzzleLine1.To, Color.Green, 0.1f);
-            DsDebugDraw.DrawLine(muzzleLine2.From, muzzleLine1.To, Color.Blue, 0.1f);
+            DsDebugDraw.DrawLine(hDebug.PivotTestLineFrom, hDebug.PivotTestLineTo, Color.Blue, 0.1f);
+            DsDebugDraw.DrawLine(hDebug.BarrelTestLineFrom, hDebug.BarrelTestLineTo, Color.Red, 0.1f);
+            DsDebugDraw.DrawLine(hDebug.CenterTestLineFrom, hDebug.CenterTestLineTo, Color.Yellow, 0.1f);
+            DsDebugDraw.DrawLine(hDebug.AimTestLineFrom, hDebug.AimTestLineTo, Color.White, 0.1f);
+            DsDebugDraw.DrawLine(hDebug.AzimuthFwdLineFrom, hDebug.AzimuthFwdLineTo, Color.Cyan, 0.1f);
 
+
+            if (Tick180)
+            {
+                Log.Line($"mPos:{hDebug.MuzzlePos} - mDir:{hDebug.MuzzleDir} - pPos:{playerObb.Center} - mLen:{muzzleLine1.Length}");
+            }
         }
 
         private static void CounterKeenLogMessage(bool console = true)

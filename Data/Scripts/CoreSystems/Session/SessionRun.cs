@@ -232,6 +232,8 @@ namespace CoreSystems
                     DsUtil.Complete("network1", true);
                 }
 
+                ++SimulationCount;
+
             }
             catch (Exception ex) { Log.Line($"Exception in SessionSim: {ex}", null, true); }
         }

@@ -463,12 +463,16 @@ namespace CoreSystems.Support
             var clientPredictedAmmoDisabled = AmmoModsFound && _modifierMap[ClientPredAmmoStr].HasData() && _modifierMap[ClientPredAmmoStr].GetAsBool;
             var predictionEligible = session.IsClient || session.DedicatedServer;
 
-            ClientPredictedAmmo = predictionEligible && FixedFireAmmo && !ammo.IsShrapnel && RealShotsPerMin <= 120 && !clientPredictedAmmoDisabled;
+
+            var predictedShotLimit = system.PartType != HardwareDef.HardwareType.HandWeapon ? 120 : 450;
+            var predictedReloadLimit = system.PartType != HardwareDef.HardwareType.HandWeapon ? 120 : 60;
+
+            ClientPredictedAmmo = predictionEligible && FixedFireAmmo && !ammo.IsShrapnel && RealShotsPerMin <= predictedShotLimit && !clientPredictedAmmoDisabled;
 
             if (!ClientPredictedAmmo && predictionEligible)
                 Log.Line($"{ammo.AmmoDef.AmmoRound} is NOT enabled for client prediction");
 
-            SlowFireFixedWeapon = system.TurretMovement == WeaponSystem.TurretType.Fixed && (RealShotsPerMin <= 120 || Reloadable && system.WConst.ReloadTime >= 120);
+            SlowFireFixedWeapon = system.TurretMovement == WeaponSystem.TurretType.Fixed && (RealShotsPerMin <= predictedShotLimit || Reloadable && system.WConst.ReloadTime >= predictedReloadLimit);
 
             if (!SlowFireFixedWeapon && system.TurretMovement == WeaponSystem.TurretType.Fixed && predictionEligible)
                 Log.Line($"{ammo.AmmoDef.AmmoRound} does not qualify for fixed weapon client reload verification");

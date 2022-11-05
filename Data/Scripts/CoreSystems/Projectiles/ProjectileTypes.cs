@@ -36,6 +36,7 @@ namespace CoreSystems.Support
         internal VoxelCache VoxelCache;
         internal Vector3D ShooterVel;
         internal Vector3D Origin;
+        internal Vector3D OriginFwd;
         internal Vector3D OriginUp;
         internal Vector3D Direction;
         internal Vector3D PrevTargetPos;
@@ -197,6 +198,7 @@ namespace CoreSystems.Support
             ShooterVel = Vector3D.Zero;
             TriggerMatrix = MatrixD.Identity;
             PrevTargetPos = Vector3D.Zero;
+            OriginFwd = Vector3D.Zero;
         }
     }
     internal enum DroneStatus
@@ -224,17 +226,20 @@ namespace CoreSystems.Support
         internal DroneStatus DroneStat;
         internal DroneMission DroneMsn;
         internal Vector3D TaskPosition;
+        internal Vector3D RandOffsetDir;
+        internal Vector3D OffsetDir;
         internal FakeTargets DummyTargets;
         internal MyEntity NavTargetEnt;
         internal Target ShootTarget;
         internal BoundingSphereD NavTargetBound;
+
         internal bool IsFriend;
         internal bool UsesStrafe;
         internal bool SmartReady;
         internal bool IsSmart;
         internal bool MineSeeking;
-        internal bool MineActivated;
-        internal bool MineTriggered;
+        internal bool StageOne;
+        internal bool StageTwo;
         internal bool WasTracking;
         internal bool PickTarget;
         internal int ProSyncPosMissCount;
@@ -256,6 +261,8 @@ namespace CoreSystems.Support
             DroneStat = DroneStatus.Launch;
             DroneMsn = DroneMission.Attack;
             TaskPosition = Vector3D.Zero;
+            RandOffsetDir = Vector3D.Zero;
+            OffsetDir = Vector3D.Zero;
             NavTargetEnt = null;
             ShootTarget = null;
             NavTargetBound = new BoundingSphereD(Vector3D.Zero,0);
@@ -263,8 +270,8 @@ namespace CoreSystems.Support
             UsesStrafe = false;
             SmartReady = false;
             MineSeeking = false;
-            MineActivated = false;
-            MineTriggered = false;
+            StageOne = false;
+            StageTwo = false;
             WasTracking = false;
             IsSmart = false;
             SmartSlot = 0;
@@ -625,7 +632,7 @@ namespace CoreSystems.Support
                 p.PrevTargetPos = frag.PrevTargetPos;
                 info.Direction = frag.Direction;
                 p.StartSpeed = frag.Velocity;
-                p.Gravity = aConst.FeelsGravity && info.Ai.InPlanetGravity ? frag.Weapon.GravityPoint : Vector3D.Zero;
+                p.Gravity = aConst.FeelsGravity && info.Ai.InPlanetGravity ? frag.Weapon.GravityPoint * aConst.GravityMultiplier : Vector3D.Zero;
                 info.LockOnFireState = frag.LockOnFireState;
                 info.MaxTrajectory = aConst.MaxTrajectory;
                 info.ShotFade = 0;
