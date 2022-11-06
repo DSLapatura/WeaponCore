@@ -95,10 +95,10 @@ namespace CoreSystems
             {
                 foreach (var part in PartToPullConsumable) { 
 
-                    using (part.BaseComp.Ai?.TopEntity.Pin())
+                    using (part.BaseComp.TopEntity.Pin())
                     using (part.BaseComp.CoreEntity.Pin()) {
 
-                        if (part.BaseComp.CoreEntity.MarkedForClose || part.BaseComp.Ai == null || part.BaseComp.Ai.MarkedForClose || part.BaseComp.Ai.TopEntity.MarkedForClose || !part.BaseComp.InventoryInited || part.BaseComp.Platform.State != CorePlatform.PlatformState.Ready) {
+                        if (part.BaseComp.CoreEntity.MarkedForClose || part.BaseComp.Ai == null || part.BaseComp.Ai.MarkedForClose || part.BaseComp.TopEntity.MarkedForClose || !part.BaseComp.InventoryInited || part.BaseComp.Platform.State != CorePlatform.PlatformState.Ready) {
                             InvPullClean.Add(part);
                             continue;
                         }

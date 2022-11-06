@@ -446,7 +446,7 @@ namespace CoreSystems
             {
                 var w = HomingWeapons[i];
                 var comp = w.BaseComp;
-                if (w.BaseComp.Ai == null || comp.Ai.TopEntity.MarkedForClose || comp.Ai.Concealed || comp.CoreEntity.MarkedForClose || !comp.Cube.IsFunctional) {
+                if (w.BaseComp.Ai == null || comp.TopEntity.MarkedForClose || comp.Ai.Concealed || comp.CoreEntity.MarkedForClose || !comp.Cube.IsFunctional) {
                     HomingWeapons.RemoveAtFast(i);
                     continue;
                 }
@@ -1027,7 +1027,7 @@ namespace CoreSystems
                     var aiFaction = MyAPIGateway.Session.Factions.TryGetPlayerFaction(w.BaseComp.Ai.AiOwner);
                     var aFaction = aiFaction != null && !string.IsNullOrEmpty(aiFaction.Name) ? $"{aiFaction.Name}({aiFaction.FactionId})" : "NA";
 
-                    Log.Line($"New Threat Detected:{topmost.DebugName}\n - by: {w.BaseComp.Ai.TopEntity.DebugName}" +
+                    Log.Line($"New Threat Detected:{topmost.DebugName}\n - by: {w.BaseComp.TopEntity.DebugName}" +
                              $"Attacking Weapon:{w.System.PartName} " + $"[Weapon] Owner:{wOwner} - Faction:{wFaction} - Neutrals:{w.Comp.Data.Repo.Values.Set.Overrides.Neutrals} - Friends:{w.Comp.Data.Repo.Values.Set.Overrides.Friendly} - Unowned:{w.Comp.Data.Repo.Values.Set.Overrides.Unowned}\n" +
                              $"[Ai] Owner:{aOwner} - Faction:{aFaction} - Relationship:{info.EntInfo.Relationship} - ThreatLevel:{info.OffenseRating} - isFocus:{w.BaseComp.Ai.Construct.RootAi.Construct.Focus.OldHasFocus}\n", "combat");
                 }

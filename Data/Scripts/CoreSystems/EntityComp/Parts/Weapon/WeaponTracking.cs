@@ -575,15 +575,16 @@ namespace CoreSystems.Platform
         internal static Vector3D TrajectoryEstimation(Weapon weapon, Vector3D targetPos, Vector3D targetVel, Vector3D targetAcc, Vector3D shooterPos, out bool valid, bool overrideMode = false, bool setAdvOverride = false, bool skipAccel = false)
         {
             valid = true;
-            var ai = weapon.Comp.Ai;
+            var comp = weapon.Comp;
+            var ai = comp.Ai;
             var session = ai.Session;
             var ammoDef = weapon.ActiveAmmoDef.AmmoDef;
 
             if (ai.VelocityUpdateTick != session.Tick)
             {
-                ai.TopEntityVolume.Center = ai.TopEntity.PositionComp.WorldVolume.Center;
-                ai.TopEntityVel = ai.TopEntity.Physics?.LinearVelocity ?? Vector3D.Zero;
-                ai.IsStatic = ai.TopEntity.Physics?.IsStatic ?? false;
+                ai.TopEntityVolume.Center = comp.TopEntity.PositionComp.WorldVolume.Center;
+                ai.TopEntityVel = comp.TopEntity.Physics?.LinearVelocity ?? Vector3D.Zero;
+                ai.IsStatic = comp.TopEntity.Physics?.IsStatic ?? false;
                 ai.VelocityUpdateTick = session.Tick;
             }
 

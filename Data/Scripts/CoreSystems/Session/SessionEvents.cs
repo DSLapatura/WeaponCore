@@ -579,8 +579,8 @@ namespace CoreSystems
                 PlayerEventId++;
                 if (AuthorIds.Contains(player.SteamUserId))
                 {
-                    if (MpActive && DedicatedServer)
-                        FutureEvents.Schedule(MovePlayer, player, 600);
+                    //if (MpActive && DedicatedServer)
+                    //    FutureEvents.Schedule(MovePlayer, player, 600);
 
                     ConnectedAuthors.Add(id, player.SteamUserId);
                 }

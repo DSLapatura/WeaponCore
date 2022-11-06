@@ -479,9 +479,10 @@ namespace CoreSystems
     {
         [ProtoMember(1)] public uint Revision;
         [ProtoMember(2)] public long EntityId;
-        [ProtoMember(3)] public Vector3 TargetPos;
+        //[ProtoMember(3)] public Vector3 TargetPos;
         [ProtoMember(4)] public int PartId;
         [ProtoMember(5)] public WeaponRandomGenerator WeaponRandom; // save
+        [ProtoMember(6)] public Vector3D TargetPos;
 
         internal void SyncTarget(Weapon w)
         {
@@ -526,6 +527,7 @@ namespace CoreSystems
             }
 
             target.TargetPos = TargetPos;
+            target.TargetingOrigin = w.MyPivotPos;
             target.ClientDirty = true;
         }
 
@@ -533,7 +535,7 @@ namespace CoreSystems
         {
             ++Revision;
             EntityId = 0;
-            TargetPos = Vector3.Zero;
+            TargetPos = Vector3D.Zero;
         }
     }
 

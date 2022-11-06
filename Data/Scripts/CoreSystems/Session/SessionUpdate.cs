@@ -3,7 +3,6 @@ using CoreSystems.Platform;
 using CoreSystems.Projectiles;
 using CoreSystems.Support;
 using Sandbox.ModAPI;
-using VRage.Game.ModAPI;
 using VRageMath;
 using static CoreSystems.Support.Target;
 using static CoreSystems.Support.CoreComponent.Start;
@@ -12,12 +11,8 @@ using static CoreSystems.Support.WeaponDefinition.AmmoDef.TrajectoryDef.Guidance
 using static CoreSystems.ProtoWeaponState;
 using Sandbox.Game.Entities;
 using System;
-using System.Diagnostics;
 using Sandbox.ModAPI.Weapons;
 using SpaceEngineers.Game.ModAPI;
-using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
-using VRage.Input;
-using SpaceEngineers.Game.Weapons.Guns;
 using VRage.Game.Entity;
 
 namespace CoreSystems
@@ -739,7 +734,7 @@ namespace CoreSystems
                 var w = AcquireTargets[i];
                 var comp = w.Comp;
                 var overrides = w.MasterComp?.Data.Repo.Values.Set.Overrides ?? comp.Data.Repo.Values.Set.Overrides;
-                if (w.BaseComp.IsAsleep || w.BaseComp.Ai == null || comp.Ai.TopEntity.MarkedForClose || comp.Ai.IsGrid && !comp.Ai.HasPower || comp.Ai.Concealed || comp.CoreEntity.MarkedForClose || !comp.Ai.DbReady || !comp.IsWorking || w.NoMagsToLoad && w.ProtoWeaponAmmo.CurrentAmmo == 0 && Tick - w.LastMagSeenTick > 600) {
+                if (w.BaseComp.IsAsleep || w.BaseComp.Ai == null || comp.TopEntity.MarkedForClose || comp.Ai.IsGrid && !comp.Ai.HasPower || comp.Ai.Concealed || comp.CoreEntity.MarkedForClose || !comp.Ai.DbReady || !comp.IsWorking || w.NoMagsToLoad && w.ProtoWeaponAmmo.CurrentAmmo == 0 && Tick - w.LastMagSeenTick > 600) {
 
                     w.AcquiringTarget = false;
                     AcquireTargets.RemoveAtFast(i);
@@ -787,7 +782,7 @@ namespace CoreSystems
             for (int i = ShootingWeapons.Count - 1; i >= 0; i--) {
                 
                 var w = ShootingWeapons[i];
-                var invalidWeapon = w.Comp.CoreEntity.MarkedForClose || w.Comp.Ai == null || w.Comp.Ai.Concealed || w.Comp.Ai.TopEntity.MarkedForClose || w.Comp.Platform.State != CorePlatform.PlatformState.Ready;
+                var invalidWeapon = w.Comp.CoreEntity.MarkedForClose || w.Comp.Ai == null || w.Comp.Ai.Concealed || w.Comp.TopEntity.MarkedForClose || w.Comp.Platform.State != CorePlatform.PlatformState.Ready;
                 var smartTimer = w.ActiveAmmoDef.AmmoDef.Trajectory.Guidance == Smart && (QCount == w.ShortLoadId && (w.Target.HasTarget || w.LockOnFireState) && Tick - w.LastSmartLosCheck > 240 || Tick - w.LastSmartLosCheck > 1200);
                 var quickSkip = invalidWeapon || w.Comp.IsBlock && smartTimer && !w.SmartLos() || w.PauseShoot || w.LiveDrones >= w.System.MaxActiveProjectiles || (w.ProtoWeaponAmmo.CurrentAmmo == 0 && w.ClientMakeUpShots == 0) && w.ActiveAmmoDef.AmmoDef.Const.Reloadable;
                 if (quickSkip) continue;

@@ -107,7 +107,7 @@ namespace CoreSystems
                 info.HitList.Clear();
 
                 if (GlobalDamageHandlerActive && info.ObjectsHit > 0)
-                    Api.ProjectileDamageEvents.Add(new MyTuple<ulong, long, int, MyEntity, MyEntity, ListReader<MyTuple<Vector3D, object, float>>>(info.Id, info.Weapon.Comp.Data.Repo.Values.State.PlayerId, info.Weapon.PartId, info.Weapon.Comp.CoreEntity, info.Ai.TopEntity, new ListReader<MyTuple<Vector3D, object, float>>(info.ProHits)));
+                    Api.ProjectileDamageEvents.Add(new MyTuple<ulong, long, int, MyEntity, MyEntity, ListReader<MyTuple<Vector3D, object, float>>>(info.Id, info.Weapon.Comp.Data.Repo.Values.State.PlayerId, info.Weapon.PartId, info.Weapon.Comp.CoreEntity, info.Weapon.Comp.TopEntity, new ListReader<MyTuple<Vector3D, object, float>>(info.ProHits)));
 
             }
             Hits.Clear();
@@ -253,7 +253,7 @@ namespace CoreSystems
             if (logDamage) Log.Line($"Shld hit: Primary dmg- {priDamage}    AOE dmg- {detonateDamage+radiantDamage}");
 
             var hitWave = info.AmmoDef.Const.RealShotsPerMin <= 120;
-            var hit = SApi.PointAttackShieldCon(shield, hitEnt.HitPos.Value, info.Target.CoreEntity.EntityId, (float)scaledDamage, (float)detonateDamage, energy, hitWave);
+            var hit = SApi.PointAttackShieldCon(shield, hitEnt.HitPos.Value, info.Weapon.Comp.CoreEntity.EntityId, (float)scaledDamage, (float)detonateDamage, energy, hitWave);
             info.DamageDoneShld += (long)(scaledDamage + detonateDamage);
 
             if (hit.HasValue)
@@ -327,7 +327,7 @@ namespace CoreSystems
 
             //Target/targeting Info
             var largeGrid = grid.GridSizeEnum == MyCubeSize.Large;
-            var attackerId = t.Target.CoreEntity.EntityId;
+            var attackerId = t.Weapon.Comp.CoreEntity.EntityId;
             var maxObjects = t.AmmoDef.Const.MaxObjectsHit;
             var gridMatrix = grid.PositionComp.WorldMatrixRef;
             var playerAi = t.Ai.AiType == Ai.AiTypes.Player;
@@ -836,7 +836,7 @@ namespace CoreSystems
             var shieldHeal = info.AmmoDef.DamageScales.Shields.Type == ShieldDef.ShieldType.Heal;
             var sync = MpActive && IsServer;
 
-            var attackerId = info.Target.CoreEntity.EntityId;
+            var attackerId = info.Weapon.Comp.CoreEntity.EntityId;
 
             var objHp = destObj.Integrity;
             var integrityCheck = info.AmmoDef.DamageScales.MaxIntegrity > 0;
@@ -1049,7 +1049,7 @@ namespace CoreSystems
                     if (dRadius < 1.5) dRadius = 1.5f;
 
                     if (info.DoDamage)
-                        SUtils.CreateVoxelExplosion(this, dDamage, dRadius, hitEnt.HitPos.Value, hitEnt.Intersection.Direction, info.Target.CoreEntity, destObj, info.AmmoDef, true);
+                        SUtils.CreateVoxelExplosion(this, dDamage, dRadius, hitEnt.HitPos.Value, hitEnt.Intersection.Direction, info.Weapon.Comp.CoreEntity, destObj, info.AmmoDef, true);
                 }
 
                 if (GlobalDamageHandlerActive) {

@@ -10,6 +10,8 @@ using VRage.ModAPI;
 using VRageMath;
 using static CoreSystems.Support.Ai;
 using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetDef;
+using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
+
 namespace CoreSystems.Platform
 {
     public partial class Weapon
@@ -149,6 +151,19 @@ namespace CoreSystems.Platform
                         */
                     }
                 }
+            }
+
+            internal void CycleHandAmmo()
+            {
+                if (ConsumableSelectionPartIds.Count > 0)
+                {
+                    CycleAmmo();
+                }
+            }
+
+            internal void HandReloadNotify(Weapon w)
+            {
+                Session.ShowLocalNotify($"Ammo type swapped to: {w.ActiveAmmoDef.AmmoName}", 1500, "White");
             }
 
             internal void GetHandWeaponDummyInfo(out Vector3D position, out Vector3D direction, out Vector3D upDir, out Vector3D localPos)

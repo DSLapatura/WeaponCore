@@ -22,6 +22,8 @@ namespace CoreSystems.Platform
         private readonly HashSet<string> _muzzlesFiring = new HashSet<string>();
         internal readonly Dictionary<int, string> MuzzleIdToName = new Dictionary<int, string>();
         internal readonly Dictionary<long, ClientProSync> WeaponProSyncs = new Dictionary<long, ClientProSync>();
+        internal readonly Dictionary<string, PartAnimation> AnimationLookup = new Dictionary<string, PartAnimation>();
+        internal readonly List<MyCubeBlock> Top5 = new List<MyCubeBlock>();
 
         internal readonly WeaponFrameCache WeaponCache;
         internal readonly WeaponSystem System;
@@ -48,17 +50,18 @@ namespace CoreSystems.Platform
         internal readonly MyEntity3DSoundEmitter HardPointEmitter;
 
         internal readonly Dictionary<EventTriggers, PartAnimation[]> AnimationsSet;
-        internal readonly Dictionary<string, PartAnimation> AnimationLookup = new Dictionary<string, PartAnimation>();
-        internal bool AlternateForward;
         internal readonly bool PrimaryWeaponGroup;
         internal readonly bool AiOnlyWeapon;
         internal readonly bool HasHardPointSound;
+        
+        internal WeaponDefinition.TargetingDef.BlockTypes LastTop5BlockType;
 
         private int _nextVirtual;
         private uint _ticksUntilShoot;
         private uint _spinUpTick;
         private uint _ticksBeforeSpinUp;
 
+        internal bool AlternateForward;
         internal bool BurstAvDelay;
         internal bool HeatLoopRunning;
         internal bool PreFired;

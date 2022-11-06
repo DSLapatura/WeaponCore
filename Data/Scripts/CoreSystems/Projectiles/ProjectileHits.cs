@@ -34,6 +34,9 @@ namespace CoreSystems.Projectiles
                 var info = p.Info;
                 var target = info.Target;
                 var ai = info.Ai;
+                var w = info.Weapon;
+                var coreEntity = w.Comp.CoreEntity;
+                var topEntity = w.Comp.TopEntity;
                 var aDef = info.AmmoDef;
                 var aConst = info.AmmoDef.Const;
                 var shieldByPass = aConst.ShieldDamageBypassMod > 0;
@@ -51,19 +54,19 @@ namespace CoreSystems.Projectiles
                 var entityCollection = p.MyEntityList;
                 var collectionCount = !useEntityCollection ? p.MySegmentList.Count : entityCollection.Count;
                 var ray = new RayD(ref p.Beam.From, ref p.Beam.Direction);
-                var firingCube = target.CoreCube;
+                var firingCube = coreEntity as MyCubeBlock;
                 var goCritical = aConst.IsCriticalReaction;
                 var selfDamage = aConst.SelfDamage;
                 var ignoreVoxels = aDef.IgnoreVoxels;
                 var isGrid = ai.AiType == Ai.AiTypes.Grid;
                 var beamLen = p.Beam.Length;
                 var beamLenSqr = beamLen * beamLen;
+                var closestFutureDistSqr = double.MaxValue;
 
                 //New Obb, have fun!
-                var lastpos = p.LastPosition;
-                var curpos = p.Position;
-                var thickness = p.Info.AmmoDef.Const.CollisionSize;
-                var closestFutureDistSqr = double.MaxValue;
+                //var lastpos = p.LastPosition;
+                //var curpos = p.Position;
+                //var thickness = p.Info.AmmoDef.Const.CollisionSize;
                 //p.ProjObb.Center = curpos + (curpos - lastpos) * 0.5f;
                 //p.ProjObb.Orientation = Quaternion.CreateFromTwoVectors(lastpos, curpos);
                 //p.ProjObb.HalfExtent = new Vector3D(p.ProjObb.Orientation.Length() / 2 + thickness, thickness, thickness);
@@ -80,7 +83,7 @@ namespace CoreSystems.Projectiles
                     var grid = ent as MyCubeGrid;
                     var entIsSelf = grid != null && firingCube != null && (grid == firingCube.CubeGrid || firingCube.CubeGrid.IsSameConstructAs(grid));
 
-                    if (entIsSelf && aConst.IsSmart && !info.Storage.SmartReady || ent.MarkedForClose || !ent.InScene || ent == info.MyShield || !isGrid && ent == ai.TopEntity) continue;
+                    if (entIsSelf && aConst.IsSmart && !info.Storage.SmartReady || ent.MarkedForClose || !ent.InScene || ent == info.MyShield || !isGrid && ent == topEntity) continue;
 
                     var character = ent as IMyCharacter;
                     if (info.EwarActive && character != null && !genericFields) continue;
@@ -167,7 +170,7 @@ namespace CoreSystems.Projectiles
                             if (shieldInfo.Value.Item2.Item1)
                             {
                                 var shrapnelSpawn = p.Info.IsFragment && p.Info.Age < 1;
-                                if (Vector3D.Transform(!shrapnelSpawn ? info.Origin : target.CoreEntity.PositionComp.WorldMatrixRef.Translation, shieldInfo.Value.Item3.Item1).LengthSquared() > 1)
+                                if (Vector3D.Transform(!shrapnelSpawn ? info.Origin : coreEntity.PositionComp.WorldMatrixRef.Translation, shieldInfo.Value.Item3.Item1).LengthSquared() > 1)
                                 {
 
                                     var dist = MathFuncs.IntersectEllipsoid(shieldInfo.Value.Item3.Item1, shieldInfo.Value.Item3.Item2, new RayD(p.Beam.From, p.Beam.Direction));
@@ -376,7 +379,7 @@ namespace CoreSystems.Projectiles
                                 if (!isBeam && p.Beam.Length <= grid.GridSize * 2 && !goCritical)
                                 {
                                     MyCube cube;
-                                    if (!(grid.TryGetCube(grid.WorldToGridInteger(p.Position), out cube) && cube.CubeBlock != target.CoreCube.SlimBlock || grid.TryGetCube(grid.WorldToGridInteger(p.LastPosition), out cube) && cube.CubeBlock != target.CoreCube.SlimBlock))
+                                    if (!(grid.TryGetCube(grid.WorldToGridInteger(p.Position), out cube) && isGrid && cube.CubeBlock != firingCube.SlimBlock || grid.TryGetCube(grid.WorldToGridInteger(p.LastPosition), out cube) && isGrid && cube.CubeBlock != firingCube.SlimBlock))
                                     {
                                         HitEntityPool.Return(hitEntity);
                                         continue;
@@ -400,7 +403,7 @@ namespace CoreSystems.Projectiles
                                             if (grid.TryGetCube(hitEntity.Vector3ICache[j], out myCube))
                                             {
 
-                                                if (goCritical || ((IMySlimBlock)myCube.CubeBlock).Position != target.CoreCube.Position)
+                                                if (goCritical || isGrid && ((IMySlimBlock)myCube.CubeBlock).Position != firingCube.Position)
                                                 {
 
                                                     hitself = true;
@@ -480,7 +483,8 @@ namespace CoreSystems.Projectiles
                     }
                 }
 
-                target.ClosestObstacle = closestFutureEnt;
+                if (aConst.IsDrone)
+                    info.Storage.ClosestObstacle = closestFutureEnt;
 
                 if (target.TargetState == Target.TargetStates.IsProjectile && aConst.NonAntiSmartEwar && !projetileInShield)
                 {
@@ -672,7 +676,7 @@ namespace CoreSystems.Projectiles
 
             var intersectOrigin = isBeam ? new Vector3D(p.Beam.From + (info.Direction * distToTarget)) : p.LastPosition;
 
-            info.Ai.Session.SendFixedGunHitEvent(hit, info.Target.CoreEntity, info.Hit.Entity, intersectOrigin, vel, info.OriginUp, info.MuzzleId, info.Weapon.System.WeaponIdHash, aConst.AmmoIdxPos, (float)(isBeam ? info.MaxTrajectory : distToTarget));
+            info.Ai.Session.SendFixedGunHitEvent(hit, info.Weapon.Comp.CoreEntity, info.Hit.Entity, intersectOrigin, vel, info.OriginUp, info.MuzzleId, info.Weapon.System.WeaponIdHash, aConst.AmmoIdxPos, (float)(isBeam ? info.MaxTrajectory : distToTarget));
             info.AimedShot = false; //to prevent hits on another grid from triggering again
         }
 
@@ -886,7 +890,7 @@ namespace CoreSystems.Projectiles
                             {
                                 var posI = hitEnt.Vector3ICache[j];
                                 var firstBlock = grid.GetCubeBlock(posI) as IMySlimBlock;
-                                if (firstBlock != null && firstBlock != lastBlockHit && !firstBlock.IsDestroyed && (hitEnt.Info.Target.CoreCube == null || firstBlock != hitEnt.Info.Target.CoreCube.SlimBlock || ewarWeaponDamage && firstBlock == hitEnt.Info.Target.CoreCube.SlimBlock))
+                                if (firstBlock != null && firstBlock != lastBlockHit && !firstBlock.IsDestroyed && (hitEnt.Info.Ai.AiType != Ai.AiTypes.Grid || firstBlock != hitEnt.Info.Weapon.Comp.Cube.SlimBlock || ewarWeaponDamage && firstBlock == hitEnt.Info.Weapon.Comp.Cube.SlimBlock))
                                 {
                                     lastBlockHit = firstBlock;
                                     hitEnt.Blocks.Add(new HitEntity.RootBlocks {Block = firstBlock, QueryPos = posI});

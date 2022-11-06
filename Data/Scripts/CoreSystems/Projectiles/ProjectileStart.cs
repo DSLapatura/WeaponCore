@@ -44,16 +44,20 @@ namespace CoreSystems.Projectiles
                 info.AmmoDef = a;
                 info.DoDamage = Session.IsServer && (!aConst.ClientPredictedAmmo || t == Kind.Client || !comp.ActivePlayer ); // shrapnel do not run this loop, but do inherit DoDamage from parent.
 
-                target.CoreCube = comp.Cube;
-                target.CoreEntity = comp.CoreEntity;
-                target.CoreParent = comp.TopEntity;
-
                 target.Projectile = wTarget.Projectile;
                 target.TargetEntity = t != Kind.Client ? wTarget.TargetEntity : gen.TargetEnt;
 
-                target.TargetState = wTarget.TargetState;
                 if (t == Kind.Client)
+                {
                     target.TargetState = target.TargetEntity != null ? Target.TargetStates.IsEntity : Target.TargetStates.None;
+                    target.TargetPos = target.TargetEntity != null ? target.TargetEntity.PositionComp.WorldAABB.Center : Vector3D.Zero;
+                }
+                else
+                {
+                    target.TargetState = wTarget.TargetState;
+                    target.TargetPos = wTarget.TargetPos;
+                }
+
 
                 info.Storage.DummyTargets = null;
                 if (comp.FakeMode && (aConst.IsDrone || aConst.IsSmart))
@@ -73,7 +77,6 @@ namespace CoreSystems.Projectiles
                 w.WeaponCache.VirutalId = t != Kind.Virtual ? -1 : w.WeaponCache.VirutalId;
                 info.Origin = t != Kind.Client ? t != Kind.Virtual ? muzzle.Position : w.MyPivotPos : gen.Origin;
                 info.Direction = t != Kind.Client ? t != Kind.Virtual ? gen.Direction : w.MyPivotFwd : gen.Direction;
-                info.OriginFwd = info.Direction;
 
                 if (t == Kind.Client && !aConst.IsBeamWeapon) 
                     p.Velocity = gen.Velocity;

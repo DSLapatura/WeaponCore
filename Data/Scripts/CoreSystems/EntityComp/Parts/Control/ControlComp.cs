@@ -394,43 +394,6 @@ namespace CoreSystems.Platform
 
                 return true;
             }
-
-            private uint _lastAction1Tick;
-            internal void CheckAction1(Ai topAi)
-            {
-                var w = topAi.RootFixedWeaponComp.PrimaryWeapon;
-                var target = w.Target;
-                Vector3D targetPos;
-                if (target.HasTarget && target.HasTarget && target.ChangeTick > _lastAction1Tick && Weapon.TargetAligned(w, target, out targetPos))
-                {
-                    Actions.Clear();
-                    Controller.GetActions(Actions, null);
-
-                    foreach (var a in Actions)
-                    {
-                        Log.Line($"tracking: {a.Id} - {a.Name}");
-                    }
-                    _lastAction1Tick = Session.Tick;
-                }
-
-            }
-
-            private uint _lastAction2Tick;
-            internal void CheckActions2(Ai topAi)
-            {
-                if (_lastAction2Tick > 1)
-                {
-                    Actions.Clear();
-                    Controller.GetActions(Actions, null);
-
-                    foreach (var a in Actions)
-                    {
-                        Log.Line($"notTracking: {a.Id} - {a.Name}");
-                    }
-                }
-                _lastAction2Tick = Session.Tick;
-            }
-
         }
     }
 }

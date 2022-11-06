@@ -12,41 +12,32 @@ namespace CoreSystems.Support
 {
     public class Target
     {
-        internal readonly List<MyCubeBlock> Top5 = new List<MyCubeBlock>();
-        internal int[] TargetDeck = Array.Empty<int>();
-        internal int[] BlockDeck = Array.Empty<int>();
-        internal States PreviousState = States.NotSet;
+        internal Part Part;
+        internal MyEntity TargetEntity;
+        internal Projectile Projectile;
+        internal Vector3D TargetPos;
+        internal Vector3D TargetingOrigin;
+        internal Vector3D OriginTargetDir;
+
         internal States CurrentState = States.NotSet;
+        internal TargetStates TargetState;
+
         internal bool HasTarget;
         internal bool IsAligned;
         internal bool SoftProjetileReset;
         internal bool TargetChanged;
-        internal bool ParentIsPart;
         internal bool IsTargetStorage;
         internal bool ClientDirty;
-        internal bool CoreIsCube;
         internal bool IsDrone;
-        internal Part Part;
-        internal MyEntity CoreEntity;
-        internal MyEntity CoreParent;
-        internal MyEntity TargetEntity;
-        internal MyEntity ClosestObstacle;
-        internal MyCubeBlock CoreCube;
-        internal Projectile Projectile;
 
-        internal int TargetPrevDeckLen;
-        internal int BlockPrevDeckLen;
         internal uint ExpiredTick;
         internal uint ResetTick;
         internal uint ProjectileEndTick;
-        internal uint ChangeTick;
-        internal BlockTypes LastBlockType;
-        internal TargetStates TargetState;
-        internal Vector3D TargetPos;
-        internal double HitShortDist;
-        internal double OrigDistance;
         internal long TargetId;
         internal long TopEntityId;
+
+        internal double HitShortDist;
+        internal double OrigDistance;
 
         public enum TargetStates
         {
@@ -94,11 +85,6 @@ namespace CoreSystems.Support
 
         internal Target(Part part = null, bool main = false)
         {
-            ParentIsPart = part?.BaseComp?.CoreEntity != null;
-            CoreEntity = part?.BaseComp?.CoreEntity;
-            CoreParent = part?.BaseComp?.TopEntity;
-            CoreCube = part?.BaseComp?.Cube;
-            CoreIsCube = CoreCube != null;
             Part = part;
             IsTargetStorage = main;
         }
@@ -198,6 +184,8 @@ namespace CoreSystems.Support
             target.TargetEntity = TargetEntity;
             target.Projectile = Projectile;
             target.TargetPos = TargetPos;
+            target.TargetingOrigin = TargetingOrigin;
+
             target.HitShortDist = HitShortDist;
             target.OrigDistance = OrigDistance;
             target.TopEntityId = TopEntityId;
@@ -207,24 +195,12 @@ namespace CoreSystems.Support
             Reset(expireTick, States.Transfered);
         }
 
-        internal void CopyTo(Target target, bool drone = false)
-        {
-            target.IsDrone = drone;
-            target.TargetEntity = TargetEntity;
-            target.Projectile = Projectile;
-            target.TargetPos = TargetPos;
-            target.HitShortDist = HitShortDist;
-            target.OrigDistance = OrigDistance;
-            target.TopEntityId = TopEntityId;
-            target.TargetState = TargetState;
-            target.StateChange(HasTarget, CurrentState);
-        }
-
-        internal void Set(MyEntity ent, Vector3D pos, double shortDist, double origDist, long topEntId, Projectile projectile = null, bool isFakeTarget = false)
+        internal void Set(MyEntity ent, Vector3D pos, Vector3D targetingOrigin, double shortDist, double origDist, long topEntId, Projectile projectile = null, bool isFakeTarget = false)
         {
             TargetEntity = ent;
             Projectile = projectile;
             TargetPos = pos;
+            TargetingOrigin = targetingOrigin;
             HitShortDist = shortDist;
             OrigDistance = origDist;
             TopEntityId = topEntId;
@@ -242,11 +218,12 @@ namespace CoreSystems.Support
         }
 
 
-        internal void SetFake(uint expiredTick, Vector3D pos)
+        internal void SetFake(uint expiredTick, Vector3D pos, Vector3D targetingOrigin)
         {
             Reset(expiredTick, States.Fake, false);
             TargetState = TargetStates.IsFake;
             TargetPos = pos;
+            TargetingOrigin = targetingOrigin;
             StateChange(true, States.Fake);
         }
 
@@ -270,10 +247,10 @@ namespace CoreSystems.Support
 
             IsDrone = false;
             TargetEntity = null;
-            ClosestObstacle = null;
             IsAligned = false;
             Projectile = null;
             TargetPos = Vector3D.Zero;
+            TargetingOrigin = Vector3D.Zero;
             HitShortDist = 0;
             OrigDistance = 0;
             TopEntityId = 0;
@@ -292,7 +269,7 @@ namespace CoreSystems.Support
             SetTargetId(setTarget, reason);
             TargetChanged = !HasTarget && setTarget || HasTarget && !setTarget;
 
-            if (TargetChanged && ParentIsPart && IsTargetStorage) {
+            if (TargetChanged && IsTargetStorage) {
 
                 if (setTarget) {
                     Part.BaseComp.Ai.WeaponsTracking++;
@@ -304,10 +281,7 @@ namespace CoreSystems.Support
                 }
             }
             HasTarget = setTarget;
-            PreviousState = CurrentState;
             CurrentState = reason;
-            if (Part != null)
-                ChangeTick = Part.BaseComp.Session.Tick;
         }
 
         internal void SetTargetId(bool setTarget, States reason)

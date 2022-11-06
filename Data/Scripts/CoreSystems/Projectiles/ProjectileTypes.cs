@@ -19,7 +19,7 @@ namespace CoreSystems.Support
 {
     public class ProInfo
     {
-        internal readonly Target Target = new Target(null, true);
+        internal readonly Target Target = new Target();
         internal readonly SmartStorage Storage = new SmartStorage();
         internal readonly List<HitEntity> HitList = new List<HitEntity>();
         internal List<MyTuple<Vector3D, object, float>> ProHits;
@@ -36,7 +36,6 @@ namespace CoreSystems.Support
         internal VoxelCache VoxelCache;
         internal Vector3D ShooterVel;
         internal Vector3D Origin;
-        internal Vector3D OriginFwd;
         internal Vector3D OriginUp;
         internal Vector3D Direction;
         internal Vector3D PrevTargetPos;
@@ -93,10 +92,6 @@ namespace CoreSystems.Support
             TriggerEntity = triggerEntity;
             Target.TargetEntity = weapon.Target.TargetEntity;
             Target.Projectile = weapon.Target.Projectile;
-            Target.CoreEntity = weapon.Target.CoreEntity;
-            Target.CoreCube = weapon.Target.CoreCube;
-            Target.CoreParent = weapon.Target.CoreParent;
-            Target.CoreIsCube = weapon.Target.CoreIsCube;
             MuzzleId = muzzle.MuzzleId;
             UniqueMuzzleId = muzzle.UniqueId;
             Direction = muzzle.DeviatedDir;
@@ -110,7 +105,7 @@ namespace CoreSystems.Support
             var monitor = Weapon.Comp.ProjectileMonitors[Weapon.PartId];
             if (monitor?.Count > 0) {
                 for (int i = 0; i < monitor.Count; i++)
-                    monitor[i].Invoke(Target.CoreEntity.EntityId, Weapon.PartId, Id, Target.TargetId, Hit.LastHit, false);
+                    monitor[i].Invoke(Weapon.Comp.CoreEntity.EntityId, Weapon.PartId, Id, Target.TargetId, Hit.LastHit, false);
 
                 Weapon.System.Session.MonitoredProjectiles.Remove(Id);
             }
@@ -198,7 +193,6 @@ namespace CoreSystems.Support
             ShooterVel = Vector3D.Zero;
             TriggerMatrix = MatrixD.Identity;
             PrevTargetPos = Vector3D.Zero;
-            OriginFwd = Vector3D.Zero;
         }
     }
     internal enum DroneStatus
@@ -229,6 +223,7 @@ namespace CoreSystems.Support
         internal Vector3D RandOffsetDir;
         internal Vector3D OffsetDir;
         internal FakeTargets DummyTargets;
+        internal MyEntity ClosestObstacle;
         internal MyEntity NavTargetEnt;
         internal Target ShootTarget;
         internal BoundingSphereD NavTargetBound;
@@ -265,6 +260,7 @@ namespace CoreSystems.Support
             OffsetDir = Vector3D.Zero;
             NavTargetEnt = null;
             ShootTarget = null;
+            ClosestObstacle = null;
             NavTargetBound = new BoundingSphereD(Vector3D.Zero,0);
             IsFriend = false;
             UsesStrafe = false;
@@ -548,10 +544,6 @@ namespace CoreSystems.Support
                 frag.TargetProjectile = target.Projectile;
 
                 frag.MuzzleId = info.MuzzleId;
-                frag.CoreEntity = target.CoreEntity;
-                frag.CoreParent = target.CoreParent;
-                frag.CoreCube = target.CoreCube;
-                frag.CoreIsCube = target.CoreIsCube;
                 frag.Radial = aConst.FragRadial;
                 frag.SceneVersion = info.CompSceneVersion;
                 frag.Origin = newOrigin;
@@ -612,10 +604,6 @@ namespace CoreSystems.Support
                 target.TargetEntity = frag.TargetEntity;
                 target.TargetState = frag.TargetState;
                 target.Projectile = frag.TargetProjectile;
-                target.CoreEntity = frag.CoreEntity;
-                target.CoreParent = frag.CoreParent;
-                target.CoreCube = frag.CoreCube;
-                target.CoreIsCube = frag.CoreIsCube;
 
                 target.TargetState = frag.TargetState;
 
@@ -662,9 +650,6 @@ namespace CoreSystems.Support
         public MyEntity PrimeEntity;
         public MyEntity TriggerEntity;
         public MyEntity TargetEntity;
-        public MyEntity CoreEntity;
-        public MyEntity CoreParent;
-        public MyCubeBlock CoreCube;
         public Projectile TargetProjectile;
         public Vector3D Origin;
         public Vector3D OriginUp;
@@ -677,7 +662,6 @@ namespace CoreSystems.Support
         public bool DoDamage;
         public bool LockOnFireState;
         public bool IgnoreShield;
-        public bool CoreIsCube;
         public Target.TargetStates TargetState;
         public float Radial;
         internal int SceneVersion;

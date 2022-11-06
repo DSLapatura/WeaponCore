@@ -17,6 +17,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
         internal int CurrentWheel;
         internal int ShiftTime;
         internal int MouseMenuTime;
+        internal int ReloadTime;
         internal bool MouseButtonPressed;
         internal bool InputChanged;
         internal bool MouseButtonLeftWasPressed;
@@ -31,6 +32,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
         internal bool MouseButtonRightReleased;
         internal bool MouseButtonRightWasPressed;
 
+        internal bool ReloadKeyPressed;
         internal bool ReloadKeyReleased;
 
         internal bool IronSights;
@@ -122,10 +124,18 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
 
                 if (playerWeapon && s.GunnerBlackList)
                 {
-
+                    ReloadKeyPressed = MyAPIGateway.Input.IsKeyPress(ReloadKey);
                     ReloadKeyReleased = MyAPIGateway.Input.IsNewKeyReleased(ReloadKey);
+
                     if (ReloadKeyReleased)
-                        ai.OnlyWeaponComp.ForceReload();
+                    {
+                        if (ReloadTime < 60)
+                            ai.OnlyWeaponComp.ForceReload();
+                        else
+                            ai.OnlyWeaponComp.CycleHandAmmo();
+                    }
+
+                    ReloadTime = ReloadKeyPressed ? ++ReloadTime : 0;
 
                     ShiftReleased = MyAPIGateway.Input.IsNewKeyReleased(MyKeys.LeftShift);
                     ShiftPressed = MyAPIGateway.Input.IsKeyPress(MyKeys.LeftShift);

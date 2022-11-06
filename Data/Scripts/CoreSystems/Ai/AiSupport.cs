@@ -191,14 +191,11 @@ namespace CoreSystems.Support
             }
         }
 
-        private static int[] GetDeck(ref int[] deck, ref int prevDeckLen, int firstCard, int cardsToSort, int cardsToShuffle, ref XorShiftRandomStruct rng)
+        private static int[] GetDeck(ref int[] deck, int firstCard, int cardsToSort, int cardsToShuffle, ref XorShiftRandomStruct rng)
         {
             var count = cardsToSort - firstCard;
-            if (prevDeckLen < count)
-            {
-                deck = new int[count];
-                prevDeckLen = count;
-            }
+            if (deck.Length < count)
+                deck = new int[count * 2];
 
             var shuffle = cardsToShuffle > 0;
 

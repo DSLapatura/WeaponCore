@@ -346,7 +346,7 @@ namespace CoreSystems.Platform
 
                 if (IsBlock && !HasAim)
                 {
-                    var distSqr = Vector3.DistanceSquared(Cube.PositionComp.LocalAABB.Center, Ai.TopEntity.PositionComp.LocalAABB.Center);
+                    var distSqr = Vector3.DistanceSquared(Cube.PositionComp.LocalAABB.Center, TopEntity.PositionComp.LocalAABB.Center);
                     if (distSqr < Ai.ClosestFixedWeaponCompSqr)
                     {
                         Ai.ClosestFixedWeaponCompSqr = distSqr;
@@ -948,7 +948,6 @@ namespace CoreSystems.Platform
                     w.StopReloadSound();
                     w.StopBarrelRotateSound();
                     w.StopShootingAv(false);
-                    //w.IsShooting = false;
                 }
             }
 
@@ -998,6 +997,42 @@ namespace CoreSystems.Platform
                     Session.GunnerRelease(playerId);
                 }
                 LastControllingPlayerId = 0;
+            }
+
+            internal void CycleAmmo()
+            {
+                for (int i = 0; i < Collection.Count; i++)
+                {
+                    var w = Collection[i];
+
+                    if (!w.System.HasAmmoSelection)
+                        continue;
+
+                    var availAmmo = w.System.AmmoTypes.Length;
+                    var aId = w.DelayedCycleId >= 0 ? w.DelayedCycleId : w.Reload.AmmoTypeId;
+                    var currActive = w.System.AmmoTypes[aId];
+                    var next = (aId + 1) % availAmmo;
+                    var currDef = w.System.AmmoTypes[next];
+
+                    var change = false;
+
+                    while (!(currActive.Equals(currDef)))
+                    {
+                        if (currDef.AmmoDef.Const.IsTurretSelectable)
+                        {
+                            change = true;
+                            break;
+                        }
+
+                        next = (next + 1) % availAmmo;
+                        currDef = w.System.AmmoTypes[next];
+                    }
+
+                    if (change)
+                    {
+                        w.QueueAmmoChange(next);
+                    }
+                }
             }
         }
     }

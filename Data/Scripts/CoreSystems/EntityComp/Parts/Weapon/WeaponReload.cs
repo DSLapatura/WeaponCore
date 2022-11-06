@@ -39,6 +39,9 @@ namespace CoreSystems.Platform
 
             CheckInventorySystem = true;
 
+            if (proposed && Comp.TypeSpecific == CompTypeSpecific.Rifle)
+                Comp.HandReloadNotify(this);
+
             UpdateRof();
             SetWeaponDps();
             UpdateWeaponRange();
@@ -53,6 +56,9 @@ namespace CoreSystems.Platform
 
             ActiveAmmoDef = System.AmmoTypes[Reload.AmmoTypeId];
             PrepAmmoShuffle();
+
+            if (Comp.TypeSpecific == CompTypeSpecific.Rifle)
+                Comp.HandReloadNotify(this);
 
             UpdateRof();
             SetWeaponDps();

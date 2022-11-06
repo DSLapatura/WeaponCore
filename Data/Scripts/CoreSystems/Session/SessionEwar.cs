@@ -134,7 +134,7 @@ namespace CoreSystems
 
             var grid = hitEnt.Entity as MyCubeGrid;
             if (grid?.Physics == null || grid.MarkedForClose) return;
-            var attackerId = info.Target.CoreEntity.EntityId;
+            var attackerId = info.Weapon.Comp.CoreEntity.EntityId;
             GetAndSortBlocksInSphere(info.AmmoDef, hitEnt.Info.Weapon.System, grid, hitEnt.PruneSphere, !hitEnt.DamageOverTime, hitEnt.Blocks);
 
             var depletable = info.AmmoDef.Ewar.Depletable;
@@ -159,7 +159,7 @@ namespace CoreSystems
             {
 
                 Dictionary<EwarType, GridEffect> effects;
-                var attackerId = info.Target.CoreEntity.EntityId;
+                var attackerId = info.Weapon.Comp.CoreEntity.EntityId;
                 if (_gridEffects.TryGetValue(grid, out effects))
                 {
                     GridEffect gridEffect;

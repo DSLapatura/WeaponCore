@@ -176,7 +176,7 @@ namespace CoreSystems.Support
             MaxSpeed = maxSpeed;
             MaxStepSize = MaxSpeed * MyEngineConstants.PHYSICS_STEP_SIZE_IN_SECONDS;
             ShootVelStep = info.ShooterVel * MyEngineConstants.PHYSICS_STEP_SIZE_IN_SECONDS;
-            CoreEntity = info.Target.CoreEntity;
+            CoreEntity = info.Weapon.Comp.CoreEntity;
             MaxTrajectory = info.MaxTrajectory;
             ShotFade = info.ShotFade;
             FireCounter = info.FireCounter;

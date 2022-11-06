@@ -439,9 +439,9 @@ namespace CoreSystems.Support
 
                 if (weapon.Comp.Ai.VelocityUpdateTick != weapon.Comp.Session.Tick)
                 {
-                    weapon.Comp.Ai.TopEntityVolume.Center = weapon.Comp.Ai.TopEntity.PositionComp.WorldVolume.Center;
-                    weapon.Comp.Ai.TopEntityVel = weapon.Comp.Ai.TopEntity.Physics?.LinearVelocity ?? Vector3D.Zero;
-                    weapon.Comp.Ai.IsStatic = weapon.Comp.Ai.TopEntity.Physics?.IsStatic ?? false;
+                    weapon.Comp.Ai.TopEntityVolume.Center = weapon.Comp.TopEntity.PositionComp.WorldVolume.Center;
+                    weapon.Comp.Ai.TopEntityVel = weapon.Comp.TopEntity.Physics?.LinearVelocity ?? Vector3D.Zero;
+                    weapon.Comp.Ai.IsStatic = weapon.Comp.TopEntity.Physics?.IsStatic ?? false;
                     weapon.Comp.Ai.VelocityUpdateTick = weapon.Comp.Session.Tick;
                 }
 
@@ -515,9 +515,9 @@ namespace CoreSystems.Support
 
                 if (weapon.Comp.Ai.VelocityUpdateTick != weapon.Comp.Session.Tick)
                 {
-                    weapon.Comp.Ai.TopEntityVolume.Center = weapon.Comp.Ai.TopEntity.PositionComp.WorldVolume.Center;
-                    weapon.Comp.Ai.TopEntityVel = weapon.Comp.Ai.TopEntity.Physics?.LinearVelocity ?? Vector3D.Zero;
-                    weapon.Comp.Ai.IsStatic = weapon.Comp.Ai.TopEntity.Physics?.IsStatic ?? false;
+                    weapon.Comp.Ai.TopEntityVolume.Center = weapon.Comp.TopEntity.PositionComp.WorldVolume.Center;
+                    weapon.Comp.Ai.TopEntityVel = weapon.Comp.TopEntity.Physics?.LinearVelocity ?? Vector3D.Zero;
+                    weapon.Comp.Ai.IsStatic = weapon.Comp.TopEntity.Physics?.IsStatic ?? false;
                     weapon.Comp.Ai.VelocityUpdateTick = weapon.Comp.Session.Tick;
                 }
 

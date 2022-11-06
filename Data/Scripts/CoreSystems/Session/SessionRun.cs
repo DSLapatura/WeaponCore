@@ -147,8 +147,11 @@ namespace CoreSystems
         {
             try
             {
+
                 if (SuppressWc)
                     return;
+
+                ++SimulationCount;
 
                 if (!DedicatedServer) {
                     EntityControlUpdate();
@@ -232,7 +235,6 @@ namespace CoreSystems
                     DsUtil.Complete("network1", true);
                 }
 
-                ++SimulationCount;
 
             }
             catch (Exception ex) { Log.Line($"Exception in SessionSim: {ex}", null, true); }

@@ -366,38 +366,7 @@ namespace CoreSystems.Control
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp?.Platform.State != CorePlatform.PlatformState.Ready) return;
-            for (int i = 0; i < comp.Collection.Count; i++)
-            {
-                var w = comp.Collection[i];
-
-                if (!w.System.HasAmmoSelection)
-                    continue;
-
-                var availAmmo = w.System.AmmoTypes.Length;
-                var aId = w.DelayedCycleId >= 0 ? w.DelayedCycleId : w.Reload.AmmoTypeId;
-                var currActive = w.System.AmmoTypes[aId];
-                var next = (aId + 1) % availAmmo;
-                var currDef = w.System.AmmoTypes[next];
-
-                var change = false;
-
-                while (!(currActive.Equals(currDef)))
-                {
-                    if (currDef.AmmoDef.Const.IsTurretSelectable)
-                    {
-                        change = true;
-                        break;
-                    }
-
-                    next = (next + 1) % availAmmo;
-                    currDef = w.System.AmmoTypes[next];
-                }
-
-                if (change)
-                {
-                    w.QueueAmmoChange(next);
-                }
-            }
+            comp.CycleAmmo();
         }
 
         internal static void TerminActionCycleDecoy(IMyTerminalBlock blk)

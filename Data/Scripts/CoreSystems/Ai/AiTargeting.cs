@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using CoreSystems.Platform;
 using CoreSystems.Projectiles;
 using Sandbox.Game.Entities;
@@ -15,10 +15,6 @@ using static CoreSystems.Support.WeaponDefinition;
 using static CoreSystems.Support.WeaponDefinition.TargetingDef;
 using static CoreSystems.Support.WeaponDefinition.TargetingDef.BlockTypes;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef;
-using static CoreSystems.WeaponRandomGenerator.RandomType;
-using static CoreSystems.WeaponRandomGenerator;
-using CollisionLayers = Sandbox.Engine.Physics.MyPhysics.CollisionLayers;
-using Sandbox.Engine.Physics;
 
 namespace CoreSystems.Support
 {
@@ -61,7 +57,7 @@ namespace CoreSystems.Support
                 Vector3D predictedPos;
                 if (Weapon.CanShootTarget(w, ref fakeInfo.WorldPosition, fakeInfo.LinearVelocity, fakeInfo.Acceleration, out predictedPos))
                 {
-                    w.Target.SetFake(w.Comp.Session.Tick, predictedPos);
+                    w.Target.SetFake(w.Comp.Session.Tick, predictedPos, w.MyPivotPos);
                     if (w.ActiveAmmoDef.AmmoDef.Trajectory.Guidance != TrajectoryDef.GuidanceType.None || !w.MuzzleHitSelf())
                         targetType = TargetType.Other;
                 }
@@ -97,7 +93,6 @@ namespace CoreSystems.Support
             session.TargetRequests++;
             var ammoDef = w.ActiveAmmoDef.AmmoDef;
             var aConst = ammoDef.Const;
-            var barrelPos = w.BarrelOrigin;
             var weaponPos = w.BarrelOrigin + (w.MyPivotFwd * w.MuzzleDistToBarrelCenter);
             var target = w.NewTarget;
             var s = w.System;
@@ -116,7 +111,7 @@ namespace CoreSystems.Support
             if (session.WaterApiLoaded && !ammoDef.IgnoreWater && ai.InPlanetGravity && ai.MyPlanet != null && session.WaterMap.TryGetValue(ai.MyPlanet.EntityId, out water))
                 waterSphere = new BoundingSphereD(ai.MyPlanet.PositionComp.WorldAABB.Center, water.MinRadius);
             var numOfTargets = ai.SortedTargets.Count;
-            var deck = GetDeck(ref target.TargetDeck, ref target.TargetPrevDeckLen,  0, numOfTargets, ai.DetectionInfo.DroneCount, ref w.TargetData.WeaponRandom.AcquireRandom);
+            var deck = GetDeck(ref session.TargetDeck, 0, numOfTargets, ai.DetectionInfo.DroneCount, ref w.TargetData.WeaponRandom.AcquireRandom);
 
             for (int i = 0; i < numOfTargets; i++)
             {
@@ -125,7 +120,7 @@ namespace CoreSystems.Support
                 if (!info.Drone)
                     break;
 
-                if (info?.Target == null || info.Target.MarkedForClose || !attackNeutrals && info.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Neutral || !attackNoOwner && info.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.NoOwnership) continue;
+                if (info.Target == null || info.Target.MarkedForClose || !attackNeutrals && info.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Neutral || !attackNoOwner && info.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.NoOwnership) continue;
 
                 if (movingMode && info.VelLenSqr < 1 || !fireOnStation && info.IsStatic || stationOnly && !info.IsStatic)
                     continue;
@@ -170,10 +165,7 @@ namespace CoreSystems.Support
                             continue;
                     }
 
-                    var targetNormDir = Vector3D.Normalize(targetCenter - barrelPos);
-                    var predictedMuzzlePos = barrelPos + (targetNormDir * w.MuzzleDistToBarrelCenter);
-
-                    if (!AcquireBlock(s, w.Comp.Ai, target, info, predictedMuzzlePos, w.TargetData.WeaponRandom, Acquire, ref waterSphere, ref w.XorRnd, w, true)) continue;
+                    if (!AcquireBlock(w, target, info,  ref waterSphere, ref w.XorRnd, null, true)) continue;
                     target.TransferTo(w.Target, w.Comp.Session.Tick, true);
 
                     var validTarget = w.Target.TargetState == Target.TargetStates.IsEntity;
@@ -200,13 +192,16 @@ namespace CoreSystems.Support
             if (info.CompSceneVersion != info.Weapon.Comp.SceneVersion)
                 return false;
 
-            var s = info.Weapon.System;
+            var w = info.Weapon;
+            var s = w.System;
             var target = info.Target;
             info.Storage.ChaseAge = info.Age;
             var ai = info.Ai;
+            var session = ai.Session;
+
             var aConst = info.AmmoDef.Const;
             var weaponPos = p.Position;
-            var overRides = info.Weapon.Comp.Data.Repo.Values.Set.Overrides;
+            var overRides = w.Comp.Data.Repo.Values.Set.Overrides;
             var attackNeutrals = overRides.Neutrals;
             var attackFriends = overRides.Friendly;
             var attackNoOwner = overRides.Unowned;
@@ -242,7 +237,7 @@ namespace CoreSystems.Support
             var numOfTargets = ai.SortedTargets.Count;
             var hasOffset = offset > 0;
             var adjTargetCount = forceFoci && hasOffset ? offset : numOfTargets + offset;
-            var deck = GetDeck(ref target.TargetDeck, ref target.TargetPrevDeckLen,  0, numOfTargets, p.Info.Weapon.System.Values.Targeting.TopTargets, ref p.Info.Random);
+            var deck = GetDeck(ref session.TargetDeck,  0, numOfTargets, w.System.Values.Targeting.TopTargets, ref p.Info.Random);
 
             for (int i = 0; i < adjTargetCount; i++)
             {
@@ -287,7 +282,7 @@ namespace CoreSystems.Support
 
                     if (!s.TrackGrids || !overRides.Grids || !focusTarget && tInfo.FatCount < 2 || Obstruction(ref tInfo, ref targetPos, p) || (!overRides.LargeGrid && tInfo.LargeGrid) || (!overRides.SmallGrid && !tInfo.LargeGrid)) continue;
 
-                    if (!AcquireBlock(s, ai, target, tInfo, weaponPos, null, ReAcquire, ref waterSphere, ref info.Random, null, !focusTarget, overRides)) continue;
+                    if (!AcquireBlock(w, target, tInfo, ref waterSphere, ref info.Random, p, !focusTarget)) continue;
                     acquired = true;
                     break;
                 }
@@ -296,7 +291,7 @@ namespace CoreSystems.Support
                     continue;
 
                 var topEntId = tInfo.Target.GetTopMostParent().EntityId;
-                target.Set(tInfo.Target, targetPos, 0, 0, topEntId);
+                target.Set(tInfo.Target, targetPos, weaponPos, 0, 0, topEntId);
                 acquired = true;
                 break;
             }
@@ -308,10 +303,13 @@ namespace CoreSystems.Support
         {
             var info = p.Info;
             var aConst = info.AmmoDef.Const;
-            var s = info.Weapon.System;
+            var w = info.Weapon;
+            var comp = w.Comp;
+            var s = w.System;
             var target = info.Target;
             info.Storage.ChaseAge = info.Age;
             var ai = info.Ai;
+            var session = ai.Session;
             var physics = s.Session.Physics;
             var weaponPos = p.Position;
 
@@ -341,17 +339,16 @@ namespace CoreSystems.Support
             }
 
             var numToRandomize = s.ClosestFirst ? s.Values.Targeting.TopTargets : numOfTargets;
-            if (target.TargetPrevDeckLen < numOfTargets) {
-                target.TargetDeck = new int[numOfTargets];
-                target.TargetPrevDeckLen = numOfTargets;
+            if (session.TargetDeck.Length < numOfTargets) {
+                session.TargetDeck = new int[numOfTargets];
             }
 
             for (int i = 0; i < numOfTargets; i++) {
                 var j = i < numToRandomize ? info.Random.Range(0, i + 1) : i;
-                target.TargetDeck[i] = target.TargetDeck[j];
-                target.TargetDeck[j] = 0 + i;
+                session.TargetDeck[i] = session.TargetDeck[j];
+                session.TargetDeck[j] = 0 + i;
             }
-            var deck = target.TargetDeck;
+            var deck = session.TargetDeck;
             for (int x = 0; x < numOfTargets; x++)
             {
                 var card = deck[x];
@@ -389,7 +386,7 @@ namespace CoreSystems.Support
                     physics.CastRay(weaponPos, lp.Position, out hitInfo, 15);
                     if (hitInfo?.HitEntity == null)
                     {
-                        target.Set(null, lp.Position, 0, 0, long.MaxValue, lp);
+                        target.Set(null, lp.Position, weaponPos, 0, 0, long.MaxValue, lp);
                         p.PrevTargetPos = target.Projectile.Position;
                         target.Projectile.Seekers.Add(p);
                         found = true;
@@ -399,10 +396,10 @@ namespace CoreSystems.Support
                 else
                 {
                     Vector3D? hitInfo;
-                    if (ai.AiType == AiTypes.Grid && GridIntersection.BresenhamGridIntersection(ai.GridEntity, ref weaponPos, ref lp.Position, out hitInfo, target.CoreCube, ai))
+                    if (ai.AiType == AiTypes.Grid && GridIntersection.BresenhamGridIntersection(ai.GridEntity, ref weaponPos, ref lp.Position, out hitInfo, comp.CoreEntity, ai))
                         continue;
 
-                    target.Set(null, lp.Position, 0, 0, long.MaxValue, lp);
+                    target.Set(null, lp.Position, weaponPos, 0, 0, long.MaxValue, lp);
                     p.PrevTargetPos = target.Projectile.Position;
                     target.Projectile.Seekers.Add(p);
                     found = true;
@@ -420,12 +417,13 @@ namespace CoreSystems.Support
             var attackFriends = overRides.Friendly;
             var attackNoOwner = overRides.Unowned;
             var forceFoci = overRides.FocusTargets;
-            var session = w.Comp.Session;
+            var session = comp.Session;
             var ai = comp.Ai;
             var aConst = w.ActiveAmmoDef.AmmoDef.Const;
             session.TargetRequests++;
-            var barrelPos = w.BarrelOrigin;
             var weaponPos = w.BarrelOrigin + (w.MyPivotFwd * w.MuzzleDistToBarrelCenter);
+            var aimOrigin = w.MyPivotPos;
+
             var target = w.NewTarget;
             var s = w.System;
             var accelPrediction = (int)s.Values.HardPoint.AimLeadingPrediction > 1;
@@ -462,7 +460,7 @@ namespace CoreSystems.Support
             var numOfTargets = ai.SortedTargets.Count;
             var adjTargetCount = forceFoci && hasOffset ? offset : numOfTargets + offset;
 
-            var deck = GetDeck(ref target.TargetDeck, ref target.TargetPrevDeckLen,  0, numOfTargets, w.System.Values.Targeting.TopTargets, ref w.TargetData.WeaponRandom.AcquireRandom);
+            var deck = GetDeck(ref session.TargetDeck, 0, numOfTargets, w.System.Values.Targeting.TopTargets, ref w.TargetData.WeaponRandom.AcquireRandom);
             try
             {
                 for (int x = 0; x < adjTargetCount; x++)
@@ -521,20 +519,19 @@ namespace CoreSystems.Support
                         }
                         else if (!Weapon.CanShootTargetObb(w, info.Target, targetLinVel, targetAccel, out newCenter)) continue;
 
-                        if (w.Comp.Ai.FriendlyShieldNear)
+                        if (ai.FriendlyShieldNear)
                         {
                             var targetDir = newCenter - weaponPos;
                             if (w.HitFriendlyShield(weaponPos, newCenter, targetDir))
                                 continue;
                         }
 
-                        var targetNormDir = Vector3D.Normalize(targetCenter - barrelPos);
-                        var predictedMuzzlePos = barrelPos + (targetNormDir * w.MuzzleDistToBarrelCenter);
+
                         w.FoundTopMostTarget = true;
 
-                        if (!AcquireBlock(s, w.Comp.Ai, target, info, predictedMuzzlePos, w.TargetData.WeaponRandom, Acquire, ref waterSphere, ref w.XorRnd, w, !focusTarget, overRides)) continue;
+                        if (!AcquireBlock(w, target, info,  ref waterSphere, ref w.XorRnd, null, !focusTarget)) continue;
                         targetType = TargetType.Other;
-                        target.TransferTo(w.Target, w.Comp.Session.Tick);
+                        target.TransferTo(w.Target, comp.Session.Tick);
 
                         if (targetType == TargetType.Other && w.Target.TargetState == Target.TargetStates.IsEntity)
                             ai.Session.NewThreat(w);
@@ -548,7 +545,7 @@ namespace CoreSystems.Support
                     Vector3D predictedPos;
                     if (!Weapon.CanShootTarget(w, ref targetCenter, targetLinVel, targetAccel, out predictedPos, true, info.Target)) continue;
 
-                    if (w.Comp.Ai.FriendlyShieldNear)
+                    if (ai.FriendlyShieldNear)
                     {
                         var targetDir = predictedPos - weaponPos;
                         if (w.HitFriendlyShield(weaponPos, predictedPos, targetDir))
@@ -569,9 +566,9 @@ namespace CoreSystems.Support
                             var shortDist = rayDist * (1 - w.LastHitInfo.Fraction);
                             var origDist = rayDist * w.LastHitInfo.Fraction;
                             var topEntId = info.Target.GetTopMostParent().EntityId;
-                            target.Set(info.Target, w.LastHitInfo.Position, shortDist, origDist, topEntId);
+                            target.Set(info.Target, w.LastHitInfo.Position, aimOrigin, shortDist, origDist, topEntId);
                             targetType = TargetType.Other;
-                            target.TransferTo(w.Target, w.Comp.Session.Tick);
+                            target.TransferTo(w.Target, comp.Session.Tick);
                             
                             w.FoundTopMostTarget = true;
 
@@ -592,15 +589,19 @@ namespace CoreSystems.Support
             catch (Exception ex) { Log.Line($"Exception in AcquireTopMostEntity: {ex}"); targetType = TargetType.None; }
         }
 
-        private static bool AcquireBlock(WeaponSystem system, Ai ai, Target target, TargetInfo info, Vector3D weaponPos, WeaponRandomGenerator wRng, RandomType type, ref BoundingSphereD waterSphere, ref XorShiftRandomStruct xRnd, Weapon w = null, bool checkPower = true, ProtoWeaponOverrides overRides = null)
+        private static bool AcquireBlock(Weapon w, Target target, TargetInfo info, ref BoundingSphereD waterSphere, ref XorShiftRandomStruct xRnd, Projectile p, bool checkPower = true)
         {
+            var system = w.System;
+            var s = system.Session;
             if (system.TargetSubSystems)
             {
+                var overRides = w.Comp.Data.Repo.Values.Set.Overrides;
                 var subSystems = system.Values.Targeting.SubSystems;
+                var focusSubSystem = overRides.FocusSubSystem || overRides.FocusSubSystem;
+
                 var targetLinVel = info.Target.Physics?.LinearVelocity ?? Vector3D.Zero;
                 var targetAccel = (int)system.Values.HardPoint.AimLeadingPrediction > 1 ? info.Target.Physics?.LinearAcceleration ?? Vector3D.Zero : Vector3.Zero;
-                var focusSubSystem = overRides != null && overRides.FocusSubSystem || w != null && w.Comp.Data.Repo.Values.Set.Overrides.FocusSubSystem;
-                var subSystem = overRides?.SubSystem ?? w?.Comp.Data.Repo.Values.Set.Overrides.SubSystem ?? Any;
+                var subSystem = overRides.SubSystem;
 
                 foreach (var blockType in subSystems)
                 {
@@ -613,14 +614,14 @@ namespace CoreSystems.Support
                         var subSystemList = blockTypeMap[bt];
                         if (system.ClosestFirst)
                         {
-                            if (target.Top5.Count > 0 && (bt != target.LastBlockType || target.Top5[0].CubeGrid != subSystemList[0].CubeGrid))
-                                target.Top5.Clear();
+                            if (w.Top5.Count > 0 && (bt != w.LastTop5BlockType || w.Top5[0].CubeGrid != subSystemList[0].CubeGrid))
+                                w.Top5.Clear();
 
-                            target.LastBlockType = bt;
-                            if (GetClosestHitableBlockOfType(subSystemList, ai, target, info, weaponPos, targetLinVel, targetAccel, ref waterSphere, w, checkPower))
+                            w.LastTop5BlockType = bt;
+                            if (GetClosestHitableBlockOfType(w, subSystemList, target, info, targetLinVel, targetAccel, ref waterSphere, p, checkPower))
                                 return true;
                         }
-                        else if (FindRandomBlock(system, ai, target, weaponPos, info, subSystemList, w, wRng, type, ref waterSphere, ref xRnd,  checkPower)) return true;
+                        else if (FindRandomBlock(w,  target, info, subSystemList, ref waterSphere, ref xRnd, p, checkPower)) return true;
                     }
 
                     if (focusSubSystem) break;
@@ -629,18 +630,32 @@ namespace CoreSystems.Support
                 if (system.OnlySubSystems || focusSubSystem && subSystem != Any) return false;
             }
             TopMap topMap;
-            return system.Session.TopEntityToInfoMap.TryGetValue((MyCubeGrid)info.Target, out topMap) && topMap.MyCubeBocks != null && FindRandomBlock(system, ai, target, weaponPos, info, topMap.MyCubeBocks, w, wRng, type, ref waterSphere, ref xRnd, checkPower);
+            return system.Session.TopEntityToInfoMap.TryGetValue((MyCubeGrid)info.Target, out topMap) && topMap.MyCubeBocks != null && FindRandomBlock(w, target, info, topMap.MyCubeBocks, ref waterSphere, ref xRnd, p, checkPower);
         }
 
-        private static bool FindRandomBlock(WeaponSystem system, Ai ai, Target target, Vector3D weaponPos, TargetInfo info, ConcurrentCachingList<MyCubeBlock> subSystemList, Weapon w, WeaponRandomGenerator wRng, RandomType type, ref BoundingSphereD waterSphere, ref XorShiftRandomStruct xRnd, bool checkPower = true)
+        private static bool FindRandomBlock(Weapon w, Target target, TargetInfo info, ConcurrentCachingList<MyCubeBlock> subSystemList, ref BoundingSphereD waterSphere, ref XorShiftRandomStruct xRnd, Projectile p, bool checkPower = true)
         {
             var totalBlocks = subSystemList.Count;
+            var system = w.System;
+            var ai = w.Comp.Ai;
+            var s = ai.Session;
+
+            var aimOrigin = p?.Position ?? w.MyPivotPos;
+
+            Vector3D weaponPos;
+            if (p != null)
+                weaponPos = p.Position;
+            else {
+                var barrelPos = w.BarrelOrigin;
+                var targetNormDir = Vector3D.Normalize(info.Target.PositionComp.WorldAABB.Center - barrelPos);
+                weaponPos = barrelPos + (targetNormDir * w.MuzzleDistToBarrelCenter);
+            }
 
             var topEnt = info.Target.GetTopMostParent();
 
             var entSphere = topEnt.PositionComp.WorldVolume;
             var distToEnt = MyUtils.GetSmallestDistanceToSphere(ref weaponPos, ref entSphere);
-            var weaponCheck = w?.ActiveAmmoDef != null && !w.ActiveAmmoDef.AmmoDef.Const.SkipAimChecks;
+            var weaponCheck = p == null && !w.ActiveAmmoDef.AmmoDef.Const.SkipAimChecks;
             var topBlocks = system.Values.Targeting.TopBlocks;
             var lastBlocks = topBlocks > 10 && distToEnt < 1000 ? topBlocks : 10;
             var isPriroity = false;
@@ -658,9 +673,9 @@ namespace CoreSystems.Support
 
             if (totalBlocks < lastBlocks) lastBlocks = totalBlocks;
 
-            var deck = GetDeck(ref target.BlockDeck, ref target.BlockPrevDeckLen,  0, totalBlocks, topBlocks, ref xRnd);
+            var deck = GetDeck(ref s.BlockDeck,  0, totalBlocks, topBlocks, ref xRnd);
 
-            var physics = system.Session.Physics;
+            var physics = s.Physics;
             var iGrid = topEnt as IMyCubeGrid;
             var gridPhysics = iGrid?.Physics;
             Vector3D targetLinVel = gridPhysics?.LinearVelocity ?? Vector3D.Zero;
@@ -668,10 +683,10 @@ namespace CoreSystems.Support
             var foundBlock = false;
             var blocksChecked = 0;
             var blocksSighted = 0;
-            var hitTmpList = system.Session.HitInfoTmpList;
+            var hitTmpList = s.HitInfoTmpList;
             for (int i = 0; i < totalBlocks; i++)
             {
-                if (weaponCheck && (blocksChecked > lastBlocks || isPriroity && (blocksSighted > 100 || blocksChecked > 50 && system.Session.RandomRayCasts > 500 || blocksChecked > 25 && system.Session.RandomRayCasts > 1000)))
+                if (weaponCheck && (blocksChecked > lastBlocks || isPriroity && (blocksSighted > 100 || blocksChecked > 50 && s.RandomRayCasts > 500 || blocksChecked > 25 && s.RandomRayCasts > 1000)))
                     break;
 
                 var card = deck[i];
@@ -679,7 +694,7 @@ namespace CoreSystems.Support
 
                 if (block.MarkedForClose || checkPower && !(block is IMyWarhead) && !block.IsWorking) continue;
 
-                system.Session.BlockChecks++;
+                s.BlockChecks++;
 
                 var blockPos = block.CubeGrid.GridIntegerToWorld(block.Position);
                 double rayDist;
@@ -695,12 +710,12 @@ namespace CoreSystems.Support
                     Vector3D predictedPos;
                     if (!Weapon.CanShootTarget(w, ref blockPos, targetLinVel, targetAccel, out predictedPos, w.RotorTurretTracking)) continue;
 
-                    if (system.Session.WaterApiLoaded && waterSphere.Radius > 2 && waterSphere.Contains(predictedPos) != ContainmentType.Disjoint)
+                    if (s.WaterApiLoaded && waterSphere.Radius > 2 && waterSphere.Contains(predictedPos) != ContainmentType.Disjoint)
                         continue;
 
                     blocksSighted++;
 
-                    system.Session.RandomRayCasts++;
+                    s.RandomRayCasts++;
 
                     var targetDir = blockPos - w.BarrelOrigin;
                     Vector3D targetDirNorm;
@@ -756,20 +771,20 @@ namespace CoreSystems.Support
                     var shortDist = rayDist * (1 - iHitInfo.Fraction);
                     var origDist = rayDist * iHitInfo.Fraction;
                     var topEntId = block.GetTopMostParent().EntityId;
-                    target.Set(block, iHitInfo.Position, shortDist, origDist, topEntId);
+                    target.Set(block, iHitInfo.Position, aimOrigin, shortDist, origDist, topEntId);
                     foundBlock = true;
                     break;
                 }
 
                 Vector3D.Distance(ref weaponPos, ref blockPos, out rayDist);
-                target.Set(block, block.PositionComp.WorldAABB.Center, rayDist, rayDist, block.GetTopMostParent().EntityId);
+                target.Set(block, block.PositionComp.WorldAABB.Center, aimOrigin, rayDist, rayDist, block.GetTopMostParent().EntityId);
                 foundBlock = true;
                 break;
             }
             return foundBlock;
         }
 
-        internal static bool GetClosestHitableBlockOfType(ConcurrentCachingList<MyCubeBlock> cubes, Ai ai, Target target, TargetInfo info, Vector3D currentPos, Vector3D targetLinVel, Vector3D targetAccel, ref BoundingSphereD waterSphere, Weapon w = null, bool checkPower = true)
+        internal static bool GetClosestHitableBlockOfType(Weapon w, ConcurrentCachingList<MyCubeBlock> cubes, Target target, TargetInfo info, Vector3D targetLinVel, Vector3D targetAccel, ref BoundingSphereD waterSphere, Projectile p, bool checkPower = true)
         {
             var minValue = double.MaxValue;
             var minValue0 = double.MaxValue;
@@ -782,13 +797,26 @@ namespace CoreSystems.Support
             MyCubeBlock newEntity1 = null;
             MyCubeBlock newEntity2 = null;
             MyCubeBlock newEntity3 = null;
+
+            var aimOrigin = p?.Position ?? w.MyPivotPos;
+
+            Vector3D weaponPos;
+            if (p != null)
+                weaponPos = p.Position;
+            else
+            {
+                var barrelPos = w.BarrelOrigin;
+                var targetNormDir = Vector3D.Normalize(info.Target.PositionComp.WorldAABB.Center - barrelPos);
+                weaponPos = barrelPos + (targetNormDir * w.MuzzleDistToBarrelCenter);
+            }
+            var ai = w.Comp.Ai;
+            var s = ai.Session;
             var bestCubePos = Vector3D.Zero;
-            var top5Count = target.Top5.Count;
-            var testPos = currentPos;
-            var top5 = target.Top5;
+            var top5Count = w.Top5.Count;
+            var top5 = w.Top5;
             var physics = ai.Session.Physics;
             var hitTmpList = ai.Session.HitInfoTmpList;
-            var weaponCheck = w?.ActiveAmmoDef != null && !w.ActiveAmmoDef.AmmoDef.Const.SkipAimChecks;
+            var weaponCheck = p == null && !w.ActiveAmmoDef.AmmoDef.Const.SkipAimChecks;
             IHitInfo iHitInfo = null;
 
             for (int i = 0; i < cubes.Count + top5Count; i++)
@@ -804,7 +832,7 @@ namespace CoreSystems.Support
                     continue;
 
                 var cubePos = grid.GridIntegerToWorld(cube.Position);
-                var range = cubePos - testPos;
+                var range = cubePos - weaponPos;
                 var test = (range.X * range.X) + (range.Y * range.Y) + (range.Z * range.Z);
 
                 if (ai.Session.WaterApiLoaded && waterSphere.Radius > 2 && waterSphere.Contains(cubePos) != ContainmentType.Disjoint)
@@ -949,22 +977,22 @@ namespace CoreSystems.Support
             {
 
                 double rayDist;
-                Vector3D.Distance(ref testPos, ref bestCubePos, out rayDist);
+                Vector3D.Distance(ref weaponPos, ref bestCubePos, out rayDist);
                 var shortDist = rayDist * (1 - iHitInfo.Fraction);
                 var origDist = rayDist * iHitInfo.Fraction;
                 var topEntId = newEntity.GetTopMostParent().EntityId;
-                target.Set(newEntity, iHitInfo.Position, shortDist, origDist, topEntId);
+                target.Set(newEntity, iHitInfo.Position, aimOrigin, shortDist, origDist, topEntId);
                 top5.Add(newEntity);
             }
             else if (newEntity != null)
             {
 
                 double rayDist;
-                Vector3D.Distance(ref testPos, ref bestCubePos, out rayDist);
+                Vector3D.Distance(ref weaponPos, ref bestCubePos, out rayDist);
                 var shortDist = rayDist;
                 var origDist = rayDist;
                 var topEntId = newEntity.GetTopMostParent().EntityId;
-                target.Set(newEntity, bestCubePos, shortDist, origDist, topEntId);
+                target.Set(newEntity, bestCubePos, aimOrigin, shortDist, origDist, topEntId);
                 top5.Add(newEntity);
             }
             else target.Reset(ai.Session.Tick, Target.States.NoTargetsSeen, w == null);
@@ -980,16 +1008,18 @@ namespace CoreSystems.Support
         internal static void AcquireProjectile(Weapon w, out TargetType targetType)
         {
             var ai = w.Comp.Ai;
-            var s = w.System;
-            var physics = s.Session.Physics;
+            var system = w.System;
+            var s = ai.Session;
+            var physics = system.Session.Physics;
             var target = w.NewTarget;
             var weaponPos = w.BarrelOrigin;
+            var aimOrigin = w.MyPivotPos;
 
             var collection = ai.GetProCache();
             var numOfTargets = collection.Count;
             var lockedOnly = w.System.Values.Targeting.LockedSmartOnly;
             var smartOnly = w.System.Values.Targeting.IgnoreDumbProjectiles;
-            if (s.ClosestFirst)
+            if (system.ClosestFirst)
             {
                 int length = collection.Count;
                 for (int h = length / 2; h > 0; h /= 2)
@@ -1009,8 +1039,8 @@ namespace CoreSystems.Support
                 }
             }
 
-            var numToRandomize = s.ClosestFirst ? w.System.Values.Targeting.TopTargets : numOfTargets;
-            var deck = GetDeck(ref target.TargetDeck, ref target.TargetPrevDeckLen,  0, numOfTargets, numToRandomize, ref w.TargetData.WeaponRandom.AcquireRandom);
+            var numToRandomize = system.ClosestFirst ? w.System.Values.Targeting.TopTargets : numOfTargets;
+            var deck = GetDeck(ref s.TargetDeck,  0, numOfTargets, numToRandomize, ref w.TargetData.WeaponRandom.AcquireRandom);
 
             for (int x = 0; x < numOfTargets; x++)
             {
@@ -1019,7 +1049,7 @@ namespace CoreSystems.Support
                 var lpaConst = lp.Info.AmmoDef.Const;
                 var smart = lpaConst.IsDrone || lpaConst.IsSmart;
                 var cube = lp.Info.Target.TargetEntity as MyCubeBlock;
-                if (smartOnly && !smart || lockedOnly && (!smart || cube != null && w.Comp.Ai.AiType == AiTypes.Grid && cube.CubeGrid.IsSameConstructAs(w.Comp.Ai.GridEntity)) || lp.MaxSpeed > s.MaxTargetSpeed || lp.MaxSpeed <= 0 || lp.State != Projectile.ProjectileState.Alive || Vector3D.DistanceSquared(lp.Position, weaponPos) > w.MaxTargetDistanceSqr || Vector3D.DistanceSquared(lp.Position, weaponPos) < w.MinTargetDistanceBufferSqr) continue;
+                if (smartOnly && !smart || lockedOnly && (!smart || cube != null && w.Comp.Ai.AiType == AiTypes.Grid && cube.CubeGrid.IsSameConstructAs(w.Comp.Ai.GridEntity)) || lp.MaxSpeed > system.MaxTargetSpeed || lp.MaxSpeed <= 0 || lp.State != Projectile.ProjectileState.Alive || Vector3D.DistanceSquared(lp.Position, weaponPos) > w.MaxTargetDistanceSqr || Vector3D.DistanceSquared(lp.Position, weaponPos) < w.MinTargetDistanceBufferSqr) continue;
 
                 Vector3D predictedPos;
                 if (Weapon.CanShootTarget(w, ref lp.Position, lp.Velocity, lp.MaxAccelVelocity, out predictedPos))
@@ -1057,7 +1087,7 @@ namespace CoreSystems.Support
                             var shortDist = hitDist;
                             var origDist = hitDist;
                             const long topEntId = long.MaxValue;
-                            target.Set(null, lp.Position, shortDist, origDist, topEntId, lp);
+                            target.Set(null, lp.Position, aimOrigin, shortDist, origDist, topEntId, lp);
                             targetType = TargetType.Projectile;
                             target.TransferTo(w.Target, w.Comp.Session.Tick);
                             return;
@@ -1074,7 +1104,7 @@ namespace CoreSystems.Support
                         var shortDist = hitDist;
                         var origDist = hitDist;
                         const long topEntId = long.MaxValue;
-                        target.Set(null, lp.Position, shortDist, origDist, topEntId, lp);
+                        target.Set(null, lp.Position, aimOrigin, shortDist, origDist, topEntId, lp);
                         targetType = TargetType.Projectile;
                         target.TransferTo(w.Target, w.Comp.Session.Tick);
                         return;
@@ -1088,6 +1118,7 @@ namespace CoreSystems.Support
         {
             var ai = p.Info.Ai;
             var obstruction = false;
+            var topEntity = p.Info.Weapon.Comp.TopEntity;
             for (int j = 0; j < ai.Obstructions.Count; j++)
             {
                 var ent = ai.Obstructions[j];
@@ -1140,8 +1171,8 @@ namespace CoreSystems.Support
                     var subDist = sub.PositionComp.WorldVolume.Intersects(ray);
                     if (subDist.HasValue)
                     {
-                        var transform = ai.TopEntity.PositionComp.WorldMatrixRef;
-                        var box = ai.TopEntity.PositionComp.LocalAABB;
+                        var transform = topEntity.PositionComp.WorldMatrixRef;
+                        var box = topEntity.PositionComp.LocalAABB;
                         var obb = new MyOrientedBoundingBoxD(box, transform);
                         if (obb.Intersects(ref ray) != null)
                             obstruction = sub.RayCastBlocks(p.Position, targetPos) != null;

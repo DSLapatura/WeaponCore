@@ -221,6 +221,7 @@ namespace CoreSystems
         internal readonly HashSet<ArmorDefinition> CoreSystemsArmorDefs = new HashSet<ArmorDefinition>();
         internal readonly HashSet<string> VanillaSubtypes = new HashSet<string>();
         internal readonly HashSet<MyStringHash> PerformanceWarning = new HashSet<MyStringHash>();
+        internal readonly HashSet<Ai> GridsToUpdateInventories = new HashSet<Ai>();
 
         internal readonly List<MyCubeGrid> DirtyGridsTmp = new List<MyCubeGrid>(10);
         internal readonly List<DbScan> DbsToUpdate = new List<DbScan>(32);
@@ -230,17 +231,14 @@ namespace CoreSystems
         internal readonly List<Fragment> FragmentsNeedingEntities = new List<Fragment>(128);
         internal readonly List<WeaponAmmoMoveRequest> ConsumableToPullQueue = new List<WeaponAmmoMoveRequest>(128);
         internal readonly List<PacketObj> ClientPacketsToClean = new List<PacketObj>(64);
-        internal readonly HashSet<Ai> GridsToUpdateInventories = new HashSet<Ai>();
         internal readonly List<CleanSound> SoundsToClean = new List<CleanSound>(128);
         internal readonly List<LosDebug> LosDebugList = new List<LosDebug>(128);
         internal readonly List<MyTuple<IMyPlayer, Vector4, FakeTarget>> ActiveMarks = new List<MyTuple<IMyPlayer, Vector4, FakeTarget>>();
+        
         internal readonly Queue<PartAnimation> ThreadedAnimations = new Queue<PartAnimation>();
         internal readonly List<Weapon>[] LeadGroups = new List<Weapon>[4];
         internal readonly Queue<double> ClientPerfHistory = new Queue<double>(20);
         internal readonly int[] AuthorSettings = new int[6];
-        internal readonly double[] OffSetTargetAz = new double[1024];
-        internal readonly double[] OffSetTargetEl = new double[1024];
-
 
         ///
         ///
@@ -269,10 +267,13 @@ namespace CoreSystems
         private readonly List<MyKeys> _pressedKeys = new List<MyKeys>();
         private readonly List<MyMouseButtonsEnum> _pressedButtons = new List<MyMouseButtonsEnum>();
         private readonly List<MyEntity> _tmpNearByBlocks = new List<MyEntity>();
+        internal readonly List<IMySlimBlock>[] DamageBlockCache = new List<IMySlimBlock>[512];
         private readonly EwaredBlocksPacket _cachedEwarPacket = new EwaredBlocksPacket();
         private readonly SpinLockRef _dityGridLock = new SpinLockRef();
 
-        internal readonly List<IMySlimBlock>[] DamageBlockCache = new List<IMySlimBlock>[512];
+        internal int[] TargetDeck = new int[1000];
+        internal int[] BlockDeck = new int[5000];
+
         internal List<RadiatedBlock> SlimsSortedList = new List<RadiatedBlock>(1024);
         internal MyConcurrentPool<MyEntity> TriggerEntityPool;
 
