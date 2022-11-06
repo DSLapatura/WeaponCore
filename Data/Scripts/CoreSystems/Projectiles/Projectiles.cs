@@ -1,16 +1,13 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using CoreSystems.Support;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
 using VRage.Collections;
 using VRage.Game;
-using VRage.Library.Threading;
 using VRage.Utils;
 using VRageMath;
 using static CoreSystems.Projectiles.Projectile;
-using static CoreSystems.Session;
 using static CoreSystems.Support.AvShot;
 
 namespace CoreSystems.Projectiles
@@ -21,8 +18,6 @@ namespace CoreSystems.Projectiles
         internal readonly Session Session;
         internal readonly MyConcurrentPool<List<NewVirtual>> VirtInfoPools = new MyConcurrentPool<List<NewVirtual>>(128, vInfo => vInfo.Clear());
         internal readonly MyConcurrentPool<ProInfo> VirtInfoPool = new MyConcurrentPool<ProInfo>(128, vInfo => vInfo.Clean());
-        internal readonly MyConcurrentPool<Fragments> ShrapnelPool = new MyConcurrentPool<Fragments>(128);
-        internal readonly MyConcurrentPool<Fragment> FragmentPool = new MyConcurrentPool<Fragment>(128);
         internal readonly MyConcurrentPool<HitEntity> HitEntityPool = new MyConcurrentPool<HitEntity>(512, hitEnt => hitEnt.Clean());
 
         internal readonly List<DeferedVoxels> DeferedVoxels = new List<DeferedVoxels>(128);
@@ -34,6 +29,8 @@ namespace CoreSystems.Projectiles
         internal readonly List<DeferedAv> DeferedAvDraw = new List<DeferedAv>(1024);
         internal readonly List<NewProjectile> NewProjectiles = new List<NewProjectile>(512);
         internal readonly Stack<Projectile> ProjectilePool = new Stack<Projectile>(2048);
+        internal readonly Stack<Fragments> ShrapnelPool = new Stack<Fragments>(128);
+        internal readonly Stack<Fragment> FragmentPool = new Stack<Fragment>(128);
 
         internal ulong CurrentProjectileId;
         internal Projectiles(Session session)

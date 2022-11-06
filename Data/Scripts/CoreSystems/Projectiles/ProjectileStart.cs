@@ -34,6 +34,7 @@ namespace CoreSystems.Projectiles
                 var targetable = weaponAmmoDef.Const.Health > 0 && !weaponAmmoDef.Const.IsBeamWeapon;
                 var p = Session.Projectiles.ProjectilePool.Count > 0 ? Session.Projectiles.ProjectilePool.Pop() : new Projectile();
                 var info = p.Info;
+                var storage = info.Storage;
                 var target = info.Target;
 
                 info.Id = Session.Projectiles.CurrentProjectileId++;
@@ -58,10 +59,20 @@ namespace CoreSystems.Projectiles
                     target.TargetPos = wTarget.TargetPos;
                 }
 
+                p.PrevTargetPos = wTarget.TargetPos;
 
-                info.Storage.DummyTargets = null;
-                if (comp.FakeMode && (aConst.IsDrone || aConst.IsSmart))
-                    Session.PlayerDummyTargets.TryGetValue(repo.Values.State.PlayerId, out info.Storage.DummyTargets);
+
+                storage.DummyTargets = null;
+                if ((aConst.IsDrone || aConst.IsSmart))
+                {
+                    storage.TargetPosition = wTarget.TargetPos;
+
+                    if (comp.FakeMode)
+                        Session.PlayerDummyTargets.TryGetValue(repo.Values.State.PlayerId, out storage.DummyTargets);
+
+                    if (aConst.ProjectileSync)
+                        storage.SyncId = (long)w.Reload.EndId << 32 | w.ProjectileCounter & 0xFFFFFFFFL;
+                }
 
                 info.BaseDamagePool = aConst.BaseDamage;
 
@@ -92,7 +103,6 @@ namespace CoreSystems.Projectiles
                 }
                 else shotFade = 0;
                 info.ShotFade = shotFade;
-                p.PrevTargetPos = wTarget.TargetPos;
 
                 var updateGravity = aConst.FeelsGravity && info.Ai.InPlanetGravity;
                 if (updateGravity && Session.Tick - w.GravityTick > 119)
@@ -144,10 +154,6 @@ namespace CoreSystems.Projectiles
                     for (int j = 0; j < monitor.Count; j++)
                         monitor[j].Invoke(comp.CoreEntity.EntityId, w.PartId, info.Id, target.TargetId, p.Position, true);
                 }
-
-                if (aConst.ProjectileSync) 
-                    info.Storage.SyncId = (long)w.Reload.EndId << 32 | w.ProjectileCounter & 0xFFFFFFFFL;
-
             }
             NewProjectiles.Clear();
         }

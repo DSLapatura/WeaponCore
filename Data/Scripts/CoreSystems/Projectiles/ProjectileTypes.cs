@@ -14,6 +14,8 @@ using static CoreSystems.Support.HitEntity.Type;
 using static CoreSystems.Support.WeaponDefinition;
 using static CoreSystems.Support.Ai;
 using CollisionLayers = Sandbox.Engine.Physics.MyPhysics.CollisionLayers;
+using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
+using Sandbox.Game.Weapons;
 
 namespace CoreSystems.Support
 {
@@ -219,9 +221,11 @@ namespace CoreSystems.Support
         internal readonly ProNavGuidanceInlined Navigation = new ProNavGuidanceInlined(60);
         internal DroneStatus DroneStat;
         internal DroneMission DroneMsn;
-        internal Vector3D TaskPosition;
+        internal Vector3D TargetPosition;
         internal Vector3D RandOffsetDir;
         internal Vector3D OffsetDir;
+        internal Vector3D OriginLookAtPos;
+        internal Vector3D OriginTargetDir;
         internal FakeTargets DummyTargets;
         internal MyEntity ClosestObstacle;
         internal MyEntity NavTargetEnt;
@@ -255,7 +259,7 @@ namespace CoreSystems.Support
             LastOffsetTime = 0;
             DroneStat = DroneStatus.Launch;
             DroneMsn = DroneMission.Attack;
-            TaskPosition = Vector3D.Zero;
+            TargetPosition = Vector3D.Zero;
             RandOffsetDir = Vector3D.Zero;
             OffsetDir = Vector3D.Zero;
             NavTargetEnt = null;
@@ -517,14 +521,14 @@ namespace CoreSystems.Support
     internal class Fragments
     {
         internal List<Fragment> Sharpnel = new List<Fragment>();
-        internal void Init(Projectile p, MyConcurrentPool<Fragment> fragPool, AmmoDef ammoDef, bool timedSpawn, ref Vector3D newOrigin, ref Vector3D pointDir)
+        internal void Init(Projectile p, Stack<Fragment> fragPool, AmmoDef ammoDef, bool timedSpawn, ref Vector3D newOrigin, ref Vector3D pointDir)
         {
             var info = p.Info;
             var target = info.Target;
             var aConst = info.AmmoDef.Const;
             var fragCount = p.Info.AmmoDef.Fragment.Fragments;
             var syncId = !timedSpawn && fragCount == 1 && ammoDef.Const.ProjectileSync && aConst.ProjectileSync ? info.Storage.SyncId : long.MinValue;
-
+            var guidance = aConst.IsDrone || aConst.IsSmart;
             if (info.Ai.Session.IsClient && fragCount > 0 && info.AimedShot && aConst.ClientPredictedAmmo && !info.IsFragment)
             {
                 Projectiles.Projectiles.SendClientHit(p, false);
@@ -532,12 +536,17 @@ namespace CoreSystems.Support
 
             for (int i = 0; i < fragCount; i++)
             {
-                var frag = fragPool.Get();
+                var frag = fragPool.Count > 0 ? fragPool.Pop() : new Fragment();
+
                 frag.Weapon = info.Weapon;
                 frag.Ai = info.Ai;
                 frag.AmmoDef = ammoDef;
+                if (guidance)
+                {
+                    frag.DummyTargets = info.Storage.DummyTargets;
+                    frag.SyncId = syncId;
+                }
 
-                frag.SyncId = syncId;
                 frag.Depth = info.SpawnDepth + 1;
                 frag.TargetState = target.TargetState;
                 frag.TargetEntity = target.TargetEntity;
@@ -592,6 +601,7 @@ namespace CoreSystems.Support
                 var p = session.Projectiles.ProjectilePool.Count > 0 ? session.Projectiles.ProjectilePool.Pop() : new Projectile();
                 var info = p.Info;
                 info.Weapon = frag.Weapon;
+
                 info.Ai = frag.Ai;
                 info.Id = session.Projectiles.CurrentProjectileId++;
 
@@ -614,7 +624,6 @@ namespace CoreSystems.Support
                 info.OriginUp = frag.OriginUp;
                 info.Random = frag.Random;
                 info.DoDamage = frag.DoDamage;
-                info.Storage.SyncId = frag.SyncId;
                 info.SpawnDepth = frag.Depth;
                 info.BaseDamagePool = aConst.BaseDamage;
                 p.PrevTargetPos = frag.PrevTargetPos;
@@ -627,17 +636,21 @@ namespace CoreSystems.Support
                 info.ShieldBypassed = frag.IgnoreShield;
                 info.CompSceneVersion = frag.SceneVersion;
 
+                if (aConst.IsDrone || aConst.IsSmart)
+                {
+                    info.Storage.SyncId = frag.SyncId;
+                    info.Storage.DummyTargets = frag.DummyTargets;
+                }
+
                 session.Projectiles.ActiveProjetiles.Add(p);
                 p.Start();
 
                 if (aConst.Health > 0 && !aConst.IsBeamWeapon)
                     session.Projectiles.AddTargets.Add(p);
 
-
-                session.Projectiles.FragmentPool.Return(frag);
+                session.Projectiles.FragmentPool.Push(frag);
             }
-
-            session?.Projectiles.ShrapnelPool.Return(this);
+            session?.Projectiles.ShrapnelPool.Push(this);
             Sharpnel.Clear();
         }
     }
@@ -651,6 +664,7 @@ namespace CoreSystems.Support
         public MyEntity TriggerEntity;
         public MyEntity TargetEntity;
         public Projectile TargetProjectile;
+        public FakeTargets DummyTargets;
         public Vector3D Origin;
         public Vector3D OriginUp;
         public Vector3D Direction;

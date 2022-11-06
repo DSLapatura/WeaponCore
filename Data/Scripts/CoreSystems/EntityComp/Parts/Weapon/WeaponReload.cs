@@ -1,10 +1,7 @@
 ﻿using System;
 using CoreSystems.Support;
-using Sandbox.Game.Entities;
-using Sandbox.ModAPI;
 using static CoreSystems.Support.CoreComponent;
 using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetDef;
-using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace CoreSystems.Platform
 {

@@ -163,15 +163,16 @@ namespace CoreSystems.Platform
 
             internal void HandReloadNotify(Weapon w)
             {
-                Session.ShowLocalNotify($"Ammo type swapped to: {w.ActiveAmmoDef.AmmoName}", 1500, "White");
+                Session.ShowLocalNotify($"Ammo type swapped to: {w.ActiveAmmoDef.AmmoName}", 1500, "White", true);
             }
 
             internal void GetHandWeaponDummyInfo(out Vector3D position, out Vector3D direction, out Vector3D upDir, out Vector3D localPos)
             {
-                position = CharacterPosComp.LogicalPositionWorld;
+                var localMuzzlePos = Rifle.GetMuzzlePosition();
+                position = localMuzzlePos + TopEntity.PositionComp.WorldMatrixRef.Translation;
                 direction = CharacterPosComp.LogicalOrientationWorld;
                 upDir = TopEntity.PositionComp.WorldMatrixRef.Up;
-                localPos = CharacterPosComp.LogicalPositionLocalSpace;
+                localPos = localMuzzlePos;
             }
 
             internal MatrixD GetWhyKeenTransformedWorldMatrix()

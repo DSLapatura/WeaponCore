@@ -311,8 +311,8 @@ namespace CoreSystems
                 p.Info?.AvShot?.AmmoEffect?.Stop();
 
             Projectiles.ShrapnelToSpawn.Clear();
-            Projectiles.ShrapnelPool.Clean();
-            Projectiles.FragmentPool.Clean();
+            Projectiles.ShrapnelPool.Clear();
+            Projectiles.FragmentPool.Clear();
             Projectiles.ActiveProjetiles.Clear();
             Projectiles.ProjectilePool.Clear();
             Projectiles.HitEntityPool.Clean();

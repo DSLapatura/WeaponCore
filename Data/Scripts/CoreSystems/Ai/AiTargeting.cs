@@ -290,8 +290,7 @@ namespace CoreSystems.Support
                 if (Obstruction(ref tInfo, ref targetPos, p))
                     continue;
 
-                var topEntId = tInfo.Target.GetTopMostParent().EntityId;
-                target.Set(tInfo.Target, targetPos, weaponPos, 0, 0, topEntId);
+                target.Set(tInfo.Target, targetPos, weaponPos, 0, 0);
                 acquired = true;
                 break;
             }
@@ -386,7 +385,7 @@ namespace CoreSystems.Support
                     physics.CastRay(weaponPos, lp.Position, out hitInfo, 15);
                     if (hitInfo?.HitEntity == null)
                     {
-                        target.Set(null, lp.Position, weaponPos, 0, 0, long.MaxValue, lp);
+                        target.Set(null, lp.Position, weaponPos, 0, 0, lp);
                         p.PrevTargetPos = target.Projectile.Position;
                         target.Projectile.Seekers.Add(p);
                         found = true;
@@ -399,7 +398,7 @@ namespace CoreSystems.Support
                     if (ai.AiType == AiTypes.Grid && GridIntersection.BresenhamGridIntersection(ai.GridEntity, ref weaponPos, ref lp.Position, out hitInfo, comp.CoreEntity, ai))
                         continue;
 
-                    target.Set(null, lp.Position, weaponPos, 0, 0, long.MaxValue, lp);
+                    target.Set(null, lp.Position, weaponPos, 0, 0, lp);
                     p.PrevTargetPos = target.Projectile.Position;
                     target.Projectile.Seekers.Add(p);
                     found = true;
@@ -565,8 +564,7 @@ namespace CoreSystems.Support
                             Vector3D.Distance(ref weaponPos, ref targetCenter, out rayDist);
                             var shortDist = rayDist * (1 - w.LastHitInfo.Fraction);
                             var origDist = rayDist * w.LastHitInfo.Fraction;
-                            var topEntId = info.Target.GetTopMostParent().EntityId;
-                            target.Set(info.Target, w.LastHitInfo.Position, aimOrigin, shortDist, origDist, topEntId);
+                            target.Set(info.Target, w.LastHitInfo.Position, aimOrigin, shortDist, origDist);
                             targetType = TargetType.Other;
                             target.TransferTo(w.Target, comp.Session.Tick);
                             
@@ -770,14 +768,13 @@ namespace CoreSystems.Support
                     Vector3D.Distance(ref weaponPos, ref blockPos, out rayDist);
                     var shortDist = rayDist * (1 - iHitInfo.Fraction);
                     var origDist = rayDist * iHitInfo.Fraction;
-                    var topEntId = block.GetTopMostParent().EntityId;
-                    target.Set(block, iHitInfo.Position, aimOrigin, shortDist, origDist, topEntId);
+                    target.Set(block, iHitInfo.Position, aimOrigin, shortDist, origDist);
                     foundBlock = true;
                     break;
                 }
 
                 Vector3D.Distance(ref weaponPos, ref blockPos, out rayDist);
-                target.Set(block, block.PositionComp.WorldAABB.Center, aimOrigin, rayDist, rayDist, block.GetTopMostParent().EntityId);
+                target.Set(block, block.PositionComp.WorldAABB.Center, aimOrigin, rayDist, rayDist);
                 foundBlock = true;
                 break;
             }
@@ -980,8 +977,7 @@ namespace CoreSystems.Support
                 Vector3D.Distance(ref weaponPos, ref bestCubePos, out rayDist);
                 var shortDist = rayDist * (1 - iHitInfo.Fraction);
                 var origDist = rayDist * iHitInfo.Fraction;
-                var topEntId = newEntity.GetTopMostParent().EntityId;
-                target.Set(newEntity, iHitInfo.Position, aimOrigin, shortDist, origDist, topEntId);
+                target.Set(newEntity, iHitInfo.Position, aimOrigin, shortDist, origDist);
                 top5.Add(newEntity);
             }
             else if (newEntity != null)
@@ -991,8 +987,7 @@ namespace CoreSystems.Support
                 Vector3D.Distance(ref weaponPos, ref bestCubePos, out rayDist);
                 var shortDist = rayDist;
                 var origDist = rayDist;
-                var topEntId = newEntity.GetTopMostParent().EntityId;
-                target.Set(newEntity, bestCubePos, aimOrigin, shortDist, origDist, topEntId);
+                target.Set(newEntity, bestCubePos, aimOrigin, shortDist, origDist);
                 top5.Add(newEntity);
             }
             else target.Reset(ai.Session.Tick, Target.States.NoTargetsSeen, w == null);
@@ -1086,8 +1081,7 @@ namespace CoreSystems.Support
                             Vector3D.Distance(ref weaponPos, ref lp.Position, out hitDist);
                             var shortDist = hitDist;
                             var origDist = hitDist;
-                            const long topEntId = long.MaxValue;
-                            target.Set(null, lp.Position, aimOrigin, shortDist, origDist, topEntId, lp);
+                            target.Set(null, lp.Position, aimOrigin, shortDist, origDist, lp);
                             targetType = TargetType.Projectile;
                             target.TransferTo(w.Target, w.Comp.Session.Tick);
                             return;
@@ -1103,8 +1097,7 @@ namespace CoreSystems.Support
                         Vector3D.Distance(ref weaponPos, ref lp.Position, out hitDist);
                         var shortDist = hitDist;
                         var origDist = hitDist;
-                        const long topEntId = long.MaxValue;
-                        target.Set(null, lp.Position, aimOrigin, shortDist, origDist, topEntId, lp);
+                        target.Set(null, lp.Position, aimOrigin, shortDist, origDist, lp);
                         targetType = TargetType.Projectile;
                         target.TransferTo(w.Target, w.Comp.Session.Tick);
                         return;

@@ -547,7 +547,7 @@ namespace CoreSystems.Projectiles
                                     else
                                     {
                                         s.NavTargetBound = new BoundingSphereD(fakeTarget.FakeInfo.WorldPosition, fragProx * 0.5f);
-                                        s.TaskPosition = fakeTarget.FakeInfo.WorldPosition;
+                                        s.TargetPosition = fakeTarget.FakeInfo.WorldPosition;
                                         hasTarget = true;
                                     }
                                 }
@@ -595,7 +595,7 @@ namespace CoreSystems.Projectiles
                                 s.NavTargetEnt = tasks.Enemy;
                                 s.NavTargetBound = s.NavTargetEnt.PositionComp.WorldVolume;
                                 var tTargetDist = Vector3D.Distance(Position, tasks.Enemy.PositionComp.WorldVolume.Center);
-                                s.ShootTarget.Set(tasks.Enemy, tasks.Enemy.PositionComp.WorldVolume.Center, Position, tTargetDist, tTargetDist, tasks.EnemyId);
+                                s.ShootTarget.Set(tasks.Enemy, tasks.Enemy.PositionComp.WorldVolume.Center, Position, tTargetDist, tTargetDist);
                                 s.IsFriend = false;
                                 break;
                             case ProtoWeaponCompTasks.Tasks.Defend:
@@ -1321,9 +1321,34 @@ namespace CoreSystems.Projectiles
                     }
                 }
 
+
+                if (!s.StageOne && false)
+                {
+                    var heightStart = s.OriginLookAtPos - (Info.OriginUp * 500);
+                    var heightend = s.TargetPosition - (Info.OriginUp * 500);
+                    var distFromTargetHeightLine = MyUtils.GetPointLineDistance(ref heightend, ref s.TargetPosition, ref Position);
+                    if (distFromTargetHeightLine > 1500)
+                    {
+                        var heightDir = heightend - heightStart;
+                        var mag = heightDir.Normalize();
+
+                        var slidingPoint = heightStart + heightDir * ((mag * 0.05) + Info.DistanceTraveled);
+                        DsDebugDraw.DrawSingleVec(heightStart, 20f, Color.Red);
+                        DsDebugDraw.DrawSingleVec(heightend, 20f, Color.Blue);
+                        DsDebugDraw.DrawSingleVec(slidingPoint, 20f, Color.Yellow);
+                        var pointDir = Vector3D.Normalize(slidingPoint - s.OriginLookAtPos);
+                        PrevTargetPos = MyUtils.LinePlaneIntersection(slidingPoint, heightDir, s.OriginLookAtPos, pointDir);
+                    }
+                    else
+                        s.StageOne = true;
+
+                }
+
+
                 Vector3D targetAcceleration = Vector3D.Zero;
                 if (s.Navigation.LastVelocity.HasValue)
                     targetAcceleration = (PrevTargetVel - s.Navigation.LastVelocity.Value) * 60;
+
                 s.Navigation.LastVelocity = PrevTargetVel;
 
                 Vector3D missileToTarget = PrevTargetPos - Position;
@@ -1392,16 +1417,17 @@ namespace CoreSystems.Projectiles
                         commandedAccel = Vector3D.Normalize(commandedAccel) * AccelInMetersPerSec;
                     }
                 }
+                /*
                 if (true)
                 {
-                    var distFromLine = MyUtils.GetPointLineDistance(ref Info.Origin, ref Info.Target.TargetPos, ref Position);
+                    var distFromLine = MyUtils.GetPointLineDistance(ref Info.Target.OriginLookAtPos, ref Info.Target.TargetPos, ref Position);
                     if (distFromLine < 500 && !s.StageOne)
                     {
-                        var angle = 0.5 * MathHelper.Pi;
+                        var angle = 0 * MathHelper.Pi;
                         var up = Vector3D.CalculatePerpendicularVector(Info.OriginUp);
-                        var right = Vector3D.Cross(Vector3D.Normalize(Info.Target.TargetPos - Info.Origin), up);
+                        var right = Vector3D.Cross(Info.Target.OriginTargetDir, up);
                         s.RandOffsetDir = Math.Sin(angle) * up + Math.Cos(angle) * right;
-                        s.RandOffsetDir *= 10;
+                        s.RandOffsetDir *= 0.5;
                     }
                     else
                         s.StageOne = true;
@@ -1413,6 +1439,7 @@ namespace CoreSystems.Projectiles
                     }
 
                 }
+                */
                 newVel = Velocity + (commandedAccel * StepConst);
                 
                 var accelDir = commandedAccel / AccelInMetersPerSec;
@@ -1950,7 +1977,7 @@ namespace CoreSystems.Projectiles
                 }
 
                 var projectiles = Info.Ai.Session.Projectiles;
-                var shrapnel = projectiles.ShrapnelPool.Get();
+                var shrapnel = projectiles.ShrapnelPool.Count > 0 ? projectiles.ShrapnelPool.Pop() : new Fragments();
                 shrapnel.Init(this, projectiles.FragmentPool, fragAmmoDef, timedSpawn, ref newOrigin, ref pointDir);
                 projectiles.ShrapnelToSpawn.Add(shrapnel);
             }
@@ -2082,8 +2109,7 @@ namespace CoreSystems.Projectiles
                     MyEntity targetEnt;
                     if (sync.ProStateSync.TargetId > 0 && (target.TargetId != sync.ProStateSync.TargetId) && MyEntities.TryGetEntityById(sync.ProStateSync.TargetId, out targetEnt))
                     {
-                        var topEntId = targetEnt.GetTopMostParent()?.EntityId ?? 0;
-                        target.Set(targetEnt, targetEnt.PositionComp.WorldAABB.Center, Position, 0, 0, topEntId);
+                        target.Set(targetEnt, targetEnt.PositionComp.WorldAABB.Center, Position, 0, 0);
                        
                         if (w.System.WConst.DebugMode)
                             Log.Line($"ProSyn: Id:{Info.Id} - age:{Info.Age} - targetSetTo:{targetEnt.DebugName}");

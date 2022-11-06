@@ -10,28 +10,21 @@ namespace CoreSystems.Support
 {
     public class Target
     {
-        internal Part Part;
+        internal Weapon Weapon;
         internal MyEntity TargetEntity;
         internal Projectile Projectile;
         internal Vector3D TargetPos;
-        internal Vector3D OriginLookAtPos;
-        internal Vector3D OriginTargetDir;
-
         internal States CurrentState = States.NotSet;
         internal TargetStates TargetState;
-
         internal bool HasTarget;
         internal bool IsAligned;
         internal bool SoftProjetileReset;
         internal bool TargetChanged;
         internal bool ClientDirty;
         internal bool IsDrone;
-
         internal uint ResetTick;
         internal uint ProjectileEndTick;
-
         internal long TargetId;
-
         internal double HitShortDist;
         internal double OrigDistance;
 
@@ -79,9 +72,9 @@ namespace CoreSystems.Support
             ProjectileNewTarget,
         }
 
-        internal Target(Part part = null)
+        internal Target(Weapon weapon = null)
         {
-            Part = part;
+            Weapon = weapon;
         }
 
         internal void PushTargetToClient(Weapon w)
@@ -179,8 +172,6 @@ namespace CoreSystems.Support
             target.TargetEntity = TargetEntity;
             target.Projectile = Projectile;
             target.TargetPos = TargetPos;
-            target.OriginLookAtPos = OriginLookAtPos;
-            target.OriginTargetDir = OriginTargetDir;
 
             target.HitShortDist = HitShortDist;
             target.OrigDistance = OrigDistance;
@@ -190,13 +181,11 @@ namespace CoreSystems.Support
             Reset(expireTick, States.Transfered);
         }
 
-        internal void Set(MyEntity ent, Vector3D pos, Vector3D originLookAtPos, double shortDist, double origDist, long topEntId, Projectile projectile = null, bool isFakeTarget = false)
+        internal void Set(MyEntity ent, Vector3D pos, Vector3D originLookAtPos, double shortDist, double origDist, Projectile projectile = null, bool isFakeTarget = false)
         {
             TargetEntity = ent;
             Projectile = projectile;
             TargetPos = pos;
-            OriginLookAtPos = originLookAtPos;
-            OriginTargetDir = Vector3D.Normalize(pos  - originLookAtPos);
             HitShortDist = shortDist;
             OrigDistance = origDist;
 
@@ -218,7 +207,6 @@ namespace CoreSystems.Support
             Reset(expiredTick, States.Fake, false);
             TargetState = TargetStates.IsFake;
             TargetPos = pos;
-            OriginLookAtPos = targetingOrigin;
             StateChange(true, States.Fake);
         }
 
@@ -245,7 +233,6 @@ namespace CoreSystems.Support
             IsAligned = false;
             Projectile = null;
             TargetPos = Vector3D.Zero;
-            OriginLookAtPos = Vector3D.Zero;
             HitShortDist = 0;
             OrigDistance = 0;
             TargetId = 0;
@@ -262,15 +249,15 @@ namespace CoreSystems.Support
             SetTargetId(setTarget, reason);
             TargetChanged = !HasTarget && setTarget || HasTarget && !setTarget;
 
-            if (TargetChanged && Part != null) {
+            if (TargetChanged && Weapon != null) {
 
                 if (setTarget) {
-                    Part.BaseComp.Ai.WeaponsTracking++;
-                    Part.BaseComp.PartTracking++;
+                    Weapon.BaseComp.Ai.WeaponsTracking++;
+                    Weapon.BaseComp.PartTracking++;
                 }
                 else {
-                    Part.BaseComp.Ai.WeaponsTracking--;
-                    Part.BaseComp.PartTracking--;
+                    Weapon.BaseComp.Ai.WeaponsTracking--;
+                    Weapon.BaseComp.PartTracking--;
                 }
             }
             HasTarget = setTarget;

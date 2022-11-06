@@ -126,16 +126,15 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
                 {
                     ReloadKeyPressed = MyAPIGateway.Input.IsKeyPress(ReloadKey);
                     ReloadKeyReleased = MyAPIGateway.Input.IsNewKeyReleased(ReloadKey);
+                    ReloadTime = ReloadKeyPressed ? ++ReloadTime : 0;
 
-                    if (ReloadKeyReleased)
+                    if (ReloadTime == 60)
+                        ai.OnlyWeaponComp.CycleHandAmmo();
+                    else if (ReloadTime < 60 && ReloadKeyReleased)
                     {
-                        if (ReloadTime < 60)
-                            ai.OnlyWeaponComp.ForceReload();
-                        else
-                            ai.OnlyWeaponComp.CycleHandAmmo();
+                        ai.OnlyWeaponComp.ForceReload();
                     }
 
-                    ReloadTime = ReloadKeyPressed ? ++ReloadTime : 0;
 
                     ShiftReleased = MyAPIGateway.Input.IsNewKeyReleased(MyKeys.LeftShift);
                     ShiftPressed = MyAPIGateway.Input.IsKeyPress(MyKeys.LeftShift);

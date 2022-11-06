@@ -497,8 +497,9 @@ namespace CoreSystems
             var isProjectile = EntityId == -1;
             var noTarget = EntityId == 0;
             var isFakeTarget = EntityId == -2;
+            var aConst = w.ActiveAmmoDef.AmmoDef.Const;
 
-            if (!w.ActiveAmmoDef.AmmoDef.Const.Reloadable && !noTarget)
+            if (!aConst.Reloadable && !noTarget)
                 w.ProjectileCounter = 0;
 
             if (isProjectile)
@@ -527,8 +528,6 @@ namespace CoreSystems
             }
 
             target.TargetPos = TargetPos;
-            target.OriginLookAtPos = w.MyPivotPos;
-            target.OriginTargetDir = Vector3D.Normalize(TargetPos - w.MyPivotPos);
             target.ClientDirty = true;
         }
 
