@@ -333,14 +333,14 @@ namespace CoreSystems.Platform
 
             if (TurretAttached && !System.TrackTargets)
                 Target = comp.PrimaryWeapon.Target;
-            else Target = new Target(this, true);
+            else Target = new Target(this);
 
             _numOfMuzzles = System.Muzzles.Length;
             BeamSlot = new uint[_numOfMuzzles];
             Muzzles = new Muzzle[_numOfMuzzles];
             Dummies = new Dummy[_numOfMuzzles];
             WeaponCache = new WeaponFrameCache(_numOfMuzzles);
-            NewTarget = new Target(this);
+            NewTarget = new Target();
             RayCallBack = new ParallelRayCallBack(this);
             Acquire = new PartAcquire(this);
             AzimuthPart = new PartInfo {Entity = azimuthPart, IsCoreEntity = azimuthPart == Comp.CoreEntity, ParentIsCoreEntity = azimuthPart?.Parent == Comp.CoreEntity};

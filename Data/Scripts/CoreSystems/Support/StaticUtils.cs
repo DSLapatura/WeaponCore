@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text;
 using CoreSystems.Projectiles;
 using Sandbox.Game;
 using Sandbox.Game.Entities;
@@ -84,6 +85,15 @@ namespace CoreSystems.Support
             if (value < 0.0)
                 return 0.0d;
             return value > 1.0 ? 1d : value;
+        }
+
+        public static void ReplaceAll(StringBuilder sb, char[] charlist, char replacewith)
+        {
+            for (int i = 0; i < sb.Length; i++)
+            {
+                if (charlist.Contains(sb[i]))
+                    sb[i] = replacewith;
+            }
         }
 
         public static double Lerp(double a, double b, double t) => a + (b - a) * Clamp01(t);

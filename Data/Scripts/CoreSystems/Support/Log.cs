@@ -148,7 +148,10 @@ namespace CoreSystems.Support
 
             using (var read = MyAPIGateway.Utilities.ReadFileInLocalStorage(oldName, anyObjectInYourMod))
             {
-                using (var write = MyAPIGateway.Utilities.WriteFileInLocalStorage(newName, anyObjectInYourMod))
+                var sb = new StringBuilder(newName);
+                SUtils.ReplaceAll(sb, Path.GetInvalidFileNameChars(), '_');
+
+                using (var write = MyAPIGateway.Utilities.WriteFileInLocalStorage(sb.ToString(), anyObjectInYourMod))
                 {
                     write.Write(read.ReadToEnd());
                     write.Flush();

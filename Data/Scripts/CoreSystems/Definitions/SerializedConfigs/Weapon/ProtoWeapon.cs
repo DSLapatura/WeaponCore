@@ -527,7 +527,8 @@ namespace CoreSystems
             }
 
             target.TargetPos = TargetPos;
-            target.TargetingOrigin = w.MyPivotPos;
+            target.OriginLookAtPos = w.MyPivotPos;
+            target.OriginTargetDir = Vector3D.Normalize(TargetPos - w.MyPivotPos);
             target.ClientDirty = true;
         }
 

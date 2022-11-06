@@ -1,12 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using CoreSystems.Platform;
 using CoreSystems.Projectiles;
 using Sandbox.Game.Entities;
 using VRage.Game;
 using VRage.Game.Entity;
 using VRageMath;
-using static CoreSystems.Support.WeaponDefinition.TargetingDef;
 
 namespace CoreSystems.Support
 {
@@ -16,7 +14,7 @@ namespace CoreSystems.Support
         internal MyEntity TargetEntity;
         internal Projectile Projectile;
         internal Vector3D TargetPos;
-        internal Vector3D TargetingOrigin;
+        internal Vector3D OriginLookAtPos;
         internal Vector3D OriginTargetDir;
 
         internal States CurrentState = States.NotSet;
@@ -26,15 +24,13 @@ namespace CoreSystems.Support
         internal bool IsAligned;
         internal bool SoftProjetileReset;
         internal bool TargetChanged;
-        internal bool IsTargetStorage;
         internal bool ClientDirty;
         internal bool IsDrone;
 
-        internal uint ExpiredTick;
         internal uint ResetTick;
         internal uint ProjectileEndTick;
+
         internal long TargetId;
-        internal long TopEntityId;
 
         internal double HitShortDist;
         internal double OrigDistance;
@@ -83,10 +79,9 @@ namespace CoreSystems.Support
             ProjectileNewTarget,
         }
 
-        internal Target(Part part = null, bool main = false)
+        internal Target(Part part = null)
         {
             Part = part;
-            IsTargetStorage = main;
         }
 
         internal void PushTargetToClient(Weapon w)
@@ -175,7 +170,7 @@ namespace CoreSystems.Support
                 ClientDirty = false;
             }
 
-            w.Target.ExpiredTick = w.System.Session.Tick;
+            w.Target.ResetTick = w.System.Session.Tick;
         }
 
         internal void TransferTo(Target target, uint expireTick, bool drone = false)
@@ -184,26 +179,26 @@ namespace CoreSystems.Support
             target.TargetEntity = TargetEntity;
             target.Projectile = Projectile;
             target.TargetPos = TargetPos;
-            target.TargetingOrigin = TargetingOrigin;
+            target.OriginLookAtPos = OriginLookAtPos;
+            target.OriginTargetDir = OriginTargetDir;
 
             target.HitShortDist = HitShortDist;
             target.OrigDistance = OrigDistance;
-            target.TopEntityId = TopEntityId;
             target.TargetState = TargetState;
 
             target.StateChange(HasTarget, CurrentState);
             Reset(expireTick, States.Transfered);
         }
 
-        internal void Set(MyEntity ent, Vector3D pos, Vector3D targetingOrigin, double shortDist, double origDist, long topEntId, Projectile projectile = null, bool isFakeTarget = false)
+        internal void Set(MyEntity ent, Vector3D pos, Vector3D originLookAtPos, double shortDist, double origDist, long topEntId, Projectile projectile = null, bool isFakeTarget = false)
         {
             TargetEntity = ent;
             Projectile = projectile;
             TargetPos = pos;
-            TargetingOrigin = targetingOrigin;
+            OriginLookAtPos = originLookAtPos;
+            OriginTargetDir = Vector3D.Normalize(pos  - originLookAtPos);
             HitShortDist = shortDist;
             OrigDistance = origDist;
-            TopEntityId = topEntId;
 
             if (projectile != null)
                 TargetState = TargetStates.IsProjectile;
@@ -223,7 +218,7 @@ namespace CoreSystems.Support
             Reset(expiredTick, States.Fake, false);
             TargetState = TargetStates.IsFake;
             TargetPos = pos;
-            TargetingOrigin = targetingOrigin;
+            OriginLookAtPos = targetingOrigin;
             StateChange(true, States.Fake);
         }
 
@@ -250,17 +245,15 @@ namespace CoreSystems.Support
             IsAligned = false;
             Projectile = null;
             TargetPos = Vector3D.Zero;
-            TargetingOrigin = Vector3D.Zero;
+            OriginLookAtPos = Vector3D.Zero;
             HitShortDist = 0;
             OrigDistance = 0;
-            TopEntityId = 0;
             TargetId = 0;
             ResetTick = expiredTick;
             SoftProjetileReset = false;
             if (expire)
             {
                 StateChange(false, reason);
-                ExpiredTick = expiredTick;
             }
         }
 
@@ -269,7 +262,7 @@ namespace CoreSystems.Support
             SetTargetId(setTarget, reason);
             TargetChanged = !HasTarget && setTarget || HasTarget && !setTarget;
 
-            if (TargetChanged && IsTargetStorage) {
+            if (TargetChanged && Part != null) {
 
                 if (setTarget) {
                     Part.BaseComp.Ai.WeaponsTracking++;

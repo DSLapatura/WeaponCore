@@ -20,7 +20,6 @@ namespace CoreSystems.Projectiles
     internal class Projectile
     {
         internal const float StepConst = MyEngineConstants.PHYSICS_STEP_SIZE_IN_SECONDS;
-
         internal readonly ProInfo Info = new ProInfo();
         internal readonly List<MyLineSegmentOverlapResult<MyEntity>> MySegmentList = new List<MyLineSegmentOverlapResult<MyEntity>>();
         internal readonly List<MyEntity> MyEntityList = new List<MyEntity>();
@@ -50,7 +49,6 @@ namespace CoreSystems.Projectiles
         internal Vector3 Gravity;
         internal LineD Beam;
         internal BoundingSphereD PruneSphere;
-        //internal MyOrientedBoundingBoxD ProjObb;
         internal double AccelInMetersPerSec;
         internal double DistanceToTravelSqr;
         internal double VelocityLengthSqr;
@@ -73,6 +71,9 @@ namespace CoreSystems.Projectiles
         internal bool Intersecting;
         internal bool FinalizeIntersection;
         internal bool Asleep;
+
+        //internal MyOrientedBoundingBoxD ProjObb;
+
         internal enum CheckTypes
         {
             Ray,
@@ -294,7 +295,8 @@ namespace CoreSystems.Projectiles
                 PruneQuery = MyEntityQueryType.Both;
             }
 
-            if (aConst.DynamicGuidance && PruneQuery == MyEntityQueryType.Dynamic && staticIsInRange) CheckForNearVoxel(60);
+            if (aConst.DynamicGuidance && PruneQuery == MyEntityQueryType.Dynamic && staticIsInRange) 
+                CheckForNearVoxel(60);
 
             var accelPerSec = trajectory.AccelPerSec;
             AccelInMetersPerSec = !aConst.AmmoSkipAccel ? accelPerSec : DesiredSpeed;
@@ -424,7 +426,6 @@ namespace CoreSystems.Projectiles
             if (aConst.DynamicGuidance && session.AntiSmartActive)
                 DynTrees.UnregisterProjectile(this);
 
-            var target = Info.Target;
             var dmgTotal = Info.DamageDoneAoe + Info.DamageDonePri + Info.DamageDoneShld + Info.DamageDoneProj;
 
             if (dmgTotal > 0 && Info.Ai?.Construct.RootAi != null && !Info.Ai.MarkedForClose && !Info.Weapon.Comp.CoreEntity.MarkedForClose)
@@ -1394,11 +1395,9 @@ namespace CoreSystems.Projectiles
                 if (true)
                 {
                     var distFromLine = MyUtils.GetPointLineDistance(ref Info.Origin, ref Info.Target.TargetPos, ref Position);
-                    var offset = false;
                     if (distFromLine < 500 && !s.StageOne)
                     {
-                        offset = true;
-                        var angle = 2 * MathHelper.TwoPi;
+                        var angle = 0.5 * MathHelper.Pi;
                         var up = Vector3D.CalculatePerpendicularVector(Info.OriginUp);
                         var right = Vector3D.Cross(Vector3D.Normalize(Info.Target.TargetPos - Info.Origin), up);
                         s.RandOffsetDir = Math.Sin(angle) * up + Math.Cos(angle) * right;
@@ -1407,7 +1406,7 @@ namespace CoreSystems.Projectiles
                     else
                         s.StageOne = true;
 
-                    if (offset)
+                    if (!s.StageOne)
                     {
                         commandedAccel += AccelInMetersPerSec * s.RandOffsetDir;
                         commandedAccel = Vector3D.Normalize(commandedAccel) * AccelInMetersPerSec;
