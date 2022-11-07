@@ -166,30 +166,29 @@ namespace CoreSystems.Platform
                 Session.ShowLocalNotify($"Ammo type swapped to: {w.ActiveAmmoDef.AmmoName}", 1500, "White", true);
             }
 
-            internal void GetHandWeaponDummyInfo(out Vector3D position, out Vector3D direction, out Vector3D upDir, out Vector3D localPos)
+            internal Matrix GetHandWeaponDummyInfo()
             {
-                
-                var localMuzzlePos = Rifle.GetMuzzlePosition();
-                position = localMuzzlePos + TopEntity.PositionComp.WorldMatrixRef.Translation;
-                direction = CharacterPosComp.LogicalOrientationWorld;
-                upDir = TopEntity.PositionComp.WorldMatrixRef.Up;
-                localPos = localMuzzlePos;
+                var rifleLocalMatrix = Rifle.PositionComp.LocalMatrixRef;
+                rifleLocalMatrix.Translation = (CharacterPosComp.LogicalPositionWorld);
+
+                rifleLocalMatrix.Translation += (rifleLocalMatrix.Forward * 0.25f);
+                rifleLocalMatrix.Translation += (rifleLocalMatrix.Down * 0.25f);
+                rifleLocalMatrix.Translation += (rifleLocalMatrix.Right * 0.25f);
+
+                return rifleLocalMatrix;
             }
 
             internal MatrixD GetWhyKeenTransformedWorldMatrix()
             {
-                var childOffsetWorldMatrix = Rifle.PositionComp.WorldMatrixRef;
-                var parentWorldMatrix = TopEntity.PositionComp.WorldMatrixRef;
-                parentWorldMatrix.Translation = CharacterPosComp.LogicalPositionWorld;
+                var rifleLocalMatrix = Rifle.PositionComp.LocalMatrixRef;
+                rifleLocalMatrix.Translation = (CharacterPosComp.LogicalPositionWorld);
 
-                return parentWorldMatrix * childOffsetWorldMatrix;
+                rifleLocalMatrix.Translation += (rifleLocalMatrix.Forward * 0.25f);
+                rifleLocalMatrix.Translation += (rifleLocalMatrix.Down * 0.25f);
+                rifleLocalMatrix.Translation += (rifleLocalMatrix.Right * 0.25f);
+
+                return rifleLocalMatrix;
             }
-
-            internal Vector3D GetWhyKeenTransformedCenter(IMyAutomaticRifleGun childEntity, MyEntity topEntity)
-            {
-                return CharacterPosComp.LogicalPositionWorld;
-            }
-
 
         }
     }

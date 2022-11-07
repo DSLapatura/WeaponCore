@@ -132,14 +132,12 @@ namespace CoreSystems.Support
 
                 if (requiresHandWeaponOffsets) {
                     var wComp = (Weapon.WeaponComponent) _part.BaseComp;
-                    wComp.GetHandWeaponDummyInfo(out CachedPos, out CachedDir, out CachedUpDir, out localPos);
+                    partWorldMatrix = wComp.GetHandWeaponDummyInfo();
                 }
-                else
-                {
-                    Vector3D.Transform(ref localPos, ref partWorldMatrix, out CachedPos);
-                    Vector3D.TransformNormal(ref localDir, ref partWorldMatrix, out CachedDir);
-                    Vector3D.TransformNormal(ref localUpDir, ref partWorldMatrix, out CachedUpDir);
-                }
+
+                Vector3D.Transform(ref localPos, ref partWorldMatrix, out CachedPos);
+                Vector3D.TransformNormal(ref localDir, ref partWorldMatrix, out CachedDir);
+                Vector3D.TransformNormal(ref localUpDir, ref partWorldMatrix, out CachedUpDir);
 
                 _info.Position = CachedPos;
                 _info.LocalPosition = localPos;
