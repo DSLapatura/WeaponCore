@@ -1330,10 +1330,10 @@ namespace CoreSystems.Projectiles
 
                 if (!s.StageOne && false)
                 {
-                    var desiredHeight = 20;
-                    var flyByWaterStartOffset = 0.05;
-                    var stageOneAccelMulti = 2;
-                    var stageOneThreshold = 1000;
+                    var desiredHeight = 15d;
+                    var flyByWaterStartOffset = 0.03;
+                    var stageOneAccelMulti = 6;
+                    var stageOneThreshold = 100;
 
                     var heightOffset = Info.OriginUp * desiredHeight;
 
@@ -1351,20 +1351,21 @@ namespace CoreSystems.Projectiles
                         var closestPos = heightStart + heightDir * ((magnitude * flyByWaterStartOffset) + Info.DistanceTraveled);
 
                         var useSurface = true;
-                        if (Info.MyPlanet != null && useSurface)
-                            PlanetSurfaceHeightAdjustment(ref closestPos);
+                        var adjHeightPos = closestPos;
 
-                        var adjHeightPos = closestPos - (Info.OriginUp * desiredHeight);
+                        Vector3D surfacePos;
+                        if (Info.MyPlanet != null && useSurface)
+                            PlanetSurfaceHeightAdjustment(closestPos, desiredHeight, out adjHeightPos, out surfacePos);
 
                         var targetsPerspectiveDir = Vector3D.Normalize(adjHeightPos - actualTargetPosition);
                         TargetPosition = MyUtils.LinePlaneIntersection(adjHeightPos, heightDir, actualTargetPosition, targetsPerspectiveDir);
 
                         if (Info.Ai.Session.DebugMod)
                         {
-                            DsDebugDraw.DrawSingleVec(heightStart, 20f, Color.Red);
-                            DsDebugDraw.DrawSingleVec(heightend, 20f, Color.Blue);
-                            DsDebugDraw.DrawSingleVec(adjHeightPos, 20f, Color.Green);
-                            DsDebugDraw.DrawSingleVec(TargetPosition, 20f, Color.Yellow);
+                            DsDebugDraw.DrawSingleVec(heightStart, 10f, Color.Red);
+                            DsDebugDraw.DrawSingleVec(heightend, 10f, Color.Blue);
+                            DsDebugDraw.DrawSingleVec(adjHeightPos, 10f, Color.Green);
+                            DsDebugDraw.DrawSingleVec(TargetPosition, 10f, Color.Yellow);
                         }
                     }
                     else
@@ -1384,7 +1385,7 @@ namespace CoreSystems.Projectiles
                 Vector3D lateralTargetAcceleration = (targetAcceleration - Vector3D.Dot(targetAcceleration, missileToTargetNorm) * missileToTargetNorm);
 
                 Vector3D omega = Vector3D.Cross(missileToTarget, relativeVelocity) / Math.Max(missileToTarget.LengthSquared(), 1); //to combat instability at close range
-                var lateralAcceleration = 10 * relativeVelocity.Length() * Vector3D.Cross(omega, missileToTargetNorm) + 0 * lateralTargetAcceleration;
+                var lateralAcceleration = smarts.Aggressiveness * relativeVelocity.Length() * Vector3D.Cross(omega, missileToTargetNorm) + 0 * lateralTargetAcceleration;
 
                 Vector3D commandedAccel;
                 if (Vector3D.IsZero(lateralAcceleration))
@@ -1463,26 +1464,22 @@ namespace CoreSystems.Projectiles
             Velocity = newVel;
         }
 
-        private double PlanetSurfaceHeightAdjustment(ref Vector3D closestPos)
+        private void PlanetSurfaceHeightAdjustment(Vector3D closestPos, double desiredHeight, out Vector3D adjustedHeight, out Vector3D surfacePos)
         {
             var planetCenter = Info.MyPlanet.PositionComp.WorldAABB.Center;
 
-            var heighestSurfacePos = Vector3D.MinValue;
-
-            double heightestSurfaceSqr = 0;
-            double naiveToCenterSqr;
-            Vector3D.DistanceSquared(ref closestPos, ref planetCenter, out naiveToCenterSqr);
-
+            Vector3D waterSurfacePos = closestPos;
+            double waterSurface = 0;
+            
             WaterData water;
             if (Info.Weapon.Comp.Session.WaterApiLoaded && Info.Weapon.Comp.Session.WaterMap.TryGetValue(Info.MyPlanet.EntityId, out water))
             {
                 var waterOuterSphere = new BoundingSphereD(Info.MyPlanet.PositionComp.WorldAABB.Center, water.MaxRadius);
                 if (new RayD(LastPosition, Info.Direction).Intersects(waterOuterSphere).HasValue || waterOuterSphere.Contains(LastPosition) == ContainmentType.Contains || waterOuterSphere.Contains(Position) == ContainmentType.Contains)
                 {
-                    var waterSurfacePos = WaterModAPI.GetClosestSurfacePoint(Position, water.Planet);
-                    heighestSurfacePos = waterSurfacePos;
+                    waterSurfacePos = WaterModAPI.GetClosestSurfacePoint(Position, water.Planet);
 
-                    Vector3D.DistanceSquared(ref waterSurfacePos, ref planetCenter, out heightestSurfaceSqr);
+                    Vector3D.DistanceSquared(ref waterSurfacePos, ref planetCenter, out waterSurface);
                 }
             }
 
@@ -1490,16 +1487,10 @@ namespace CoreSystems.Projectiles
 
             double surfaceToCenterSqr;
             Vector3D.DistanceSquared(ref voxelSurfacePos, ref planetCenter, out surfaceToCenterSqr);
-            if (surfaceToCenterSqr > heightestSurfaceSqr || heighestSurfacePos == Vector3D.MinValue)
-            {
-                heighestSurfacePos = voxelSurfacePos;
-                heightestSurfaceSqr = surfaceToCenterSqr;
-            }
 
-            if (naiveToCenterSqr < surfaceToCenterSqr)
-                closestPos += (heighestSurfacePos - closestPos);
-
-            return heightestSurfaceSqr;
+            surfacePos = surfaceToCenterSqr > waterSurface ? voxelSurfacePos : waterSurfacePos;
+            var gravDir = Vector3D.Normalize(surfacePos - planetCenter);
+            adjustedHeight = surfacePos + (gravDir * desiredHeight);
         }
 
         internal void OffSetTarget(bool roam = false)
