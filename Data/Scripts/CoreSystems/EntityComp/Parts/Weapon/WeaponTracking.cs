@@ -973,7 +973,7 @@ namespace CoreSystems.Platform
 
                 }
                 var topMostEnt = Target.TargetEntity.GetTopMostParent();
-                if (Comp.TopEntity != topMostEnt || !Comp.Ai.Targets.ContainsKey(topMostEnt))
+                if (Target.TopEntityId != topMostEnt.EntityId || !Comp.Ai.Targets.ContainsKey(topMostEnt))
                 {
                     masterWeapon.Target.Reset(Comp.Session.Tick, Target.States.RayCheckFailed);
                     if (masterWeapon != this) Target.Reset(Comp.Session.Tick, Target.States.RayCheckFailed);

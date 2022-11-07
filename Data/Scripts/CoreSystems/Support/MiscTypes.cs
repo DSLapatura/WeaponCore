@@ -25,6 +25,8 @@ namespace CoreSystems.Support
         internal uint ResetTick;
         internal uint ProjectileEndTick;
         internal long TargetId;
+        internal long TopEntityId;
+
         internal double HitShortDist;
         internal double OrigDistance;
 
@@ -175,20 +177,21 @@ namespace CoreSystems.Support
 
             target.HitShortDist = HitShortDist;
             target.OrigDistance = OrigDistance;
+            target.TopEntityId = TopEntityId;
             target.TargetState = TargetState;
 
             target.StateChange(HasTarget, CurrentState);
             Reset(expireTick, States.Transfered);
         }
 
-        internal void Set(MyEntity ent, Vector3D pos, Vector3D originLookAtPos, double shortDist, double origDist, Projectile projectile = null, bool isFakeTarget = false)
+        internal void Set(MyEntity ent, Vector3D pos, Vector3D originLookAtPos, double shortDist, double origDist, long topEntId, Projectile projectile = null, bool isFakeTarget = false)
         {
             TargetEntity = ent;
             Projectile = projectile;
             TargetPos = pos;
             HitShortDist = shortDist;
             OrigDistance = origDist;
-
+            TopEntityId = topEntId;
             if (projectile != null)
                 TargetState = TargetStates.IsProjectile;
             else if (isFakeTarget)
@@ -236,6 +239,7 @@ namespace CoreSystems.Support
             HitShortDist = 0;
             OrigDistance = 0;
             TargetId = 0;
+            TopEntityId = 0;
             ResetTick = expiredTick;
             SoftProjetileReset = false;
             if (expire)

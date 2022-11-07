@@ -599,7 +599,7 @@ namespace CoreSystems.Projectiles
                                 s.NavTargetEnt = tasks.Enemy;
                                 s.NavTargetBound = s.NavTargetEnt.PositionComp.WorldVolume;
                                 var tTargetDist = Vector3D.Distance(Position, tasks.Enemy.PositionComp.WorldVolume.Center);
-                                s.ShootTarget.Set(tasks.Enemy, tasks.Enemy.PositionComp.WorldVolume.Center, Position, tTargetDist, tTargetDist);
+                                s.ShootTarget.Set(tasks.Enemy, tasks.Enemy.PositionComp.WorldVolume.Center, Position, tTargetDist, tTargetDist, tasks.EnemyId);
                                 s.IsFriend = false;
                                 break;
                             case ProtoWeaponCompTasks.Tasks.Defend:
@@ -2153,7 +2153,7 @@ namespace CoreSystems.Projectiles
                     MyEntity targetEnt;
                     if (sync.ProStateSync.TargetId > 0 && (target.TargetId != sync.ProStateSync.TargetId) && MyEntities.TryGetEntityById(sync.ProStateSync.TargetId, out targetEnt))
                     {
-                        target.Set(targetEnt, targetEnt.PositionComp.WorldAABB.Center, Position, 0, 0);
+                        target.Set(targetEnt, targetEnt.PositionComp.WorldAABB.Center, Position, 0, 0, targetEnt.GetTopMostParent()?.EntityId ?? 0);
                        
                         if (w.System.WConst.DebugMode)
                             Log.Line($"ProSyn: Id:{Info.Id} - age:{Info.Age} - targetSetTo:{targetEnt.DebugName}");

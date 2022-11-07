@@ -239,7 +239,7 @@ namespace CoreSystems.Projectiles
 
                         var cubeTarget = target.TargetEntity as MyCubeBlock;
 
-                        var condition1 = cubeTarget == null && targetAi.TopEntity == topEntity;
+                        var condition1 = cubeTarget == null && targetAi.TopEntity.EntityId == target.TopEntityId;
                         var condition2 = targetAi.AiType == Ai.AiTypes.Grid && (targetAi.GridEntity.IsStatic || cubeTarget != null && targetAi.GridEntity.IsSameConstructAs(cubeTarget.CubeGrid));
                         Ai.TargetInfo tInfo;
                         var condition3 = !condition1 && !condition2 && cubeTarget != null && !notSmart && targetSphere.Contains(cubeTarget.CubeGrid.PositionComp.WorldVolume) != ContainmentType.Disjoint && !targetAi.Targets.TryGetValue(cubeTarget.CubeGrid, out tInfo);
