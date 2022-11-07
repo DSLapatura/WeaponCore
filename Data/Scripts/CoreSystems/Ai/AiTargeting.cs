@@ -386,7 +386,7 @@ namespace CoreSystems.Support
                     if (hitInfo?.HitEntity == null)
                     {
                         target.Set(null, lp.Position, weaponPos, 0, 0, lp);
-                        p.PrevTargetPos = target.Projectile.Position;
+                        p.TargetPosition = target.Projectile.Position;
                         target.Projectile.Seekers.Add(p);
                         found = true;
                         break;
@@ -399,7 +399,7 @@ namespace CoreSystems.Support
                         continue;
 
                     target.Set(null, lp.Position, weaponPos, 0, 0, lp);
-                    p.PrevTargetPos = target.Projectile.Position;
+                    p.TargetPosition = target.Projectile.Position;
                     target.Projectile.Seekers.Add(p);
                     found = true;
                     break;

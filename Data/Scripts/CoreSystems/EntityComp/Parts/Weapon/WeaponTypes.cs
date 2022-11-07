@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using CoreSystems.Projectiles;
 using CoreSystems.Support;
 using Sandbox.Game.Entities;
 using VRage.Game.Entity;
@@ -140,6 +141,56 @@ namespace CoreSystems.Platform
             internal ulong UniqueId;
             internal bool Av1Looping;
             internal bool Av2Looping;
+
+        }
+
+        public class ApiShootRequest
+        {
+            public enum TargetType
+            {
+                Position,
+                MyEntity,
+                Projectile,
+            }
+
+            public bool Dirty;
+            public TargetType Type;
+            public Vector3D Position;
+            public MyEntity TargetEntity;
+            public ulong ProjectileId;
+
+            public bool Update(object target)
+            {
+                if (Dirty)
+                    return false;
+
+                var entity = target as MyEntity;
+                var position = target as Vector3D?;
+                var projectileId = target as ulong?;
+
+                if (entity != null)
+                {
+                    TargetEntity = entity;
+                    Type = TargetType.MyEntity;
+                    return true;
+                }
+
+                if (position != null)
+                {
+                    Position = position.Value;
+                    Type = TargetType.Position;
+                    return true;
+                }
+
+                if (projectileId != null)
+                {
+                    ProjectileId = projectileId.Value;
+                    Type = TargetType.Projectile;
+                    return true;
+                }
+
+                return false;
+            }
 
         }
 

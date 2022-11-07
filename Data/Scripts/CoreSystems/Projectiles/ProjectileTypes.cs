@@ -2,11 +2,9 @@
 using System.Collections.Generic;
 using CoreSystems.Platform;
 using CoreSystems.Projectiles;
-using Sandbox.Engine.Physics;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
 using VRage;
-using VRage.Collections;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRageMath;
@@ -14,8 +12,6 @@ using static CoreSystems.Support.HitEntity.Type;
 using static CoreSystems.Support.WeaponDefinition;
 using static CoreSystems.Support.Ai;
 using CollisionLayers = Sandbox.Engine.Physics.MyPhysics.CollisionLayers;
-using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
-using Sandbox.Game.Weapons;
 
 namespace CoreSystems.Support
 {
@@ -559,7 +555,7 @@ namespace CoreSystems.Support
                 frag.OriginUp = info.OriginUp;
                 frag.Random = new XorShiftRandomStruct(info.Random.NextUInt64());
                 frag.DoDamage = info.DoDamage;
-                frag.PrevTargetPos = p.PrevTargetPos;
+                frag.PrevTargetPos = p.TargetPosition;
                 frag.Velocity = !aConst.FragDropVelocity ? p.Velocity : Vector3D.Zero;
                 frag.LockOnFireState = info.LockOnFireState;
                 frag.IgnoreShield = info.ShieldBypassed && aConst.ShieldDamageBypassMod > 0;
@@ -626,7 +622,7 @@ namespace CoreSystems.Support
                 info.DoDamage = frag.DoDamage;
                 info.SpawnDepth = frag.Depth;
                 info.BaseDamagePool = aConst.BaseDamage;
-                p.PrevTargetPos = frag.PrevTargetPos;
+                p.TargetPosition = frag.PrevTargetPos;
                 info.Direction = frag.Direction;
                 p.StartSpeed = frag.Velocity;
                 p.Gravity = aConst.FeelsGravity && info.Ai.InPlanetGravity ? frag.Weapon.GravityPoint * aConst.GravityMultiplier : Vector3D.Zero;

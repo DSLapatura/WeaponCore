@@ -146,7 +146,6 @@ namespace CoreSystems
             HandlesInput = !IsServer || IsServer && !DedicatedServer;
             IsHost = IsServer && !DedicatedServer && MpActive;
             MpServer = IsHost || DedicatedServer;
-            LocalVersion = ModContext.ModId == "CoreSystems";
 
             MyAPIGateway.GridGroups.OnGridGroupCreated += GridGroupsOnOnGridGroupCreated;
             MyAPIGateway.GridGroups.OnGridGroupDestroyed += GridGroupsOnOnGridGroupDestroyed;

@@ -914,6 +914,11 @@ namespace CoreSystems
 
         private void ModChecker()
         {
+            LocalVersion = ModContext.ModId == "CoreSystems";
+
+            if (LocalVersion)
+                DebugMod = true;
+
             foreach (var mod in Session.Mods)
             {
                 var modPath = mod.GetPath();

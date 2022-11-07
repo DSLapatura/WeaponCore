@@ -54,6 +54,8 @@ namespace CoreSystems.Api
                 
                 ["TargetFocusHandler"] = new Func<long, bool, Func<MyEntity, IMyCharacter, long, int, bool>, bool>(TargetFocusHandler),
                 ["HudHandler"] = new Func<long, bool, Func<IMyCharacter, long, int, bool>, bool>(HudHandler),
+                ["ShootHandler"] = new Func<long, bool, Func<Vector3D, Vector3D, int, bool, object, int, int, int, bool>, bool>(ShootHandler),
+                ["ShootRequest"] = new Func<MyEntity, object, int, bool>(ShootRequest),
 
                 ["ReleaseAiFocusBase"] = new Func<MyEntity, long, bool>(ReleaseAiFocus),
 
@@ -693,6 +695,33 @@ namespace CoreSystems.Api
             return true;
         }
 
+        // handleEntityId is the EntityId of the grid you want to suppress hud on.
+        // All grids in that grids subgrid network are affected
+        //
+        // return type determines if this hud element is restricted for player
+        private bool ShootHandler(long handledEntityId, bool unRegister, Func<Vector3D, Vector3D, int, bool, object, int, int, int, bool> callback)
+        {
+            if (unRegister)
+                return _session.ShootHandlers.Remove(handledEntityId);
+
+            if (_session.ShootHandlers.ContainsKey(handledEntityId))
+                return false;
+
+            _session.ShootHandlers.Add(handledEntityId, callback);
+            return true;
+        }
+
+        private bool ShootRequest(MyEntity weaponEntity, object target, int weaponId)
+        {
+            var comp = weaponEntity.Components.Get<Weapon.WeaponComponent>();
+            if (comp?.Platform != null && comp.Platform.Weapons.Count > weaponId)
+            {
+                var weapon = comp.Platform.Weapons[weaponId];
+                return weapon.ShootRequest.Update(target);
+            }
+            return false;
+        }
+
         private void PbRegisterEventMonitorCallback(Sandbox.ModAPI.Ingame.IMyTerminalBlock weaponEntity, int weaponId, Action<int, bool> callBack) => RegisterEventMonitorCallback((MyEntity) weaponEntity, weaponId, callBack);
         private void RegisterEventMonitorCallback(MyEntity weaponEntity, int weaponId, Action<int, bool> callBack)
         {
@@ -728,7 +757,7 @@ namespace CoreSystems.Api
         private MyTuple<bool, int, int> GetProjectilesLockedOnLegacy(IMyEntity entity) => GetProjectilesLockedOn((MyEntity) entity);
         private MyTuple<bool, int, int> GetProjectilesLockedOn(MyEntity entity)
         {
-            var victim = (MyEntity)entity;
+            var victim = entity;
             var grid = victim.GetTopMostParent();
             Ai ai;
             MyTuple<bool, int, int> tuple;

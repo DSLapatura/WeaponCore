@@ -178,6 +178,8 @@ namespace CoreSystems
         internal readonly Dictionary<long, DamageHandlerRegistrant> DamageHandlerRegistrants = new Dictionary<long, DamageHandlerRegistrant>();
         internal readonly Dictionary<long, Func<MyEntity, IMyCharacter, long, int, bool>> TargetFocusHandlers = new Dictionary<long, Func<MyEntity, IMyCharacter, long, int, bool>>();
         internal readonly Dictionary<long, Func<IMyCharacter, long, int, bool>> HudHandlers = new Dictionary<long, Func<IMyCharacter, long, int, bool>>();
+        internal readonly Dictionary<long, Func<Vector3D, Vector3D, int, bool, object, int, int, int, bool>> ShootHandlers = new Dictionary<long, Func<Vector3D, Vector3D, int, bool, object, int, int, int, bool>>();
+        
         internal readonly ConcurrentDictionary<long, int> DeferredPlayerLock = new ConcurrentDictionary<long, int>();
         internal readonly HashSet<MyDefinitionId> DefIdsComparer = new HashSet<MyDefinitionId>(MyDefinitionId.Comparer);
         internal readonly HashSet<string> VanillaSubpartNames = new HashSet<string>();

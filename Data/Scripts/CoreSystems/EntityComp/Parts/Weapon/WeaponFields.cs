@@ -24,7 +24,7 @@ namespace CoreSystems.Platform
         internal readonly Dictionary<long, ClientProSync> WeaponProSyncs = new Dictionary<long, ClientProSync>();
         internal readonly Dictionary<string, PartAnimation> AnimationLookup = new Dictionary<string, PartAnimation>();
         internal readonly List<MyCubeBlock> Top5 = new List<MyCubeBlock>();
-
+        internal readonly ApiShootRequest ShootRequest = new ApiShootRequest();
         internal readonly WeaponFrameCache WeaponCache;
         internal readonly WeaponSystem System;
         internal readonly Target Target;

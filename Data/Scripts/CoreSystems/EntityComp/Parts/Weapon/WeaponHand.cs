@@ -168,6 +168,7 @@ namespace CoreSystems.Platform
 
             internal void GetHandWeaponDummyInfo(out Vector3D position, out Vector3D direction, out Vector3D upDir, out Vector3D localPos)
             {
+                
                 var localMuzzlePos = Rifle.GetMuzzlePosition();
                 position = localMuzzlePos + TopEntity.PositionComp.WorldMatrixRef.Translation;
                 direction = CharacterPosComp.LogicalOrientationWorld;
