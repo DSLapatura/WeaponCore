@@ -148,6 +148,7 @@ namespace CoreSystems.Platform
         {
             public enum TargetType
             {
+                None,
                 Position,
                 MyEntity,
                 Projectile,
@@ -155,11 +156,13 @@ namespace CoreSystems.Platform
 
             public bool Dirty;
             public TargetType Type;
-            public Vector3D Position;
+            public Vector3D Position = Vector3D.MaxValue;
+            public ulong ProjectileId = ulong.MaxValue;
             public MyEntity TargetEntity;
-            public ulong ProjectileId;
+            public double ExtraShotAngle;
 
-            public bool Update(object target)
+
+            public bool Update(object target, double extraShotAngle)
             {
                 if (Dirty)
                     return false;
@@ -172,6 +175,7 @@ namespace CoreSystems.Platform
                 {
                     TargetEntity = entity;
                     Type = TargetType.MyEntity;
+                    ExtraShotAngle = extraShotAngle;
                     return true;
                 }
 
@@ -179,6 +183,7 @@ namespace CoreSystems.Platform
                 {
                     Position = position.Value;
                     Type = TargetType.Position;
+                    ExtraShotAngle = extraShotAngle;
                     return true;
                 }
 
@@ -186,10 +191,20 @@ namespace CoreSystems.Platform
                 {
                     ProjectileId = projectileId.Value;
                     Type = TargetType.Projectile;
+                    ExtraShotAngle = extraShotAngle;
                     return true;
                 }
 
                 return false;
+            }
+
+            public void Clean()
+            {
+                Type = TargetType.None;
+                TargetEntity = null;
+                Position = Vector3D.MaxValue;
+                ProjectileId = ulong.MaxValue;
+                ExtraShotAngle = 0;
             }
 
         }

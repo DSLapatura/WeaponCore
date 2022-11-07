@@ -34,7 +34,7 @@ namespace CoreSystems.Api
         private Action<MyEntity, int, Action<long, int, ulong, long, Vector3D, bool>> _addProjectileMonitor;
         private Action<MyEntity, int, Action<long, int, ulong, long, Vector3D, bool>> _removeProjectileMonitor;
 
-        private Func<MyEntity, object, int, bool> _shootRequest;
+        private Func<MyEntity, object, int, double, bool> _shootRequest;
 
         private Func<ulong, MyTuple<Vector3D, Vector3D, float, float, long, string>> _getProjectileState;
         private Action<ulong, MyTuple<bool, Vector3D, Vector3D, float>> _setProjectileState;
@@ -338,8 +338,9 @@ namespace CoreSystems.Api
         /// <param name="weaponEntity"></param>
         /// <param name="target">MyEntity, ulong (projectile) or Vector3D</param>
         /// <param name="weaponId">Most weapons have only id 0, but some are multi-weapon entities</param>
+        /// <param name="additionalDeviateShotAngle"></param>
         /// <returns></returns>
-        public bool ShootRequest(MyEntity weaponEntity, object target, int weaponId = 0) => _shootRequest?.Invoke(weaponEntity, target, weaponId) ?? false;
+        public bool ShootRequest(MyEntity weaponEntity, object target, int weaponId = 0, double additionalDeviateShotAngle = 0) => _shootRequest?.Invoke(weaponEntity, target, weaponId, additionalDeviateShotAngle) ?? false;
 
         /// <summary>
         /// Enables you to monitor and approve shoot requests for this weapon/construct/player/grid network

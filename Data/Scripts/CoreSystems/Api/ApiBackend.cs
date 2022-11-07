@@ -55,7 +55,7 @@ namespace CoreSystems.Api
                 ["TargetFocusHandler"] = new Func<long, bool, Func<MyEntity, IMyCharacter, long, int, bool>, bool>(TargetFocusHandler),
                 ["HudHandler"] = new Func<long, bool, Func<IMyCharacter, long, int, bool>, bool>(HudHandler),
                 ["ShootHandler"] = new Func<long, bool, Func<Vector3D, Vector3D, int, bool, object, int, int, int, bool>, bool>(ShootHandler),
-                ["ShootRequest"] = new Func<MyEntity, object, int, bool>(ShootRequest),
+                ["ShootRequest"] = new Func<MyEntity, object, int, double, bool>(ShootRequest),
 
                 ["ReleaseAiFocusBase"] = new Func<MyEntity, long, bool>(ReleaseAiFocus),
 
@@ -711,13 +711,13 @@ namespace CoreSystems.Api
             return true;
         }
 
-        private bool ShootRequest(MyEntity weaponEntity, object target, int weaponId)
+        private bool ShootRequest(MyEntity weaponEntity, object target, int weaponId, double additionalDeviateShotAngle)
         {
             var comp = weaponEntity.Components.Get<Weapon.WeaponComponent>();
             if (comp?.Platform != null && comp.Platform.Weapons.Count > weaponId)
             {
                 var weapon = comp.Platform.Weapons[weaponId];
-                return weapon.ShootRequest.Update(target);
+                return weapon.ShootRequest.Update(target, additionalDeviateShotAngle);
             }
             return false;
         }
