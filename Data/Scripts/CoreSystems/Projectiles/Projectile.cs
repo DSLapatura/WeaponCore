@@ -1208,6 +1208,7 @@ namespace CoreSystems.Projectiles
             var s = Info.Storage;
             var coreParent = Info.Weapon.Comp.TopEntity;
             var startTrack = s.SmartReady || coreParent == null || coreParent.MarkedForClose;
+            var speedCapMulti = 1d;
 
             if (!startTrack && Info.DistanceTraveled * Info.DistanceTraveled >= aConst.SmartsDelayDistSqr) {
                 var lineCheck = new LineD(Position, LockedTarget ? TargetPosition : Position + (Info.Direction * 10000f));
@@ -1335,10 +1336,9 @@ namespace CoreSystems.Projectiles
                 }
 
                 var accelMpsMulti = AccelInMetersPerSec;
-                
                 if (aConst.ApproachesCount > 0 && s.Stage < aConst.ApproachesCount)
                 {
-                    ProcessStage(ref accelMpsMulti, s.Stage);
+                    ProcessStage(ref accelMpsMulti, ref speedCapMulti, s.Stage);
                 }
 
                 Vector3D targetAcceleration = Vector3D.Zero;
@@ -1426,13 +1426,15 @@ namespace CoreSystems.Projectiles
                 newVel = Velocity + MaxAccelVelocity;
             VelocityLengthSqr = newVel.LengthSquared();
 
-            if (VelocityLengthSqr > MaxSpeedSqr) newVel = Info.Direction * MaxSpeed;
+            var speedCap = speedCapMulti * MaxSpeed;
+            if (VelocityLengthSqr > MaxSpeedSqr || s.StageActive && VelocityLengthSqr > speedCap * speedCap) 
+                newVel = Info.Direction * MaxSpeed;
 
             PrevVelocity = Velocity;
             Velocity = newVel;
         }
 
-        private void ProcessStage(ref double accelMpsMulti, int stage)
+        private void ProcessStage(ref double accelMpsMulti, ref double speedCapMulti, int stage)
         {
             var s = Info.Storage;
 
@@ -1496,7 +1498,8 @@ namespace CoreSystems.Projectiles
                 {
                     s.StageActive = true;
 
-                    accelMpsMulti *= def.AccelMulti;
+                    accelMpsMulti = AccelInMetersPerSec * def.AccelMulti;
+                    speedCapMulti = (def.SpeedCapMulti * MaxSpeed);
                     var magnitude = heightDir.Normalize();
 
                     var followPosition = heightStart + heightDir * ((magnitude * def.LeadDistance) + Info.DistanceTraveled);
@@ -1551,7 +1554,7 @@ namespace CoreSystems.Projectiles
                     if (hasNextStep && moveForward)
                     {
                         s.StageActive = false;
-                        ProcessStage(ref accelMpsMulti, ++s.Stage);
+                        ProcessStage(ref accelMpsMulti, ref speedCapMulti, ++s.Stage);
                     }
                     else if (def.Failure == TrajectoryDef.ApproachDef.StartFailure.MoveToPrevious && s.Stage - 1 >= 0)
                     {
