@@ -1464,15 +1464,11 @@ namespace CoreSystems.Projectiles
                     s.Stage = 0;
                 }
 
-                var actualTargetPosition = TargetPosition;
-                accelMpsMulti *= def.AccelMulti;
-
                 var heightOffset = upDir * def.DesiredElevation;
                 var heightStart = s.LookAtPos - heightOffset;
                 var heightend = s.TargetPosition - heightOffset;
                 var heightDir = heightend - heightStart;
 
-                var useSurfaceForPlane = planetExists && def.Plane == TrajectoryDef.ApproachDef.PlaneRelativeTo.AtSurface;
 
                 double startCondition;
                 switch (def.StartCondition)
@@ -1504,6 +1500,7 @@ namespace CoreSystems.Projectiles
                     var magnitude = heightDir.Normalize();
 
                     var followPosition = heightStart + heightDir * ((magnitude * def.LeadDistance) + Info.DistanceTraveled);
+                    var useSurfaceForPlane = planetExists && def.Plane == TrajectoryDef.ApproachDef.PlaneRelativeTo.AtSurface;
 
                     Vector3D adjFollowPos;
                     Vector3D surfacePos;
@@ -1514,6 +1511,7 @@ namespace CoreSystems.Projectiles
                         adjFollowPos = followPosition;
                     }
 
+                    var actualTargetPosition = TargetPosition;
                     var targetsPerspectiveDir = Vector3D.Normalize(adjFollowPos - actualTargetPosition);
 
 
