@@ -1207,13 +1207,6 @@ namespace CoreSystems.Support
                         MoveToNext,
                     }
 
-                    public enum StartAnchor
-                    {
-                        Surface,
-                        OriginPosition,
-                        TargetPosition,
-                    }
-
                     public enum Conditions
                     {
                         Spawn,
@@ -1226,7 +1219,10 @@ namespace CoreSystems.Support
                     {
                         RelativeToBlock,
                         RelativeToGravity,
+                        TargetDirection,
+                        TargetVelocity,
                     }
+
                     public enum PlaneRelativeTo
                     {
                         AtShooter,
@@ -1235,23 +1231,22 @@ namespace CoreSystems.Support
                         AtMidPoint,
                     }
 
-                    [ProtoMember(1)] internal StartAnchor Anchor;
-                    [ProtoMember(2)] internal StartFailure Failure;
-                    [ProtoMember(3)] internal Conditions StartCondition;
-                    [ProtoMember(4)] internal Conditions EndCondition;
-                    [ProtoMember(5)] internal UpRelativeTo UpDirection;
-                    [ProtoMember(6)] internal PlaneRelativeTo Plane;
-                    [ProtoMember(7)] internal double AngleOffset;
-                    [ProtoMember(8)] internal double StartValue;
-                    [ProtoMember(9)] internal double EndValue;
-                    [ProtoMember(10)] internal double LeadDistance;
-                    [ProtoMember(11)] internal double DesiredElevation;
-                    [ProtoMember(12)] internal double AccelMulti;
-                    [ProtoMember(13)] internal double SpeedCapMulti;
-                    [ProtoMember(14)] internal bool ReflectTargetMovement;
-                    [ProtoMember(15)] internal bool EndOnlyOnNextStart;
-                    [ProtoMember(16)] internal ParticleDef AlternateParticle;
-                    [ProtoMember(17)] internal string AlternateSound;
+                    [ProtoMember(1)] internal StartFailure Failure;
+                    [ProtoMember(2)] internal Conditions StartCondition;
+                    [ProtoMember(3)] internal Conditions EndCondition;
+                    [ProtoMember(4)] internal UpRelativeTo UpDirection;
+                    [ProtoMember(5)] internal PlaneRelativeTo Plane;
+                    [ProtoMember(6)] internal double AngleOffset;
+                    [ProtoMember(7)] internal double StartValue;
+                    [ProtoMember(8)] internal double EndValue;
+                    [ProtoMember(9)] internal double LeadDistance;
+                    [ProtoMember(10)] internal double DesiredElevation;
+                    [ProtoMember(11)] internal double AccelMulti;
+                    [ProtoMember(12)] internal double SpeedCapMulti;
+                    [ProtoMember(13)] internal bool ReflectTargetMovement;
+                    [ProtoMember(14)] internal bool EndOnlyOnNextStart;
+                    [ProtoMember(15)] internal ParticleDef AlternateParticle;
+                    [ProtoMember(16)] internal string AlternateSound;
                 }
 
                 [ProtoContract]

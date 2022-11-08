@@ -1,8 +1,5 @@
-﻿using System;
-using CoreSystems.Platform;
-using CoreSystems.Support;
+﻿using CoreSystems.Support;
 using Sandbox.Game.Entities;
-using VRage.Game;
 using VRageMath;
 using static CoreSystems.Support.NewProjectile;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef;

@@ -1338,7 +1338,7 @@ namespace CoreSystems.Projectiles
                 var accelMpsMulti = AccelInMetersPerSec;
                 if (aConst.ApproachesCount > 0 && s.Stage < aConst.ApproachesCount)
                 {
-                    ProcessStage(ref accelMpsMulti, ref speedCapMulti, s.Stage);
+                    ProcessStage(ref accelMpsMulti, ref speedCapMulti);
                 }
 
                 Vector3D targetAcceleration = Vector3D.Zero;
@@ -1434,7 +1434,7 @@ namespace CoreSystems.Projectiles
             Velocity = newVel;
         }
 
-        private void ProcessStage(ref double accelMpsMulti, ref double speedCapMulti, int stage)
+        private void ProcessStage(ref double accelMpsMulti, ref double speedCapMulti)
         {
             var s = Info.Storage;
 
@@ -1447,28 +1447,42 @@ namespace CoreSystems.Projectiles
                 var planetExists = Info.MyPlanet != null;
                 var upDir = def.UpDirection == TrajectoryDef.ApproachDef.UpRelativeTo.RelativeToBlock || !planetExists ? Info.OriginUp : Vector3D.Normalize(Position - Info.MyPlanet.PositionComp.WorldAABB.Center);
 
+
+                if (!MyUtils.IsZero(def.AngleOffset))
+                {
+                    var angle = def.AngleOffset * MathHelper.Pi;
+                    var forward = Vector3D.CalculatePerpendicularVector(upDir);
+                    var right = Vector3D.Cross(upDir, forward);
+                    s.OffsetDir = Math.Sin(angle) * forward + Math.Cos(angle) * right;
+                }
+
+                var offsetDir = upDir - s.OffsetDir;
+
                 if (s.Stage == -1)
                 {
-                    switch (def.Anchor)
+                    switch (def.Plane)
                     {
-                        case TrajectoryDef.ApproachDef.StartAnchor.OriginPosition:
+                        case TrajectoryDef.ApproachDef.PlaneRelativeTo.AtShooter:
                             s.LookAtPos = Position;
                             break;
-                        case TrajectoryDef.ApproachDef.StartAnchor.TargetPosition:
+                        case TrajectoryDef.ApproachDef.PlaneRelativeTo.AtTarget:
                             s.LookAtPos = TargetPosition;
                             break;
-                        case TrajectoryDef.ApproachDef.StartAnchor.Surface:
+                        case TrajectoryDef.ApproachDef.PlaneRelativeTo.AtSurface:
                             if (planetExists)
-                                PlanetSurfaceHeightAdjustment(Position, Info.Direction, upDir, approach, accelMpsMulti, out s.LookAtPos);
+                                PlanetSurfaceHeightAdjustment(Position, Info.Direction, offsetDir, approach, accelMpsMulti, out s.LookAtPos);
                             else
-                                s.LookAtPos =  Position;
+                                s.LookAtPos = Position;
+                            break;
+                        case TrajectoryDef.ApproachDef.PlaneRelativeTo.AtMidPoint:
+                            s.LookAtPos = Vector3D.Lerp(TargetPosition, Position, 0.5);
                             break;
                     }
 
                     s.Stage = 0;
                 }
 
-                var heightOffset = upDir * def.DesiredElevation;
+                var heightOffset = offsetDir * def.DesiredElevation;
                 var heightStart = s.LookAtPos - heightOffset;
                 var heightend = s.TargetPosition - heightOffset;
                 var heightDir = heightend - heightStart;
@@ -1503,12 +1517,11 @@ namespace CoreSystems.Projectiles
                     var magnitude = heightDir.Normalize();
 
                     var followPosition = heightStart + heightDir * ((magnitude * def.LeadDistance) + Info.DistanceTraveled);
-                    var useSurfaceForPlane = planetExists && def.Plane == TrajectoryDef.ApproachDef.PlaneRelativeTo.AtSurface;
 
                     Vector3D adjFollowPos;
                     Vector3D surfacePos;
-                    if (Info.MyPlanet != null && useSurfaceForPlane)
-                        adjFollowPos = PlanetSurfaceHeightAdjustment(followPosition, heightDir, upDir, approach, accelMpsMulti, out surfacePos);
+                    if (Info.MyPlanet != null && planetExists && def.Plane == TrajectoryDef.ApproachDef.PlaneRelativeTo.AtSurface)
+                        adjFollowPos = PlanetSurfaceHeightAdjustment(followPosition, heightDir, offsetDir, approach, accelMpsMulti, out surfacePos);
                     else
                     {
                         adjFollowPos = followPosition;
@@ -1516,7 +1529,6 @@ namespace CoreSystems.Projectiles
 
                     var usedTargetPosition = def.ReflectTargetMovement ? TargetPosition : Info.Target.TargetPos;
                     var targetsPerspectiveDir = Vector3D.Normalize(adjFollowPos - usedTargetPosition);
-
 
                     TargetPosition = MyUtils.LinePlaneIntersection(adjFollowPos, heightDir, usedTargetPosition, targetsPerspectiveDir);
 
@@ -1554,7 +1566,8 @@ namespace CoreSystems.Projectiles
                     if (hasNextStep && moveForward)
                     {
                         s.StageActive = false;
-                        ProcessStage(ref accelMpsMulti, ref speedCapMulti, ++s.Stage);
+                        ++s.Stage;
+                        ProcessStage(ref accelMpsMulti, ref speedCapMulti);
                     }
                     else if (def.Failure == TrajectoryDef.ApproachDef.StartFailure.MoveToPrevious && s.Stage - 1 >= 0)
                     {
