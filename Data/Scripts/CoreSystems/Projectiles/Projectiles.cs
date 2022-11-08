@@ -296,13 +296,13 @@ namespace CoreSystems.Projectiles
 
                     if (info.DistanceTraveled * info.DistanceTraveled >= p.DistanceToTravelSqr) {
 
-                        p.AtMaxRange = !info.Storage.MineSeeking;
+                        p.AtMaxRange = !aConst.IsMine || !info.Storage.StageActive;
                         if (p.DeaccelRate > 0) {
 
                             p.DeaccelRate--;
-                            if (aConst.IsMine && !info.Storage.MineSeeking && info.Storage.Stage != 0) {
+                            if (aConst.IsMine && !info.Storage.StageActive && info.Storage.Stage != 0) {
                                 if (p.EnableAv) info.AvShot.Cloaked = info.AmmoDef.Trajectory.Mines.Cloak;
-                                info.Storage.MineSeeking = true;
+                                info.Storage.StageActive = true;
                             }
                         }
                     }
@@ -403,7 +403,7 @@ namespace CoreSystems.Projectiles
 
                 var sphereCheck = false;
 
-                if (storage.MineSeeking && storage.Stage != 1)
+                if (aConst.IsMine && storage.StageActive && storage.Stage != 1)
                     p.SeekEnemy();
                 else if (useEwarSphere)
                 {
@@ -462,7 +462,7 @@ namespace CoreSystems.Projectiles
                     lock (ValidateHits)
                         ValidateHits.Add(p);
                 }
-                else if (storage.MineSeeking && storage.Stage != 1 && info.Age - storage.ChaseAge > 600)
+                else if (aConst.IsMine && storage.StageActive && storage.Stage != 1 && info.Age - storage.ChaseAge > 600)
                 {
                     p.Asleep = true;
                 }

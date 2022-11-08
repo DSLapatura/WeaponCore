@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using CoreSystems.Support;
 using Jakaria.API;
 using Sandbox.Game.Entities;
@@ -1069,6 +1070,7 @@ namespace CoreSystems.Projectiles
 
         private bool SmartRoam()
         {
+            var aConst = Info.AmmoDef.Const;
             var smarts = Info.AmmoDef.Trajectory.Smarts;
             var roam = smarts.Roam;
             var hadTaret = HadTarget != HadTargetState.None;
@@ -1091,7 +1093,7 @@ namespace CoreSystems.Projectiles
                     TargetPosition += OffsetTarget;
                 }
             }
-            else if (Info.Storage.MineSeeking)
+            else if (aConst.IsMine && Info.Storage.StageActive)
             {
                 ResetMine();
                 return false;
@@ -1325,7 +1327,7 @@ namespace CoreSystems.Projectiles
                             TargetPosition += OffsetTarget;
                         }
                     }
-                    else if (s.MineSeeking)
+                    else if (aConst.IsMine && s.StageActive)
                     {
                         ResetMine();
                         return;
@@ -1469,7 +1471,6 @@ namespace CoreSystems.Projectiles
                 var heightend = s.TargetPosition - heightOffset;
                 var heightDir = heightend - heightStart;
 
-
                 double startCondition;
                 switch (def.StartCondition)
                 {
@@ -1490,11 +1491,10 @@ namespace CoreSystems.Projectiles
                         break;
                 }
 
-                var started = false;
 
-                if (startCondition > def.StartValue)
+                if (startCondition > def.StartValue || s.StageActive && def.EndOnlyOnNextStart)
                 {
-                    started = true;
+                    s.StageActive = true;
 
                     accelMpsMulti *= def.AccelMulti;
                     var magnitude = heightDir.Normalize();
@@ -1511,11 +1511,11 @@ namespace CoreSystems.Projectiles
                         adjFollowPos = followPosition;
                     }
 
-                    var actualTargetPosition = TargetPosition;
-                    var targetsPerspectiveDir = Vector3D.Normalize(adjFollowPos - actualTargetPosition);
+                    var usedTargetPosition = def.ReflectTargetMovement ? TargetPosition : Info.Target.TargetPos;
+                    var targetsPerspectiveDir = Vector3D.Normalize(adjFollowPos - usedTargetPosition);
 
 
-                    TargetPosition = MyUtils.LinePlaneIntersection(adjFollowPos, heightDir, actualTargetPosition, targetsPerspectiveDir);
+                    TargetPosition = MyUtils.LinePlaneIntersection(adjFollowPos, heightDir, usedTargetPosition, targetsPerspectiveDir);
 
                     if (Info.Ai.Session.DebugMod)
                     {
@@ -1546,12 +1546,18 @@ namespace CoreSystems.Projectiles
                 if (endCondition > def.EndValue)
                 {
                     var hasNextStep = s.Stage + 1 < aConst.ApproachesCount;
-                    var moveForward = started && def.Failure == TrajectoryDef.ApproachDef.StartFailure.Wait || def.Failure == TrajectoryDef.ApproachDef.StartFailure.MoveToNext;
-                    
+                    var moveForward = s.StageActive && def.Failure == TrajectoryDef.ApproachDef.StartFailure.Wait || def.Failure == TrajectoryDef.ApproachDef.StartFailure.MoveToNext;
+
                     if (hasNextStep && moveForward)
+                    {
+                        s.StageActive = false;
                         ProcessStage(ref accelMpsMulti, ++s.Stage);
+                    }
                     else if (def.Failure == TrajectoryDef.ApproachDef.StartFailure.MoveToPrevious && s.Stage - 1 >= 0)
+                    {
+                        s.StageActive = false;
                         --s.Stage;
+                    }
                 }
             }
         }
@@ -1880,7 +1886,7 @@ namespace CoreSystems.Projectiles
             Info.AvShot.Triggered = false;
             Info.Storage.Stage = - 1;
             LockedTarget = false;
-            Info.Storage.MineSeeking = true;
+            Info.Storage.StageActive = true;
 
             if (Info.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.DetectSmart)
             {

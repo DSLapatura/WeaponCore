@@ -231,7 +231,7 @@ namespace CoreSystems.Support
         internal bool UsesStrafe;
         internal bool SmartReady;
         internal bool IsSmart;
-        internal bool MineSeeking;
+        internal bool StageActive;
         internal bool WasTracking;
         internal bool PickTarget;
         internal int ProSyncPosMissCount;
@@ -263,7 +263,7 @@ namespace CoreSystems.Support
             IsFriend = false;
             UsesStrafe = false;
             SmartReady = false;
-            MineSeeking = false;
+            StageActive = false;
             WasTracking = false;
             IsSmart = false;
             SmartSlot = 0;
