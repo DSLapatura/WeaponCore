@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using CoreSystems.Support;
 using Jakaria.API;
-using Microsoft.Xml.Serialization.GeneratedAssembly;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI.Ingame;
 using VRage.Game;
@@ -13,14 +11,10 @@ using VRage.Game.ModAPI;
 using VRage.Utils;
 using VRageMath;
 using static CoreSystems.Session;
-using static CoreSystems.Support.AvShot;
-using static CoreSystems.Support.DeferedVoxels;
 using static CoreSystems.Support.DroneStatus;
-using static CoreSystems.Support.VoxelIntersect;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.EwarDef.EwarType;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.FragmentDef.TimedSpawnDef;
-using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace CoreSystems.Projectiles
 {
