@@ -1211,7 +1211,7 @@ namespace CoreSystems.Support
                     {
                         Surface,
                         OriginPosition,
-                        ShooterPosition,
+                        TargetPosition,
                     }
 
                     public enum Conditions

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using CoreSystems.Support;
 using Jakaria.API;
+using Microsoft.Xml.Serialization.GeneratedAssembly;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI.Ingame;
 using VRage.Game;
@@ -1341,7 +1342,7 @@ namespace CoreSystems.Projectiles
                 
                 if (aConst.ApproachesCount > 0 && s.Stage < aConst.ApproachesCount)
                 {
-                    ProcessStage(ref accelMpsMulti);
+                    ProcessStage(ref accelMpsMulti, s.Stage);
                 }
 
                 Vector3D targetAcceleration = Vector3D.Zero;
@@ -1435,25 +1436,45 @@ namespace CoreSystems.Projectiles
             Velocity = newVel;
         }
 
-        private void ProcessStage(ref double accelMpsMulti)
+        private void ProcessStage(ref double accelMpsMulti, int stage)
         {
             var s = Info.Storage;
-            if (!Vector3D.IsZero(s.OriginLookAtPos) && !Vector3D.IsZero(s.TargetPosition))
+
+            if (!Vector3D.IsZero(s.TargetPosition))
             {
                 var aConst = Info.AmmoDef.Const;
                 var approach = aConst.Approaches[s.Stage];
                 var def = approach.Definition;
-                var actualTargetPosition = TargetPosition;
 
                 var planetExists = Info.MyPlanet != null;
-
-                if (s.Stage == -1)
-                    s.Stage = 0;
-
                 var upDir = def.UpDirection == TrajectoryDef.ApproachDef.UpRelativeTo.RelativeToBlock || !planetExists ? Info.OriginUp : Vector3D.Normalize(Position - Info.MyPlanet.PositionComp.WorldAABB.Center);
 
+                if (s.Stage == -1)
+                {
+                    switch (def.Anchor)
+                    {
+                        case TrajectoryDef.ApproachDef.StartAnchor.OriginPosition:
+                            s.LookAtPos = Position;
+                            break;
+                        case TrajectoryDef.ApproachDef.StartAnchor.TargetPosition:
+                            s.LookAtPos = TargetPosition;
+                            break;
+                        case TrajectoryDef.ApproachDef.StartAnchor.Surface:
+                            if (planetExists)
+                                PlanetSurfaceHeightAdjustment(Position, Info.Direction, upDir, approach, accelMpsMulti, out s.LookAtPos);
+                            else
+                                s.LookAtPos =  Position;
+                            break;
+                    }
+
+                    s.Stage = 0;
+                }
+
+                var actualTargetPosition = TargetPosition;
+                accelMpsMulti *= def.AccelMulti;
+
                 var heightOffset = upDir * def.DesiredElevation;
-                var heightStart = s.OriginLookAtPos - heightOffset;
+                var heightStart = s.LookAtPos - heightOffset;
                 var heightend = s.TargetPosition - heightOffset;
                 var heightDir = heightend - heightStart;
 
@@ -1463,7 +1484,7 @@ namespace CoreSystems.Projectiles
                 switch (def.StartCondition)
                 {
                     case TrajectoryDef.ApproachDef.Conditions.DesiredElevation:
-                        startCondition = 0;
+                        startCondition = def.DesiredElevation;
                         break;
                     case TrajectoryDef.ApproachDef.Conditions.DistanceFromTarget:
                         startCondition = MyUtils.GetPointLineDistance(ref heightend, ref s.TargetPosition, ref Position);
@@ -1479,17 +1500,21 @@ namespace CoreSystems.Projectiles
                         break;
                 }
 
+                var started = false;
 
                 if (startCondition > def.StartValue)
                 {
+                    started = true;
+
                     accelMpsMulti *= def.AccelMulti;
                     var magnitude = heightDir.Normalize();
 
                     var followPosition = heightStart + heightDir * ((magnitude * def.LeadDistance) + Info.DistanceTraveled);
 
                     Vector3D adjFollowPos;
+                    Vector3D surfacePos;
                     if (Info.MyPlanet != null && useSurfaceForPlane)
-                        PlanetSurfaceHeightAdjustment(followPosition, heightDir, upDir, approach, accelMpsMulti, out adjFollowPos);
+                        adjFollowPos = PlanetSurfaceHeightAdjustment(followPosition, heightDir, upDir, approach, accelMpsMulti, out surfacePos);
                     else
                     {
                         adjFollowPos = followPosition;
@@ -1526,38 +1551,44 @@ namespace CoreSystems.Projectiles
                         break;
                 }
 
-                if (endCondition > def.EndValue && ++s.Stage < aConst.ApproachesCount)
+                if (endCondition > def.EndValue)
                 {
-                    ProcessStage(ref accelMpsMulti);
+                    var hasNextStep = s.Stage + 1 < aConst.ApproachesCount;
+                    var moveForward = started && def.Failure == TrajectoryDef.ApproachDef.StartFailure.Wait || def.Failure == TrajectoryDef.ApproachDef.StartFailure.MoveToNext;
+                    
+                    if (hasNextStep && moveForward)
+                        ProcessStage(ref accelMpsMulti, ++s.Stage);
+                    else if (def.Failure == TrajectoryDef.ApproachDef.StartFailure.MoveToPrevious && s.Stage - 1 >= 0)
+                        --s.Stage;
                 }
             }
         }
 
-        private void PlanetSurfaceHeightAdjustment(Vector3D followPosition, Vector3D heightDir, Vector3D upDir, ApproachConstants approach, double accelMpsMulti, out Vector3D adjustedHeight)
+        private Vector3D PlanetSurfaceHeightAdjustment(Vector3D checkPosition, Vector3D heightDir, Vector3D upDir, ApproachConstants approach, double accelMpsMulti, out Vector3D surfacePos)
         {
             var planetCenter = Info.MyPlanet.PositionComp.WorldAABB.Center;
 
-            Vector3D waterSurfacePos = followPosition;
+            Vector3D waterSurfacePos = checkPosition;
             double waterSurface = 0;
             
             WaterData water;
             if (Info.Weapon.Comp.Session.WaterApiLoaded && Info.Weapon.Comp.Session.WaterMap.TryGetValue(Info.MyPlanet.EntityId, out water))
             {
                 var waterOuterSphere = new BoundingSphereD(Info.MyPlanet.PositionComp.WorldAABB.Center, water.MaxRadius);
-                if (new RayD(followPosition - (heightDir * accelMpsMulti), heightDir).Intersects(waterOuterSphere).HasValue || waterOuterSphere.Contains(followPosition) == ContainmentType.Contains)
+                if (new RayD(checkPosition - (heightDir * accelMpsMulti), heightDir).Intersects(waterOuterSphere).HasValue || waterOuterSphere.Contains(checkPosition) == ContainmentType.Contains)
                 {
-                    waterSurfacePos = WaterModAPI.GetClosestSurfacePoint(followPosition, water.Planet);
+                    waterSurfacePos = WaterModAPI.GetClosestSurfacePoint(checkPosition, water.Planet);
                     Vector3D.DistanceSquared(ref waterSurfacePos, ref planetCenter, out waterSurface);
                 }
             }
 
-            var voxelSurfacePos = Info.MyPlanet.GetClosestSurfacePointGlobal(ref followPosition);
+            var voxelSurfacePos = Info.MyPlanet.GetClosestSurfacePointGlobal(ref checkPosition);
 
             double surfaceToCenterSqr;
             Vector3D.DistanceSquared(ref voxelSurfacePos, ref planetCenter, out surfaceToCenterSqr);
 
-            var surfacePos = surfaceToCenterSqr > waterSurface ? voxelSurfacePos : waterSurfacePos;
-            adjustedHeight = surfacePos + (upDir * approach.Definition.DesiredElevation);
+            surfacePos = surfaceToCenterSqr > waterSurface ? voxelSurfacePos : waterSurfacePos;
+            return surfacePos + (upDir * approach.Definition.DesiredElevation);
         }
 
         internal void OffSetTarget(bool roam = false)

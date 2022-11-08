@@ -66,7 +66,6 @@ namespace CoreSystems.Projectiles
                 if ((aConst.IsDrone || aConst.IsSmart))
                 {
                     storage.TargetPosition = wTarget.TargetPos;
-                    storage.OriginLookAtPos = w.MyPivotPos;
 
                     if (comp.FakeMode)
                         Session.PlayerDummyTargets.TryGetValue(repo.Values.State.PlayerId, out storage.DummyTargets);

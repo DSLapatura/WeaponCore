@@ -1205,7 +1205,7 @@ namespace CoreSystems.Api
                         {
                             Surface,
                             OriginPosition,
-                            ShooterPosition,
+                            TargetPosition,
                         }
 
                         public enum Conditions

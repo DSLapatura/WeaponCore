@@ -220,7 +220,7 @@ namespace CoreSystems.Support
         internal Vector3D TargetPosition;
         internal Vector3D RandOffsetDir;
         internal Vector3D OffsetDir;
-        internal Vector3D OriginLookAtPos;
+        internal Vector3D LookAtPos;
         internal FakeTargets DummyTargets;
         internal MyEntity ClosestObstacle;
         internal MyEntity NavTargetEnt;
