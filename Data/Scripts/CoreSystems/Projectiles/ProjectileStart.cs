@@ -147,14 +147,6 @@ namespace CoreSystems.Projectiles
                 }
                 Session.Projectiles.ActiveProjetiles.Add(p);
                 p.Start();
-
-                var monitor = comp.ProjectileMonitors[w.PartId];
-                if (monitor.Count > 0)
-                {
-                    Session.MonitoredProjectiles[p.Info.Id] = p;
-                    for (int j = 0; j < monitor.Count; j++)
-                        monitor[j].Invoke(comp.CoreEntity.EntityId, w.PartId, info.Id, target.TargetId, p.Position, true);
-                }
             }
             NewProjectiles.Clear();
         }

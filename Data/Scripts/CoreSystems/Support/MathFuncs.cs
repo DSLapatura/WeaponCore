@@ -372,7 +372,15 @@ namespace CoreSystems.Support
             return Math.Sqrt(maxedDiff) * missileToTarget + normalMissileAcceleration;
         }
 
-        internal static bool WeaponLookAt(Weapon weapon, ref Vector3D targetDir, double targetDistSqr, bool setWeapon, bool canSeeOnly, out bool isTracking)
+        public enum DebugCaller
+        {
+
+            TrajectoryEstimation,
+            CanShootTarget,
+            TrackingTarget,
+        }
+
+        internal static bool WeaponLookAt(Weapon weapon, ref Vector3D targetDir, double targetDistSqr, bool setWeapon, bool canSeeOnly, DebugCaller caller, out bool isTracking)
         {
             isTracking = false;
             try
@@ -399,12 +407,12 @@ namespace CoreSystems.Support
                 Vector3D localTargetVector;
                 Vector3D.TransformNormal(ref targetDir, ref transposeMatrix, out localTargetVector);
 
-                if (double.IsNaN(localTargetVector.X) || double.IsNaN(localTargetVector.Y) || double.IsNaN(localTargetVector.Z))
+                if (double.IsNaN(localTargetVector.X))
                 {
                     if (weapon.Comp.Session.Tick - weapon.LastNanTick > 60)
                     {
                         weapon.LastNanTick = weapon.Comp.Session.Tick;
-                        Log.Line($"WeaponLookAt:{weapon.System.PartName} - targetDir:{targetDir} - transPoseMatrix:{transposeMatrix} - up:{up} - left:{left} - forward:{forward} - currentVector:{currentVector}");
+                        Log.Line($"WeaponLookAt:{weapon.System.PartName} - caller:{caller} - targetDir:{targetDir} - transPoseMatrix:{transposeMatrix} - up:{up} - left:{left} - forward:{forward} - currentVector:{currentVector}");
                     }
                     return false;
                 }

@@ -83,7 +83,6 @@ namespace CoreSystems.Support
         internal uint LastTick;
         internal uint LastHit = uint.MaxValue / 2;
         internal int FireCounter;
-        internal int WaterIntersectType;
         internal ParticleState HitParticle;
         internal TracerState Tracer;
         internal TrailState Trail;
@@ -114,6 +113,7 @@ namespace CoreSystems.Support
         public bool SegmentGaped;
         public bool TextureReverse;
         public int TextureIdx = -1;
+        public int StageIdx = -1;
         public uint TextureLastUpdate;
         public double SegmentLenTranserved = 1;
         public double SegMeasureStep;
@@ -182,7 +182,7 @@ namespace CoreSystems.Support
             FireCounter = info.FireCounter;
             ShrinkInited = false;
             OriginDir = originDir;
-
+            StageIdx = info.Storage.Stage;
             var defaultDecayTime = AmmoDef.Const.DecayTime;
 
             if (defaultDecayTime > 1 && System.Session.ClientAvLevel > 0)
@@ -258,11 +258,13 @@ namespace CoreSystems.Support
                 var saveHit = d.Hit;
                 ++a.LifeTime;
                 a.LastTick = s.Tick;
-                a.StepSize = d.StepSize;
                 a.EstTravel = a.StepSize * a.LifeTime;
-                a.ShortStepSize = d.ShortStepSize ?? d.StepSize;
+                var stageChange = a.StageIdx != d.StageIdx;
+                a.StageIdx = d.StageIdx;
+
                 a.ShortEstTravel = MathHelperD.Clamp((a.EstTravel - a.StepSize) + a.ShortStepSize, 0, double.MaxValue);
-                a.VisualLength = d.VisualLength;
+
+                
                 if (a.SmartOn || aConst.IsBeamWeapon && aConst.ConvergeBeams)
                     a.VisualDir = d.Direction;
                 else if (a.LifeTime == 1)
@@ -780,7 +782,12 @@ namespace CoreSystems.Support
             }
 
             if (MyUtils.IsZero(remainingTracer, 1E-01F)) remainingTracer = 0;
-            System.Session.Projectiles.DeferedAvDraw.Add(new DeferedAv { AvShot = this, StepSize = stepSize, VisualLength = remainingTracer, TracerFront = endPos, ShortStepSize = stepSizeToHit, Hit = hit, TriggerGrowthSteps = info.TriggerGrowthSteps, Direction = info.Direction });
+
+            StepSize = stepSize;
+            VisualLength = remainingTracer;
+            ShortStepSize = stepSizeToHit;
+
+            System.Session.Projectiles.DeferedAvDraw.Add(new DeferedAv { AvShot = this, TracerFront = endPos, Hit = hit, TriggerGrowthSteps = info.TriggerGrowthSteps, Direction = info.Direction, StageIdx = info.Storage.Stage });
         }
 
         internal void HitEffects(bool force = false)
@@ -1214,6 +1221,7 @@ namespace CoreSystems.Support
             TextureReverse = false;
             SegmentLenTranserved = 1;
             TextureIdx = -1;
+            StageIdx = -1;
             SegMeasureStep = 0;
             TextureLastUpdate = 0;
 
@@ -1268,10 +1276,8 @@ namespace CoreSystems.Support
     {
         internal AvShot AvShot;
         internal bool Hit;
-        internal double StepSize;
-        internal double VisualLength;
-        internal double? ShortStepSize;
         internal int TriggerGrowthSteps;
+        internal int StageIdx;
         internal Vector3D TracerFront;
         internal Vector3D Direction;
     }

@@ -12,6 +12,7 @@ using VRage.ObjectBuilders;
 using VRage.Utils;
 using VRageMath;
 using static CoreSystems.Support.WeaponDefinition;
+using static CoreSystems.Support.WeaponDefinition.AmmoDef.TrajectoryDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.TrajectoryDef.GuidanceType;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.EwarDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.ShapeDef.Shapes;
@@ -98,8 +99,8 @@ namespace CoreSystems.Support
         public readonly MySoundPair VoxelSoundPair;
         public readonly MySoundPair PlayerSoundPair;
         public readonly MySoundPair FloatingSoundPair;
-
         public readonly MyAmmoMagazineDefinition MagazineDef;
+        public readonly ApproachConstants[] Approaches;
         public readonly AmmoDef[] AmmoPattern;
         public readonly MyStringId[] TracerTextures;
         public readonly MyStringId[] TrailTextures;
@@ -117,6 +118,7 @@ namespace CoreSystems.Support
         public readonly string DetParticleStr;
         public readonly string DetSoundStr;
         public readonly string ShotSoundStr;
+        public readonly int ApproachesCount;
         public readonly int MaxObjectsHit;
         public readonly int TargetLossTime;
         public readonly int MaxLifeTime;
@@ -178,9 +180,9 @@ namespace CoreSystems.Support
         public readonly bool IsBeamWeapon;
         public readonly bool ConvergeBeams;
         public readonly bool RotateRealBeam;
-        public readonly bool AmmoParticleShrinks;
-        public readonly bool FieldParticleShrinks;
-        public readonly bool HitParticleShrinks;
+        public readonly bool AmmoParticleNoCull;
+        public readonly bool FieldParticleNoCull;
+        public readonly bool HitParticleNoCull;
         public readonly bool DrawLine;
         public readonly bool Ewar;
         public readonly bool NonAntiSmartEwar;
@@ -381,9 +383,9 @@ namespace CoreSystems.Support
             RequiresTarget = ammo.AmmoDef.Trajectory.Guidance != None && !OverrideTarget || system.TrackTargets;
 
 
-            AmmoParticleShrinks = ammo.AmmoDef.AmmoGraphics.Particles.Ammo.ShrinkByDistance;
-            HitParticleShrinks = ammo.AmmoDef.AmmoGraphics.Particles.Hit.ShrinkByDistance;
-            FieldParticleShrinks = ammo.AmmoDef.Ewar.Field.Particle.ShrinkByDistance;
+            AmmoParticleNoCull = ammo.AmmoDef.AmmoGraphics.Particles.Ammo.DisableCameraCulling;
+            HitParticleNoCull = ammo.AmmoDef.AmmoGraphics.Particles.Hit.DisableCameraCulling;
+            FieldParticleNoCull = ammo.AmmoDef.Ewar.Field.Particle.DisableCameraCulling;
 
             AmmoParticle = !string.IsNullOrEmpty(ammo.AmmoDef.AmmoGraphics.Particles.Ammo.Name);
             HitParticle = !string.IsNullOrEmpty(ammo.AmmoDef.AmmoGraphics.Particles.Hit.Name);
@@ -443,7 +445,7 @@ namespace CoreSystems.Support
             HeatModifier = ammo.AmmoDef.HeatModifier > 0 ? ammo.AmmoDef.HeatModifier : 1;
 
             ComputeShieldBypass(shieldBypassRaw, out ShieldDamageBypassMod);
-
+            ComputeApproaches(ammo,  out ApproachesCount, out Approaches);
             ComputeAmmoPattern(ammo, system, wDef, fragGuidedAmmo, fragAntiSmart, fragTargetOverride, out AntiSmartDetected, out TargetOverrideDetected, out AmmoPattern, out WeaponPatternCount, out FragPatternCount, out GuidedAmmoDetected, out WeaponPattern, out FragmentPattern);
 
             DamageScales(ammo.AmmoDef, out DamageScaling, out FallOffScaling, out ArmorScaling, out CustomDamageScales, out CustomBlockDefinitionBasesToScales, out SelfDamage, out VoxelDamage, out HealthHitModifier, out VoxelHitModifier, out DeformDelay);
@@ -638,6 +640,22 @@ namespace CoreSystems.Support
             hasGroup = groupSize > 0 && groupDelay > 0;
             pointType = ammo.AmmoDef.Fragment.TimedSpawns.PointType;
             directAimCone = MathHelper.ToRadians(Math.Max(ammo.AmmoDef.Fragment.TimedSpawns.DirectAimCone,1));
+        }
+
+        private void ComputeApproaches(WeaponSystem.AmmoType ammo, out int approachesCount, out ApproachConstants[] approaches)
+        {
+            approachesCount = ammo.AmmoDef.Trajectory.Approaches?.Length ?? 0;
+
+            approaches = approachesCount > 0 ? new ApproachConstants[approachesCount] : null;
+
+            if (approaches != null)
+            {
+                for (int i = 0; i < approaches.Length; i++)
+                {
+                    approaches[i] = new ApproachConstants(ammo.AmmoDef.Trajectory.Approaches[i], i);
+                }
+            }
+
         }
 
         private void ComputeAmmoPattern(WeaponSystem.AmmoType ammo, WeaponSystem system, WeaponDefinition wDef, bool fragGuidedAmmo, bool fragAntiSmart, bool fragTargetOverride, out bool hasAntiSmart, out bool hasTargetOverride, out AmmoDef[] ammoPattern, out int weaponPatternCount, out int fragmentPatternCount, out bool hasGuidedAmmo, out bool weaponPattern, out bool fragmentPattern)
@@ -1575,6 +1593,28 @@ namespace CoreSystems.Support
             return falloffModifier;
         }
 
+    }
+
+    public class ApproachConstants
+    {
+        public readonly int Index;
+        public readonly MySoundPair SoundPair;
+        public readonly ApproachDef Definition;
+        public readonly bool AlternateTravelSound;
+        public readonly bool AlternateTravelParticle;
+
+        public ApproachConstants(ApproachDef def, int index)
+        {
+            Index = index;
+            Definition = def;
+            AlternateTravelSound = !string.IsNullOrEmpty(def.AlternateSound);
+            AlternateTravelParticle = !string.IsNullOrEmpty(def.AlternateParticle.Name);
+
+            if (AlternateTravelSound)
+            {
+                SoundPair = new MySoundPair(def.AlternateSound);
+            }
+        }
     }
 
     internal class ValueProcessors

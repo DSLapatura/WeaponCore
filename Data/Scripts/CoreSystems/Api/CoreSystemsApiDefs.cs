@@ -1172,6 +1172,7 @@ namespace CoreSystems.Api
                     [ProtoMember(12)] internal MinesDef Mines;
                     [ProtoMember(13)] internal float GravityMultiplier;
                     [ProtoMember(14)] internal uint MaxTrajectoryTime;
+                    [ProtoMember(15)] internal ApproachDef[] Approaches;
 
                     [ProtoContract]
                     public struct SmartsDef
@@ -1188,6 +1189,64 @@ namespace CoreSystems.Api
                         [ProtoMember(10)] internal bool KeepAliveAfterTargetLoss;
                         [ProtoMember(11)] internal float OffsetRatio;
                         [ProtoMember(12)] internal int OffsetTime;
+                    }
+
+                    [ProtoContract]
+                    public struct ApproachDef
+                    {
+                        public enum StartFailure
+                        {
+                            Wait,
+                            MoveToPrevious,
+                            MoveToNext,
+                        }
+
+                        public enum StartAnchor
+                        {
+                            Surface,
+                            OriginPosition,
+                            ShooterPosition,
+                        }
+
+                        public enum Conditions
+                        {
+                            Spawn,
+                            DistanceFromTarget,
+                            Lifetime,
+                            DesiredElevation,
+                        }
+
+                        public enum UpRelativeTo
+                        {
+                            RelativeToBlock,
+                            RelativeToGravity,
+                        }
+                        public enum PlaneRelativeTo
+                        {
+                            AtShooter,
+                            AtTarget,
+                            AtSurface,
+                            AtMidPoint,
+                        }
+
+                        [ProtoMember(1)] internal StartAnchor Anchor;
+                        [ProtoMember(2)] internal StartFailure Failure;
+                        [ProtoMember(3)] internal Conditions StartCondition;
+                        [ProtoMember(4)] internal Conditions EndCondition;
+                        [ProtoMember(5)] internal UpRelativeTo UpDirection;
+                        [ProtoMember(6)] internal PlaneRelativeTo Plane;
+                        [ProtoMember(7)] internal double AngleOffset;
+                        [ProtoMember(8)] internal double StartValue;
+                        [ProtoMember(9)] internal double EndValue;
+                        [ProtoMember(10)] internal double LeadDistance;
+                        [ProtoMember(11)] internal double DesiredElevation;
+                        [ProtoMember(12)] internal double AccelMulti;
+                        [ProtoMember(13)] internal double SpeedCapMulti;
+                        [ProtoMember(14)] internal bool ReflectTargetMovement;
+                        [ProtoMember(15)] internal bool EndOnlyOnNextStart;
+                        [ProtoMember(16)] internal ParticleDef AlternateParticle;
+                        [ProtoMember(17)] internal string AlternateSound;
+
                     }
 
                     [ProtoContract]
@@ -1229,7 +1288,7 @@ namespace CoreSystems.Api
                 [ProtoMember(3)] internal Vector3D Offset;
                 [ProtoMember(4)] internal ParticleOptionDef Extras;
                 [ProtoMember(5)] internal bool ApplyToShield;
-                [ProtoMember(6)] internal bool ShrinkByDistance;
+                [ProtoMember(6)] internal bool DisableCameraCulling;
             }
         }
     }

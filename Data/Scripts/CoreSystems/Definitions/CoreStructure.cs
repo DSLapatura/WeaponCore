@@ -1,10 +1,7 @@
 ﻿using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using CoreSystems.Platform;
 using VRage;
 using VRage.Game;
 using VRage.Utils;
-using VRageMath;
 using static CoreSystems.Support.WeaponDefinition;
 using static CoreSystems.Support.WeaponDefinition.HardPointDef;
 namespace CoreSystems.Support

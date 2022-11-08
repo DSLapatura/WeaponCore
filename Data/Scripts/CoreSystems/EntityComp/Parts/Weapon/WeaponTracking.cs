@@ -36,7 +36,6 @@ namespace CoreSystems.Platform
                 targetPos = targetCenter;
             var targetDir = targetPos - weapon.MyPivotPos;
 
-
             double rangeToTarget;
             Vector3D.DistanceSquared(ref targetPos, ref weapon.MyPivotPos, out rangeToTarget);
 
@@ -47,7 +46,7 @@ namespace CoreSystems.Platform
             if (weapon.RotorTurretTracking)
                 canTrack = validEstimate && MathFuncs.RotorTurretLookAt(weapon.MasterComp.Platform.Control, ref targetDir, rangeToTarget);
             else if (weapon == trackingWeapon)
-                canTrack = validEstimate && MathFuncs.WeaponLookAt(weapon, ref targetDir, rangeToTarget, false, true, out isTracking);
+                canTrack = validEstimate && MathFuncs.WeaponLookAt(weapon, ref targetDir, rangeToTarget, false, true, MathFuncs.DebugCaller.CanShootTarget , out isTracking);
             else
                 canTrack = validEstimate && MathFuncs.IsDotProductWithinTolerance(ref weapon.MyPivotFwd, ref targetDir, weapon.AimingTolerance);
 
@@ -383,7 +382,7 @@ namespace CoreSystems.Platform
 
             if (readyToTrack && baseData.State.Control != ProtoWeaponState.ControlMode.Camera)
             {
-                if (MathFuncs.WeaponLookAt(w, ref targetDir, rangeToTargetSqr, true, false, out isTracking))
+                if (MathFuncs.WeaponLookAt(w, ref targetDir, rangeToTargetSqr, true, false, MathFuncs.DebugCaller.TrackingTarget, out isTracking))
                 {
 
                     w.ReturingHome = false;
@@ -799,7 +798,7 @@ namespace CoreSystems.Platform
                 var targetDirection = targetAimPoint - shooterPos;
 
                 bool isTracking;
-                if (!weapon.RotorTurretTracking && !MathFuncs.WeaponLookAt(weapon, ref targetDirection, deltaLength * deltaLength, false, true, out isTracking)) //Angle 2 obscured, switch to angle 1
+                if (!weapon.RotorTurretTracking && !MathFuncs.WeaponLookAt(weapon, ref targetDirection, deltaLength * deltaLength, false, true, MathFuncs.DebugCaller.TrajectoryEstimation, out isTracking)) //Angle 2 obscured, switch to angle 1
                 {
                     verticalDistance = Math.Tan(angle1) * horizontalDistance;
                     gravityOffset = new Vector3D((verticalDistance + Math.Abs(elevationDifference)) * -weapon.GravityUnitDir);

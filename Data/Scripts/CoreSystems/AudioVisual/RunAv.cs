@@ -171,7 +171,6 @@ namespace CoreSystems.Support
                         }
                     }
 
-                    //BDC call for drawsplash
                     if (av.Hit.EventType == HitEntity.Type.Water)
                     {
                         var splashHit = av.Hit.SurfaceHit;//Hopefully we can get a more precise surface intercept or correction?

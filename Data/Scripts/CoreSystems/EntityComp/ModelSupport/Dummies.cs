@@ -132,7 +132,7 @@ namespace CoreSystems.Support
 
                 if (requiresHandWeaponOffsets) {
                     var wComp = (Weapon.WeaponComponent) _part.BaseComp;
-                    partWorldMatrix = wComp.GetHandWeaponDummyInfo();
+                    partWorldMatrix = wComp.GetHandWeaponApproximateWorldMatrix();
                 }
 
                 Vector3D.Transform(ref localPos, ref partWorldMatrix, out CachedPos);

@@ -166,7 +166,7 @@ namespace CoreSystems.Platform
                 Session.ShowLocalNotify($"Ammo type swapped to: {w.ActiveAmmoDef.AmmoName}", 1500, "White", true);
             }
 
-            internal Matrix GetHandWeaponDummyInfo()
+            internal Matrix GetHandWeaponApproximateWorldMatrix()
             {
                 var rifleLocalMatrix = Rifle.PositionComp.LocalMatrixRef;
                 rifleLocalMatrix.Translation = (CharacterPosComp.LogicalPositionWorld);

@@ -542,6 +542,7 @@ namespace CoreSystems.Support
                     if (meteor != null && (!s.TrackMeteors || !overRides.Meteors)) continue;
 
                     if (character != null && (!s.TrackCharacters || !overRides.Biologicals || character.IsDead || character.Integrity <= 0 || session.AdminMap.ContainsKey(character))) continue;
+
                     Vector3D predictedPos;
                     if (!Weapon.CanShootTarget(w, ref targetCenter, targetLinVel, targetAccel, out predictedPos, true, info.Target)) continue;
 
@@ -697,6 +698,7 @@ namespace CoreSystems.Support
                 s.BlockChecks++;
 
                 var blockPos = block.CubeGrid.GridIntegerToWorld(block.Position);
+
                 double rayDist;
                 if (weaponCheck)
                 {
@@ -707,6 +709,7 @@ namespace CoreSystems.Support
 
                     blocksChecked++;
                     ai.Session.CanShoot++;
+
                     Vector3D predictedPos;
                     if (!Weapon.CanShootTarget(w, ref blockPos, targetLinVel, targetAccel, out predictedPos, w.RotorTurretTracking)) continue;
 
@@ -849,7 +852,6 @@ namespace CoreSystems.Support
 
                         if (weaponCheck)
                         {
-
                             ai.Session.CanShoot++;
                             Vector3D predictedPos;
                             if (Weapon.CanShootTarget(w, ref cubePos, targetLinVel, targetAccel, out predictedPos))

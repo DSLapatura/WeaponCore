@@ -221,7 +221,6 @@ namespace CoreSystems.Support
         internal Vector3D RandOffsetDir;
         internal Vector3D OffsetDir;
         internal Vector3D OriginLookAtPos;
-        internal Vector3D OriginTargetDir;
         internal FakeTargets DummyTargets;
         internal MyEntity ClosestObstacle;
         internal MyEntity NavTargetEnt;
@@ -233,8 +232,6 @@ namespace CoreSystems.Support
         internal bool SmartReady;
         internal bool IsSmart;
         internal bool MineSeeking;
-        internal bool StageOne;
-        internal bool StageTwo;
         internal bool WasTracking;
         internal bool PickTarget;
         internal int ProSyncPosMissCount;
@@ -243,6 +240,7 @@ namespace CoreSystems.Support
         internal int ZombieLifeTime;
         internal int LastOffsetTime;
         internal int SmartSlot;
+        internal int Stage = -1;
         internal long SyncId;
 
         internal void Clean(bool synced)
@@ -266,12 +264,10 @@ namespace CoreSystems.Support
             UsesStrafe = false;
             SmartReady = false;
             MineSeeking = false;
-            StageOne = false;
-            StageTwo = false;
             WasTracking = false;
             IsSmart = false;
             SmartSlot = 0;
-
+            Stage = -1;
             if (synced) {
                 for (int i = 0; i < PastProInfos.Length; i++)
                     PastProInfos[i] = Vector3D.Zero;
@@ -683,7 +679,6 @@ namespace CoreSystems.Support
         internal BoundingSphereD HitSphere = new BoundingSphereD(Vector3D.Zero, 2f);
         internal BoundingSphereD MissSphere = new BoundingSphereD(Vector3D.Zero, 1.5f);
         internal BoundingSphereD PlanetSphere = new BoundingSphereD(Vector3D.Zero, 0.1f);
-        //internal BoundingSphereD TestSphere = new BoundingSphereD(Vector3D.Zero, 5f);
         internal Vector3D FirstPlanetHit;
 
         internal uint HitRefreshed;
@@ -700,7 +695,6 @@ namespace CoreSystems.Support
                 Vector3D.DistanceSquared(ref hit, ref FirstPlanetHit, out dist);
                 if (dist > 625)
                 {
-                    //Log.Line("early planet reset");
                     FirstPlanetHit = hit;
                     PlanetSphere.Radius = 0.1f;
                 }
