@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using CoreSystems.Api;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
 using VRage.Collections;
@@ -9,7 +8,6 @@ using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRage.Utils;
 using VRageMath;
-using static CoreSystems.Support.WeaponDefinition.AmmoDef.TrajectoryDef;
 namespace CoreSystems.Support
 {
     internal class AvShot
@@ -1023,7 +1021,7 @@ namespace CoreSystems.Support
 
             }
 
-            if (aConst.AmmoParticle && Active)
+            if (aConst.AmmoParticle && Active && newStageIdx != -1 && aConst.Approaches[newStageIdx].AlternateTravelSound)
             {
                 DisposeAmmoEffect(false, false);
                 AmmoParticleStopped = false;

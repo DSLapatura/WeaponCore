@@ -165,7 +165,6 @@ namespace CoreSystems.Projectiles
             if (Info.MyPlanet != null)
                 Info.VoxelCache.PlanetSphere.Center = Info.Ai.ClosestPlanetCenter;
 
-            Info.MyShield = Info.Ai.MyShield;
             Info.Ai.ProjectileTicker = Info.Ai.Session.Tick;
             Info.ObjectsHit = 0;
             Info.BaseHealthPool = aConst.Health;

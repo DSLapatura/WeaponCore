@@ -27,7 +27,6 @@ namespace CoreSystems.Support
         internal Ai Ai;
         internal AmmoDef AmmoDef;
         internal MyPlanet MyPlanet;
-        internal MyEntity MyShield;
         internal VoxelCache VoxelCache;
         internal Vector3D ShooterVel;
         internal Vector3D Origin;
@@ -81,7 +80,6 @@ namespace CoreSystems.Support
             Weapon = weapon;
             Ai = weapon.BaseComp.Ai;
             MyPlanet = weapon.BaseComp.Ai.MyPlanet;
-            MyShield = weapon.BaseComp.Ai.MyShield;
             AmmoDef = ammodef;
             Target.TargetEntity = weapon.Target.TargetEntity;
             Target.Projectile = weapon.Target.Projectile;
@@ -135,7 +133,6 @@ namespace CoreSystems.Support
             AvShot = null;
             Ai = null;
             MyPlanet = null;
-            MyShield = null;
             AmmoDef = null;
             VoxelCache = null;
             Weapon = null;

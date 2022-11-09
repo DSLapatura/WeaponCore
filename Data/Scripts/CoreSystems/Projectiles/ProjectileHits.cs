@@ -83,7 +83,7 @@ namespace CoreSystems.Projectiles
                     var grid = ent as MyCubeGrid;
                     var entIsSelf = grid != null && firingCube != null && (grid == firingCube.CubeGrid || firingCube.CubeGrid.IsSameConstructAs(grid));
 
-                    if (entIsSelf && aConst.IsSmart && !info.Storage.SmartReady || ent.MarkedForClose || !ent.InScene || ent == info.MyShield || !isGrid && ent == topEntity) continue;
+                    if (entIsSelf && aConst.IsSmart && !info.Storage.SmartReady || ent.MarkedForClose || !ent.InScene || ent == ai.MyShield || !isGrid && ent == topEntity) continue;
 
                     var character = ent as IMyCharacter;
                     if (info.EwarActive && character != null && !genericFields) continue;
