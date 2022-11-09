@@ -1241,6 +1241,9 @@ namespace CoreSystems.Api
                         [ProtoMember(14)] internal bool EndOnlyOnNextStart;
                         [ProtoMember(15)] internal ParticleDef AlternateParticle;
                         [ProtoMember(16)] internal string AlternateSound;
+                        [ProtoMember(17)] internal string AlternateModel;
+                        [ProtoMember(18)] internal int OnFailureRevertTo;
+                        [ProtoMember(19)] internal ParticleDef StartParticle;
 
                     }
 

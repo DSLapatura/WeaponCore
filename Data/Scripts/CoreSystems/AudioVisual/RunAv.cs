@@ -3,18 +3,13 @@ using CoreSystems.Platform;
 using Jakaria.API;
 using Sandbox.Game;
 using Sandbox.Game.Entities;
-using Sandbox.Game.Entities.Character;
-using Sandbox.Game.Weapons;
 using Sandbox.ModAPI;
 using VRage.Collections;
 using VRage.Game;
-using VRage.Game.Entity;
 using VRage.Game.ModAPI;
-using VRage.ModAPI;
 using VRage.Utils;
 using VRageMath;
 using VRageRender;
-using VRageRender.Messages;
 
 namespace CoreSystems.Support
 {
@@ -186,7 +181,10 @@ namespace CoreSystems.Support
                     {
                         if (av.AmmoEffect != null && av.AmmoDef.Const.AmmoParticle && av.AmmoDef.Const.PrimeModel)
                         {
-                            var offVec = av.TracerFront + Vector3D.Rotate(av.AmmoDef.AmmoGraphics.Particles.Ammo.Offset, av.PrimeMatrix);
+                            ApproachConstants def = av.StageIdx == -1 ? null : av.AmmoDef.Const.Approaches[av.StageIdx];
+                            var particleDef =  def == null || !def.AlternateTravelParticle ? av.AmmoDef.AmmoGraphics.Particles.Ammo : def.Definition.AlternateParticle;
+
+                            var offVec = av.TracerFront + Vector3D.Rotate(particleDef.Offset, av.PrimeMatrix);
                             av.AmmoEffect.WorldMatrix = av.PrimeMatrix;
                             av.AmmoEffect.SetTranslation(ref offVec);
                         }

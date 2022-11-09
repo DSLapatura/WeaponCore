@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using CoreSystems.Platform;
 using CoreSystems.Projectiles;
 using Sandbox.Game.Entities;
@@ -26,8 +25,6 @@ namespace CoreSystems.Support
         internal AvShot AvShot;
         internal Weapon Weapon;
         internal Ai Ai;
-        internal MyEntity PrimeEntity;
-        internal MyEntity TriggerEntity;
         internal AmmoDef AmmoDef;
         internal MyPlanet MyPlanet;
         internal MyEntity MyShield;
@@ -86,8 +83,6 @@ namespace CoreSystems.Support
             MyPlanet = weapon.BaseComp.Ai.MyPlanet;
             MyShield = weapon.BaseComp.Ai.MyShield;
             AmmoDef = ammodef;
-            PrimeEntity = primeEntity;
-            TriggerEntity = triggerEntity;
             Target.TargetEntity = weapon.Target.TargetEntity;
             Target.Projectile = weapon.Target.Projectile;
             MuzzleId = muzzle.MuzzleId;
@@ -126,18 +121,6 @@ namespace CoreSystems.Support
                 {
                     Weapon.System.Session.UniqueMuzzleId = VoxelCache;
                 }
-            }
-
-            if (PrimeEntity != null)
-            {
-                AmmoDef.Const.PrimeEntityPool.Return(PrimeEntity);
-                PrimeEntity = null;
-            }
-
-            if (TriggerEntity != null)
-            {
-                Weapon.System.Session.TriggerEntityPool.Return(TriggerEntity);
-                TriggerEntity = null;
             }
 
             if (PatternShuffle != null)
@@ -224,13 +207,8 @@ namespace CoreSystems.Support
         internal FakeTargets DummyTargets;
         internal MyEntity ClosestObstacle;
         internal MyEntity NavTargetEnt;
-        internal Target ShootTarget;
         internal BoundingSphereD NavTargetBound;
-
-        internal bool IsFriend;
-        internal bool UsesStrafe;
         internal bool SmartReady;
-        internal bool IsSmart;
         internal bool StageActive;
         internal bool WasTracking;
         internal bool PickTarget;
@@ -257,15 +235,11 @@ namespace CoreSystems.Support
             RandOffsetDir = Vector3D.Zero;
             OffsetDir = Vector3D.Zero;
             NavTargetEnt = null;
-            ShootTarget = null;
             ClosestObstacle = null;
             NavTargetBound = new BoundingSphereD(Vector3D.Zero,0);
-            IsFriend = false;
-            UsesStrafe = false;
             SmartReady = false;
             StageActive = false;
             WasTracking = false;
-            IsSmart = false;
             SmartSlot = 0;
             Stage = -1;
             if (synced) {
@@ -455,7 +429,6 @@ namespace CoreSystems.Support
             if (thisTick > RequestTick + _maxDelay)
                 return false;
 
-            //Log.Line($"newResult: {thisTick} - {RequestTick} - {_maxDelay} - {RequestTick + _maxDelay} - {thisTick - (RequestTick + _maxDelay)}");
             cachedPlanetResult = HitInfo;
             return true;
         }
@@ -567,17 +540,6 @@ namespace CoreSystems.Support
                     MyMath.FastCos(randomFloat1)), Matrix.CreateFromDir(pointDir));
 
                 frag.Direction = shrapnelDir;
-                frag.PrimeEntity = null;
-                frag.TriggerEntity = null;
-                if (frag.AmmoDef.Const.PrimeModel && frag.AmmoDef.Const.PrimeEntityPool.Count > 0)
-                    frag.PrimeEntity = frag.AmmoDef.Const.PrimeEntityPool.Get();
-
-                if (frag.AmmoDef.Const.TriggerModel && info.Ai.Session.TriggerEntityPool.Count > 0)
-                    frag.TriggerEntity = info.Ai.Session.TriggerEntityPool.Get();
-
-                if (frag.AmmoDef.Const.PrimeModel && frag.PrimeEntity == null || frag.AmmoDef.Const.TriggerModel && frag.TriggerEntity == null)
-                    info.Ai.Session.FragmentsNeedingEntities.Add(frag);
-
                 Sharpnel.Add(frag);
             }
         }
@@ -600,8 +562,6 @@ namespace CoreSystems.Support
                 var aDef = frag.AmmoDef;
                 var aConst = aDef.Const;
                 info.AmmoDef = aDef;
-                info.PrimeEntity = frag.PrimeEntity;
-                info.TriggerEntity = frag.TriggerEntity;
                 var target = info.Target;
                 target.TargetEntity = frag.TargetEntity;
                 target.TargetState = frag.TargetState;
@@ -652,8 +612,6 @@ namespace CoreSystems.Support
         public Weapon Weapon;
         public Ai Ai;
         public AmmoDef AmmoDef;
-        public MyEntity PrimeEntity;
-        public MyEntity TriggerEntity;
         public MyEntity TargetEntity;
         public Projectile TargetProjectile;
         public FakeTargets DummyTargets;

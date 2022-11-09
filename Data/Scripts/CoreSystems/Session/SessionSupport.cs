@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Net.Sockets;
-using System.Runtime.Remoting.Metadata.W3cXsd2001;
 using CoreSystems.Platform;
 using CoreSystems.Settings;
 using CoreSystems.Support;
@@ -11,9 +9,7 @@ using Sandbox.Definitions;
 using Sandbox.Game;
 using Sandbox.Game.Entities;
 using Sandbox.Game.EntityComponents;
-using Sandbox.Game.Weapons;
 using Sandbox.ModAPI;
-using Sandbox.ModAPI.Weapons;
 using Scripts;
 using VRage;
 using VRage.Game;

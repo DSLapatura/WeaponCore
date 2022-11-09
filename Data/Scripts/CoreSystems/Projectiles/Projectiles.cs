@@ -192,7 +192,7 @@ namespace CoreSystems.Projectiles
                         if (MyUtils.IsValid(p.Gravity) && !MyUtils.IsZero(ref p.Gravity)) {
 
                             p.Velocity += p.Gravity * Projectile.StepConst;
-                            if (!storage.IsSmart)
+                            if (!aConst.IsSmart)
                                 Vector3D.Normalize(ref p.Velocity, out info.Direction);
                         }
                     }
@@ -216,9 +216,10 @@ namespace CoreSystems.Projectiles
                             p.RunDrone();
                     }
 
+                    var runSmart = aConst.IsSmart && (!aConst.IsMine || storage.Stage == 1 && p.DistanceToTravelSqr < double.MaxValue);
                     if (!aConst.AmmoSkipAccel && !info.EwarAreaPulse) {
 
-                        if (storage.IsSmart) p.RunSmart();
+                        if (runSmart) p.RunSmart();
                         else if (aConst.IsDrone) p.RunDrone();
                         else {
                             var accel = true;
@@ -249,7 +250,7 @@ namespace CoreSystems.Projectiles
                             p.Velocity = newVel;
                         }
                     }
-                    else if (storage.IsSmart)
+                    else if (runSmart)
                         p.RunSmart();
                     else if (aConst.IsDrone) 
                         p.RunDrone();

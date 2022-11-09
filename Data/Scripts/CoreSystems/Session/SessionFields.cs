@@ -230,7 +230,6 @@ namespace CoreSystems
         internal readonly List<Weapon> ShootingWeapons = new List<Weapon>(128);
         internal readonly List<PacketInfo> PacketsToClient = new List<PacketInfo>(128);
         internal readonly List<Packet> PacketsToServer = new List<Packet>(128);
-        internal readonly List<Fragment> FragmentsNeedingEntities = new List<Fragment>(128);
         internal readonly List<WeaponAmmoMoveRequest> ConsumableToPullQueue = new List<WeaponAmmoMoveRequest>(128);
         internal readonly List<PacketObj> ClientPacketsToClean = new List<PacketObj>(64);
         internal readonly List<CleanSound> SoundsToClean = new List<CleanSound>(128);

@@ -238,7 +238,6 @@ namespace CoreSystems
             ProblemRep.Clean();
             ProblemRep.Session = null;
 
-            FragmentsNeedingEntities.Clear();
             PhysicalItemListPool.Clean();
             BetterItemsListPool.Clean();
             BetterInventoryItems.Clean();

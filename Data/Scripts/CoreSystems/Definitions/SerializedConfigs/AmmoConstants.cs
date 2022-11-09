@@ -374,7 +374,7 @@ namespace CoreSystems.Support
             IsField = ammo.AmmoDef.Ewar.Mode == EwarMode.Field || ammo.AmmoDef.Trajectory.DeaccelTime > 0;
             IsHybrid = ammo.AmmoDef.HybridRound;
             IsDrone = ammo.AmmoDef.Trajectory.Guidance == DroneAdvanced;
-            IsSmart = ammo.AmmoDef.Trajectory.Guidance == Smart;
+            IsSmart = ammo.AmmoDef.Trajectory.Guidance == Smart || ammo.AmmoDef.Trajectory.Guidance == DetectSmart;
             IsTurretSelectable = !ammo.IsShrapnel && ammo.AmmoDef.HardPointUsable;
 
             ProjectileSync = ammo.AmmoDef.Synchronize && session.MpActive && (IsDrone || IsSmart);
@@ -445,7 +445,7 @@ namespace CoreSystems.Support
             HeatModifier = ammo.AmmoDef.HeatModifier > 0 ? ammo.AmmoDef.HeatModifier : 1;
 
             ComputeShieldBypass(shieldBypassRaw, out ShieldDamageBypassMod);
-            ComputeApproaches(ammo,  out ApproachesCount, out Approaches);
+            ComputeApproaches(ammo, wDef, out ApproachesCount, out Approaches);
             ComputeAmmoPattern(ammo, system, wDef, fragGuidedAmmo, fragAntiSmart, fragTargetOverride, out AntiSmartDetected, out TargetOverrideDetected, out AmmoPattern, out WeaponPatternCount, out FragPatternCount, out GuidedAmmoDetected, out WeaponPattern, out FragmentPattern);
 
             DamageScales(ammo.AmmoDef, out DamageScaling, out FallOffScaling, out ArmorScaling, out CustomDamageScales, out CustomBlockDefinitionBasesToScales, out SelfDamage, out VoxelDamage, out HealthHitModifier, out VoxelHitModifier, out DeformDelay);
@@ -526,6 +526,16 @@ namespace CoreSystems.Support
             CustomBlockDefinitionBasesToScales?.Clear();
             PrimeEntityPool?.Clean();
             _modifierMap.Clear();
+
+            if (Approaches != null)
+            {
+                for (int i = 0; i < Approaches.Length; i++)
+                {
+                    var a = Approaches[i];
+                    a.Clean();
+                    Approaches[i] = null;
+                }
+            }
         }
 
         internal void ComputeShieldBypass(float shieldBypassRaw, out float shieldDamageBypassMod)
@@ -599,6 +609,9 @@ namespace CoreSystems.Support
             }
         }
 
+
+
+
         private void ComputeSteps(WeaponSystem.AmmoType ammo, out float shotFadeStep, out float trajectoryStep, out bool alwaysDraw)
         {
             var changeFadeSteps = ammo.AmmoDef.AmmoGraphics.Lines.Tracer.VisualFadeEnd - ammo.AmmoDef.AmmoGraphics.Lines.Tracer.VisualFadeStart;
@@ -642,17 +655,17 @@ namespace CoreSystems.Support
             directAimCone = MathHelper.ToRadians(Math.Max(ammo.AmmoDef.Fragment.TimedSpawns.DirectAimCone,1));
         }
 
-        private void ComputeApproaches(WeaponSystem.AmmoType ammo, out int approachesCount, out ApproachConstants[] approaches)
+        private void ComputeApproaches(WeaponSystem.AmmoType ammo, WeaponDefinition wDef, out int approachesCount, out ApproachConstants[] approaches)
         {
             approachesCount = ammo.AmmoDef.Trajectory.Approaches?.Length ?? 0;
 
             approaches = approachesCount > 0 ? new ApproachConstants[approachesCount] : null;
 
-            if (approaches != null)
+            if (approaches != null && ammo.AmmoDef.Trajectory.Approaches != null)
             {
                 for (int i = 0; i < approaches.Length; i++)
                 {
-                    approaches[i] = new ApproachConstants(ammo.AmmoDef.Trajectory.Approaches[i], i);
+                    approaches[i] = new ApproachConstants(ammo.AmmoDef.Trajectory.Approaches[i], i, wDef.ModPath);
                 }
             }
 
@@ -798,7 +811,7 @@ namespace CoreSystems.Support
             primeModel = ammoDef.AmmoGraphics.ModelName != string.Empty;
             var vanillaModel = !ammoDef.AmmoGraphics.ModelName.StartsWith(BackSlash);
             primeModelPath = primeModel ? vanillaModel ? ammoDef.AmmoGraphics.ModelName : wDef.ModPath + ammoDef.AmmoGraphics.ModelName : string.Empty;
-            return primeModel ? new MyConcurrentPool<MyEntity>(256, PrimeEntityClear, 10000, PrimeEntityActivator) : null;
+            return primeModel ? new MyConcurrentPool<MyEntity>(64, PrimeEntityClear, 6400, PrimeEntityActivator) : null;
         }
 
         private void Beams(AmmoDef ammoDef, out bool isBeamWeapon, out bool virtualBeams, out bool rotateRealBeam, out bool convergeBeams, out bool oneHitParticle, out bool offsetEffect)
@@ -1599,22 +1612,62 @@ namespace CoreSystems.Support
     {
         public readonly int Index;
         public readonly MySoundPair SoundPair;
+        public readonly MyConcurrentPool<MyEntity> ModelPool;
         public readonly ApproachDef Definition;
+        public readonly string ModelPath;
         public readonly bool AlternateTravelSound;
         public readonly bool AlternateTravelParticle;
+        public readonly bool AlternateModel;
+        public readonly bool StartParticle;
 
-        public ApproachConstants(ApproachDef def, int index)
+        public ApproachConstants(ApproachDef def, int index, string modPath)
         {
             Index = index;
             Definition = def;
             AlternateTravelSound = !string.IsNullOrEmpty(def.AlternateSound);
             AlternateTravelParticle = !string.IsNullOrEmpty(def.AlternateParticle.Name);
+            StartParticle = !string.IsNullOrEmpty(def.StartParticle.Name);
+            AlternateModel = !string.IsNullOrEmpty(def.AlternateModel);
+
+            if (AlternateModel)
+            {
+                ModelPath = modPath + def.AlternateModel;
+            }
 
             if (AlternateTravelSound)
             {
                 SoundPair = new MySoundPair(def.AlternateSound);
             }
+
+            ModelPool = AlternateModel ? new MyConcurrentPool<MyEntity>(64, AlternateEntityClear, 640, AlternateEntityActivator) : null;
         }
+
+        public void Clean()
+        {
+            ModelPool?.Clean();
+        }
+
+        private MyEntity AlternateEntityActivator()
+        {
+            var ent = new MyEntity();
+            ent.Init(null, ModelPath, null, null);
+            ent.Render.CastShadows = false;
+            ent.IsPreview = true;
+            ent.Save = false;
+            ent.SyncFlag = false;
+            ent.NeedsWorldMatrix = false;
+            ent.Flags |= EntityFlags.IsNotGamePrunningStructureObject;
+            MyEntities.Add(ent, false);
+            return ent;
+        }
+
+        private static void AlternateEntityClear(MyEntity myEntity)
+        {
+            myEntity.PositionComp.SetWorldMatrix(ref MatrixD.Identity, null, false, false, false);
+            myEntity.InScene = false;
+            myEntity.Render.RemoveRenderObjects();
+        }
+
     }
 
     internal class ValueProcessors

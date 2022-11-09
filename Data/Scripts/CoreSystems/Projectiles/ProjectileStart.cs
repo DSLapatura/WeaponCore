@@ -115,9 +115,6 @@ namespace CoreSystems.Projectiles
 
                 if (t != Kind.Virtual)
                 {
-                    info.PrimeEntity = aConst.PrimeModel ? aConst.PrimeEntityPool.Get() : null;
-                    info.TriggerEntity = aConst.TriggerModel ? Session.TriggerEntityPool.Get() : null;
-
                     if (targetable)
                         Session.Projectiles.AddTargets.Add(p);
                 }
@@ -149,9 +146,6 @@ namespace CoreSystems.Projectiles
 
         private void SpawnFragments()
         {
-            if (Session.FragmentsNeedingEntities.Count > 0)
-                PrepFragmentEntities();
-
             int spawned = 0;
             for (int j = 0; j < ShrapnelToSpawn.Count; j++)
             {
@@ -167,17 +161,6 @@ namespace CoreSystems.Projectiles
             UpdateState(ActiveProjetiles.Count - spawned);
         }
 
-        internal void PrepFragmentEntities()
-        {
-            for (int i = 0; i < Session.FragmentsNeedingEntities.Count; i++)
-            {
-                var frag = Session.FragmentsNeedingEntities[i];
-                if (frag.AmmoDef.Const.PrimeModel && frag.PrimeEntity == null) frag.PrimeEntity = frag.AmmoDef.Const.PrimeEntityPool.Get();
-                if (frag.AmmoDef.Const.TriggerModel && frag.TriggerEntity == null) frag.TriggerEntity = Session.TriggerEntityPool.Get();
-            }
-            Session.FragmentsNeedingEntities.Clear();
-        }
-
         internal void AddProjectileTargets(Projectile reAdd = null) // This also for fragments and readds, not sure if there is better way
         {
             for (int i = 0; reAdd == null && i < AddTargets.Count || reAdd != null && i == 0; i++)
@@ -187,7 +170,6 @@ namespace CoreSystems.Projectiles
                 var overrides = info.Weapon.Comp.Data.Repo.Values.Set.Overrides;
                 var ai = info.Ai;
                 var target = info.Target;
-                var topEntity = info.Weapon.Comp.TopEntity;
                 var ammoDef = info.AmmoDef;
 
                 for (int t = 0; t < ai.TargetAis.Count; t++)

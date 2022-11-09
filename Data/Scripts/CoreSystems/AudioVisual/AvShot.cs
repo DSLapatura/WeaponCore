@@ -1,15 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using CoreSystems.Api;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
 using VRage.Collections;
 using VRage.Game;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
-using VRage.ModAPI;
 using VRage.Utils;
 using VRageMath;
-
+using static CoreSystems.Support.WeaponDefinition.AmmoDef.TrajectoryDef;
 namespace CoreSystems.Support
 {
     internal class AvShot
@@ -165,8 +165,6 @@ namespace CoreSystems.Support
             if (ParentId != ulong.MaxValue) Log.Line($"invalid avshot, parentId:{ParentId}");
             ParentId = info.Id;
             Model = (info.AmmoDef.Const.PrimeModel || info.AmmoDef.Const.TriggerModel) ? Model = ModelState.Exists : Model = ModelState.None;
-            PrimeEntity = info.PrimeEntity;
-            TriggerEntity = info.TriggerEntity;
             Origin = info.Origin;
             OriginUp = info.OriginUp;
             Offset = AmmoDef.Const.OffsetEffect;
@@ -258,10 +256,26 @@ namespace CoreSystems.Support
                 var saveHit = d.Hit;
                 ++a.LifeTime;
                 a.LastTick = s.Tick;
-                a.EstTravel = a.StepSize * a.LifeTime;
-                var stageChange = a.StageIdx != d.StageIdx;
-                a.StageIdx = d.StageIdx;
+                var createdPrimeEntity = false;
+                if (aConst.PrimeModel && a.PrimeEntity == null) {
+                    
+                    ApproachConstants def = d.StageIdx == -1 ? null : a.AmmoDef.Const.Approaches[d.StageIdx];
+                    a.PrimeEntity = def == null || !def.AlternateModel ? aConst.PrimeEntityPool.Get() : aConst.Approaches[d.StageIdx].ModelPool.Get(); ;
+                    a.ModelSphereCurrent.Radius = a.PrimeEntity.PositionComp.WorldVolume.Radius * 2;
+                    createdPrimeEntity = true;
+                }
 
+                if (aConst.TriggerModel && a.TriggerEntity == null) {
+                    a.TriggerEntity = a.System.Session.TriggerEntityPool.Get();
+                    if (a.TriggerEntity.PositionComp.WorldVolume.Radius * 2 > a.ModelSphereCurrent.Radius)
+                        a.ModelSphereCurrent.Radius = a.TriggerEntity.PositionComp.WorldVolume.Radius * 2;
+                }
+
+                if (a.StageIdx != d.StageIdx)
+                    a.StageChange(d.StageIdx, createdPrimeEntity);
+
+
+                a.EstTravel = a.StepSize * a.LifeTime;
                 a.ShortEstTravel = MathHelperD.Clamp((a.EstTravel - a.StepSize) + a.ShortStepSize, 0, double.MaxValue);
 
                 
@@ -317,6 +331,11 @@ namespace CoreSystems.Support
 
                         if (a.OnScreen == Screen.None && s.Camera.IsInFrustum(ref a.ModelSphereCurrent))
                             a.OnScreen = Screen.ModelOnly;
+                    }
+
+                    if (a.OnScreen == Screen.None && (aConst.AmmoParticle && aConst.AmmoParticleNoCull))
+                    {
+                        a.OnScreen = a.Model == ModelState.Exists ? Screen.ModelOnly : Screen.Trail;
                     }
                 }
 
@@ -802,7 +821,7 @@ namespace CoreSystems.Support
                     HitParticleActive = true;//FML... didn't know there was rand for impacts.
                 }
 
-                if (OnScreen == Screen.Tracer || distToCameraSqr < 360000) {
+                if (OnScreen == Screen.Tracer  || AmmoDef.Const.HitParticleNoCull || distToCameraSqr < 360000) {
                     if (HitParticleActive && AmmoDef.Const.HitParticle && !(LastHitShield && !AmmoDef.AmmoGraphics.Particles.Hit.ApplyToShield))
                         HitParticle = ParticleState.Custom;
                 }
@@ -900,26 +919,30 @@ namespace CoreSystems.Support
         {
             TravelEmitter.SetPosition(TracerFront);
             TravelEmitter.Entity = PrimeEntity;
-            TravelEmitter.PlaySound(AmmoDef.Const.TravelSoundPair, true);
+            ApproachConstants def = StageIdx == -1 ? null : AmmoDef.Const.Approaches[StageIdx];
+            TravelEmitter.PlaySound(def == null ? AmmoDef.Const.TravelSoundPair : def.SoundPair, true);
             TravelSound = true;
         }
 
         internal void PlayAmmoParticle()
         {
+            ApproachConstants def = StageIdx == -1 ? null : AmmoDef.Const.Approaches[StageIdx];
+            var particleDef = def == null || !def.AlternateTravelParticle ? AmmoDef.AmmoGraphics.Particles.Ammo : def.Definition.AlternateParticle;
+
             MatrixD matrix;
             if (Model != ModelState.None && PrimeEntity != null)
                 matrix = PrimeMatrix;
             else {
                 matrix = MatrixD.CreateWorld(TracerFront, Direction, OriginUp);
-                var offVec = TracerFront + Vector3D.Rotate(AmmoDef.AmmoGraphics.Particles.Ammo.Offset, matrix);
+                var offVec = TracerFront + Vector3D.Rotate(particleDef.Offset, matrix);
                 matrix.Translation = offVec;
             }
 
             var renderId = AmmoDef.Const.PrimeModel && PrimeEntity != null ? PrimeEntity.Render.GetRenderObjectID() : uint.MaxValue;
-            if (MyParticlesManager.TryCreateParticleEffect(AmmoDef.AmmoGraphics.Particles.Ammo.Name, ref matrix, ref TracerFront, renderId, out AmmoEffect))
+            if (MyParticlesManager.TryCreateParticleEffect(particleDef.Name, ref matrix, ref TracerFront, renderId, out AmmoEffect))
             {
 
-                AmmoEffect.UserScale = AmmoDef.AmmoGraphics.Particles.Ammo.Extras.Scale;
+                AmmoEffect.UserScale = particleDef.Extras.Scale;
 
                 AmmoParticleStopped = false;
                 AmmoParticleInited = true;
@@ -971,6 +994,43 @@ namespace CoreSystems.Support
             TotalLength = MathHelperD.Clamp(MaxTracerLength + MaxGlowLength, 0.1f, MaxTrajectory);
         }
 
+        private void StageChange(int newStageIdx, bool createdPrimeEntity)
+        {
+            var aConst = AmmoDef.Const;
+            var oldStage = StageIdx;
+            StageIdx = newStageIdx;
+
+            if (Model == ModelState.Exists && PrimeEntity != null)
+            {
+                if (!createdPrimeEntity)
+                {
+                    if (PrimeEntity.InScene)
+                    {
+                        PrimeEntity.InScene = false;
+                        PrimeEntity.Render.RemoveRenderObjects();
+                    }
+
+                    if (oldStage == -1)
+                         aConst.PrimeEntityPool.Return(PrimeEntity); 
+                    else 
+                        aConst.Approaches[oldStage].ModelPool.Return(PrimeEntity);
+
+                    PrimeEntity = newStageIdx == -1 ? aConst.PrimeEntityPool.Get() : aConst.Approaches[newStageIdx].ModelPool.Get();
+
+                    if (PrimeEntity.PositionComp.WorldVolume.Radius * 2 > ModelSphereCurrent.Radius)
+                        ModelSphereCurrent.Radius = PrimeEntity.PositionComp.WorldVolume.Radius * 2;
+                }
+
+            }
+
+            if (aConst.AmmoParticle && Active)
+            {
+                DisposeAmmoEffect(false, false);
+                AmmoParticleStopped = false;
+            }
+        }
+
+
         internal void RunBeam()
         {
             MyParticleEffect effect;
@@ -1004,7 +1064,12 @@ namespace CoreSystems.Support
             if (Vector3D.IsZero(TracerFront)) TracerFront = EndState.EndPos;
 
             if (AmmoDef.Const.AmmoParticle)
-                DisposeAmmoEffect(AmmoDef.AmmoGraphics.Particles.Ammo.Extras.Restart, false);
+            {
+                ApproachConstants def = StageIdx == -1 ? null : AmmoDef.Const.Approaches[StageIdx];
+                var particleDef = def == null || !def.AlternateTravelParticle ? AmmoDef.AmmoGraphics.Particles.Ammo : def.Definition.AlternateParticle;
+
+                DisposeAmmoEffect(particleDef.Extras.Restart, false);
+            }
 
             if (EndState.DetonateEffect)
             {
@@ -1068,7 +1133,8 @@ namespace CoreSystems.Support
                     if (loop)
                     {
                         TravelEmitter.StopSound(true);
-                        TravelEmitter.PlaySound(AmmoDef.Const.TravelSoundPair, stopPrevious: false, skipIntro: true, force2D: false, alwaysHearOnRealistic: false, skipToEnd: true);
+                        ApproachConstants def = StageIdx == -1 ? null : AmmoDef.Const.Approaches[StageIdx];
+                        TravelEmitter.PlaySound(def == null ? AmmoDef.Const.TravelSoundPair : def.SoundPair, stopPrevious: false, skipIntro: true, force2D: false, alwaysHearOnRealistic: false, skipToEnd: true);
                     }
                 }
 
@@ -1140,7 +1206,9 @@ namespace CoreSystems.Support
                     if (loop)
                     {
                         TravelEmitter.StopSound(true);
-                        TravelEmitter.PlaySound(AmmoDef.Const.TravelSoundPair, stopPrevious: false, skipIntro: true, force2D: false, alwaysHearOnRealistic: false, skipToEnd: true);
+                        ApproachConstants def = StageIdx == -1 ? null : AmmoDef.Const.Approaches[StageIdx];
+
+                        TravelEmitter.PlaySound(def == null ? AmmoDef.Const.TravelSoundPair : def.SoundPair, stopPrevious: false, skipIntro: true, force2D: false, alwaysHearOnRealistic: false, skipToEnd: true);
                     }
                 }
                 
@@ -1162,6 +1230,17 @@ namespace CoreSystems.Support
             {
                 TriggerEntity.InScene = false;
                 TriggerEntity.Render.RemoveRenderObjects();
+            }
+
+
+            if (PrimeEntity != null)
+            {
+                AmmoDef.Const.PrimeEntityPool.Return(PrimeEntity);
+            }
+
+            if (TriggerEntity != null)
+            {
+                System.Session.TriggerEntityPool.Return(TriggerEntity);
             }
 
             HitVelocity = Vector3D.Zero;
