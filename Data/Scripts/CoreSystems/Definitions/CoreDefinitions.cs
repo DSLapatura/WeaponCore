@@ -1195,6 +1195,7 @@ namespace CoreSystems.Support
                     [ProtoMember(11)] internal float OffsetRatio;
                     [ProtoMember(12)] internal int OffsetTime;
                     [ProtoMember(13)] internal bool CheckFutureIntersection;
+                    [ProtoMember(14)] internal double NavAcceleration;
                 }
 
                 [ProtoContract]
@@ -1223,19 +1224,19 @@ namespace CoreSystems.Support
                         TargetVelocity,
                     }
 
-                    public enum PlaneRelativeTo
+                    public enum VantagePointRelativeTo
                     {
-                        AtShooter,
-                        AtTarget,
-                        AtSurface,
-                        AtMidPoint,
+                        Shooter,
+                        Target,
+                        Surface,
+                        MidPoint,
                     }
 
                     [ProtoMember(1)] internal StartFailure Failure;
                     [ProtoMember(2)] internal Conditions StartCondition;
                     [ProtoMember(3)] internal Conditions EndCondition;
                     [ProtoMember(4)] internal UpRelativeTo UpDirection;
-                    [ProtoMember(5)] internal PlaneRelativeTo Plane;
+                    [ProtoMember(5)] internal VantagePointRelativeTo VantagePoint;
                     [ProtoMember(6)] internal double AngleOffset;
                     [ProtoMember(7)] internal double StartValue;
                     [ProtoMember(8)] internal double EndValue;
@@ -1243,13 +1244,16 @@ namespace CoreSystems.Support
                     [ProtoMember(10)] internal double DesiredElevation;
                     [ProtoMember(11)] internal double AccelMulti;
                     [ProtoMember(12)] internal double SpeedCapMulti;
-                    [ProtoMember(13)] internal bool ReflectTargetMovement;
+                    [ProtoMember(13)] internal bool AdjustToTargetMovement;
                     [ProtoMember(14)] internal bool EndOnlyOnNextStart;
                     [ProtoMember(15)] internal ParticleDef AlternateParticle;
                     [ProtoMember(16)] internal string AlternateSound;
                     [ProtoMember(17)] internal string AlternateModel;
                     [ProtoMember(18)] internal int OnFailureRevertTo;
                     [ProtoMember(19)] internal ParticleDef StartParticle;
+                    [ProtoMember(20)] internal bool AdjustVantagePoint;
+                    [ProtoMember(21)] internal bool AdjustUpDir;
+                    [ProtoMember(22)] internal bool AdjustElevation;
                 }
 
                 [ProtoContract]

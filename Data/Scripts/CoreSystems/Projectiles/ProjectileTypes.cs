@@ -206,7 +206,6 @@ namespace CoreSystems.Support
         internal MyEntity NavTargetEnt;
         internal BoundingSphereD NavTargetBound;
         internal bool SmartReady;
-        internal bool StageActive;
         internal bool WasTracking;
         internal bool PickTarget;
         internal int ProSyncPosMissCount;
@@ -215,7 +214,8 @@ namespace CoreSystems.Support
         internal int ZombieLifeTime;
         internal int LastOffsetTime;
         internal int SmartSlot;
-        internal int Stage = -1;
+        internal int LastActivatedStage;
+        internal int RequestedStage = -1;
         internal long SyncId;
 
         internal void Clean(bool synced)
@@ -235,10 +235,10 @@ namespace CoreSystems.Support
             ClosestObstacle = null;
             NavTargetBound = new BoundingSphereD(Vector3D.Zero,0);
             SmartReady = false;
-            StageActive = false;
             WasTracking = false;
             SmartSlot = 0;
-            Stage = -1;
+            LastActivatedStage = -1;
+            RequestedStage = -1;
             if (synced) {
                 for (int i = 0; i < PastProInfos.Length; i++)
                     PastProInfos[i] = Vector3D.Zero;

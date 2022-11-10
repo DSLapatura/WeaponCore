@@ -15,7 +15,7 @@ using static CoreSystems.Support.DroneStatus;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.EwarDef.EwarType;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.FragmentDef.TimedSpawnDef;
-
+using static CoreSystems.Support.WeaponDefinition.AmmoDef.TrajectoryDef.ApproachDef;
 namespace CoreSystems.Projectiles
 {
     internal class Projectile
@@ -1103,7 +1103,7 @@ namespace CoreSystems.Projectiles
                     TargetPosition += OffsetTarget;
                 }
             }
-            else if (aConst.IsMine && Info.Storage.StageActive)
+            else if (aConst.IsMine && Info.Storage.LastActivatedStage >= 0)
             {
                 ResetMine();
                 return false;
@@ -1340,7 +1340,7 @@ namespace CoreSystems.Projectiles
                             TargetPosition += OffsetTarget;
                         }
                     }
-                    else if (aConst.IsMine && s.StageActive)
+                    else if (aConst.IsMine && s.LastActivatedStage >= 0)
                     {
                         ResetMine();
                         return;
@@ -1348,9 +1348,9 @@ namespace CoreSystems.Projectiles
                 }
 
                 var accelMpsMulti = AccelInMetersPerSec;
-                if (aConst.ApproachesCount > 0 && s.Stage < aConst.ApproachesCount)
+                if (aConst.ApproachesCount > 0 && s.RequestedStage < aConst.ApproachesCount)
                 {
-                    ProcessStage(ref accelMpsMulti, ref speedCapMulti);
+                    ProcessStage(ref accelMpsMulti, ref speedCapMulti, s.RequestedStage);
                 }
 
                 Vector3D targetAcceleration = Vector3D.Zero;
@@ -1365,7 +1365,7 @@ namespace CoreSystems.Projectiles
                 Vector3D lateralTargetAcceleration = (targetAcceleration - Vector3D.Dot(targetAcceleration, missileToTargetNorm) * missileToTargetNorm);
 
                 Vector3D omega = Vector3D.Cross(missileToTarget, relativeVelocity) / Math.Max(missileToTarget.LengthSquared(), 1); //to combat instability at close range
-                var lateralAcceleration = smarts.Aggressiveness * relativeVelocity.Length() * Vector3D.Cross(omega, missileToTargetNorm) + 0 * lateralTargetAcceleration;
+                var lateralAcceleration = smarts.Aggressiveness * relativeVelocity.Length() * Vector3D.Cross(omega, missileToTargetNorm) + smarts.NavAcceleration * lateralTargetAcceleration;
 
                 Vector3D commandedAccel;
                 if (Vector3D.IsZero(lateralAcceleration))
@@ -1439,100 +1439,107 @@ namespace CoreSystems.Projectiles
             VelocityLengthSqr = newVel.LengthSquared();
 
             var speedCap = speedCapMulti * MaxSpeed;
-            if (VelocityLengthSqr > MaxSpeedSqr || s.StageActive && VelocityLengthSqr > speedCap * speedCap) 
+            if (VelocityLengthSqr > MaxSpeedSqr || s.LastActivatedStage >= 0 && VelocityLengthSqr > speedCap * speedCap) 
                 newVel = Info.Direction * MaxSpeed;
 
             PrevVelocity = Velocity;
             Velocity = newVel;
         }
 
-        private void ProcessStage(ref double accelMpsMulti, ref double speedCapMulti)
+        private void ProcessStage(ref double accelMpsMulti, ref double speedCapMulti, int lastActiveStage)
         {
             var s = Info.Storage;
 
             if (!Vector3D.IsZero(s.TargetPosition))
             {
-                var reset = s.Stage < 0;
-                if (reset)
-                    s.Stage = 0;
+                if (s.RequestedStage == -1)
+                {
+                    s.LastActivatedStage = s.RequestedStage;
+                    s.RequestedStage = 0;
+                    Log.Line($"StageStart: {Info.AmmoDef.AmmoRound} - last: {s.LastActivatedStage}");
+
+                }
+
+                var stageChange = s.RequestedStage != lastActiveStage;
 
                 var aConst = Info.AmmoDef.Const;
 
-                var approach = aConst.Approaches[s.Stage];
+                var approach = aConst.Approaches[s.RequestedStage];
                 var def = approach.Definition;
 
                 var planetExists = Info.MyPlanet != null;
 
-                Vector3D upDir;
-                switch (def.UpDirection)
+                if (def.AdjustUpDir || stageChange)
                 {
-                    case TrajectoryDef.ApproachDef.UpRelativeTo.RelativeToBlock:
-                        upDir = Info.OriginUp;
-                        break;
-                    case TrajectoryDef.ApproachDef.UpRelativeTo.RelativeToGravity:
-                        upDir = !planetExists ? Info.OriginUp : Vector3D.Normalize(Position - Info.MyPlanet.PositionComp.WorldAABB.Center);
-                        break;
-                    case TrajectoryDef.ApproachDef.UpRelativeTo.TargetDirection:
-                        upDir = Vector3D.Normalize(s.TargetPosition - Position);
-                        break;
-                    case TrajectoryDef.ApproachDef.UpRelativeTo.TargetVelocity:
-                        upDir = !Vector3D.IsZero(PrevTargetVel) ? Vector3D.Normalize(PrevTargetVel) : Info.OriginUp;
-                        break;
-                    default:
-                        upDir = Info.OriginUp;
-                        break;
+                    switch (def.UpDirection)
+                    {
+                        case UpRelativeTo.RelativeToBlock:
+                            s.OffsetDir = Info.OriginUp;
+                            break;
+                        case UpRelativeTo.RelativeToGravity:
+                            s.OffsetDir = !planetExists ? Info.OriginUp : Vector3D.Normalize(Position - Info.MyPlanet.PositionComp.WorldAABB.Center);
+                            break;
+                        case UpRelativeTo.TargetDirection:
+                            s.OffsetDir = Vector3D.Normalize(s.TargetPosition - Position);
+                            break;
+                        case UpRelativeTo.TargetVelocity:
+                            s.OffsetDir = !Vector3D.IsZero(PrevTargetVel) ? Vector3D.Normalize(PrevTargetVel) : Info.OriginUp;
+                            break;
+                        default:
+                            s.OffsetDir = Info.OriginUp;
+                            break;
+                    }
                 }
+
 
                 if (!MyUtils.IsZero(def.AngleOffset))
                 {
                     var angle = def.AngleOffset * MathHelper.Pi;
-                    var forward = Vector3D.CalculatePerpendicularVector(upDir);
-                    var right = Vector3D.Cross(upDir, forward);
+                    var forward = Vector3D.CalculatePerpendicularVector(s.OffsetDir);
+                    var right = Vector3D.Cross(s.OffsetDir, forward);
                     s.OffsetDir = Math.Sin(angle) * forward + Math.Cos(angle) * right;
                 }
 
-                var offsetDir = upDir - s.OffsetDir;
-
-                if (reset)
+                if (stageChange || def.AdjustVantagePoint)
                 {
-                    switch (def.Plane)
+                    switch (def.VantagePoint)
                     {
-                        case TrajectoryDef.ApproachDef.PlaneRelativeTo.AtShooter:
+                        case VantagePointRelativeTo.Shooter:
                             s.LookAtPos = Position;
                             break;
-                        case TrajectoryDef.ApproachDef.PlaneRelativeTo.AtTarget:
+                        case VantagePointRelativeTo.Target:
                             s.LookAtPos = TargetPosition;
                             break;
-                        case TrajectoryDef.ApproachDef.PlaneRelativeTo.AtSurface:
+                        case VantagePointRelativeTo.Surface:
                             if (planetExists)
-                                PlanetSurfaceHeightAdjustment(Position, Info.Direction, offsetDir, approach, accelMpsMulti, out s.LookAtPos);
+                                PlanetSurfaceHeightAdjustment(Position, Info.Direction,  approach, out s.LookAtPos);
                             else
                                 s.LookAtPos = Position;
                             break;
-                        case TrajectoryDef.ApproachDef.PlaneRelativeTo.AtMidPoint:
+                        case VantagePointRelativeTo.MidPoint:
                             s.LookAtPos = Vector3D.Lerp(TargetPosition, Position, 0.5);
                             break;
                     }
                 }
 
-                var heightOffset = offsetDir * def.DesiredElevation;
-                var heightStart = s.LookAtPos - heightOffset;
-                var heightend = s.TargetPosition - heightOffset;
+                var heightOffset = s.OffsetDir * def.DesiredElevation;
+                var heightStart = s.LookAtPos + heightOffset;
+                var heightend = s.TargetPosition + heightOffset;
                 var heightDir = heightend - heightStart;
 
                 double startCondition;
                 switch (def.StartCondition)
                 {
-                    case TrajectoryDef.ApproachDef.Conditions.DesiredElevation:
+                    case Conditions.DesiredElevation:
                         startCondition = def.DesiredElevation;
                         break;
-                    case TrajectoryDef.ApproachDef.Conditions.DistanceFromTarget: // could save a sqrt by inlining and using heightDir
+                    case Conditions.DistanceFromTarget: // could save a sqrt by inlining and using heightDir
                         startCondition = MyUtils.GetPointLineDistance(ref heightend, ref s.TargetPosition, ref Position);
                         break;
-                    case TrajectoryDef.ApproachDef.Conditions.Lifetime:
+                    case Conditions.Lifetime:
                         startCondition = Info.Age;
                         break;
-                    case TrajectoryDef.ApproachDef.Conditions.Spawn:
+                    case Conditions.Spawn:
                         startCondition = double.MaxValue;
                         break;
                     default:
@@ -1541,49 +1548,56 @@ namespace CoreSystems.Projectiles
                 }
 
 
-                if (startCondition > def.StartValue || s.StageActive && def.EndOnlyOnNextStart)
+                if (startCondition > def.StartValue || s.LastActivatedStage >= 0 && def.EndOnlyOnNextStart)
                 {
-                    s.StageActive = true;
+                    s.LastActivatedStage = s.RequestedStage;
 
                     accelMpsMulti = AccelInMetersPerSec * def.AccelMulti;
                     speedCapMulti = (def.SpeedCapMulti * MaxSpeed);
-                    var magnitude = heightDir.Normalize();
+                    var startToEndDist = heightDir.Normalize();
 
-                    var followPosition = heightStart + heightDir * ((magnitude * def.LeadDistance) + Info.DistanceTraveled);
+                    var followPosition = heightStart + heightDir * (def.LeadDistance + Info.DistanceTraveled);
 
                     Vector3D adjFollowPos;
                     Vector3D surfacePos;
-                    if (Info.MyPlanet != null && planetExists && def.Plane == TrajectoryDef.ApproachDef.PlaneRelativeTo.AtSurface)
-                        adjFollowPos = PlanetSurfaceHeightAdjustment(followPosition, heightDir, offsetDir, approach, accelMpsMulti, out surfacePos);
+
+                    if (Info.MyPlanet != null && planetExists && (def.AdjustElevation))
+                        adjFollowPos = PlanetSurfaceHeightAdjustment(followPosition, s.OffsetDir, approach,  out surfacePos);
+                    else if (def.AdjustElevation)
+                    {
+                        adjFollowPos = followPosition;
+                    }
                     else
                     {
                         adjFollowPos = followPosition;
                     }
 
-                    var trackedPos = def.ReflectTargetMovement ? TargetPosition : Info.Target.TargetPos;
+                    var trackedPos = def.AdjustToTargetMovement ? TargetPosition : Info.Target.TargetPos;
                     var targetsPerspectiveDir = Vector3D.Normalize(adjFollowPos - trackedPos);
 
                     TargetPosition = MyUtils.LinePlaneIntersection(adjFollowPos, heightDir, trackedPos, targetsPerspectiveDir);
 
                     if (Info.Ai.Session.DebugMod)
                     {
-                        DsDebugDraw.DrawSingleVec(heightStart, 10f, Color.Red);
-                        DsDebugDraw.DrawSingleVec(heightend, 10f, Color.Blue);
-                        DsDebugDraw.DrawSingleVec(adjFollowPos, 10f, Color.Green);
+                        DsDebugDraw.DrawSingleVec(heightStart, 5f, Color.Red);
+                        DsDebugDraw.DrawSingleVec(heightend, 5f, Color.Blue);
+                        DsDebugDraw.DrawSingleVec(adjFollowPos, 5f, Color.Green);
                         DsDebugDraw.DrawSingleVec(TargetPosition, 10f, Color.Yellow);
+                        DsDebugDraw.DrawSingleVec(Position, 5f, Color.White);
                     }
                 }
 
+                var endCon = def.EndCondition;
                 double endCondition;
-                switch (def.EndCondition)
+                switch (endCon)
                 {
-                    case TrajectoryDef.ApproachDef.Conditions.DesiredElevation:
-                        endCondition = 0;
+                    case Conditions.DesiredElevation:
+                        endCondition = def.DesiredElevation;
                         break;
-                    case TrajectoryDef.ApproachDef.Conditions.DistanceFromTarget:
-                        endCondition = def.EndCondition != def.StartCondition ? MyUtils.GetPointLineDistance(ref heightend, ref s.TargetPosition, ref Position) : startCondition;
+                    case Conditions.DistanceFromTarget:
+                        endCondition = endCon != def.StartCondition ? MyUtils.GetPointLineDistance(ref heightend, ref s.TargetPosition, ref Position) : startCondition;
                         break;
-                    case TrajectoryDef.ApproachDef.Conditions.Lifetime:
+                    case Conditions.Lifetime:
                         endCondition = Info.Age;
                         break;
                     default:
@@ -1591,42 +1605,44 @@ namespace CoreSystems.Projectiles
                         break;
                 }
 
-                if (endCondition > def.EndValue)
+
+                var endConditionDiff = endCondition - def.EndValue;
+                if (endCon == Conditions.DesiredElevation && Math.Abs(endConditionDiff) <= Beam.Length || endCon == Conditions.DistanceFromTarget  && endConditionDiff <= 1 || endCon == Conditions.Lifetime && MyUtils.IsZero(endConditionDiff, 1E-01F))
                 {
-                    var hasNextStep = s.Stage + 1 < aConst.ApproachesCount;
-                    var moveForward = s.StageActive && def.Failure == TrajectoryDef.ApproachDef.StartFailure.Wait || def.Failure == TrajectoryDef.ApproachDef.StartFailure.MoveToNext;
+                    var hasNextStep = s.RequestedStage + 1 < aConst.ApproachesCount;
+                    var moveForward = s.LastActivatedStage >= 0 && def.Failure == StartFailure.Wait || def.Failure == StartFailure.MoveToNext;
 
                     if (hasNextStep && moveForward)
                     {
-                        s.StageActive = false;
-                        ++s.Stage;
-                        ProcessStage(ref accelMpsMulti, ref speedCapMulti);
+                        var oldLast = s.LastActivatedStage;
+                        s.LastActivatedStage = s.RequestedStage;
+                        ++s.RequestedStage;
+                        Log.Line($"stageChange: {Info.AmmoDef.AmmoRound} - next: {s.RequestedStage} - last:{oldLast}");
+                        ProcessStage(ref accelMpsMulti, ref speedCapMulti, s.LastActivatedStage);
                     }
-                    else if (def.Failure == TrajectoryDef.ApproachDef.StartFailure.MoveToPrevious)
+                    else if (def.Failure == StartFailure.MoveToPrevious)
                     {
-                        s.StageActive = false;
-                        s.Stage = def.OnFailureRevertTo;
+                        s.LastActivatedStage = s.RequestedStage;
+                        var prev = s.RequestedStage;
+                        s.RequestedStage = def.OnFailureRevertTo;
+                        Log.Line($"stageChange: {Info.AmmoDef.AmmoRound} - previous:{prev} to {s.RequestedStage}");
                     }
                 }
             }
         }
 
-        private Vector3D PlanetSurfaceHeightAdjustment(Vector3D checkPosition, Vector3D heightDir, Vector3D upDir, ApproachConstants approach, double accelMpsMulti, out Vector3D surfacePos)
+        private Vector3D PlanetSurfaceHeightAdjustment(Vector3D checkPosition, Vector3D upDir, ApproachConstants approach, out Vector3D surfacePos)
         {
             var planetCenter = Info.MyPlanet.PositionComp.WorldAABB.Center;
 
             Vector3D waterSurfacePos = checkPosition;
             double waterSurface = 0;
-            
-            WaterData water;
+
+            WaterData water = null;
             if (Info.Weapon.Comp.Session.WaterApiLoaded && Info.Weapon.Comp.Session.WaterMap.TryGetValue(Info.MyPlanet.EntityId, out water))
             {
-                var waterOuterSphere = new BoundingSphereD(Info.MyPlanet.PositionComp.WorldAABB.Center, water.MaxRadius);
-                if (new RayD(checkPosition - (heightDir * accelMpsMulti), heightDir).Intersects(waterOuterSphere).HasValue || waterOuterSphere.Contains(checkPosition) == ContainmentType.Contains)
-                {
-                    waterSurfacePos = WaterModAPI.GetClosestSurfacePoint(checkPosition, water.Planet);
-                    Vector3D.DistanceSquared(ref waterSurfacePos, ref planetCenter, out waterSurface);
-                }
+                waterSurfacePos = WaterModAPI.GetClosestSurfacePoint(checkPosition, water.Planet);
+                Vector3D.DistanceSquared(ref waterSurfacePos, ref planetCenter, out waterSurface);
             }
 
             var voxelSurfacePos = Info.MyPlanet.GetClosestSurfacePointGlobal(ref checkPosition);
@@ -1635,6 +1651,7 @@ namespace CoreSystems.Projectiles
             Vector3D.DistanceSquared(ref voxelSurfacePos, ref planetCenter, out surfaceToCenterSqr);
 
             surfacePos = surfaceToCenterSqr > waterSurface ? voxelSurfacePos : waterSurfacePos;
+
             return surfacePos + (upDir * approach.Definition.DesiredElevation);
         }
         #endregion
@@ -1785,7 +1802,7 @@ namespace CoreSystems.Projectiles
         internal void ActivateMine()
         {
             var ent = Info.Target.TargetEntity;
-            Info.Storage.Stage = 0;
+            Info.Storage.RequestedStage = 0;
             AtMaxRange = false;
             var targetPos = ent.PositionComp.WorldAABB.Center;
             var deltaPos = targetPos - Position;
@@ -1844,7 +1861,7 @@ namespace CoreSystems.Projectiles
             var inRange = false;
             var activate = false;
             var minDist = double.MaxValue;
-            if (Info.Storage.Stage != 0)
+            if (Info.Storage.RequestedStage != 0)
             {
                 MyEntity closestEnt = null;
                 MyGamePruningStructure.GetAllTopMostEntitiesInSphere(ref PruneSphere, MyEntityList, MyEntityQueryType.Dynamic);
@@ -1896,7 +1913,7 @@ namespace CoreSystems.Projectiles
 
             if (minDist <= Info.AmmoDef.Const.CollisionSize) activate = true;
             if (minDist <= detectRadius) inRange = true;
-            if (Info.Storage.Stage == 0)
+            if (Info.Storage.RequestedStage == 0)
             {
                 if (!inRange)
                     TriggerMine(true);
@@ -1918,12 +1935,12 @@ namespace CoreSystems.Projectiles
             }
 
             if (startTimer) DeaccelRate = Info.AmmoDef.Trajectory.Mines.FieldTime;
-            Info.Storage.Stage = 1; // stage1, Guidance == DetectSmart and DistanceToTravelSqr != double.MaxValue means smart tracking is active.
+            Info.Storage.RequestedStage = 1; // stage1, Guidance == DetectSmart and DistanceToTravelSqr != double.MaxValue means smart tracking is active.
         }
 
         internal void ResetMine()
         {
-            if (Info.Storage.Stage == 1)
+            if (Info.Storage.RequestedStage == 1)
             {
                 Info.DistanceTraveled = double.MaxValue;
                 DeaccelRate = 0;
@@ -1934,9 +1951,9 @@ namespace CoreSystems.Projectiles
             DistanceToTravelSqr = MaxTrajectorySqr;
 
             Info.AvShot.Triggered = false;
-            Info.Storage.Stage = - 1;
+            Info.Storage.LastActivatedStage = Info.Storage.RequestedStage;
+            Info.Storage.RequestedStage = - 1;
             LockedTarget = false;
-            Info.Storage.StageActive = true;
 
             if (Info.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.DetectSmart)
             {

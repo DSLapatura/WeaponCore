@@ -216,7 +216,7 @@ namespace CoreSystems.Projectiles
                             p.RunDrone();
                     }
 
-                    var runSmart = aConst.IsSmart && (!aConst.IsMine || storage.Stage == 1 && p.DistanceToTravelSqr < double.MaxValue);
+                    var runSmart = aConst.IsSmart && (!aConst.IsMine || storage.RequestedStage == 1 && p.DistanceToTravelSqr < double.MaxValue);
                     if (!aConst.AmmoSkipAccel && !info.EwarAreaPulse) {
 
                         if (runSmart) p.RunSmart();
@@ -297,13 +297,13 @@ namespace CoreSystems.Projectiles
 
                     if (info.DistanceTraveled * info.DistanceTraveled >= p.DistanceToTravelSqr) {
 
-                        p.AtMaxRange = !aConst.IsMine || !info.Storage.StageActive;
+                        p.AtMaxRange = !aConst.IsMine || storage.LastActivatedStage < 0;
                         if (p.DeaccelRate > 0) {
 
                             p.DeaccelRate--;
-                            if (aConst.IsMine && !info.Storage.StageActive && info.Storage.Stage != 0) {
+                            if (aConst.IsMine && storage.LastActivatedStage < 0 && info.Storage.RequestedStage != 0) {
                                 if (p.EnableAv) info.AvShot.Cloaked = info.AmmoDef.Trajectory.Mines.Cloak;
-                                info.Storage.StageActive = true;
+                                storage.LastActivatedStage = 0;
                             }
                         }
                     }
@@ -404,7 +404,7 @@ namespace CoreSystems.Projectiles
 
                 var sphereCheck = false;
 
-                if (aConst.IsMine && storage.StageActive && storage.Stage != 1)
+                if (aConst.IsMine && storage.LastActivatedStage >= 0 && storage.RequestedStage != 1)
                     p.SeekEnemy();
                 else if (useEwarSphere)
                 {
@@ -463,7 +463,7 @@ namespace CoreSystems.Projectiles
                     lock (ValidateHits)
                         ValidateHits.Add(p);
                 }
-                else if (aConst.IsMine && storage.StageActive && storage.Stage != 1 && info.Age - storage.ChaseAge > 600)
+                else if (aConst.IsMine && storage.LastActivatedStage >= 0 && storage.RequestedStage != 1 && info.Age - storage.ChaseAge > 600)
                 {
                     p.Asleep = true;
                 }
@@ -507,7 +507,7 @@ namespace CoreSystems.Projectiles
                             vs.ShortStepSize = beam.Length;
                             vs.VisualLength = beam.Length;
 
-                            Session.Projectiles.DeferedAvDraw.Add(new DeferedAv { AvShot = vs,  TracerFront = beam.To, Hit = p.Intersecting, TriggerGrowthSteps = info.TriggerGrowthSteps, Direction = beam.Direction, StageIdx = info.Storage.Stage });
+                            Session.Projectiles.DeferedAvDraw.Add(new DeferedAv { AvShot = vs,  TracerFront = beam.To, Hit = p.Intersecting, TriggerGrowthSteps = info.TriggerGrowthSteps, Direction = beam.Direction, StageIdx = info.Storage.RequestedStage });
                         }
                         else {
                             Vector3D beamEnd;
@@ -523,9 +523,9 @@ namespace CoreSystems.Projectiles
                             vs.VisualLength = line.Length;
 
                             if (p.Intersecting && hitPos.HasValue)
-                                Session.Projectiles.DeferedAvDraw.Add(new DeferedAv { AvShot = vs, TracerFront = line.To, Hit = true, TriggerGrowthSteps = info.TriggerGrowthSteps, Direction = line.Direction, StageIdx = info.Storage.Stage });
+                                Session.Projectiles.DeferedAvDraw.Add(new DeferedAv { AvShot = vs, TracerFront = line.To, Hit = true, TriggerGrowthSteps = info.TriggerGrowthSteps, Direction = line.Direction, StageIdx = info.Storage.RequestedStage });
                             else
-                                Session.Projectiles.DeferedAvDraw.Add(new DeferedAv { AvShot = vs,  TracerFront = line.To, Hit = false, TriggerGrowthSteps = info.TriggerGrowthSteps, Direction = line.Direction, StageIdx = info.Storage.Stage });
+                                Session.Projectiles.DeferedAvDraw.Add(new DeferedAv { AvShot = vs,  TracerFront = line.To, Hit = false, TriggerGrowthSteps = info.TriggerGrowthSteps, Direction = line.Direction, StageIdx = info.Storage.RequestedStage });
                         }
                     }
                     continue;
@@ -558,7 +558,7 @@ namespace CoreSystems.Projectiles
                         info.AvShot.StepSize = info.MaxTrajectory;
                         info.AvShot.VisualLength = info.MaxTrajectory;
 
-                        DeferedAvDraw.Add(new DeferedAv { AvShot = info.AvShot, TracerFront = p.Position, TriggerGrowthSteps = info.TriggerGrowthSteps, Direction = info.Direction, StageIdx = info.Storage.Stage });
+                        DeferedAvDraw.Add(new DeferedAv { AvShot = info.AvShot, TracerFront = p.Position, TriggerGrowthSteps = info.TriggerGrowthSteps, Direction = info.Direction, StageIdx = info.Storage.RequestedStage });
                     }
                     else if (p.ModelState == EntityState.None && aConst.AmmoParticle && !aConst.DrawLine)
                     {
@@ -567,7 +567,7 @@ namespace CoreSystems.Projectiles
                         {
                             info.AvShot.StepSize = stepSize;
                             info.AvShot.VisualLength = aConst.CollisionSize;
-                            DeferedAvDraw.Add(new DeferedAv { AvShot = info.AvShot, TracerFront = p.Position, TriggerGrowthSteps = info.TriggerGrowthSteps, Direction = info.Direction, StageIdx = info.Storage.Stage });
+                            DeferedAvDraw.Add(new DeferedAv { AvShot = info.AvShot, TracerFront = p.Position, TriggerGrowthSteps = info.TriggerGrowthSteps, Direction = info.Direction, StageIdx = info.Storage.RequestedStage });
                         }
                     }
                     else
@@ -585,7 +585,7 @@ namespace CoreSystems.Projectiles
                             {
                                 info.AvShot.StepSize = stepSize;
                                 info.AvShot.VisualLength = info.ProjectileDisplacement;
-                                DeferedAvDraw.Add(new DeferedAv { AvShot = p.Info.AvShot, TracerFront = p.Position, TriggerGrowthSteps = info.TriggerGrowthSteps, Direction = info.Direction, StageIdx = info.Storage.Stage });
+                                DeferedAvDraw.Add(new DeferedAv { AvShot = p.Info.AvShot, TracerFront = p.Position, TriggerGrowthSteps = info.TriggerGrowthSteps, Direction = info.Direction, StageIdx = info.Storage.RequestedStage });
                             }
                         }
                         else
@@ -595,7 +595,7 @@ namespace CoreSystems.Projectiles
                             {
                                 info.AvShot.StepSize = stepSize;
                                 info.AvShot.VisualLength = info.TracerLength;
-                                DeferedAvDraw.Add(new DeferedAv { AvShot = info.AvShot,  TracerFront = p.Position, TriggerGrowthSteps = info.TriggerGrowthSteps, Direction = info.Direction, StageIdx = info.Storage.Stage });
+                                DeferedAvDraw.Add(new DeferedAv { AvShot = info.AvShot,  TracerFront = p.Position, TriggerGrowthSteps = info.TriggerGrowthSteps, Direction = info.Direction, StageIdx = info.Storage.RequestedStage });
                             }
                         }
                     }
@@ -605,7 +605,7 @@ namespace CoreSystems.Projectiles
                 {
                     info.AvShot.StepSize = stepSize;
                     info.AvShot.VisualLength = info.TracerLength;
-                    DeferedAvDraw.Add(new DeferedAv { AvShot = info.AvShot, TracerFront = p.Position, TriggerGrowthSteps = info.TriggerGrowthSteps, Direction = info.Direction, StageIdx = info.Storage.Stage });
+                    DeferedAvDraw.Add(new DeferedAv { AvShot = info.AvShot, TracerFront = p.Position, TriggerGrowthSteps = info.TriggerGrowthSteps, Direction = info.Direction, StageIdx = info.Storage.RequestedStage });
                 }
             }
         }

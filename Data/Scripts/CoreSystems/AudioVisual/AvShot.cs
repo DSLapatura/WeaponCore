@@ -178,7 +178,7 @@ namespace CoreSystems.Support
             FireCounter = info.FireCounter;
             ShrinkInited = false;
             OriginDir = originDir;
-            StageIdx = info.Storage.Stage;
+            StageIdx = info.Storage.RequestedStage;
             var defaultDecayTime = AmmoDef.Const.DecayTime;
 
             if (defaultDecayTime > 1 && System.Session.ClientAvLevel > 0)
@@ -804,7 +804,7 @@ namespace CoreSystems.Support
             VisualLength = remainingTracer;
             ShortStepSize = stepSizeToHit;
 
-            System.Session.Projectiles.DeferedAvDraw.Add(new DeferedAv { AvShot = this, TracerFront = endPos, Hit = hit, TriggerGrowthSteps = info.TriggerGrowthSteps, Direction = info.Direction, StageIdx = info.Storage.Stage });
+            System.Session.Projectiles.DeferedAvDraw.Add(new DeferedAv { AvShot = this, TracerFront = endPos, Hit = hit, TriggerGrowthSteps = info.TriggerGrowthSteps, Direction = info.Direction, StageIdx = info.Storage.RequestedStage });
         }
 
         internal void HitEffects(bool force = false)
@@ -997,6 +997,9 @@ namespace CoreSystems.Support
             var aConst = AmmoDef.Const;
             var oldStage = StageIdx;
             StageIdx = newStageIdx;
+            ApproachConstants oldDef = oldStage == -1 ? null : AmmoDef.Const.Approaches[oldStage];
+            ApproachConstants newDef = newStageIdx == -1 ? null : AmmoDef.Const.Approaches[newStageIdx];
+
 
             if (Model == ModelState.Exists && PrimeEntity != null)
             {
@@ -1008,12 +1011,12 @@ namespace CoreSystems.Support
                         PrimeEntity.Render.RemoveRenderObjects();
                     }
 
-                    if (oldStage == -1)
+                    if (oldDef == null || !oldDef.AlternateModel)
                          aConst.PrimeEntityPool.Return(PrimeEntity); 
-                    else 
-                        aConst.Approaches[oldStage].ModelPool.Return(PrimeEntity);
+                    else
+                        oldDef.ModelPool.Return(PrimeEntity);
 
-                    PrimeEntity = newStageIdx == -1 ? aConst.PrimeEntityPool.Get() : aConst.Approaches[newStageIdx].ModelPool.Get();
+                    PrimeEntity = newDef == null || !newDef.AlternateModel ? aConst.PrimeEntityPool.Get() : newDef.ModelPool.Get();
 
                     if (PrimeEntity.PositionComp.WorldVolume.Radius * 2 > ModelSphereCurrent.Radius)
                         ModelSphereCurrent.Radius = PrimeEntity.PositionComp.WorldVolume.Radius * 2;
@@ -1021,7 +1024,7 @@ namespace CoreSystems.Support
 
             }
 
-            if (aConst.AmmoParticle && Active && newStageIdx != -1 && aConst.Approaches[newStageIdx].AlternateTravelSound)
+            if (aConst.AmmoParticle && Active && (newDef != null && newDef.AlternateTravelParticle) && newDef.AlternateTravelSound)
             {
                 DisposeAmmoEffect(false, false);
                 AmmoParticleStopped = false;
