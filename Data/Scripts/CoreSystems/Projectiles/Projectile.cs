@@ -1461,13 +1461,11 @@ namespace CoreSystems.Projectiles
                 }
 
                 var stageChange = s.RequestedStage != lastActiveStage;
-
                 var aConst = Info.AmmoDef.Const;
-
                 var approach = aConst.Approaches[s.RequestedStage];
                 var def = approach.Definition;
-
                 var planetExists = Info.MyPlanet != null;
+                var targetPosition = TargetPosition;
 
                 if (def.AdjustUpDir || stageChange)
                 {
@@ -1500,24 +1498,31 @@ namespace CoreSystems.Projectiles
                     s.OffsetDir = Math.Sin(angle) * forward + Math.Cos(angle) * right;
                 }
 
+                Vector3D surfacePos = Vector3D.Zero;
                 if (stageChange || def.AdjustVantagePoint)
                 {
                     switch (def.VantagePoint)
                     {
-                        case VantagePointRelativeTo.Shooter:
-                            s.LookAtPos = Position;
+                        case VantagePointRelativeTo.Origin:
+                            s.LookAtPos = Info.Origin;
                             break;
+                        case VantagePointRelativeTo.Shooter:
+                            s.LookAtPos = Info.Weapon.MyPivotPos;
+                           break;
                         case VantagePointRelativeTo.Target:
-                            s.LookAtPos = TargetPosition;
+                            s.LookAtPos = targetPosition;
                             break;
                         case VantagePointRelativeTo.Surface:
                             if (planetExists)
-                                PlanetSurfaceHeightAdjustment(Position, Info.Direction,  approach, out s.LookAtPos);
+                            {
+                                PlanetSurfaceHeightAdjustment(Position, Info.Direction, approach, out surfacePos);
+                                s.LookAtPos = surfacePos;
+                            }
                             else
-                                s.LookAtPos = Position;
+                                s.LookAtPos = Info.Origin;
                             break;
                         case VantagePointRelativeTo.MidPoint:
-                            s.LookAtPos = Vector3D.Lerp(TargetPosition, Position, 0.5);
+                            s.LookAtPos = Vector3D.Lerp(targetPosition, Position, 0.5);
                             break;
                     }
                 }
@@ -1546,7 +1551,8 @@ namespace CoreSystems.Projectiles
                         startCondition = 0;
                         break;
                 }
-
+                var startToEndDist = heightDir.Normalize();
+                var followPosition = heightStart + heightDir * (def.LeadDistance + Info.DistanceTraveled >= def.TrackingDistance ? Info.DistanceTraveled : 0);
 
                 if (startCondition > def.StartValue || s.LastActivatedStage >= 0 && def.EndOnlyOnNextStart)
                 {
@@ -1554,15 +1560,10 @@ namespace CoreSystems.Projectiles
 
                     accelMpsMulti = AccelInMetersPerSec * def.AccelMulti;
                     speedCapMulti = (def.SpeedCapMulti * MaxSpeed);
-                    var startToEndDist = heightDir.Normalize();
-
-                    var followPosition = heightStart + heightDir * (def.LeadDistance + Info.DistanceTraveled);
 
                     Vector3D adjFollowPos;
-                    Vector3D surfacePos;
-
-                    if (Info.MyPlanet != null && planetExists && (def.AdjustElevation))
-                        adjFollowPos = PlanetSurfaceHeightAdjustment(followPosition, s.OffsetDir, approach,  out surfacePos);
+                    if (Info.MyPlanet != null && planetExists && def.AdjustElevation)
+                        adjFollowPos = Vector3D.IsZero(surfacePos) ? PlanetSurfaceHeightAdjustment(followPosition, s.OffsetDir, approach, out surfacePos) : surfacePos;
                     else if (def.AdjustElevation)
                     {
                         adjFollowPos = followPosition;
@@ -1572,11 +1573,11 @@ namespace CoreSystems.Projectiles
                         adjFollowPos = followPosition;
                     }
 
-                    var trackedPos = def.AdjustToTargetMovement ? TargetPosition : Info.Target.TargetPos;
+                    var trackedPos = def.AdjustToTargetMovement ? targetPosition : Info.Target.TargetPos;
                     var targetsPerspectiveDir = Vector3D.Normalize(adjFollowPos - trackedPos);
 
                     TargetPosition = MyUtils.LinePlaneIntersection(adjFollowPos, heightDir, trackedPos, targetsPerspectiveDir);
-
+                    
                     if (Info.Ai.Session.DebugMod)
                     {
                         DsDebugDraw.DrawSingleVec(heightStart, 5f, Color.Red);
@@ -1587,15 +1588,19 @@ namespace CoreSystems.Projectiles
                     }
                 }
 
+
                 var endCon = def.EndCondition;
                 double endCondition;
                 switch (endCon)
                 {
                     case Conditions.DesiredElevation:
-                        endCondition = def.DesiredElevation;
+                        var plane = new PlaneD(s.LookAtPos, heightDir);
+                        plane.DistanceToPoint(Position);
+                        var offsetPos = Position + (s.OffsetDir * plane.DistanceToPoint(Position));
+                        endCondition = !Vector3D.IsZero(surfacePos) ? Vector3D.Distance(Position, surfacePos) : Vector3D.Distance(Position, offsetPos);
                         break;
                     case Conditions.DistanceFromTarget:
-                        endCondition = endCon != def.StartCondition ? MyUtils.GetPointLineDistance(ref heightend, ref s.TargetPosition, ref Position) : startCondition;
+                        endCondition = endCon != def.StartCondition ? MyUtils.GetPointLineDistance(ref heightend, ref targetPosition, ref Position) : startCondition;
                         break;
                     case Conditions.Lifetime:
                         endCondition = Info.Age;
@@ -1606,8 +1611,8 @@ namespace CoreSystems.Projectiles
                 }
 
 
-                var endConditionDiff = endCondition - def.EndValue;
-                if (endCon == Conditions.DesiredElevation && Math.Abs(endConditionDiff) <= Beam.Length || endCon == Conditions.DistanceFromTarget  && endConditionDiff <= 1 || endCon == Conditions.Lifetime && MyUtils.IsZero(endConditionDiff, 1E-01F))
+                var endConditionDiff = Math.Abs(endCondition - def.EndValue);
+                if (endCon == Conditions.DesiredElevation && endConditionDiff <= aConst.CollisionSize || endCon == Conditions.DistanceFromTarget  && endConditionDiff <= aConst.CollisionSize || endCon == Conditions.Lifetime && MyUtils.IsZero(endConditionDiff, 1E-01F))
                 {
                     var hasNextStep = s.RequestedStage + 1 < aConst.ApproachesCount;
                     var moveForward = s.LastActivatedStage >= 0 && def.Failure == StartFailure.Wait || def.Failure == StartFailure.MoveToNext;
