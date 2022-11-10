@@ -1454,9 +1454,9 @@ namespace CoreSystems.Projectiles
             {
                 if (s.RequestedStage == -1)
                 {
-                    s.LastActivatedStage = s.RequestedStage;
-                    s.RequestedStage = 0;
                     Log.Line($"StageStart: {Info.AmmoDef.AmmoRound} - last: {s.LastActivatedStage}");
+                    s.LastActivatedStage = -1;
+                    s.RequestedStage = 0;
 
                 }
 
