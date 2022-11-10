@@ -1615,7 +1615,9 @@ namespace CoreSystems.Projectiles
                 if (endCon == Conditions.DesiredElevation && endConditionDiff <= aConst.CollisionSize || endCon == Conditions.DistanceFromTarget  && endConditionDiff <= aConst.CollisionSize || endCon == Conditions.Lifetime && MyUtils.IsZero(endConditionDiff, 1E-01F))
                 {
                     var hasNextStep = s.RequestedStage + 1 < aConst.ApproachesCount;
-                    var moveForward = s.LastActivatedStage >= 0 && def.Failure == StartFailure.Wait || def.Failure == StartFailure.MoveToNext;
+                    var isActive = s.LastActivatedStage >= 0;
+
+                    var moveForward = isActive && def.Failure == StartFailure.Wait || !isActive && def.Failure == StartFailure.MoveToNext;
 
                     if (hasNextStep && moveForward)
                     {
@@ -1625,7 +1627,7 @@ namespace CoreSystems.Projectiles
                         Log.Line($"stageChange: {Info.AmmoDef.AmmoRound} - next: {s.RequestedStage} - last:{oldLast}");
                         ProcessStage(ref accelMpsMulti, ref speedCapMulti, s.LastActivatedStage);
                     }
-                    else if (def.Failure == StartFailure.MoveToPrevious)
+                    else if (def.Failure == StartFailure.MoveToPrevious && !isActive)
                     {
                         s.LastActivatedStage = s.RequestedStage;
                         var prev = s.RequestedStage;
