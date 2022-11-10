@@ -1562,8 +1562,9 @@ namespace CoreSystems.Projectiles
                     speedCapMulti = (def.SpeedCapMulti * MaxSpeed);
 
                     Vector3D adjFollowPos;
+                    Vector3D followSurfacePos;
                     if (Info.MyPlanet != null && planetExists && def.AdjustElevation)
-                        adjFollowPos = Vector3D.IsZero(surfacePos) ? PlanetSurfaceHeightAdjustment(followPosition, s.OffsetDir, approach, out surfacePos) : surfacePos;
+                        adjFollowPos = PlanetSurfaceHeightAdjustment(followPosition, s.OffsetDir, approach, out followSurfacePos);
                     else if (def.AdjustElevation)
                     {
                         adjFollowPos = followPosition;
