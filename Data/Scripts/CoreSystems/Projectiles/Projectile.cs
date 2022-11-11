@@ -1573,7 +1573,7 @@ namespace CoreSystems.Projectiles
                         start1 = Info.Age >= def.Start1Value;
                         break;
                     case Conditions.MinTravelRequired:
-                        start1 = false;
+                        start1 = Info.DistanceTraveled - s.StartDistanceTraveled >= def.Start1Value;
                         break;
                     case Conditions.Spawn:
                     case Conditions.Ignore:
@@ -1605,7 +1605,7 @@ namespace CoreSystems.Projectiles
                         start2 = Info.Age >= def.Start2Value;
                         break;
                     case Conditions.MinTravelRequired:
-                        start2 = false;
+                        start2 = Info.DistanceTraveled - s.StartDistanceTraveled >= def.Start2Value;
                         break;
                     case Conditions.Spawn:
                     case Conditions.Ignore:
@@ -1686,7 +1686,7 @@ namespace CoreSystems.Projectiles
                         end1 = Info.Age >= def.End1Value;
                         break;
                     case Conditions.MinTravelRequired:
-                        end1 = false;
+                        end1 = Info.DistanceTraveled - s.StartDistanceTraveled >= def.End1Value;
                         break;
                     case Conditions.Ignore:
                         end1 = true;
@@ -1724,7 +1724,7 @@ namespace CoreSystems.Projectiles
                         end2 = Info.Age >= def.End2Value;
                         break;
                     case Conditions.MinTravelRequired:
-                        end2 = false;
+                        end2 = Info.DistanceTraveled - s.StartDistanceTraveled >= def.End2Value;
                         break;
                     case Conditions.Ignore:
                         end2 = true;
