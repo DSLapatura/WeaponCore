@@ -1223,7 +1223,7 @@ namespace CoreSystems.Projectiles
             var startTrack = s.SmartReady || coreParent == null || coreParent.MarkedForClose;
             var speedCapMulti = 1d;
 
-            if (!startTrack && Info.DistanceTraveled * Info.DistanceTraveled >= aConst.SmartsDelayDistSqr) {
+            if (!startTrack && Info.DistanceTraveled * Info.DistanceTraveled >= 0) {
                 var lineCheck = new LineD(Position, LockedTarget ? TargetPosition : Position + (Info.Direction * 10000f));
                 startTrack = !new MyOrientedBoundingBoxD(coreParent.PositionComp.LocalAABB, coreParent.PositionComp.WorldMatrixRef).Intersects(ref lineCheck).HasValue;
             }
@@ -1427,16 +1427,19 @@ namespace CoreSystems.Projectiles
                     }
                 }
 
-                newVel = Velocity + (commandedAccel * StepConst);
-                
-                var accelDir = commandedAccel / accelMpsMulti;
-
-                AccelDir = accelDir;
-
-                Vector3D.Normalize(ref newVel, out Info.Direction);
+                if (accelMpsMulti > 0)
+                {
+                    newVel = Velocity + (commandedAccel * StepConst);
+                    var accelDir = commandedAccel / accelMpsMulti;
+                    AccelDir = accelDir;
+                    Vector3D.Normalize(ref newVel, out Info.Direction);
+                }
+                else
+                    newVel = Velocity;
             }
             else
-                newVel = Velocity + MaxAccelVelocity;
+                newVel = aConst.ApproachesCount == 0 ? Velocity + MaxAccelVelocity : Velocity;
+
             VelocityLengthSqr = newVel.LengthSquared();
 
             var speedCap = speedCapMulti * MaxSpeed;
@@ -1455,7 +1458,7 @@ namespace CoreSystems.Projectiles
             {
                 if (s.RequestedStage == -1)
                 {
-                    Log.Line($"StageStart: {Info.AmmoDef.AmmoRound} - last: {s.LastActivatedStage} - gravity:{Gravity.Length()} - {Info.AmmoDef.Const.Approaches[0].Definition.EndCondition1} - {Info.AmmoDef.Const.Approaches[1].Definition.EndCondition1}");
+                    Log.Line($"StageStart: {Info.AmmoDef.AmmoRound} - last: {s.LastActivatedStage}");
                     s.LastActivatedStage = -1;
                     s.RequestedStage = 0;
 
@@ -1677,6 +1680,7 @@ namespace CoreSystems.Projectiles
                         break;
                     case Conditions.Lifetime:
                         end1 = Info.Age >= def.End1Value;
+                        Log.Line($"{end1} - {Info.Age} >= {def.End1Value}");
                         break;
                     case Conditions.MinTravelRequired:
                         end1 = false;
