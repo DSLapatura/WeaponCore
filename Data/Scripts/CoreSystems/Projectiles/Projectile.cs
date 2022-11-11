@@ -1216,14 +1216,17 @@ namespace CoreSystems.Projectiles
         #region Smart
         internal void RunSmart()
         {
-            Vector3D newVel;
-            var aConst = Info.AmmoDef.Const;
+            var proposedVel = Velocity;
+
+            var ammo = Info.AmmoDef;
+            var aConst = ammo.Const;
             var s = Info.Storage;
+            var smarts = ammo.Trajectory.Smarts;
             var coreParent = Info.Weapon.Comp.TopEntity;
             var startTrack = s.SmartReady || coreParent == null || coreParent.MarkedForClose;
             var speedCapMulti = 1d;
 
-            if (!startTrack && Info.DistanceTraveled * Info.DistanceTraveled >= 0) {
+            if (!startTrack && Info.DistanceTraveled * Info.DistanceTraveled >= aConst.SmartsDelayDistSqr) {
                 var lineCheck = new LineD(Position, LockedTarget ? TargetPosition : Position + (Info.Direction * 10000f));
                 startTrack = !new MyOrientedBoundingBoxD(coreParent.PositionComp.LocalAABB, coreParent.PositionComp.WorldMatrixRef).Intersects(ref lineCheck).HasValue;
             }
@@ -1231,7 +1234,6 @@ namespace CoreSystems.Projectiles
             if (startTrack)
             {
                 s.SmartReady = true;
-                var smarts = Info.AmmoDef.Trajectory.Smarts;
                 var fake = Info.Target.TargetState == Target.TargetStates.IsFake;
                 var hadTarget = HadTarget != HadTargetState.None;
 
@@ -1429,25 +1431,26 @@ namespace CoreSystems.Projectiles
 
                 if (accelMpsMulti > 0)
                 {
-                    newVel = Velocity + (commandedAccel * StepConst);
+                    proposedVel = Velocity + (commandedAccel * StepConst);
                     var accelDir = commandedAccel / accelMpsMulti;
-                    AccelDir = accelDir;
-                    Vector3D.Normalize(ref newVel, out Info.Direction);
-                }
-                else
-                    newVel = Velocity;
-            }
-            else
-                newVel = aConst.ApproachesCount == 0 ? Velocity + MaxAccelVelocity : Velocity;
 
-            VelocityLengthSqr = newVel.LengthSquared();
+                    AccelDir = accelDir;
+                    Vector3D.Normalize(ref proposedVel, out Info.Direction);
+                }
+            }
+            else if (!smarts.AccelClearance)
+            {
+                proposedVel = Velocity + MaxAccelVelocity;
+            }
+
+            VelocityLengthSqr = proposedVel.LengthSquared();
 
             var speedCap = speedCapMulti * MaxSpeed;
-            if (VelocityLengthSqr > MaxSpeedSqr || s.LastActivatedStage >= 0 && VelocityLengthSqr > speedCap * speedCap) 
-                newVel = Info.Direction * MaxSpeed;
+            if (VelocityLengthSqr > MaxSpeedSqr || s.LastActivatedStage >= 0 && VelocityLengthSqr > speedCap * speedCap)
+                proposedVel = Info.Direction * MaxSpeed;
 
             PrevVelocity = Velocity;
-            Velocity = newVel;
+            Velocity = proposedVel;
         }
 
         private void ProcessStage(ref double accelMpsMulti, ref double speedCapMulti, int lastActiveStage)

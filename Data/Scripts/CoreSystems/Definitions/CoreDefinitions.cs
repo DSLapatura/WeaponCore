@@ -1196,6 +1196,8 @@ namespace CoreSystems.Support
                     [ProtoMember(12)] internal int OffsetTime;
                     [ProtoMember(13)] internal bool CheckFutureIntersection;
                     [ProtoMember(14)] internal double NavAcceleration;
+                    [ProtoMember(15)] internal bool AccelClearance;
+
                 }
 
                 [ProtoContract]
