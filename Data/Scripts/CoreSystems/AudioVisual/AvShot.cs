@@ -269,9 +269,8 @@ namespace CoreSystems.Support
                         a.ModelSphereCurrent.Radius = a.TriggerEntity.PositionComp.WorldVolume.Radius * 2;
                 }
 
-                if (a.StageIdx != d.StageIdx)
+                if (a.StageIdx != d.StageIdx && d.StageIdx <= aConst.Approaches.Length - 1)
                     a.StageChange(d.StageIdx, createdPrimeEntity);
-
 
                 a.EstTravel = a.StepSize * a.LifeTime;
                 a.ShortEstTravel = MathHelperD.Clamp((a.EstTravel - a.StepSize) + a.ShortStepSize, 0, double.MaxValue);
@@ -995,8 +994,9 @@ namespace CoreSystems.Support
         private void StageChange(int newStageIdx, bool createdPrimeEntity)
         {
             var aConst = AmmoDef.Const;
+            var lastApproach = AmmoDef.Const.Approaches.Length - 1;
             var oldStage = StageIdx;
-            StageIdx = newStageIdx;
+            StageIdx = newStageIdx <= lastApproach ? newStageIdx : lastApproach;
             ApproachConstants oldDef = oldStage == -1 ? null : AmmoDef.Const.Approaches[oldStage];
             ApproachConstants newDef = newStageIdx == -1 ? null : AmmoDef.Const.Approaches[newStageIdx];
 
