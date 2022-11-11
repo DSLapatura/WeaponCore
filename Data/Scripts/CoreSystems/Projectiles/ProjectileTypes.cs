@@ -214,9 +214,10 @@ namespace CoreSystems.Support
         internal int ZombieLifeTime;
         internal int LastOffsetTime;
         internal int SmartSlot;
-        internal int LastActivatedStage;
+        internal int LastActivatedStage = -1;
         internal int RequestedStage = -1;
         internal long SyncId;
+        internal double StartDistanceTraveled;
 
         internal void Clean(bool synced)
         {
@@ -237,6 +238,7 @@ namespace CoreSystems.Support
             SmartReady = false;
             WasTracking = false;
             SmartSlot = 0;
+            StartDistanceTraveled = 0;
             LastActivatedStage = -1;
             RequestedStage = -1;
             if (synced) {

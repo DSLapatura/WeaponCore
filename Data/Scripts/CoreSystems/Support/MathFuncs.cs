@@ -631,7 +631,7 @@ namespace CoreSystems.Support
             return num;
         }
 
-        internal static double Intercept(Vector3D deltaPos, Vector3D deltaVel, float projectileVel)
+        internal static double Intercept(Vector3D deltaPos, Vector3D deltaVel, double projectileVel)
         {
             var num1 = Vector3D.Dot(deltaVel, deltaVel) - projectileVel * projectileVel;
             var num2 = 2.0 * Vector3D.Dot(deltaVel, deltaPos);

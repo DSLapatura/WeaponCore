@@ -1205,10 +1205,12 @@ namespace CoreSystems.Api
 
                         public enum Conditions
                         {
+                            Ignore,
                             Spawn,
                             DistanceFromTarget,
                             Lifetime,
                             DesiredElevation,
+                            MinTravelRequired
                         }
 
                         public enum UpRelativeTo
@@ -1229,8 +1231,8 @@ namespace CoreSystems.Api
                         }
 
                         [ProtoMember(1)] internal StartFailure Failure;
-                        [ProtoMember(2)] internal Conditions StartCondition;
-                        [ProtoMember(3)] internal Conditions EndCondition;
+                        [ProtoMember(2)] internal Conditions StartCondition1;
+                        [ProtoMember(3)] internal Conditions EndCondition1;
                         [ProtoMember(4)] internal UpRelativeTo UpDirection;
                         [ProtoMember(5)] internal VantagePointRelativeTo VantagePoint;
                         [ProtoMember(6)] internal double AngleOffset;
@@ -1251,6 +1253,8 @@ namespace CoreSystems.Api
                         [ProtoMember(21)] internal bool AdjustUpDir;
                         [ProtoMember(22)] internal bool AdjustElevation;
                         [ProtoMember(23)] internal double TrackingDistance;
+                        [ProtoMember(24)] internal Conditions StartCondition2;
+                        [ProtoMember(25)] internal Conditions EndCondition2;
                     }
 
                     [ProtoContract]

@@ -8,6 +8,7 @@ using VRage.Game;
 using VRage.Game.Components;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
+using VRage.Game.ObjectBuilders.Definitions;
 using VRage.Utils;
 using VRageMath;
 using static CoreSystems.Session;
@@ -58,7 +59,7 @@ namespace CoreSystems.Projectiles
         internal double MaxSpeed;
         internal double MaxTrajectorySqr;
         internal double DistanceToSurfaceSqr;
-        internal float DesiredSpeed;
+        internal double DesiredSpeed;
         internal int DeaccelRate;
         internal int PruningProxyId = -1;
         internal int TargetsSeen;
@@ -1461,9 +1462,21 @@ namespace CoreSystems.Projectiles
                 }
 
                 var stageChange = s.RequestedStage != lastActiveStage;
+
+                if (stageChange)
+                {
+                    s.StartDistanceTraveled = Info.DistanceTraveled;
+                }
+
                 var aConst = Info.AmmoDef.Const;
                 var approach = aConst.Approaches[s.RequestedStage];
                 var def = approach.Definition;
+                def.StartCondition1 = Conditions.Spawn;
+                def.EndCondition1 = Conditions.DistanceFromTarget;
+
+                if (def.StartCondition1 == def.StartCondition2 || def.EndCondition1 == def.EndCondition2)
+                    return; // bad modder, failed to read coreparts comment, fail silently so they drive themselves nuts
+
                 var planetExists = Info.MyPlanet != null;
                 var targetPosition = TargetPosition;
 
@@ -1488,7 +1501,6 @@ namespace CoreSystems.Projectiles
                             break;
                     }
                 }
-
 
                 if (!MyUtils.IsZero(def.AngleOffset))
                 {
@@ -1532,31 +1544,83 @@ namespace CoreSystems.Projectiles
                 var heightend = s.TargetPosition + heightOffset;
                 var heightDir = heightend - heightStart;
 
-                double startCondition;
-                switch (def.StartCondition)
+                bool start1;
+                switch (def.StartCondition1)
                 {
                     case Conditions.DesiredElevation:
-                        startCondition = def.DesiredElevation;
+                        var plane = new PlaneD(s.LookAtPos, heightDir);
+                        var offsetPos = Position + (s.OffsetDir * plane.DistanceToPoint(Position));
+
+                        var distFromSurfaceSqr = !Vector3D.IsZero(surfacePos) ? Vector3D.DistanceSquared(Position, surfacePos) : Vector3D.DistanceSquared(Position, offsetPos);
+
+                        var lessThanTolerance = (def.Start1Value + aConst.CollisionSize) * (def.Start1Value + aConst.CollisionSize);
+                        var greaterThanTolerance = (def.Start1Value - aConst.CollisionSize) * (def.Start1Value - aConst.CollisionSize);
+
+                        start1 = distFromSurfaceSqr >= greaterThanTolerance && distFromSurfaceSqr <= lessThanTolerance;
+
                         break;
                     case Conditions.DistanceFromTarget: // could save a sqrt by inlining and using heightDir
-                        startCondition = MyUtils.GetPointLineDistance(ref heightend, ref s.TargetPosition, ref Position);
+                        start1 = MyUtils.GetPointLineDistance(ref heightend, ref s.TargetPosition, ref Position) - aConst.CollisionSize <= def.Start1Value;
                         break;
                     case Conditions.Lifetime:
-                        startCondition = Info.Age;
+                        start1 = Info.Age >= def.Start1Value;
+                        break;
+                    case Conditions.MinTravelRequired:
+                        start1 = false;
                         break;
                     case Conditions.Spawn:
-                        startCondition = double.MaxValue;
+                    case Conditions.Ignore:
+                        start1 = true;
                         break;
                     default:
-                        startCondition = 0;
+                        start1 = false;
                         break;
                 }
-                var startToEndDist = heightDir.Normalize();
-                var followPosition = heightStart + heightDir * (def.LeadDistance + Info.DistanceTraveled >= def.TrackingDistance ? Info.DistanceTraveled : 0);
 
-                if (startCondition > def.StartValue || s.LastActivatedStage >= 0 && def.EndOnlyOnNextStart)
+                bool start2;
+                def.StartCondition2 = Conditions.Ignore;
+                switch (def.StartCondition2)
                 {
-                    s.LastActivatedStage = s.RequestedStage;
+                    case Conditions.DesiredElevation:
+                        var plane = new PlaneD(s.LookAtPos, heightDir);
+                        var offsetPos = Position + (s.OffsetDir * plane.DistanceToPoint(Position));
+
+                        var distFromSurfaceSqr = !Vector3D.IsZero(surfacePos) ? Vector3D.DistanceSquared(Position, surfacePos) : Vector3D.DistanceSquared(Position, offsetPos);
+
+                        var lessThanTolerance = (def.Start2Value + aConst.CollisionSize) * (def.Start2Value + aConst.CollisionSize);
+                        var greaterThanTolerance = (def.Start2Value - aConst.CollisionSize) * (def.Start2Value - aConst.CollisionSize);
+
+                        start2 = distFromSurfaceSqr >= greaterThanTolerance && distFromSurfaceSqr <= lessThanTolerance;
+                        break;
+                    case Conditions.DistanceFromTarget: // could save a sqrt by inlining and using heightDir
+                        start2 = MyUtils.GetPointLineDistance(ref heightend, ref s.TargetPosition, ref Position) - aConst.CollisionSize <= def.Start2Value;
+                        break;
+                    case Conditions.Lifetime:
+                        start2 = Info.Age >= def.Start2Value;
+                        break;
+                    case Conditions.MinTravelRequired:
+                        start2 = false;
+                        break;
+                    case Conditions.Spawn:
+                    case Conditions.Ignore:
+                        start2 = true;
+                        break;
+                    default:
+                        start2 = false;
+                        break;
+                }
+
+                var startToEndDist = heightDir.Normalize();
+                var travelLead = Info.DistanceTraveled - s.StartDistanceTraveled >= def.TrackingDistance ? Info.DistanceTraveled : 0;
+                var totalLead = travelLead + def.LeadDistance;
+                var followPosition = heightStart + heightDir * totalLead;
+                if (start1 && start2 || s.LastActivatedStage >= 0 && def.EndOnlyOnNextStart)
+                {
+                    if (s.LastActivatedStage != s.RequestedStage)
+                    {
+                        Log.Line($"stage: {s.RequestedStage} start conditions met: {start1} - {start2} or forced active due to EndOnlyOnNextStart: {s.LastActivatedStage >= 0 && def.EndOnlyOnNextStart}");
+                        s.LastActivatedStage = s.RequestedStage;
+                    }
 
                     accelMpsMulti = AccelInMetersPerSec * def.AccelMulti;
                     speedCapMulti = (def.SpeedCapMulti * MaxSpeed);
@@ -1590,42 +1654,97 @@ namespace CoreSystems.Projectiles
                 }
 
 
-                var endCon = def.EndCondition;
-                double endCondition;
-                switch (endCon)
+                bool end1;
+                def.EndCondition1 = Conditions.DistanceFromTarget;
+                switch (def.EndCondition1)
                 {
                     case Conditions.DesiredElevation:
                         var plane = new PlaneD(s.LookAtPos, heightDir);
-                        plane.DistanceToPoint(Position);
                         var offsetPos = Position + (s.OffsetDir * plane.DistanceToPoint(Position));
-                        endCondition = !Vector3D.IsZero(surfacePos) ? Vector3D.Distance(Position, surfacePos) : Vector3D.Distance(Position, offsetPos);
+
+                        var distFromSurfaceSqr = !Vector3D.IsZero(surfacePos) ? Vector3D.DistanceSquared(Position, surfacePos) : Vector3D.DistanceSquared(Position, offsetPos);
+
+                        var lessThanTolerance = (def.End1Value + aConst.CollisionSize) * (def.End1Value + aConst.CollisionSize);
+                        var greaterThanTolerance = (def.End1Value - aConst.CollisionSize) * (def.End1Value - aConst.CollisionSize);
+
+                        end1 = distFromSurfaceSqr >= greaterThanTolerance && distFromSurfaceSqr <= lessThanTolerance;
                         break;
                     case Conditions.DistanceFromTarget:
-                        endCondition = endCon != def.StartCondition ? MyUtils.GetPointLineDistance(ref heightend, ref targetPosition, ref Position) : startCondition;
+                        if (def.EndCondition1 == def.StartCondition1)
+                            end1 = start1;
+                        else if (def.EndCondition1 == def.StartCondition2)
+                            end1 = start2;
+                        else
+                        {
+                            end1 = MyUtils.GetPointLineDistance(ref heightend, ref targetPosition, ref Position) - aConst.CollisionSize <= def.End1Value;
+                        }
                         break;
                     case Conditions.Lifetime:
-                        endCondition = Info.Age;
+                        end1 = Info.Age >= def.End1Value;
+                        break;
+                    case Conditions.MinTravelRequired:
+                        end1 = false;
+                        break;
+                    case Conditions.Ignore:
+                        end1 = true;
                         break;
                     default:
-                        endCondition = 0;
+                        end1 = false;
                         break;
                 }
 
+                bool end2;
+                switch (def.EndCondition2)
+                {
+                    case Conditions.DesiredElevation:
+                        var plane = new PlaneD(s.LookAtPos, heightDir);
+                        var offsetPos = Position + (s.OffsetDir * plane.DistanceToPoint(Position));
 
-                var endConditionDiff = Math.Abs(endCondition - def.EndValue);
-                if (endCon == Conditions.DesiredElevation && endConditionDiff <= aConst.CollisionSize || endCon == Conditions.DistanceFromTarget  && endConditionDiff <= aConst.CollisionSize || endCon == Conditions.Lifetime && MyUtils.IsZero(endConditionDiff, 1E-01F))
+                        var distFromSurfaceSqr = !Vector3D.IsZero(surfacePos) ? Vector3D.DistanceSquared(Position, surfacePos) : Vector3D.DistanceSquared(Position, offsetPos);
+
+                        var lessThanTolerance = (def.End2Value + aConst.CollisionSize) * (def.End2Value + aConst.CollisionSize);
+                        var greaterThanTolerance = (def.End2Value - aConst.CollisionSize) * (def.End2Value - aConst.CollisionSize);
+
+                        end2 = distFromSurfaceSqr >= greaterThanTolerance && distFromSurfaceSqr <= lessThanTolerance;
+                        break;
+                    case Conditions.DistanceFromTarget:
+                        if (def.EndCondition2 == def.StartCondition1)
+                            end2 = start1;
+                        else if (def.EndCondition2 == def.StartCondition2)
+                            end2 = start2;
+                        else
+                        {
+                            end2 = MyUtils.GetPointLineDistance(ref heightend, ref targetPosition, ref Position) - aConst.CollisionSize <= def.End2Value;
+                        }
+
+
+                        break;
+                    case Conditions.Lifetime:
+                        end2 = Info.Age >= def.End2Value;
+                        break;
+                    case Conditions.MinTravelRequired:
+                        end2 = false;
+                        break;
+                    case Conditions.Ignore:
+                        end2 = true;
+                        break;
+                    default:
+                        end2 = false;
+                        break;
+                }
+
+                if (end1 && end2)
                 {
                     var hasNextStep = s.RequestedStage + 1 < aConst.ApproachesCount;
                     var isActive = s.LastActivatedStage >= 0;
 
-                    var moveForward = isActive && def.Failure == StartFailure.Wait || !isActive && def.Failure == StartFailure.MoveToNext;
-
+                    var moveForward = isActive && (def.Failure == StartFailure.Wait || def.Failure == StartFailure.MoveToPrevious) || !isActive && def.Failure == StartFailure.MoveToNext;
                     if (hasNextStep && moveForward)
                     {
                         var oldLast = s.LastActivatedStage;
                         s.LastActivatedStage = s.RequestedStage;
                         ++s.RequestedStage;
-                        Log.Line($"stageChange: {Info.AmmoDef.AmmoRound} - next: {s.RequestedStage} - last:{oldLast}");
+                        Log.Line($"stageEnd: {Info.AmmoDef.AmmoRound} - next: {s.RequestedStage} - last:{oldLast} - eCon1:{def.EndCondition1} - eCon2:{def.EndCondition2}");
                         ProcessStage(ref accelMpsMulti, ref speedCapMulti, s.LastActivatedStage);
                     }
                     else if (def.Failure == StartFailure.MoveToPrevious && !isActive)
@@ -1633,7 +1752,7 @@ namespace CoreSystems.Projectiles
                         s.LastActivatedStage = s.RequestedStage;
                         var prev = s.RequestedStage;
                         s.RequestedStage = def.OnFailureRevertTo;
-                        Log.Line($"stageChange: {Info.AmmoDef.AmmoRound} - previous:{prev} to {s.RequestedStage}");
+                        Log.Line($"stageEnd: {Info.AmmoDef.AmmoRound} - previous:{prev} to {s.RequestedStage} - eCon1:{def.EndCondition1} - eCon2:{def.EndCondition2}");
                     }
                 }
             }
