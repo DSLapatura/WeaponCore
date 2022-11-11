@@ -1206,6 +1206,7 @@ namespace CoreSystems.Support
                         Wait,
                         MoveToPrevious,
                         MoveToNext,
+                        ForceReset,
                     }
 
                     public enum Conditions

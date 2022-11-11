@@ -1201,6 +1201,7 @@ namespace CoreSystems.Api
                             Wait,
                             MoveToPrevious,
                             MoveToNext,
+                            ForceReset,
                         }
 
                         public enum Conditions

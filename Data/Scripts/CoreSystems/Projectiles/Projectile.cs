@@ -1673,11 +1673,9 @@ namespace CoreSystems.Projectiles
                         else
                         {
                             end1 = MyUtils.GetPointLineDistance(ref heightend, ref targetPosition, ref Position) - aConst.CollisionSize <= def.End1Value;
-                            Log.Line($"DistFromTarget: {def.End1Value} - {s.RequestedStage} - {s.LastActivatedStage}");
                         }
                         break;
                     case Conditions.Lifetime:
-                        Log.Line($"Lifetime: {def.End1Value} - {s.RequestedStage} - {s.LastActivatedStage}");
                         end1 = Info.Age >= def.End1Value;
                         break;
                     case Conditions.MinTravelRequired:
@@ -1735,8 +1733,8 @@ namespace CoreSystems.Projectiles
                 {
                     var hasNextStep = s.RequestedStage + 1 < aConst.ApproachesCount;
                     var isActive = s.LastActivatedStage >= 0;
-
-                    var moveForward = isActive && (def.Failure == StartFailure.Wait || def.Failure == StartFailure.MoveToPrevious) || !isActive && def.Failure == StartFailure.MoveToNext;
+                    var moveForward = isActive && (def.Failure == StartFailure.Wait || def.Failure == StartFailure.MoveToPrevious || def.Failure == StartFailure.MoveToNext) || !isActive && def.Failure == StartFailure.MoveToNext;
+                    var failBackwards = def.Failure == StartFailure.MoveToPrevious && !isActive || def.Failure == StartFailure.ForceReset;
                     if (hasNextStep && moveForward)
                     {
                         var oldLast = s.LastActivatedStage;
@@ -1745,12 +1743,17 @@ namespace CoreSystems.Projectiles
                         Log.Line($"stageEnd: {Info.AmmoDef.AmmoRound} - next: {s.RequestedStage} - last:{oldLast} - eCon1:{def.EndCondition1} - eCon2:{def.EndCondition2}");
                         ProcessStage(ref accelMpsMulti, ref speedCapMulti, s.LastActivatedStage);
                     }
-                    else if (def.Failure == StartFailure.MoveToPrevious && !isActive)
+                    else if (failBackwards)
                     {
                         s.LastActivatedStage = s.RequestedStage;
                         var prev = s.RequestedStage;
                         s.RequestedStage = def.OnFailureRevertTo;
                         Log.Line($"stageEnd: {Info.AmmoDef.AmmoRound} - previous:{prev} to {s.RequestedStage} - eCon1:{def.EndCondition1} - eCon2:{def.EndCondition2}");
+                    }
+                    else if (!hasNextStep)
+                    {
+                        s.LastActivatedStage = aConst.Approaches.Length;
+                        s.RequestedStage = aConst.Approaches.Length;
                     }
                 }
             }
