@@ -25,7 +25,6 @@ namespace CoreSystems.Support
         internal MyParticleEffect FieldEffect;
         internal MyEntity CoreEntity;
         internal WeaponSystem.FiringSoundState FiringSoundState;
-        internal bool Offset;
         internal bool TravelSound;
         internal bool HasTravelSound;
         internal bool HitSoundActive;
@@ -37,7 +36,6 @@ namespace CoreSystems.Support
         internal bool TrailActivated;
         internal bool Hitting;
         internal bool Back;
-        internal bool DetonateFakeExp;
         internal bool LastStep;
         internal bool IsFragment;
         internal bool AmmoParticleStopped;
@@ -50,7 +48,6 @@ namespace CoreSystems.Support
         internal bool HitParticleActive;
         internal bool MarkForClose;
         internal bool ProEnded;
-        internal bool SmartOn;
         internal double MaxTracerLength;
         internal double MaxGlowLength;
         internal double StepSize;
@@ -61,7 +58,6 @@ namespace CoreSystems.Support
         internal double TrailWidth;
         internal double VisualLength;
         internal double MaxSpeed;
-        internal double MaxStepSize;
         internal double TracerLengthSqr;
         internal double EstTravel;
         internal double ShortEstTravel;
@@ -70,17 +66,14 @@ namespace CoreSystems.Support
         internal float TrailScaler;
         internal float GlowShrinkSize;
         internal float DistanceToLine;
-        internal ulong ParentId = ulong.MaxValue;
         internal ulong UniqueMuzzleId;
         internal int LifeTime;
         internal int MuzzleId;
-        internal int PartId;
         internal int TracerStep;
         internal int TracerSteps;
         internal int DecayTime;
         internal uint LastTick;
         internal uint LastHit = uint.MaxValue / 2;
-        internal int FireCounter;
         internal ParticleState HitParticle;
         internal TracerState Tracer;
         internal TrailState Trail;
@@ -154,28 +147,22 @@ namespace CoreSystems.Support
         }
 
         #region Run
-        internal void Init(ProInfo info, bool smartsOn, double firstStepSize, double maxSpeed, ref Vector3D originDir)
+        internal void Init(ProInfo info, double firstStepSize, double maxSpeed, ref Vector3D originDir)
         {
             System = info.Weapon.System;
             AmmoDef = info.AmmoDef;
             IsFragment = info.IsFragment;
-            SmartOn = smartsOn;
-            if (ParentId != ulong.MaxValue) Log.Line($"invalid avshot, parentId:{ParentId}");
-            ParentId = info.Id;
             Model = (info.AmmoDef.Const.PrimeModel || info.AmmoDef.Const.TriggerModel) ? Model = ModelState.Exists : Model = ModelState.None;
             Origin = info.Origin;
             OriginUp = info.OriginUp;
-            Offset = AmmoDef.Const.OffsetEffect;
             MaxTracerLength = info.TracerLength;
             MuzzleId = info.MuzzleId;
             UniqueMuzzleId = info.UniqueMuzzleId;
             MaxSpeed = maxSpeed;
-            MaxStepSize = MaxSpeed * MyEngineConstants.PHYSICS_STEP_SIZE_IN_SECONDS;
             ShootVelStep = info.ShooterVel * MyEngineConstants.PHYSICS_STEP_SIZE_IN_SECONDS;
             CoreEntity = info.Weapon.Comp.CoreEntity;
             MaxTrajectory = info.MaxTrajectory;
             ShotFade = info.ShotFade;
-            FireCounter = info.FireCounter;
             ShrinkInited = false;
             OriginDir = originDir;
             StageIdx = info.Storage.RequestedStage;
@@ -202,7 +189,7 @@ namespace CoreSystems.Support
 
             if (AmmoDef.Const.Trail)
             {
-                MaxGlowLength = MathHelperD.Clamp(DecayTime * MaxStepSize, 0.1f, MaxTrajectory);
+                MaxGlowLength = MathHelperD.Clamp(DecayTime * MaxSpeed * MyEngineConstants.PHYSICS_STEP_SIZE_IN_SECONDS, 0.1f, MaxTrajectory);
                 Trail = AmmoDef.AmmoGraphics.Lines.Trail.Back ? TrailState.Back : Trail = TrailState.Front;
                 GlowShrinkSize = !AmmoDef.AmmoGraphics.Lines.Trail.UseColorFade ? AmmoDef.Const.TrailWidth / DecayTime : 1f / DecayTime;
                 Back = Trail == TrailState.Back;
@@ -276,7 +263,7 @@ namespace CoreSystems.Support
                 a.ShortEstTravel = MathHelperD.Clamp((a.EstTravel - a.StepSize) + a.ShortStepSize, 0, double.MaxValue);
 
                 
-                if (a.SmartOn || aConst.IsBeamWeapon && aConst.ConvergeBeams)
+                if (aConst.IsSmart || aConst.IsDrone || aConst.IsBeamWeapon && aConst.ConvergeBeams)
                     a.VisualDir = d.Direction;
                 else if (a.LifeTime == 1)
                     a.VisualDir = a.OriginDir;
@@ -1263,11 +1250,9 @@ namespace CoreSystems.Support
             TrailScaler = 0;
             MaxTrajectory = 0;
             ShotFade = 0;
-            FireCounter = 0;
             UniqueMuzzleId = 0;
             DecayTime = 0;
             LastHit = uint.MaxValue / 2;
-            ParentId = ulong.MaxValue;
             LastHitShield = false;
             TravelSound = false;
             HitSoundActive = false;
@@ -1283,7 +1268,6 @@ namespace CoreSystems.Support
             Hitting = false;
             Back = false;
             LastStep = false;
-            DetonateFakeExp = false;
             AmmoParticleStopped = false;
             AmmoParticleInited = false;
             FieldParticleStopped = false;

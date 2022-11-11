@@ -29,7 +29,6 @@ namespace CoreSystems.Platform
         {
             EventTriggerStateChanged(EventTriggers.Tracking, Target.HasTarget);
             EventTriggerStateChanged(EventTriggers.StopTracking, !Target.HasTarget);
-            WeaponCache.MissDistance = 0;
             if (!Target.HasTarget)
             {
                 if (InCharger) 

@@ -32,14 +32,12 @@ namespace CoreSystems.Support
         internal Vector3D Origin;
         internal Vector3D OriginUp;
         internal Vector3D Direction;
-        internal Vector3D PrevTargetPos;
         internal Hit Hit;
         internal XorShiftRandomStruct Random;
         internal int Age;
         internal int TriggerGrowthSteps;
         internal int MuzzleId;
         internal int ObjectsHit;
-        internal int FireCounter;
         internal int SpawnDepth;
         internal int Frags;
         internal int LastFragTime;
@@ -49,7 +47,6 @@ namespace CoreSystems.Support
         internal double DistanceTraveled;
         internal double PrevDistanceTraveled;
         internal double ProjectileDisplacement;
-        internal double ClosestDistSqrToTarget = double.MaxValue;
         internal double TracerLength;
         internal double MaxTrajectory;
         internal long DamageDonePri;
@@ -159,10 +156,8 @@ namespace CoreSystems.Support
             MaxTrajectory = 0;
             ShotFade = 0;
             TracerLength = 0;
-            FireCounter = 0;
             UniqueMuzzleId = 0;
             LastFragTime = 0;
-            ClosestDistSqrToTarget = double.MinValue; 
             ShieldResistMod = 1f;
             ShieldBypassMod = 1f;
             Hit = new Hit();
@@ -170,7 +165,6 @@ namespace CoreSystems.Support
             Origin = Vector3D.Zero;
             ShooterVel = Vector3D.Zero;
             TriggerMatrix = MatrixD.Identity;
-            PrevTargetPos = Vector3D.Zero;
         }
     }
     internal enum DroneStatus
@@ -224,6 +218,7 @@ namespace CoreSystems.Support
             SyncId = long.MinValue;
             LastProSyncStateAge = int.MinValue;
             ProSyncPosMissCount = 0;
+
             ChaseAge = 0;
             ZombieLifeTime = 0;
             LastOffsetTime = 0;
@@ -442,7 +437,6 @@ namespace CoreSystems.Support
         internal IMySlimBlock HitBlock;
         internal int VirutalId = -1;
         internal VoxelParallelHits[] VoxelHits;
-        internal double MissDistance;
 
         internal WeaponFrameCache(int size)
         {

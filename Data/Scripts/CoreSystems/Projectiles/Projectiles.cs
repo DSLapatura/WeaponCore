@@ -337,24 +337,6 @@ namespace CoreSystems.Projectiles
                 var aDef = info.AmmoDef;
                 var aConst = aDef.Const;
                 var target = info.Target;
-                var targetEnt = target.TargetEntity;
-
-                if (!info.IsFragment && !aConst.DynamicGuidance && targetEnt != null)
-                {
-                    var targetCenter = targetEnt.PositionComp.WorldAABB.Center;
-                    double distSqrToTarget;
-                    Vector3D.DistanceSquared(ref targetCenter, ref p.Position, out distSqrToTarget);
-                    if (distSqrToTarget < info.ClosestDistSqrToTarget || info.ClosestDistSqrToTarget < 0)
-                    {
-                        info.ClosestDistSqrToTarget = distSqrToTarget;
-                        info.PrevTargetPos = targetCenter;
-                    }
-                    else if (info.ClosestDistSqrToTarget > 0 && info.ClosestDistSqrToTarget < distSqrToTarget)
-                    {
-                        info.ClosestDistSqrToTarget = 0;
-                        info.Weapon.WeaponCache.MissDistance = (info.PrevTargetPos - p.LastPosition).Length();
-                    }
-                }
 
                 if (p.ModelState == EntityState.Exists)
                 {
@@ -491,7 +473,7 @@ namespace CoreSystems.Projectiles
                         var vs = vp.AvShot;
 
                         vp.TracerLength = info.TracerLength;
-                        vs.Init(vp, false, p.AccelInMetersPerSec * StepConst, p.MaxSpeed, ref p.AccelDir);
+                        vs.Init(vp, p.AccelInMetersPerSec * StepConst, p.MaxSpeed, ref p.AccelDir);
 
                         if (info.BaseDamagePool <= 0 || p.State == ProjectileState.Depleted)
                             vs.ProEnded = true;
