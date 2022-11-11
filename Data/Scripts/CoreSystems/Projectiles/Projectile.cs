@@ -1455,7 +1455,7 @@ namespace CoreSystems.Projectiles
             {
                 if (s.RequestedStage == -1)
                 {
-                    Log.Line($"StageStart: {Info.AmmoDef.AmmoRound} - last: {s.LastActivatedStage}");
+                    Log.Line($"StageStart: {Info.AmmoDef.AmmoRound} - last: {s.LastActivatedStage} - gravity:{Gravity.Length()} - {Info.AmmoDef.Const.Approaches[0].Definition.EndCondition1} - {Info.AmmoDef.Const.Approaches[1].Definition.EndCondition1}");
                     s.LastActivatedStage = -1;
                     s.RequestedStage = 0;
 
@@ -1471,8 +1471,6 @@ namespace CoreSystems.Projectiles
                 var aConst = Info.AmmoDef.Const;
                 var approach = aConst.Approaches[s.RequestedStage];
                 var def = approach.Definition;
-                def.StartCondition1 = Conditions.Spawn;
-                def.EndCondition1 = Conditions.DistanceFromTarget;
 
                 if (def.StartCondition1 == def.StartCondition2 || def.EndCondition1 == def.EndCondition2)
                     return; // bad modder, failed to read coreparts comment, fail silently so they drive themselves nuts
@@ -1578,7 +1576,6 @@ namespace CoreSystems.Projectiles
                 }
 
                 bool start2;
-                def.StartCondition2 = Conditions.Ignore;
                 switch (def.StartCondition2)
                 {
                     case Conditions.DesiredElevation:
@@ -1655,7 +1652,6 @@ namespace CoreSystems.Projectiles
 
 
                 bool end1;
-                def.EndCondition1 = Conditions.DistanceFromTarget;
                 switch (def.EndCondition1)
                 {
                     case Conditions.DesiredElevation:
@@ -1677,9 +1673,11 @@ namespace CoreSystems.Projectiles
                         else
                         {
                             end1 = MyUtils.GetPointLineDistance(ref heightend, ref targetPosition, ref Position) - aConst.CollisionSize <= def.End1Value;
+                            Log.Line($"DistFromTarget: {def.End1Value} - {s.RequestedStage} - {s.LastActivatedStage}");
                         }
                         break;
                     case Conditions.Lifetime:
+                        Log.Line($"Lifetime: {def.End1Value} - {s.RequestedStage} - {s.LastActivatedStage}");
                         end1 = Info.Age >= def.End1Value;
                         break;
                     case Conditions.MinTravelRequired:
