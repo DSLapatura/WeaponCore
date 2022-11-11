@@ -62,7 +62,7 @@ namespace CoreSystems.Projectiles
                 storage.DummyTargets = null;
                 if ((aConst.IsDrone || aConst.IsSmart))
                 {
-                    storage.TargetPosition = wTarget.TargetPos;
+                    storage.SetTargetPos = wTarget.TargetPos;
 
                     if (comp.FakeMode)
                         Session.PlayerDummyTargets.TryGetValue(repo.Values.State.PlayerId, out storage.DummyTargets);

@@ -551,7 +551,7 @@ namespace CoreSystems.Projectiles
                                     else
                                     {
                                         s.NavTargetBound = new BoundingSphereD(fakeTarget.FakeInfo.WorldPosition, fragProx * 0.5f);
-                                        s.TargetPosition = fakeTarget.FakeInfo.WorldPosition;
+                                        s.SetTargetPos = fakeTarget.FakeInfo.WorldPosition;
                                         hasTarget = true;
                                     }
                                 }
@@ -1225,7 +1225,7 @@ namespace CoreSystems.Projectiles
             var coreParent = Info.Weapon.Comp.TopEntity;
             var startTrack = s.SmartReady || coreParent == null || coreParent.MarkedForClose;
             var speedCapMulti = 1d;
-
+            var targetLock = false;
             if (!startTrack && Info.DistanceTraveled * Info.DistanceTraveled >= aConst.SmartsDelayDistSqr) {
                 var lineCheck = new LineD(Position, LockedTarget ? TargetPosition : Position + (Info.Direction * 10000f));
                 startTrack = !new MyOrientedBoundingBoxD(coreParent.PositionComp.LocalAABB, coreParent.PositionComp.WorldMatrixRef).Intersects(ref lineCheck).HasValue;
@@ -1291,7 +1291,7 @@ namespace CoreSystems.Projectiles
                     }
 
                     TargetPosition = targetPos;
-
+                    targetLock = true;
                     var physics = Info.Target.TargetEntity?.Physics ?? Info.Target.TargetEntity?.Parent?.Physics;
 
                     var tVel = Vector3.Zero;
@@ -1353,7 +1353,7 @@ namespace CoreSystems.Projectiles
                 var accelMpsMulti = AccelInMetersPerSec;
                 if (aConst.ApproachesCount > 0 && s.RequestedStage < aConst.ApproachesCount)
                 {
-                    ProcessStage(ref accelMpsMulti, ref speedCapMulti, s.RequestedStage);
+                    ProcessStage(ref accelMpsMulti, ref speedCapMulti, TargetPosition, s.RequestedStage, targetLock);
                 }
 
                 Vector3D targetAcceleration = Vector3D.Zero;
@@ -1447,21 +1447,24 @@ namespace CoreSystems.Projectiles
 
             var speedCap = speedCapMulti * MaxSpeed;
             if (VelocityLengthSqr > MaxSpeedSqr || s.LastActivatedStage >= 0 && VelocityLengthSqr > speedCap * speedCap)
-                proposedVel = Info.Direction * MaxSpeed;
+                proposedVel = Info.Direction * speedCap;
 
             PrevVelocity = Velocity;
             Velocity = proposedVel;
         }
 
-        private void ProcessStage(ref double accelMpsMulti, ref double speedCapMulti, int lastActiveStage)
+        private void ProcessStage(ref double accelMpsMulti, ref double speedCapMulti, Vector3D targetPos, int lastActiveStage, bool targetLock)
         {
             var s = Info.Storage;
 
-            if (!Vector3D.IsZero(s.TargetPosition))
+            if (targetLock)
+                s.SetTargetPos = targetPos;
+
+            if (!Vector3D.IsZero(s.SetTargetPos))
             {
                 if (s.RequestedStage == -1)
                 {
-                    Log.Line($"StageStart: {Info.AmmoDef.AmmoRound} - last: {s.LastActivatedStage}");
+                    Log.Line($"StageStart: {Info.AmmoDef.AmmoRound} - last: {s.LastActivatedStage} - age:{Info.Age}");
                     s.LastActivatedStage = -1;
                     s.RequestedStage = 0;
 
@@ -1471,6 +1474,7 @@ namespace CoreSystems.Projectiles
 
                 if (stageChange)
                 {
+                    Log.Line($"state change: {s.RequestedStage} - age:{Info.Age}");
                     s.StartDistanceTraveled = Info.DistanceTraveled;
                 }
 
@@ -1482,7 +1486,6 @@ namespace CoreSystems.Projectiles
                     return; // bad modder, failed to read coreparts comment, fail silently so they drive themselves nuts
 
                 var planetExists = Info.MyPlanet != null;
-                var targetPosition = TargetPosition;
 
                 if (def.AdjustUpDir || stageChange)
                 {
@@ -1495,7 +1498,7 @@ namespace CoreSystems.Projectiles
                             s.OffsetDir = !planetExists ? Info.OriginUp : Vector3D.Normalize(Position - Info.MyPlanet.PositionComp.WorldAABB.Center);
                             break;
                         case UpRelativeTo.TargetDirection:
-                            s.OffsetDir = Vector3D.Normalize(s.TargetPosition - Position);
+                            s.OffsetDir = Vector3D.Normalize(s.SetTargetPos - Position);
                             break;
                         case UpRelativeTo.TargetVelocity:
                             s.OffsetDir = !Vector3D.IsZero(PrevTargetVel) ? Vector3D.Normalize(PrevTargetVel) : Info.OriginUp;
@@ -1526,7 +1529,7 @@ namespace CoreSystems.Projectiles
                             s.LookAtPos = Info.Weapon.MyPivotPos;
                            break;
                         case VantagePointRelativeTo.Target:
-                            s.LookAtPos = targetPosition;
+                            s.LookAtPos = s.SetTargetPos;
                             break;
                         case VantagePointRelativeTo.Surface:
                             if (planetExists)
@@ -1538,14 +1541,14 @@ namespace CoreSystems.Projectiles
                                 s.LookAtPos = Info.Origin;
                             break;
                         case VantagePointRelativeTo.MidPoint:
-                            s.LookAtPos = Vector3D.Lerp(targetPosition, Position, 0.5);
+                            s.LookAtPos = Vector3D.Lerp(s.SetTargetPos, Position, 0.5);
                             break;
                     }
                 }
 
                 var heightOffset = s.OffsetDir * def.DesiredElevation;
                 var heightStart = s.LookAtPos + heightOffset;
-                var heightend = s.TargetPosition + heightOffset;
+                var heightend = (def.AdjustToTargetMovement ? s.SetTargetPos : Info.Target.TargetPos) + heightOffset;
                 var heightDir = heightend - heightStart;
 
                 bool start1;
@@ -1564,7 +1567,7 @@ namespace CoreSystems.Projectiles
 
                         break;
                     case Conditions.DistanceFromTarget: // could save a sqrt by inlining and using heightDir
-                        start1 = MyUtils.GetPointLineDistance(ref heightend, ref s.TargetPosition, ref Position) - aConst.CollisionSize <= def.Start1Value;
+                        start1 = MyUtils.GetPointLineDistance(ref heightend, ref s.SetTargetPos, ref Position) - aConst.CollisionSize <= def.Start1Value;
                         break;
                     case Conditions.Lifetime:
                         start1 = Info.Age >= def.Start1Value;
@@ -1596,7 +1599,7 @@ namespace CoreSystems.Projectiles
                         start2 = distFromSurfaceSqr >= greaterThanTolerance && distFromSurfaceSqr <= lessThanTolerance;
                         break;
                     case Conditions.DistanceFromTarget: // could save a sqrt by inlining and using heightDir
-                        start2 = MyUtils.GetPointLineDistance(ref heightend, ref s.TargetPosition, ref Position) - aConst.CollisionSize <= def.Start2Value;
+                        start2 = MyUtils.GetPointLineDistance(ref heightend, ref s.SetTargetPos, ref Position) - aConst.CollisionSize <= def.Start2Value;
                         break;
                     case Conditions.Lifetime:
                         start2 = Info.Age >= def.Start2Value;
@@ -1615,13 +1618,13 @@ namespace CoreSystems.Projectiles
 
                 var startToEndDist = heightDir.Normalize();
                 var travelLead = Info.DistanceTraveled - s.StartDistanceTraveled >= def.TrackingDistance ? Info.DistanceTraveled : 0;
-                var totalLead = travelLead + def.LeadDistance;
+                var totalLead = travelLead + 0;
                 var followPosition = heightStart + heightDir * totalLead;
                 if (start1 && start2 || s.LastActivatedStage >= 0 && def.EndOnlyOnNextStart)
                 {
                     if (s.LastActivatedStage != s.RequestedStage)
                     {
-                        Log.Line($"stage: {s.RequestedStage} start conditions met: {start1} - {start2} or forced active due to EndOnlyOnNextStart: {s.LastActivatedStage >= 0 && def.EndOnlyOnNextStart}");
+                        Log.Line($"stage: age:{Info.Age} - {s.RequestedStage} start conditions met: {start1} - {start2} - forced from EndOnlyOnNextStart: {s.LastActivatedStage >= 0 && def.EndOnlyOnNextStart}");
                         s.LastActivatedStage = s.RequestedStage;
                     }
 
@@ -1641,21 +1644,19 @@ namespace CoreSystems.Projectiles
                         adjFollowPos = followPosition;
                     }
 
-                    var trackedPos = def.AdjustToTargetMovement ? targetPosition : Info.Target.TargetPos;
+                    var trackedPos = def.AdjustToTargetMovement ? s.SetTargetPos : Info.Target.TargetPos;
                     var targetsPerspectiveDir = Vector3D.Normalize(adjFollowPos - trackedPos);
 
                     TargetPosition = MyUtils.LinePlaneIntersection(adjFollowPos, heightDir, trackedPos, targetsPerspectiveDir);
-                    
-                    if (Info.Ai.Session.DebugMod)
-                    {
-                        DsDebugDraw.DrawSingleVec(heightStart, 5f, Color.Red);
-                        DsDebugDraw.DrawSingleVec(heightend, 5f, Color.Blue);
-                        DsDebugDraw.DrawSingleVec(adjFollowPos, 5f, Color.Green);
-                        DsDebugDraw.DrawSingleVec(TargetPosition, 10f, Color.Yellow);
-                        DsDebugDraw.DrawSingleVec(Position, 5f, Color.White);
-                    }
                 }
 
+                if (Info.Ai.Session.DebugMod)
+                {
+                    DsDebugDraw.DrawSingleVec(heightStart, 5f, Color.Red);
+                    DsDebugDraw.DrawSingleVec(heightend, 5f, Color.Blue);
+                    DsDebugDraw.DrawSingleVec(TargetPosition, 10f, Color.Yellow);
+                    DsDebugDraw.DrawSingleVec(Position, 5f, Color.White);
+                }
 
                 bool end1;
                 switch (def.EndCondition1)
@@ -1678,7 +1679,7 @@ namespace CoreSystems.Projectiles
                             end1 = start2;
                         else
                         {
-                            end1 = MyUtils.GetPointLineDistance(ref heightend, ref targetPosition, ref Position) - aConst.CollisionSize <= def.End1Value;
+                            end1 = MyUtils.GetPointLineDistance(ref heightend, ref s.SetTargetPos, ref Position) - aConst.CollisionSize <= def.End1Value;
                         }
                         break;
                     case Conditions.Lifetime:
@@ -1716,10 +1717,8 @@ namespace CoreSystems.Projectiles
                             end2 = start2;
                         else
                         {
-                            end2 = MyUtils.GetPointLineDistance(ref heightend, ref targetPosition, ref Position) - aConst.CollisionSize <= def.End2Value;
+                            end2 = MyUtils.GetPointLineDistance(ref heightend, ref s.SetTargetPos, ref Position) - aConst.CollisionSize <= def.End2Value;
                         }
-
-
                         break;
                     case Conditions.Lifetime:
                         end2 = Info.Age >= def.End2Value;
@@ -1746,20 +1745,25 @@ namespace CoreSystems.Projectiles
                         var oldLast = s.LastActivatedStage;
                         s.LastActivatedStage = s.RequestedStage;
                         ++s.RequestedStage;
-                        Log.Line($"stageEnd: {Info.AmmoDef.AmmoRound} - next: {s.RequestedStage} - last:{oldLast} - eCon1:{def.EndCondition1} - eCon2:{def.EndCondition2}");
-                        ProcessStage(ref accelMpsMulti, ref speedCapMulti, s.LastActivatedStage);
+                        Log.Line($"stageEnd: age:{Info.Age} - next: {s.RequestedStage} - last:{oldLast} - eCon1:{def.EndCondition1} - eCon2:{def.EndCondition2}");
+                        ProcessStage(ref accelMpsMulti, ref speedCapMulti, targetPos, s.LastActivatedStage, targetLock);
                     }
                     else if (failBackwards)
                     {
                         s.LastActivatedStage = s.RequestedStage;
                         var prev = s.RequestedStage;
                         s.RequestedStage = def.OnFailureRevertTo;
-                        Log.Line($"stageEnd: {Info.AmmoDef.AmmoRound} - previous:{prev} to {s.RequestedStage} - eCon1:{def.EndCondition1} - eCon2:{def.EndCondition2}");
+                        Log.Line($"stageEnd:age:{Info.Age} - previous:{prev} to {s.RequestedStage} - eCon1:{def.EndCondition1} - eCon2:{def.EndCondition2}");
                     }
                     else if (!hasNextStep)
                     {
+                        Log.Line($"Approach ended, no more steps - age:{Info.Age} - {def.Failure} - {def.EndCondition1} - {def.End1Value}");
                         s.LastActivatedStage = aConst.Approaches.Length;
                         s.RequestedStage = aConst.Approaches.Length;
+                    }
+                    else
+                    {
+                        Log.Line($"end met no valid condition");
                     }
                 }
             }

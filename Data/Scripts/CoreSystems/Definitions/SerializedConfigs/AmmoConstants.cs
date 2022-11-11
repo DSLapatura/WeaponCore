@@ -250,6 +250,7 @@ namespace CoreSystems.Support
         public readonly bool ShieldSound;
         public readonly bool IsDrone;
         public readonly bool IsSmart;
+        public readonly bool AccelClearance;
         public readonly bool DynamicGuidance;
         public readonly float PowerPerTick;
         public readonly float DirectAimCone;
@@ -379,6 +380,7 @@ namespace CoreSystems.Support
 
             ProjectileSync = ammo.AmmoDef.Synchronize && session.MpActive && (IsDrone || IsSmart);
 
+            AccelClearance = ammo.AmmoDef.Trajectory.Smarts.AccelClearance;
             OverrideTarget = ammo.AmmoDef.Trajectory.Smarts.OverideTarget;
             RequiresTarget = ammo.AmmoDef.Trajectory.Guidance != None && !OverrideTarget || system.TrackTargets;
 

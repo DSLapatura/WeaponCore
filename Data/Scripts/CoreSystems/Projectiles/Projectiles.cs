@@ -489,7 +489,7 @@ namespace CoreSystems.Projectiles
                             vs.ShortStepSize = beam.Length;
                             vs.VisualLength = beam.Length;
 
-                            Session.Projectiles.DeferedAvDraw.Add(new DeferedAv { AvShot = vs,  TracerFront = beam.To, Hit = p.Intersecting, TriggerGrowthSteps = info.TriggerGrowthSteps, Direction = beam.Direction, StageIdx = info.Storage.RequestedStage });
+                            Session.Projectiles.DeferedAvDraw.Add(new DeferedAv { AvShot = vs, Info = info, TracerFront = beam.To, Hit = p.Intersecting, Direction = beam.Direction });
                         }
                         else {
                             Vector3D beamEnd;
@@ -505,9 +505,9 @@ namespace CoreSystems.Projectiles
                             vs.VisualLength = line.Length;
 
                             if (p.Intersecting && hitPos.HasValue)
-                                Session.Projectiles.DeferedAvDraw.Add(new DeferedAv { AvShot = vs, TracerFront = line.To, Hit = true, TriggerGrowthSteps = info.TriggerGrowthSteps, Direction = line.Direction, StageIdx = info.Storage.RequestedStage });
+                                Session.Projectiles.DeferedAvDraw.Add(new DeferedAv { AvShot = vs, Info = info, TracerFront = line.To, Hit = true,  Direction = line.Direction });
                             else
-                                Session.Projectiles.DeferedAvDraw.Add(new DeferedAv { AvShot = vs,  TracerFront = line.To, Hit = false, TriggerGrowthSteps = info.TriggerGrowthSteps, Direction = line.Direction, StageIdx = info.Storage.RequestedStage });
+                                Session.Projectiles.DeferedAvDraw.Add(new DeferedAv { AvShot = vs, Info = info, TracerFront = line.To, Hit = false,  Direction = line.Direction});
                         }
                     }
                     continue;
@@ -540,7 +540,7 @@ namespace CoreSystems.Projectiles
                         info.AvShot.StepSize = info.MaxTrajectory;
                         info.AvShot.VisualLength = info.MaxTrajectory;
 
-                        DeferedAvDraw.Add(new DeferedAv { AvShot = info.AvShot, TracerFront = p.Position, TriggerGrowthSteps = info.TriggerGrowthSteps, Direction = info.Direction, StageIdx = info.Storage.RequestedStage });
+                        DeferedAvDraw.Add(new DeferedAv { AvShot = info.AvShot, Info = info, TracerFront = p.Position,  Direction = info.Direction });
                     }
                     else if (p.ModelState == EntityState.None && aConst.AmmoParticle && !aConst.DrawLine)
                     {
@@ -549,7 +549,7 @@ namespace CoreSystems.Projectiles
                         {
                             info.AvShot.StepSize = stepSize;
                             info.AvShot.VisualLength = aConst.CollisionSize;
-                            DeferedAvDraw.Add(new DeferedAv { AvShot = info.AvShot, TracerFront = p.Position, TriggerGrowthSteps = info.TriggerGrowthSteps, Direction = info.Direction, StageIdx = info.Storage.RequestedStage });
+                            DeferedAvDraw.Add(new DeferedAv { AvShot = info.AvShot, Info = info, TracerFront = p.Position,  Direction = info.Direction, });
                         }
                     }
                     else
@@ -567,7 +567,7 @@ namespace CoreSystems.Projectiles
                             {
                                 info.AvShot.StepSize = stepSize;
                                 info.AvShot.VisualLength = info.ProjectileDisplacement;
-                                DeferedAvDraw.Add(new DeferedAv { AvShot = p.Info.AvShot, TracerFront = p.Position, TriggerGrowthSteps = info.TriggerGrowthSteps, Direction = info.Direction, StageIdx = info.Storage.RequestedStage });
+                                DeferedAvDraw.Add(new DeferedAv { AvShot = p.Info.AvShot, Info = info, TracerFront = p.Position,  Direction = info.Direction });
                             }
                         }
                         else
@@ -577,7 +577,7 @@ namespace CoreSystems.Projectiles
                             {
                                 info.AvShot.StepSize = stepSize;
                                 info.AvShot.VisualLength = info.TracerLength;
-                                DeferedAvDraw.Add(new DeferedAv { AvShot = info.AvShot,  TracerFront = p.Position, TriggerGrowthSteps = info.TriggerGrowthSteps, Direction = info.Direction, StageIdx = info.Storage.RequestedStage });
+                                DeferedAvDraw.Add(new DeferedAv { AvShot = info.AvShot, Info = info, TracerFront = p.Position,  Direction = info.Direction });
                             }
                         }
                     }
@@ -587,7 +587,7 @@ namespace CoreSystems.Projectiles
                 {
                     info.AvShot.StepSize = stepSize;
                     info.AvShot.VisualLength = info.TracerLength;
-                    DeferedAvDraw.Add(new DeferedAv { AvShot = info.AvShot, TracerFront = p.Position, TriggerGrowthSteps = info.TriggerGrowthSteps, Direction = info.Direction, StageIdx = info.Storage.RequestedStage });
+                    DeferedAvDraw.Add(new DeferedAv { AvShot = info.AvShot, Info = info, TracerFront = p.Position, Direction = info.Direction });
                 }
             }
         }

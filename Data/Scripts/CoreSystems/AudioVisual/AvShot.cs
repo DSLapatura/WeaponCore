@@ -48,6 +48,7 @@ namespace CoreSystems.Support
         internal bool HitParticleActive;
         internal bool MarkForClose;
         internal bool ProEnded;
+        internal bool AccelClearance;
         internal double MaxTracerLength;
         internal double MaxGlowLength;
         internal double StepSize;
@@ -236,16 +237,22 @@ namespace CoreSystems.Support
             {
                 var d = s.Projectiles.DeferedAvDraw[x];
                 var a = d.AvShot;
+                var storage = d.Info.Storage;
+                var stage = storage.RequestedStage;
                 var aConst = a.AmmoDef.Const;
+                var triggerGrowthSteps = d.Info.TriggerGrowthSteps;
                 var lineEffect = aConst.Trail || aConst.DrawLine;
                 var saveHit = d.Hit;
+                
                 ++a.LifeTime;
                 a.LastTick = s.Tick;
+                a.AccelClearance = !aConst.AccelClearance || storage.SmartReady;
+                
                 var createdPrimeEntity = false;
                 if (aConst.PrimeModel && a.PrimeEntity == null) {
                     
-                    ApproachConstants def = d.StageIdx == -1 ? null : a.AmmoDef.Const.Approaches[d.StageIdx];
-                    a.PrimeEntity = def == null || !def.AlternateModel ? aConst.PrimeEntityPool.Get() : aConst.Approaches[d.StageIdx].ModelPool.Get(); ;
+                    ApproachConstants def = stage == -1 ? null : a.AmmoDef.Const.Approaches[stage];
+                    a.PrimeEntity = def == null || !def.AlternateModel ? aConst.PrimeEntityPool.Get() : aConst.Approaches[stage].ModelPool.Get(); ;
                     a.ModelSphereCurrent.Radius = a.PrimeEntity.PositionComp.WorldVolume.Radius * 2;
                     createdPrimeEntity = true;
                 }
@@ -256,12 +263,12 @@ namespace CoreSystems.Support
                         a.ModelSphereCurrent.Radius = a.TriggerEntity.PositionComp.WorldVolume.Radius * 2;
                 }
 
-                if (a.StageIdx != d.StageIdx && d.StageIdx <= aConst.Approaches.Length - 1)
-                    a.StageChange(d.StageIdx, createdPrimeEntity);
+                var stagesOver = a.StageIdx == -1 && aConst.ApproachesCount == stage;
+                if (a.StageIdx != stage && !stagesOver)
+                    a.StageChange(stage, createdPrimeEntity);
 
                 a.EstTravel = a.StepSize * a.LifeTime;
                 a.ShortEstTravel = MathHelperD.Clamp((a.EstTravel - a.StepSize) + a.ShortStepSize, 0, double.MaxValue);
-
                 
                 if (aConst.IsSmart || aConst.IsDrone || aConst.IsBeamWeapon && aConst.ConvergeBeams)
                     a.VisualDir = d.Direction;
@@ -282,7 +289,7 @@ namespace CoreSystems.Support
                 {
                     a.ModelSphereCurrent.Center = a.TracerFront;
                     if (a.Triggered)
-                        a.ModelSphereCurrent.Radius = d.TriggerGrowthSteps < aConst.EwarRadius ? a.TriggerMatrix.Scale.AbsMax() : aConst.EwarRadius;
+                        a.ModelSphereCurrent.Radius = triggerGrowthSteps < aConst.EwarRadius ? a.TriggerMatrix.Scale.AbsMax() : aConst.EwarRadius;
 
                     if (s.Camera.IsInFrustum(ref a.ModelSphereCurrent))
                         a.OnScreen = Screen.ModelOnly;
@@ -311,7 +318,7 @@ namespace CoreSystems.Support
                     {
                         a.ModelSphereCurrent.Center = a.TracerFront;
                         if (a.Triggered)
-                            a.ModelSphereCurrent.Radius = d.TriggerGrowthSteps < aConst.EwarRadius ? a.TriggerMatrix.Scale.AbsMax() : aConst.EwarRadius;
+                            a.ModelSphereCurrent.Radius = triggerGrowthSteps < aConst.EwarRadius ? a.TriggerMatrix.Scale.AbsMax() : aConst.EwarRadius;
 
                         if (a.OnScreen == Screen.None && s.Camera.IsInFrustum(ref a.ModelSphereCurrent))
                             a.OnScreen = Screen.ModelOnly;
@@ -410,7 +417,7 @@ namespace CoreSystems.Support
 
                 if (aConst.AmmoParticle && a.Active)
                 {
-                    if (a.OnScreen != Screen.None)
+                    if (a.OnScreen != Screen.None && a.AccelClearance)
                     {
                         if ((a.AmmoParticleStopped || !a.AmmoParticleInited))
                             a.PlayAmmoParticle();
@@ -790,7 +797,7 @@ namespace CoreSystems.Support
             VisualLength = remainingTracer;
             ShortStepSize = stepSizeToHit;
 
-            System.Session.Projectiles.DeferedAvDraw.Add(new DeferedAv { AvShot = this, TracerFront = endPos, Hit = hit, TriggerGrowthSteps = info.TriggerGrowthSteps, Direction = info.Direction, StageIdx = info.Storage.RequestedStage });
+            System.Session.Projectiles.DeferedAvDraw.Add(new DeferedAv { AvShot = this, Info = info, TracerFront = endPos, Hit = hit,  Direction = info.Direction });
         }
 
         internal void HitEffects(bool force = false)
@@ -904,7 +911,10 @@ namespace CoreSystems.Support
             TravelEmitter.SetPosition(TracerFront);
             TravelEmitter.Entity = PrimeEntity;
             ApproachConstants def = StageIdx == -1 ? null : AmmoDef.Const.Approaches[StageIdx];
-            TravelEmitter.PlaySound(def == null ? AmmoDef.Const.TravelSoundPair : def.SoundPair, true);
+            var pair = def == null  || !def.AlternateTravelSound ? AmmoDef.Const.TravelSoundPair : def.SoundPair;
+            Log.Line($"start travel sound: {StageIdx} - {def?.Definition.AlternateSound}");
+
+            TravelEmitter.PlaySound(pair, true);
             TravelSound = true;
         }
 
@@ -912,7 +922,6 @@ namespace CoreSystems.Support
         {
             ApproachConstants def = StageIdx == -1 ? null : AmmoDef.Const.Approaches[StageIdx];
             var particleDef = def == null || !def.AlternateTravelParticle ? AmmoDef.AmmoGraphics.Particles.Ammo : def.Definition.AlternateParticle;
-
             MatrixD matrix;
             if (Model != ModelState.None && PrimeEntity != null)
                 matrix = PrimeMatrix;
@@ -981,11 +990,12 @@ namespace CoreSystems.Support
         private void StageChange(int newStageIdx, bool createdPrimeEntity)
         {
             var aConst = AmmoDef.Const;
-            var lastApproach = AmmoDef.Const.Approaches.Length - 1;
+            var lastApproach = AmmoDef.Const.Approaches.Length;
             var oldStage = StageIdx;
-            StageIdx = newStageIdx <= lastApproach ? newStageIdx : lastApproach;
+            StageIdx = newStageIdx < lastApproach ? newStageIdx : -1;
+
             ApproachConstants oldDef = oldStage == -1 ? null : AmmoDef.Const.Approaches[oldStage];
-            ApproachConstants newDef = newStageIdx == -1 ? null : AmmoDef.Const.Approaches[newStageIdx];
+            ApproachConstants newDef = StageIdx == -1 ? null : AmmoDef.Const.Approaches[StageIdx];
 
 
             if (Model == ModelState.Exists && PrimeEntity != null)
@@ -1011,10 +1021,16 @@ namespace CoreSystems.Support
 
             }
 
-            if (aConst.AmmoParticle && Active && (newDef != null && newDef.AlternateTravelParticle) && newDef.AlternateTravelSound)
+            if (aConst.AmmoParticle && Active && (newDef != null && newDef.AlternateTravelParticle))
             {
                 DisposeAmmoEffect(false, false);
-                AmmoParticleStopped = false;
+                AmmoParticleInited = false;
+            }
+            if (TravelSound && TravelEmitter != null)
+            {
+                Log.Line($"stop sound");
+                TravelEmitter.StopSound(true);
+                TravelSound = false;
             }
         }
 
@@ -1122,7 +1138,7 @@ namespace CoreSystems.Support
                     {
                         TravelEmitter.StopSound(true);
                         ApproachConstants def = StageIdx == -1 ? null : AmmoDef.Const.Approaches[StageIdx];
-                        TravelEmitter.PlaySound(def == null ? AmmoDef.Const.TravelSoundPair : def.SoundPair, stopPrevious: false, skipIntro: true, force2D: false, alwaysHearOnRealistic: false, skipToEnd: true);
+                        TravelEmitter.PlaySound(def == null  || !def.AlternateTravelSound ? AmmoDef.Const.TravelSoundPair : def.SoundPair, stopPrevious: false, skipIntro: true, force2D: false, alwaysHearOnRealistic: false, skipToEnd: true);
                     }
                 }
 
@@ -1196,7 +1212,7 @@ namespace CoreSystems.Support
                         TravelEmitter.StopSound(true);
                         ApproachConstants def = StageIdx == -1 ? null : AmmoDef.Const.Approaches[StageIdx];
 
-                        TravelEmitter.PlaySound(def == null ? AmmoDef.Const.TravelSoundPair : def.SoundPair, stopPrevious: false, skipIntro: true, force2D: false, alwaysHearOnRealistic: false, skipToEnd: true);
+                        TravelEmitter.PlaySound(def == null || !def.AlternateTravelSound ? AmmoDef.Const.TravelSoundPair : def.SoundPair, stopPrevious: false, skipIntro: true, force2D: false, alwaysHearOnRealistic: false, skipToEnd: true);
                     }
                 }
                 
@@ -1339,9 +1355,8 @@ namespace CoreSystems.Support
     internal struct DeferedAv
     {
         internal AvShot AvShot;
+        internal ProInfo Info;
         internal bool Hit;
-        internal int TriggerGrowthSteps;
-        internal int StageIdx;
         internal Vector3D TracerFront;
         internal Vector3D Direction;
     }

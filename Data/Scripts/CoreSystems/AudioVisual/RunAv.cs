@@ -109,7 +109,7 @@ namespace CoreSystems.Support
                         {
                             double distSqr;
                             Vector3D.DistanceSquared(ref av.TracerFront, ref Session.CameraPos, out distSqr);
-                            if (distSqr <= av.AmmoDef.Const.AmmoTravelSoundDistSqr)
+                            if (distSqr <= av.AmmoDef.Const.AmmoTravelSoundDistSqr && av.AccelClearance)
                                 av.TravelSoundStart();
                         }
                         else av.TravelEmitter.SetPosition(av.TracerFront);

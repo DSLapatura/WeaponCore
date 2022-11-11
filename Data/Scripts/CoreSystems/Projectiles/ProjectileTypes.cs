@@ -191,7 +191,7 @@ namespace CoreSystems.Support
         internal readonly ProNavGuidanceInlined Navigation = new ProNavGuidanceInlined(60);
         internal DroneStatus DroneStat;
         internal DroneMission DroneMsn;
-        internal Vector3D TargetPosition;
+        internal Vector3D SetTargetPos;
         internal Vector3D RandOffsetDir;
         internal Vector3D OffsetDir;
         internal Vector3D LookAtPos;
@@ -224,7 +224,7 @@ namespace CoreSystems.Support
             LastOffsetTime = 0;
             DroneStat = DroneStatus.Launch;
             DroneMsn = DroneMission.Attack;
-            TargetPosition = Vector3D.Zero;
+            SetTargetPos = Vector3D.Zero;
             RandOffsetDir = Vector3D.Zero;
             OffsetDir = Vector3D.Zero;
             NavTargetEnt = null;
