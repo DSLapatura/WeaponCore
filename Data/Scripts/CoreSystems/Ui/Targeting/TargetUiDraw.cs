@@ -4,6 +4,7 @@ using CoreSystems;
 using CoreSystems.Platform;
 using CoreSystems.Support;
 using Sandbox.Game.Entities;
+using Sandbox.ModAPI;
 using VRage;
 using VRage.Game;
 using VRage.Game.Entity;
@@ -29,12 +30,19 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             
             ActivateSelector();
 
+
+
             if (s.CheckTarget(s.TrackingAi) && GetTargetState(s))
             {
                 if (ActivateLeads())
                     DrawActiveLeads();
 
                 DrawTarget();
+                HandHitMarkerActive = false;
+            }
+            else if (s.TrackingAi.AiType == Ai.AiTypes.Player && HandHitMarkerActive)
+            {
+                HandWeaponMarker();
             }
         }
 
@@ -385,7 +393,6 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
 
             var handheldHud = (s.UiInput.IronLock || dumbHandHeld);
             var showHud = !s.Settings.Enforcement.DisableHudTargetInfo && (!s.UiInput.PlayerWeapon || handheldHud) && !(s.HudHandlers.Count > 0 && s.HudUi.RestrictHudHandlers(_session.TrackingAi, _session.PlayerId, Hud.Hud.HudMode.TargetInfo));
-            
 
             if (showHud)
             {
@@ -488,23 +495,28 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             return drawInfo;
         }
 
-        internal void SetHit(List<HitEntity> infoHitList)
+        internal void SetHit(ProInfo info)
         {
-            var focus = _session.TrackingAi.Construct.Data.Repo.FocusData;
+            if (_session.TrackingAi.AiType == Ai.AiTypes.Player)
+            {
+                CheckHandWeaponEntityHit(info);
+                return;
+            }
 
+            var focus = _session.TrackingAi.Construct.Data.Repo.FocusData;
             MyEntity target;
-            if (focus.Target > 0 && MyEntities.TryGetEntityById(focus.Target, out target) && CheckEntityHit(target, infoHitList))
+            if (focus.Target > 0 && MyEntities.TryGetEntityById(focus.Target, out target) && CheckBlockWeaponEntityHit(target, info))
                     return;
 
             if (LastSelectedEntity != null)
-                CheckEntityHit(LastSelectedEntity, infoHitList);
+                CheckBlockWeaponEntityHit(LastSelectedEntity, info);
         }
 
-        private bool CheckEntityHit(MyEntity ent, List<HitEntity> infoHitList)
+        private bool CheckBlockWeaponEntityHit(MyEntity ent, ProInfo info)
         {
             var grid = ent as MyCubeGrid;
 
-            foreach (var hitEnt in infoHitList)
+            foreach (var hitEnt in info.HitList)
             {
                 var hitGrid = hitEnt.Entity as MyCubeGrid;
                 var bothGrids = grid != null && hitGrid != null;
@@ -519,12 +531,48 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                 }
 
                 if (!check) continue;
-
+                HitMarkerColor = Color.White;
                 HitIncrease = FullPulseSize - CircleSize;
                 return true;
             }
 
             return false;
+        }
+
+        private bool CheckHandWeaponEntityHit(ProInfo info)
+        {
+            foreach (var hitEnt in info.HitList)
+            {
+                if (info.Weapon.Comp.Ai.Construct.RootAi != _session.TrackingAi)
+                    continue;
+                /*
+                MyTuple<float, TargetControl, MyRelationsBetweenPlayerAndBlock> tInfo;
+                if (_masterTargets.TryGetValue(hitEnt.Entity, out tInfo))
+                {
+                    HitMarkerColor = Color.White;
+                }
+                else
+                    HitMarkerColor = Color.DeepSkyBlue;
+                */
+
+                HandHitIncrease = HandFullPulseSize - HandCircleSize;
+                HandHitMarkerActive = true;
+                return true;
+            }
+
+            return false;
+        }
+
+        private void HandWeaponMarker()
+        {
+            var s = _session;
+            if (!_cachedPointerPos) InitPointerOffset(0.05);
+            var offetPosition = Vector3D.Transform(PointerOffset, _session.CameraMatrix);
+
+            var screenScale = (s.UiInput.IronSights ? 0.0375 : 0.025) * s.ScaleFov;
+
+            var radius = (float)(screenScale * HandMarkerSize());
+            MyTransparentGeometry.AddBillboardOriented(_targetCircle, HandHitMarkerColor, offetPosition, s.CameraMatrix.Left, s.CameraMatrix.Up, radius, BlendTypeEnum.PostPP);
         }
 
         private double MarkerSize()
@@ -541,6 +589,23 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             }
 
             return CircleSize + increase;
+        }
+
+        private double HandMarkerSize()
+        {
+            var increase = HandHitIncrease;
+
+            if (HandHitIncrease > HandPulseSize)
+            {
+                HandHitIncrease = !MyUtils.IsZero(HandHitIncrease - HandPulseSize) ? HandHitIncrease - HandPulseSize : 0d;
+            }
+            else
+            {
+                HandHitIncrease = 0d;
+                HandHitMarkerActive = false;
+            }
+
+            return HandCircleSize + increase;
         }
 
         private bool TargetTextStatus(int slot, TargetStatus targetState, float scale, Vector2 localOffset, bool shielded, bool details, out string textStr, out Vector2 textOffset)

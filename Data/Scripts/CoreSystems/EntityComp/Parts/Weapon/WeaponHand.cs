@@ -1,8 +1,12 @@
-﻿using CoreSystems.Support;
+﻿using CoreSystems.Projectiles;
+using CoreSystems.Support;
 using Sandbox.Common.ObjectBuilders;
 using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Character.Components;
+using Sandbox.Game.Screens;
 using Sandbox.Game.Weapons;
+using Sandbox.Game.World;
+using Sandbox.ModAPI;
 using Sandbox.ModAPI.Weapons;
 using VRage.Game;
 using VRage.Game.Entity;
@@ -85,8 +89,7 @@ namespace CoreSystems.Platform
             {
                 if (active)
                 {
-                    Rifle.Shoot(MyShootActionEnum.PrimaryAction, Vector3D.Zero, null);
-                    MyCharacterWeaponPositionComponent positionComponent = w.Comp.Rifle.Owner.Components.Get<MyCharacterWeaponPositionComponent>();
+                    Rifle.Shoot(MyShootActionEnum.PrimaryAction, Vector3D.MaxValue, Vector3D.MaxValue);
                 }
             }
 
@@ -175,7 +178,7 @@ namespace CoreSystems.Platform
             internal Matrix GetHandWeaponApproximateWorldMatrix(bool offset)
             {
                 var rifleLocalMatrix = Rifle.PositionComp.LocalMatrixRef;
-                rifleLocalMatrix.Translation = (CharacterPosComp.LogicalPositionWorld);
+                rifleLocalMatrix.Translation = (CharacterPosComp.LogicalPositionWorld + (TopEntity.Physics.LinearVelocity * Projectile.StepConst));
                 if (offset)
                 {
                     rifleLocalMatrix.Translation += (rifleLocalMatrix.Forward * 0.25f);
@@ -189,7 +192,7 @@ namespace CoreSystems.Platform
             internal MatrixD GetWhyKeenTransformedWorldMatrix()
             {
                 var rifleLocalMatrix = Rifle.PositionComp.LocalMatrixRef;
-                rifleLocalMatrix.Translation = (CharacterPosComp.LogicalPositionWorld);
+                rifleLocalMatrix.Translation = (CharacterPosComp.LogicalPositionWorld + (TopEntity.Physics.LinearVelocity * Projectile.StepConst));
 
                 rifleLocalMatrix.Translation += (rifleLocalMatrix.Forward * 0.25f);
                 rifleLocalMatrix.Translation += (rifleLocalMatrix.Down * 0.25f);

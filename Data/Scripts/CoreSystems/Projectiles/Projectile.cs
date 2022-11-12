@@ -1778,6 +1778,20 @@ namespace CoreSystems.Projectiles
                         break;
                 }
 
+                if (Info.Ai.Session.DebugMod)
+                {
+                    var session = Info.Ai.Session;
+                    if (session.ApproachProId == Info.Id || session.Tick != session.ApproachDebugTick)
+                    {
+                        session.ApproachDebugTick = session.Tick;
+                        session.ApproachProId = Info.Id;
+                        session.ApproachStart1 = start1;
+                        session.ApproachStart2 = start2;
+                        session.ApproachEnd1 = end1;
+                        session.ApproachEnd2 = end2;
+                    }
+                }
+
                 if (end1 && end2)
                 {
                     var hasNextStep = s.RequestedStage + 1 < aConst.ApproachesCount;

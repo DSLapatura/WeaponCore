@@ -272,7 +272,6 @@ namespace CoreSystems
 
                             var v3 = grid.LocalToGridInteger(painted.LocalPosition);
                             MyCube cube;
-
                             if (!grid.TryGetCube(v3, out cube))
                             {
 

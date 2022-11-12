@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using CoreSystems.Projectiles;
 using CoreSystems.Support;
 using Sandbox.Game.Entities;
 using VRage.Game;
@@ -10,7 +9,6 @@ using VRage.Game.ModAPI;
 using VRage.Game.ModAPI.Interfaces;
 using VRageMath;
 using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetDef;
-using static CoreSystems.Support.CoreComponent;
 namespace CoreSystems.Platform
 {
     public partial class Weapon 

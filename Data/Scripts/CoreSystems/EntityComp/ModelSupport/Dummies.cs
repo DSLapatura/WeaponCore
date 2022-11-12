@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using CoreSystems.Platform;
+using CoreSystems.Projectiles;
 using Sandbox.ModAPI.Weapons;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
@@ -130,7 +131,6 @@ namespace CoreSystems.Support
                 var localDir = dummyMatrix.Forward;
                 var localUpDir = dummyMatrix.Up;
                 var partWorldMatrix = _cachedSubpart.PositionComp.WorldMatrixRef;
-
                 if (rifleIsDedidcatedOrDebug) { // blame keen
                     var wComp = (Weapon.WeaponComponent)_part.BaseComp;
                     var offset = !wComp.Rifle.GunBase.HasIronSightsActive;
@@ -141,6 +141,9 @@ namespace CoreSystems.Support
                 }
                 else
                 {
+                    if (rifle)
+                        partWorldMatrix.Translation += (_part.BaseComp.TopEntity.Physics.LinearVelocityUnsafe * Projectile.StepConst);
+
                     Vector3D.Transform(ref localPos, ref partWorldMatrix, out CachedPos);
                     bool clientRifleOffset = false;
                     if (rifle) // I lack the words to describe the level of my disgust

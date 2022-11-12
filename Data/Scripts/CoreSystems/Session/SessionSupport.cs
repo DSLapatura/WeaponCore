@@ -182,6 +182,15 @@ namespace CoreSystems
                     }
                 }
             }
+
+            if (ApproachDebugTick == Tick && Tick != 0)
+            {
+                if (Tick10)
+                    ShowLocalNotify($"[Approach] Stage:{ApproachStage} - Start1:{ApproachStart1} - Start2:{ApproachStart2} - End1:{ApproachEnd1} - End2:{ApproachEnd2}", 160, "White");
+            }
+            else if (ApproachDebugTick == Tick -1 && Tick != 1)
+                ShowLocalNotify($"[Approach] Completed on stage:{ApproachStage} - {ApproachStart1}:{ApproachStart2}:{ApproachEnd1}:{ApproachEnd2}", 2000, "White");
+
         }
 
         private double _avCpuTime;
@@ -956,7 +965,6 @@ namespace CoreSystems
                 }
             }
 
-            DebugMod = DebugVersion;
         }
 
         public string ModPath()

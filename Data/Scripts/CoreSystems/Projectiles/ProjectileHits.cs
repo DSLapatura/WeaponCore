@@ -798,7 +798,7 @@ namespace CoreSystems.Projectiles
                     info.AvShot.LastHitShield = hitEntity.EventType == Shield;
                     info.AvShot.Hit = info.Hit;
                     if (info.AimedShot && Session.TrackingAi != null && Session.TargetUi.HitIncrease < 0.1d && !info.Weapon.Comp.OnCustomTurret && (info.AmmoDef.Const.FixedFireAmmo || info.Weapon.Comp.Data.Repo.Values.Set.Overrides.Control != ProtoWeaponOverrides.ControlModes.Auto))
-                        Session.TargetUi.SetHit(info.HitList);
+                        Session.TargetUi.SetHit(info);
                 }
 
                 return true;

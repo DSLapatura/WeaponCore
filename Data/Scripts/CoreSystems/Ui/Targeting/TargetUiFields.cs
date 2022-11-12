@@ -18,7 +18,11 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
         internal double PointerAdjScale = 0.05f;
         internal double AdjScale;
         internal double HitIncrease;
+        internal double HandHitIncrease;
+        internal Color HitMarkerColor = Color.White;
+        internal Vector4 HandHitMarkerColor = new Vector4(2,2,2,2);
         internal bool DrawReticle;
+        internal bool HandHitMarkerActive;
         internal uint ReticleOnSelfTick;
         internal uint MasterUpdateTick;
         internal uint LastSelectableTick;
@@ -47,6 +51,10 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
         private const double CircleSize = 0.075d;
         private const double FullPulseSize = 0.1d;
         private const double PulseSize = 0.003125d;
+
+        private const double HandCircleSize = 0.025d;
+        private const double HandFullPulseSize = 0.1d;
+        private const double HandPulseSize = 0.003125d;
 
         private readonly MyStringId _reticle = MyStringId.GetOrCompute("TargetReticle");
         private readonly MyStringId _targetCircle = MyStringId.GetOrCompute("DS_ActiveTarget");
