@@ -1468,7 +1468,8 @@ namespace CoreSystems.Projectiles
             {
                 if (s.RequestedStage == -1)
                 {
-                    Log.Line($"StageStart: {Info.AmmoDef.AmmoRound} - last: {s.LastActivatedStage} - age:{Info.Age}");
+                    if (Info.Ai.Session.DebugMod)
+                        Log.Line($"StageStart: {Info.AmmoDef.AmmoRound} - last: {s.LastActivatedStage} - age:{Info.Age}");
                     s.LastActivatedStage = -1;
                     s.RequestedStage = 0;
 
@@ -1478,7 +1479,8 @@ namespace CoreSystems.Projectiles
 
                 if (stageChange)
                 {
-                    Log.Line($"state change: {s.RequestedStage} - age:{Info.Age}");
+                    if (Info.Ai.Session.DebugMod)
+                        Log.Line($"state change: {s.RequestedStage} - age:{Info.Age}");
                     s.StartDistanceTraveled = Info.DistanceTraveled;
                 }
 
@@ -1560,16 +1562,12 @@ namespace CoreSystems.Projectiles
                 switch (def.StartCondition1)
                 {
                     case Conditions.DesiredElevation:
-                        var plane = new PlaneD(s.LookAtPos, heightDir);
-                        var offsetPos = Position + (s.OffsetDir * plane.DistanceToPoint(Position));
-
-                        var distFromSurfaceSqr = !Vector3D.IsZero(surfacePos) ? Vector3D.DistanceSquared(Position, surfacePos) : Vector3D.DistanceSquared(Position, offsetPos);
-
+                        var plane = new PlaneD(s.LookAtPos, s.OffsetDir);
+                        var distToPlane = plane.DistanceToPoint(Position);
+                        var distFromSurfaceSqr = !Vector3D.IsZero(surfacePos) ? Vector3D.DistanceSquared(Position, surfacePos) : distToPlane * distToPlane;
                         var lessThanTolerance = (def.Start1Value + aConst.CollisionSize) * (def.Start1Value + aConst.CollisionSize);
                         var greaterThanTolerance = (def.Start1Value - aConst.CollisionSize) * (def.Start1Value - aConst.CollisionSize);
-
                         start1 = distFromSurfaceSqr >= greaterThanTolerance && distFromSurfaceSqr <= lessThanTolerance;
-
                         break;
                     case Conditions.DistanceFromTarget: // could save a sqrt by inlining and using heightDir
                         if (Info.Ai.Session.DebugMod)
@@ -1595,14 +1593,11 @@ namespace CoreSystems.Projectiles
                 switch (def.StartCondition2)
                 {
                     case Conditions.DesiredElevation:
-                        var plane = new PlaneD(s.LookAtPos, heightDir);
-                        var offsetPos = Position + (s.OffsetDir * plane.DistanceToPoint(Position));
-
-                        var distFromSurfaceSqr = !Vector3D.IsZero(surfacePos) ? Vector3D.DistanceSquared(Position, surfacePos) : Vector3D.DistanceSquared(Position, offsetPos);
-
+                        var plane = new PlaneD(s.LookAtPos, s.OffsetDir);
+                        var distToPlane = plane.DistanceToPoint(Position);
+                        var distFromSurfaceSqr = !Vector3D.IsZero(surfacePos) ? Vector3D.DistanceSquared(Position, surfacePos) : distToPlane * distToPlane;
                         var lessThanTolerance = (def.Start2Value + aConst.CollisionSize) * (def.Start2Value + aConst.CollisionSize);
                         var greaterThanTolerance = (def.Start2Value - aConst.CollisionSize) * (def.Start2Value - aConst.CollisionSize);
-
                         start2 = distFromSurfaceSqr >= greaterThanTolerance && distFromSurfaceSqr <= lessThanTolerance;
                         break;
                     case Conditions.DistanceFromTarget: // could save a sqrt by inlining and using heightDir
@@ -1629,7 +1624,8 @@ namespace CoreSystems.Projectiles
                 {
                     if (s.LastActivatedStage != s.RequestedStage)
                     {
-                        Log.Line($"stage: age:{Info.Age} - {s.RequestedStage} start conditions met: {start1} - {start2} - forced from EndOnlyOnNextStart: {s.LastActivatedStage >= 0 && def.EndOnlyOnNextStart}");
+                        if (Info.Ai.Session.DebugMod)
+                            Log.Line($"stage: age:{Info.Age} - {s.RequestedStage} start conditions met: {start1} - {start2} - forced from EndOnlyOnNextStart: {s.LastActivatedStage >= 0 && def.EndOnlyOnNextStart}");
                         s.LastActivatedStage = s.RequestedStage;
                     }
 
@@ -1657,7 +1653,9 @@ namespace CoreSystems.Projectiles
                         }
                         case VantagePointRelativeTo.Origin:
                         {
-                            adjFollowPos = followPosition;
+                            var plane = new PlaneD(Info.Origin, heightDir);
+                            var distToPlane = plane.DistanceToPoint(followPosition);
+                            adjFollowPos = followPosition + (heightDir * distToPlane);
                             break;
                         }
                         case VantagePointRelativeTo.MidPoint:
@@ -1694,30 +1692,27 @@ namespace CoreSystems.Projectiles
 
                     if (Info.Ai.Session.DebugMod)
                     {
-                        DsDebugDraw.DrawLine(adjFollowPos, trackedPos, Color.White, 10f);
-                        DsDebugDraw.DrawSingleVec(trackedPos, 50f, Color.LightSkyBlue);
+                        DsDebugDraw.DrawLine(adjFollowPos, trackedPos, Color.White, 3);
+                        DsDebugDraw.DrawSingleVec(trackedPos, 10, Color.LightSkyBlue);
                     }
                 }
 
                 if (Info.Ai.Session.DebugMod)
                 {
-                    DsDebugDraw.DrawSingleVec(heightStart, 50f, Color.GreenYellow);
-                    DsDebugDraw.DrawSingleVec(heightend, 50f, Color.LightSkyBlue);
-                    DsDebugDraw.DrawSingleVec(TargetPosition, 50f, Color.Red);
+                    DsDebugDraw.DrawSingleVec(heightStart, 10, Color.GreenYellow);
+                    DsDebugDraw.DrawSingleVec(heightend, 10, Color.LightSkyBlue);
+                    DsDebugDraw.DrawSingleVec(TargetPosition, 10, Color.Red);
                 }
 
                 bool end1;
                 switch (def.EndCondition1)
                 {
                     case Conditions.DesiredElevation:
-                        var plane = new PlaneD(s.LookAtPos, heightDir);
-                        var offsetPos = Position + (s.OffsetDir * plane.DistanceToPoint(Position));
-
-                        var distFromSurfaceSqr = !Vector3D.IsZero(surfacePos) ? Vector3D.DistanceSquared(Position, surfacePos) : Vector3D.DistanceSquared(Position, offsetPos);
-
+                        var plane = new PlaneD(s.LookAtPos, s.OffsetDir);
+                        var distToPlane = plane.DistanceToPoint(Position);
+                        var distFromSurfaceSqr = !Vector3D.IsZero(surfacePos) ? Vector3D.DistanceSquared(Position, surfacePos) : distToPlane * distToPlane;
                         var lessThanTolerance = (def.End1Value + aConst.CollisionSize) * (def.End1Value + aConst.CollisionSize);
                         var greaterThanTolerance = (def.End1Value - aConst.CollisionSize) * (def.End1Value - aConst.CollisionSize);
-
                         end1 = distFromSurfaceSqr >= greaterThanTolerance && distFromSurfaceSqr <= lessThanTolerance;
                         break;
                     case Conditions.DistanceFromTarget:
@@ -1750,14 +1745,11 @@ namespace CoreSystems.Projectiles
                 switch (def.EndCondition2)
                 {
                     case Conditions.DesiredElevation:
-                        var plane = new PlaneD(s.LookAtPos, heightDir);
-                        var offsetPos = Position + (s.OffsetDir * plane.DistanceToPoint(Position));
-
-                        var distFromSurfaceSqr = !Vector3D.IsZero(surfacePos) ? Vector3D.DistanceSquared(Position, surfacePos) : Vector3D.DistanceSquared(Position, offsetPos);
-
+                        var plane = new PlaneD(s.LookAtPos, s.OffsetDir);
+                        var distToPlane = plane.DistanceToPoint(Position);
+                        var distFromSurfaceSqr = !Vector3D.IsZero(surfacePos) ? Vector3D.DistanceSquared(Position, surfacePos) : distToPlane * distToPlane;
                         var lessThanTolerance = (def.End2Value + aConst.CollisionSize) * (def.End2Value + aConst.CollisionSize);
                         var greaterThanTolerance = (def.End2Value - aConst.CollisionSize) * (def.End2Value - aConst.CollisionSize);
-
                         end2 = distFromSurfaceSqr >= greaterThanTolerance && distFromSurfaceSqr <= lessThanTolerance;
                         break;
                     case Conditions.DistanceFromTarget:
@@ -1797,7 +1789,8 @@ namespace CoreSystems.Projectiles
                         var oldLast = s.LastActivatedStage;
                         s.LastActivatedStage = s.RequestedStage;
                         ++s.RequestedStage;
-                        Log.Line($"stageEnd: age:{Info.Age} - next: {s.RequestedStage} - last:{oldLast} - eCon1:{def.EndCondition1} - eCon2:{def.EndCondition2}");
+                        if (Info.Ai.Session.DebugMod)
+                            Log.Line($"stageEnd: age:{Info.Age} - next: {s.RequestedStage} - last:{oldLast} - eCon1:{def.EndCondition1} - eCon2:{def.EndCondition2}");
                         ProcessStage(ref accelMpsMulti, ref speedCapMulti, targetPos, s.LastActivatedStage, targetLock);
                     }
                     else if (failBackwards)
@@ -1805,17 +1798,20 @@ namespace CoreSystems.Projectiles
                         s.LastActivatedStage = s.RequestedStage;
                         var prev = s.RequestedStage;
                         s.RequestedStage = def.OnFailureRevertTo;
-                        Log.Line($"stageEnd:age:{Info.Age} - previous:{prev} to {s.RequestedStage} - eCon1:{def.EndCondition1} - eCon2:{def.EndCondition2}");
+                        if (Info.Ai.Session.DebugMod)
+                            Log.Line($"stageEnd:age:{Info.Age} - previous:{prev} to {s.RequestedStage} - eCon1:{def.EndCondition1} - eCon2:{def.EndCondition2}");
                     }
                     else if (!hasNextStep)
                     {
-                        Log.Line($"Approach ended, no more steps - age:{Info.Age} - strages:[r:{s.RequestedStage} l:{s.LastActivatedStage}] - ec1:{def.EndCondition1} - ec1:{def.End1Value} - ec1:{def.EndCondition2} - ec1:{def.End2Value} - failure:{def.Failure}");
+                        if (Info.Ai.Session.DebugMod)
+                            Log.Line($"Approach ended, no more steps - age:{Info.Age} - strages:[r:{s.RequestedStage} l:{s.LastActivatedStage}] - ec1:{def.EndCondition1} - ec1:{def.End1Value} - ec1:{def.EndCondition2} - ec1:{def.End2Value} - failure:{def.Failure}");
                         s.LastActivatedStage = aConst.Approaches.Length;
                         s.RequestedStage = aConst.Approaches.Length;
                     }
                     else
                     {
-                        Log.Line($"end met no valid condition");
+                        if (Info.Ai.Session.DebugMod)
+                            Log.Line($"end met no valid condition");
                     }
                 }
             }
