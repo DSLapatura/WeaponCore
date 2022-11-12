@@ -50,8 +50,11 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
         {
             var s = _session;
             if (!_cachedPointerPos) InitPointerOffset(0.05);
-            if (!_cachedTargetPos) InitTargetOffset();
-            var offetPosition = Vector3D.Transform(PointerOffset, _session.CameraMatrix);
+
+            var offetPosition = Vector3D.Transform(PointerOffset, s.CameraMatrix);
+            AimPosition = offetPosition;
+            AimDirection = Vector3D.Normalize(AimPosition - s.CameraPos);
+
             if (s.UiInput.CameraBlockView)
             {
                 _pointerPosition.Y = 0f;
@@ -566,11 +569,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
         private void HandWeaponMarker()
         {
             var s = _session;
-            if (!_cachedPointerPos) InitPointerOffset(0.05);
-            var offetPosition = Vector3D.Transform(PointerOffset, _session.CameraMatrix);
-
+            var offetPosition = Vector3D.Transform(HandPointerOffset, s.CameraMatrix);
             var screenScale = (s.UiInput.IronSights ? 0.0375 : 0.025) * s.ScaleFov;
-
             var radius = (float)(screenScale * HandMarkerSize());
             MyTransparentGeometry.AddBillboardOriented(_targetCircle, HandHitMarkerColor, offetPosition, s.CameraMatrix.Left, s.CameraMatrix.Up, radius, BlendTypeEnum.PostPP);
         }
@@ -748,20 +748,6 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             return true;
         }
 
-
-        private void InitTargetOffset()
-        {
-            var position = new Vector3D(_targetDrawPosition.X, _targetDrawPosition.Y, 0);
-            var scale = 0.075 * _session.ScaleFov;
-
-            position.X *= scale * _session.AspectRatio;
-            position.Y *= scale;
-
-            AdjScale = 0.125 * scale;
-
-            TargetOffset = new Vector3D(position.X, position.Y, -0.1);
-            _cachedTargetPos = true;
-        }
 
         public string ShieldSides(Vector3I shunts)
         {

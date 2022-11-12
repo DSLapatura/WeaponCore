@@ -93,7 +93,6 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             if (s.Tick - MasterUpdateTick > 300 || MasterUpdateTick < 300 && _masterTargets.Count == 0)
                 BuildMasterCollections(ai);
             if (!_cachedPointerPos) InitPointerOffset(0.05);
-            if (!_cachedTargetPos) InitTargetOffset();
             var cockPit = s.ActiveCockPit;
             Vector3D end;
             if (s.UiInput.CameraBlockView)
@@ -323,7 +322,6 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
         internal void ResetCache()
         {
             _cachedPointerPos = false;
-            _cachedTargetPos = false;
         }
 
         private void InitPointerOffset(double adjust)
@@ -346,7 +344,6 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             var ai = s.TrackingAi;
 
             if (!_cachedPointerPos) InitPointerOffset(0.05);
-            if (!_cachedTargetPos) InitTargetOffset();
             var updateTick = s.Tick - _cacheIdleTicks > 300 || _endIdx == -1 || _sortedMasterList.Count - 1 < _endIdx;
 
             if (updateTick && !UpdateCache(s.Tick) || s.UiInput.ShiftPressed || s.UiInput.ControlKeyPressed || s.UiInput.AltPressed || s.UiInput.CtrlPressed) return;

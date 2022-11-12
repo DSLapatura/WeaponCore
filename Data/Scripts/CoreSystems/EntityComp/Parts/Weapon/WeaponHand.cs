@@ -179,6 +179,7 @@ namespace CoreSystems.Platform
             {
                 var rifleLocalMatrix = Rifle.PositionComp.LocalMatrixRef;
                 rifleLocalMatrix.Translation = (CharacterPosComp.LogicalPositionWorld + (TopEntity.Physics.LinearVelocity * Projectile.StepConst));
+
                 if (offset)
                 {
                     rifleLocalMatrix.Translation += (rifleLocalMatrix.Forward * 0.25f);

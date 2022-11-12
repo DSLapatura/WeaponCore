@@ -288,7 +288,7 @@ namespace CoreSystems
                 CameraPos = CameraMatrix.Translation;
                 CameraFrustrum.Matrix = (Camera.ViewMatrix * Camera.ProjectionMatrix);
                 var newFov = Camera.FovWithZoom;
-                
+
                 if (!MyUtils.IsEqual(newFov, CurrentFovWithZoom))
                     FovChanged();
 

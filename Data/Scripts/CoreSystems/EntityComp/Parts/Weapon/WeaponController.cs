@@ -121,7 +121,7 @@ namespace CoreSystems.Platform
                 PosChangedTick = Comp.Session.SimulationCount;
                 
                 var justBlock = AzimuthPart.IsCoreEntity && ElevationPart.IsCoreEntity && MuzzlePart.IsCoreEntity;
-                var requiresRootWorldOffset = Comp.TypeSpecific == CompTypeSpecific.Rifle && Comp.Session.DedicatedServer;
+                var requiresRootWorldOffset = Comp.TypeSpecific == CompTypeSpecific.Rifle && (Comp.Session.DedicatedServer || Comp.Session.DebugMod);
 
                 MatrixD azimuthMatrix;
                 MatrixD elevationMatrix;

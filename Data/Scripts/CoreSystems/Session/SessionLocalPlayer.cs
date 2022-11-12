@@ -69,6 +69,7 @@ namespace CoreSystems
 
                     SendActiveControlUpdate(TrackingAi, controlledEntity, true);
                     TargetLeadUpdate();
+
                 }
                 else if (LeadGroupsDirty || !MyUtils.IsEqual(LastOptimalDps, TrackingAi.Construct.OptimalDps))
                     TargetLeadUpdate();
@@ -163,7 +164,6 @@ namespace CoreSystems
             var rifle = entity as IMyAutomaticRifleGun;
             ActiveControlBlock = block ?? null;
             PlayerHandWeapon = rifle ?? null;
-
             var controlStringLeft = MyAPIGateway.Input.GetControl(MyMouseButtonsEnum.Left).GetGameControlEnum().String;
             CustomBlackListRequestBecauseKeenIsBrainDead(controlStringLeft, PlayerId);
             if (rifle == null)
@@ -185,7 +185,6 @@ namespace CoreSystems
         {
             if (!GunnerBlackList || PlayerId == -1)
                 return;
-
             GunnerBlackList = false;
             ActiveControlBlock = null;
             PlayerHandWeapon = null;

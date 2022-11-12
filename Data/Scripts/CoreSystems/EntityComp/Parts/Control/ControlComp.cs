@@ -11,6 +11,7 @@ using VRage.Game;
 using VRage.Game.Entity;
 using VRage.Utils;
 using VRageMath;
+using WeaponCore.Data.Scripts.CoreSystems.Ui.Hud;
 
 namespace CoreSystems.Platform
 {
@@ -235,6 +236,7 @@ namespace CoreSystems.Platform
             internal void TookControl(long playerId)
             {
                 LastControllingPlayerId = playerId;
+
                 if (Session.IsServer)
                 {
 

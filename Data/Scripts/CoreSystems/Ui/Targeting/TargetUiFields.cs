@@ -11,12 +11,11 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
 {
     internal partial class TargetUi
     {
+        internal Vector3D HandPointerOffset = new Vector3D(0,0,-0.1);
         internal Vector3D PointerOffset;
-        internal Vector3D TargetOffset;
         internal Vector3D AimPosition;
         internal Vector3D AimDirection;
         internal double PointerAdjScale = 0.05f;
-        internal double AdjScale;
         internal double HitIncrease;
         internal double HandHitIncrease;
         internal Color HitMarkerColor = Color.White;
@@ -99,7 +98,6 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
         private int _currentIdx;
         private int _endIdx = -1;
         private bool _cachedPointerPos;
-        private bool _cachedTargetPos;
         private ThirdPersonModes _3RdPersonDraw;
 
         private enum ThirdPersonModes
