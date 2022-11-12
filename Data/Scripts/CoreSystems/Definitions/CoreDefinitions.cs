@@ -1259,7 +1259,7 @@ namespace CoreSystems.Support
                     [ProtoMember(19)] internal ParticleDef StartParticle;
                     [ProtoMember(20)] internal bool AdjustVantagePoint;
                     [ProtoMember(21)] internal bool AdjustUpDir;
-                    //[ProtoMember(22)] internal bool AdjustElevation;
+                    [ProtoMember(22)] internal bool PushLeadByTravelDistance;
                     [ProtoMember(23)] internal double TrackingDistance;
                     [ProtoMember(24)] internal Conditions StartCondition2;
                     [ProtoMember(25)] internal double Start2Value;

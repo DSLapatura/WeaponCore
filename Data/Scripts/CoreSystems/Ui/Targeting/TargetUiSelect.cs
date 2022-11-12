@@ -1,11 +1,10 @@
 ﻿using CoreSystems;
 using CoreSystems.Support;
 using Sandbox.Game.Entities;
-using Sandbox.ModAPI;
 using VRage;
+using VRage.Game;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
-using VRage.Input;
 using VRageMath;
 
 namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
@@ -15,16 +14,16 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
         internal void ActivateSelector()
         {
             var s = _session;
-            if (s.TrackingAi.AiType == Ai.AiTypes.Phantom || s.UiInput.FirstPersonView && !s.UiInput.TurretBlockView && !s.UiInput.IronSights && !s.UiInput.AltPressed) return;
+            if (s.TrackingAi.AiType == Ai.AiTypes.Phantom || s.UiInput.FirstPersonView && !s.UiInput.TurretBlockView && !s.UiInput.IronSights && (!s.UiInput.AltPressed || s.UiInput.PlayerWeapon)) return;
             if (s.UiInput.CtrlReleased && !s.UiInput.FirstPersonView && !s.UiInput.CameraBlockView && !s.UiInput.TurretBlockView)
             {
                 switch (_3RdPersonDraw)
                 {
                     case ThirdPersonModes.None:
-                        _3RdPersonDraw = !s.UiInput.HoldingPlayerWeapon ? ThirdPersonModes.DotTarget : ThirdPersonModes.None;
+                        _3RdPersonDraw = !s.UiInput.PlayerWeapon ? ThirdPersonModes.DotTarget : ThirdPersonModes.None;
                         break;
                     case ThirdPersonModes.DotTarget:
-                        _3RdPersonDraw = !s.UiInput.HoldingPlayerWeapon ? ThirdPersonModes.Crosshair : ThirdPersonModes.None;
+                        _3RdPersonDraw = !s.UiInput.PlayerWeapon ? ThirdPersonModes.Crosshair : ThirdPersonModes.None;
                         break;
                     case ThirdPersonModes.Crosshair:
                         _3RdPersonDraw = ThirdPersonModes.None;
@@ -37,7 +36,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
 
             var enableActivator = _3RdPersonDraw == ThirdPersonModes.Crosshair || s.UiInput.FirstPersonView && s.UiInput.AltPressed && !s.UiInput.IronSights || s.UiInput.CameraBlockView;
 
-            if (enableActivator || !s.UiInput.FirstPersonView && !s.UiInput.CameraBlockView && !s.UiInput.HoldingPlayerWeapon || s.UiInput.TurretBlockView || s.UiInput.IronSights)
+            if (enableActivator || !s.UiInput.FirstPersonView && !s.UiInput.CameraBlockView && !s.UiInput.PlayerWeapon || s.UiInput.TurretBlockView || s.UiInput.IronSights)
                 DrawSelector(enableActivator);
         }
 
@@ -137,7 +136,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             var paintTarget = ai.Session.PlayerDummyTargets[ai.Session.PlayerId].PaintedTarget;
             var mark = s.UiInput.MouseButtonRightReleased && !ai.SmartHandheld || ai.SmartHandheld && s.UiInput.MouseButtonMenuReleased;
 
-            var advanced = s.Settings.ClientConfig.AdvancedMode || s.UiInput.IronSights;
+            var advanced = s.Settings.ClientConfig.AdvancedMode || s.UiInput.IronLock;
             MyEntity closestEnt = null;
             _session.Physics.CastRay(AimPosition, end, _hitInfo);
 
@@ -232,10 +231,18 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
 
             if (!manualSelect)
             {
-                var activeColor = closestEnt != null && !_masterTargets.ContainsKey(closestEnt) || foundOther ? Color.DeepSkyBlue : Color.Red;
+                MyTuple<float, TargetControl, MyRelationsBetweenPlayerAndBlock> tInfo = new MyTuple<float, TargetControl, MyRelationsBetweenPlayerAndBlock>();
+                var activeColor = closestEnt != null && !_masterTargets.TryGetValue(closestEnt, out tInfo) || foundOther ? Color.DeepSkyBlue : Color.Red;
 
                 var voxel = closestEnt as MyVoxelBase;
-                _reticleColor = closestEnt != null && voxel == null ? activeColor : Color.White;
+                var dumbHand = s.UiInput.PlayerWeapon && !ai.SmartHandheld;
+                var playerIgnore = dumbHand && (tInfo.Item2 != TargetControl.None && tInfo.Item3 != MyRelationsBetweenPlayerAndBlock.Enemies);
+                
+                _reticleColor = closestEnt != null && (voxel == null && !playerIgnore) ? activeColor : Color.White;
+               
+                if (dumbHand && _reticleColor == Color.DeepSkyBlue)
+                    _reticleColor = Color.White;
+
                 if (voxel == null)
                 {
                     LastSelectableTick = _session.Tick;
@@ -393,8 +400,9 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                     var tInfo = subTargets[j];
                     if (tInfo.Target.MarkedForClose || tInfo.Target is IMyCharacter) continue;
                     TopMap topMap;
+
                     var controlType = tInfo.Drone ? TargetControl.Drone : tInfo.IsGrid && _session.TopEntityToInfoMap.TryGetValue((MyCubeGrid)tInfo.Target, out topMap) && topMap.PlayerControllers.Count > 0 ? TargetControl.Player : tInfo.IsGrid && !_session.GridHasPower((MyCubeGrid)tInfo.Target) ? TargetControl.Trash : TargetControl.Other;
-                    _masterTargets[tInfo.Target] = new MyTuple<float, TargetControl>(tInfo.OffenseRating, controlType);
+                    _masterTargets[tInfo.Target] = new MyTuple<float, TargetControl, MyRelationsBetweenPlayerAndBlock>(tInfo.OffenseRating, controlType, tInfo.EntInfo.Relationship);
                     _toPruneMasterDict[tInfo.Target] = tInfo;
                 }
             }

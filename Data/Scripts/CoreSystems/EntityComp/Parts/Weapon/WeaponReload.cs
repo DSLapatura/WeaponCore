@@ -36,7 +36,7 @@ namespace CoreSystems.Platform
 
             CheckInventorySystem = true;
 
-            if (proposed && Comp.TypeSpecific == CompTypeSpecific.Rifle)
+            if (proposed && Comp.TypeSpecific == CompTypeSpecific.Rifle && Comp.Session.HandlesInput)
                 Comp.HandReloadNotify(this);
 
             UpdateRof();

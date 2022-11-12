@@ -36,6 +36,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
         internal bool ReloadKeyReleased;
 
         internal bool IronSights;
+        internal bool IronLock;
         internal bool WasInMenu;
         internal bool WheelForward;
         internal bool WheelBackward;
@@ -65,7 +66,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
         internal bool CameraBlockView;
         internal bool TurretBlockView;
         internal long CameraChannelId;
-        internal bool HoldingPlayerWeapon;
+        internal bool PlayerWeapon;
         internal bool Debug = true;
         internal bool MouseShootWasOn;
         internal bool MouseShootOn;
@@ -94,6 +95,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
             WheelForward = false;
             WheelBackward = false;
             IronSights = false;
+            IronLock = false;
             AimRay = new LineD();
             CycleNextKeyPressed = false;
             CyclePrevKeyPressed = false;
@@ -120,11 +122,11 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
 
 
                 ClientInputState.InMenu = _session.InMenu;
-                HoldingPlayerWeapon = ai.AiType == Ai.AiTypes.Player;
+                PlayerWeapon = ai.AiType == Ai.AiTypes.Player;
 
-                IronSights = HoldingPlayerWeapon && ai.OnlyWeaponComp.Rifle.GunBase.HasIronSightsActive;
-
-                if (HoldingPlayerWeapon && s.GunnerBlackList)
+                IronSights = PlayerWeapon && ai.OnlyWeaponComp.Rifle.GunBase.HasIronSightsActive;
+                IronLock = IronSights && ai.SmartHandheld;
+                if (PlayerWeapon && s.GunnerBlackList)
                 {
                     ReloadKeyPressed = MyAPIGateway.Input.IsKeyPress(ReloadKey);
                     ReloadKeyReleased = MyAPIGateway.Input.IsNewKeyReleased(ReloadKey);
@@ -144,7 +146,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
 
                 if (MouseButtonMenuWasPressed)
                 {
-                    if (++MouseMenuTime == 90 && IronSights)
+                    if (++MouseMenuTime == 90 && IronLock)
                         UpdateNonBlockControlMode(ai);
                 }
                 else

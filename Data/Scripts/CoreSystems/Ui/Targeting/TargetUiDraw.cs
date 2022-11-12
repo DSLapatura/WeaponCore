@@ -59,7 +59,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             }
             else if (s.UiInput.CtrlPressed)
             {
-                if (!s.UiInput.HoldingPlayerWeapon)
+                if (!s.UiInput.PlayerWeapon)
                 {
                     if (s.UiInput.PreviousWheel != s.UiInput.CurrentWheel)
                     {
@@ -381,9 +381,10 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             var collection = detailedHud ? _primaryTargetHuds : _primaryMinimalHuds;
             var infoKey = s.UiInput.InfoKey == MyKeys.Decimal ? MyKeys.Delete : s.UiInput.InfoKey;
             var drawInfo = UpdateKeyInfo(detailedHud);
+            var dumbHandHeld = s.UiInput.PlayerWeapon && s.LeadGroupActive;
 
-            var handheldHud = s.TrackingAi.SmartHandheld && (s.UiInput.IronSights || s.LeadGroupActive);
-            var showHud = !s.Settings.Enforcement.DisableHudTargetInfo && (!s.TrackingAi.SmartHandheld || handheldHud) && !(s.HudHandlers.Count > 0 && s.HudUi.RestrictHudHandlers(_session.TrackingAi, _session.PlayerId, Hud.Hud.HudMode.TargetInfo));
+            var handheldHud = (s.UiInput.IronLock || dumbHandHeld);
+            var showHud = !s.Settings.Enforcement.DisableHudTargetInfo && (!s.UiInput.PlayerWeapon || handheldHud) && !(s.HudHandlers.Count > 0 && s.HudUi.RestrictHudHandlers(_session.TrackingAi, _session.PlayerId, Hud.Hud.HudMode.TargetInfo));
             
 
             if (showHud)
@@ -410,8 +411,6 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
 
                     var color = Color.White;
                     var lockColor = Color.White;
-
-                    //var hudOpacity = MathHelper.Clamp(_session.UIHudOpacity, 0.25f, 1f);
 
                     switch (lockMode)
                     {
@@ -821,7 +820,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             if (s.Tick - MasterUpdateTick > 300 || MasterUpdateTick < 300 && _masterTargets.Count == 0)
                 BuildMasterCollections(ai);
             var targetId = ai.Construct.Data.Repo.FocusData.Target;
-            MyTuple<float, TargetControl> targetInfo;
+            MyTuple<float, TargetControl, MyRelationsBetweenPlayerAndBlock> targetInfo;
             MyEntity target;
             if ((targetId <= 0 || !MyEntities.TryGetEntityById(targetId, out target) || !_masterTargets.TryGetValue(target, out targetInfo) || ai.NoTargetLos.ContainsKey(target))) 
                 return false;

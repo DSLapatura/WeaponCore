@@ -218,7 +218,6 @@ namespace CoreSystems.Support
             SyncId = long.MinValue;
             LastProSyncStateAge = int.MinValue;
             ProSyncPosMissCount = 0;
-
             ChaseAge = 0;
             ZombieLifeTime = 0;
             LastOffsetTime = 0;

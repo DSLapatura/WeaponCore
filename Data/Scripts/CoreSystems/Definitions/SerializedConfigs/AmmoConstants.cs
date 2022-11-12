@@ -1622,10 +1622,7 @@ namespace CoreSystems.Support
         public readonly bool AlternateTravelParticle;
         public readonly bool AlternateModel;
         public readonly bool StartParticle;
-        public readonly double ModLeadConstraint;
         public readonly double ModFutureStep;
-        public readonly double LeadConstraint;
-        public readonly double FutureStep;
 
         public ApproachConstants(WeaponSystem.AmmoType ammo, int index, WeaponDefinition wDef)
         {
@@ -1658,10 +1655,7 @@ namespace CoreSystems.Support
             var speedStepLimit = def.SpeedCapMulti * desiredSpeedStep;
             var futureStepLimit = maxStepLimit <= speedStepLimit ? maxStepLimit : speedStepLimit;
 
-            ModLeadConstraint = def.LeadDistance + futureStepLimit;
             ModFutureStep = futureStepLimit;
-            LeadConstraint = def.LeadDistance + desiredSpeedStep;
-            FutureStep = desiredSpeedStep;
         }
 
         public void Clean()

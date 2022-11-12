@@ -125,13 +125,13 @@ namespace CoreSystems.Support
 
                 var dummyMatrix = _cachedDummyMatrix ?? MatrixD.Identity;
                 var rifle = _part != null && _part.BaseComp.TypeSpecific == CompTypeSpecific.Rifle;
-                var isDedicatedOrDebug = rifle && (_part.BaseComp.Session.DedicatedServer || _part.BaseComp.Session.DebugMod);
+                var rifleIsDedidcatedOrDebug = rifle && (_part.BaseComp.Session.DedicatedServer || _part.BaseComp.Session.DebugMod);
                 var localPos = dummyMatrix.Translation;
                 var localDir = dummyMatrix.Forward;
                 var localUpDir = dummyMatrix.Up;
                 var partWorldMatrix = _cachedSubpart.PositionComp.WorldMatrixRef;
 
-                if (isDedicatedOrDebug) { // blame keen
+                if (rifleIsDedidcatedOrDebug) { // blame keen
                     var wComp = (Weapon.WeaponComponent)_part.BaseComp;
                     var offset = !wComp.Rifle.GunBase.HasIronSightsActive;
                     partWorldMatrix = wComp.GetHandWeaponApproximateWorldMatrix(offset);
@@ -141,6 +141,7 @@ namespace CoreSystems.Support
                 }
                 else
                 {
+                    Vector3D.Transform(ref localPos, ref partWorldMatrix, out CachedPos);
                     bool clientRifleOffset = false;
                     if (rifle) // I lack the words to describe the level of my disgust
                     {
@@ -156,8 +157,6 @@ namespace CoreSystems.Support
 
                     if (!clientRifleOffset)
                         Vector3D.TransformNormal(ref localDir, ref partWorldMatrix, out CachedDir);
-
-                    Vector3D.Transform(ref localPos, ref partWorldMatrix, out CachedPos);
                 }
 
                 _info.Position = CachedPos;

@@ -323,20 +323,22 @@ namespace CoreSystems.Support
                         if (a.OnScreen == Screen.None && s.Camera.IsInFrustum(ref a.ModelSphereCurrent))
                             a.OnScreen = Screen.ModelOnly;
                     }
-
-                    if (a.OnScreen == Screen.None && (aConst.AmmoParticle && aConst.AmmoParticleNoCull))
-                    {
-                        a.OnScreen = a.Model == ModelState.Exists ? Screen.ModelOnly : Screen.Trail;
-                    }
                 }
 
                 if (a.OnScreen == Screen.None)
                 {
-                    a.TestSphere.Center = a.TracerFront;
-                    if (s.Camera.IsInFrustum(ref a.TestSphere))
-                        a.OnScreen = Screen.InProximity;
-                    else if (Vector3D.DistanceSquared(a.TracerFront, s.CameraPos) <= 225)
-                        a.OnScreen = Screen.InProximity;
+                    if (aConst.AmmoParticle && aConst.AmmoParticleNoCull)
+                    {
+                        a.OnScreen = a.ModelOnly ? Screen.ModelOnly : Screen.Trail;
+                    }
+                    else
+                    {
+                        a.TestSphere.Center = a.TracerFront;
+                        if (s.Camera.IsInFrustum(ref a.TestSphere))
+                            a.OnScreen = Screen.InProximity;
+                        else if (Vector3D.DistanceSquared(a.TracerFront, s.CameraPos) <= 225)
+                            a.OnScreen = Screen.InProximity;
+                    }
                 }
 
                 if (maxDrawCnt > 0) {
@@ -379,7 +381,7 @@ namespace CoreSystems.Support
 
                 var lineOnScreen = a.OnScreen > (Screen)2;
 
-                if (!a.Active && (a.OnScreen != Screen.None || a.HitSoundInitted || a.TravelSound)) {
+                if (!a.Active && (a.OnScreen != Screen.None || a.HitSoundInitted || a.TravelSound || aConst.AmmoParticleNoCull || saveHit && aConst.HitParticleNoCull || aConst.FieldParticle && aConst.FieldParticleNoCull)) {
                     a.Active = true;
                     s.Av.AvShots.Add(a);
                 }
@@ -912,7 +914,6 @@ namespace CoreSystems.Support
             TravelEmitter.Entity = PrimeEntity;
             ApproachConstants def = StageIdx == -1 ? null : AmmoDef.Const.Approaches[StageIdx];
             var pair = def == null  || !def.AlternateTravelSound ? AmmoDef.Const.TravelSoundPair : def.SoundPair;
-            Log.Line($"start travel sound: {StageIdx} - {def?.Definition.AlternateSound}");
 
             TravelEmitter.PlaySound(pair, true);
             TravelSound = true;
@@ -1028,7 +1029,6 @@ namespace CoreSystems.Support
             }
             if (TravelSound && TravelEmitter != null)
             {
-                Log.Line($"stop sound");
                 TravelEmitter.StopSound(true);
                 TravelSound = false;
             }

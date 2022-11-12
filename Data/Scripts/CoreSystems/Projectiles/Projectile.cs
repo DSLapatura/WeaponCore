@@ -1218,7 +1218,7 @@ namespace CoreSystems.Projectiles
         #region Smart
         internal void RunSmart()
         {
-            var proposedVel = Velocity;
+            Vector3D proposedVel = Velocity;
 
             var ammo = Info.AmmoDef;
             var aConst = ammo.Const;
@@ -1228,6 +1228,9 @@ namespace CoreSystems.Projectiles
             var startTrack = s.SmartReady || coreParent == null || coreParent.MarkedForClose;
             var speedCapMulti = 1d;
             var targetLock = false;
+            var approachEnded = s.LastActivatedStage >= aConst.ApproachesCount;
+            var approachActive = s.LastActivatedStage >= 0 && !approachEnded;
+
             if (!startTrack && Info.DistanceTraveled * Info.DistanceTraveled >= aConst.SmartsDelayDistSqr) {
                 var lineCheck = new LineD(Position, LockedTarget ? TargetPosition : Position + (Info.Direction * 10000f));
                 startTrack = !new MyOrientedBoundingBoxD(coreParent.PositionComp.LocalAABB, coreParent.PositionComp.WorldMatrixRef).Intersects(ref lineCheck).HasValue;
@@ -1420,11 +1423,9 @@ namespace CoreSystems.Projectiles
                         s.RandOffsetDir *= smarts.OffsetRatio;
                     }
 
-                    double dist;
-                    Vector3D.DistanceSquared(ref TargetPosition, ref Position, out dist);
-                    var offset = dist > VelocityLengthSqr * 2;
-
-                    if (offset)
+                    double distSqr;
+                    Vector3D.DistanceSquared(ref TargetPosition, ref Position, out distSqr);
+                    if (distSqr > VelocityLengthSqr * 2)
                     {
                         commandedAccel += accelMpsMulti * s.RandOffsetDir;
                         commandedAccel = Vector3D.Normalize(commandedAccel) * accelMpsMulti;
@@ -1440,7 +1441,7 @@ namespace CoreSystems.Projectiles
                     Vector3D.Normalize(ref proposedVel, out Info.Direction);
                 }
             }
-            else if (!smarts.AccelClearance)
+            else if (!smarts.AccelClearance || s.SmartReady)
             {
                 proposedVel = Velocity + MaxAccelVelocity;
             }
@@ -1448,7 +1449,8 @@ namespace CoreSystems.Projectiles
             VelocityLengthSqr = proposedVel.LengthSquared();
 
             var speedCap = speedCapMulti * MaxSpeed;
-            if (VelocityLengthSqr > MaxSpeedSqr || s.LastActivatedStage >= 0 && VelocityLengthSqr > speedCap * speedCap)
+            
+            if (VelocityLengthSqr > MaxSpeedSqr || approachActive && VelocityLengthSqr > speedCap * speedCap)
                 proposedVel = Info.Direction * speedCap;
 
             PrevVelocity = Velocity;
@@ -1570,6 +1572,8 @@ namespace CoreSystems.Projectiles
 
                         break;
                     case Conditions.DistanceFromTarget: // could save a sqrt by inlining and using heightDir
+                        if (Info.Ai.Session.DebugMod)
+                            DsDebugDraw.DrawLine(heightend, s.SetTargetPos, Color.Green, 10);
                         start1 = MyUtils.GetPointLineDistance(ref heightend, ref s.SetTargetPos, ref Position) - aConst.CollisionSize <= def.Start1Value;
                         break;
                     case Conditions.Lifetime:
@@ -1602,6 +1606,8 @@ namespace CoreSystems.Projectiles
                         start2 = distFromSurfaceSqr >= greaterThanTolerance && distFromSurfaceSqr <= lessThanTolerance;
                         break;
                     case Conditions.DistanceFromTarget: // could save a sqrt by inlining and using heightDir
+                        if (Info.Ai.Session.DebugMod)
+                            DsDebugDraw.DrawLine(heightend, s.SetTargetPos, Color.Blue, 10);
                         start2 = MyUtils.GetPointLineDistance(ref heightend, ref s.SetTargetPos, ref Position) - aConst.CollisionSize <= def.Start2Value;
                         break;
                     case Conditions.Lifetime:
@@ -1619,16 +1625,7 @@ namespace CoreSystems.Projectiles
                         break;
                 }
 
-                var start = start1 && start2 || s.LastActivatedStage >= 0 && def.EndOnlyOnNextStart;
-
-                var travelLead = Info.DistanceTraveled - s.StartDistanceTraveled >= def.TrackingDistance ? Info.DistanceTraveled : 0;
-                var desiredLead = travelLead + def.LeadDistance;
-                var clampedLead = start ? MathHelperD.Clamp(desiredLead, approach.ModFutureStep, approach.ModLeadConstraint) : MathHelperD.Clamp(desiredLead, approach.FutureStep, approach.LeadConstraint);
-                
-                Log.Line($"[dLead:{desiredLead} cLead:{clampedLead}] - {approach.ModLeadConstraint} - {approach.LeadConstraint}");
-                var followPosition = heightStart + heightDir * clampedLead;
-                
-                if (start)
+                if (start1 && start2 || s.LastActivatedStage >= 0 && def.EndOnlyOnNextStart)
                 {
                     if (s.LastActivatedStage != s.RequestedStage)
                     {
@@ -1637,17 +1634,23 @@ namespace CoreSystems.Projectiles
                     }
 
                     accelMpsMulti = AccelInMetersPerSec * def.AccelMulti;
-                    speedCapMulti = (def.SpeedCapMulti * MaxSpeed);
+                    speedCapMulti = def.SpeedCapMulti;
+
+                    var travelLead = Info.DistanceTraveled - s.StartDistanceTraveled >= def.TrackingDistance ? Info.DistanceTraveled : 0;
+                    var desiredLead = (def.PushLeadByTravelDistance ? travelLead : 0) + def.LeadDistance;
+                    var clampedLead = MathHelperD.Clamp(desiredLead, approach.ModFutureStep, double.MaxValue);
+                    var followPosition = heightStart + heightDir * clampedLead;
 
                     Vector3D adjFollowPos;
-                    Vector3D followSurfacePos;
-
                     switch (def.AdjustElevation)
                     {
                         case VantagePointRelativeTo.Surface:
                         {
                             if (Info.MyPlanet != null && planetExists && def.AdjustElevation == VantagePointRelativeTo.Surface)
+                            {
+                                Vector3D followSurfacePos;
                                 adjFollowPos = PlanetSurfaceHeightAdjustment(followPosition, s.OffsetDir, approach, out followSurfacePos);
+                            }
                             else
                                 adjFollowPos = followPosition;
                             break;
@@ -1688,14 +1691,19 @@ namespace CoreSystems.Projectiles
                     var targetsPerspectiveDir = Vector3D.Normalize(adjFollowPos - trackedPos);
 
                     TargetPosition = MyUtils.LinePlaneIntersection(adjFollowPos, heightDir, trackedPos, targetsPerspectiveDir);
+
+                    if (Info.Ai.Session.DebugMod)
+                    {
+                        DsDebugDraw.DrawLine(adjFollowPos, trackedPos, Color.White, 10f);
+                        DsDebugDraw.DrawSingleVec(trackedPos, 50f, Color.LightSkyBlue);
+                    }
                 }
 
                 if (Info.Ai.Session.DebugMod)
                 {
-                    DsDebugDraw.DrawSingleVec(heightStart, 5f, Color.Red);
-                    DsDebugDraw.DrawSingleVec(heightend, 5f, Color.Blue);
-                    DsDebugDraw.DrawSingleVec(TargetPosition, 10f, Color.Yellow);
-                    DsDebugDraw.DrawSingleVec(Position, 5f, Color.White);
+                    DsDebugDraw.DrawSingleVec(heightStart, 50f, Color.GreenYellow);
+                    DsDebugDraw.DrawSingleVec(heightend, 50f, Color.LightSkyBlue);
+                    DsDebugDraw.DrawSingleVec(TargetPosition, 50f, Color.Red);
                 }
 
                 bool end1;
@@ -1719,6 +1727,8 @@ namespace CoreSystems.Projectiles
                             end1 = start2;
                         else
                         {
+                            if (Info.Ai.Session.DebugMod)
+                                DsDebugDraw.DrawLine(heightend, s.SetTargetPos, Color.Red, 10);
                             end1 = MyUtils.GetPointLineDistance(ref heightend, ref s.SetTargetPos, ref Position) - aConst.CollisionSize <= def.End1Value;
                         }
                         break;
@@ -1757,6 +1767,8 @@ namespace CoreSystems.Projectiles
                             end2 = start2;
                         else
                         {
+                            if (Info.Ai.Session.DebugMod)
+                                DsDebugDraw.DrawLine(heightend, s.SetTargetPos, Color.Yellow, 10);
                             end2 = MyUtils.GetPointLineDistance(ref heightend, ref s.SetTargetPos, ref Position) - aConst.CollisionSize <= def.End2Value;
                         }
                         break;
@@ -1797,7 +1809,7 @@ namespace CoreSystems.Projectiles
                     }
                     else if (!hasNextStep)
                     {
-                        Log.Line($"Approach ended, no more steps - age:{Info.Age} - {def.Failure} - {def.EndCondition1} - {def.End1Value}");
+                        Log.Line($"Approach ended, no more steps - age:{Info.Age} - strages:[r:{s.RequestedStage} l:{s.LastActivatedStage}] - ec1:{def.EndCondition1} - ec1:{def.End1Value} - ec1:{def.EndCondition2} - ec1:{def.End2Value} - failure:{def.Failure}");
                         s.LastActivatedStage = aConst.Approaches.Length;
                         s.RequestedStage = aConst.Approaches.Length;
                     }
