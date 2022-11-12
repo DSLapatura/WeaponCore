@@ -16,15 +16,15 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
         {
             var s = _session;
             if (s.TrackingAi.AiType == Ai.AiTypes.Phantom || s.UiInput.FirstPersonView && !s.UiInput.TurretBlockView && !s.UiInput.IronSights && !s.UiInput.AltPressed) return;
-            if (MyAPIGateway.Input.IsNewKeyReleased(MyKeys.Control) && !s.UiInput.FirstPersonView && !s.UiInput.CameraBlockView && !s.UiInput.TurretBlockView)
+            if (s.UiInput.CtrlReleased && !s.UiInput.FirstPersonView && !s.UiInput.CameraBlockView && !s.UiInput.TurretBlockView)
             {
                 switch (_3RdPersonDraw)
                 {
                     case ThirdPersonModes.None:
-                        _3RdPersonDraw = ThirdPersonModes.DotTarget;
+                        _3RdPersonDraw = !s.UiInput.HoldingPlayerWeapon ? ThirdPersonModes.DotTarget : ThirdPersonModes.None;
                         break;
                     case ThirdPersonModes.DotTarget:
-                        _3RdPersonDraw = ThirdPersonModes.Crosshair;
+                        _3RdPersonDraw = !s.UiInput.HoldingPlayerWeapon ? ThirdPersonModes.Crosshair : ThirdPersonModes.None;
                         break;
                     case ThirdPersonModes.Crosshair:
                         _3RdPersonDraw = ThirdPersonModes.None;
@@ -35,10 +35,9 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             if (s.UiInput.TurretBlockView || s.UiInput.CameraBlockView)
                 _3RdPersonDraw = ThirdPersonModes.DotTarget;
 
-            var playerAi = s.TrackingAi.AiType == Ai.AiTypes.Player;
             var enableActivator = _3RdPersonDraw == ThirdPersonModes.Crosshair || s.UiInput.FirstPersonView && s.UiInput.AltPressed && !s.UiInput.IronSights || s.UiInput.CameraBlockView;
 
-            if (enableActivator || !s.UiInput.FirstPersonView && !s.UiInput.CameraBlockView && !playerAi || s.UiInput.TurretBlockView || s.UiInput.IronSights)
+            if (enableActivator || !s.UiInput.FirstPersonView && !s.UiInput.CameraBlockView && !s.UiInput.HoldingPlayerWeapon || s.UiInput.TurretBlockView || s.UiInput.IronSights)
                 DrawSelector(enableActivator);
         }
 

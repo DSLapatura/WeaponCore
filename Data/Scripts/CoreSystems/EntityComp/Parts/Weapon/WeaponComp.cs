@@ -98,7 +98,9 @@ namespace CoreSystems.Platform
                     }
 
                     if (w.ProtoWeaponAmmo.CurrentAmmo == 0 && !w.Loading)
+                    {
                         w.EventTriggerStateChanged(WeaponDefinition.AnimationDef.PartAnimationSetDef.EventTriggers.EmptyOnGameLoad, true);
+                    }
 
                     if (TypeSpecific == CompTypeSpecific.Rifle)
                     {
@@ -592,6 +594,44 @@ namespace CoreSystems.Platform
 
                 if (comp.Session.MpActive)
                     comp.Session.SendComp(comp);
+            }
+
+            internal static bool GetThreatValue(WeaponComponent comp, string setting, out bool enabled, out string primaryName)
+            {
+                var o = comp.Data.Repo.Values.Set.Overrides;
+                switch (setting)
+                {
+                    case "Unowned":
+                    case "Other":
+                        primaryName = "Unowned";
+                        enabled = o.Unowned;
+                        return true;
+                    case "Meteors":
+                        primaryName = "Meteors";
+                        enabled = o.Meteors;
+                        return true;
+                    case "Grids":
+                        primaryName = "Grids";
+                        enabled = o.Grids;
+                        return true;
+                    case "Biologicals":
+                    case "Characters":
+                        primaryName = "Biologicals";
+                        enabled = o.Biologicals;
+                        return true;
+                    case "Projectiles":
+                        primaryName = "Projectiles";
+                        enabled = o.Projectiles;
+                        return true;
+                    case "Neutrals":
+                        primaryName = "Neutrals";
+                        enabled = o.Neutrals;
+                        return true;
+                    default:
+                        primaryName = string.Empty;
+                        enabled = false;
+                        return false;
+                }
             }
 
             internal static void ResetCompState(WeaponComponent comp, long playerId, bool resetTarget, Dictionary<string, int> settings = null)

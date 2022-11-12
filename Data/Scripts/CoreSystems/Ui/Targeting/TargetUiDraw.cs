@@ -59,19 +59,23 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             }
             else if (s.UiInput.CtrlPressed)
             {
-                if (s.UiInput.PreviousWheel != s.UiInput.CurrentWheel)
+                if (!s.UiInput.HoldingPlayerWeapon)
                 {
-                    var currentPos = _pointerPosition.Y;
-                    if (s.UiInput.CurrentWheel > s.UiInput.PreviousWheel) currentPos += 0.05f;
-                    else currentPos -= 0.05f;
-                    var clampPos = MathHelper.Clamp(currentPos, -1.25f, 1.25f);
-                    _3RdPersonPos.Y = clampPos;
-                    InitPointerOffset(0.05);
-                }
-                if (!MyUtils.IsEqual(_pointerPosition, _3RdPersonPos))
-                {
-                    _pointerPosition = _3RdPersonPos;
-                    InitPointerOffset(0.05);
+                    if (s.UiInput.PreviousWheel != s.UiInput.CurrentWheel)
+                    {
+                        var currentPos = _pointerPosition.Y;
+                        if (s.UiInput.CurrentWheel > s.UiInput.PreviousWheel) currentPos += 0.05f;
+                        else currentPos -= 0.05f;
+                        var clampPos = MathHelper.Clamp(currentPos, -1.25f, 1.25f);
+                        _3RdPersonPos.Y = clampPos;
+                        InitPointerOffset(0.05);
+                    }
+
+                    if (!MyUtils.IsEqual(_pointerPosition, _3RdPersonPos))
+                    {
+                        _pointerPosition = _3RdPersonPos;
+                        InitPointerOffset(0.05);
+                    }
                 }
             }
             else if (!MyUtils.IsEqual(_pointerPosition, _3RdPersonPos))

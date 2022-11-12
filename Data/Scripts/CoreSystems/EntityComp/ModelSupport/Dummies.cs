@@ -124,20 +124,41 @@ namespace CoreSystems.Support
                     UpdatePhantom();
 
                 var dummyMatrix = _cachedDummyMatrix ?? MatrixD.Identity;
-                var requiresHandWeaponOffsets = _part != null && _part.BaseComp.TypeSpecific == CompTypeSpecific.Rifle && _part.BaseComp.Session.DedicatedServer;
+                var rifle = _part != null && _part.BaseComp.TypeSpecific == CompTypeSpecific.Rifle;
+                var isDedicatedOrDebug = rifle && (_part.BaseComp.Session.DedicatedServer || _part.BaseComp.Session.DebugMod);
                 var localPos = dummyMatrix.Translation;
                 var localDir = dummyMatrix.Forward;
                 var localUpDir = dummyMatrix.Up;
                 var partWorldMatrix = _cachedSubpart.PositionComp.WorldMatrixRef;
 
-                if (requiresHandWeaponOffsets) {
-                    var wComp = (Weapon.WeaponComponent) _part.BaseComp;
-                    partWorldMatrix = wComp.GetHandWeaponApproximateWorldMatrix();
+                if (isDedicatedOrDebug) { // blame keen
+                    var wComp = (Weapon.WeaponComponent)_part.BaseComp;
+                    var offset = !wComp.Rifle.GunBase.HasIronSightsActive;
+                    partWorldMatrix = wComp.GetHandWeaponApproximateWorldMatrix(offset);
+                    Vector3D.Transform(ref localPos, ref partWorldMatrix, out CachedPos);
+                    CachedDir = Vector3D.Normalize(wComp.CharacterPosComp.LogicalCrosshairPoint - CachedPos);
+                    CachedUpDir = partWorldMatrix.Up;
                 }
+                else
+                {
+                    bool clientRifleOffset = false;
+                    if (rifle) // I lack the words to describe the level of my disgust
+                    {
+                        var wComp = (Weapon.WeaponComponent)_part.BaseComp;
+                        clientRifleOffset = !wComp.Rifle.GunBase.HasIronSightsActive;
+                        var keenWhyPartWorldMatrix = wComp.GetHandWeaponApproximateWorldMatrix(clientRifleOffset);
+                        CachedUpDir = keenWhyPartWorldMatrix.Up;
+                        if (clientRifleOffset)
+                            CachedDir = Vector3D.Normalize(wComp.CharacterPosComp.LogicalCrosshairPoint - CachedPos);
+                    }
+                    else
+                        Vector3D.TransformNormal(ref localUpDir, ref partWorldMatrix, out CachedUpDir);
 
-                Vector3D.Transform(ref localPos, ref partWorldMatrix, out CachedPos);
-                Vector3D.TransformNormal(ref localDir, ref partWorldMatrix, out CachedDir);
-                Vector3D.TransformNormal(ref localUpDir, ref partWorldMatrix, out CachedUpDir);
+                    if (!clientRifleOffset)
+                        Vector3D.TransformNormal(ref localDir, ref partWorldMatrix, out CachedDir);
+
+                    Vector3D.Transform(ref localPos, ref partWorldMatrix, out CachedPos);
+                }
 
                 _info.Position = CachedPos;
                 _info.LocalPosition = localPos;

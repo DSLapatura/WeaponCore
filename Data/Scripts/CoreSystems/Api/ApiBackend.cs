@@ -930,11 +930,39 @@ namespace CoreSystems.Api
             return false;
         }
 
-        private static void SetTurretTargetTypesLegacy(IMyEntity weaponBlock, ICollection<string> collection, int weaponId = 0) => SetTurretTargetTypes((MyEntity) weaponBlock, collection, weaponId);
-        private static void SetTurretTargetTypes(MyEntity weaponBlock, ICollection<string> collection, int weaponId = 0)
-        {
+        private void SetTurretTargetTypesLegacy(IMyEntity weaponBlock, ICollection<string> collection, int weaponId = 0) => SetTurretTargetTypes((MyEntity) weaponBlock, collection, weaponId);
 
+        private readonly HashSet<WeaponDefinition.TargetingDef.Threat> _validRequests = new HashSet<WeaponDefinition.TargetingDef.Threat>();
+        private void SetTurretTargetTypes(MyEntity weaponBlock, ICollection<string> collection, int weaponId = 0)
+        {
+            var comp = weaponBlock.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp?.Platform != null && comp.Platform.State == Ready && comp.Platform.Weapons.Count > weaponId)
+            {
+                var weapon = comp.Platform.Weapons[weaponId];
+                var threats = weapon.System.Values.Targeting.Threats;
+
+                foreach (var request in collection)
+                {
+                    foreach (var validThreats in threats)
+                    {
+                        if (request == validThreats.ToString())
+                            _validRequests.Add(validThreats);
+                    }
+                }
+
+                foreach (var request in _validRequests)
+                {
+                    bool enabled;
+                    string primaryName;
+                    if (Weapon.WeaponComponent.GetThreatValue(comp, request.ToString(), out enabled, out primaryName))
+                    {
+                        Weapon.WeaponComponent.SetValue(comp, primaryName, enabled ? 0 : 1, 0);
+                    }
+                }
+            }
+            _validRequests.Clear();
         }
+
         private static void SetBlockTrackingRangeLegacy(IMyEntity weaponBlock, float range) =>SetBlockTrackingRange((MyEntity) weaponBlock, range);
         private static void SetBlockTrackingRange(MyEntity weaponBlock, float range)
         {
@@ -1017,7 +1045,7 @@ namespace CoreSystems.Api
                 var targetVel = topMost.Physics?.LinearVelocity ?? Vector3.Zero;
                 var targetAccel = topMost.Physics?.AngularAcceleration ?? Vector3.Zero;
                 Vector3D predictedPos;
-                return Weapon.CanShootTargetObb(w, (MyEntity)targetEnt, targetVel, targetAccel, out predictedPos);
+                return Weapon.CanShootTargetObb(w, targetEnt, targetVel, targetAccel, out predictedPos);
             }
             return false;
         }

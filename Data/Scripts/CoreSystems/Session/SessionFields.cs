@@ -453,6 +453,7 @@ namespace CoreSystems
         internal bool LeadGroupActive;
         internal bool ArmorCoreActive;
         internal bool DebugMod;
+        internal bool DebugVersion;
         internal bool AntiSmartActive;
         internal bool DirtyGrid;
         internal bool AuthorConnected;

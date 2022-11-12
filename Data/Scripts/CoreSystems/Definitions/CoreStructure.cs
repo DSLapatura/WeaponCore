@@ -7,7 +7,7 @@ using static CoreSystems.Support.WeaponDefinition.HardPointDef;
 namespace CoreSystems.Support
 {
 
-    internal class CoreStructure
+    public class CoreStructure
     {
         internal Dictionary<MyStringHash, CoreSystem> PartSystems;
         internal Dictionary<int, int> HashToId;
@@ -44,7 +44,7 @@ namespace CoreSystems.Support
         }
     }
 
-    internal class WeaponStructure : CoreStructure
+    public class WeaponStructure : CoreStructure
     {
         internal bool TurretAttached;
         internal double MaxLockRange = 10000;

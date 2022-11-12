@@ -87,7 +87,9 @@ namespace CoreSystems.Support
                                 Session.FutureEvents.Schedule(w.TurnOnAV, null, 100);
 
                             if (w.ProtoWeaponAmmo.CurrentAmmo == 0)
-                                w.EventTriggerStateChanged(EventTriggers.EmptyOnGameLoad, true);                            
+                            {
+                                w.EventTriggerStateChanged(EventTriggers.EmptyOnGameLoad, true);
+                            }
                         }
                     }
                 }

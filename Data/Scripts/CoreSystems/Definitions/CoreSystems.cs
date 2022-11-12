@@ -14,7 +14,7 @@ using static CoreSystems.Support.WeaponDefinition.AmmoDef.EwarDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.AreaOfDamageDef;
 namespace CoreSystems.Support
 {
-    internal class CoreSystem
+    public class CoreSystem
     {
         public const string Arc = "Arc";
         public HardwareDef.HardwareType PartType;
@@ -96,9 +96,9 @@ namespace CoreSystems.Support
         }
     }
 
-    internal class WeaponSystem : CoreSystem
+    public class WeaponSystem : CoreSystem
     {
-        internal class AmmoType
+        public class AmmoType
         {
             public MyDefinitionId AmmoDefinitionId;
             public MyDefinitionId EjectionDefinitionId;

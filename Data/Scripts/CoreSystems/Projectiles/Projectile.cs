@@ -17,6 +17,8 @@ using static CoreSystems.Support.WeaponDefinition.AmmoDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.EwarDef.EwarType;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.FragmentDef.TimedSpawnDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.TrajectoryDef.ApproachDef;
+using static VRage.Game.MyObjectBuilder_SessionComponentMission;
+
 namespace CoreSystems.Projectiles
 {
     internal class Projectile
@@ -1550,6 +1552,7 @@ namespace CoreSystems.Projectiles
                 var heightStart = s.LookAtPos + heightOffset;
                 var heightend = (def.AdjustToTargetMovement ? s.SetTargetPos : Info.Target.TargetPos) + heightOffset;
                 var heightDir = heightend - heightStart;
+                var startToEndDist = heightDir.Normalize();
 
                 bool start1;
                 switch (def.StartCondition1)
@@ -1616,11 +1619,16 @@ namespace CoreSystems.Projectiles
                         break;
                 }
 
-                var startToEndDist = heightDir.Normalize();
+                var start = start1 && start2 || s.LastActivatedStage >= 0 && def.EndOnlyOnNextStart;
+
                 var travelLead = Info.DistanceTraveled - s.StartDistanceTraveled >= def.TrackingDistance ? Info.DistanceTraveled : 0;
-                var totalLead = travelLead + 0;
-                var followPosition = heightStart + heightDir * totalLead;
-                if (start1 && start2 || s.LastActivatedStage >= 0 && def.EndOnlyOnNextStart)
+                var desiredLead = travelLead + def.LeadDistance;
+                var clampedLead = start ? MathHelperD.Clamp(desiredLead, approach.ModFutureStep, approach.ModLeadConstraint) : MathHelperD.Clamp(desiredLead, approach.FutureStep, approach.LeadConstraint);
+                
+                Log.Line($"[dLead:{desiredLead} cLead:{clampedLead}] - {approach.ModLeadConstraint} - {approach.LeadConstraint}");
+                var followPosition = heightStart + heightDir * clampedLead;
+                
+                if (start)
                 {
                     if (s.LastActivatedStage != s.RequestedStage)
                     {
@@ -1633,15 +1641,47 @@ namespace CoreSystems.Projectiles
 
                     Vector3D adjFollowPos;
                     Vector3D followSurfacePos;
-                    if (Info.MyPlanet != null && planetExists && def.AdjustElevation)
-                        adjFollowPos = PlanetSurfaceHeightAdjustment(followPosition, s.OffsetDir, approach, out followSurfacePos);
-                    else if (def.AdjustElevation)
+
+                    switch (def.AdjustElevation)
                     {
-                        adjFollowPos = followPosition;
-                    }
-                    else
-                    {
-                        adjFollowPos = followPosition;
+                        case VantagePointRelativeTo.Surface:
+                        {
+                            if (Info.MyPlanet != null && planetExists && def.AdjustElevation == VantagePointRelativeTo.Surface)
+                                adjFollowPos = PlanetSurfaceHeightAdjustment(followPosition, s.OffsetDir, approach, out followSurfacePos);
+                            else
+                                adjFollowPos = followPosition;
+                            break;
+                        }
+                        case VantagePointRelativeTo.Origin:
+                        {
+                            adjFollowPos = followPosition;
+                            break;
+                        }
+                        case VantagePointRelativeTo.MidPoint:
+                        {
+                            var projetedPos = Vector3D.Lerp(s.SetTargetPos, followPosition, 0.5);
+                            var plane = new PlaneD(projetedPos, heightDir);
+                            var distToPlane = plane.DistanceToPoint(followPosition);
+                            adjFollowPos = followPosition + (heightDir * distToPlane);
+                            break;
+                        }
+                        case VantagePointRelativeTo.Shooter:
+                        {
+                            var plane = new PlaneD(Info.Weapon.MyPivotPos, heightDir);
+                            var distToPlane = plane.DistanceToPoint(followPosition);
+                            adjFollowPos = followPosition + (heightDir * distToPlane);
+                            break;
+                        }
+                        case VantagePointRelativeTo.Target:
+                        {
+                            var plane = new PlaneD(s.SetTargetPos, heightDir);
+                            var distToPlane = plane.DistanceToPoint(followPosition);
+                            adjFollowPos = followPosition + (heightDir * distToPlane);
+                            break;
+                        }
+                        default:
+                            adjFollowPos = followPosition;
+                            break;
                     }
 
                     var trackedPos = def.AdjustToTargetMovement ? s.SetTargetPos : Info.Target.TargetPos;

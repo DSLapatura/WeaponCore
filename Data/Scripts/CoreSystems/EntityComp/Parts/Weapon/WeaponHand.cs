@@ -1,4 +1,5 @@
 ﻿using CoreSystems.Support;
+using Sandbox.Common.ObjectBuilders;
 using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Character.Components;
 using Sandbox.Game.Weapons;
@@ -71,15 +72,12 @@ namespace CoreSystems.Platform
             {
                 if (active && state == EventTriggers.Reloading)
                 {
-                    Log.Line($"reloadActive: wAmmo:{w.ProtoWeaponAmmo.CurrentAmmo} - wcMag:{w.Reload.CurrentMags} - ammo:{Rifle.CurrentAmmunition} - magCurrentAmmo:{Rifle.CurrentMagazineAmmunition} - magAmount:{Rifle.CurrentMagazineAmount}");
-
                     if (Session.IsServer)
                         Rifle.Reload();
                 }
                 else
                 {
                     Session.FutureEvents.Schedule(ForceAmmoValues, null, 15);
-                    Log.Line($"reloadInactive: wAmmo:{w.ProtoWeaponAmmo.CurrentAmmo} - wcMag:{w.Reload.CurrentMags} - ammo:{Rifle.CurrentAmmunition} - magCurrentAmmo:{Rifle.CurrentMagazineAmmunition} - magAmount:{Rifle.CurrentMagazineAmount}");
                 }
             }
 
@@ -87,8 +85,6 @@ namespace CoreSystems.Platform
             {
                 if (active)
                 {
-                    Log.Line($"HandhelShoot: wAmmo:{w.ProtoWeaponAmmo.CurrentAmmo} - wcMag:{w.Reload.CurrentMags} - ammo:{Rifle.CurrentAmmunition} - magCurrentAmmo:{Rifle.CurrentMagazineAmmunition} - magAmount:{Rifle.CurrentMagazineAmount}");
-
                     Rifle.Shoot(MyShootActionEnum.PrimaryAction, Vector3D.Zero, null);
                     MyCharacterWeaponPositionComponent positionComponent = w.Comp.Rifle.Owner.Components.Get<MyCharacterWeaponPositionComponent>();
                 }
@@ -96,18 +92,25 @@ namespace CoreSystems.Platform
 
             internal void AmmoStorage(bool load = false)
             {
+                if (Session.IsCreative)
+                {
+                    if (load)
+                        PrimaryWeapon.ProtoWeaponAmmo.CurrentAmmo = Rifle.CurrentMagazineAmmunition;
+                    return;
+                }
+
                 foreach (var item in CoreInventory.GetItems())
                 {
                     var physGunOb = item.Content as MyObjectBuilder_PhysicalGunObject;
 
-                    if (physGunOb?.GunEntity != null && physGunOb.GunEntity.EntityId == GunBase.PhysicalObject.GunEntity.EntityId)
+                    if (physGunOb?.GunEntity is MyObjectBuilder_AutomaticRifle && Session.CoreSystemsDefs.ContainsKey(physGunOb.SubtypeId.String))
                     {
+
                         WeaponObStorage storage;
                         var newStorage = false;
                         if (!Ai.WeaponAmmoCountStorage.TryGetValue(physGunOb, out storage))
                         {
                             newStorage = true;
-
                             Rifle.CurrentMagazineAmount = PrimaryWeapon.Reload.CurrentMags;
                             storage = new WeaponObStorage
                             {
@@ -122,6 +125,12 @@ namespace CoreSystems.Platform
                         else
                             Log.Line($"retrived storage for: loading:{load} - {physGunOb.GunEntity.EntityId}[{GunBase.PhysicalObject.GunEntity.EntityId}] - {physGunOb.SubtypeName}");
 
+                        if (physGunOb.GunEntity.EntityId != GunBase.PhysicalObject.GunEntity.EntityId)
+                        {
+                            Log.Line($"ammoStorage skipping: {physGunOb.SubtypeName}[{physGunOb.GunEntity.EntityId}] not active entity: {GunBase.PhysicalObject.SubtypeName}[{GunBase.PhysicalObject.GunEntity.EntityId}]");
+                            continue;
+                        }
+
                         if (!load)
                         {
                             storage.CurrentAmmunition = Rifle.CurrentAmmunition;
@@ -135,10 +144,6 @@ namespace CoreSystems.Platform
                             PrimaryWeapon.ProtoWeaponAmmo.CurrentAmmo = storage.CurrentMagazineAmmunition;
                             Rifle.CurrentMagazineAmount = storage.CurrentMagazineAmount;
                         }
-
-                        Log.Line($"ammo[s:{storage.CurrentAmmunition} r:{Rifle.CurrentAmmunition} w:{PrimaryWeapon.ProtoWeaponAmmo.CurrentAmmo}] - mAmmo[s:{storage.CurrentMagazineAmmunition} r:{Rifle.CurrentMagazineAmmunition}] - mags[s:{storage.CurrentMagazineAmount} r:{Rifle.CurrentMagazineAmount} w:{PrimaryWeapon.Reload.CurrentMags}]");
-
-
 
                         /*
                         var whateverThisIs = physGunOb.GunEntity as IMyObjectBuilder_GunObject<MyObjectBuilder_GunBase>;
@@ -166,14 +171,16 @@ namespace CoreSystems.Platform
                 Session.ShowLocalNotify($"Ammo type swapped to: {w.ActiveAmmoDef.AmmoName}", 1500, "White", true);
             }
 
-            internal Matrix GetHandWeaponApproximateWorldMatrix()
+            internal Matrix GetHandWeaponApproximateWorldMatrix(bool offset)
             {
                 var rifleLocalMatrix = Rifle.PositionComp.LocalMatrixRef;
                 rifleLocalMatrix.Translation = (CharacterPosComp.LogicalPositionWorld);
-
-                rifleLocalMatrix.Translation += (rifleLocalMatrix.Forward * 0.25f);
+                if (offset)
+                {
+                    rifleLocalMatrix.Translation += (rifleLocalMatrix.Forward * 0.25f);
+                    rifleLocalMatrix.Translation += (rifleLocalMatrix.Right * 0.15f);
+                }
                 rifleLocalMatrix.Translation += (rifleLocalMatrix.Down * 0.25f);
-                rifleLocalMatrix.Translation += (rifleLocalMatrix.Right * 0.25f);
 
                 return rifleLocalMatrix;
             }

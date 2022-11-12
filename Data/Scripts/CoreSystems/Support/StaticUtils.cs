@@ -137,14 +137,22 @@ namespace CoreSystems.Support
         }
 
         public static IMyTerminalControlOnOffSwitch RefreshToggle;
+        public static MyCubeBlock RefreshToggleCube;
 
         public static void UpdateTerminal(this MyCubeBlock block)
         {
             try
             {
+                if (block == RefreshToggleCube && RefreshToggle != null)
+                {
+                    RefreshTerminalControls((IMyTerminalBlock)block);
+                    return;
+                }
+
                 if (!GetRefreshToggle())
                     return;
 
+                RefreshToggleCube = block;
                 RefreshTerminalControls((IMyTerminalBlock)block);
             }
             catch (Exception ex) { Log.Line($"Exception in UpdateTerminal: {ex}"); }
@@ -177,6 +185,7 @@ namespace CoreSystems.Support
 
             }
         }
+
         /*
         public static void UpdateTerminal(this MyCubeBlock block)
         {

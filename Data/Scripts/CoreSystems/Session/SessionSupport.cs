@@ -685,6 +685,15 @@ namespace CoreSystems
                                 MyAPIGateway.Utilities.ShowNotification($"Client configuration has been set to defaults", 10000);
                                 Settings.VersionControl.UpdateClientCfgFile();
                                 break;
+                            case "debug":
+                                if (DebugVersion)
+                                {
+                                    somethingUpdated = true;
+                                    DebugMod = !DebugMod;
+                                    MyAPIGateway.Utilities.ShowNotification($"Debug has been toggled: {DebugMod}", 10000);
+                                }
+
+                                break;
                         }
                     }
                 }
@@ -913,7 +922,7 @@ namespace CoreSystems
             LocalVersion = ModContext.ModId == "CoreSystems";
 
             if (LocalVersion)
-                DebugMod = true;
+                DebugVersion = true;
 
             foreach (var mod in Session.Mods)
             {
@@ -928,8 +937,8 @@ namespace CoreSystems
                     ReplaceVanilla = true;
                 else if (mod.GetPath().Contains("AppData\\Roaming\\SpaceEngineers\\Mods\\VanillaReplacement") || mod.Name.StartsWith("WCVanilla") || mod.FriendlyName.StartsWith("WCVanilla"))
                     ReplaceVanilla = true;
-                else if (mod.PublishedFileId == 2189703321 || mod.PublishedFileId == 2496225055 || mod.PublishedFileId == 2726343161 || mod.PublishedFileId == 2734980390) 
-                    DebugMod = true;
+                else if (mod.PublishedFileId == 2189703321 || mod.PublishedFileId == 2496225055 || mod.PublishedFileId == 2726343161 || mod.PublishedFileId == 2734980390)
+                    DebugVersion = true;
                 else if (mod.PublishedFileId == 2200451495)
                     WaterMod = true;
             }
@@ -946,6 +955,8 @@ namespace CoreSystems
                     PickDef(baseDefs);
                 }
             }
+
+            DebugMod = DebugVersion;
         }
 
         public string ModPath()

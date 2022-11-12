@@ -150,8 +150,10 @@ namespace CoreSystems.Platform
                     case EventTriggers.Reloading:
                     case EventTriggers.NoMagsToLoad:
                     case EventTriggers.EmptyOnGameLoad:
-                        if (Comp.TypeSpecific == CoreComponent.CompTypeSpecific.Rifle)
+                        if (Comp.TypeSpecific == CoreComponent.CompTypeSpecific.Rifle && (!Comp.Session.IsCreative || state == EventTriggers.Reloading))
+                        {
                             Comp.HandheldReload(this, state, active);
+                        }
                         break;
                 }
 

@@ -55,6 +55,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
         internal bool InfoKeyReleased;
         internal bool BlackListActive1;
         internal bool CtrlPressed;
+        internal bool CtrlReleased;
         internal bool AnyKeyPressed;
         internal bool KeyPrevPressed;
         internal bool UiKeyPressed;
@@ -64,6 +65,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
         internal bool CameraBlockView;
         internal bool TurretBlockView;
         internal long CameraChannelId;
+        internal bool HoldingPlayerWeapon;
         internal bool Debug = true;
         internal bool MouseShootWasOn;
         internal bool MouseShootOn;
@@ -118,11 +120,11 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
 
 
                 ClientInputState.InMenu = _session.InMenu;
-                var playerWeapon = ai.AiType == Ai.AiTypes.Player;
+                HoldingPlayerWeapon = ai.AiType == Ai.AiTypes.Player;
 
-                IronSights = playerWeapon && ai.OnlyWeaponComp.Rifle.GunBase.HasIronSightsActive;
+                IronSights = HoldingPlayerWeapon && ai.OnlyWeaponComp.Rifle.GunBase.HasIronSightsActive;
 
-                if (playerWeapon && s.GunnerBlackList)
+                if (HoldingPlayerWeapon && s.GunnerBlackList)
                 {
                     ReloadKeyPressed = MyAPIGateway.Input.IsKeyPress(ReloadKey);
                     ReloadKeyReleased = MyAPIGateway.Input.IsNewKeyReleased(ReloadKey);
@@ -195,6 +197,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
 
                 AltPressed = MyAPIGateway.Input.IsAnyAltKeyPressed();
                 CtrlPressed = MyAPIGateway.Input.IsKeyPress(MyKeys.Control);
+                CtrlReleased = MyAPIGateway.Input.IsNewKeyReleased(MyKeys.Control);
                 KeyPrevPressed = AnyKeyPressed;
                 AnyKeyPressed = MyAPIGateway.Input.IsAnyKeyPress();
                 UiKeyWasPressed = UiKeyPressed;

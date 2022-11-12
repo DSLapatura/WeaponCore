@@ -20,6 +20,7 @@ using static CoreSystems.Support.WeaponDefinition.AmmoDef.DamageScaleDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.FragmentDef.TimedSpawnDef;
 using static CoreSystems.Support.ValueProcessors;
 using static CoreSystems.Support.WeaponDefinition.HardPointDef;
+using static CoreSystems.Support.CoreComponent;
 
 namespace CoreSystems.Support
 {
@@ -667,7 +668,7 @@ namespace CoreSystems.Support
             {
                 for (int i = 0; i < approaches.Length; i++)
                 {
-                    approaches[i] = new ApproachConstants(ammo.AmmoDef.Trajectory.Approaches[i], i, wDef.ModPath);
+                    approaches[i] = new ApproachConstants(ammo, i, wDef);
                 }
             }
 
@@ -1621,9 +1622,14 @@ namespace CoreSystems.Support
         public readonly bool AlternateTravelParticle;
         public readonly bool AlternateModel;
         public readonly bool StartParticle;
+        public readonly double ModLeadConstraint;
+        public readonly double ModFutureStep;
+        public readonly double LeadConstraint;
+        public readonly double FutureStep;
 
-        public ApproachConstants(ApproachDef def, int index, string modPath)
+        public ApproachConstants(WeaponSystem.AmmoType ammo, int index, WeaponDefinition wDef)
         {
+            var def = ammo.AmmoDef.Trajectory.Approaches[index];
             Index = index;
             Definition = def;
             AlternateTravelSound = !string.IsNullOrEmpty(def.AlternateSound);
@@ -1633,7 +1639,7 @@ namespace CoreSystems.Support
 
             if (AlternateModel)
             {
-                ModelPath = modPath + def.AlternateModel;
+                ModelPath = wDef.ModPath + def.AlternateModel;
             }
 
             if (AlternateTravelSound)
@@ -1642,6 +1648,20 @@ namespace CoreSystems.Support
             }
 
             ModelPool = AlternateModel ? new MyConcurrentPool<MyEntity>(64, AlternateEntityClear, 640, AlternateEntityActivator) : null;
+
+            var stepConst = MyEngineConstants.PHYSICS_STEP_SIZE_IN_SECONDS;
+            var desiredSpeed = ammo.AmmoDef.Trajectory.DesiredSpeed;
+            var accel = ammo.AmmoDef.Trajectory.AccelPerSec;
+
+            var desiredSpeedStep = desiredSpeed * stepConst;
+            var maxStepLimit = accel * def.AccelMulti > 0 ? def.AccelMulti : accel;
+            var speedStepLimit = def.SpeedCapMulti * desiredSpeedStep;
+            var futureStepLimit = maxStepLimit <= speedStepLimit ? maxStepLimit : speedStepLimit;
+
+            ModLeadConstraint = def.LeadDistance + futureStepLimit;
+            ModFutureStep = futureStepLimit;
+            LeadConstraint = def.LeadDistance + desiredSpeedStep;
+            FutureStep = desiredSpeedStep;
         }
 
         public void Clean()
