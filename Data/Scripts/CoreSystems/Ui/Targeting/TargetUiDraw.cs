@@ -383,23 +383,24 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
         {
             var s = _session;
 
-            var focus = s.TrackingAi.Construct.Data.Repo.FocusData;
+            var ai = s.TrackingAi;
+            var focus = ai.Construct.Data.Repo.FocusData;
             var detailedHud = !s.Settings.ClientConfig.MinimalHud && (s.Settings.ClientConfig.AdvancedMode || s.MinimalHudOverride);
             var element = 0;
 
             if (focus.Target <= 0) return;
             var lockMode = focus.Locked;
 
-            var targetState = s.TrackingAi.TargetState;
+            var targetState = ai.TargetState;
             var shielded = detailedHud && targetState.ShieldHealth >= 0;
 
             var collection = detailedHud ? _primaryTargetHuds : _primaryMinimalHuds;
             var infoKey = s.UiInput.InfoKey == MyKeys.Decimal ? MyKeys.Delete : s.UiInput.InfoKey;
             var drawInfo = UpdateKeyInfo(detailedHud);
-            var dumbHandHeld = s.UiInput.PlayerWeapon && s.LeadGroupActive;
+            var dumbHandHeld = s.UiInput.PlayerWeapon && !ai.SmartHandheld && s.LeadGroupActive;
 
             var handheldHud = (s.UiInput.IronLock || dumbHandHeld);
-            var showHud = !s.Settings.Enforcement.DisableHudTargetInfo && (!s.UiInput.PlayerWeapon || handheldHud) && !(s.HudHandlers.Count > 0 && s.HudUi.RestrictHudHandlers(_session.TrackingAi, _session.PlayerId, Hud.Hud.HudMode.TargetInfo));
+            var showHud = !s.Settings.Enforcement.DisableHudTargetInfo && (!s.UiInput.PlayerWeapon || handheldHud) && !(s.HudHandlers.Count > 0 && s.HudUi.RestrictHudHandlers(ai, _session.PlayerId, Hud.Hud.HudMode.TargetInfo));
 
             if (showHud)
             {
