@@ -1553,8 +1553,14 @@ namespace CoreSystems.Projectiles
                 }
 
                 var heightOffset = s.OffsetDir * def.DesiredElevation;
-                var heightStart = s.LookAtPos + heightOffset;
-                var heightend = (def.AdjustToTargetMovement ? s.SetTargetPos : Info.Target.TargetPos) + heightOffset;
+
+                var source = s.LookAtPos;
+                var destination = def.VantagePoint != VantagePointRelativeTo.Target
+                    ? (def.AdjustDestinationPosition ? s.SetTargetPos : Info.Target.TargetPos)
+                    : (def.AdjustDestinationPosition ? Position : Info.Origin);
+
+                var heightStart = source + heightOffset;
+                var heightend = destination + heightOffset;
                 var heightDir = heightend - heightStart;
                 var startToEndDist = heightDir.Normalize();
 
@@ -1571,8 +1577,8 @@ namespace CoreSystems.Projectiles
                         break;
                     case Conditions.DistanceFromTarget: // could save a sqrt by inlining and using heightDir
                         if (Info.Ai.Session.DebugMod)
-                            DsDebugDraw.DrawLine(heightend, s.SetTargetPos, Color.Green, 10);
-                        start1 = MyUtils.GetPointLineDistance(ref heightend, ref s.SetTargetPos, ref Position) - aConst.CollisionSize <= def.Start1Value;
+                            DsDebugDraw.DrawLine(heightend, destination, Color.Green, 10);
+                        start1 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize <= def.Start1Value;
                         break;
                     case Conditions.Lifetime:
                         start1 = Info.Age >= def.Start1Value;
@@ -1602,8 +1608,8 @@ namespace CoreSystems.Projectiles
                         break;
                     case Conditions.DistanceFromTarget: // could save a sqrt by inlining and using heightDir
                         if (Info.Ai.Session.DebugMod)
-                            DsDebugDraw.DrawLine(heightend, s.SetTargetPos, Color.Blue, 10);
-                        start2 = MyUtils.GetPointLineDistance(ref heightend, ref s.SetTargetPos, ref Position) - aConst.CollisionSize <= def.Start2Value;
+                            DsDebugDraw.DrawLine(heightend, destination, Color.Blue, 10);
+                        start2 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize <= def.Start2Value;
                         break;
                     case Conditions.Lifetime:
                         start2 = Info.Age >= def.Start2Value;
@@ -1620,12 +1626,12 @@ namespace CoreSystems.Projectiles
                         break;
                 }
 
-                if (start1 && start2 || s.LastActivatedStage >= 0 && def.EndOnlyOnNextStart)
+                if (start1 && start2 || s.LastActivatedStage >= 0 && !def.CanExpireOnceStarted)
                 {
                     if (s.LastActivatedStage != s.RequestedStage)
                     {
                         if (Info.Ai.Session.DebugMod)
-                            Log.Line($"stage: age:{Info.Age} - {s.RequestedStage} start conditions met: {start1} - {start2} - forced from EndOnlyOnNextStart: {s.LastActivatedStage >= 0 && def.EndOnlyOnNextStart}");
+                            Log.Line($"stage: age:{Info.Age} - {s.RequestedStage} - CanExpireOnceStarted:{def.CanExpireOnceStarted}");
                         s.LastActivatedStage = s.RequestedStage;
                     }
 
@@ -1635,9 +1641,9 @@ namespace CoreSystems.Projectiles
                     var travelLead = Info.DistanceTraveled - s.StartDistanceTraveled >= def.TrackingDistance ? Info.DistanceTraveled : 0;
                     var desiredLead = (def.PushLeadByTravelDistance ? travelLead : 0) + def.LeadDistance;
                     var clampedLead = MathHelperD.Clamp(desiredLead, approach.ModFutureStep, double.MaxValue);
-                    var followPosition = heightStart + heightDir * clampedLead;
+                    var leadPosition = heightStart + heightDir * clampedLead;
 
-                    Vector3D adjFollowPos;
+                    Vector3D heightAdjLeadPos;
                     switch (def.AdjustElevation)
                     {
                         case VantagePointRelativeTo.Surface:
@@ -1645,55 +1651,54 @@ namespace CoreSystems.Projectiles
                             if (Info.MyPlanet != null && planetExists && def.AdjustElevation == VantagePointRelativeTo.Surface)
                             {
                                 Vector3D followSurfacePos;
-                                adjFollowPos = PlanetSurfaceHeightAdjustment(followPosition, s.OffsetDir, approach, out followSurfacePos);
+                                heightAdjLeadPos = PlanetSurfaceHeightAdjustment(leadPosition, s.OffsetDir, approach, out followSurfacePos);
                             }
                             else
-                                adjFollowPos = followPosition;
+                                heightAdjLeadPos = leadPosition;
                             break;
                         }
                         case VantagePointRelativeTo.Origin:
                         {
                             var plane = new PlaneD(Info.Origin, heightDir);
-                            var distToPlane = plane.DistanceToPoint(followPosition);
-                            adjFollowPos = followPosition + (heightDir * distToPlane);
+                            var distToPlane = plane.DistanceToPoint(leadPosition);
+                            heightAdjLeadPos = leadPosition + (heightDir * distToPlane);
                             break;
                         }
                         case VantagePointRelativeTo.MidPoint:
                         {
-                            var projetedPos = Vector3D.Lerp(s.SetTargetPos, followPosition, 0.5);
+                            var projetedPos = Vector3D.Lerp(destination, leadPosition, 0.5);
                             var plane = new PlaneD(projetedPos, heightDir);
-                            var distToPlane = plane.DistanceToPoint(followPosition);
-                            adjFollowPos = followPosition + (heightDir * distToPlane);
+                            var distToPlane = plane.DistanceToPoint(leadPosition);
+                            heightAdjLeadPos = leadPosition + (heightDir * distToPlane);
                             break;
                         }
                         case VantagePointRelativeTo.Shooter:
                         {
                             var plane = new PlaneD(Info.Weapon.MyPivotPos, heightDir);
-                            var distToPlane = plane.DistanceToPoint(followPosition);
-                            adjFollowPos = followPosition + (heightDir * distToPlane);
+                            var distToPlane = plane.DistanceToPoint(leadPosition);
+                            heightAdjLeadPos = leadPosition + (heightDir * distToPlane);
                             break;
                         }
                         case VantagePointRelativeTo.Target:
                         {
-                            var plane = new PlaneD(s.SetTargetPos, heightDir);
-                            var distToPlane = plane.DistanceToPoint(followPosition);
-                            adjFollowPos = followPosition + (heightDir * distToPlane);
+                            var plane = new PlaneD(destination, heightDir);
+                            var distToPlane = plane.DistanceToPoint(leadPosition);
+                            heightAdjLeadPos = leadPosition + (heightDir * distToPlane);
                             break;
                         }
                         default:
-                            adjFollowPos = followPosition;
+                            heightAdjLeadPos = leadPosition;
                             break;
                     }
 
-                    var trackedPos = def.AdjustToTargetMovement ? s.SetTargetPos : Info.Target.TargetPos;
-                    var targetsPerspectiveDir = Vector3D.Normalize(adjFollowPos - trackedPos);
+                    var destPerspectiveDir = Vector3D.Normalize(heightAdjLeadPos - destination);
 
-                    TargetPosition = MyUtils.LinePlaneIntersection(adjFollowPos, heightDir, trackedPos, targetsPerspectiveDir);
+                    TargetPosition = MyUtils.LinePlaneIntersection(heightAdjLeadPos, heightDir, destination, destPerspectiveDir);
 
                     if (Info.Ai.Session.DebugMod)
                     {
-                        DsDebugDraw.DrawLine(adjFollowPos, trackedPos, Color.White, 3);
-                        DsDebugDraw.DrawSingleVec(trackedPos, 10, Color.LightSkyBlue);
+                        DsDebugDraw.DrawLine(heightAdjLeadPos, destination, Color.White, 3);
+                        DsDebugDraw.DrawSingleVec(destination, 10, Color.LightSkyBlue);
                     }
                 }
 
@@ -1723,8 +1728,8 @@ namespace CoreSystems.Projectiles
                         else
                         {
                             if (Info.Ai.Session.DebugMod)
-                                DsDebugDraw.DrawLine(heightend, s.SetTargetPos, Color.Red, 10);
-                            end1 = MyUtils.GetPointLineDistance(ref heightend, ref s.SetTargetPos, ref Position) - aConst.CollisionSize <= def.End1Value;
+                                DsDebugDraw.DrawLine(heightend, destination, Color.Red, 10);
+                            end1 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize <= def.End1Value;
                         }
                         break;
                     case Conditions.Lifetime:
@@ -1760,8 +1765,8 @@ namespace CoreSystems.Projectiles
                         else
                         {
                             if (Info.Ai.Session.DebugMod)
-                                DsDebugDraw.DrawLine(heightend, s.SetTargetPos, Color.Yellow, 10);
-                            end2 = MyUtils.GetPointLineDistance(ref heightend, ref s.SetTargetPos, ref Position) - aConst.CollisionSize <= def.End2Value;
+                                DsDebugDraw.DrawLine(heightend, destination, Color.Yellow, 10);
+                            end2 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize <= def.End2Value;
                         }
                         break;
                     case Conditions.Lifetime:

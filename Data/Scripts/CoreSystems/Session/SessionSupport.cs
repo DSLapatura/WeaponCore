@@ -187,7 +187,7 @@ namespace CoreSystems
             {
                 if (Tick10)
                 {
-                    ShowLocalNotify($"[Approach] Stage:{ApproachDebug.Stage} - Start1:{ApproachDebug.Approach.Definition.StartCondition1}:{ApproachDebug.Start1} - Start2:{ApproachDebug.Approach.Definition.StartCondition2}:{ApproachDebug.Start2} - End1:{ApproachDebug.Approach.Definition.EndCondition1}:{ApproachDebug.End1} - End2:{ApproachDebug.Approach.Definition.EndCondition1}:{ApproachDebug.End2}", 160, "White");
+                    ShowLocalNotify($"[Approach] Stage:{ApproachDebug.Stage} - Start1:{ApproachDebug.Approach.Definition.StartCondition1}:{ApproachDebug.Start1} - Start2:{ApproachDebug.Approach.Definition.StartCondition2}:{ApproachDebug.Start2} - End1:{ApproachDebug.Approach.Definition.EndCondition1}:{ApproachDebug.End1} - End2:{ApproachDebug.Approach.Definition.EndCondition2}:{ApproachDebug.End2}", 160, "White");
                     ShowLocalNotify($"[AccelMulti:{ApproachDebug.Approach.Definition.AccelMulti} - SpeedCapMulti:{ApproachDebug.Approach.Definition.SpeedCapMulti} - LeadDist:{ApproachDebug.Approach.Definition.LeadDistance} - FailType:{ApproachDebug.Approach.Definition.Failure}", 160, "White");
                 }
             }

@@ -1244,8 +1244,8 @@ namespace CoreSystems.Api
                         [ProtoMember(10)] internal double DesiredElevation;
                         [ProtoMember(11)] internal double AccelMulti;
                         [ProtoMember(12)] internal double SpeedCapMulti;
-                        [ProtoMember(13)] internal bool AdjustToTargetMovement;
-                        [ProtoMember(14)] internal bool EndOnlyOnNextStart;
+                        [ProtoMember(13)] internal bool AdjustDestinationPosition;
+                        [ProtoMember(14)] internal bool CanExpireOnceStarted;
                         [ProtoMember(15)] internal ParticleDef AlternateParticle;
                         [ProtoMember(16)] internal string AlternateSound;
                         [ProtoMember(17)] internal string AlternateModel;
