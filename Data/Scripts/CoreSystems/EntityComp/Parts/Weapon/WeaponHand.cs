@@ -90,11 +90,9 @@ namespace CoreSystems.Platform
                 {
                     if (load)
                         PrimaryWeapon.ProtoWeaponAmmo.CurrentAmmo = Rifle.CurrentMagazineAmmunition;
-                    Log.Line($"iscreative");
                     return;
                 }
 
-                Log.Line($"AmmoStorage");
                 foreach (var item in CoreInventory.GetItems())
                 {
                     var physGunOb = item.Content as MyObjectBuilder_PhysicalGunObject;
