@@ -144,22 +144,12 @@ namespace CoreSystems
     [ProtoContract]
     public class HandWeaponDebugPacket : Packet
     {
-        [ProtoMember(1)] internal Matrix PlayerWorldMatrix;
-        [ProtoMember(2)] internal Matrix RifleWorldMatrix;
-        [ProtoMember(3)] internal BoundingBox PlayerBox;
-        [ProtoMember(4)] internal BoundingBox RifleBox;
-        [ProtoMember(5)] internal Vector3D MuzzlePos;
-        [ProtoMember(6)] internal Vector3D MuzzleDir;
-        [ProtoMember(7)] internal Vector3D CenterTestLineFrom;
-        [ProtoMember(8)] internal Vector3D CenterTestLineTo;
-        [ProtoMember(9)] internal Vector3D PivotTestLineFrom;
-        [ProtoMember(10)] internal Vector3D PivotTestLineTo;
-        [ProtoMember(11)] internal Vector3D BarrelTestLineFrom;
-        [ProtoMember(12)] internal Vector3D BarrelTestLineTo;
-        [ProtoMember(13)] internal Vector3D AimTestLineFrom;
-        [ProtoMember(14)] internal Vector3D AimTestLineTo;
-        [ProtoMember(15)] internal Vector3D AzimuthFwdLineFrom;
-        [ProtoMember(16)] internal Vector3D AzimuthFwdLineTo;
+        [ProtoMember(1)] internal uint LastHitTick = uint.MaxValue;
+        [ProtoMember(2)] internal uint LastShootTick = uint.MaxValue;
+        [ProtoMember(3)] internal Vector3D ShootStart;
+        [ProtoMember(4)] internal Vector3D ShootEnd;
+        [ProtoMember(5)] internal Vector3D HitStart;
+        [ProtoMember(6)] internal Vector3D HitEnd;
 
         public override void CleanUp()
         {

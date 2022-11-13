@@ -504,7 +504,7 @@ namespace CoreSystems
                             continue;
                         }
 
-                        //if (ai.AiType == Ai.AiTypes.Player && DedicatedServer)
+                        //if (DebugVersion && DedicatedServer && ai.AiType == Ai.AiTypes.Player && (HandDebugPacketPacket.LastHitTick == Tick || HandDebugPacketPacket.LastShootTick == Tick))
                         //    SendHandDebugInfo(w);
 
                         if (w.AvCapable && Tick20) {

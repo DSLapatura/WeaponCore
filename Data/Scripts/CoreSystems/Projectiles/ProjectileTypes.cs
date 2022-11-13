@@ -624,6 +624,18 @@ namespace CoreSystems.Support
         internal long SyncId;
     }
 
+    public struct ApproachDebug
+    {
+        public ApproachConstants Approach;
+        public ulong ProId;
+        public uint LastTick;
+        public int Stage;
+        public bool Start1;
+        public bool Start2;
+        public bool End1;
+        public bool End2;
+    }
+
     public class VoxelCache
     {
         internal BoundingSphereD HitSphere = new BoundingSphereD(Vector3D.Zero, 2f);

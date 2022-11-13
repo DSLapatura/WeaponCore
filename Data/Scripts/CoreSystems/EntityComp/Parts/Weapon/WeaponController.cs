@@ -230,16 +230,6 @@ namespace CoreSystems.Platform
                     MyPivotPos += offSet;
                 }
 
-                Comp.Session.HandDebugPacketPacket.CenterTestLineFrom = centerTestPos;
-                Comp.Session.HandDebugPacketPacket.CenterTestLineTo = centerTestPos + (MyPivotUp * 20);
-                Comp.Session.HandDebugPacketPacket.PivotTestLineFrom = MyPivotPos;
-                Comp.Session.HandDebugPacketPacket.PivotTestLineTo = MyPivotPos - (WeaponConstMatrix.Left * 10);
-                Comp.Session.HandDebugPacketPacket.BarrelTestLineFrom = weaponCenter;
-                Comp.Session.HandDebugPacketPacket.AimTestLineFrom = MyPivotPos;
-                Comp.Session.HandDebugPacketPacket.AimTestLineTo = MyPivotPos + (MyPivotFwd * 20);
-                Comp.Session.HandDebugPacketPacket.AzimuthFwdLineTo = weaponCenter;
-                Comp.Session.HandDebugPacketPacket.AzimuthFwdLineFrom = weaponCenter + (WeaponConstMatrix.Forward * 19);
-
                 if (!Comp.Debug) return;
 
                 MyCenterTestLine = new LineD(centerTestPos, centerTestPos + (MyPivotUp * 20));

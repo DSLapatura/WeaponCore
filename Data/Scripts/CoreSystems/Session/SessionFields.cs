@@ -323,7 +323,7 @@ namespace CoreSystems
         internal ProblemReport ProblemRep;
 
         internal XorShiftRandomStruct XorRnd;
-
+        internal ApproachDebug ApproachDebug = new ApproachDebug {LastTick = uint.MaxValue};
         internal MatrixD CameraMatrix;
         internal Vector3D CameraPos;
         internal Vector3D PlayerPos;
@@ -346,9 +346,7 @@ namespace CoreSystems
         internal uint TargetLastDrawTick;
         internal uint LastProSyncSendTick;
         internal uint LastPongTick;
-        internal uint ApproachDebugTick;
 
-        internal int ApproachStage;
         internal int TargetDrawAge;
         internal int WeaponIdCounter;
 
@@ -379,7 +377,6 @@ namespace CoreSystems
         internal ulong MultiplayerId;
         internal ulong MuzzleIdCounter;
         internal ulong PhantomIdCounter;
-        internal ulong ApproachProId;
 
         internal long PlayerId;
         internal int ClientAvDivisor = 1;
@@ -462,10 +459,6 @@ namespace CoreSystems
         internal bool DirtyGrid;
         internal bool AuthorConnected;
 
-        internal bool ApproachStart1;
-        internal bool ApproachStart2;
-        internal bool ApproachEnd1;
-        internal bool ApproachEnd2;
 
 
         internal readonly HashSet<ulong> BlackListedPlayers = new HashSet<ulong>()

@@ -16,6 +16,8 @@ using static CoreSystems.Support.WeaponDefinition.AmmoDef.EwarDef.EwarType;
 using static CoreSystems.Support.DeferedVoxels;
 using CollisionLayers = Sandbox.Engine.Physics.MyPhysics.CollisionLayers;
 using Jakaria.API;
+using static CoreSystems.Platform.Weapon;
+using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace CoreSystems.Projectiles
 {
@@ -793,6 +795,10 @@ namespace CoreSystems.Projectiles
                 }
                 else visualHitPos = hitEntity.HitPos;
                 info.Hit = new Hit { Block = hitBlock, Entity = hitEntity.Entity, EventType = hitEntity.EventType, LastHit = visualHitPos ?? Vector3D.Zero, SurfaceHit = visualHitPos ?? Vector3D.Zero, HitVelocity = lastHitVel ?? Vector3D.Zero, HitTick = Session.Tick};
+
+                //if (Session.DebugVersion && info.Ai.AiType == Ai.AiTypes.Player)
+                //    Session.AddHandHitDebug(p.Beam.From, p.Beam.To, false);
+
                 if (p.EnableAv)
                 {
                     info.AvShot.LastHitShield = hitEntity.EventType == Shield;

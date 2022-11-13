@@ -124,7 +124,11 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
 
                 if (_3RdPersonDraw == ThirdPersonModes.DotTarget)
                 {
-                    var scaler = s.UiInput.TurretBlockView ? 0.5f : 0.35f;
+                    var handHit = s.UiInput.PlayerWeapon && HandHitMarkerActive;
+                    var scaler = handHit ? 0.75f : s.UiInput.TurretBlockView ? 0.5f : 0.35f;
+                    if (handHit)
+                        _reticleColor = Color.White;
+                    
                     MyTransparentGeometry.AddBillboardOriented(_whiteDot, _reticleColor, offetPosition, s.CameraMatrix.Left, s.CameraMatrix.Up, (float)PointerAdjScale * scaler, BlendTypeEnum.PostPP);
                 }
             }
@@ -502,7 +506,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
         {
             if (_session.TrackingAi.AiType == Ai.AiTypes.Player)
             {
-                CheckHandWeaponEntityHit(info);
+                if (_session.UiInput.FirstPersonView)
+                    CheckHandWeaponEntityHit(info);
                 return;
             }
 
@@ -542,28 +547,17 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             return false;
         }
 
-        private bool CheckHandWeaponEntityHit(ProInfo info)
+        private void CheckHandWeaponEntityHit(ProInfo info)
         {
             foreach (var hitEnt in info.HitList)
             {
                 if (info.Weapon.Comp.Ai.Construct.RootAi != _session.TrackingAi)
                     continue;
-                /*
-                MyTuple<float, TargetControl, MyRelationsBetweenPlayerAndBlock> tInfo;
-                if (_masterTargets.TryGetValue(hitEnt.Entity, out tInfo))
-                {
-                    HitMarkerColor = Color.White;
-                }
-                else
-                    HitMarkerColor = Color.DeepSkyBlue;
-                */
 
                 HandHitIncrease = HandFullPulseSize - HandCircleSize;
                 HandHitMarkerActive = true;
-                return true;
+                return;
             }
-
-            return false;
         }
 
         private void HandWeaponMarker()

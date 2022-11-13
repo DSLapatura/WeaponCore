@@ -132,6 +132,9 @@ namespace CoreSystems.Platform
                         muzzle.UpDirection = newInfo.UpDirection;
                         muzzle.Position = newInfo.Position;
                         muzzle.LastUpdateTick = tick;
+
+                        //if (Comp.Session.DebugVersion && Comp.Ai.AiType == Ai.AiTypes.Player)
+                        //    Comp.Session.AddHandHitDebug(muzzle.Position, muzzle.Position + (muzzle.Direction * 10), true);
                     }
                     #endregion
 

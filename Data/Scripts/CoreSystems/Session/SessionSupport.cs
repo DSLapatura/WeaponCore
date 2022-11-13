@@ -156,7 +156,7 @@ namespace CoreSystems
             LosDebugList.Add(debug);
         }
 
-        internal void LosDebuging()
+        internal void VisualDebuging()
         {
             for (var i = LosDebugList.Count - 1; i >= 0; i--)
             {
@@ -183,13 +183,55 @@ namespace CoreSystems
                 }
             }
 
-            if (ApproachDebugTick == Tick && Tick != 0)
+            if (ApproachDebug.LastTick == Tick && Tick != uint.MaxValue)
             {
                 if (Tick10)
-                    ShowLocalNotify($"[Approach] Stage:{ApproachStage} - Start1:{ApproachStart1} - Start2:{ApproachStart2} - End1:{ApproachEnd1} - End2:{ApproachEnd2}", 160, "White");
+                {
+                    ShowLocalNotify($"[Approach] Stage:{ApproachDebug.Stage} - Start1:{ApproachDebug.Approach.Definition.StartCondition1}:{ApproachDebug.Start1} - Start2:{ApproachDebug.Approach.Definition.StartCondition2}:{ApproachDebug.Start2} - End1:{ApproachDebug.Approach.Definition.EndCondition1}:{ApproachDebug.End1} - End2:{ApproachDebug.Approach.Definition.EndCondition1}:{ApproachDebug.End2}", 160, "White");
+                    ShowLocalNotify($"[AccelMulti:{ApproachDebug.Approach.Definition.AccelMulti} - SpeedCapMulti:{ApproachDebug.Approach.Definition.SpeedCapMulti} - LeadDist:{ApproachDebug.Approach.Definition.LeadDistance} - FailType:{ApproachDebug.Approach.Definition.Failure}", 160, "White");
+                }
             }
-            else if (ApproachDebugTick == Tick -1 && Tick != 1)
-                ShowLocalNotify($"[Approach] Completed on stage:{ApproachStage} - {ApproachStart1}:{ApproachStart2}:{ApproachEnd1}:{ApproachEnd2}", 2000, "White");
+            else if (ApproachDebug.LastTick == Tick -1 && Tick != 1)
+                ShowLocalNotify($"[Approach] Completed on stage:{ApproachDebug.Stage} - {ApproachDebug.Start1}:{ApproachDebug.Start2}:{ApproachDebug.End1}:{ApproachDebug.End2}", 2000, "White");
+
+            /*
+            if (Tick - _clientHandDebug.LastHitTick < 1200 || Tick - _clientHandDebug.LastShootTick < 1200)
+            {
+                if (_clientHandDebug.ShootStart != Vector3D.Zero)
+                    DsDebugDraw.DrawLine(_clientHandDebug.ShootStart, _clientHandDebug.ShootEnd, Color.Blue, 0.2f);
+                if (_clientHandDebug.HitStart != Vector3D.Zero)
+                    DsDebugDraw.DrawLine(_clientHandDebug.HitStart, _clientHandDebug.HitEnd, Color.Red, 0.2f);
+            }
+
+            if (Tick - _clientHandDebug2.LastHitTick < 1200 || Tick - _clientHandDebug2.LastShootTick < 1200)
+            {
+                if (_clientHandDebug2.ShootStart != Vector3D.Zero)
+                    DsDebugDraw.DrawLine(_clientHandDebug2.ShootStart, _clientHandDebug2.ShootEnd, Color.Green, 0.2f);
+                if (_clientHandDebug2.HitStart != Vector3D.Zero)
+                    DsDebugDraw.DrawLine(_clientHandDebug2.HitStart, _clientHandDebug2.HitEnd, Color.Yellow, 0.2f);
+            }
+            */
+
+        }
+
+        public void AddHandHitDebug(Vector3D start, Vector3D end, bool shoot)
+        {
+            var packet = HandlesInput ? _clientHandDebug2 : HandDebugPacketPacket;
+            if (shoot)
+            {
+                packet.LastShootTick = Tick + 1;
+                packet.LastHitTick = uint.MaxValue;
+                packet.ShootStart = start;
+                packet.ShootEnd = end;
+                packet.HitStart = Vector3D.Zero;
+                packet.HitEnd = Vector3D.Zero;
+            }
+            else
+            {
+                packet.LastHitTick = Tick + 1;
+                packet.HitStart = start;
+                packet.HitEnd = end;
+            }
 
         }
 
@@ -867,28 +909,17 @@ namespace CoreSystems
             }
         }
 
+        private readonly HandWeaponDebugPacket _clientHandDebug = new HandWeaponDebugPacket();
+        private readonly HandWeaponDebugPacket _clientHandDebug2 = new HandWeaponDebugPacket();
+
         private void DrawHandDebug(HandWeaponDebugPacket hDebug)
         {
-            var playerObb = new MyOrientedBoundingBoxD(hDebug.PlayerBox, hDebug.PlayerWorldMatrix);
-            //DsDebugDraw.DrawBox(playerObb, Color.Blue);
-
-            var rifleObb = new MyOrientedBoundingBoxD(hDebug.RifleBox, hDebug.RifleWorldMatrix);
-            DsDebugDraw.DrawBox(rifleObb, Color.Red);
-
-            var muzzleLine1 =  new LineD(hDebug.MuzzlePos, hDebug.MuzzlePos + (hDebug.MuzzleDir * 3));
-
-            DsDebugDraw.DrawLine(muzzleLine1.From, muzzleLine1.To, Color.Green, 0.1f);
-            DsDebugDraw.DrawLine(hDebug.PivotTestLineFrom, hDebug.PivotTestLineTo, Color.Blue, 0.1f);
-            DsDebugDraw.DrawLine(hDebug.BarrelTestLineFrom, hDebug.BarrelTestLineTo, Color.Red, 0.1f);
-            DsDebugDraw.DrawLine(hDebug.CenterTestLineFrom, hDebug.CenterTestLineTo, Color.Yellow, 0.1f);
-            DsDebugDraw.DrawLine(hDebug.AimTestLineFrom, hDebug.AimTestLineTo, Color.White, 0.1f);
-            DsDebugDraw.DrawLine(hDebug.AzimuthFwdLineFrom, hDebug.AzimuthFwdLineTo, Color.Cyan, 0.1f);
-
-
-            if (Tick180)
-            {
-                Log.Line($"mPos:{hDebug.MuzzlePos} - mDir:{hDebug.MuzzleDir} - pPos:{playerObb.Center} - mLen:{muzzleLine1.Length}");
-            }
+            _clientHandDebug.ShootStart = hDebug.ShootStart;
+            _clientHandDebug.ShootEnd = hDebug.ShootEnd;
+            _clientHandDebug.HitStart = hDebug.HitStart;
+            _clientHandDebug.HitEnd = hDebug.HitEnd;
+            _clientHandDebug.LastHitTick = Tick;
+            _clientHandDebug.LastShootTick = Tick;
         }
 
         private static void CounterKeenLogMessage(bool console = true)

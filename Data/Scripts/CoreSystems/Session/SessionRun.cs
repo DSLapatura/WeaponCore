@@ -280,7 +280,7 @@ namespace CoreSystems
                 
 
                 if (DebugLos || DebugMod)
-                    LosDebuging();
+                    VisualDebuging();
                 
                 _lastDrawTick = Tick;
                 DsUtil.Start("draw");

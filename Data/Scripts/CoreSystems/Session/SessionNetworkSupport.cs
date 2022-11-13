@@ -107,13 +107,6 @@ namespace CoreSystems
         internal readonly HandWeaponDebugPacket HandDebugPacketPacket = new HandWeaponDebugPacket {PType = PacketType.HandWeaponDebug};
         private void SendHandDebugInfo(Weapon weapon)
         {
-            HandDebugPacketPacket.PlayerWorldMatrix = weapon.Comp.TopEntity.PositionComp.WorldMatrixRef;
-            HandDebugPacketPacket.PlayerBox = weapon.Comp.TopEntity.PositionComp.LocalAABB;
-            HandDebugPacketPacket.RifleBox = weapon.Comp.Rifle.PositionComp.LocalAABB;
-            HandDebugPacketPacket.RifleWorldMatrix = weapon.Comp.Rifle.PositionComp.WorldMatrixRef * weapon.Comp.TopEntity.PositionComp.WorldMatrixRef;
-            HandDebugPacketPacket.MuzzlePos = weapon.Dummies[0].Info.Position;
-            HandDebugPacketPacket.MuzzleDir = weapon.Dummies[0].Info.Direction;
-
             PlayerMap player;
             if (Players.TryGetValue(weapon.Comp.Data.Repo.Values.State.PlayerId, out player))
             {

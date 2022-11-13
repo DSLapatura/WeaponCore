@@ -1781,14 +1781,13 @@ namespace CoreSystems.Projectiles
                 if (Info.Ai.Session.DebugMod)
                 {
                     var session = Info.Ai.Session;
-                    if (session.ApproachProId == Info.Id || session.Tick != session.ApproachDebugTick)
+                    if (session.ApproachDebug.ProId == Info.Id || session.Tick != session.ApproachDebug.LastTick)
                     {
-                        session.ApproachDebugTick = session.Tick;
-                        session.ApproachProId = Info.Id;
-                        session.ApproachStart1 = start1;
-                        session.ApproachStart2 = start2;
-                        session.ApproachEnd1 = end1;
-                        session.ApproachEnd2 = end2;
+                        session.ApproachDebug = new ApproachDebug { 
+                            LastTick = session.Tick, Approach = approach, 
+                            Start1 = start1, Start2 = start2, End1 = end1, End2 = end2, 
+                            ProId = Info.Id, Stage = s.LastActivatedStage
+                        };
                     }
                 }
 
