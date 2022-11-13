@@ -14,7 +14,6 @@ namespace CoreSystems.Platform
 {
     public partial class Weapon : Part
     {
-        internal int NextMuzzle;
         internal volatile bool Casting;
         private readonly int _numOfMuzzles;
         private readonly int _numModelBarrels;
@@ -24,7 +23,7 @@ namespace CoreSystems.Platform
         internal readonly Dictionary<long, ClientProSync> WeaponProSyncs = new Dictionary<long, ClientProSync>();
         internal readonly Dictionary<string, PartAnimation> AnimationLookup = new Dictionary<string, PartAnimation>();
         internal readonly List<MyCubeBlock> Top5 = new List<MyCubeBlock>();
-        internal readonly ApiShootRequest ShootRequest = new ApiShootRequest();
+        internal readonly ApiShootRequest ShootRequest;
         internal readonly WeaponFrameCache WeaponCache;
         internal readonly WeaponSystem System;
         internal readonly Target Target;
@@ -84,6 +83,7 @@ namespace CoreSystems.Platform
         internal float HeatPerc;
         internal int BarrelRate;
         internal int ShotsFired;
+        internal int NextMuzzle;
         internal int MiddleMuzzleIndex;
         internal int DelayedCycleId = -1;
         internal int PosChangedTick = -1;
@@ -336,6 +336,7 @@ namespace CoreSystems.Platform
             else Target = new Target(this);
 
             _numOfMuzzles = System.Muzzles.Length;
+            ShootRequest = new ApiShootRequest(this);
             BeamSlot = new uint[_numOfMuzzles];
             Muzzles = new Muzzle[_numOfMuzzles];
             Dummies = new Dummy[_numOfMuzzles];

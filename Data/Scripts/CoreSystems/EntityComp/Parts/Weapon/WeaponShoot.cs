@@ -73,6 +73,9 @@ namespace CoreSystems.Platform
                 var rnd = wValues.Targets[PartId].WeaponRandom;
                 var pattern = ActiveAmmoDef.AmmoDef.Pattern;
                 var loading = System.Values.HardPoint.Loading;
+                var reqDeviantMod = ShootRequest.ExtraShotAngle > 0;
+                var forceShotDirection = ShootRequest.Type == ApiShootRequest.TargetType.Position;
+
                 FireCounter++;
                 List<NewVirtual> vProList = null;
                 var selfDamage = 0f;
@@ -133,6 +136,9 @@ namespace CoreSystems.Platform
                         muzzle.Position = newInfo.Position;
                         muzzle.LastUpdateTick = tick;
 
+                        if (forceShotDirection)
+                            muzzle.Direction = Vector3D.Normalize(ShootRequest.Position - muzzle.Position);
+
                         //if (Comp.Session.DebugVersion && Comp.Ai.AiType == Ai.AiTypes.Player)
                         //    Comp.Session.AddHandHitDebug(muzzle.Position, muzzle.Position + (muzzle.Direction * 10), true);
                     }
@@ -165,11 +171,14 @@ namespace CoreSystems.Platform
                     for (int j = 0; j < loading.TrajectilesPerBarrel; j++) {
 
                         #region Pick projectile direction
-                        if (System.WConst.DeviateShotAngleRads > 0) {
+                        if (System.WConst.DeviateShotAngleRads > 0 || reqDeviantMod) {
                             var dirMatrix = Matrix.CreateFromDir(muzzle.Direction);
                             var rnd1 = rnd.TurretRandom.NextDouble();
                             var rnd2 = rnd.TurretRandom.NextDouble();
-                            var randomFloat1 = (float)(rnd1 * (System.WConst.DeviateShotAngleRads + System.WConst.DeviateShotAngleRads) - System.WConst.DeviateShotAngleRads);
+                            var deviatePlus = !reqDeviantMod ? System.WConst.DeviateShotAngleRads + System.WConst.DeviateShotAngleRads :  System.WConst.DeviateShotAngleRads + System.WConst.DeviateShotAngleRads + ShootRequest.ExtraShotAngle + ShootRequest.ExtraShotAngle;
+                            var deviateMinus = !reqDeviantMod ? System.WConst.DeviateShotAngleRads : System.WConst.DeviateShotAngleRads + ShootRequest.ExtraShotAngle;
+                            var randomFloat1 = (float)(rnd1 * deviatePlus - deviateMinus);
+                            
                             var randomFloat2 = (float)(rnd2 * MathHelper.TwoPi);
                             muzzle.DeviatedDir = Vector3.TransformNormal(-new Vector3D(MyMath.FastSin(randomFloat1) * MyMath.FastCos(randomFloat2), MyMath.FastSin(randomFloat1) * MyMath.FastSin(randomFloat2), MyMath.FastCos(randomFloat1)), dirMatrix);
                         }

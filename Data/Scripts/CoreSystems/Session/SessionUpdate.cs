@@ -610,7 +610,7 @@ namespace CoreSystems
                         ///
                         /// Queue for target acquire or set to tracking weapon.
                         /// 
-                        var seek = wComp.FakeMode && w.Target.TargetState != TargetStates.IsFake || (aConst.RequiresTarget || w.RotorTurretTracking) & !w.Target.HasTarget && !noAmmo && (wComp.DetectOtherSignals && ai.DetectionInfo.OtherInRange || ai.DetectionInfo.PriorityInRange) && (!wComp.UserControlled && !enforcement.DisableAi || wValues.State.Trigger == On);
+                        var seek = wComp.FakeMode && w.Target.TargetState != TargetStates.IsFake || (aConst.RequiresTarget || w.ShootRequest.AcquireTarget || w.RotorTurretTracking) & !w.Target.HasTarget && !noAmmo && (wComp.DetectOtherSignals && ai.DetectionInfo.OtherInRange || ai.DetectionInfo.PriorityInRange) && (!wComp.UserControlled && !enforcement.DisableAi || wValues.State.Trigger == On);
 
                         if (!IsClient && (seek || (aConst.RequiresTarget || w.RotorTurretTracking) && (rootConstruct.TargetResetTick == Tick || w.ProjectilesNear) && !wComp.UserControlled && !enforcement.DisableAi) && !w.AcquiringTarget && wValues.State.Control != ControlMode.Camera)
                         {
@@ -641,7 +641,7 @@ namespace CoreSystems
 
                         w.LockOnFireState = shootRequest && (w.System.LockOnFocus && !w.Comp.ModOverride) && construct.Data.Repo.FocusData.HasFocus && focus.FocusInRange(w);
                         var shotReady = canShoot && (shootRequest && (!w.System.LockOnFocus || w.Comp.ModOverride) || w.LockOnFireState);
-                        var shoot = shotReady && ai.CanShoot && (!aConst.RequiresTarget || w.Target.HasTarget || finish || overRide || wComp.ShootManager.Signal == Weapon.ShootManager.Signals.Manual);
+                        var shoot = shotReady && ai.CanShoot && (!aConst.RequiresTarget || w.Target.HasTarget || finish || overRide || wComp.ShootManager.Signal == Weapon.ShootManager.Signals.Manual || w.ShootRequest.Type == Weapon.ApiShootRequest.TargetType.Position);
 
                         if (shoot) {
                             if (w.System.DelayCeaseFire && (autoShot || w.FinishShots))
@@ -746,8 +746,8 @@ namespace CoreSystems
 
                 var acquire = (w.Acquire.IsSleeping && AsleepCount == w.Acquire.SlotId || !w.Acquire.IsSleeping && AwakeCount == w.Acquire.SlotId);
 
-                var seekProjectile = w.ProjectilesNear || (w.System.TrackProjectile || w.Comp.OnCustomTurret) && overrides.Projectiles && w.BaseComp.Ai.CheckProjectiles;
-                var checkTime = w.Target.TargetChanged || acquire || seekProjectile || w.FastTargetResetTick == Tick;
+                var seekProjectile = w.ProjectilesNear || Tick == w.ShootRequest.RequestTick && w.ShootRequest.Type == Weapon.ApiShootRequest.TargetType.Position || (w.System.TrackProjectile || w.Comp.OnCustomTurret) && overrides.Projectiles && w.BaseComp.Ai.CheckProjectiles;
+                var checkTime = w.Target.TargetChanged || acquire || seekProjectile || w.FastTargetResetTick == Tick || w.ShootRequest.RequestTick == Tick;
                 var ai = w.BaseComp.Ai;
 
                 if (checkTime || ai.Construct.RootAi.Construct.TargetResetTick == Tick && w.Target.HasTarget) {
@@ -756,7 +756,7 @@ namespace CoreSystems
                     {
                         if (comp.PrimaryWeapon != null && comp.PrimaryWeapon.System.DesignatorWeapon && comp.PrimaryWeapon != w && comp.PrimaryWeapon.Target.HasTarget) {
 
-                            var topMost = comp.PrimaryWeapon.Target.TargetEntity?.GetTopMostParent();
+                            var topMost = comp.PrimaryWeapon.Target.TargetEntity?.GetTopMostParent() ?? w.ShootRequest.TargetEntity?.GetTopMostParent();
                             Ai.AcquireTarget(w, false, topMost, overrides);
                         }
                         else

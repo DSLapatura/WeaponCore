@@ -160,6 +160,14 @@ namespace CoreSystems.Platform
                 if (canPlay)
                     PlayParticleEvent(state, active, distance, muzzles);
 
+                //  Vector3D scopePos, Vector3D scopeDirection, int requestState, bool hasLos, object target, int currentAmmo, int remainingMags, int requestStage
+                Func<Vector3D, Vector3D, int, bool, object, int, int, int, bool> shootHandler;
+                if (active && Comp.Session.ShootHandlers.Count > 0 && (Comp.Session.ShootHandlers.TryGetValue(Comp.CoreEntity.EntityId, out shootHandler) || Comp.Session.ShootHandlers.TryGetValue(Comp.TopEntity.EntityId, out shootHandler)))
+                {
+                    var scope = Scope.Info;
+                    shootHandler.Invoke(scope.Position, scope.Direction, 0, true, ShootRequest.RawTarget ?? Target.TargetEntity, ProtoWeaponAmmo.CurrentAmmo, Reload.CurrentMags, (int) state);
+                }
+
                 var monitor = Comp.EventMonitors[PartId];
                 if (monitor?.Count > 0)
                 {

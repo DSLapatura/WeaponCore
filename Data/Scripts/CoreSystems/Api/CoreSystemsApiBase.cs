@@ -377,6 +377,8 @@ namespace CoreSystems.Api
 
         public enum ShootState
         {
+            EventStart,
+            EventEnd,
             Preceding,
             Canceled,
         }

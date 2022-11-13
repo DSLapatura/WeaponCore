@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using CoreSystems.Platform;
 using CoreSystems.Projectiles;
@@ -15,12 +16,14 @@ using static CoreSystems.Support.WeaponDefinition;
 using static CoreSystems.Support.WeaponDefinition.TargetingDef;
 using static CoreSystems.Support.WeaponDefinition.TargetingDef.BlockTypes;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef;
+using System.Collections.ObjectModel;
+using static CoreSystems.Support.PartAnimation;
 
 namespace CoreSystems.Support
 {
     public partial class Ai
     {
-        internal static void AcquireTarget(Weapon w, bool attemptReset, MyEntity targetGrid = null, ProtoWeaponOverrides overrides = null)
+        internal static void AcquireTarget(Weapon w, bool attemptReset, MyEntity targetEntity = null, ProtoWeaponOverrides overrides = null)
         {
             var targetType = TargetType.None;
 
@@ -34,22 +37,24 @@ namespace CoreSystems.Support
             {
                 w.AimCone.ConeDir = w.MyPivotFwd;
                 w.AimCone.ConeTip = w.BarrelOrigin + (w.MyPivotFwd * w.MuzzleDistToBarrelCenter);
+                var request = w.ShootRequest;
+                var projectileRequest = request.Type == Weapon.ApiShootRequest.TargetType.Projectile;
                 var pCount = w.Comp.Ai.LiveProjectile.Count;
-                var shootProjectile = pCount > 0 && (w.System.TrackProjectile || w.Comp.OnCustomTurret) && overrides.Projectiles;
+                var shootProjectile = pCount > 0 && (w.System.TrackProjectile || projectileRequest || w.Comp.OnCustomTurret) && overrides.Projectiles;
                 var projectilesFirst = !attemptReset && shootProjectile && w.System.Values.Targeting.Threats.Length > 0 && w.System.Values.Targeting.Threats[0] == Threat.Projectiles;
-                var onlyCheckProjectile = w.ProjectilesNear && !w.Target.TargetChanged && w.Comp.Session.Count != w.Acquire.SlotId && !attemptReset;
+                var onlyCheckProjectile = projectileRequest || w.ProjectilesNear && !w.Target.TargetChanged && w.Comp.Session.Count != w.Acquire.SlotId && !attemptReset;
                 if (!projectilesFirst && w.System.TrackTopMostEntities && !onlyCheckProjectile)
                 {
-                    AcquireTopMostEntity(w, overrides, out targetType, attemptReset, targetGrid);
+                    AcquireTopMostEntity(w, overrides, out targetType, attemptReset, targetEntity);
                 }
                 else if (!attemptReset && shootProjectile)
                 {
-                    AcquireProjectile(w, out targetType);
+                    AcquireProjectile(w, out targetType, request.ProjectileId);
                 }
 
                 if (projectilesFirst && targetType == TargetType.None && !onlyCheckProjectile)
                 {
-                    AcquireTopMostEntity(w, overrides, out targetType, false, targetGrid);
+                    AcquireTopMostEntity(w, overrides, out targetType, false, targetEntity);
                 }
             }
             else if (w.ValidFakeTargetInfo(w.Comp.Data.Repo.Values.State.PlayerId, out fakeInfo))
@@ -1004,7 +1009,7 @@ namespace CoreSystems.Support
             return top5.Count > 0;
         }
 
-        internal static void AcquireProjectile(Weapon w, out TargetType targetType)
+        internal static void AcquireProjectile(Weapon w, out TargetType targetType, ulong id = ulong.MaxValue)
         {
             var ai = w.Comp.Ai;
             var system = w.System;
@@ -1015,10 +1020,18 @@ namespace CoreSystems.Support
             var aimOrigin = w.MyPivotPos;
 
             var collection = ai.GetProCache();
-            var numOfTargets = collection.Count;
+
             var lockedOnly = w.System.Values.Targeting.LockedSmartOnly;
             var smartOnly = w.System.Values.Targeting.IgnoreDumbProjectiles;
-            if (system.ClosestFirst)
+
+            int index = int.MinValue;
+            if (id != ulong.MaxValue) {
+                if (!GetProjectileIndex(collection, id, out index)) {
+                    targetType = TargetType.None;
+                    return;
+                }
+            }
+            else if (system.ClosestFirst)
             {
                 int length = collection.Count;
                 for (int h = length / 2; h > 0; h /= 2)
@@ -1038,12 +1051,18 @@ namespace CoreSystems.Support
                 }
             }
 
-            var numToRandomize = system.ClosestFirst ? w.System.Values.Targeting.TopTargets : numOfTargets;
-            var deck = GetDeck(ref s.TargetDeck,  0, numOfTargets, numToRandomize, ref w.TargetData.WeaponRandom.AcquireRandom);
+            var numOfTargets = index < -1 ? collection.Count : index < 0 ? 0 : 1;
+
+            int[] deck = null;
+            if (index < -1)
+            {
+                var numToRandomize = system.ClosestFirst ? w.System.Values.Targeting.TopTargets : numOfTargets;
+                deck = GetDeck(ref s.TargetDeck, 0, numOfTargets, numToRandomize, ref w.TargetData.WeaponRandom.AcquireRandom);
+            }
 
             for (int x = 0; x < numOfTargets; x++)
             {
-                var card = deck[x];
+                var card = index < -1 ? deck[x] : index;
                 var lp = collection[card];
                 var lpaConst = lp.Info.AmmoDef.Const;
                 var smart = lpaConst.IsDrone || lpaConst.IsSmart;
@@ -1109,6 +1128,24 @@ namespace CoreSystems.Support
                 }
             }
             targetType = TargetType.None;
+        }
+
+        private static bool GetProjectileIndex(List<Projectile> collection, ulong id, out int index)
+        {
+            if (id != ulong.MaxValue && collection.Count > 0)
+            {
+                for (int i = 0; i < collection.Count; i++)
+                {
+                    if (collection[i].Info.Id == id)
+                    {
+                        index = i;
+                        return true;
+                    }
+                }
+            }
+
+            index = -1;
+            return false;
         }
 
         private static bool Obstruction(ref TargetInfo info, ref Vector3D targetPos, Projectile p)

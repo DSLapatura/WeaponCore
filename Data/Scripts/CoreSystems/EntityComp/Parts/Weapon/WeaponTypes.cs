@@ -146,6 +146,11 @@ namespace CoreSystems.Platform
 
         public class ApiShootRequest
         {
+            public ApiShootRequest(Weapon weapon)
+            {
+                Weapon = weapon;
+            }
+
             public enum TargetType
             {
                 None,
@@ -154,18 +159,25 @@ namespace CoreSystems.Platform
                 Projectile,
             }
 
+            public readonly Weapon Weapon;
+            public object RawTarget;
             public bool Dirty;
+            public bool AcquireTarget;
             public TargetType Type;
             public Vector3D Position = Vector3D.MaxValue;
             public ulong ProjectileId = ulong.MaxValue;
+            public uint RequestTick = uint.MaxValue;
             public MyEntity TargetEntity;
             public double ExtraShotAngle;
-
 
             public bool Update(object target, double extraShotAngle)
             {
                 if (Dirty)
                     return false;
+
+                Dirty = true;
+                RequestTick = Weapon.Comp.Session.Tick + 1;
+                RawTarget = target;
 
                 var entity = target as MyEntity;
                 var position = target as Vector3D?;
@@ -176,6 +188,7 @@ namespace CoreSystems.Platform
                     TargetEntity = entity;
                     Type = TargetType.MyEntity;
                     ExtraShotAngle = extraShotAngle;
+                    AcquireTarget = Weapon.TurretController;
                     return true;
                 }
 
@@ -192,6 +205,7 @@ namespace CoreSystems.Platform
                     ProjectileId = projectileId.Value;
                     Type = TargetType.Projectile;
                     ExtraShotAngle = extraShotAngle;
+                    AcquireTarget = Weapon.TurretController;
                     return true;
                 }
 
@@ -202,9 +216,13 @@ namespace CoreSystems.Platform
             {
                 Type = TargetType.None;
                 TargetEntity = null;
+                RawTarget = null;
                 Position = Vector3D.MaxValue;
                 ProjectileId = ulong.MaxValue;
+                RequestTick = uint.MaxValue;
                 ExtraShotAngle = 0;
+                AcquireTarget = false;
+                Dirty = false;
             }
 
         }
