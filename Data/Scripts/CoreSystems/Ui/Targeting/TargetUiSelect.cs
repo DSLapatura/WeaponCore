@@ -144,10 +144,11 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
 
                 var hit = _hitInfo[i];
                 closestEnt = hit.HitEntity.GetTopMostParent() as MyEntity;
+                if (closestEnt == null)
+                    continue;
 
-                var hitGrid = closestEnt as MyCubeGrid;
 
-                if (hitGrid != null && ai.IsGrid && hitGrid.IsSameConstructAs(ai.GridEntity))
+                if (ai.TopEntityMap.GroupMap.Construct.ContainsKey(closestEnt))
                 {
                     rayHitSelf = true;
                     rayOnlyHitSelf = true;
@@ -156,30 +157,32 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
 
                 if (rayOnlyHitSelf) rayOnlyHitSelf = false;
 
+                var hitGrid = closestEnt as MyCubeGrid;
+                var character = closestEnt as IMyCharacter;
+
                 if (hitGrid != null && ((uint)hitGrid.Flags & 0x1000000) > 0) continue;
 
                 if (manualSelect)
                 {
-                    if (hitGrid == null || !_masterTargets.ContainsKey(hitGrid))
+                    if (character == null && hitGrid == null || !_masterTargets.ContainsKey(closestEnt))
                     {
                         continue;
                     }
-
                     if (firstStage)
                     {
-                        _firstStageEnt = hitGrid;
+                        _firstStageEnt = closestEnt;
                         possibleTarget = true;
                     }
                     else
                     {
-                        if (hitGrid == _firstStageEnt) {
+                        if (closestEnt == _firstStageEnt) {
 
                             if (mark && advanced && !checkOnly && ai.Construct.Focus.EntityIsFocused(ai, closestEnt)) 
                                 paintTarget.Update(hit.Position, s.Tick, closestEnt);
 
                             if (!checkOnly)
                             {
-                                s.SetTarget(hitGrid, ai);
+                                s.SetTarget(closestEnt, ai);
                             }
                             possibleTarget = true;
                         }
@@ -234,11 +237,11 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                 var activeColor = closestEnt != null && !_masterTargets.TryGetValue(closestEnt, out tInfo) || foundOther ? Color.DeepSkyBlue : Color.Red;
 
                 var voxel = closestEnt as MyVoxelBase;
+                var character = closestEnt as IMyCharacter;
                 var dumbHand = s.UiInput.PlayerWeapon && !ai.SmartHandheld;
                 var playerIgnore = dumbHand && (tInfo.Item2 != TargetControl.None && tInfo.Item3 != MyRelationsBetweenPlayerAndBlock.Enemies);
                 
                 _reticleColor = closestEnt != null && (voxel == null && !playerIgnore) ? activeColor : Color.White;
-               
                 if (dumbHand && _reticleColor == Color.DeepSkyBlue)
                     _reticleColor = Color.White;
 
@@ -281,7 +284,6 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                     if (LastSelectedEntity.MarkedForClose || focusEnt == LastSelectedEntity || focusGrid != null && lastEntityGrid != null && focusGrid.IsSameConstructAs(lastEntityGrid))
                         skip = true;
                 }
-
                 if (LastSelectedEntity != null && !skip && _session.CameraFrustrum.Contains(LastSelectedEntity.PositionComp.WorldVolume) != ContainmentType.Disjoint)
                 {
                     position = LastSelectedEntity.PositionComp.WorldAABB.Center;
@@ -395,7 +397,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                 for (int j = 0; j < subTargets.Count; j++)
                 {
                     var tInfo = subTargets[j];
-                    if (tInfo.Target.MarkedForClose || tInfo.Target is IMyCharacter) continue;
+                    var character = tInfo.Target as IMyCharacter;
+                    if (tInfo.Target.MarkedForClose || character?.ControllerInfo != null && (!ai.Session.UiInput.PlayerWeapon && ai.Session.Players.ContainsKey(character.ControllerInfo.ControllingIdentityId))) continue;
                     TopMap topMap;
 
                     var controlType = tInfo.Drone ? TargetControl.Drone : tInfo.IsGrid && _session.TopEntityToInfoMap.TryGetValue((MyCubeGrid)tInfo.Target, out topMap) && topMap.PlayerControllers.Count > 0 ? TargetControl.Player : tInfo.IsGrid && !_session.GridHasPower((MyCubeGrid)tInfo.Target) ? TargetControl.Trash : TargetControl.Other;

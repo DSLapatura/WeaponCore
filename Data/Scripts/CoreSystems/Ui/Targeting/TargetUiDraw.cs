@@ -551,7 +551,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
         {
             foreach (var hitEnt in info.HitList)
             {
-                if (info.Weapon.Comp.Ai.Construct.RootAi != _session.TrackingAi)
+                if (info.Weapon.Comp.Ai.Construct.RootAi != _session.TrackingAi || hitEnt.Entity is MyVoxelBase)
                     continue;
 
                 HandHitIncrease = HandFullPulseSize - HandCircleSize;
