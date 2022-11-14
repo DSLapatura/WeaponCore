@@ -60,7 +60,6 @@ namespace CoreSystems
                 if (ai.AiType == Ai.AiTypes.Grid && !ai.HasPower || enforcement.ServerSleepSupport && IsServer && ai.AwakeComps == 0 && ai.WeaponsTracking == 0 && ai.SleepingComps > 0 && !ai.CheckProjectiles && ai.AiSleep && !ai.DbUpdated) 
                     continue;
 
-
                 if (ai.AiType != Ai.AiTypes.Phantom && (ai.TopEntityMap.GroupMap.LastControllerTick == Tick || ai.TopEntityMap.LastControllerTick == Tick))
                     Ai.Constructs.UpdatePlayerStates(ai.TopEntityMap.GroupMap);
 

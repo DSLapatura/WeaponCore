@@ -1248,6 +1248,13 @@ namespace CoreSystems.Support
                         StartOr_EndAnd,
                     }
 
+                    public enum StageEvents
+                    {
+                        None,
+                        EndProjectile,
+                        EndProjectileOnFailure,
+                    }
+
                     [ProtoMember(1)] internal StartFailure Failure;
                     [ProtoMember(2)] internal Conditions StartCondition1;
                     [ProtoMember(3)] internal Conditions EndCondition1;
@@ -1278,6 +1285,8 @@ namespace CoreSystems.Support
                     [ProtoMember(28)] internal VantagePointRelativeTo AdjustElevation;
                     [ProtoMember(29)] internal double ElevationTolerance;
                     [ProtoMember(30)] internal ConditionOperators Operators;
+                    [ProtoMember(31)] internal StageEvents StartEvent;
+                    [ProtoMember(32)] internal StageEvents EndEvent;
                 }
 
                 [ProtoContract]

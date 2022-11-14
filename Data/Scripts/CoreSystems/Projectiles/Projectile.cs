@@ -1656,6 +1656,16 @@ namespace CoreSystems.Projectiles
                         if (Info.Ai.Session.DebugMod)
                             Log.Line($"stage: age:{Info.Age} - {s.RequestedStage} - CanExpireOnceStarted:{def.CanExpireOnceStarted}");
                         s.LastActivatedStage = s.RequestedStage;
+
+                        switch (def.StartEvent)
+                        {
+                            case StageEvents.EndProjectile:
+                                EarlyEnd = true;
+                                DistanceToTravelSqr = Info.DistanceTraveled * Info.DistanceTraveled;
+                                break;
+                            case StageEvents.None:
+                                break;
+                        }
                     }
 
                     accelMpsMulti = AccelInMetersPerSec * def.AccelMulti;
@@ -1847,9 +1857,15 @@ namespace CoreSystems.Projectiles
                 {
                     var hasNextStep = s.RequestedStage + 1 < aConst.ApproachesCount;
                     var isActive = s.LastActivatedStage >= 0;
-                    var moveForward = isActive && (def.Failure == StartFailure.Wait || def.Failure == StartFailure.MoveToPrevious || def.Failure == StartFailure.MoveToNext) || !isActive && def.Failure == StartFailure.MoveToNext;
+                    var moveForward = isActive && hasNextStep && (def.Failure == StartFailure.Wait || def.Failure == StartFailure.MoveToPrevious || def.Failure == StartFailure.MoveToNext) || !isActive && def.Failure == StartFailure.MoveToNext;
                     var failBackwards = def.Failure == StartFailure.MoveToPrevious && !isActive || def.Failure == StartFailure.ForceReset;
-                    if (hasNextStep && moveForward)
+
+                    if (def.EndEvent == StageEvents.EndProjectile || def.EndEvent == StageEvents.EndProjectileOnFailure && (failBackwards || !moveForward && hasNextStep)) {
+                        EarlyEnd = true;
+                        DistanceToTravelSqr = Info.DistanceTraveled * Info.DistanceTraveled;
+                    }
+
+                    if (moveForward)
                     {
                         var oldLast = s.LastActivatedStage;
                         s.LastActivatedStage = s.RequestedStage;
