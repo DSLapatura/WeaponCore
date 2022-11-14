@@ -480,6 +480,9 @@ namespace CoreSystems.Support
             TouchingWater = false;
             BlockMonitoring = false;
             ShieldFortified = false;
+            EnemiesNear = false;
+            EnemyEntities = false;
+            EnemyProjectiles = false;
             Data.Clean();
 
             RootFixedWeaponComp = null;

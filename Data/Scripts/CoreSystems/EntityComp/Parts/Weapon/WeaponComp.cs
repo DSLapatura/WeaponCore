@@ -9,6 +9,7 @@ using Sandbox.ModAPI.Weapons;
 using VRage.Game;
 using VRage.Game.Entity;
 using VRageMath;
+using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace CoreSystems.Platform
 {
@@ -357,10 +358,9 @@ namespace CoreSystems.Platform
                 }
 
                 ActivePlayer = Ai.Construct.RootAi.Construct.ControllingPlayers.ContainsKey(Data.Repo.Values.State.PlayerId);
-
                 UpdatedState = true;
 
-                var overRides = Data.Repo.Values.Set.Overrides;
+                var overRides = !OnCustomTurret ? Data.Repo.Values.Set.Overrides : Ai.RootFixedWeaponComp.PrimaryWeapon.MasterComp.Data.Repo.Values.Set.Overrides;
                 var attackNeutrals = overRides.Neutrals;
                 var attackNoOwner = overRides.Unowned;
                 var attackFriends = overRides.Friendly;

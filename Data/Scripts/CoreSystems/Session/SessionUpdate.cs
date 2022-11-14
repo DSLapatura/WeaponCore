@@ -14,6 +14,7 @@ using System;
 using Sandbox.ModAPI.Weapons;
 using SpaceEngineers.Game.ModAPI;
 using VRage.Game.Entity;
+using System.Runtime.CompilerServices;
 
 namespace CoreSystems
 {
@@ -46,7 +47,10 @@ namespace CoreSystems
                     ai.DeadProjectiles.Clear();
                     ai.LiveProjectileTick = Tick;
                 }
-                var enemyProjectiles = ai.LiveProjectile.Count > 0;
+                ai.EnemyProjectiles = ai.LiveProjectile.Count > 0;
+                ai.EnemyEntities = ai.SortedTargets.Count > 0;
+                ai.EnemiesNear = ai.EnemyProjectiles || ai.EnemyEntities;
+
                 ai.CheckProjectiles = Tick - ai.NewProjectileTick <= 1;
 
                 if (ai.AiType == Ai.AiTypes.Grid && (ai.UpdatePowerSources || !ai.HadPower && ai.GridEntity.IsPowered || ai.HasPower && !ai.GridEntity.IsPowered || Tick10))
@@ -70,7 +74,8 @@ namespace CoreSystems
                 var rootAi = construct.RootAi;
                 var rootConstruct = rootAi.Construct;
                 var focus = rootConstruct.Focus;
-
+                
+               
                 if (rootConstruct.DirtyWeaponGroups)
                 {
                     Ai.Constructs.RebuildWeaponGroups(rootAi.TopEntityMap.GroupMap);
@@ -85,6 +90,11 @@ namespace CoreSystems
                     else if (Tick60 && rootConstruct.RecentItems.Count > 0)
                         rootConstruct.CheckEmptyWeapons();
                 }
+
+                MyEntity fTarget;
+                var hasFocus = rootConstruct.Data.Repo.FocusData.Target > 0 && MyEntities.TryGetEntityById(rootConstruct.Data.Repo.FocusData.Target, out fTarget);
+                var constructResetTick = rootConstruct.TargetResetTick == Tick;
+
                 ///
                 /// Upgrade update section
                 ///
@@ -386,24 +396,27 @@ namespace CoreSystems
                     if (wComp.Status != Started)
                         wComp.HealthCheck();
 
+                    wComp.OnCustomTurret = ai.RootFixedWeaponComp?.PrimaryWeapon?.MasterComp != null;
+
                     if (ai.DbUpdated || !wComp.UpdatedState) 
                         wComp.DetectStateChanges();
 
                     if (wComp.Platform.State != CorePlatform.PlatformState.Ready || wComp.IsDisabled || wComp.IsAsleep || !wComp.IsWorking || wComp.CoreEntity.MarkedForClose || wComp.LazyUpdate && !ai.DbUpdated && Tick > wComp.NextLazyUpdateStart)
                         continue;
 
-                    wComp.OnCustomTurret = ai.RootFixedWeaponComp?.PrimaryWeapon?.MasterComp != null;
-
-
                     var wValues = wComp.Data.Repo.Values;
                     var overrides = wValues.Set.Overrides;
+
+                    var controlComp = wComp.OnCustomTurret ? ai.RootFixedWeaponComp.PrimaryWeapon.MasterComp : null;
+                    var masterAi = controlComp != null ? controlComp?.Ai : ai;
+                    var masterOverrides = controlComp != null ? controlComp.Data.Repo.Values.Set.Overrides : overrides;
                     var cMode = overrides.Control;
 
                     var sMode = overrides.ShootMode;
-                    var focusTargets = wComp.OnCustomTurret ? ai.RootFixedWeaponComp.PrimaryWeapon.MasterComp.Data.Repo.Values.Set.Overrides.FocusTargets : overrides.FocusTargets;
-                    var grids = wComp.OnCustomTurret ? ai.RootFixedWeaponComp.PrimaryWeapon.MasterComp.Data.Repo.Values.Set.Overrides.Grids : overrides.Grids;
-                    var overRide = wComp.OnCustomTurret ? ai.RootFixedWeaponComp.PrimaryWeapon.MasterComp.Data.Repo.Values.Set.Overrides.Override : overrides.Override;
-                    var projectiles = wComp.OnCustomTurret ? ai.RootFixedWeaponComp.PrimaryWeapon.MasterComp.Data.Repo.Values.Set.Overrides.Projectiles : overrides.Projectiles;
+                    var focusTargets = masterOverrides.FocusTargets;
+                    var grids = masterOverrides.Grids;
+                    var overRide = masterOverrides.Override;
+                    var projectiles = masterOverrides.Projectiles;
 
 
                     if (IsServer && wComp.OnCustomTurret)
@@ -602,7 +615,7 @@ namespace CoreSystems
                         else if(w.Target.TargetEntity != null && w.Target.TargetEntity.MarkedForClose || w.DelayedTargetResetTick == Tick && w.TargetData.EntityId == 0 && w.Target.HasTarget)
                             w.Target.Reset(w.System.Session.Tick, States.ServerReset);
 
-                        w.ProjectilesNear = enemyProjectiles && (w.System.TrackProjectile || wComp.OnCustomTurret) && projectiles && w.Target.TargetState != TargetStates.IsProjectile && (w.Target.TargetChanged || QCount == w.ShortLoadId);
+                        w.ProjectilesNear = ai.EnemyProjectiles && (w.System.TrackProjectile || wComp.OnCustomTurret) && projectiles && w.Target.TargetState != TargetStates.IsProjectile && (w.Target.TargetChanged || QCount == w.ShortLoadId);
 
                         if (wValues.State.Control == ControlMode.Camera && UiInput.MouseButtonPressed)
                             w.Target.TargetPos = Vector3D.Zero;
@@ -610,11 +623,26 @@ namespace CoreSystems
                         ///
                         /// Queue for target acquire or set to tracking weapon.
                         /// 
-                        var seek = wComp.FakeMode && w.Target.TargetState != TargetStates.IsFake || (aConst.RequiresTarget || w.ShootRequest.AcquireTarget || w.RotorTurretTracking) & !w.Target.HasTarget && !noAmmo && (wComp.DetectOtherSignals && ai.DetectionInfo.OtherInRange || ai.DetectionInfo.PriorityInRange) && (!wComp.UserControlled && !enforcement.DisableAi || wValues.State.Trigger == On);
 
-                        if (!IsClient && (seek || (aConst.RequiresTarget || w.RotorTurretTracking) && (rootConstruct.TargetResetTick == Tick || w.ProjectilesNear) && !wComp.UserControlled && !enforcement.DisableAi) && !w.AcquiringTarget && wValues.State.Control != ControlMode.Camera)
+                        var timer = w.Acquire;
+                        var myTimeSlot = timer.IsSleeping && AsleepCount == timer.SlotId || !timer.IsSleeping && AwakeCount == timer.SlotId;
+                        var enemiesNear = masterAi.EnemiesNear;
+
+                        var focusRequest = hasFocus && (aConst.SkipAimChecks || constructResetTick);
+                        var forceAcquire = (aConst.RequiresTarget || w.RotorTurretTracking) && (!aConst.SkipAimChecks && myTimeSlot || focusRequest);
+                        var quickAcquire = (forceAcquire || w.ShootRequest.AcquireTarget);
+
+                        var somethingNearBy = wComp.DetectOtherSignals && masterAi.DetectionInfo.OtherInRange || masterAi.DetectionInfo.PriorityInRange;
+                        var readyForAcquire = !IsClient && !enforcement.DisableAi && somethingNearBy && wValues.State.Control != ControlMode.Camera && (!wComp.UserControlled || wComp.FakeMode || wValues.State.Trigger == On);
+                        var weaponReady = !noAmmo && !w.Target.HasTarget && enemiesNear && w.TargetAcquireTick == uint.MaxValue;
+                        
+                        var seek = readyForAcquire && quickAcquire && weaponReady;
+                        var seekProjectile = readyForAcquire && weaponReady && w.ProjectilesNear;
+                        var fakeRequest = readyForAcquire && wComp.FakeMode && w.Target.TargetState != TargetStates.IsFake;
+
+                        if (seek || seekProjectile || fakeRequest)
                         {
-                            w.AcquiringTarget = true;
+                            w.TargetAcquireTick = Tick;
                             AcquireTargets.Add(w);
                         }
 
@@ -631,7 +659,7 @@ namespace CoreSystems
                         var overHeat = w.PartState.Overheated && (w.OverHeatCountDown == 0 || w.OverHeatCountDown != 0 && w.OverHeatCountDown-- == 0);
 
                         var canShoot = !overHeat && !reloading && !w.System.DesignatorWeapon && sequenceReady;
-                        var paintedTarget = wComp.PainterMode && w.Target.TargetState == TargetStates.IsFake && (w.Target.IsAligned || wComp.OnCustomTurret && wComp.Ai.RootFixedWeaponComp.PrimaryWeapon.MasterComp.Platform.Control.IsAimed);
+                        var paintedTarget = wComp.PainterMode && w.Target.TargetState == TargetStates.IsFake && (w.Target.IsAligned || wComp.OnCustomTurret && controlComp.Platform.Control.IsAimed);
                         var autoShot = paintedTarget || w.AiShooting && wValues.State.Trigger == Off;
                         var anyShot = !wComp.ShootManager.FreezeClientShoot && (w.ShootCount > 0 || onConfrimed) && noShootDelay || autoShot && sMode == Weapon.ShootManager.ShootModes.AiShoot;
 
@@ -733,10 +761,16 @@ namespace CoreSystems
             {
                 var w = AcquireTargets[i];
                 var comp = w.Comp;
+                var ai = comp.Ai;
+                var constructResetTick = ai?.Construct.RootAi.Construct.TargetResetTick == Tick;
                 var overrides = w.MasterComp?.Data.Repo.Values.Set.Overrides ?? comp.Data.Repo.Values.Set.Overrides;
-                if (w.BaseComp.IsAsleep || w.BaseComp.Ai == null || comp.TopEntity.MarkedForClose || comp.Ai.IsGrid && !comp.Ai.HasPower || comp.Ai.Concealed || comp.CoreEntity.MarkedForClose || !comp.Ai.DbReady || !comp.IsWorking || w.NoMagsToLoad && w.ProtoWeaponAmmo.CurrentAmmo == 0 && Tick - w.LastMagSeenTick > 600) {
+                var requiresFocus = w.ActiveAmmoDef?.AmmoDef.Const.SkipAimChecks ?? constructResetTick;
+                MyEntity fTarget;
+                var noFocus = requiresFocus && (ai.Construct.Data.Repo.FocusData.Target == 0 || !MyEntities.TryGetEntityById(ai.Construct.Data.Repo.FocusData.Target, out fTarget));
+                
+                if (noFocus && false || comp.IsAsleep || w.BaseComp.Ai == null || comp.TopEntity.MarkedForClose || comp.Ai.IsGrid && !comp.Ai.HasPower || comp.Ai.Concealed || comp.CoreEntity.MarkedForClose || !comp.Ai.DbReady || !comp.IsWorking || w.NoMagsToLoad && w.ProtoWeaponAmmo.CurrentAmmo == 0 && Tick - w.LastMagSeenTick > 600) {
 
-                    w.AcquiringTarget = false;
+                    w.TargetAcquireTick = uint.MaxValue;
                     AcquireTargets.RemoveAtFast(i);
                     continue;
                 }
@@ -746,28 +780,28 @@ namespace CoreSystems
 
                 var acquire = (w.Acquire.IsSleeping && AsleepCount == w.Acquire.SlotId || !w.Acquire.IsSleeping && AwakeCount == w.Acquire.SlotId);
 
-                var seekProjectile = w.ProjectilesNear || Tick == w.ShootRequest.RequestTick && w.ShootRequest.Type == Weapon.ApiShootRequest.TargetType.Position || (w.System.TrackProjectile || w.Comp.OnCustomTurret) && overrides.Projectiles && w.BaseComp.Ai.CheckProjectiles;
-                var checkTime = w.Target.TargetChanged || acquire || seekProjectile || w.FastTargetResetTick == Tick || w.ShootRequest.RequestTick == Tick;
-                var ai = w.BaseComp.Ai;
+                var seekProjectile = w.ProjectilesNear || Tick == w.ShootRequest.RequestTick && w.ShootRequest.Type == Weapon.ApiShootRequest.TargetType.Position || (w.System.TrackProjectile || w.Comp.OnCustomTurret) && overrides.Projectiles && ai.CheckProjectiles;
+                var checkTime = w.TargetAcquireTick == Tick || w.Target.TargetChanged || acquire || seekProjectile || w.FastTargetResetTick == Tick || w.ShootRequest.RequestTick == Tick;
 
-                if (checkTime || ai.Construct.RootAi.Construct.TargetResetTick == Tick && w.Target.HasTarget) {
+                if (checkTime || requiresFocus && w.Target.HasTarget) {
 
                     if (seekProjectile || comp.Data.Repo.Values.State.TrackingReticle || (comp.DetectOtherSignals && ai.DetectionInfo.OtherInRange || ai.DetectionInfo.PriorityInRange) && ai.DetectionInfo.ValidSignalExists(w))
                     {
                         if (comp.PrimaryWeapon != null && comp.PrimaryWeapon.System.DesignatorWeapon && comp.PrimaryWeapon != w && comp.PrimaryWeapon.Target.HasTarget) {
 
-                            var topMost = comp.PrimaryWeapon.Target.TargetEntity?.GetTopMostParent() ?? w.ShootRequest.TargetEntity?.GetTopMostParent();
+                            var topMost = comp.PrimaryWeapon.Target.TargetEntity?.GetTopMostParent();
                             Ai.AcquireTarget(w, false, topMost, overrides);
                         }
                         else
                         {
-                            Ai.AcquireTarget(w, ai.Construct.RootAi.Construct.TargetResetTick == Tick, null, overrides);
+                            var requestedTopEntity = w.ShootRequest.TargetEntity?.GetTopMostParent();
+                            Ai.AcquireTarget(w, requiresFocus, requestedTopEntity, overrides);
                         }
                     }
 
                     if (w.Target.HasTarget || !(comp.DetectOtherSignals && ai.DetectionInfo.OtherInRange || ai.DetectionInfo.PriorityInRange)) {
 
-                        w.AcquiringTarget = false;
+                        w.TargetAcquireTick = uint.MaxValue;
                         AcquireTargets.RemoveAtFast(i);
                         if (w.Target.HasTarget && MpActive) {
                             w.Target.PushTargetToClient(w);

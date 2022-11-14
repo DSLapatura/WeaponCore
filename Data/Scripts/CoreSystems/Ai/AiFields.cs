@@ -111,6 +111,9 @@ namespace CoreSystems.Support
         internal BoundingBox BlockChangeArea = BoundingBox.CreateInvalid();
         internal AiTypes AiType;
         internal long AiOwner;
+        internal bool EnemyProjectiles;
+        internal bool EnemyEntities;
+        internal bool EnemiesNear;
         internal bool BlockMonitoring;
         internal bool AiSleep;
         internal bool Aiming;
@@ -181,12 +184,6 @@ namespace CoreSystems.Support
         internal float OptimalDps;
         internal float EffectiveDps;
         internal float PerfectDps;
-        internal enum TargetType
-        {
-            Projectile,
-            Other,
-            None,
-        }
 
         internal enum AiTypes
         {

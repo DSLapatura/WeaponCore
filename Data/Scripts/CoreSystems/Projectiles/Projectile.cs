@@ -1254,7 +1254,6 @@ namespace CoreSystems.Projectiles
 
                 if ((s.PickTarget && timeSlot || seekNewTarget || gaveUpChase && validTarget || isZombie || seekFirstTarget) && NewTarget() || validTarget)
                 {
-
                     if (s.ZombieLifeTime > 0)
                     {
                         s.ZombieLifeTime = 0;

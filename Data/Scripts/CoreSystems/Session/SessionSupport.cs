@@ -8,6 +8,7 @@ using Sandbox.Common.ObjectBuilders;
 using Sandbox.Definitions;
 using Sandbox.Game;
 using Sandbox.Game.Entities;
+using Sandbox.Game.Entities.Character.Components;
 using Sandbox.Game.EntityComponents;
 using Sandbox.ModAPI;
 using Scripts;
@@ -962,7 +963,10 @@ namespace CoreSystems
             LocalVersion = ModContext.ModId == "CoreSystems";
 
             if (LocalVersion)
+            {
                 DebugVersion = true;
+                DebugMod = true;
+            }
 
             foreach (var mod in Session.Mods)
             {
@@ -1166,7 +1170,8 @@ namespace CoreSystems
         {
             foreach (var rifle in DelayedHandWeaponsSpawn.Keys)
             {
-                if (rifle.AmmoInventory?.Entity == null || rifle.Owner == null)
+                MyCharacterWeaponPositionComponent weaponPosComp;
+                if (rifle.AmmoInventory?.Entity == null || rifle.Owner == null || !rifle.Owner.Components.TryGet(out weaponPosComp) || Vector3D.IsZero(weaponPosComp.LogicalPositionWorld))
                     continue;
 
                 byte value;

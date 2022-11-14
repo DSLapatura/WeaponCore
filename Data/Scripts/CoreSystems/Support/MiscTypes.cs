@@ -107,10 +107,7 @@ namespace CoreSystems.Support
 
                 if (first || w.System.Session.Tick20)
                 {
-                    Ai.TargetType targetType;
-                    Ai.AcquireProjectile(w, out targetType);
-
-                    if (targetType == Ai.TargetType.None)
+                    if (Ai.AcquireProjectile(w))
                     {
                         if (w.NewTarget.CurrentState != States.NoTargetsSeen)
                             w.NewTarget.Reset(w.Comp.Session.Tick, States.NoTargetsSeen);
@@ -143,10 +140,7 @@ namespace CoreSystems.Support
 
                     if (w.Target.TargetState == TargetStates.IsProjectile)
                     {
-                        Ai.TargetType targetType;
-                        Ai.AcquireProjectile(w, out targetType);
-
-                        if (targetType == Ai.TargetType.None)
+                        if (Ai.AcquireProjectile(w))
                         {
                             if (w.NewTarget.CurrentState != States.NoTargetsSeen)
                                 w.NewTarget.Reset(w.Comp.Session.Tick, States.NoTargetsSeen);

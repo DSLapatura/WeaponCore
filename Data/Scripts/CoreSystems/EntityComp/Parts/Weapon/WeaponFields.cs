@@ -129,6 +129,7 @@ namespace CoreSystems.Platform
 
         internal float ShotEnergyCost;
         internal float LastHeat;
+        internal uint TargetAcquireTick = uint.MaxValue;
         internal uint ReloadEndTick = uint.MaxValue;
         internal uint CeaseFireDelayTick = uint.MaxValue / 2;
         internal uint LastTargetTick;
@@ -195,7 +196,6 @@ namespace CoreSystems.Platform
         internal bool CurrentlyDegrading;
         internal bool FixedOffset;
         internal bool ProjectilesNear;
-        internal bool AcquiringTarget;
         internal bool BarrelSpinning;
         internal bool ReturingHome;
         internal bool IsHome = true;
