@@ -243,7 +243,7 @@ namespace CoreSystems.Support
                 var triggerGrowthSteps = d.Info.TriggerGrowthSteps;
                 var lineEffect = aConst.Trail || aConst.DrawLine;
                 var saveHit = d.Hit;
-                
+
                 ++a.LifeTime;
                 a.LastTick = s.Tick;
                 a.AccelClearance = !aConst.AccelClearance || storage.SmartReady;
@@ -267,7 +267,11 @@ namespace CoreSystems.Support
                 if (a.StageIdx != stage && !stagesOver)
                     a.StageChange(stage, createdPrimeEntity);
 
+                if (!saveHit)
+                    a.ShortStepSize = a.StepSize;
+
                 a.EstTravel = a.StepSize * a.LifeTime;
+
                 a.ShortEstTravel = MathHelperD.Clamp((a.EstTravel - a.StepSize) + a.ShortStepSize, 0, double.MaxValue);
                 
                 if (aConst.IsSmart || aConst.IsDrone || aConst.IsBeamWeapon && aConst.ConvergeBeams)

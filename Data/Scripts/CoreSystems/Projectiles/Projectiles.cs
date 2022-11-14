@@ -483,10 +483,16 @@ namespace CoreSystems.Projectiles
 
                         vs.StepSize = stepSize;
 
-                        if (aConst.ConvergeBeams) {
-                            var beam = p.Intersecting ? new LineD(vs.Origin, hitPos ?? p.Position) : new LineD(vs.Origin, p.Position);
+                        if (aConst.ConvergeBeams)
+                        {
+                            LineD beam;
+                            if (p.Intersecting) {
+                                beam = new LineD(vs.Origin, hitPos ?? p.Position) ;
+                                vs.ShortStepSize = beam.Length;
+                            }
+                            else
+                                beam = new LineD(vs.Origin, p.Position);
 
-                            vs.ShortStepSize = beam.Length;
                             vs.VisualLength = beam.Length;
 
                             Session.Projectiles.DeferedAvDraw.Add(new DeferedAv { AvShot = vs, Info = info, TracerFront = beam.To, Hit = p.Intersecting, Direction = beam.Direction });
@@ -501,11 +507,12 @@ namespace CoreSystems.Projectiles
 
                             var line = new LineD(vs.Origin, beamEnd, !hit ? info.MaxTrajectory : info.Weapon.WeaponCache.HitDistance);
 
-                            vs.ShortStepSize = line.Length;
                             vs.VisualLength = line.Length;
 
-                            if (p.Intersecting && hitPos.HasValue)
-                                Session.Projectiles.DeferedAvDraw.Add(new DeferedAv { AvShot = vs, Info = info, TracerFront = line.To, Hit = true,  Direction = line.Direction });
+                            if (p.Intersecting && hitPos.HasValue) {
+                                vs.ShortStepSize = line.Length;
+                                Session.Projectiles.DeferedAvDraw.Add(new DeferedAv { AvShot = vs, Info = info, TracerFront = line.To, Hit = true, Direction = line.Direction });
+                            }
                             else
                                 Session.Projectiles.DeferedAvDraw.Add(new DeferedAv { AvShot = vs, Info = info, TracerFront = line.To, Hit = false,  Direction = line.Direction});
                         }
