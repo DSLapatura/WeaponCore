@@ -166,18 +166,20 @@ namespace CoreSystems.Support
                     continue;
 
                 var character = info.Target as IMyCharacter;
+
                 var targetRadius = character != null ? info.TargetRadius * 5 : info.TargetRadius;
                 if (targetRadius < minTargetRadius || info.TargetRadius > maxTargetRadius && maxTargetRadius < 8192 || !focusTarget && info.OffenseRating <= 0) continue;
 
                 var targetCenter = info.Target.PositionComp.WorldAABB.Center;
                 var targetDistSqr = Vector3D.DistanceSquared(targetCenter, weaponPos);
+
                 if (targetDistSqr > (w.MaxTargetDistance + info.TargetRadius) * (w.MaxTargetDistance + info.TargetRadius) || targetDistSqr < w.MinTargetDistanceSqr) continue;
 
-                if (water != null)
-                {
+                if (water != null) {
                     if (new BoundingSphereD(ai.MyPlanet.PositionComp.WorldAABB.Center, water.MinRadius).Contains(new BoundingSphereD(targetCenter, targetRadius)) == ContainmentType.Contains)
                         continue;
                 }
+
                 session.TargetChecks++;
                 Vector3D targetLinVel = info.Target.Physics?.LinearVelocity ?? Vector3D.Zero;
                 Vector3D targetAccel = accelPrediction ? info.Target.Physics?.LinearAcceleration ?? Vector3D.Zero : Vector3.Zero;
@@ -206,7 +208,6 @@ namespace CoreSystems.Support
                             continue;
                     }
 
-
                     w.FoundTopMostTarget = true;
 
                     if (!AcquireBlock(w, target, info,  ref waterSphere, ref w.XorRnd, null, !focusTarget)) continue;
@@ -220,24 +221,23 @@ namespace CoreSystems.Support
 
                 var meteor = info.Target as MyMeteor;
                 if (meteor != null && (!s.TrackMeteors || !overRides.Meteors)) continue;
-
-                if (character != null && (!s.TrackCharacters || !overRides.Biologicals || character.IsDead || character.Integrity <= 0 || session.AdminMap.ContainsKey(character))) continue;
+                
+                if (character != null && (!overRides.Biologicals || character.IsDead || character.Integrity <= 0 || session.AdminMap.ContainsKey(character))) continue;
 
                 Vector3D predictedPos;
                 if (!Weapon.CanShootTarget(w, ref targetCenter, targetLinVel, targetAccel, out predictedPos, true, info.Target)) continue;
-
+                
                 if (ai.FriendlyShieldNear)
                 {
                     var targetDir = predictedPos - weaponPos;
                     if (w.HitFriendlyShield(weaponPos, predictedPos, targetDir))
                         continue;
                 }
-
+                
                 session.TopRayCasts++;
 
                 if (w.LastHitInfo?.HitEntity != null && (!w.System.Values.HardPoint.Other.MuzzleCheck || !w.MuzzleHitSelf()))
                 {
-
                     TargetInfo hitInfo;
                     if (w.LastHitInfo.HitEntity == info.Target || ai.Targets.TryGetValue((MyEntity)w.LastHitInfo.HitEntity, out hitInfo) && (hitInfo.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Enemies || hitInfo.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Neutral || hitInfo.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.NoOwnership))
                     {

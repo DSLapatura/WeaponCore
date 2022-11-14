@@ -1,7 +1,6 @@
 ﻿using System;
 using CoreSystems.Support;
 using Jakaria;
-using Sandbox.Engine.Physics;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
 using SpaceEngineers.Game.ModAPI;
@@ -13,7 +12,6 @@ using VRageMath;
 using static CoreSystems.Support.WeaponDefinition.HardPointDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef;
 using CollisionLayers = Sandbox.Engine.Physics.MyPhysics.CollisionLayers;
-using System.Runtime.CompilerServices;
 
 namespace CoreSystems.Platform
 {
@@ -54,31 +52,34 @@ namespace CoreSystems.Platform
             weapon.LastHitInfo = null;
             if (checkSelfHit && target != null)
             {
-
                 var testLine = new LineD(targetCenter, weapon.BarrelOrigin);
                 var predictedMuzzlePos = testLine.To + (-testLine.Direction * weapon.MuzzleDistToBarrelCenter);
                 var ai = weapon.Comp.Ai;
-                var localPredictedPos = Vector3I.Round(Vector3D.Transform(predictedMuzzlePos, ai.GridEntity.PositionComp.WorldMatrixNormalizedInv) * ai.GridEntity.GridSizeR);
+                var clear = ai.AiType != Ai.AiTypes.Grid;
 
-                MyCube cube;
-                var noCubeAtPosition = !ai.GridEntity.TryGetCube(localPredictedPos, out cube);
-                if (noCubeAtPosition || cube.CubeBlock == weapon.Comp.Cube.SlimBlock)
+                if (!clear)
                 {
+                    var localPredictedPos = Vector3I.Round(Vector3D.Transform(predictedMuzzlePos, ai.GridEntity.PositionComp.WorldMatrixNormalizedInv) * ai.GridEntity.GridSizeR);
 
-                    var noCubeInLine = !ai.GridEntity.GetIntersectionWithLine(ref testLine, ref ai.GridHitInfo);
-                    var noCubesInLineOrHitSelf = noCubeInLine || ai.GridHitInfo.Position == weapon.Comp.Cube.Position;
-
-                    if (noCubesInLineOrHitSelf)
+                    MyCube cube;
+                    var noCubeAtPosition = !ai.GridEntity.TryGetCube(localPredictedPos, out cube);
+                    if (noCubeAtPosition || cube.CubeBlock == weapon.Comp.Cube.SlimBlock)
                     {
-
-                        weapon.System.Session.Physics.CastRay(predictedMuzzlePos, testLine.From, out weapon.LastHitInfo, CollisionLayers.DefaultCollisionLayer);
-
-                        if (weapon.LastHitInfo != null && weapon.LastHitInfo.HitEntity == ai.GridEntity)
-                            selfHit = true;
+                        var noCubeInLine = !ai.GridEntity.GetIntersectionWithLine(ref testLine, ref ai.GridHitInfo);
+                        clear = noCubeInLine || ai.GridHitInfo.Position == weapon.Comp.Cube.Position;
                     }
+                }
+
+                if (clear)
+                {
+                    weapon.System.Session.Physics.CastRay(predictedMuzzlePos, testLine.From, out weapon.LastHitInfo, CollisionLayers.DefaultCollisionLayer);
+
+                    if (ai.AiType == Ai.AiTypes.Grid && weapon.LastHitInfo != null && weapon.LastHitInfo.HitEntity == ai.GridEntity)
+                        selfHit = true;
                 }
                 else selfHit = true;
             }
+
             return !selfHit && (inRange && canTrack || weapon.Comp.Data.Repo.Values.State.TrackingReticle);
         }
 
@@ -1062,8 +1063,9 @@ namespace CoreSystems.Platform
             if (MinAzToleranceRadians > MaxAzToleranceRadians)
                 MinAzToleranceRadians -= 6.283185f;
 
-            var dummyInfo = Dummies[MiddleMuzzleIndex];
-            MuzzleDistToBarrelCenter = Vector3D.Distance(dummyInfo.Info.Position, dummyInfo.Entity.PositionComp.WorldAABB.Center);
+            var dummyInfo = Dummies[MiddleMuzzleIndex].Info;
+
+            MuzzleDistToBarrelCenter = Vector3D.Distance(dummyInfo.LocalPosition, dummyInfo.Entity.PositionComp.LocalAABB.Center);
         }
     }
 }

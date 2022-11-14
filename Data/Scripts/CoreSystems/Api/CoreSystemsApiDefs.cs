@@ -1244,7 +1244,7 @@ namespace CoreSystems.Api
 
                         public enum StageEvents
                         {
-                            None,
+                            NoNothing,
                             EndProjectile,
                             EndProjectileOnFailure,
                         }

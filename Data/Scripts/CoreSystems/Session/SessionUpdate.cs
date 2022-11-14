@@ -14,6 +14,7 @@ using System;
 using Sandbox.ModAPI.Weapons;
 using SpaceEngineers.Game.ModAPI;
 using VRage.Game.Entity;
+using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace CoreSystems
 {
@@ -774,18 +775,22 @@ namespace CoreSystems
                 var w = AcquireTargets[i];
                 var comp = w.Comp;
                 var ai = comp.Ai;
-                var constructResetTick = ai?.Construct.RootAi.Construct.TargetResetTick == Tick;
-                var overrides = w.MasterComp?.Data.Repo.Values.Set.Overrides ?? comp.Data.Repo.Values.Set.Overrides;
-                var requiresFocus = w.ActiveAmmoDef?.AmmoDef.Const.SkipAimChecks ?? constructResetTick;
-                MyEntity fTarget;
-                var noFocus = requiresFocus && (ai.Construct.Data.Repo.FocusData.Target == 0 || !MyEntities.TryGetEntityById(ai.Construct.Data.Repo.FocusData.Target, out fTarget));
-                
-                if (noFocus && false || comp.IsAsleep || w.BaseComp.Ai == null || comp.TopEntity.MarkedForClose || comp.Ai.IsGrid && !comp.Ai.HasPower || comp.Ai.Concealed || comp.CoreEntity.MarkedForClose || !comp.Ai.DbReady || !comp.IsWorking || w.NoMagsToLoad && w.ProtoWeaponAmmo.CurrentAmmo == 0 && Tick - w.LastMagSeenTick > 600) {
-
+                if (comp.TopEntity.MarkedForClose || comp.CoreEntity.MarkedForClose || ai?.Construct.RootAi == null || w.ActiveAmmoDef == null || comp.IsAsleep || comp.Ai.IsGrid && !comp.Ai.HasPower || comp.Ai.Concealed || !comp.Ai.DbReady || !comp.IsWorking || w.NoMagsToLoad && w.ProtoWeaponAmmo.CurrentAmmo == 0 && Tick - w.LastMagSeenTick > 600) {
                     w.TargetAcquireTick = uint.MaxValue;
                     AcquireTargets.RemoveAtFast(i);
                     continue;
                 }
+
+                var rootConstruct = ai.Construct.RootAi.Construct;
+                var requiresFocus = w.ActiveAmmoDef.AmmoDef.Const.SkipAimChecks || rootConstruct.TargetResetTick == Tick;
+                MyEntity fTarget;
+                if (requiresFocus && (rootConstruct.Data.Repo.FocusData.Target == 0 || !MyEntities.TryGetEntityById(rootConstruct.Data.Repo.FocusData.Target, out fTarget))) {
+                    w.TargetAcquireTick = uint.MaxValue;
+                    AcquireTargets.RemoveAtFast(i);
+                    continue;
+                }
+
+                var overrides = w.MasterComp?.Data.Repo.Values.Set.Overrides ?? comp.Data.Repo.Values.Set.Overrides;
 
                 if (!w.Acquire.Monitoring && IsServer && w.System.HasRequiresTarget)
                     AcqManager.Monitor(w.Acquire);

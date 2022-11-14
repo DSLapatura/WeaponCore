@@ -1663,7 +1663,7 @@ namespace CoreSystems.Projectiles
                                 EarlyEnd = true;
                                 DistanceToTravelSqr = Info.DistanceTraveled * Info.DistanceTraveled;
                                 break;
-                            case StageEvents.None:
+                            case StageEvents.NoNothing:
                                 break;
                         }
                     }

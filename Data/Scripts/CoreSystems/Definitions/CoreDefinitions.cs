@@ -1250,7 +1250,7 @@ namespace CoreSystems.Support
 
                     public enum StageEvents
                     {
-                        None,
+                        NoNothing,
                         EndProjectile,
                         EndProjectileOnFailure,
                     }
