@@ -1212,7 +1212,10 @@ namespace CoreSystems.Api
                             DistanceFromTarget,
                             Lifetime,
                             DesiredElevation,
-                            MinTravelRequired
+                            MinTravelRequired,
+                            MaxTravelRequired,
+                            Deadtime,
+                            DistanceToTarget,
                         }
 
                         public enum UpRelativeTo
@@ -1230,6 +1233,13 @@ namespace CoreSystems.Api
                             Target,
                             Surface,
                             MidPoint,
+                        }
+                        public enum ConditionOperators
+                        {
+                            StartEnd_And,
+                            StartEnd_Or,
+                            StartAnd_EndOr,
+                            StartOr_EndAnd,
                         }
 
                         [ProtoMember(1)] internal StartFailure Failure;
@@ -1260,7 +1270,8 @@ namespace CoreSystems.Api
                         [ProtoMember(26)] internal Conditions EndCondition2;
                         [ProtoMember(27)] internal double End2Value;
                         [ProtoMember(28)] internal VantagePointRelativeTo AdjustElevation;
-
+                        [ProtoMember(29)] internal double ElevationTolerance;
+                        [ProtoMember(30)] internal ConditionOperators Operators;
                     }
 
                     [ProtoContract]

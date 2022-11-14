@@ -1622,6 +1622,8 @@ namespace CoreSystems.Support
         public readonly bool AlternateTravelParticle;
         public readonly bool AlternateModel;
         public readonly bool StartParticle;
+        public readonly bool EndAnd;
+        public readonly bool StartAnd;
         public readonly double ModFutureStep;
 
         public ApproachConstants(WeaponSystem.AmmoType ammo, int index, WeaponDefinition wDef)
@@ -1656,7 +1658,35 @@ namespace CoreSystems.Support
             var futureStepLimit = maxStepLimit <= speedStepLimit ? maxStepLimit : speedStepLimit;
 
             ModFutureStep = futureStepLimit;
+            GetOperators(def, out StartAnd, out EndAnd);
         }
+
+        private static void GetOperators(ApproachDef def, out bool startAnd, out bool endAnd)
+        {
+            switch (def.Operators)
+            {
+                case ApproachDef.ConditionOperators.StartEnd_And:
+                    startAnd = true;
+                    endAnd = true;
+                    return;
+                case ApproachDef.ConditionOperators.StartEnd_Or:
+                    startAnd = false;
+                    endAnd = false;
+                    return;
+                case ApproachDef.ConditionOperators.StartAnd_EndOr:
+                    startAnd = true;
+                    endAnd = false;
+                    return;
+                case ApproachDef.ConditionOperators.StartOr_EndAnd:
+                    startAnd = false;
+                    endAnd = true;
+                    return;
+                default:
+                    startAnd = true;
+                    endAnd = true;
+                    break;
+            }
+        } 
 
         public void Clean()
         {

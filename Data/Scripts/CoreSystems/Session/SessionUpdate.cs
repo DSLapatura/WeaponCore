@@ -14,7 +14,6 @@ using System;
 using Sandbox.ModAPI.Weapons;
 using SpaceEngineers.Game.ModAPI;
 using VRage.Game.Entity;
-using System.Runtime.CompilerServices;
 
 namespace CoreSystems
 {
@@ -574,17 +573,32 @@ namespace CoreSystems
                         /// Check target for expire states
                         /// 
                         var noAmmo = w.NoMagsToLoad && w.ProtoWeaponAmmo.CurrentAmmo == 0 && aConst.Reloadable && !w.System.DesignatorWeapon && Tick - w.LastMagSeenTick > 600;
+                        var weaponAcquires = ai.AcquireTargets && (aConst.RequiresTarget || w.RotorTurretTracking || w.ShootRequest.AcquireTarget);
 
-                        if (!IsClient) {
-
+                        if (!IsClient)
+                        {
                             if (w.Target.HasTarget) 
                             {
                                 if (noAmmo)
+                                {
                                     w.Target.Reset(Tick, States.Expired);
+                                }
                                 else if (w.Target.TargetEntity == null && w.Target.Projectile == null && !wComp.FakeMode || wComp.ManualMode && (fakeTargets == null || Tick - fakeTargets.ManualTarget.LastUpdateTick > 120))
+                                {
                                     w.Target.Reset(Tick, States.Expired, !wComp.ManualMode);
-                                else if (w.Target.TargetEntity != null && (wComp.UserControlled && !w.System.SuppressFire || w.Target.TargetEntity.MarkedForClose || Tick60 && (focusTargets && !focus.ValidFocusTarget(w) || Tick60 && !focusTargets && !w.TurretController && (aConst.RequiresTarget || w.RotorTurretTracking) && !w.TargetInRange(w.Target.TargetEntity))))
+                                }
+                                else if (w.Target.TargetEntity != null && (w.Target.TargetEntity.MarkedForClose || !hasFocus && weaponAcquires && aConst.SkipAimChecks || wComp.UserControlled && !w.System.SuppressFire))
+                                {
                                     w.Target.Reset(Tick, States.Expired);
+                                }
+                                else if (w.Target.TargetEntity != null && Tick60 && focusTargets && !focus.ValidFocusTarget(w))
+                                {
+                                    w.Target.Reset(Tick, States.Expired);
+                                }
+                                else if (w.Target.TargetEntity != null && Tick60 && !focusTargets && !w.TurretController && weaponAcquires && !w.TargetInRange(w.Target.TargetEntity))
+                                {
+                                    w.Target.Reset(Tick, States.Expired);
+                                }
                                 else if (w.Target.Projectile != null && (!ai.LiveProjectile.Contains(w.Target.Projectile) || w.Target.TargetState == TargetStates.IsProjectile && w.Target.Projectile.State != Projectile.ProjectileState.Alive)) 
                                 {
                                     w.Target.Reset(Tick, States.Expired);
@@ -623,27 +637,26 @@ namespace CoreSystems
                         ///
                         /// Queue for target acquire or set to tracking weapon.
                         /// 
-
-                        var timer = w.Acquire;
-                        var myTimeSlot = timer.IsSleeping && AsleepCount == timer.SlotId || !timer.IsSleeping && AwakeCount == timer.SlotId;
-                        var enemiesNear = masterAi.EnemiesNear;
-
-                        var focusRequest = hasFocus && (aConst.SkipAimChecks || constructResetTick);
-                        var forceAcquire = (aConst.RequiresTarget || w.RotorTurretTracking) && (!aConst.SkipAimChecks && myTimeSlot || focusRequest);
-                        var quickAcquire = (forceAcquire || w.ShootRequest.AcquireTarget);
-
-                        var somethingNearBy = wComp.DetectOtherSignals && masterAi.DetectionInfo.OtherInRange || masterAi.DetectionInfo.PriorityInRange;
-                        var readyForAcquire = !IsClient && !enforcement.DisableAi && somethingNearBy && wValues.State.Control != ControlMode.Camera && (!wComp.UserControlled || wComp.FakeMode || wValues.State.Trigger == On);
-                        var weaponReady = !noAmmo && !w.Target.HasTarget && enemiesNear && w.TargetAcquireTick == uint.MaxValue;
                         
-                        var seek = readyForAcquire && quickAcquire && weaponReady;
-                        var seekProjectile = readyForAcquire && weaponReady && w.ProjectilesNear;
-                        var fakeRequest = readyForAcquire && wComp.FakeMode && w.Target.TargetState != TargetStates.IsFake;
-
-                        if (seek || seekProjectile || fakeRequest)
+                        if (weaponAcquires && w.TargetAcquireTick == uint.MaxValue && wValues.State.Control != ControlMode.Camera && (!wComp.UserControlled || wComp.FakeMode || wValues.State.Trigger == On))
                         {
-                            w.TargetAcquireTick = Tick;
-                            AcquireTargets.Add(w);
+                            var myTimeSlot = w.Acquire.IsSleeping && AsleepCount == w.Acquire.SlotId || !w.Acquire.IsSleeping && AwakeCount == w.Acquire.SlotId;
+
+                            var focusRequest = hasFocus && (aConst.SkipAimChecks || constructResetTick);
+                            var acquireReady = !aConst.SkipAimChecks && myTimeSlot || focusRequest;
+
+                            var somethingNearBy = wComp.DetectOtherSignals && masterAi.DetectionInfo.OtherInRange || masterAi.DetectionInfo.PriorityInRange;
+                            var weaponReady = !noAmmo && masterAi.EnemiesNear && somethingNearBy && (!w.Target.HasTarget || hasFocus && constructResetTick);
+
+                            var seek = weaponReady && (acquireReady || w.ProjectilesNear);
+                            var fakeRequest =  wComp.FakeMode && w.Target.TargetState != TargetStates.IsFake && wComp.UserControlled;
+
+                            if (seek || fakeRequest)
+                            {
+                                w.TargetAcquireTick = Tick;
+                                AcquireTargets.Add(w);
+                            }
+
                         }
 
                         if (w.Target.TargetChanged) // Target changed

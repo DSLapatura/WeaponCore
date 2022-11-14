@@ -146,6 +146,7 @@ namespace CoreSystems.Support
         internal bool IsGrid;
         internal bool SmartHandheld;
         internal bool ModOverride;
+        internal bool AcquireTargets;
         internal bool RotorTurretAimed;
         internal uint RotorCommandTick;
         internal uint TargetsUpdatedTick;
@@ -213,6 +214,7 @@ namespace CoreSystems.Support
                 AiType = GridEntity != null ? AiTypes.Grid : type == CoreComponent.CompTypeSpecific.Rifle ? AiTypes.Player : AiTypes.Phantom;
                 IsGrid = AiType == AiTypes.Grid;
                 DeadSphereRadius = GridEntity?.GridSizeHalf + 0.1 ?? 1.35;
+                AcquireTargets = !session.IsClient && !session.Settings.Enforcement.DisableAi;
 
                 if (AiType != AiTypes.Phantom)
                     session.TopEntityToInfoMap.TryGetValue(topEntity, out TopEntityMap);

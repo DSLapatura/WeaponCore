@@ -1569,9 +1569,10 @@ namespace CoreSystems.Projectiles
                     case Conditions.DesiredElevation:
                         var plane = new PlaneD(s.LookAtPos, s.OffsetDir);
                         var distToPlane = plane.DistanceToPoint(Position);
+                        var tolernace = def.ElevationTolerance + aConst.CollisionSize;
                         var distFromSurfaceSqr = !Vector3D.IsZero(surfacePos) ? Vector3D.DistanceSquared(Position, surfacePos) : distToPlane * distToPlane;
-                        var lessThanTolerance = (def.Start1Value + aConst.CollisionSize) * (def.Start1Value + aConst.CollisionSize);
-                        var greaterThanTolerance = (def.Start1Value - aConst.CollisionSize) * (def.Start1Value - aConst.CollisionSize);
+                        var lessThanTolerance = (def.Start1Value + tolernace) * (def.Start1Value + tolernace);
+                        var greaterThanTolerance = (def.Start1Value - tolernace) * (def.Start1Value - tolernace);
                         start1 = distFromSurfaceSqr >= greaterThanTolerance && distFromSurfaceSqr <= lessThanTolerance;
                         break;
                     case Conditions.DistanceFromTarget: // could save a sqrt by inlining and using heightDir
@@ -1579,11 +1580,22 @@ namespace CoreSystems.Projectiles
                             DsDebugDraw.DrawLine(heightend, destination, Color.Green, 10);
                         start1 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize <= def.Start1Value;
                         break;
+                    case Conditions.DistanceToTarget: // could save a sqrt by inlining and using heightDir
+                        if (Info.Ai.Session.DebugMod)
+                            DsDebugDraw.DrawLine(heightend, destination, Color.Green, 10);
+                        start1 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize >= def.Start1Value;
+                        break;
                     case Conditions.Lifetime:
                         start1 = Info.Age >= def.Start1Value;
                         break;
+                    case Conditions.Deadtime:
+                        start1 = Info.Age <= def.Start1Value;
+                        break;
                     case Conditions.MinTravelRequired:
                         start1 = Info.DistanceTraveled - s.StartDistanceTraveled >= def.Start1Value;
+                        break;
+                    case Conditions.MaxTravelRequired:
+                        start1 = Info.DistanceTraveled - s.StartDistanceTraveled <= def.Start1Value;
                         break;
                     case Conditions.Spawn:
                     case Conditions.Ignore:
@@ -1600,9 +1612,10 @@ namespace CoreSystems.Projectiles
                     case Conditions.DesiredElevation:
                         var plane = new PlaneD(s.LookAtPos, s.OffsetDir);
                         var distToPlane = plane.DistanceToPoint(Position);
+                        var tolernace = def.ElevationTolerance + aConst.CollisionSize;
                         var distFromSurfaceSqr = !Vector3D.IsZero(surfacePos) ? Vector3D.DistanceSquared(Position, surfacePos) : distToPlane * distToPlane;
-                        var lessThanTolerance = (def.Start2Value + aConst.CollisionSize) * (def.Start2Value + aConst.CollisionSize);
-                        var greaterThanTolerance = (def.Start2Value - aConst.CollisionSize) * (def.Start2Value - aConst.CollisionSize);
+                        var lessThanTolerance = (def.Start2Value + tolernace) * (def.Start2Value + tolernace);
+                        var greaterThanTolerance = (def.Start2Value - tolernace) * (def.Start2Value - tolernace);
                         start2 = distFromSurfaceSqr >= greaterThanTolerance && distFromSurfaceSqr <= lessThanTolerance;
                         break;
                     case Conditions.DistanceFromTarget: // could save a sqrt by inlining and using heightDir
@@ -1610,11 +1623,22 @@ namespace CoreSystems.Projectiles
                             DsDebugDraw.DrawLine(heightend, destination, Color.Blue, 10);
                         start2 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize <= def.Start2Value;
                         break;
+                    case Conditions.DistanceToTarget: 
+                        if (Info.Ai.Session.DebugMod)
+                            DsDebugDraw.DrawLine(heightend, destination, Color.Green, 10);
+                        start2 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize >= def.Start2Value;
+                        break;
                     case Conditions.Lifetime:
                         start2 = Info.Age >= def.Start2Value;
                         break;
+                    case Conditions.Deadtime:
+                        start2 = Info.Age <= def.Start2Value;
+                        break;
                     case Conditions.MinTravelRequired:
                         start2 = Info.DistanceTraveled - s.StartDistanceTraveled >= def.Start2Value;
+                        break;
+                    case Conditions.MaxTravelRequired:
+                        start2 = Info.DistanceTraveled - s.StartDistanceTraveled <= def.Start2Value;
                         break;
                     case Conditions.Spawn:
                     case Conditions.Ignore:
@@ -1625,7 +1649,7 @@ namespace CoreSystems.Projectiles
                         break;
                 }
 
-                if (start1 && start2 || s.LastActivatedStage >= 0 && !def.CanExpireOnceStarted)
+                if (approach.StartAnd && start1 && start2 || !approach.StartAnd && (start1 || start2) || s.LastActivatedStage >= 0 && !def.CanExpireOnceStarted)
                 {
                     if (s.LastActivatedStage != s.RequestedStage)
                     {
@@ -1714,9 +1738,10 @@ namespace CoreSystems.Projectiles
                     case Conditions.DesiredElevation:
                         var plane = new PlaneD(s.LookAtPos, s.OffsetDir);
                         var distToPlane = plane.DistanceToPoint(Position);
+                        var tolernace = def.ElevationTolerance + aConst.CollisionSize;
                         var distFromSurfaceSqr = !Vector3D.IsZero(surfacePos) ? Vector3D.DistanceSquared(Position, surfacePos) : distToPlane * distToPlane;
-                        var lessThanTolerance = (def.End1Value + aConst.CollisionSize) * (def.End1Value + aConst.CollisionSize);
-                        var greaterThanTolerance = (def.End1Value - aConst.CollisionSize) * (def.End1Value - aConst.CollisionSize);
+                        var lessThanTolerance = (def.End1Value + tolernace) * (def.End1Value + tolernace);
+                        var greaterThanTolerance = (def.End1Value - tolernace) * (def.End1Value - tolernace);
                         end1 = distFromSurfaceSqr >= greaterThanTolerance && distFromSurfaceSqr <= lessThanTolerance;
                         break;
                     case Conditions.DistanceFromTarget:
@@ -1731,11 +1756,22 @@ namespace CoreSystems.Projectiles
                             end1 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize <= def.End1Value;
                         }
                         break;
+                    case Conditions.DistanceToTarget: 
+                        if (Info.Ai.Session.DebugMod)
+                            DsDebugDraw.DrawLine(heightend, destination, Color.Green, 10);
+                        end1 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize >= def.End1Value;
+                        break;
                     case Conditions.Lifetime:
                         end1 = Info.Age >= def.End1Value;
                         break;
+                    case Conditions.Deadtime:
+                        end1 = Info.Age <= def.End1Value;
+                        break;
                     case Conditions.MinTravelRequired:
                         end1 = Info.DistanceTraveled - s.StartDistanceTraveled >= def.End1Value;
+                        break;
+                    case Conditions.MaxTravelRequired:
+                        end1 = Info.DistanceTraveled - s.StartDistanceTraveled <= def.End1Value;
                         break;
                     case Conditions.Ignore:
                         end1 = true;
@@ -1751,9 +1787,10 @@ namespace CoreSystems.Projectiles
                     case Conditions.DesiredElevation:
                         var plane = new PlaneD(s.LookAtPos, s.OffsetDir);
                         var distToPlane = plane.DistanceToPoint(Position);
+                        var tolernace = def.ElevationTolerance + aConst.CollisionSize;
                         var distFromSurfaceSqr = !Vector3D.IsZero(surfacePos) ? Vector3D.DistanceSquared(Position, surfacePos) : distToPlane * distToPlane;
-                        var lessThanTolerance = (def.End2Value + aConst.CollisionSize) * (def.End2Value + aConst.CollisionSize);
-                        var greaterThanTolerance = (def.End2Value - aConst.CollisionSize) * (def.End2Value - aConst.CollisionSize);
+                        var lessThanTolerance = (def.End2Value + tolernace) * (def.End2Value + tolernace);
+                        var greaterThanTolerance = (def.End2Value - tolernace) * (def.End2Value - tolernace);
                         end2 = distFromSurfaceSqr >= greaterThanTolerance && distFromSurfaceSqr <= lessThanTolerance;
                         break;
                     case Conditions.DistanceFromTarget:
@@ -1768,11 +1805,22 @@ namespace CoreSystems.Projectiles
                             end2 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize <= def.End2Value;
                         }
                         break;
+                    case Conditions.DistanceToTarget: 
+                        if (Info.Ai.Session.DebugMod)
+                            DsDebugDraw.DrawLine(heightend, destination, Color.Green, 10);
+                        end2 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize >= def.End2Value;
+                        break;
                     case Conditions.Lifetime:
                         end2 = Info.Age >= def.End2Value;
                         break;
+                    case Conditions.Deadtime:
+                        end2 = Info.Age <= def.End2Value;
+                        break;
                     case Conditions.MinTravelRequired:
                         end2 = Info.DistanceTraveled - s.StartDistanceTraveled >= def.End2Value;
+                        break;
+                    case Conditions.MaxTravelRequired:
+                        end2 = Info.DistanceTraveled - s.StartDistanceTraveled <= def.End2Value;
                         break;
                     case Conditions.Ignore:
                         end2 = true;
@@ -1795,7 +1843,7 @@ namespace CoreSystems.Projectiles
                     }
                 }
 
-                if (end1 && end2)
+                if (approach.EndAnd && end1 && end2 || !approach.EndAnd && (end1 || end2))
                 {
                     var hasNextStep = s.RequestedStage + 1 < aConst.ApproachesCount;
                     var isActive = s.LastActivatedStage >= 0;
