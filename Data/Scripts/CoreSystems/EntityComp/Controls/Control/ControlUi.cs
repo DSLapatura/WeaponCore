@@ -5,6 +5,7 @@ using CoreSystems.Support;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
 using VRage.Game;
+using VRage.Game.Entity;
 using VRage.ModAPI;
 using VRage.Utils;
 using VRageMath;
@@ -382,5 +383,44 @@ namespace CoreSystems
             ControlSys.ControlComponent.RequestSetValue(comp, "LargeGrid", value, comp.Session.PlayerId);
         }
 
+        internal static void ToolWeaponFill(IMyTerminalBlock block, List<MyTerminalControlListBoxItem> arg1, List<MyTerminalControlListBoxItem> arg2)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as ControlSys.ControlComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+                return;
+
+            foreach (var f in comp.ToolsAndWeapons)
+            {
+                var cube = f as MyCubeBlock;
+
+                if (cube != null)
+                {
+                    var wComp = cube.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+                    var tool = cube as IMyShipToolBase;
+                    if (wComp != null)
+                    {
+                        var func = wComp.Cube as IMyFunctionalBlock;
+                        if (func != null)
+                        {
+                            arg1.Add(new MyTerminalControlListBoxItem(MyStringId.GetOrCompute(func.CustomName), MyStringId.NullOrEmpty, f));
+                        }
+                    }
+                    else if (tool != null)
+                    {
+                        arg1.Add(new MyTerminalControlListBoxItem(MyStringId.GetOrCompute(tool.CustomName), MyStringId.NullOrEmpty, f));
+                    }
+                }
+
+            }
+        }
+
+        internal static void ToolWeaponSelect(IMyTerminalBlock block, List<MyTerminalControlListBoxItem> list)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
+                return;
+
+            return;
+        }
     }
 }

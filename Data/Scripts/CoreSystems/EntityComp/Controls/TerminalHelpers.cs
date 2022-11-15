@@ -96,6 +96,8 @@ namespace CoreSystems.Control
 
         internal static void AddTurretControlBlockControls<T>(Session session) where T : IMyTerminalBlock
         {
+            CtcAddListBoxNoAction<T>(session, "ToolsAndWeapons", "Available tools and weapons", "Auto populated by weaponcore", BlockUi.ToolWeaponFill, BlockUi.ToolWeaponSelect, CtcIsReady, 1, true);
+
             CtcAddCheckboxNoAction<T>(session, "Advanced", Localization.GetText("TerminalAdvancedTitle"), Localization.GetText("TerminalAdvancedTooltip"), BlockUi.GetAdvancedControl, BlockUi.RequestAdvancedControl, true, CtcIsReady);
             CtcAddOnOffSwitchNoAction<T>(session, "ShareFireControlEnabled", Localization.GetText("TerminalShareFireControlTitle"), Localization.GetText("TerminalShareFireControlTooltip"), BlockUi.GetShareFireControlControl, BlockUi.RequestShareFireControlControl, true, CtcIsReady);
 
@@ -927,6 +929,27 @@ namespace CoreSystems.Control
 
             return c;
         }
+
+        internal static IMyTerminalControlListbox CtcAddListBoxNoAction<T>(Session session, string name, string title, string tooltip, Action<IMyTerminalBlock, List<MyTerminalControlListBoxItem>, List<MyTerminalControlListBoxItem>> fillAction, Action<IMyTerminalBlock, List<MyTerminalControlListBoxItem>> selectAction, Func<IMyTerminalBlock, bool> visibleGetter = null, int visibleRowCount = 5, bool multiSelect = false, bool groups = false) where T : IMyTerminalBlock
+        {
+            var c = MyAPIGateway.TerminalControls.CreateControl<IMyTerminalControlListbox, T>("WC_" + name);
+
+            c.Title = MyStringId.GetOrCompute(title);
+            c.Tooltip = MyStringId.GetOrCompute(tooltip);
+            c.ListContent = fillAction;
+            c.ItemSelected = selectAction;
+            c.Multiselect = multiSelect;
+            c.VisibleRowsCount = visibleRowCount;
+            c.SupportsMultipleBlocks = groups;
+            c.Visible = visibleGetter;
+            c.Enabled = CtcIsReady;
+
+            MyAPIGateway.TerminalControls.AddControl<T>(c);
+            session.CustomControls.Add(c);
+
+            return c;
+        }
+
 
         internal static IMyTerminalControlOnOffSwitch CtcAddOnOffSwitchNoAction<T>(Session session, string name, string title, string tooltip, Func<IMyTerminalBlock, bool> getter, Action<IMyTerminalBlock, bool> setter, bool allowGroup, Func<IMyTerminalBlock, bool> visibleGetter = null) where T : IMyTerminalBlock
         {

@@ -59,7 +59,6 @@ namespace CoreSystems
 
         internal static void FriendFill(IMyTerminalBlock block, List<MyTerminalControlListBoxItem> arg1, List<MyTerminalControlListBoxItem> arg2)
         {
-
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
                 return;
@@ -68,7 +67,6 @@ namespace CoreSystems
             {
                 arg1.Add(new MyTerminalControlListBoxItem(MyStringId.GetOrCompute(f.DisplayName), MyStringId.NullOrEmpty, f));
             }
-
         }
 
         internal static void FriendSelect(IMyTerminalBlock block, List<MyTerminalControlListBoxItem> list)

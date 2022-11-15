@@ -404,7 +404,7 @@ namespace CoreSystems
                 "RemoveSelectedTextures",
                 "PreserveAspectRatio",
 
-                //"Open Toolbar",
+                "Open Toolbar",
                 "RotorAzimuth",
                 "RotorElevation",
                 "CameraList",

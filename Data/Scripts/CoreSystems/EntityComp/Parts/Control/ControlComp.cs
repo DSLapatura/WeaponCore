@@ -20,6 +20,8 @@ namespace CoreSystems.Platform
         public class ControlComponent : CoreComponent
         {
             internal readonly List<Sandbox.ModAPI.Interfaces.ITerminalAction> Actions = new List<Sandbox.ModAPI.Interfaces.ITerminalAction>();
+            internal readonly HashSet<MyEntity> ToolsAndWeapons = new HashSet<MyEntity>();
+
             internal readonly ControlCompData Data;
             internal readonly ControlStructure Structure;
             internal readonly IMyTurretControlBlock Controller;

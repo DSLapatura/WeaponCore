@@ -306,6 +306,14 @@ namespace CoreSystems
                             continue;
                         }
 
+                        if (Tick180) {
+                            cComp.ToolsAndWeapons.Clear();
+                            foreach (var comp in topAi.WeaponComps)
+                                cComp.ToolsAndWeapons.Add(comp.CoreEntity);
+                            foreach (var tool in topAi.Tools)
+                                cComp.ToolsAndWeapons.Add((MyEntity) tool);
+                        }
+
                         var trackWeapon = topAi.RootFixedWeaponComp?.PrimaryWeapon;
                         controlPart.TrackingWeapon = trackWeapon;
                         if (trackWeapon == null)
