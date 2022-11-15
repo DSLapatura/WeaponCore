@@ -106,7 +106,7 @@ namespace CoreSystems.Support
                         { "TerminalAdvancedTitle", "Advanced Features" },
                         { "TerminalAdvancedTooltip", "This enables more advanced UI features that tend to be confusing to new users" },
                         { "TerminalShootTitle", "Shoot" },
-                        { "TerminalShootTooltip", "Shoot On/Off Toggle, this will be required, replaced by Shoot Mode KeyToggle" },
+                        { "TerminalShootTooltip", "Shoot On/Off Toggle, this will be retired, replaced by Shoot Mode KeyToggle" },
                         { "ActionStateOn", "On" },
                         { "ActionStateOff", "Off" },
                         { "ActionWCShootMode", "Cycle Shoot Modes" },

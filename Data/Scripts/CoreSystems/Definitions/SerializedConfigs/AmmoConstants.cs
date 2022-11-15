@@ -346,6 +346,9 @@ namespace CoreSystems.Support
             var fragGuidedAmmo = false;
             var fragAntiSmart = false;
             var fragTargetOverride = false;
+            var fragHasTimedSpawn = false;
+
+
             for (int i = 0; i < wDef.Ammos.Length; i++)
             {
                 var ammoType = wDef.Ammos[i];
@@ -357,6 +360,10 @@ namespace CoreSystems.Support
                     if (hasGuidance)
                         fragGuidedAmmo = true;
 
+                    var hasTimed = ammoType.Fragment.TimedSpawns.Enable;
+                    if (hasTimed)
+                        fragHasTimedSpawn = true;
+
                     if (ammoType.Ewar.Type == EwarType.AntiSmart)
                         fragAntiSmart = true;
 
@@ -364,6 +371,8 @@ namespace CoreSystems.Support
                         fragTargetOverride = true;
                 }
             }
+
+            var fragHasAutonomy = fragGuidedAmmo || fragAntiSmart || fragTargetOverride || fragHasTimedSpawn;
 
             HasFragment = FragmentId > -1;
 
@@ -472,7 +481,7 @@ namespace CoreSystems.Support
             var predictedShotLimit = system.PartType != HardwareDef.HardwareType.HandWeapon ? 120 : 450;
             var predictedReloadLimit = system.PartType != HardwareDef.HardwareType.HandWeapon ? 120 : 60;
 
-            ClientPredictedAmmo = predictionEligible && FixedFireAmmo && !ammo.IsShrapnel && RealShotsPerMin <= predictedShotLimit && !clientPredictedAmmoDisabled;
+            ClientPredictedAmmo = predictionEligible && FixedFireAmmo && !fragHasAutonomy && !ammo.IsShrapnel && RealShotsPerMin <= predictedShotLimit && !clientPredictedAmmoDisabled;
 
             if (!ClientPredictedAmmo && predictionEligible)
                 Log.Line($"{ammo.AmmoDef.AmmoRound} is NOT enabled for client prediction");

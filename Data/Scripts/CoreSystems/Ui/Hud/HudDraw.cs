@@ -1,6 +1,7 @@
 ﻿using CoreSystems;
 using CoreSystems.Platform;
 using CoreSystems.Support;
+using System.Runtime.CompilerServices;
 using VRage.Game;
 using VRage.Utils;
 using VRageMath;
@@ -222,10 +223,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
             _textureAddList.Add(backgroundTexture);
         }
 
-        private const string NeedsLockStr = ": Locked";
-        private const string CurrentLockStr = "None";
         private const string EmptyStr = "";
-        private const string GapStr = ": ";
+        private const string NoAmmoStr = ": No Ammo";
         private const string NoTargetStr = ": No Target";
         private const string NoSubsystem = ": No Subsystem";
 
@@ -238,15 +237,27 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
                 var comp = weapon.Comp;
                 if (comp.Ai == null || comp.Ai.MarkedForClose || comp.CoreEntity.MarkedForClose || comp.Data.Repo?.Values == null || weapon.ActiveAmmoDef?.AmmoDef?.Const == null)
                     continue;
-
+                var s = _session;
+                var aConst = weapon.ActiveAmmoDef.AmmoDef.Const;
                 var ai = weapon.Comp.Ai;
                 var overrides = comp.Data.Repo.Values.Set.Overrides;
-                var delayNoTarget = !weapon.System.WConst.GiveUpAfter || _session.Tick - weapon.LastShootTick > weapon.System.WConst.DelayAfterBurst;
+                var delayNoTarget = !weapon.System.WConst.GiveUpAfter || s.Tick - weapon.LastShootTick > weapon.System.WConst.DelayAfterBurst;
                 var notAnyBlock = overrides.SubSystem != WeaponDefinition.TargetingDef.BlockTypes.Any;
                 var needsTarget =  !weapon.Target.HasTarget && overrides.Grids && (comp.DetectOtherSignals && ai.DetectionInfo.OtherInRange || ai.DetectionInfo.PriorityInRange) && weapon.ActiveAmmoDef.AmmoDef.Const.CanReportTargetStatus && comp.Data.Repo.Values.Set.ReportTarget && delayNoTarget && ai.DetectionInfo.TargetInRange(weapon);
-                var showReloadIcon = (weapon.Loading || weapon.Reload.WaitForClient || _session.Tick - weapon.LastLoadedTick < 60);
+                var showReloadIcon = (weapon.Loading || weapon.Reload.WaitForClient || s.Tick - weapon.LastLoadedTick < 60);
+                
+                string noTagetReason = EmptyStr;
+                if (needsTarget)
+                {
+                    if (overrides.FocusSubSystem && !showReloadIcon && notAnyBlock && weapon.FoundTopMostTarget)
+                        noTagetReason = NoSubsystem;
+                    else if (weapon.NoMagsToLoad && weapon.ProtoWeaponAmmo.CurrentAmmo == 0 && aConst.Reloadable && !weapon.System.DesignatorWeapon && s.Tick - weapon.LastMagSeenTick > 600)
+                        noTagetReason = NoAmmoStr;
+                    else 
+                        noTagetReason = NoTargetStr;
+                }
 
-                var name = weapon.System.ShortName + (needsTarget ? overrides.FocusSubSystem && !showReloadIcon  && notAnyBlock && weapon.FoundTopMostTarget ? NoSubsystem : NoTargetStr : EmptyStr);
+                var name = weapon.System.ShortName + noTagetReason;
 
                 var textOffset = bgStartPosX - _bgWidth + _reloadWidth + _padding;
                 var hasHeat = weapon.HeatPerc > 0;
@@ -270,7 +281,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
 
                     textInfo.Text = $"(x{stackedInfo.WeaponStack})";
                     textInfo.Color = new Vector4(0.5f, 0.5f, 1, 1);
-                    textInfo.Position.X = textOffset + (name.Length * ((_textSize * _session.AspectRatioInv) * 0.6f) * ShadowSizeScaler);
+                    textInfo.Position.X = textOffset + (name.Length * ((_textSize * s.AspectRatioInv) * 0.6f) * ShadowSizeScaler);
 
                     textInfo.Position.Y = currWeaponDisplayPos.Y;
                     textInfo.FontSize = _sTextSize;

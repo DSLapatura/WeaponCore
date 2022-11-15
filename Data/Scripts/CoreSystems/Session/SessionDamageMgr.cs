@@ -4,6 +4,7 @@ using CoreSystems.Projectiles;
 using CoreSystems.Support;
 using Sandbox.Definitions;
 using Sandbox.Game.Entities;
+using Sandbox.Game.Entities.Cube;
 using Sandbox.ModAPI;
 using VRage;
 using VRage.Collections;

@@ -209,7 +209,7 @@ namespace CoreSystems
                     for (int i = actions.Count - 1; i >= 0; i--)
                     {
                         var action = actions[i];
-                        if (!advanced && AdvancedActions.Contains(action.Id))
+                        if (!advanced && AdvancedActions.Contains(action.Id) || HideActions.Contains(action.Id))
                         {
                             actions.RemoveAt(i);
                         }
@@ -420,6 +420,7 @@ namespace CoreSystems
 
         private static readonly HashSet<string> AdvancedControls = new HashSet<string>
         {
+            "WC_Shoot",
             "WC_Override",
             "WC_ShareFireControlEnabled",
             "WC_ControlModes",
@@ -434,8 +435,17 @@ namespace CoreSystems
             "Burst Count",
         };
 
+        private static readonly HashSet<string> HideActions = new HashSet<string>()
+        {
+            "Shoot_On",
+            "Shoot_Off",
+        };
+
         private static readonly HashSet<string> AdvancedActions = new HashSet<string>
         {
+            "WC_Shoot",
+
+            "ShootToggle",
             "MinSize Decrease",
             "MinSize Increase",
             "MaxSize Decrease",

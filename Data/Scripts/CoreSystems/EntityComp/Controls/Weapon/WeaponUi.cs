@@ -478,14 +478,22 @@ namespace CoreSystems
 
                 AmmoList.Clear();
                 var ammos = wep.System.AmmoTypes;
+                int ammoId = -1;
                 for (int j = 0; j < ammos.Length; j++)
                 {
-                    if (!ammos[j].AmmoDef.Const.IsTurretSelectable) continue;
-                    var item = new MyTerminalControlComboBoxItem { Key = j, Value = MyStringId.GetOrCompute($"{ammos[j].AmmoDef.AmmoRound}") };
+                    var ammo = ammos[j];
+                    if (!ammo.AmmoDef.Const.IsTurretSelectable) continue;
+                    string ammoStr = ammo.AmmoDef.AmmoRound;
+                    if (wep.DelayedCycleId != -1 && wep.AmmoName.EndsWith(ammo.AmmoDef.AmmoRound))
+                    {
+                        ammoId = j;
+                        ammoStr = wep.AmmoName;
+                    }
+                    var item = new MyTerminalControlComboBoxItem { Key = j, Value = MyStringId.GetOrCompute($"{ammoStr}") };
                     AmmoList.Add(item);
                 }
 
-                return comp.Collection[i].Reload.AmmoTypeId;
+                return ammoId  == -1 ? wep.Reload.AmmoTypeId : ammoId;
             }
             return 0;
         }
