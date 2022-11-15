@@ -96,7 +96,7 @@ namespace CoreSystems.Control
 
         internal static void AddTurretControlBlockControls<T>(Session session) where T : IMyTerminalBlock
         {
-            CtcAddListBoxNoAction<T>(session, "ToolsAndWeapons", "Available tools and weapons", "Auto populated by weaponcore", BlockUi.ToolWeaponFill, BlockUi.ToolWeaponSelect, CtcIsReady, 1, true);
+            CtcAddListBoxNoAction<T>(session, "ToolsAndWeapons", "Available tools and weapons", "Auto populated by weaponcore", BlockUi.ToolWeaponFill, BlockUi.ToolWeaponSelect, CtcIsReady, 4, true);
 
             CtcAddCheckboxNoAction<T>(session, "Advanced", Localization.GetText("TerminalAdvancedTitle"), Localization.GetText("TerminalAdvancedTooltip"), BlockUi.GetAdvancedControl, BlockUi.RequestAdvancedControl, true, CtcIsReady);
             CtcAddOnOffSwitchNoAction<T>(session, "ShareFireControlEnabled", Localization.GetText("TerminalShareFireControlTitle"), Localization.GetText("TerminalShareFireControlTooltip"), BlockUi.GetShareFireControlControl, BlockUi.RequestShareFireControlControl, true, CtcIsReady);
