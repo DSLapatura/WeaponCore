@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using CoreSystems.Platform;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
 using VRage.Collections;
@@ -12,7 +13,6 @@ namespace CoreSystems.Support
 {
     internal class AvShot
     {
-        internal WeaponSystem System;
         internal WeaponDefinition.AmmoDef AmmoDef;
         internal MyEntity PrimeEntity;
         internal MyEntity TriggerEntity;
@@ -23,8 +23,7 @@ namespace CoreSystems.Support
         internal List<Vector3D> Offsets = new List<Vector3D>(64);
         internal MyParticleEffect AmmoEffect;
         internal MyParticleEffect FieldEffect;
-        internal MyEntity CoreEntity;
-        internal WeaponSystem.FiringSoundState FiringSoundState;
+        internal Weapon Weapon;
         internal bool TravelSound;
         internal bool HasTravelSound;
         internal bool HitSoundActive;
@@ -150,7 +149,6 @@ namespace CoreSystems.Support
         #region Run
         internal void Init(ProInfo info, double firstStepSize, double maxSpeed, ref Vector3D originDir)
         {
-            System = info.Weapon.System;
             AmmoDef = info.AmmoDef;
             IsFragment = info.IsFragment;
             Model = (info.AmmoDef.Const.PrimeModel || info.AmmoDef.Const.TriggerModel) ? Model = ModelState.Exists : Model = ModelState.None;
@@ -161,24 +159,24 @@ namespace CoreSystems.Support
             UniqueMuzzleId = info.UniqueMuzzleId;
             MaxSpeed = maxSpeed;
             ShootVelStep = info.ShooterVel * MyEngineConstants.PHYSICS_STEP_SIZE_IN_SECONDS;
-            CoreEntity = info.Weapon.Comp.CoreEntity;
+            Weapon = info.Weapon;
             MaxTrajectory = info.MaxTrajectory;
             ShotFade = info.ShotFade;
             ShrinkInited = false;
             OriginDir = originDir;
             StageIdx = info.Storage.RequestedStage;
             var defaultDecayTime = AmmoDef.Const.DecayTime;
-
-            if (defaultDecayTime > 1 && System.Session.ClientAvLevel > 0)
+            var s = Weapon.System.Session;
+            if (defaultDecayTime > 1 && s.ClientAvLevel > 0)
             {
                 if (AmmoDef.Const.RareTrail)
                     DecayTime = defaultDecayTime;
                 else if (AmmoDef.Const.ShortTrail)
-                    DecayTime = MathHelper.Clamp(defaultDecayTime - System.Session.ClientAvLevel, 1, int.MaxValue);
-                else if (AmmoDef.Const.TinyTrail && System.Session.ClientAvLevel > 5)
-                    DecayTime = MathHelper.Clamp(defaultDecayTime + 5 - System.Session.ClientAvLevel, 1, int.MaxValue);
+                    DecayTime = MathHelper.Clamp(defaultDecayTime - s.ClientAvLevel, 1, int.MaxValue);
+                else if (AmmoDef.Const.TinyTrail && s.ClientAvLevel > 5)
+                    DecayTime = MathHelper.Clamp(defaultDecayTime + 5 - s.ClientAvLevel, 1, int.MaxValue);
                 else if (AmmoDef.Const.LongTrail)
-                    DecayTime = MathHelper.Clamp(defaultDecayTime / System.Session.ClientAvDivisor, 1, int.MaxValue);
+                    DecayTime = MathHelper.Clamp(defaultDecayTime /s.ClientAvDivisor, 1, int.MaxValue);
                 else
                     DecayTime = defaultDecayTime;
             }
@@ -199,7 +197,7 @@ namespace CoreSystems.Support
             TotalLength = MathHelperD.Clamp(MaxTracerLength + MaxGlowLength, 0.1f, MaxTrajectory);
 
             AvInfoCache infoCache;
-            if (AmmoDef.Const.IsBeamWeapon && AmmoDef.Const.TracerMode != AmmoConstants.Texture.Normal && System.Session.AvShotCache.TryGetValue(info.UniqueMuzzleId, out infoCache))
+            if (AmmoDef.Const.IsBeamWeapon && AmmoDef.Const.TracerMode != AmmoConstants.Texture.Normal && s.AvShotCache.TryGetValue(info.UniqueMuzzleId, out infoCache))
                 UpdateCache(infoCache);
         }
         static void ShellSort(List<DeferedAv> list)
@@ -211,10 +209,10 @@ namespace CoreSystems.Support
                 for (int i = h; i < length; i += 1)
                 {
                     var tempValue = list[i];
-                    var temp = Vector3D.DistanceSquared(tempValue.TracerFront, tempValue.AvShot.System.Session.CameraPos);
+                    var temp = Vector3D.DistanceSquared(tempValue.TracerFront, tempValue.AvShot.Weapon.System.Session.CameraPos);
 
                     int j;
-                    for (j = i; j >= h && Vector3D.DistanceSquared(list[j - h].TracerFront, tempValue.AvShot.System.Session.CameraPos) > temp; j -= h)
+                    for (j = i; j >= h && Vector3D.DistanceSquared(list[j - h].TracerFront, tempValue.AvShot.Weapon.System.Session.CameraPos) > temp; j -= h)
                     {
                         list[j] = list[j - h];
                     }
@@ -258,7 +256,7 @@ namespace CoreSystems.Support
                 }
 
                 if (aConst.TriggerModel && a.TriggerEntity == null) {
-                    a.TriggerEntity = a.System.Session.TriggerEntityPool.Get();
+                    a.TriggerEntity = a.Weapon.System.Session.TriggerEntityPool.Get();
                     if (a.TriggerEntity.PositionComp.WorldVolume.Radius * 2 > a.ModelSphereCurrent.Radius)
                         a.ModelSphereCurrent.Radius = a.TriggerEntity.PositionComp.WorldVolume.Radius * 2;
                 }
@@ -476,7 +474,7 @@ namespace CoreSystems.Support
 
             if (glowCount <= DecayTime)
             {
-                var glow = System.Session.Av.Glows.Count > 0 ? System.Session.Av.Glows.Pop() : new AfterGlow();
+                var glow = Weapon.System.Session.Av.Glows.Count > 0 ? Weapon.System.Session.Av.Glows.Pop() : new AfterGlow();
 
                 glow.TailPos = backPos;
                 GlowSteps.Enqueue(glow);
@@ -533,7 +531,7 @@ namespace CoreSystems.Support
                         width += randomValue;
                     }
 
-                    width = (float)Math.Max(width, 0.10f * System.Session.ScaleFov * (DistanceToLine / 100));
+                    width = (float)Math.Max(width, 0.10f * Weapon.System.Session.ScaleFov * (DistanceToLine / 100));
                     TracerShrinks.Enqueue(new Shrinks { NewFront = shrunk.Value.NewTracerFront, Color = color, Length = shrunk.Value.Reduced, Thickness = width, Last = last });
                 }
             }
@@ -567,12 +565,12 @@ namespace CoreSystems.Support
         {
             var color = AmmoDef.AmmoGraphics.Lines.Tracer.Color;
             var segmentColor = AmmoDef.AmmoGraphics.Lines.Tracer.Segmentation.Color;
-            if (AmmoDef.Const.TracerMode != AmmoConstants.Texture.Normal && TextureLastUpdate != System.Session.Tick)
+            if (AmmoDef.Const.TracerMode != AmmoConstants.Texture.Normal && TextureLastUpdate != Weapon.System.Session.Tick)
             {
-                if (System.Session.Tick - TextureLastUpdate > 1)
+                if (Weapon.System.Session.Tick - TextureLastUpdate > 1)
                     AmmoInfoClean();
 
-                TextureLastUpdate = System.Session.Tick;
+                TextureLastUpdate = Weapon.System.Session.Tick;
 
                 switch (AmmoDef.Const.TracerMode) {
                     case AmmoConstants.Texture.Resize:
@@ -624,7 +622,7 @@ namespace CoreSystems.Support
                 }
 
                 if (AmmoDef.Const.IsBeamWeapon)
-                    System.Session.AvShotCache[UniqueMuzzleId] = new AvInfoCache {SegMeasureStep = SegMeasureStep, SegmentGaped = SegmentGaped, SegmentLenTranserved = SegmentLenTranserved, TextureIdx = TextureIdx, TextureLastUpdate = TextureLastUpdate, TextureReverse = TextureReverse};
+                    Weapon.System.Session.AvShotCache[UniqueMuzzleId] = new AvInfoCache {SegMeasureStep = SegMeasureStep, SegmentGaped = SegmentGaped, SegmentLenTranserved = SegmentLenTranserved, TextureIdx = TextureIdx, TextureLastUpdate = TextureLastUpdate, TextureReverse = TextureReverse};
             }
 
             if (AmmoDef.Const.LineColorVariance)
@@ -665,21 +663,21 @@ namespace CoreSystems.Support
             }
 
             var checkPos = TracerFront + (-VisualDir * TotalLength);
-            ClosestPointOnLine = MyUtils.GetClosestPointOnLine(ref TracerFront, ref checkPos, ref System.Session.CameraPos);
-            DistanceToLine = (float)Vector3D.Distance(ClosestPointOnLine, System.Session.CameraMatrix.Translation);
+            ClosestPointOnLine = MyUtils.GetClosestPointOnLine(ref TracerFront, ref checkPos, ref Weapon.System.Session.CameraPos);
+            DistanceToLine = (float)Vector3D.Distance(ClosestPointOnLine, Weapon.System.Session.CameraMatrix.Translation);
 
             if (AmmoDef.Const.IsBeamWeapon && Vector3D.DistanceSquared(TracerFront, TracerBack) > 640000)
             {
                 checkPos = TracerFront + (-VisualDir * (TotalLength - MathHelperD.Clamp(DistanceToLine * 6, DistanceToLine, MaxTrajectory * 0.5)));
-                ClosestPointOnLine = MyUtils.GetClosestPointOnLine(ref TracerFront, ref checkPos, ref System.Session.CameraPos);
-                DistanceToLine = (float)Vector3D.Distance(ClosestPointOnLine, System.Session.CameraMatrix.Translation);
+                ClosestPointOnLine = MyUtils.GetClosestPointOnLine(ref TracerFront, ref checkPos, ref Weapon.System.Session.CameraPos);
+                DistanceToLine = (float)Vector3D.Distance(ClosestPointOnLine, Weapon.System.Session.CameraMatrix.Translation);
             }
 
             double scale = 0.1f;
-            var widthScaler = !System.Session.GunnerBlackList ? 1f : (System.Session.ScaleFov * 1.3f);
+            var widthScaler = !Weapon.System.Session.GunnerBlackList ? 1f : (Weapon.System.Session.ScaleFov * 1.3f);
 
-            TracerWidth = MathHelperD.Clamp(scale * System.Session.ScaleFov * (DistanceToLine / 100), tracerWidth * widthScaler, double.MaxValue);
-            TrailWidth = MathHelperD.Clamp(scale * System.Session.ScaleFov * (DistanceToLine / 100), trailWidth * widthScaler, double.MaxValue);
+            TracerWidth = MathHelperD.Clamp(scale * Weapon.System.Session.ScaleFov * (DistanceToLine / 100), tracerWidth * widthScaler, double.MaxValue);
+            TrailWidth = MathHelperD.Clamp(scale * Weapon.System.Session.ScaleFov * (DistanceToLine / 100), trailWidth * widthScaler, double.MaxValue);
 
             TrailScaler = ((float)TrailWidth / trailWidth);
 
@@ -701,7 +699,7 @@ namespace CoreSystems.Support
             TracerLengthSqr = tracerLength * tracerLength;
             var maxOffset = AmmoDef.Const.MaxOffset;
             var minLength = AmmoDef.Const.MinOffsetLength;
-            var dyncMaxLength = MathHelperD.Clamp(AmmoDef.Const.MaxOffsetLength * System.Session.ClientAvDivisor, 0, Math.Max(tracerLength * 0.5d, AmmoDef.Const.MaxOffsetLength));
+            var dyncMaxLength = MathHelperD.Clamp(AmmoDef.Const.MaxOffsetLength * Weapon.System.Session.ClientAvDivisor, 0, Math.Max(tracerLength * 0.5d, AmmoDef.Const.MaxOffsetLength));
             var maxLength = MathHelperD.Clamp(dyncMaxLength, 0, tracerLength);
 
             double currentForwardDistance = 0;
@@ -725,7 +723,7 @@ namespace CoreSystems.Support
             var tracerLengthSqr = tracerLength * tracerLength;
             var maxOffset = AmmoDef.Const.MaxOffset;
             var minLength = AmmoDef.Const.MinOffsetLength;
-            var dyncMaxLength = MathHelperD.Clamp(AmmoDef.Const.MaxOffsetLength * System.Session.ClientAvDivisor, 0, Math.Max(tracerLength * 0.5d, AmmoDef.Const.MaxOffsetLength));
+            var dyncMaxLength = MathHelperD.Clamp(AmmoDef.Const.MaxOffsetLength * Weapon.System.Session.ClientAvDivisor, 0, Math.Max(tracerLength * 0.5d, AmmoDef.Const.MaxOffsetLength));
 
             var maxLength = MathHelperD.Clamp(dyncMaxLength, 0, tracerLength);
 
@@ -803,15 +801,15 @@ namespace CoreSystems.Support
             VisualLength = remainingTracer;
             ShortStepSize = stepSizeToHit;
 
-            System.Session.Projectiles.DeferedAvDraw.Add(new DeferedAv { AvShot = this, Info = info, TracerFront = endPos, Hit = hit,  Direction = info.Direction });
+            Weapon.System.Session.Projectiles.DeferedAvDraw.Add(new DeferedAv { AvShot = this, Info = info, TracerFront = endPos, Hit = hit,  Direction = info.Direction });
         }
 
         internal void HitEffects(bool force = false)
         {
-            if (System.Session.Tick - LastHit > 4 || force) {
+            if (Weapon.System.Session.Tick - LastHit > 4 || force) {
 
                 double distToCameraSqr;
-                Vector3D.DistanceSquared(ref Hit.SurfaceHit, ref System.Session.CameraPos, out distToCameraSqr);
+                Vector3D.DistanceSquared(ref Hit.SurfaceHit, ref Weapon.System.Session.CameraPos, out distToCameraSqr);
 
                 if (Hit.EventType == HitEntity.Type.Water) 
                 {
@@ -820,7 +818,7 @@ namespace CoreSystems.Support
 
                 if (OnScreen == Screen.Tracer  || AmmoDef.Const.HitParticleNoCull || distToCameraSqr < 360000) {
                     if (HitParticleActive && AmmoDef.Const.HitParticle && !(LastHitShield && !AmmoDef.AmmoGraphics.Particles.Hit.ApplyToShield))
-                        HitParticle = ParticleState.Custom;
+                            HitParticle = ParticleState.Custom;
                 }
 
 
@@ -851,14 +849,14 @@ namespace CoreSystems.Support
 
                     if (pair != null) {
 
-                        var hitEmitter = System.Session.Av.PersistentEmitters.Count > 0 ? System.Session.Av.PersistentEmitters.Pop() : new MyEntity3DSoundEmitter(null);
+                        var hitEmitter = Weapon.System.Session.Av.PersistentEmitters.Count > 0 ? Weapon.System.Session.Av.PersistentEmitters.Pop() : new MyEntity3DSoundEmitter(null);
 
-                        var pos = System.Session.Tick - Hit.HitTick <= 1 && !MyUtils.IsZero(Hit.SurfaceHit) ? Hit.SurfaceHit : TracerFront;
+                        var pos = Weapon.System.Session.Tick - Hit.HitTick <= 1 && !MyUtils.IsZero(Hit.SurfaceHit) ? Hit.SurfaceHit : TracerFront;
                         hitEmitter.Entity = Hit.Entity;
                         hitEmitter.SetPosition(pos);
                         hitEmitter.PlaySound(pair);
 
-                        System.Session.SoundsToClean.Add(new Session.CleanSound { DelayedReturn = true, Emitter = hitEmitter, Pair = pair, EmitterPool = System.Session.Av.PersistentEmitters, SpawnTick = System.Session.Tick });
+                        Weapon.System.Session.SoundsToClean.Add(new Session.CleanSound { DelayedReturn = true, Emitter = hitEmitter, Pair = pair, EmitterPool = Weapon.System.Session.Av.PersistentEmitters, SpawnTick = Weapon.System.Session.Tick });
 
                         HitSoundInitted = true;
                     }
@@ -870,11 +868,10 @@ namespace CoreSystems.Support
 
         internal void SetupSounds(double distanceFromCameraSqr)
         {
-            FiringSoundState = System.FiringSound;
 
             if (!AmmoDef.Const.IsBeamWeapon && AmmoDef.Const.AmmoTravelSound) {
                 HasTravelSound = true;
-                TravelEmitter = System.Session.Av.TravelEmitters.Count > 0 ? System.Session.Av.TravelEmitters.Pop() : new MyEntity3DSoundEmitter(null);
+                TravelEmitter = Weapon.System.Session.Av.TravelEmitters.Count > 0 ? Weapon.System.Session.Av.TravelEmitters.Pop() : new MyEntity3DSoundEmitter(null);
 
                 TravelEmitter.CanPlayLoopSounds = true;
             }
@@ -892,7 +889,7 @@ namespace CoreSystems.Support
                 {
                     if (AmmoDef.Const.ShotSound && distanceFromCameraSqr <= AmmoDef.Const.ShotSoundDistSqr)
                     {
-                        FireEmitter = System.Session.Av.FireEmitters.Count > 0 ? System.Session.Av.FireEmitters.Pop() : new MyEntity3DSoundEmitter(null);
+                        FireEmitter = Weapon.System.Session.Av.FireEmitters.Count > 0 ? Weapon.System.Session.Av.FireEmitters.Pop() : new MyEntity3DSoundEmitter(null);
                         FireEmitter.CanPlayLoopSounds = true;
                         FireEmitter.Entity = null;
                         FireEmitter.SetPosition(Origin);
@@ -900,12 +897,12 @@ namespace CoreSystems.Support
 
                     }
                 }
-                else if (FiringSoundState == WeaponSystem.FiringSoundState.PerShot && distanceFromCameraSqr <= System.FiringSoundDistSqr)
+                else if (Weapon.System.FiringSound == WeaponSystem.FiringSoundState.PerShot && distanceFromCameraSqr <= Weapon.System.FiringSoundDistSqr)
                 {
 
-                    FireEmitter = System.Session.Av.FireEmitters.Count > 0 ? System.Session.Av.FireEmitters.Pop() : new MyEntity3DSoundEmitter(null);
+                    FireEmitter = Weapon.System.Session.Av.FireEmitters.Count > 0 ? Weapon.System.Session.Av.FireEmitters.Pop() : new MyEntity3DSoundEmitter(null);
                     FireEmitter.CanPlayLoopSounds = true;
-                    FireEmitter.Entity = CoreEntity;
+                    FireEmitter.Entity = Weapon.Comp.CoreEntity;
                     FireEmitter.SetPosition(Origin);
                     FireEmitter.PlaySound(AmmoDef.Const.ShotSoundPair, true);
                 }
@@ -937,11 +934,10 @@ namespace CoreSystems.Support
             }
 
             var renderId = AmmoDef.Const.PrimeModel && PrimeEntity != null ? PrimeEntity.Render.GetRenderObjectID() : uint.MaxValue;
+
             if (MyParticlesManager.TryCreateParticleEffect(particleDef.Name, ref matrix, ref TracerFront, renderId, out AmmoEffect))
             {
-
                 AmmoEffect.UserScale = particleDef.Extras.Scale;
-
                 AmmoParticleStopped = false;
                 AmmoParticleInited = true;
                 var loop = AmmoEffect.Loop || AmmoEffect.DurationMax <= 0;
@@ -1044,7 +1040,7 @@ namespace CoreSystems.Support
             MyParticleEffect effect;
             MatrixD matrix;
             var vel = HitVelocity;
-            if (!System.Session.Av.BeamEffects.TryGetValue(UniqueMuzzleId, out effect)) {
+            if (!Weapon.System.Session.Av.BeamEffects.TryGetValue(UniqueMuzzleId, out effect)) {
 
                 MatrixD.CreateTranslation(ref TracerFront, out matrix);
                 if (!MyParticlesManager.TryCreateParticleEffect(AmmoDef.AmmoGraphics.Particles.Hit.Name, ref matrix, ref TracerFront, uint.MaxValue, out effect)) {
@@ -1052,7 +1048,7 @@ namespace CoreSystems.Support
                 }
 
                 if (effect.Loop || effect.DurationMax <= 0)
-                    System.Session.Av.BeamEffects[UniqueMuzzleId] = effect;
+                    Weapon.System.Session.Av.BeamEffects[UniqueMuzzleId] = effect;
 
                 effect.UserScale = AmmoDef.AmmoGraphics.Particles.Hit.Extras.Scale;
 
@@ -1086,18 +1082,18 @@ namespace CoreSystems.Support
                 {
                     var a = AmmoDef;
                     var c = a.Const;
-                    var hit = System.Session.Tick - Hit.HitTick <= 1 && !MyUtils.IsZero(Hit.SurfaceHit) && Hit.Entity != null;
+                    var hit = Weapon.System.Session.Tick - Hit.HitTick <= 1 && !MyUtils.IsZero(Hit.SurfaceHit) && Hit.Entity != null;
                     var pos = hit ? Hit.SurfaceHit : TracerFront;
-                    if (a.Const.DetonationSound && Vector3D.DistanceSquared(System.Session.CameraPos, pos) < a.Const.DetonationSoundDistSqr)
+                    if (a.Const.DetonationSound && Vector3D.DistanceSquared(Weapon.System.Session.CameraPos, pos) < a.Const.DetonationSoundDistSqr)
                     {
-                        var detEmitter = System.Session.Av.PersistentEmitters.Count > 0 ? System.Session.Av.PersistentEmitters.Pop() : new MyEntity3DSoundEmitter(null);
+                        var detEmitter = Weapon.System.Session.Av.PersistentEmitters.Count > 0 ? Weapon.System.Session.Av.PersistentEmitters.Pop() : new MyEntity3DSoundEmitter(null);
                         detEmitter.Entity = Hit.Entity;
                         detEmitter.SetPosition(pos);
                         detEmitter.PlaySound(a.Const.DetSoundPair);
-                        System.Session.SoundsToClean.Add(new Session.CleanSound { DelayedReturn = true, Emitter = detEmitter, EmitterPool = System.Session.Av.PersistentEmitters, SpawnTick = System.Session.Tick });
+                        Weapon.System.Session.SoundsToClean.Add(new Session.CleanSound { DelayedReturn = true, Emitter = detEmitter, EmitterPool = Weapon.System.Session.Av.PersistentEmitters, SpawnTick = Weapon.System.Session.Tick });
                     }
 
-                    if (a.Const.CustomDetParticle || System.Session.Av.ExplosionReady)
+                    if (a.Const.CustomDetParticle || Weapon.System.Session.Av.ExplosionReady)
                     {
                         var particle = AmmoDef.AmmoGraphics.Particles.Hit;
                         var keenStrikesAgain = particle.Offset == Vector3D.MaxValue;
@@ -1128,7 +1124,7 @@ namespace CoreSystems.Support
                     FireEmitter.PlaySound(AmmoDef.Const.ShotSoundPair, stopPrevious: false, skipIntro: true, force2D: false, alwaysHearOnRealistic: false, skipToEnd: true);
                 }
 
-                System.Session.SoundsToClean.Add(new Session.CleanSound { DelayedReturn = true, Emitter = FireEmitter, EmitterPool = System.Session.Av.FireEmitters, SpawnTick = System.Session.Tick });
+                Weapon.System.Session.SoundsToClean.Add(new Session.CleanSound { DelayedReturn = true, Emitter = FireEmitter, EmitterPool = Weapon.System.Session.Av.FireEmitters, SpawnTick = Weapon.System.Session.Tick });
 
                 FireEmitter = null;
             }
@@ -1146,7 +1142,7 @@ namespace CoreSystems.Support
                     }
                 }
 
-                System.Session.SoundsToClean.Add(new Session.CleanSound { JustClean = !TravelSound, DelayedReturn = TravelSound, Emitter = TravelEmitter, EmitterPool = System.Session.Av.TravelEmitters, SpawnTick = System.Session.Tick });
+                Weapon.System.Session.SoundsToClean.Add(new Session.CleanSound { JustClean = !TravelSound, DelayedReturn = TravelSound, Emitter = TravelEmitter, EmitterPool = Weapon.System.Session.Av.TravelEmitters, SpawnTick = Weapon.System.Session.Tick });
 
                 TravelSound = false;
                 TravelEmitter = null;
@@ -1204,7 +1200,7 @@ namespace CoreSystems.Support
                     FireEmitter.PlaySound(AmmoDef.Const.ShotSoundPair, stopPrevious: false, skipIntro: true, force2D: false, alwaysHearOnRealistic: false, skipToEnd: true);
                 }
 
-                System.Session.SoundsToClean.Add(new Session.CleanSound { DelayedReturn = true, Emitter = FireEmitter, EmitterPool = System.Session.Av.FireEmitters, SpawnTick = System.Session.Tick });
+                Weapon.System.Session.SoundsToClean.Add(new Session.CleanSound { DelayedReturn = true, Emitter = FireEmitter, EmitterPool = Weapon.System.Session.Av.FireEmitters, SpawnTick = Weapon.System.Session.Tick });
             }
 
             if (TravelEmitter != null) {
@@ -1219,8 +1215,8 @@ namespace CoreSystems.Support
                         TravelEmitter.PlaySound(def == null || !def.AlternateTravelSound ? AmmoDef.Const.TravelSoundPair : def.SoundPair, stopPrevious: false, skipIntro: true, force2D: false, alwaysHearOnRealistic: false, skipToEnd: true);
                     }
                 }
-                
-                System.Session.SoundsToClean.Add(new Session.CleanSound { JustClean = !TravelSound, DelayedReturn = TravelSound, Emitter = TravelEmitter, EmitterPool = System.Session.Av.TravelEmitters, SpawnTick = System.Session.Tick });
+
+                Weapon.System.Session.SoundsToClean.Add(new Session.CleanSound { JustClean = !TravelSound, DelayedReturn = TravelSound, Emitter = TravelEmitter, EmitterPool = Weapon.System.Session.Av.TravelEmitters, SpawnTick = Weapon.System.Session.Tick });
                 
                 TravelSound = false;
             }
@@ -1248,7 +1244,7 @@ namespace CoreSystems.Support
 
             if (TriggerEntity != null)
             {
-                System.Session.TriggerEntityPool.Return(TriggerEntity);
+                Weapon.System.Session.TriggerEntityPool.Return(TriggerEntity);
             }
 
             HitVelocity = Vector3D.Zero;
@@ -1311,11 +1307,11 @@ namespace CoreSystems.Support
 
             //
 
-            CoreEntity = null;
+            Weapon = null;
             PrimeEntity = null;
             TriggerEntity = null;
             AmmoDef = null;
-            System = null;
+            Weapon = null;
             FireEmitter = null;
             TravelEmitter = null;
         }

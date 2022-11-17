@@ -66,13 +66,14 @@ namespace CoreSystems.Platform
                     {
                         VanillaTurretBase = turret;
                         VanillaTurretBase.EnableIdleRotation = false;
+                        VanillaTurretBase.Range = 0;
+
                     }
                 }
                 else if (coreEntity is IMyAutomaticRifleGun)
                 {
                     HandInit((IMyAutomaticRifleGun)coreEntity, out Rifle, out CharacterPosComp, out GunBase, out TopEntity);
                 }
-
                 //Bellow order is important
                 Data = new WeaponCompData(this);
                 ShootManager = new ShootManager(this);
@@ -140,7 +141,7 @@ namespace CoreSystems.Platform
                     else
                     {
                         w.ChangeActiveAmmoClient();
-                        w.AmmoName = w.ActiveAmmoDef.AmmoName;
+                        w.AmmoName = w.ActiveAmmoDef.AmmoDef.AmmoRound;
                     }
 
                     if (w.ActiveAmmoDef.AmmoDef == null || !w.ActiveAmmoDef.AmmoDef.Const.IsTurretSelectable && w.System.AmmoTypes.Length > 1)
@@ -149,7 +150,7 @@ namespace CoreSystems.Platform
                         string errorString;
                         if (w.ActiveAmmoDef.AmmoDef != null)
                         {
-                            errorString = w.ActiveAmmoDef.AmmoName + " TurretSelectable:" + w.ActiveAmmoDef.AmmoDef.Const.IsTurretSelectable + " IsShrapnel:" + w.ActiveAmmoDef.IsShrapnel + " HardPointUsable:" + w.ActiveAmmoDef.AmmoDef.HardPointUsable;                      
+                            errorString = w.ActiveAmmoDef.AmmoDef.AmmoRound + " TurretSelectable:" + w.ActiveAmmoDef.AmmoDef.Const.IsTurretSelectable + " IsShrapnel:" + w.ActiveAmmoDef.IsShrapnel + " HardPointUsable:" + w.ActiveAmmoDef.AmmoDef.HardPointUsable;                      
                         }
                         else errorString = "ActiveAmmoDef was null";
 

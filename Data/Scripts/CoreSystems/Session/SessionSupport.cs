@@ -117,14 +117,6 @@ namespace CoreSystems
                     {
                         var name = t.Id.SubtypeName;
 
-                        var ammoMagDef = t as MyAmmoMagazineDefinition;
-
-                        if (ammoMagDef != null)
-                        {
-                            //Log.Line($"{ammoMagDef.Id.SubtypeName} - {ammoMagDef.CanPlayerOrder} - {ammoMagDef.CanSpawnFromScreen} - {ammoMagDef.AvailableInSurvival}");
-
-                        }
-
                         if (name.Contains("Armor"))
                         {
                             var normalArmor = name.Contains("ArmorBlock") || name.Contains("HeavyArmor") || name.StartsWith("LargeRoundArmor") || name.Contains("BlockArmor");

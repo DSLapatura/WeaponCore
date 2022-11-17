@@ -524,7 +524,8 @@ namespace CoreSystems.Projectiles
 
                 if (p.Intersecting) {
 
-                    if (aConst.DrawLine || aConst.PrimeModel || aConst.TriggerModel) {
+                    if (aConst.DrawLine || aConst.PrimeModel || aConst.TriggerModel)
+                    {
                         var useCollisionSize = p.ModelState == EntityState.None && aConst.AmmoParticle && !aConst.DrawLine;
                         info.AvShot.TestSphere.Center = info.Hit.LastHit;
                         info.AvShot.ShortStepAvUpdate(info, useCollisionSize, true, p.EarlyEnd, p.Position);

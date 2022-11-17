@@ -14,7 +14,10 @@ using System;
 using Sandbox.ModAPI.Weapons;
 using SpaceEngineers.Game.ModAPI;
 using VRage.Game.Entity;
-using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
+using Sandbox.Game.Entities.Interfaces;
+using Sandbox.Game.Weapons;
+using Sandbox.Game.Entities.UseObject;
+using VRage.Game.ModAPI;
 
 namespace CoreSystems
 {
@@ -90,7 +93,7 @@ namespace CoreSystems
                         rootConstruct.CheckEmptyWeapons();
                 }
 
-                MyEntity fTarget;
+                MyEntity fTarget = null;
                 var hasFocus = rootConstruct.Data.Repo.FocusData.Target > 0 && MyEntities.TryGetEntityById(rootConstruct.Data.Repo.FocusData.Target, out fTarget);
                 var constructResetTick = rootConstruct.TargetResetTick == Tick;
 
@@ -742,8 +745,8 @@ namespace CoreSystems
                 if (activeTurret)
                     AimingAi.Add(ai);
 
-                if (Tick - VanillaTurretTick < 3)
-                    ai.ResetMyGridTargeting();
+                if (Tick - VanillaTurretTick < 3 && ai.TopEntityMap.Targeting != null)
+                    ai.TopEntityMap.Targeting.AllowScanning = false;
             }
 
             if (DbTask.IsComplete && DbsToUpdate.Count > 0 && !DbUpdating)

@@ -245,7 +245,7 @@ namespace CoreSystems
 
                     if (newReload)
                     {
-                        w.AmmoName = w.System.AmmoTypes[AmmoTypeId].AmmoName;
+                        w.AmmoName = w.System.AmmoTypes[AmmoTypeId].AmmoDef.AmmoRound;
                         w.DelayedCycleId = -1;
                     }
 

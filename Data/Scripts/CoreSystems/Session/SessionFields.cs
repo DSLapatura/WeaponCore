@@ -9,6 +9,8 @@ using CoreSystems.Settings;
 using CoreSystems.Support;
 using Jakaria.API;
 using ParallelTasks;
+using Sandbox.Common.ObjectBuilders;
+using Sandbox.Common.ObjectBuilders.Definitions;
 using Sandbox.Game;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
@@ -22,11 +24,13 @@ using VRage.Game.ModAPI;
 using VRage.Input;
 using VRage.Library.Threading;
 using VRage.ModAPI;
+using VRage.ObjectBuilders;
 using VRage.Utils;
 using VRage.Voxels;
 using VRageMath;
 using WeaponCore.Data.Scripts.CoreSystems.Ui;
 using static CoreSystems.Support.Ai;
+using static CoreSystems.Support.WeaponSystem;
 
 namespace CoreSystems
 {
@@ -189,7 +193,9 @@ namespace CoreSystems
         internal readonly HashSet<MyStringHash> CustomArmorSubtypes = new HashSet<MyStringHash>();
         internal readonly HashSet<MyStringHash> CustomHeavyArmorSubtypes = new HashSet<MyStringHash>();
         internal readonly Dictionary<MyStringHash, ResistanceValues> ArmorCoreBlockMap = new Dictionary<MyStringHash, ResistanceValues>();
-        internal readonly HashSet<MyDefinitionId> AmmoDefIds = new HashSet<MyDefinitionId>(MyDefinitionId.Comparer);
+        internal readonly Dictionary<MyDefinitionId, AmmoType> AmmoDefIds = new Dictionary<MyDefinitionId, AmmoType>(MyDefinitionId.Comparer);
+        internal readonly Dictionary<MyDefinitionId, List<WeaponMagMap>> SubTypeIdToWeaponMagMap = new Dictionary<MyDefinitionId, List<WeaponMagMap>>(MyDefinitionId.Comparer);
+
         internal readonly HashSet<MyCubeGrid> DeformProtection = new HashSet<MyCubeGrid>();
         internal readonly HashSet<IMyTerminalAction> CustomActions = new HashSet<IMyTerminalAction>();
         internal readonly HashSet<IMyTerminalAction> AlteredActions = new HashSet<IMyTerminalAction>();
@@ -334,6 +340,7 @@ namespace CoreSystems
         internal Task CTask = new Task();
         internal MyStringHash ShieldHash;
         internal MyStringHash WaterHash;
+
         internal string TriggerEntityModel;
         internal string ServerVersion;
         internal string PlayerMessage;

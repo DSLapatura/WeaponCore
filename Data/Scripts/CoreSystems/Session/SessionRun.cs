@@ -1,5 +1,6 @@
 using System;
 using CoreSystems.Support;
+using Sandbox.Definitions;
 using Sandbox.Game;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
@@ -351,6 +352,20 @@ namespace CoreSystems
             try
             {
                 AllDefinitions = Static.GetAllDefinitions();
+
+                foreach (var t in AllDefinitions)
+                {
+                    var searchLight = t as MySearchlightDefinition;
+                    var turretBase = t as MyLargeTurretBaseDefinition;
+                    if (turretBase != null)
+                    {
+                        turretBase.MaxRangeMeters = 0;
+                    }
+                    if (searchLight != null)
+                    {
+                        searchLight.MaxRangeMeters = 0;
+                    }
+                }
 
                 ModChecker();
 

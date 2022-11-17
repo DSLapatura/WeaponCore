@@ -56,7 +56,6 @@ namespace CoreSystems.Support
         internal readonly HashSet<Projectile> LiveProjectile = new HashSet<Projectile>();
         internal readonly HashSet<IMyMotorStator> Stators = new HashSet<IMyMotorStator>();
         internal readonly HashSet<IMyShipToolBase> Tools = new HashSet<IMyShipToolBase>();
-
         internal readonly ConcurrentDictionary<MyCubeGrid, byte> SubGridsRegistered = new ConcurrentDictionary<MyCubeGrid, byte>();
 
         internal readonly List<WeaponComponent> TrackingComps = new List<WeaponComponent>();
@@ -217,7 +216,10 @@ namespace CoreSystems.Support
                 AcquireTargets = !session.IsClient && !session.Settings.Enforcement.DisableAi;
 
                 if (AiType != AiTypes.Phantom)
-                    session.TopEntityToInfoMap.TryGetValue(topEntity, out TopEntityMap);
+                {
+                    if (session.TopEntityToInfoMap.TryGetValue(topEntity, out TopEntityMap))
+                        TopEntityMap.GroupMap.Construct[TopEntity] = this;
+                }
 
                 topEntity.Flags |= (EntityFlags)(1 << 31);
                 Closed = false;

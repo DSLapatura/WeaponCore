@@ -53,6 +53,7 @@ namespace CoreSystems
                 var sorter = entity as MyConveyorSorter;
                 var turret = entity as IMyLargeTurretBase;
                 var controllableGun = entity as IMyUserControllableGun;
+
                 var rifle = entity as IMyAutomaticRifleGun;
 
                 var decoy = cube as IMyDecoy;

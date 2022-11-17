@@ -37,6 +37,8 @@ namespace CoreSystems.Api
                 ["GetBlockWeaponMap"] = new Func<Sandbox.ModAPI.IMyTerminalBlock, IDictionary<string, int>, bool>(GetBlockWeaponMap),
 
                 ["GetAllWeaponDefinitions"] = new Action<IList<byte[]>>(GetAllWeaponDefinitions),
+                ["GetAllWeaponMagazines"] = new Action<IDictionary<MyDefinitionId, List<MyTuple<int, MyTuple<MyDefinitionId, string, string, bool>>>>>(GetAllWeaponMagazines),
+
                 ["GetCoreWeapons"] = new Action<ICollection<MyDefinitionId>>(GetCoreWeapons),
                 ["GetCoreStaticLaunchers"] = new Action<ICollection<MyDefinitionId>>(GetCoreStaticLaunchers),
                 ["GetCoreTurrets"] = new Action<ICollection<MyDefinitionId>>(GetCoreTurrets),
@@ -58,6 +60,9 @@ namespace CoreSystems.Api
                 ["ShootRequest"] = new Func<MyEntity, object, int, double, bool>(ShootRequest),
 
                 ["ReleaseAiFocusBase"] = new Func<MyEntity, long, bool>(ReleaseAiFocus),
+                ["GetMagazineMap"] = new Func<MyEntity, int, MyTuple<MyDefinitionId, string, string, bool>>(GetMagazineMap),
+                ["SetMagazine"] = new Func<MyEntity, int, MyDefinitionId, bool, bool>(SetMagazine),
+                ["ForceReload"] = new Func<MyEntity, int, bool>(ForceReload),
 
                 // Entity converted
                 ["ToggleInfiniteAmmoBase"] = new Func<MyEntity, bool>(ToggleInfiniteResources),
@@ -579,6 +584,28 @@ namespace CoreSystems.Api
                 collection.Add(def);
         }
 
+        private void GetAllWeaponMagazines(IDictionary<MyDefinitionId, List<MyTuple<int, MyTuple<MyDefinitionId, string, string, bool>>>> dictionary)
+        {
+            dictionary.Clear();
+            foreach (var def in _session.SubTypeIdToWeaponMagMap)
+            {
+                var list = new List<MyTuple<int, MyTuple<MyDefinitionId, string, string, bool>>>();
+                dictionary[def.Key] = list;
+                foreach (var map in def.Value)
+                {
+                    list.Add(new MyTuple<int, MyTuple<MyDefinitionId, string, string, bool>>
+                    {
+                        Item1 = map.WeaponId,
+                        Item2 = new MyTuple<MyDefinitionId, string, string, bool>
+                        {
+                            Item1 = map.AmmoType.AmmoDefinitionId, Item2 = map.AmmoType.AmmoDef.AmmoMagazine,
+                            Item3 = map.AmmoType.AmmoDef.AmmoRound, Item4 = map.AmmoType.AmmoDef.Const.SkipAimChecks
+                        }
+                    });
+                }
+            }
+        }
+
         private void GetCoreStaticLaunchers(ICollection<MyDefinitionId> collection)
         {
             foreach (var def in _session.CoreSystemsFixedBlockDefs)
@@ -837,6 +864,60 @@ namespace CoreSystems.Api
                     ai.Construct.Focus.RequestReleaseActive(ai, playerId);
                     return true;
                 }
+            }
+            return false;
+        }
+
+        private MyTuple<MyDefinitionId, string, string, bool> GetMagazineMap(MyEntity weaponBlock, int weaponId)
+        {
+            var comp = weaponBlock.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp?.Platform != null && comp.Platform.State == Ready && comp.Platform.Weapons.Count > weaponId)
+            {
+                var w = comp.Platform.Weapons[weaponId];
+                WeaponSystem.AmmoType ammoType;
+                var ammoDef = w.ActiveAmmoDef;
+                if (ammoDef != null && _session.AmmoDefIds.TryGetValue(ammoDef.AmmoDefinitionId, out ammoType))
+                {
+                    var result = new MyTuple<MyDefinitionId, string, string, bool>
+                    {
+                        Item1 = ammoType.AmmoDefinitionId, 
+                        Item2 = ammoDef.AmmoDef.AmmoMagazine, 
+                        Item3 = ammoDef.AmmoDef.AmmoRound, 
+                        Item4 = ammoDef.AmmoDef.Const.SkipAimChecks
+                    };
+                    return result;
+                }
+                
+            }
+            return new MyTuple<MyDefinitionId, string, string, bool>();
+        }
+
+        private bool ForceReload(MyEntity weaponBlock, int weaponId)
+        {
+            var comp = weaponBlock.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp?.Platform != null && comp.Platform.State == Ready && comp.Platform.Weapons.Count > weaponId)
+            {
+                var weapon = comp.Platform.Weapons[weaponId];
+                weapon.Comp.ForceReload();
+                return true;
+            }
+            return false;
+        }
+
+        private bool SetMagazine(MyEntity weaponBlock, int weaponId, MyDefinitionId id, bool forceReload)
+        {
+            var comp = weaponBlock.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
+            WeaponSystem.AmmoType ammoType;
+            if (comp?.Platform != null && comp.Platform.State == Ready && comp.Platform.Weapons.Count > weaponId && _session.AmmoDefIds.TryGetValue(id, out ammoType))
+            {
+
+                var weapon = comp.Platform.Weapons[weaponId];
+                weapon.QueueAmmoChange(ammoType.AmmoDef.Const.AmmoIdxPos);
+
+                if (forceReload)
+                    weapon.Comp.ForceReload();
+
+                return true;
             }
             return false;
         }
@@ -1158,7 +1239,7 @@ namespace CoreSystems.Api
                 for (int i = 0; i < w.System.AmmoTypes.Length; i++)
                 {
                     var ammoType = w.System.AmmoTypes[i];
-                    if (ammoType.AmmoName == ammoTypeStr && ammoType.AmmoDef.Const.IsTurretSelectable)
+                    if (ammoType.AmmoDef.AmmoRound == ammoTypeStr && ammoType.AmmoDef.Const.IsTurretSelectable)
                     {
                         if (comp.Session.IsServer) {
                             w.Reload.AmmoTypeId = i;
@@ -1416,9 +1497,9 @@ namespace CoreSystems.Api
                     var w = wComp.Collection[weaponId];
                     foreach (var ammoType in w.System.AmmoTypes)
                     {
-                        if (ammoType.AmmoName == ammoName)
+                        if (ammoType.AmmoDef.AmmoRound == ammoName)
                         {
-                            w.QueueAmmoChange(ammoType.AmmoDef.Const.AmmoIdxPos);
+                            w.ChangeAmmo(ammoType.AmmoDef.Const.AmmoIdxPos);
                             break;
                         }
                     }

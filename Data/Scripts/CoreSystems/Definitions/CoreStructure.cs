@@ -149,17 +149,31 @@ namespace CoreSystems.Support
                     }
 
 
-                    Session.AmmoDefIds.Add(ammoDefId);
                     Session.AmmoValuesMap[ammo] = null;
-                    var ammoType = new WeaponSystem.AmmoType { AmmoDef = ammo, AmmoDefinitionId = ammoDefId, EjectionDefinitionId = ejectionDefId, AmmoName = ammo.AmmoRound, AmmoNameQueued = "*" + ammo.AmmoRound, IsShrapnel = shrapnelNames.Contains(ammo.AmmoRound) }; 
+                    var ammoType = new WeaponSystem.AmmoType { AmmoDef = ammo, AmmoDefinitionId = ammoDefId, EjectionDefinitionId = ejectionDefId, AmmoNameQueued = "*" + ammo.AmmoRound, IsShrapnel = shrapnelNames.Contains(ammo.AmmoRound) };
+                    Session.AmmoDefIds[ammoDefId] = ammoType;
 
-                    Session.AmmoMaps[tDef.Key][ammoType.AmmoName] = ammoType;
+                    Session.AmmoMaps[tDef.Key][ammoType.AmmoDef.AmmoRound] = ammoType;
                     weaponAmmo[i] = ammoType;
                 }
 
                 var partHash = (tDef.Key + partNameIdHash + elevationNameHash + muzzletNameHash + azimuthNameHash).GetHashCode();
                 HashToId.Add(partHash, partId);
                 var coreSystem = new WeaponSystem(Session, this, partNameIdHash, muzzletNameHash, azimuthNameHash, elevationNameHash, spinNameHash, weaponDef, typeName, weaponAmmo, partHash, partId);
+
+                MyDefinitionId subtypeId;
+                if (Session.CoreSystemsDefs.TryGetValue(SubtypeId, out subtypeId))
+                {
+                    List<Session.WeaponMagMap> list;
+                    if (!Session.SubTypeIdToWeaponMagMap.TryGetValue(subtypeId, out list))
+                    {
+                        list = new List<Session.WeaponMagMap>();
+                        Session.SubTypeIdToWeaponMagMap[subtypeId] = new List<Session.WeaponMagMap>();
+                    }
+
+                    for (int i = 0; i < weaponAmmo.Length; i++)
+                        list.Add(new Session.WeaponMagMap {WeaponId = coreSystem.WeaponId, AmmoType = weaponAmmo[i] } );
+                }
 
                 if (coreSystem.MaxLockRange > MaxLockRange)
                     MaxLockRange = coreSystem.MaxLockRange;

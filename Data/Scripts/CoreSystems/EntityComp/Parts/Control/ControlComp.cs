@@ -1,17 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using CoreSystems.Support;
-using Sandbox.Game;
-using Sandbox.Game.Entities;
-using Sandbox.Game.Gui;
-using Sandbox.Game.Weapons;
 using Sandbox.ModAPI;
 using SpaceEngineers.Game.ModAPI;
 using VRage.Game;
 using VRage.Game.Entity;
 using VRage.Utils;
 using VRageMath;
-using WeaponCore.Data.Scripts.CoreSystems.Ui.Hud;
 
 namespace CoreSystems.Platform
 {

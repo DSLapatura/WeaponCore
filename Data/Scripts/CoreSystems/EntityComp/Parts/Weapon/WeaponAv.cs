@@ -164,7 +164,7 @@ namespace CoreSystems.Platform
                 Func<Vector3D, Vector3D, int, bool, object, int, int, int, bool> shootHandler;
                 if (Comp.Session.ShootHandlers.Count > 0 && (Comp.Session.ShootHandlers.TryGetValue(Comp.CoreEntity.EntityId, out shootHandler) || Comp.Session.ShootHandlers.TryGetValue(Comp.TopEntity.EntityId, out shootHandler)))
                 {
-                    var scope = Scope.Info;
+                    var scope = GetScope.Info;
                     shootHandler.Invoke(scope.Position, scope.Direction, active ? 1 : 0, true, ShootRequest.RawTarget ?? Target.TargetEntity, ProtoWeaponAmmo.CurrentAmmo, Reload.CurrentMags, (int) state);
                 }
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using CoreSystems.Platform;
 using Sandbox.ModAPI;
 using VRage;
 using VRage.Collections;
@@ -19,6 +20,8 @@ namespace CoreSystems.Api
 
         private Action<IList<byte[]>> _getAllWeaponDefinitions;
         private Action<ICollection<MyDefinitionId>> _getCoreWeapons;
+
+        private Action<IDictionary<MyDefinitionId, List<MyTuple<int, MyTuple<MyDefinitionId, string, string, bool>>>>> _getAllWeaponMagazines;
         private Action<ICollection<MyDefinitionId>> _getCoreStaticLaunchers;
         private Action<ICollection<MyDefinitionId>> _getCoreTurrets;
         private Action<ICollection<MyDefinitionId>> _getCorePhantoms;
@@ -83,6 +86,9 @@ namespace CoreSystems.Api
         private Func<MyEntity, int, int> _getShotsFired;
         private Action<MyEntity, int, List<MyTuple<Vector3D, Vector3D, Vector3D, Vector3D, MatrixD, MatrixD>>> _getMuzzleInfo;
         private Func<MyEntity, int, MyTuple<Vector3D, Vector3D>> _getWeaponScope;
+        private Func<MyEntity, int, MyTuple<MyDefinitionId, string, string, bool>> _getMagazineMap;
+        private Func<MyEntity, int, MyDefinitionId, bool, bool> _setMagazine;
+        private Func<MyEntity, int, bool> _forceReload;
 
         public void SetWeaponTarget(MyEntity weapon, MyEntity target, int weaponId = 0) =>
             _setWeaponTarget?.Invoke(weapon, target, weaponId);
@@ -146,6 +152,8 @@ namespace CoreSystems.Api
         public void GetAllWeaponDefinitions(IList<byte[]> collection) => _getAllWeaponDefinitions?.Invoke(collection);
         public void GetAllCoreWeapons(ICollection<MyDefinitionId> collection) => _getCoreWeapons?.Invoke(collection);
         public void GetAllCoreStaticLaunchers(ICollection<MyDefinitionId> collection) => _getCoreStaticLaunchers?.Invoke(collection);
+        public void GetAllWeaponMagazines(IDictionary<MyDefinitionId, List<MyTuple<int, MyTuple<MyDefinitionId, string, string, bool>>>> collection) => _getAllWeaponMagazines?.Invoke(collection);
+
         public void GetAllCoreTurrets(ICollection<MyDefinitionId> collection) => _getCoreTurrets?.Invoke(collection);
         public void GetAllCorePhantoms(ICollection<MyDefinitionId> collection) => _getCorePhantoms?.Invoke(collection);
         public void GetAllCoreRifles(ICollection<MyDefinitionId> collection) => _getCoreRifles?.Invoke(collection);
@@ -347,9 +355,10 @@ namespace CoreSystems.Api
         /// </summary>
         /// <param name="handledEntityId"></param>
         /// <param name="unregister"></param>
-        public void ShootRequestHandler(long handledEntityId, bool unregister)
+        /// <param name="callback"></param>
+        public void ShootRequestHandler(long handledEntityId, bool unregister, Func<Vector3D, Vector3D, int, bool, object, int, int, int, bool> callback)
         {
-            _shootHandler?.Invoke(handledEntityId, unregister, ShootCallBack);
+            _shootHandler?.Invoke(handledEntityId, unregister, callback); // see example callback below
         }
 
         /// <summary>
@@ -402,6 +411,42 @@ namespace CoreSystems.Api
             Init,
         }
 
+        /// <summary>
+        /// Get active ammo Mag map from weapon 
+        /// </summary>
+        /// <param name="weapon"></param>
+        /// <param name="weaponId"></param>
+        /// <returns>Mag definitionId, mag name, ammoRound name, weapon must aim (not manual aim) true/false</returns>
+        public MyTuple<MyDefinitionId, string, string, bool> GetMagazineMap(MyEntity weapon, int weaponId)
+        {
+            return _getMagazineMap?.Invoke(weapon, weaponId) ?? new MyTuple<MyDefinitionId, string, string, bool>();
+        }
+
+        /// <summary>
+        ///  Set the active ammo type via passing Mag DefinitionId
+        /// </summary>
+        /// <param name="weapon"></param>
+        /// <param name="weaponId"></param>
+        /// <param name="id"></param>
+        /// <param name="forceReload"></param>
+        /// <returns></returns>
+        public bool SetMagazine(MyEntity weapon, int weaponId, MyDefinitionId id, bool forceReload)
+        {
+            return _setMagazine?.Invoke(weapon, weaponId, id, forceReload) ?? false;
+
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="weapon"></param>
+        /// <param name="weaponId"></param>
+        /// <returns></returns>
+        public bool ForceReload(MyEntity weapon, int weaponId)
+        {
+            return _forceReload?.Invoke(weapon, weaponId) ?? false;
+
+        }
 
         private const long Channel = 67549756549;
         private bool _getWeaponDefinitions;
@@ -470,6 +515,7 @@ namespace CoreSystems.Api
             /// base methods
             AssignMethod(delegates, "GetAllWeaponDefinitions", ref _getAllWeaponDefinitions);
             AssignMethod(delegates, "GetCoreWeapons", ref _getCoreWeapons);
+            AssignMethod(delegates, "GetAllWeaponMagazines", ref _getAllWeaponMagazines);
             AssignMethod(delegates, "GetCoreStaticLaunchers", ref _getCoreStaticLaunchers);
             AssignMethod(delegates, "GetCoreTurrets", ref _getCoreTurrets);
             AssignMethod(delegates, "GetCorePhantoms", ref _getCorePhantoms);
@@ -542,6 +588,9 @@ namespace CoreSystems.Api
             AssignMethod(delegates, "ToggleInfiniteAmmoBase", ref _toggoleInfiniteResources);
             AssignMethod(delegates, "RegisterEventMonitor", ref _monitorEvents);
             AssignMethod(delegates, "UnRegisterEventMonitor", ref _unmonitorEvents);
+            AssignMethod(delegates, "GetMagazineMap", ref _getMagazineMap);
+            AssignMethod(delegates, "SetMagazine", ref _setMagazine);
+            AssignMethod(delegates, "ForceReload", ref _forceReload);
 
             // Damage handler
             AssignMethod(delegates, "DamageHandler", ref _registerDamageEvent);

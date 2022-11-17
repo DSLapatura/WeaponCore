@@ -19,6 +19,7 @@ using VRage.Game.ModAPI;
 using VRageMath;
 using static CoreSystems.Api.WcApi.DamageHandlerHelper;
 using static CoreSystems.Platform.Part;
+using static CoreSystems.Support.WeaponSystem;
 
 namespace CoreSystems
 {
@@ -402,7 +403,7 @@ namespace CoreSystems
                     },
                     {"AmmoName", () => {
                             var message = string.Empty;
-                            return !TryGetValidPlatform(out TmpPlatform) ? string.Empty : TmpPlatform.Weapons.Aggregate(message, (current, w) => current + $"{w.ActiveAmmoDef.AmmoName}"); }
+                            return !TryGetValidPlatform(out TmpPlatform) ? string.Empty : TmpPlatform.Weapons.Aggregate(message, (current, w) => current + $"{w.ActiveAmmoDef.AmmoDef.AmmoRound}"); }
                     },
                     {"CycleRate", () => {
                             var message = string.Empty;
@@ -883,7 +884,6 @@ namespace CoreSystems
             internal uint PreviousOwl;
         }
 
-
         internal struct ClientProSyncDebugLine
         {
             internal LineD Line;
@@ -924,6 +924,12 @@ namespace CoreSystems
                 Weapon = null;
                 Inventories.Clear();
             }
+        }
+
+        public struct WeaponMagMap
+        {
+            public int WeaponId;
+            public AmmoType AmmoType;
         }
 
         public struct InventoryMags

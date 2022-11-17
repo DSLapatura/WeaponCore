@@ -280,7 +280,7 @@ namespace CoreSystems.Support
                     for (int j = 0; j < w.System.AmmoTypes.Length; j++)
                     {
                         var ammo = w.System.AmmoTypes[j];
-                        if (ammo == w.ActiveAmmoDef || !ammo.AmmoDef.Const.IsTurretSelectable || string.IsNullOrEmpty(ammo.AmmoDef.AmmoRound) || ammo.AmmoName == "Energy")
+                        if (ammo == w.ActiveAmmoDef || !ammo.AmmoDef.Const.IsTurretSelectable || string.IsNullOrEmpty(ammo.AmmoDef.AmmoRound) || ammo.AmmoDef.AmmoRound == "Energy")
                             continue;
                         
                         if (otherAmmo == null)

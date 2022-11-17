@@ -26,13 +26,13 @@ namespace CoreSystems.Platform
 
             ActiveAmmoDef = System.AmmoTypes[Reload.AmmoTypeId];
             if (string.IsNullOrEmpty(AmmoName)) 
-                AmmoName = ActiveAmmoDef.AmmoName;
+                AmmoName = ActiveAmmoDef.AmmoDef.AmmoRound;
             PrepAmmoShuffle();
 
             if (!ActiveAmmoDef.AmmoDef.Const.EnergyAmmo)
                 Reload.CurrentMags = Comp.TypeSpecific != CompTypeSpecific.Phantom ? Comp.CoreInventory.GetItemAmount(ActiveAmmoDef.AmmoDefinitionId).ToIntSafe() : int.MaxValue;
 
-            AmmoName = ActiveAmmoDef.AmmoName;
+            AmmoName = ActiveAmmoDef.AmmoDef.AmmoRound;
 
             CheckInventorySystem = true;
 
@@ -373,7 +373,7 @@ namespace CoreSystems.Platform
 
                     if (DelayedCycleId == ActiveAmmoDef.AmmoDef.Const.AmmoIdxPos)
                     {
-                        AmmoName = ActiveAmmoDef.AmmoName;
+                        AmmoName = ActiveAmmoDef.AmmoDef.AmmoRound;
                         DelayedCycleId = -1;
                     }
 

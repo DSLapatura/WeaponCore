@@ -247,19 +247,6 @@ namespace CoreSystems.Support
             }
         }
 
-        internal void ResetMyGridTargeting()
-        {
-            TopMap topMap;
-            if (Session.TopEntityToInfoMap.TryGetValue(TopEntity, out topMap))
-            {
-                if (topMap.Targeting != null && topMap.Targeting.AllowScanning)
-                {
-                    //Log.Line("grid has allow scanning, disabling");
-                    topMap.Targeting.AllowScanning = false;
-                }
-            }
-        }
-
         internal void ResetControlRotorState()
         {
             RotorManualControlId = -1;

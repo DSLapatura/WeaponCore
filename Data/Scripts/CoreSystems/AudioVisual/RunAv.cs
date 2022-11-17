@@ -568,13 +568,5 @@ namespace CoreSystems.Support
                 EndTick = 0;
             }
         }
-
-        internal struct HitSounds
-        {
-            internal MyEntity3DSoundEmitter Emitter;
-            internal MySoundPair SoundPair;
-            internal Vector3D Position;
-            internal bool Hit;
-        }
     }
 }

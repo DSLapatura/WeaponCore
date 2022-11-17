@@ -51,7 +51,7 @@ namespace CoreSystems
                 for (int i = 0; i < inventoryItems.Value.Count; i++) {
                     
                     var item = inventoryItems.Value[i];
-                    if (AmmoDefIds.Contains(item.Content.GetId())) {
+                    if (AmmoDefIds.ContainsKey(item.Content.GetId())) {
                         
                         var newItem = BetterInventoryItems.Get();
                         newItem.Item = item;

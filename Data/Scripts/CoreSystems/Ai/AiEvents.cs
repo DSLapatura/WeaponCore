@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Sandbox.Game;
 using Sandbox.Game.Entities;
+using Sandbox.Game.Entities.Interfaces;
 using Sandbox.ModAPI;
 using VRage;
 using VRage.Collections;
@@ -123,8 +124,7 @@ namespace CoreSystems.Support
             {
                 var stator = cube as IMyMotorStator;
                 var tool = cube as IMyShipToolBase;
-
-                if (stator != null || tool != null)
+                if (stator != null || tool != null )
                 {
                     if (stator != null)
                         Stators.Add(stator);
@@ -194,9 +194,10 @@ namespace CoreSystems.Support
                 var stator = cube as IMyMotorStator;
                 var tool = cube as IMyShipToolBase;
 
-                if (stator != null || tool != null)
+                if (stator != null || tool != null )
                 {
                     LastAddToRotorTick = Session.Tick;
+
                     if (stator != null)
                         Stators.Remove(stator);
 
@@ -274,7 +275,7 @@ namespace CoreSystems.Support
             {
                 if (amount <= 0 || item.Content == null || inventory == null) return;
                 var itemDef = item.Content.GetObjectId();
-                if (Session.AmmoDefIds.Contains(itemDef))
+                if (Session.AmmoDefIds.ContainsKey(itemDef))
                 {
                     Construct.RootAi?.Construct.RecentItems.Add(itemDef);
                 }

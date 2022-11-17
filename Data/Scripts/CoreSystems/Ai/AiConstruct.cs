@@ -63,6 +63,7 @@ namespace CoreSystems.Support
                 var battery = cube as MyBatteryBlock;
                 var stator = cube as IMyMotorStator;
                 var tool = cube as IMyShipToolBase;
+  
                 if (battery != null || cube.HasInventory || stator != null || tool != null)
                 {
                     FatBlockAdded(cube);
@@ -81,6 +82,7 @@ namespace CoreSystems.Support
                 var battery = cube as MyBatteryBlock;
                 var stator = cube as IMyMotorStator;
                 var tool = cube as IMyShipToolBase;
+
                 if (InventoryMonitor.ContainsKey(cube) || battery != null && Batteries.Contains(battery) || stator != null || tool != null)
                 {
                     FatBlockRemoved(cube);

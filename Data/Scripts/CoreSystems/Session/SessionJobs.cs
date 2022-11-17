@@ -2,7 +2,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using CoreSystems.Support;
-using Jakaria;
 using Jakaria.API;
 using Sandbox.Game.Entities;
 using Sandbox.Game.EntityComponents;
@@ -13,10 +12,7 @@ using VRage.Collections;
 using VRage.Game;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
-using VRage.ModAPI;
-using VRage.Utils;
 using VRageMath;
-using static CoreSystems.Platform.ControlSys;
 using static CoreSystems.Support.WeaponDefinition.TargetingDef.BlockTypes;
 namespace CoreSystems
 {
@@ -359,7 +355,6 @@ namespace CoreSystems
                         allFat.Sort(CubeComparer);
                     }
                     var terminals = 0;
-                    var tStatus = topMap.Targeting == null || topMap.Targeting.AllowScanning;
                     var thrusters = 0;
                     var powerProducers = 0;
                     var warHead = 0;
@@ -377,6 +372,7 @@ namespace CoreSystems
                             if (fat.IsWorking)
                                 ++working;
 
+                            var id = fat.BlockDefinition.Id;
 
                             var cockpit = fat as MyCockpit;
                             var decoy = fat as IMyDecoy;
@@ -413,9 +409,6 @@ namespace CoreSystems
                                 if (bomb != null)
                                     warHead++;
 
-                                if (!tStatus && fat is IMyGunBaseUser && !PartPlatforms.ContainsKey(fat.BlockDefinition.Id) && topMap.Targeting != null)
-                                    tStatus = topMap.Targeting.AllowScanning = true;
-
                                 newTypeMap[Offense].Add(fat);
                             }
                             else if (upgrade != null || fat is IMyRadioAntenna || fat is IMyLaserAntenna || remoteControl != null || fat is IMyShipToolBase || fat is IMyMedicalRoom || fat is IMyCameraBlock)
@@ -442,6 +435,8 @@ namespace CoreSystems
                     foreach (var type in newTypeMap)
                         type.Value.ApplyAdditions();
 
+                    if (topMap.Targeting != null)
+                        topMap.Targeting.AllowScanning = false;
 
                     topMap.MyCubeBocks.ApplyAdditions();
                     var iGrid = (IMyCubeGrid)grid;
