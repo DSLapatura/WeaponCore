@@ -20,8 +20,10 @@ namespace CoreSystems.Api
 
         private Action<IList<byte[]>> _getAllWeaponDefinitions;
         private Action<ICollection<MyDefinitionId>> _getCoreWeapons;
-
+        private Action<ICollection<MyDefinitionId>> _getNpcSafeWeapons;
         private Action<IDictionary<MyDefinitionId, List<MyTuple<int, MyTuple<MyDefinitionId, string, string, bool>>>>> _getAllWeaponMagazines;
+        private Action<IDictionary<MyDefinitionId, List<MyTuple<int, MyTuple<MyDefinitionId, string, string, bool>>>>> _getAllNpcSafeWeaponMagazines;
+
         private Action<ICollection<MyDefinitionId>> _getCoreStaticLaunchers;
         private Action<ICollection<MyDefinitionId>> _getCoreTurrets;
         private Action<ICollection<MyDefinitionId>> _getCorePhantoms;
@@ -151,8 +153,11 @@ namespace CoreSystems.Api
 
         public void GetAllWeaponDefinitions(IList<byte[]> collection) => _getAllWeaponDefinitions?.Invoke(collection);
         public void GetAllCoreWeapons(ICollection<MyDefinitionId> collection) => _getCoreWeapons?.Invoke(collection);
+        public void GetNpcSafeWeapons(ICollection<MyDefinitionId> collection) => _getNpcSafeWeapons?.Invoke(collection);
+
         public void GetAllCoreStaticLaunchers(ICollection<MyDefinitionId> collection) => _getCoreStaticLaunchers?.Invoke(collection);
         public void GetAllWeaponMagazines(IDictionary<MyDefinitionId, List<MyTuple<int, MyTuple<MyDefinitionId, string, string, bool>>>> collection) => _getAllWeaponMagazines?.Invoke(collection);
+        public void GetAllNpcSafeWeaponMagazines(IDictionary<MyDefinitionId, List<MyTuple<int, MyTuple<MyDefinitionId, string, string, bool>>>> collection) => _getAllNpcSafeWeaponMagazines?.Invoke(collection);
 
         public void GetAllCoreTurrets(ICollection<MyDefinitionId> collection) => _getCoreTurrets?.Invoke(collection);
         public void GetAllCorePhantoms(ICollection<MyDefinitionId> collection) => _getCorePhantoms?.Invoke(collection);
@@ -515,7 +520,11 @@ namespace CoreSystems.Api
             /// base methods
             AssignMethod(delegates, "GetAllWeaponDefinitions", ref _getAllWeaponDefinitions);
             AssignMethod(delegates, "GetCoreWeapons", ref _getCoreWeapons);
+            AssignMethod(delegates, "GetNpcSafeWeapons", ref _getNpcSafeWeapons);
+
             AssignMethod(delegates, "GetAllWeaponMagazines", ref _getAllWeaponMagazines);
+            AssignMethod(delegates, "GetAllNpcSafeWeaponMagazines", ref _getAllNpcSafeWeaponMagazines);
+
             AssignMethod(delegates, "GetCoreStaticLaunchers", ref _getCoreStaticLaunchers);
             AssignMethod(delegates, "GetCoreTurrets", ref _getCoreTurrets);
             AssignMethod(delegates, "GetCorePhantoms", ref _getCorePhantoms);
@@ -589,6 +598,7 @@ namespace CoreSystems.Api
             AssignMethod(delegates, "RegisterEventMonitor", ref _monitorEvents);
             AssignMethod(delegates, "UnRegisterEventMonitor", ref _unmonitorEvents);
             AssignMethod(delegates, "GetMagazineMap", ref _getMagazineMap);
+
             AssignMethod(delegates, "SetMagazine", ref _setMagazine);
             AssignMethod(delegates, "ForceReload", ref _forceReload);
 

@@ -409,6 +409,7 @@ namespace CoreSystems.Api
                 [ProtoMember(12)] internal OtherDef Other;
                 [ProtoMember(13)] internal bool AddToleranceToTracking;
                 [ProtoMember(14)] internal bool CanShootSubmerged;
+                [ProtoMember(15)] internal bool NpcSafe;
 
                 [ProtoContract]
                 public struct LoadingDef
@@ -563,6 +564,8 @@ namespace CoreSystems.Api
                 [ProtoMember(26)] internal bool IgnoreVoxels;
                 [ProtoMember(27)] internal bool Synchronize;
                 [ProtoMember(28)] internal double HeatModifier;
+                [ProtoMember(29)] internal bool NpcSafe;
+
 
                 [ProtoContract]
                 public struct DamageScaleDef

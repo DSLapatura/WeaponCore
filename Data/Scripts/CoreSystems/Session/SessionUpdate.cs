@@ -14,10 +14,6 @@ using System;
 using Sandbox.ModAPI.Weapons;
 using SpaceEngineers.Game.ModAPI;
 using VRage.Game.Entity;
-using Sandbox.Game.Entities.Interfaces;
-using Sandbox.Game.Weapons;
-using Sandbox.Game.Entities.UseObject;
-using VRage.Game.ModAPI;
 
 namespace CoreSystems
 {
@@ -95,7 +91,7 @@ namespace CoreSystems
 
                 MyEntity fTarget = null;
                 var hasFocus = rootConstruct.Data.Repo.FocusData.Target > 0 && MyEntities.TryGetEntityById(rootConstruct.Data.Repo.FocusData.Target, out fTarget);
-                var constructResetTick = rootConstruct.TargetResetTick == Tick;
+                var constructResetTick = rootConstruct.TargetResetTick == Tick && false;
 
                 ///
                 /// Upgrade update section

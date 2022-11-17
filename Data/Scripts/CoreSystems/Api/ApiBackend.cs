@@ -38,6 +38,9 @@ namespace CoreSystems.Api
 
                 ["GetAllWeaponDefinitions"] = new Action<IList<byte[]>>(GetAllWeaponDefinitions),
                 ["GetAllWeaponMagazines"] = new Action<IDictionary<MyDefinitionId, List<MyTuple<int, MyTuple<MyDefinitionId, string, string, bool>>>>>(GetAllWeaponMagazines),
+                
+                ["GetAllNpcSafeWeaponMagazines"] = new Action<IDictionary<MyDefinitionId, List<MyTuple<int, MyTuple<MyDefinitionId, string, string, bool>>>>>(GetAllNpcSafeWeaponMagazines),
+                ["GetNpcSafeWeapons"] = new Action<ICollection<MyDefinitionId>>(NpcSafeWeapons),
 
                 ["GetCoreWeapons"] = new Action<ICollection<MyDefinitionId>>(GetCoreWeapons),
                 ["GetCoreStaticLaunchers"] = new Action<ICollection<MyDefinitionId>>(GetCoreStaticLaunchers),
@@ -584,6 +587,12 @@ namespace CoreSystems.Api
                 collection.Add(def);
         }
 
+        private void NpcSafeWeapons(ICollection<MyDefinitionId> collection)
+        {
+            foreach (var def in _session.NpcSafeWeaponDefs.Values)
+                collection.Add(def);
+        }
+
         private void GetAllWeaponMagazines(IDictionary<MyDefinitionId, List<MyTuple<int, MyTuple<MyDefinitionId, string, string, bool>>>> dictionary)
         {
             dictionary.Clear();
@@ -600,6 +609,30 @@ namespace CoreSystems.Api
                         {
                             Item1 = map.AmmoType.AmmoDefinitionId, Item2 = map.AmmoType.AmmoDef.AmmoMagazine,
                             Item3 = map.AmmoType.AmmoDef.AmmoRound, Item4 = map.AmmoType.AmmoDef.Const.SkipAimChecks
+                        }
+                    });
+                }
+            }
+        }
+
+        private void GetAllNpcSafeWeaponMagazines(IDictionary<MyDefinitionId, List<MyTuple<int, MyTuple<MyDefinitionId, string, string, bool>>>> dictionary)
+        {
+            dictionary.Clear();
+            foreach (var def in _session.SubTypeIdToNpcSafeWeaponMagMap)
+            {
+                var list = new List<MyTuple<int, MyTuple<MyDefinitionId, string, string, bool>>>();
+                dictionary[def.Key] = list;
+                foreach (var map in def.Value)
+                {
+                    list.Add(new MyTuple<int, MyTuple<MyDefinitionId, string, string, bool>>
+                    {
+                        Item1 = map.WeaponId,
+                        Item2 = new MyTuple<MyDefinitionId, string, string, bool>
+                        {
+                            Item1 = map.AmmoType.AmmoDefinitionId,
+                            Item2 = map.AmmoType.AmmoDef.AmmoMagazine,
+                            Item3 = map.AmmoType.AmmoDef.AmmoRound,
+                            Item4 = map.AmmoType.AmmoDef.Const.SkipAimChecks
                         }
                     });
                 }

@@ -124,7 +124,7 @@ namespace CoreSystems.Support
                             var particle = av.AmmoDef.AmmoGraphics.Particles.Hit;
                             var keenStrikesAgain = particle.Offset == Vector3D.MaxValue;
                             var matrix = !keenStrikesAgain ? MatrixD.CreateTranslation(pos) : MatrixD.CreateWorld(pos, av.VisualDir, av.OriginUp);
-  
+
                             MyParticleEffect hitEffect;
                             if (MyParticlesManager.TryCreateParticleEffect(av.AmmoDef.Const.HitParticleStr, ref matrix, ref pos, uint.MaxValue, out hitEffect))
                             {

@@ -205,6 +205,9 @@ namespace CoreSystems
             }
             */
 
+            if (Tick10)
+                ShowLocalNotify($"Particles:{MyParticlesManager.InstanceCount}", 2000, "White");
+
         }
 
         public void AddHandHitDebug(Vector3D start, Vector3D end, bool shoot)

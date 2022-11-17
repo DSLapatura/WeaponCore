@@ -161,18 +161,34 @@ namespace CoreSystems.Support
                 HashToId.Add(partHash, partId);
                 var coreSystem = new WeaponSystem(Session, this, partNameIdHash, muzzletNameHash, azimuthNameHash, elevationNameHash, spinNameHash, weaponDef, typeName, weaponAmmo, partHash, partId);
 
-                MyDefinitionId subtypeId;
-                if (Session.CoreSystemsDefs.TryGetValue(SubtypeId, out subtypeId))
+                MyDefinitionId typeId;
+                if (Session.CoreSystemsDefs.TryGetValue(SubtypeId, out typeId))
                 {
                     List<Session.WeaponMagMap> list;
-                    if (!Session.SubTypeIdToWeaponMagMap.TryGetValue(subtypeId, out list))
+                    if (!Session.SubTypeIdToWeaponMagMap.TryGetValue(typeId, out list))
                     {
                         list = new List<Session.WeaponMagMap>();
-                        Session.SubTypeIdToWeaponMagMap[subtypeId] = new List<Session.WeaponMagMap>();
+                        Session.SubTypeIdToWeaponMagMap[typeId] = new List<Session.WeaponMagMap>();
                     }
 
                     for (int i = 0; i < weaponAmmo.Length; i++)
-                        list.Add(new Session.WeaponMagMap {WeaponId = coreSystem.WeaponId, AmmoType = weaponAmmo[i] } );
+                    {
+                        var ammo = weaponAmmo[i];
+                        list.Add(new Session.WeaponMagMap { WeaponId = coreSystem.WeaponId, AmmoType = ammo });
+
+                        if (ammo.AmmoDef.NpcSafe)
+                        {
+                            List<Session.WeaponMagMap> list2;
+                            if (!Session.SubTypeIdToNpcSafeWeaponMagMap.TryGetValue(typeId, out list2))
+                                Session.SubTypeIdToNpcSafeWeaponMagMap[typeId] = new List<Session.WeaponMagMap>();
+
+                            list2.Add(new Session.WeaponMagMap {WeaponId = coreSystem.WeaponId, AmmoType = ammo});
+                        }
+
+                    }
+
+                    if (coreSystem.Values.HardPoint.NpcSafe)
+                        Session.NpcSafeWeaponDefs[SubtypeId] = typeId;
                 }
 
                 if (coreSystem.MaxLockRange > MaxLockRange)
