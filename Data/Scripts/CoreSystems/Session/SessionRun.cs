@@ -276,7 +276,6 @@ namespace CoreSystems
         {
             try
             {
-
                 if (SuppressWc || DedicatedServer || _lastDrawTick == Tick || _paused) return;
                 
 

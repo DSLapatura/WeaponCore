@@ -204,10 +204,6 @@ namespace CoreSystems
                     DsDebugDraw.DrawLine(_clientHandDebug2.HitStart, _clientHandDebug2.HitEnd, Color.Yellow, 0.2f);
             }
             */
-
-            if (Tick10)
-                ShowLocalNotify($"Particles:{MyParticlesManager.InstanceCount}", 2000, "White");
-
         }
 
         public void AddHandHitDebug(Vector3D start, Vector3D end, bool shoot)
