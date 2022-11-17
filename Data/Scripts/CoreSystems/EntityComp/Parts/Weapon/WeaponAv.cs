@@ -5,7 +5,6 @@ using VRage.Game;
 using VRageMath;
 using static CoreSystems.Support.PartAnimation;
 using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetDef;
-using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace CoreSystems.Platform
 {
@@ -55,7 +54,6 @@ namespace CoreSystems.Platform
         public void StopShootingAv(bool burst)
         {
             var stopSounds = !burst || !System.WConst.FireSoundNoBurst;
-            
             if (System.WConst.FireSoundEndDelay > 0 && stopSounds)
                 Comp.Session.FutureEvents.Schedule(StopFiringSound, null, System.WConst.FireSoundEndDelay);
             else if (stopSounds) StopFiringSound(false);

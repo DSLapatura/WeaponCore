@@ -91,7 +91,7 @@ namespace CoreSystems
 
                 MyEntity fTarget = null;
                 var hasFocus = rootConstruct.Data.Repo.FocusData.Target > 0 && MyEntities.TryGetEntityById(rootConstruct.Data.Repo.FocusData.Target, out fTarget);
-                var constructResetTick = rootConstruct.TargetResetTick == Tick && false;
+                var constructResetTick = rootConstruct.TargetResetTick == Tick;
 
                 ///
                 /// Upgrade update section

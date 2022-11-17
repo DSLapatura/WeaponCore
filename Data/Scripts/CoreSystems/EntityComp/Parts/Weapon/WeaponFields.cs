@@ -80,6 +80,7 @@ namespace CoreSystems.Platform
         internal uint LastNanTick;
         internal uint OverHeatCountDown;
         internal uint DelayedTargetResetTick;
+        internal uint LastAcquireAttempt;
         internal float HeatPerc;
         internal int BarrelRate;
         internal int ShotsFired;

@@ -68,7 +68,7 @@ namespace CoreSystems.Support
                 if (w.NewTarget.CurrentState != Target.States.NoTargetsSeen) 
                     w.NewTarget.Reset(w.Comp.Session.Tick, Target.States.NoTargetsSeen);
                 
-                if (w.Target.CurrentState != Target.States.NoTargetsSeen)
+                if (w.Target.CurrentState != Target.States.NoTargetsSeen && !(forceFocus && w.Target.HasTarget))
                     w.Target.Reset(w.Comp.Session.Tick, Target.States.NoTargetsSeen, fakeInfo == null);
 
                 w.LastBlockCount = w.Comp.Ai.BlockCount;
