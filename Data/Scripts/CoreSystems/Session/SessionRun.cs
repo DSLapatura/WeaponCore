@@ -18,13 +18,6 @@ namespace CoreSystems
     [MySessionComponentDescriptor(MyUpdateOrder.BeforeSimulation | MyUpdateOrder.AfterSimulation | MyUpdateOrder.Simulation, int.MaxValue - 1)]
     public partial class Session : MySessionComponentBase
     {
-        public override MyObjectBuilder_SessionComponent GetObjectBuilder()
-        {
-            ResetVisualAreas();
-            return base.GetObjectBuilder();
-        }
-
-
         public override void BeforeStart()
         {
             try
@@ -33,6 +26,12 @@ namespace CoreSystems
                     BeforeStartInit();
             }
             catch (Exception ex) { Log.Line($"Exception in BeforeStart: {ex}", null, true); }
+        }
+
+        public override MyObjectBuilder_SessionComponent GetObjectBuilder()
+        {
+            ResetVisualAreas();
+            return base.GetObjectBuilder();
         }
 
 

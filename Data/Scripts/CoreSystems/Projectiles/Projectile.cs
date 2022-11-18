@@ -961,13 +961,13 @@ namespace CoreSystems.Projectiles
             switch (s.DroneStat)
             {
                 case Transit:
-                    droneNavTarget = Vector3D.Normalize(targetSphere.Center - Position);
+                    droneNavTarget = targetSphere.Center;
                     break;
                 case Approach:
                     if (s.DroneMsn == DroneMission.Rtb)//Check for LOS to docking target
                     {
                         var returnTargetTest = new Vector3D(parentCubePos + parentCubeOrientation.Forward * orbitSphere.Radius);
-                        var droneNavTargetAim = Vector3D.Normalize(returnTargetTest - Position);
+                        var droneNavTargetAim = returnTargetTest;
                         var testPathRayCheck = new RayD(returnTargetTest, -droneNavTargetAim);//Ray looking out from dock approach point
 
                         if (testPathRayCheck.Intersects(orbitSphereClose)==null)
@@ -985,15 +985,15 @@ namespace CoreSystems.Projectiles
                     var offsetPoint = new Vector3D(orbitSphere.Center + (centerOffset * -lineToCenter.Direction));
                     var angleQuat = Vector3D.CalculatePerpendicularVector(lineToCenter.Direction); //TODO placeholder for a possible rand-rotated quat.  Should be 90*, rand*, 0* 
                     var tangentPoint = new Vector3D(offsetPoint + offsetDist * angleQuat);
-                    droneNavTarget = Vector3D.Normalize(tangentPoint - Position);
-                    if (double.IsNaN(droneNavTarget.X)) droneNavTarget = Info.Direction; //Error catch
+                    droneNavTarget = tangentPoint;
+                    if (double.IsNaN(droneNavTarget.X) || Vector3D.IsZero(droneNavTarget)) droneNavTarget = Position + (Info.Direction * 100); ; //Error catch
                     break;
 
                 case Orbit://Orbit & shoot behavior
                     var insideOrbitSphere = new BoundingSphereD(orbitSphere.Center, orbitSphere.Radius * 0.90);
                     if (insideOrbitSphere.Contains(Position) != ContainmentType.Disjoint)
                     {
-                        droneNavTarget = Vector3D.Normalize(Info.Direction + new Vector3D(0,0.5,0));//Strafe or too far inside sphere recovery
+                        droneNavTarget = Position + (Info.Direction + new Vector3D(0,0.5,0));//Strafe or too far inside sphere recovery
                     }
                     else
                     {
@@ -1003,12 +1003,12 @@ namespace CoreSystems.Projectiles
                         var dir = (noseOffset - orbitSphere.Center) / length;
                         var deltaDist = length - orbitSphere.Radius * 0.95; //0.95 modifier for hysterisis, keeps target inside dronesphere
                         var navPoint = noseOffset + (-dir * deltaDist);
-                        droneNavTarget = Vector3D.Normalize(navPoint - Position);
+                        droneNavTarget = navPoint;
                     }
                     break;
                
                 case Strafe:
-                    droneNavTarget = Vector3D.Normalize(TargetPosition - Position);
+                    droneNavTarget = TargetPosition;
                     break;
                 case Escape:
                     var metersInSideOrbit = MyUtils.GetSmallestDistanceToSphere(ref Position, ref orbitSphereClose);
@@ -1017,20 +1017,20 @@ namespace CoreSystems.Projectiles
                         var futurePos = (Position + (TravelMagnitude * Math.Abs(metersInSideOrbit*0.5)));
                         var dirToFuturePos = Vector3D.Normalize(futurePos - orbitSphereClose.Center);
                         var futureSurfacePos = orbitSphereClose.Center + (dirToFuturePos * orbitSphereClose.Radius);
-                        droneNavTarget = Vector3D.Normalize(futureSurfacePos - Position);
+                        droneNavTarget = futureSurfacePos;
                     }
                     else
                     {
-                        droneNavTarget = Info.Direction;
+                        droneNavTarget = Position + (Info.Direction * 100);
                     }
                     break;
 
                 case Kamikaze:
-                    droneNavTarget = Vector3D.Normalize(TargetPosition - Position);
+                    droneNavTarget = TargetPosition;
                     break;
                 case Return:
                     var returnTarget = new Vector3D(parentCubePos + parentCubeOrientation.Forward * orbitSphere.Radius);
-                    droneNavTarget = Vector3D.Normalize(returnTarget - Position);
+                    droneNavTarget = returnTarget;
                     DeaccelRate = 30;
                     if (Vector3D.Distance(Position, returnTarget) <= droneSize) s.DroneStat= Dock;
                     break;
@@ -1042,7 +1042,7 @@ namespace CoreSystems.Projectiles
                     {
                         if (DeaccelRate >= 25)//Final Approach
                         {
-                            droneNavTarget = Vector3D.Normalize(sphereTarget - Position);
+                            droneNavTarget = sphereTarget;
                             DeaccelRate = 25;
                         }
 
@@ -1056,7 +1056,7 @@ namespace CoreSystems.Projectiles
                     {
                         if (Vector3D.Distance(parentCubePos, Position) >= droneSize)
                         {
-                            droneNavTarget = Vector3D.Normalize(parentCubePos - Position);
+                            droneNavTarget = parentCubePos;
                         }
                         else//docked TODO despawn and restock ammo?
                         {
@@ -1066,7 +1066,7 @@ namespace CoreSystems.Projectiles
                     break;
             }
 
-            var commandedAccel = s.Navigation.Update(Position, Velocity, AccelInMetersPerSec, TargetPosition, PrevTargetVel, Gravity, smarts.Aggressiveness, Info.AmmoDef.Const.MaxLateralThrust);
+            var commandedAccel = s.Navigation.Update(Position, Velocity, AccelInMetersPerSec, droneNavTarget, PrevTargetVel, Gravity, smarts.Aggressiveness, Info.AmmoDef.Const.MaxLateralThrust, smarts.NavAcceleration);
 
             if (smarts.OffsetTime > 0 && s.DroneStat!= Strafe && s.DroneStat!=Return && s.DroneStat!= Dock) // suppress offsets when strafing or docking
                 OffsetSmartVelocity(ref commandedAccel);
