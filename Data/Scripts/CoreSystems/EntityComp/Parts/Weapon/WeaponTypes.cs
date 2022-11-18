@@ -176,6 +176,7 @@ namespace CoreSystems.Platform
                     return false;
 
                 Dirty = true;
+                Weapon.Comp.ShootRequestDirty = true;
                 RequestTick = Weapon.Comp.Session.Tick + 1;
                 RawTarget = target;
 
@@ -197,6 +198,7 @@ namespace CoreSystems.Platform
                     Position = position.Value;
                     Type = TargetType.Position;
                     ExtraShotAngle = extraShotAngle;
+                    Weapon.Comp.ShootManager.RequestShootSync(Weapon.Comp.Session.PlayerId, ShootManager.RequestType.Once, ShootManager.Signals.Once);
                     return true;
                 }
 
@@ -209,6 +211,7 @@ namespace CoreSystems.Platform
                     return true;
                 }
 
+                Clean();
                 return false;
             }
 

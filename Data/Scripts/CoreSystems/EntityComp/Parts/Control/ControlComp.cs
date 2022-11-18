@@ -7,6 +7,7 @@ using VRage.Game;
 using VRage.Game.Entity;
 using VRage.Utils;
 using VRageMath;
+using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace CoreSystems.Platform
 {
@@ -312,6 +313,15 @@ namespace CoreSystems.Platform
                     foreach (var t in topAi.Tools)
                         t.Enabled = false;
                 }
+            }
+
+            internal static ProtoWeaponOverrides GetControlInfo(Weapon.WeaponComponent wComp, out Ai masterAi, out ControlComponent cComp)
+            {
+                var ai = wComp.Ai;
+                cComp = ai.RootFixedWeaponComp?.PrimaryWeapon?.MasterComp;
+                masterAi = cComp != null ? cComp.Ai : ai;
+
+                return cComp != null ? cComp.Data.Repo.Values.Set.Overrides : wComp.Data.Repo.Values.Set.Overrides;
             }
 
             internal bool TrackTarget(Ai topAi, IMyMotorStator root, IMyMotorStator other, bool isRoot, ref Vector3D desiredDirection)

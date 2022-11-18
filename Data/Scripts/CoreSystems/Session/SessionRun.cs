@@ -18,6 +18,13 @@ namespace CoreSystems
     [MySessionComponentDescriptor(MyUpdateOrder.BeforeSimulation | MyUpdateOrder.AfterSimulation | MyUpdateOrder.Simulation, int.MaxValue - 1)]
     public partial class Session : MySessionComponentBase
     {
+        public override MyObjectBuilder_SessionComponent GetObjectBuilder()
+        {
+            ResetVisualAreas();
+            return base.GetObjectBuilder();
+        }
+
+
         public override void BeforeStart()
         {
             try
@@ -28,11 +35,6 @@ namespace CoreSystems
             catch (Exception ex) { Log.Line($"Exception in BeforeStart: {ex}", null, true); }
         }
 
-        public override MyObjectBuilder_SessionComponent GetObjectBuilder()
-        {
-            ResetVisualAreas();
-            return base.GetObjectBuilder();
-        }
 
         public override void UpdatingStopped()
         {
@@ -45,7 +47,6 @@ namespace CoreSystems
             }
             catch (Exception ex) { Log.Line($"Exception in UpdatingStopped: {ex}", null, true); }
         }
-
 
         public override void UpdateBeforeSimulation()
         {
@@ -357,13 +358,10 @@ namespace CoreSystems
                     var searchLight = t as MySearchlightDefinition;
                     var turretBase = t as MyLargeTurretBaseDefinition;
                     if (turretBase != null)
-                    {
-                        turretBase.MaxRangeMeters = 0;
-                    }
+                        turretBase.MaxRangeMeters = 0.1f;
+
                     if (searchLight != null)
-                    {
-                        searchLight.MaxRangeMeters = 0;
-                    }
+                        searchLight.MaxRangeMeters = 0.1f;
                 }
 
                 ModChecker();

@@ -194,7 +194,7 @@ namespace CoreSystems.Support
                 var planetCenter = MyPlanet.PositionComp.WorldAABB.Center;
                 ClosestPlanetSqr = double.MaxValue;
 
-                if (new BoundingSphereD(planetCenter, MyPlanet.AtmosphereRadius + gridRadius).Intersects(gridVolume)) {
+                if (new BoundingSphereD(planetCenter, MyPlanet.AtmosphereRadius + gridRadius).Intersects(gridVolume) || AiType == AiTypes.Phantom) {
 
                     InPlanetGravity = true;
                     PlanetClosestPoint = MyPlanet.GetClosestSurfacePointGlobal(gridCenter);

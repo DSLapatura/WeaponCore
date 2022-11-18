@@ -163,7 +163,11 @@ namespace CoreSystems.Platform
                 if (Comp.Session.ShootHandlers.Count > 0 && (Comp.Session.ShootHandlers.TryGetValue(Comp.CoreEntity.EntityId, out shootHandler) || Comp.Session.ShootHandlers.TryGetValue(Comp.TopEntity.EntityId, out shootHandler)))
                 {
                     var scope = GetScope.Info;
-                    shootHandler.Invoke(scope.Position, scope.Direction, active ? 1 : 0, true, ShootRequest.RawTarget ?? Target.TargetEntity, ProtoWeaponAmmo.CurrentAmmo, Reload.CurrentMags, (int) state);
+                    var proceed = shootHandler.Invoke(scope.Position, scope.Direction, active ? 0 : 1, true, ShootRequest.RawTarget ?? Target.TargetEntity, ProtoWeaponAmmo.CurrentAmmo, Reload.CurrentMags, (int) state);
+                    if (state == EventTriggers.StopFiring && active || !proceed) {
+                        if (Comp.ShootRequestDirty)
+                            Comp.ClearShootRequest();
+                    }
                 }
 
                 var monitor = Comp.EventMonitors[PartId];

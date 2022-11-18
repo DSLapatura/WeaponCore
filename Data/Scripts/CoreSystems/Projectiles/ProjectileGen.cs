@@ -33,7 +33,6 @@ namespace CoreSystems.Projectiles
                 var info = p.Info;
                 var storage = info.Storage;
                 var target = info.Target;
-
                 info.Id = Session.Projectiles.CurrentProjectileId++;
                 info.Weapon = w;
                 info.CompSceneVersion = comp.SceneVersion;

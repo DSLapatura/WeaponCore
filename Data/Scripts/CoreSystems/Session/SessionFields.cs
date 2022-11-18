@@ -24,7 +24,6 @@ using VRage.Game.ModAPI;
 using VRage.Input;
 using VRage.Library.Threading;
 using VRage.ModAPI;
-using VRage.ObjectBuilders;
 using VRage.Utils;
 using VRage.Voxels;
 using VRageMath;
@@ -36,6 +35,7 @@ namespace CoreSystems
 {
     public partial class Session
     {
+        internal const float StepConst = MyEngineConstants.PHYSICS_STEP_SIZE_IN_SECONDS;
         internal const ushort StringPacketId = 62517;
         internal const ushort ServerPacketId = 62518;
         internal const ushort ClientPacketId = 62519;
@@ -249,6 +249,7 @@ namespace CoreSystems
         internal readonly List<Weapon>[] LeadGroups = new List<Weapon>[4];
         internal readonly Queue<double> ClientPerfHistory = new Queue<double>(20);
         internal readonly int[] AuthorSettings = new int[6];
+        internal readonly List<Projectile> EwaredProjectiles = new List<Projectile>();
 
         ///
         ///

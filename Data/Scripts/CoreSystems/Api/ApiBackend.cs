@@ -773,7 +773,7 @@ namespace CoreSystems.Api
 
         private bool ShootRequest(MyEntity weaponEntity, object target, int weaponId, double additionalDeviateShotAngle)
         {
-            var comp = weaponEntity.Components.Get<Weapon.WeaponComponent>();
+            var comp = weaponEntity.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp?.Platform != null && comp.Platform.Weapons.Count > weaponId)
             {
                 var weapon = comp.Platform.Weapons[weaponId];
@@ -782,10 +782,11 @@ namespace CoreSystems.Api
             return false;
         }
 
+
         private void PbRegisterEventMonitorCallback(Sandbox.ModAPI.Ingame.IMyTerminalBlock weaponEntity, int weaponId, Action<int, bool> callBack) => RegisterEventMonitorCallback((MyEntity) weaponEntity, weaponId, callBack);
         private void RegisterEventMonitorCallback(MyEntity weaponEntity, int weaponId, Action<int, bool> callBack)
         {
-            var comp = weaponEntity.Components.Get<Weapon.WeaponComponent>();
+            var comp = weaponEntity.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp?.Platform != null && comp.Platform.Weapons.Count > weaponId)
                 comp.EventMonitors[weaponId]?.Add(callBack);
         }
@@ -793,7 +794,7 @@ namespace CoreSystems.Api
         private void PbUnRegisterEventMonitorCallback(Sandbox.ModAPI.Ingame.IMyTerminalBlock weaponEntity, int weaponId, Action<int, bool> callBack) => UnRegisterEventMonitorCallback((MyEntity) weaponEntity, weaponId, callBack);
         private void UnRegisterEventMonitorCallback(MyEntity weaponEntity, int weaponId, Action<int, bool> callBack)
         {
-            var comp = weaponEntity.Components.Get<Weapon.WeaponComponent>();
+            var comp = weaponEntity.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp?.Platform != null && comp.Platform.Weapons.Count > weaponId)
                 comp.EventMonitors[weaponId]?.Remove(callBack);
         }

@@ -2,10 +2,12 @@
 using CoreSystems.Platform;
 using CoreSystems.Support;
 using System.Runtime.CompilerServices;
+using Sandbox.ModAPI;
 using VRage.Game;
 using VRage.Utils;
 using VRageMath;
 using WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting;
+using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
 {
@@ -240,24 +242,35 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
                 var s = _session;
                 var aConst = weapon.ActiveAmmoDef.AmmoDef.Const;
                 var ai = weapon.Comp.Ai;
-                var overrides = comp.Data.Repo.Values.Set.Overrides;
+                var wValues = comp.Data.Repo.Values;
+
+                Ai masterAi = ai;
+                ControlSys.ControlComponent controlComp = null;
+                var masterOverrides = !comp.OnCustomTurret ? wValues.Set.Overrides : ControlSys.ControlComponent.GetControlInfo(comp, out masterAi, out controlComp);
+
+                var report = weapon.ActiveAmmoDef.AmmoDef.Const.CanReportTargetStatus || comp.OnCustomTurret;
+
                 var delayNoTarget = !weapon.System.WConst.GiveUpAfter || s.Tick - weapon.LastShootTick > weapon.System.WConst.DelayAfterBurst;
-                var notAnyBlock = overrides.SubSystem != WeaponDefinition.TargetingDef.BlockTypes.Any;
-                var needsTarget =  !weapon.Target.HasTarget && overrides.Grids && (comp.DetectOtherSignals && ai.DetectionInfo.OtherInRange || ai.DetectionInfo.PriorityInRange) && weapon.ActiveAmmoDef.AmmoDef.Const.CanReportTargetStatus && comp.Data.Repo.Values.Set.ReportTarget && delayNoTarget && ai.DetectionInfo.TargetInRange(weapon);
+                var notAnyBlock = masterOverrides.SubSystem != WeaponDefinition.TargetingDef.BlockTypes.Any;
+                var needsTarget =  !weapon.Target.HasTarget && masterOverrides.Grids && (comp.DetectOtherSignals && masterAi.DetectionInfo.OtherInRange || masterAi.DetectionInfo.PriorityInRange) && report && comp.Data.Repo.Values.Set.ReportTarget && delayNoTarget && masterAi.DetectionInfo.TargetInRange(weapon);
                 var showReloadIcon = (weapon.Loading || weapon.Reload.WaitForClient || s.Tick - weapon.LastLoadedTick < 60);
                 
                 string noTagetReason = EmptyStr;
                 if (needsTarget)
                 {
-                    if (overrides.FocusSubSystem && !showReloadIcon && notAnyBlock && weapon.FoundTopMostTarget)
-                        noTagetReason = NoSubsystem;
-                    else if (weapon.NoMagsToLoad && weapon.ProtoWeaponAmmo.CurrentAmmo == 0 && aConst.Reloadable && !weapon.System.DesignatorWeapon && s.Tick - weapon.LastMagSeenTick > 600)
+                    if (weapon.NoAmmo && !showReloadIcon)
                         noTagetReason = NoAmmoStr;
+
+                    else if (masterOverrides.FocusSubSystem && !showReloadIcon && notAnyBlock && weapon.FoundTopMostTarget)
+                        noTagetReason = NoSubsystem;
+
                     else 
                         noTagetReason = NoTargetStr;
                 }
 
-                var name = weapon.System.ShortName + noTagetReason;
+                var weaponName = masterAi.AiType == Ai.AiTypes.Grid && comp.Collection.Count == 1 ? ((IMyFunctionalBlock)comp.Cube).CustomName : weapon.System.ShortName;
+
+                var name = weaponName + noTagetReason;
 
                 var textOffset = bgStartPosX - _bgWidth + _reloadWidth + _padding;
                 var hasHeat = weapon.HeatPerc > 0;

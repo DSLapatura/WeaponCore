@@ -8,7 +8,6 @@ using VRage.Game;
 using VRage.Game.Components;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
-using VRage.Game.ObjectBuilders.Definitions;
 using VRage.Utils;
 using VRageMath;
 using static CoreSystems.Session;
@@ -17,18 +16,15 @@ using static CoreSystems.Support.WeaponDefinition.AmmoDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.EwarDef.EwarType;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.FragmentDef.TimedSpawnDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.TrajectoryDef.ApproachDef;
-using static VRage.Game.MyObjectBuilder_SessionComponentMission;
 
 namespace CoreSystems.Projectiles
 {
     internal class Projectile
     {
-        internal const float StepConst = MyEngineConstants.PHYSICS_STEP_SIZE_IN_SECONDS;
         internal readonly ProInfo Info = new ProInfo();
         internal readonly List<MyLineSegmentOverlapResult<MyEntity>> MySegmentList = new List<MyLineSegmentOverlapResult<MyEntity>>();
         internal readonly List<MyEntity> MyEntityList = new List<MyEntity>();
         internal readonly List<ProInfo> VrPros = new List<ProInfo>();
-        internal readonly List<Projectile> EwaredProjectiles = new List<Projectile>();
         internal readonly List<Ai> Watchers = new List<Ai>();
         internal readonly HashSet<Projectile> Seekers = new HashSet<Projectile>();
         internal ProjectileState State;
@@ -116,7 +112,8 @@ namespace CoreSystems.Projectiles
         #region Start
         internal void Start()
         {
-            var session = Info.Ai.Session;
+            var ai = Info.Ai;
+            var session = ai.Session;
             var ammoDef = Info.AmmoDef;
             var aConst = ammoDef.Const;
             var w = Info.Weapon;
@@ -139,7 +136,7 @@ namespace CoreSystems.Projectiles
             var cameraStart = session.CameraPos;
             Vector3D.DistanceSquared(ref cameraStart, ref Info.Origin, out DistanceFromCameraSqr);
             var probability = ammoDef.AmmoGraphics.VisualProbability;
-            EnableAv = !aConst.VirtualBeams && !session.DedicatedServer && DistanceFromCameraSqr <= session.SyncDistSqr && (probability >= 1 || probability >= MyUtils.GetRandomDouble(0.0f, 1f));
+            EnableAv = !aConst.VirtualBeams && !session.DedicatedServer && (DistanceFromCameraSqr <= session.SyncDistSqr || ai.AiType == Ai.AiTypes.Phantom) && (probability >= 1 || probability >= MyUtils.GetRandomDouble(0.0f, 1f));
             ModelState = EntityState.None;
             LastEntityPos = Position;
             Info.AvShot = null;
@@ -160,15 +157,15 @@ namespace CoreSystems.Projectiles
 
             if (aConst.DynamicGuidance && session.AntiSmartActive) DynTrees.RegisterProjectile(this);
 
-            Info.MyPlanet = Info.Ai.MyPlanet;
+            Info.MyPlanet = ai.MyPlanet;
             
             if (!session.VoxelCaches.TryGetValue(Info.UniqueMuzzleId, out Info.VoxelCache))
                 Info.VoxelCache = session.VoxelCaches[ulong.MaxValue];
 
             if (Info.MyPlanet != null)
-                Info.VoxelCache.PlanetSphere.Center = Info.Ai.ClosestPlanetCenter;
+                Info.VoxelCache.PlanetSphere.Center = ai.ClosestPlanetCenter;
 
-            Info.Ai.ProjectileTicker = Info.Ai.Session.Tick;
+            ai.ProjectileTicker = ai.Session.Tick;
             Info.ObjectsHit = 0;
             Info.BaseHealthPool = aConst.Health;
             Info.BaseEwarPool = aConst.Health;
@@ -287,11 +284,11 @@ namespace CoreSystems.Projectiles
             Info.TracerLength = aConst.TracerLength <= Info.MaxTrajectory ? aConst.TracerLength : Info.MaxTrajectory;
 
 
-            var staticIsInRange = Info.Ai.ClosestStaticSqr * 0.5 < MaxTrajectorySqr;
-            var pruneStaticCheck = Info.Ai.ClosestPlanetSqr * 0.5 < MaxTrajectorySqr || Info.Ai.StaticGridInRange;
+            var staticIsInRange = ai.ClosestStaticSqr * 0.5 < MaxTrajectorySqr;
+            var pruneStaticCheck = ai.ClosestPlanetSqr * 0.5 < MaxTrajectorySqr || ai.StaticGridInRange;
             PruneQuery = (aConst.DynamicGuidance && pruneStaticCheck) || aConst.FeelsGravity && staticIsInRange || !aConst.DynamicGuidance && !aConst.FeelsGravity && staticIsInRange ? MyEntityQueryType.Both : MyEntityQueryType.Dynamic;
 
-            if (Info.Ai.PlanetSurfaceInRange && Info.Ai.ClosestPlanetSqr <= MaxTrajectorySqr)
+            if (ai.PlanetSurfaceInRange && ai.ClosestPlanetSqr <= MaxTrajectorySqr)
             {
                 LinePlanetCheck = true;
                 PruneQuery = MyEntityQueryType.Both;
@@ -2291,10 +2288,11 @@ namespace CoreSystems.Projectiles
                 case AntiSmart:
                     var eWarSphere = new BoundingSphereD(Position, Info.AmmoDef.Const.EwarRadius);
 
-                    DynTrees.GetAllProjectilesInSphere(Info.Ai.Session, ref eWarSphere, EwaredProjectiles, false);
-                    for (int j = 0; j < EwaredProjectiles.Count; j++)
+                    var s = Info.Ai.Session;
+                    DynTrees.GetAllProjectilesInSphere(Info.Ai.Session, ref eWarSphere, s.EwaredProjectiles, false);
+                    for (int j = 0; j < s.EwaredProjectiles.Count; j++)
                     {
-                        var netted = EwaredProjectiles[j];
+                        var netted = s.EwaredProjectiles[j];
 
                         if (eWarSphere.Intersects(new BoundingSphereD(netted.Position, netted.Info.AmmoDef.Const.CollisionSize)))
                         {
@@ -2312,7 +2310,7 @@ namespace CoreSystems.Projectiles
                             }
                         }
                     }
-                    EwaredProjectiles.Clear();
+                    s.EwaredProjectiles.Clear();
                     return;
                 case Push:
                     if (Info.EwarAreaPulse && Info.Random.NextDouble() * 100f <= Info.AmmoDef.Const.PulseChance || !Info.AmmoDef.Const.Pulse)

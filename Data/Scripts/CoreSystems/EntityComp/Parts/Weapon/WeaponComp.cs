@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using CoreSystems.Support;
 using Jakaria.API;
 using Sandbox.Game.Entities;
@@ -9,8 +10,8 @@ using Sandbox.ModAPI.Weapons;
 using VRage.Game;
 using VRage.Game.Entity;
 using VRageMath;
-using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
-
+using static CoreSystems.Support.PartAnimation;
+using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetDef;
 namespace CoreSystems.Platform
 {
     public partial class Weapon
@@ -54,6 +55,7 @@ namespace CoreSystems.Platform
             internal bool HasRequireTarget;
             internal bool HasDrone;
             internal bool OnCustomTurret;
+            internal bool ShootRequestDirty;
 
             internal WeaponComponent(Session session, MyEntity coreEntity, MyDefinitionId id)
             {
@@ -66,8 +68,6 @@ namespace CoreSystems.Platform
                     {
                         VanillaTurretBase = turret;
                         VanillaTurretBase.EnableIdleRotation = false;
-                        VanillaTurretBase.Range = 0;
-
                     }
                 }
                 else if (coreEntity is IMyAutomaticRifleGun)
@@ -1038,6 +1038,20 @@ namespace CoreSystems.Platform
                     Session.GunnerRelease(playerId);
                 }
                 LastControllingPlayerId = 0;
+            }
+
+            internal void ClearShootRequest()
+            {
+                if (ShootRequestDirty)
+                {
+                    for (int i = 0; i < Collection.Count; i++)
+                    {
+                        var w = Collection[i];
+                        if (w.ShootRequest.Dirty)
+                            w.ShootRequest.Clean();
+                    }
+                    ShootRequestDirty = false;
+                }
             }
 
             internal void CycleAmmo()

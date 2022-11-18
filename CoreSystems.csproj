@@ -223,7 +223,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
     <Compile Include="Data\Scripts\CoreSystems\Coreparts\PartCompile.cs" />
-    <Compile Include="Data\Scripts\CoreSystems\Projectiles\ProjectileStart.cs">
+    <Compile Include="Data\Scripts\CoreSystems\Projectiles\ProjectileGen.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
     <Compile Include="Data\Scripts\CoreSystems\Projectiles\ProjectileTypes.cs">

@@ -169,7 +169,7 @@ namespace CoreSystems.Platform
             internal Matrix GetHandWeaponApproximateWorldMatrix(bool offset)
             {
                 var rifleLocalMatrix = Rifle.PositionComp.LocalMatrixRef;
-                rifleLocalMatrix.Translation = (CharacterPosComp.LogicalPositionWorld + (TopEntity.Physics.LinearVelocity * Projectile.StepConst));
+                rifleLocalMatrix.Translation = (CharacterPosComp.LogicalPositionWorld + (TopEntity.Physics.LinearVelocity * Session.StepConst));
 
                 if (offset)
                 {
@@ -184,7 +184,7 @@ namespace CoreSystems.Platform
             internal MatrixD GetWhyKeenTransformedWorldMatrix()
             {
                 var rifleLocalMatrix = Rifle.PositionComp.LocalMatrixRef;
-                rifleLocalMatrix.Translation = (CharacterPosComp.LogicalPositionWorld + (TopEntity.Physics.LinearVelocity * Projectile.StepConst));
+                rifleLocalMatrix.Translation = (CharacterPosComp.LogicalPositionWorld + (TopEntity.Physics.LinearVelocity * Session.StepConst));
 
                 rifleLocalMatrix.Translation += (rifleLocalMatrix.Forward * 0.25f);
                 rifleLocalMatrix.Translation += (rifleLocalMatrix.Down * 0.25f);

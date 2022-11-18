@@ -69,6 +69,7 @@ namespace CoreSystems.Platform
         internal bool ScheduleAmmoChange;
         internal bool CriticalReaction;
         internal bool FoundTopMostTarget;
+        internal bool NoAmmo;
         internal uint LastMagSeenTick;
         internal uint GravityTick;
         internal uint ShootTick;

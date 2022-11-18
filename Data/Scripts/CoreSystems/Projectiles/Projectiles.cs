@@ -15,7 +15,6 @@ namespace CoreSystems.Projectiles
 {
     public partial class Projectiles
     {
-        private const float StepConst = MyEngineConstants.PHYSICS_STEP_SIZE_IN_SECONDS;
         internal readonly Session Session;
         internal readonly MyConcurrentPool<List<NewVirtual>> VirtInfoPools = new MyConcurrentPool<List<NewVirtual>>(128, vInfo => vInfo.Clear());
         internal readonly MyConcurrentPool<ProInfo> VirtInfoPool = new MyConcurrentPool<ProInfo>(128, vInfo => vInfo.Clean());
@@ -191,7 +190,7 @@ namespace CoreSystems.Projectiles
 
                         if (MyUtils.IsValid(p.Gravity) && !MyUtils.IsZero(ref p.Gravity)) {
 
-                            p.Velocity += p.Gravity * Projectile.StepConst;
+                            p.Velocity += p.Gravity * Session.StepConst;
                             if (!aConst.IsSmart)
                                 Vector3D.Normalize(ref p.Velocity, out info.Direction);
                         }
@@ -267,7 +266,7 @@ namespace CoreSystems.Projectiles
                         if (aConst.AmmoSkipAccel || p.VelocityLengthSqr > 0)
                             p.LastPosition = p.Position;
 
-                        p.TravelMagnitude = info.Age != 0 ? p.Velocity * StepConst : p.InitalStep;
+                        p.TravelMagnitude = info.Age != 0 ? p.Velocity * Session.StepConst : p.InitalStep;
                         p.Position += p.TravelMagnitude;
                     }
 
@@ -473,7 +472,7 @@ namespace CoreSystems.Projectiles
                         var vs = vp.AvShot;
 
                         vp.TracerLength = info.TracerLength;
-                        vs.Init(vp, p.AccelInMetersPerSec * StepConst, p.MaxSpeed, ref p.AccelDir);
+                        vs.Init(vp, p.AccelInMetersPerSec * Session.StepConst, p.MaxSpeed, ref p.AccelDir);
 
                         if (info.BaseDamagePool <= 0 || p.State == ProjectileState.Depleted)
                             vs.ProEnded = true;
@@ -562,7 +561,7 @@ namespace CoreSystems.Projectiles
                     }
                     else
                     {
-                        var dir = (p.Velocity - p.StartSpeed) * StepConst;
+                        var dir = (p.Velocity - p.StartSpeed) * Session.StepConst;
                         double distChanged;
                         Vector3D.Dot(ref info.Direction, ref dir, out distChanged);
 

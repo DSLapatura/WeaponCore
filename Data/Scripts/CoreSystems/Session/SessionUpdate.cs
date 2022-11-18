@@ -402,7 +402,14 @@ namespace CoreSystems
                     if (wComp.Status != Started)
                         wComp.HealthCheck();
 
+                    var wValues = wComp.Data.Repo.Values;
+                    var overrides = wValues.Set.Overrides;
+
                     wComp.OnCustomTurret = ai.RootFixedWeaponComp?.PrimaryWeapon?.MasterComp != null;
+
+                    var masterAi = ai;
+                    ControlSys.ControlComponent controlComp = null;
+                    var masterOverrides = !wComp.OnCustomTurret ? wValues.Set.Overrides : ControlSys.ControlComponent.GetControlInfo(wComp, out masterAi, out controlComp);
 
                     if (ai.DbUpdated || !wComp.UpdatedState) 
                         wComp.DetectStateChanges();
@@ -410,12 +417,6 @@ namespace CoreSystems
                     if (wComp.Platform.State != CorePlatform.PlatformState.Ready || wComp.IsDisabled || wComp.IsAsleep || !wComp.IsWorking || wComp.CoreEntity.MarkedForClose || wComp.LazyUpdate && !ai.DbUpdated && Tick > wComp.NextLazyUpdateStart)
                         continue;
 
-                    var wValues = wComp.Data.Repo.Values;
-                    var overrides = wValues.Set.Overrides;
-
-                    var controlComp = wComp.OnCustomTurret ? ai.RootFixedWeaponComp.PrimaryWeapon.MasterComp : null;
-                    var masterAi = controlComp != null ? controlComp?.Ai : ai;
-                    var masterOverrides = controlComp != null ? controlComp.Data.Repo.Values.Set.Overrides : overrides;
                     var cMode = overrides.Control;
 
                     var sMode = overrides.ShootMode;
@@ -423,7 +424,6 @@ namespace CoreSystems
                     var grids = masterOverrides.Grids;
                     var overRide = masterOverrides.Override;
                     var projectiles = masterOverrides.Projectiles;
-
 
                     if (IsServer && wComp.OnCustomTurret)
                     {
@@ -563,7 +563,7 @@ namespace CoreSystems
                         ///
                         /// Update Weapon Hud Info
                         /// 
-                        var addWeaponToHud = HandlesInput && (w.HeatPerc >= 0.01 || (w.ShowReload && (w.Loading || w.Reload.WaitForClient)) || (aConst.CanReportTargetStatus && wValues.Set.ReportTarget && !w.Target.HasTarget && grids && (wComp.DetectOtherSignals && ai.DetectionInfo.OtherInRange || ai.DetectionInfo.PriorityInRange) && ai.DetectionInfo.TargetInRange(w)));
+                        var addWeaponToHud = HandlesInput && (w.HeatPerc >= 0.01 || (w.ShowReload && (w.Loading || w.Reload.WaitForClient)) || ((aConst.CanReportTargetStatus || wComp.OnCustomTurret) && wValues.Set.ReportTarget && !w.Target.HasTarget && grids && (wComp.DetectOtherSignals && ai.DetectionInfo.OtherInRange || ai.DetectionInfo.PriorityInRange) && ai.DetectionInfo.TargetInRange(w)));
 
                         if (addWeaponToHud && !Session.Config.MinimalHud && !enforcement.DisableHudReload && (ActiveControlBlock != null && ai.SubGridCache.Contains(ActiveControlBlock.CubeGrid) || PlayerHandWeapon != null && IdToCompMap.ContainsKey(((IMyGunBaseUser)PlayerHandWeapon).OwnerId))) {
                             HudUi.TexturesToAdd++;
@@ -579,14 +579,14 @@ namespace CoreSystems
                         ///
                         /// Check target for expire states
                         /// 
-                        var noAmmo = w.NoMagsToLoad && w.ProtoWeaponAmmo.CurrentAmmo == 0 && aConst.Reloadable && !w.System.DesignatorWeapon && Tick - w.LastMagSeenTick > 600;
+                        w.NoAmmo = w.NoMagsToLoad && w.ProtoWeaponAmmo.CurrentAmmo == 0 && aConst.Reloadable && !w.System.DesignatorWeapon && Tick - w.LastMagSeenTick > 600;
                         var weaponAcquires = ai.AcquireTargets && (aConst.RequiresTarget || w.RotorTurretTracking || w.ShootRequest.AcquireTarget);
 
                         if (!IsClient)
                         {
                             if (w.Target.HasTarget) 
                             {
-                                if (noAmmo)
+                                if (w.NoAmmo)
                                 {
                                     w.Target.Reset(Tick, States.Expired);
                                 }
@@ -653,7 +653,7 @@ namespace CoreSystems
                             var acquireReady = !aConst.SkipAimChecks && myTimeSlot || focusRequest;
 
                             var somethingNearBy = wComp.DetectOtherSignals && masterAi.DetectionInfo.OtherInRange || masterAi.DetectionInfo.PriorityInRange;
-                            var weaponReady = !noAmmo && masterAi.EnemiesNear && somethingNearBy && (!w.Target.HasTarget || hasFocus && constructResetTick);
+                            var weaponReady = !w.NoAmmo && masterAi.EnemiesNear && somethingNearBy && (!w.Target.HasTarget || hasFocus && constructResetTick);
 
                             var seek = weaponReady && (acquireReady || w.ProjectilesNear);
                             var fakeRequest =  wComp.FakeMode && w.Target.TargetState != TargetStates.IsFake && wComp.UserControlled;
@@ -681,7 +681,7 @@ namespace CoreSystems
                         var canShoot = !overHeat && !reloading && !w.System.DesignatorWeapon && sequenceReady;
                         var paintedTarget = wComp.PainterMode && w.Target.TargetState == TargetStates.IsFake && (w.Target.IsAligned || wComp.OnCustomTurret && controlComp.Platform.Control.IsAimed);
                         var autoShot = paintedTarget || w.AiShooting && wValues.State.Trigger == Off;
-                        var anyShot = !wComp.ShootManager.FreezeClientShoot && (w.ShootCount > 0 || onConfrimed) && noShootDelay || autoShot && sMode == Weapon.ShootManager.ShootModes.AiShoot;
+                        var anyShot = !wComp.ShootManager.FreezeClientShoot && (w.ShootCount > 0 || onConfrimed) && noShootDelay || autoShot && (sMode == Weapon.ShootManager.ShootModes.AiShoot);
 
                         var delayedFire = w.System.DelayCeaseFire && !w.Target.IsAligned && Tick - w.CeaseFireDelayTick <= w.System.CeaseFireDelay;
                         var finish = w.FinishShots || delayedFire;
@@ -689,8 +689,7 @@ namespace CoreSystems
 
                         w.LockOnFireState = shootRequest && (w.System.LockOnFocus && !w.Comp.ModOverride) && construct.Data.Repo.FocusData.HasFocus && focus.FocusInRange(w);
                         var shotReady = canShoot && (shootRequest && (!w.System.LockOnFocus || w.Comp.ModOverride) || w.LockOnFireState);
-                        var shoot = shotReady && ai.CanShoot && (!aConst.RequiresTarget || w.Target.HasTarget || finish || overRide || wComp.ShootManager.Signal == Weapon.ShootManager.Signals.Manual || w.ShootRequest.Type == Weapon.ApiShootRequest.TargetType.Position);
-
+                        var shoot = shotReady && ai.CanShoot && (!aConst.RequiresTarget || w.Target.HasTarget || finish || overRide || wComp.ShootManager.Signal == Weapon.ShootManager.Signals.Manual);
                         if (shoot) {
                             if (w.System.DelayCeaseFire && (autoShot || w.FinishShots))
                                 w.CeaseFireDelayTick = Tick;

@@ -168,7 +168,7 @@ namespace CoreSystems.Support
                     if (!Session.SubTypeIdToWeaponMagMap.TryGetValue(typeId, out list))
                     {
                         list = new List<Session.WeaponMagMap>();
-                        Session.SubTypeIdToWeaponMagMap[typeId] = new List<Session.WeaponMagMap>();
+                        Session.SubTypeIdToWeaponMagMap[typeId] = list;
                     }
 
                     for (int i = 0; i < weaponAmmo.Length; i++)
@@ -180,7 +180,7 @@ namespace CoreSystems.Support
                         {
                             List<Session.WeaponMagMap> list2;
                             if (!Session.SubTypeIdToNpcSafeWeaponMagMap.TryGetValue(typeId, out list2))
-                                Session.SubTypeIdToNpcSafeWeaponMagMap[typeId] = new List<Session.WeaponMagMap>();
+                                Session.SubTypeIdToNpcSafeWeaponMagMap[typeId] = list2;
 
                             list2.Add(new Session.WeaponMagMap {WeaponId = coreSystem.WeaponId, AmmoType = ammo});
                         }
