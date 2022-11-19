@@ -551,9 +551,11 @@ namespace CoreSystems.Support
             {
                 for (int i = 0; i < Approaches.Length; i++)
                 {
-                    var a = Approaches[i];
-                    a.Clean();
-                    Approaches[i] = null;
+                    if (Approaches[i] != null)
+                    {
+                        Approaches[i].Clean();
+                        Approaches[i] = null;
+                    }
                 }
             }
         }
@@ -737,18 +739,19 @@ namespace CoreSystems.Support
 
         private void ComputeApproaches(WeaponSystem.AmmoType ammo, WeaponDefinition wDef, out int approachesCount, out ApproachConstants[] approaches)
         {
-            approachesCount = ammo.AmmoDef.Trajectory.Approaches?.Length ?? 0;
-
-            approaches = approachesCount > 0 ? new ApproachConstants[approachesCount] : null;
-
-            if (approaches != null && ammo.AmmoDef.Trajectory.Approaches != null)
+            if (ammo.AmmoDef.Trajectory.Approaches != null && ammo.AmmoDef.Trajectory.Approaches.Length > 0)
             {
-                for (int i = 0; i < approaches.Length; i++)
-                {
-                    approaches[i] = new ApproachConstants(ammo, i, wDef);
-                }
-            }
+                approachesCount = ammo.AmmoDef.Trajectory.Approaches.Length;
+                approaches = new ApproachConstants[approachesCount];
 
+                for (int i = 0; i < approaches.Length; i++)
+                    approaches[i] = new ApproachConstants(ammo, i, wDef);
+            }
+            else
+            {
+                approachesCount = 0;
+                approaches = null;
+            }
         }
 
         private void ComputeAmmoPattern(WeaponSystem.AmmoType ammo, WeaponSystem system, WeaponDefinition wDef, bool fragGuidedAmmo, bool fragAntiSmart, bool fragTargetOverride, out bool hasAntiSmart, out bool hasTargetOverride, out AmmoDef[] ammoPattern, out int weaponPatternCount, out int fragmentPatternCount, out bool hasGuidedAmmo, out bool weaponPattern, out bool fragmentPattern)
