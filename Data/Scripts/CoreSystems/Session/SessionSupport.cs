@@ -280,23 +280,26 @@ namespace CoreSystems
             if (ClientPerfHistory.Count > 19)
                 ClientPerfHistory.Dequeue();
 
+            var highestBillCount = Av.NearBillBoardLimit;
+            Av.NearBillBoardLimit /= 2;
+
             ClientPerfHistory.Enqueue(_avCpuTime);
-            ClientAvLevel = GetClientPerfTarget();
+            ClientAvLevel = GetClientPerfTarget(highestBillCount);
             var oldDivisor = ClientAvDivisor;
             ClientAvDivisor = ClientAvLevel + 1;
             var change = ClientAvDivisor != oldDivisor;
-
             if (change)
-                Log.LineShortDate($"ClientAvScaler changed From:[{oldDivisor}] To:[{ClientAvDivisor}]", "perf");
+                Log.LineShortDate($"ClientAvScaler changed From:[{oldDivisor}] To:[{ClientAvDivisor}] Billbaords:[{highestBillCount}]", "perf");
         }
 
-        private int GetClientPerfTarget()
+        private int GetClientPerfTarget(int highestBillCount)
         {
             var c = 0;
             var last = ClientPerfHistory.Count - 1;
             int lastValue = 0;
             var minValue = int.MaxValue;
             int maxValue = 0;
+
             foreach (var v in ClientPerfHistory)
             {
                 var rawV = Math.Round(v);
@@ -317,7 +320,7 @@ namespace CoreSystems
                     lastValue = rV;
             }
 
-            var newValue = lastValue > ClientAvLevel ? ClientAvLevel + 1 : maxValue < ClientAvLevel ? ClientAvLevel - 1 : ClientAvLevel;
+            var newValue = lastValue > ClientAvLevel || highestBillCount > 25000 ? ClientAvLevel + 1 : maxValue < ClientAvLevel ? ClientAvLevel - 1 : ClientAvLevel;
             return MathHelper.Clamp(newValue, 0, 10);
         }
 

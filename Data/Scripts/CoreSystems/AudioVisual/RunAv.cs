@@ -41,9 +41,10 @@ namespace CoreSystems.Support
         internal int BillLineIndex = -1;
         //internal int BillPoolQuadIndex = -1;
         //internal int BillQuadIndex = -1;
-
         internal int ExplosionCounter;
         internal int MaxExplosions = 100;
+        internal int NearBillBoardLimit;
+
 
         internal bool ExplosionReady
         {
@@ -62,7 +63,7 @@ namespace CoreSystems.Support
         {
             Session = session;
             for (int i = 0; i < BillBoardLinePool.Length; i++)
-                BillBoardLinePool[i] = new MyBillboard[30000];
+                BillBoardLinePool[i] = new MyBillboard[32000];
         }
 
 
@@ -412,7 +413,7 @@ namespace CoreSystems.Support
                             }
 
                             var line = LineReqPool.Count > 0 ? LineReqPool.Pop() : new LineReqCache();
-                            line.Material = aConst.TracerTextures[0];
+                            line.Material = aConst.TrailTextures[0];
                             line.Color = color;
                             line.StartPos = glow.Line.From;
                             line.Direction = glow.Line.Direction;
@@ -682,12 +683,19 @@ namespace CoreSystems.Support
             var billBoardPool = BillBoardLinePool[BillPoolLineIndex];
 
             BillLineIndex = 0;
-            for (int i = 0; i < LineRequests.Count; i++)
+            var requestCount = LineRequests.Count;
+            if (requestCount > NearBillBoardLimit)
+                NearBillBoardLimit = requestCount;
+
+            for (int i = 0; i < requestCount; i++)
             {
                 var q = LineRequests[i];
 
                 if (++BillLineIndex >= billBoardPool.Length)
+                {
+                    LineReqPool.Push(q);
                     continue;
+                }
 
                 if (billBoardPool[BillLineIndex] == null)
                     billBoardPool[BillLineIndex] = new MyBillboard();
@@ -735,6 +743,7 @@ namespace CoreSystems.Support
                 LineReqPool.Push(q);
             }
             MyTransparentGeometry.AddBillboards(LinesToAdd, false);
+
             LinesToAdd.Clear();
             LineRequests.Clear();
         }

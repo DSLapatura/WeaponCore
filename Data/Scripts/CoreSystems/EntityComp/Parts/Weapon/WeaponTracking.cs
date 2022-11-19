@@ -965,7 +965,6 @@ namespace CoreSystems.Platform
                     var checkSubsystem = overrides.FocusSubSystem && overrides.SubSystem != WeaponDefinition.TargetingDef.BlockTypes.Any;
                     if (invalidCube || focusFailed || ((uint)cube.CubeGrid.Flags & 0x1000000) > 0 || checkSubsystem && !ValidSubSystemTarget(cube, overrides.SubSystem))
                     {
-                        Log.Line($"invalidCube:{invalidCube} - focusFailed:{focusFailed} - flag:{((uint)cube.CubeGrid.Flags & 0x1000000) > 0} - checkSub:{checkSubsystem} - checkValid:{checkSubsystem && !ValidSubSystemTarget(cube, overrides.SubSystem)}");
                         masterWeapon.Target.Reset(Comp.Session.Tick, Target.States.RayCheckDeadBlock);
                         if (masterWeapon != this) Target.Reset(Comp.Session.Tick, Target.States.RayCheckDeadBlock);
                         FastTargetResetTick = System.Session.Tick;
