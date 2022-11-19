@@ -9,6 +9,8 @@ using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRage.Utils;
 using VRageMath;
+using static CoreSystems.Support.RunAv;
+
 namespace CoreSystems.Support
 {
     internal class AvShot
@@ -89,7 +91,6 @@ namespace CoreSystems.Support
         internal Vector3D ShootVelStep;
         internal Vector3D TracerFront;
         internal Vector3D TracerBack;
-        internal Vector3D ClosestPointOnLine;
         internal Vector4 Color;
         internal Vector4 SegmentColor;
 
@@ -225,10 +226,11 @@ namespace CoreSystems.Support
         internal static void DeferedAvStateUpdates(Session s)
         {
             var drawCnt = s.Projectiles.DeferedAvDraw.Count;
+            /*
             var maxDrawCnt = s.Settings.ClientConfig.ClientOptimizations ? s.Settings.ClientConfig.MaxProjectiles : int.MaxValue;
             if (drawCnt > maxDrawCnt)
                 ShellSort(s.Projectiles.DeferedAvDraw);
-
+            */
             int onScreenCnt = 0;
 
             for (int x = 0; x < drawCnt; x++)
@@ -342,12 +344,12 @@ namespace CoreSystems.Support
                             a.OnScreen = Screen.InProximity;
                     }
                 }
-
+                /*
                 if (maxDrawCnt > 0) {
                     if (a.OnScreen != Screen.None && ++onScreenCnt > maxDrawCnt)
                         a.OnScreen = Screen.None;
                 }
-
+                */
                 if (a.MuzzleId == -1)
                     return;
 
@@ -563,8 +565,6 @@ namespace CoreSystems.Support
 
         internal void LineVariableEffects()
         {
-            var color = AmmoDef.AmmoGraphics.Lines.Tracer.Color;
-            var segmentColor = AmmoDef.AmmoGraphics.Lines.Tracer.Segmentation.Color;
             if (AmmoDef.Const.TracerMode != AmmoConstants.Texture.Normal && TextureLastUpdate != Weapon.System.Session.Tick)
             {
                 if (Weapon.System.Session.Tick - TextureLastUpdate > 1)
@@ -625,28 +625,51 @@ namespace CoreSystems.Support
                     Weapon.System.Session.AvShotCache[UniqueMuzzleId] = new AvInfoCache {SegMeasureStep = SegMeasureStep, SegmentGaped = SegmentGaped, SegmentLenTranserved = SegmentLenTranserved, TextureIdx = TextureIdx, TextureLastUpdate = TextureLastUpdate, TextureReverse = TextureReverse};
             }
 
+            var color = AmmoDef.Const.LinearTracerColor;
+            var segmentColor = AmmoDef.Const.LinearSegmentColor;
+
             if (AmmoDef.Const.LineColorVariance)
             {
-                var cv = AmmoDef.AmmoGraphics.Lines.ColorVariance;
-                var randomValue = MyUtils.GetRandomFloat(cv.Start, cv.End);
-                color.X *= randomValue;
-                color.Y *= randomValue;
-                color.Z *= randomValue;
+                var tracerStart = AmmoDef.Const.LinearTracerColorStart;
+                var tracerEnd = AmmoDef.Const.LinearTracerColorEnd;
+                var rnd = AmmoDef.Const.Random;
+
+                var tempX = rnd.Y;
+                rnd.X ^= rnd.X << 23; 
+                var tempY = rnd.X ^ rnd.Y ^ (rnd.X >> 17) ^ (rnd.Y >> 26);
+                var tempZ = tempY + rnd.Y;
+                var result = XorShiftRandom.DoubleUnit * (0x7FFFFFFF & tempZ);
+                rnd.X = tempX;
+                rnd.Y = tempY;
+
+
+                Vector4.Lerp(ref tracerStart, ref tracerEnd, (float)result, out color);
                 if (AmmoDef.Const.TracerMode == AmmoConstants.Texture.Resize && AmmoDef.AmmoGraphics.Lines.Tracer.Segmentation.UseLineVariance)
                 {
-                    segmentColor.X *= randomValue;
-                    segmentColor.Y *= randomValue;
-                    segmentColor.Z *= randomValue;
+                    var segStart = AmmoDef.Const.LinearSegmentColorStart;
+                    var segEnd = AmmoDef.Const.LinearSegmentColorEnd;
+                    Vector4.Lerp(ref segStart, ref segEnd, (float)result, out segmentColor);
                 }
             }
 
             if (AmmoDef.Const.SegmentColorVariance)
             {
                 var cv = AmmoDef.AmmoGraphics.Lines.Tracer.Segmentation.ColorVariance;
+
+                var rnd = AmmoDef.Const.Random;
+
+                var tempX = rnd.Y;
+                rnd.X ^= rnd.X << 23;
+                var tempY = rnd.X ^ rnd.Y ^ (rnd.X >> 17) ^ (rnd.Y >> 26);
+                var tempZ = tempY + rnd.Y;
+                var result = XorShiftRandom.DoubleUnit * (0x7FFFFFFF & tempZ);
+                rnd.X = tempX;
+                rnd.Y = tempY;
+
+                var segStart = AmmoDef.Const.LinearSegmentColorStart;
+                var segEnd = AmmoDef.Const.LinearSegmentColorEnd;
                 var randomValue = MyUtils.GetRandomFloat(cv.Start, cv.End);
-                segmentColor.X *= randomValue;
-                segmentColor.Y *= randomValue;
-                segmentColor.Z *= randomValue;
+                Vector4.Lerp(ref segStart, ref segEnd, (float)result, out segmentColor);
             }
 
             Color = color;
@@ -663,14 +686,14 @@ namespace CoreSystems.Support
             }
 
             var checkPos = TracerFront + (-VisualDir * TotalLength);
-            ClosestPointOnLine = MyUtils.GetClosestPointOnLine(ref TracerFront, ref checkPos, ref Weapon.System.Session.CameraPos);
-            DistanceToLine = (float)Vector3D.Distance(ClosestPointOnLine, Weapon.System.Session.CameraMatrix.Translation);
+            var closestPointOnLine = MyUtils.GetClosestPointOnLine(ref TracerFront, ref checkPos, ref Weapon.System.Session.CameraPos);
+            DistanceToLine = (float)Vector3D.Distance(closestPointOnLine, Weapon.System.Session.CameraMatrix.Translation);
 
             if (AmmoDef.Const.IsBeamWeapon && Vector3D.DistanceSquared(TracerFront, TracerBack) > 640000)
             {
                 checkPos = TracerFront + (-VisualDir * (TotalLength - MathHelperD.Clamp(DistanceToLine * 6, DistanceToLine, MaxTrajectory * 0.5)));
-                ClosestPointOnLine = MyUtils.GetClosestPointOnLine(ref TracerFront, ref checkPos, ref Weapon.System.Session.CameraPos);
-                DistanceToLine = (float)Vector3D.Distance(ClosestPointOnLine, Weapon.System.Session.CameraMatrix.Translation);
+                closestPointOnLine = MyUtils.GetClosestPointOnLine(ref TracerFront, ref checkPos, ref Weapon.System.Session.CameraPos);
+                DistanceToLine = (float)Vector3D.Distance(closestPointOnLine, Weapon.System.Session.CameraMatrix.Translation);
             }
 
             double scale = 0.1f;
@@ -755,7 +778,17 @@ namespace CoreSystems.Support
                 Vector3 dir = (toBeam - fromBeam);
                 var length = dir.Length();
                 var normDir = dir / length;
-                MyTransparentGeometry.AddLineBillboard(offsetMaterial, color, fromBeam, normDir, length, beamRadius);
+
+                var line = Weapon.Comp.Session.Av.LineReqPool.Count > 0 ? Weapon.Comp.Session.Av.LineReqPool.Pop() : new LineReqCache();
+                line.Material = offsetMaterial;
+                line.Color = color;
+                line.StartPos = fromBeam;
+                line.Direction = normDir;
+                line.Length = length;
+                line.Thickness = beamRadius;
+                Weapon.Comp.Session.Av.LineRequests.Add(line);
+
+                //MyTransparentGeometry.AddLineBillboard(offsetMaterial, color, fromBeam, normDir, length, beamRadius);
 
                 if (Vector3D.DistanceSquared(matrix.Translation, toBeam) > tracerLengthSqr) break;
             }
@@ -1184,7 +1217,7 @@ namespace CoreSystems.Support
         }
 
 
-        internal void Close()
+        internal void Close(Stack<AvShot> shotPool)
         {
             // Reset only vars that are not always set
             Hit = new Hit();
@@ -1250,7 +1283,6 @@ namespace CoreSystems.Support
             HitVelocity = Vector3D.Zero;
             TracerBack = Vector3D.Zero;
             TracerFront = Vector3D.Zero;
-            ClosestPointOnLine = Vector3D.Zero;
             Color = Vector4.Zero;
             SegmentColor = Vector4.Zero;
             OnScreen = Screen.None;
@@ -1314,6 +1346,7 @@ namespace CoreSystems.Support
             Weapon = null;
             FireEmitter = null;
             TravelEmitter = null;
+            shotPool.Push(this);
         }
     }
 

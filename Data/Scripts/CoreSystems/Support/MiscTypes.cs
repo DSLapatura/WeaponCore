@@ -178,7 +178,7 @@ namespace CoreSystems.Support
             Reset(expireTick, States.Transfered);
         }
 
-        internal void Set(MyEntity ent, Vector3D pos, Vector3D originLookAtPos, double shortDist, double origDist, long topEntId, Projectile projectile = null, bool isFakeTarget = false)
+        internal void Set(MyEntity ent, Vector3D pos, double shortDist, double origDist, long topEntId, Projectile projectile = null, bool isFakeTarget = false)
         {
             TargetEntity = ent;
             Projectile = projectile;
@@ -224,7 +224,6 @@ namespace CoreSystems.Support
                     TargetState = TargetStates.None;
                     break;
             }
-
             IsDrone = false;
             TargetEntity = null;
             IsAligned = false;

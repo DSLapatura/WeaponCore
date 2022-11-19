@@ -259,12 +259,6 @@ namespace CoreSystems.Support
         internal VoxelIntersectBranch Branch;
     }
 
-    internal struct PastProInfo
-    {
-        internal Vector3D Position;
-        internal Vector3D Velocity;
-    }
-
     public class HitEntity
     {
         public enum Type

@@ -89,8 +89,7 @@ namespace CoreSystems
                         rootConstruct.CheckEmptyWeapons();
                 }
 
-                MyEntity fTarget = null;
-                var hasFocus = rootConstruct.Data.Repo.FocusData.Target > 0 && MyEntities.TryGetEntityById(rootConstruct.Data.Repo.FocusData.Target, out fTarget);
+                rootConstruct.HadFocus = rootConstruct.Data.Repo.FocusData.Target > 0 && MyEntities.TryGetEntityById(rootConstruct.Data.Repo.FocusData.Target, out rootConstruct.LastFocusEntity);
                 var constructResetTick = rootConstruct.TargetResetTick == Tick;
 
                 ///
@@ -594,7 +593,7 @@ namespace CoreSystems
                                 {
                                     w.Target.Reset(Tick, States.Expired, !wComp.ManualMode);
                                 }
-                                else if (w.Target.TargetEntity != null && (w.Target.TargetEntity.MarkedForClose || !hasFocus && weaponAcquires && aConst.SkipAimChecks || wComp.UserControlled && !w.System.SuppressFire))
+                                else if (w.Target.TargetEntity != null && (w.Target.TargetEntity.MarkedForClose || !rootConstruct.HadFocus && weaponAcquires && aConst.SkipAimChecks || wComp.UserControlled && !w.System.SuppressFire))
                                 {
                                     w.Target.Reset(Tick, States.Expired);
                                 }
@@ -649,11 +648,11 @@ namespace CoreSystems
                         {
                             var myTimeSlot = w.Acquire.IsSleeping && AsleepCount == w.Acquire.SlotId || !w.Acquire.IsSleeping && AwakeCount == w.Acquire.SlotId;
 
-                            var focusRequest = hasFocus && (aConst.SkipAimChecks || constructResetTick);
+                            var focusRequest = rootConstruct.HadFocus && (aConst.SkipAimChecks || constructResetTick);
                             var acquireReady = !aConst.SkipAimChecks && myTimeSlot || focusRequest;
 
                             var somethingNearBy = wComp.DetectOtherSignals && masterAi.DetectionInfo.OtherInRange || masterAi.DetectionInfo.PriorityInRange;
-                            var weaponReady = !w.NoAmmo && masterAi.EnemiesNear && somethingNearBy && (!w.Target.HasTarget || hasFocus && constructResetTick);
+                            var weaponReady = !w.NoAmmo && masterAi.EnemiesNear && somethingNearBy && (!w.Target.HasTarget || rootConstruct.HadFocus && constructResetTick);
 
                             var seek = weaponReady && (acquireReady || w.ProjectilesNear);
                             var fakeRequest =  wComp.FakeMode && w.Target.TargetState != TargetStates.IsFake && wComp.UserControlled;
@@ -681,7 +680,7 @@ namespace CoreSystems
                         var canShoot = !overHeat && !reloading && !w.System.DesignatorWeapon && sequenceReady;
                         var paintedTarget = wComp.PainterMode && w.Target.TargetState == TargetStates.IsFake && (w.Target.IsAligned || wComp.OnCustomTurret && controlComp.Platform.Control.IsAimed);
                         var autoShot = paintedTarget || w.AiShooting && wValues.State.Trigger == Off;
-                        var anyShot = !wComp.ShootManager.FreezeClientShoot && (w.ShootCount > 0 || onConfrimed) && noShootDelay || autoShot && (sMode == Weapon.ShootManager.ShootModes.AiShoot);
+                        var anyShot = !wComp.ShootManager.FreezeClientShoot && (w.ShootCount > 0 || onConfrimed) && noShootDelay || autoShot && sMode == Weapon.ShootManager.ShootModes.AiShoot;
 
                         var delayedFire = w.System.DelayCeaseFire && !w.Target.IsAligned && Tick - w.CeaseFireDelayTick <= w.System.CeaseFireDelay;
                         var finish = w.FinishShots || delayedFire;
@@ -781,7 +780,7 @@ namespace CoreSystems
                 var w = AcquireTargets[i];
                 var comp = w.Comp;
                 var ai = comp.Ai;
-                if (comp.TopEntity.MarkedForClose || comp.CoreEntity.MarkedForClose || ai?.Construct.RootAi == null || w.ActiveAmmoDef == null || comp.IsAsleep || comp.Ai.IsGrid && !comp.Ai.HasPower || comp.Ai.Concealed || !comp.Ai.DbReady || !comp.IsWorking || w.NoMagsToLoad && w.ProtoWeaponAmmo.CurrentAmmo == 0 && Tick - w.LastMagSeenTick > 600) {
+                if (comp.TopEntity.MarkedForClose || comp.CoreEntity.MarkedForClose || ai?.Construct.RootAi == null || w.ActiveAmmoDef == null || comp.IsAsleep || comp.Ai.IsGrid && !comp.Ai.HasPower || comp.Ai.Concealed || !comp.Ai.DbReady || !comp.IsWorking || w.NoAmmo) {
                     w.TargetAcquireTick = uint.MaxValue;
                     AcquireTargets.RemoveAtFast(i);
                     continue;
@@ -789,8 +788,7 @@ namespace CoreSystems
 
                 var rootConstruct = ai.Construct.RootAi.Construct;
                 var requiresFocus = w.ActiveAmmoDef.AmmoDef.Const.SkipAimChecks || rootConstruct.TargetResetTick == Tick;
-                MyEntity fTarget;
-                if (requiresFocus && (rootConstruct.Data.Repo.FocusData.Target == 0 || !MyEntities.TryGetEntityById(rootConstruct.Data.Repo.FocusData.Target, out fTarget))) {
+                if (requiresFocus && (!rootConstruct.HadFocus)) {
                     w.TargetAcquireTick = uint.MaxValue;
                     AcquireTargets.RemoveAtFast(i);
                     continue;

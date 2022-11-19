@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using CoreSystems.Support;
 using Sandbox.Game.Entities;
 using VRage.Game;
@@ -114,6 +115,11 @@ namespace CoreSystems.Platform
         internal MathFuncs.Cone AimCone;
         internal Matrix[] BarrelRotationPerShot = new Matrix[10];
 
+        internal string FriendlyName = string.Empty;
+        internal string FriendlyNameNoAmmo = string.Empty;
+        internal string FriendlyNameNoTarget = string.Empty;
+        internal string FriendlyNameNoSubsystem = string.Empty;
+
         internal string AmmoName = "";
         internal ProtoWeaponPartState PartState;
         internal ProtoWeaponReload Reload;
@@ -130,6 +136,7 @@ namespace CoreSystems.Platform
 
         internal float ShotEnergyCost;
         internal float LastHeat;
+        internal uint LastFriendlyNameTick;
         internal uint TargetAcquireTick = uint.MaxValue;
         internal uint ReloadEndTick = uint.MaxValue;
         internal uint CeaseFireDelayTick = uint.MaxValue / 2;
@@ -212,7 +219,6 @@ namespace CoreSystems.Platform
         internal bool VanillaTracking;
         internal bool RotorTurretTracking;
 
-
         internal bool ShotReady
         {
             get
@@ -227,21 +233,6 @@ namespace CoreSystems.Platform
 
         internal bool LoadingWait => ReloadEndTick < uint.MaxValue - 1;
         internal Dummy GetScope => Scope ?? Dummies[MiddleMuzzleIndex];
-
-        internal struct AmmoLoad
-        {
-            internal enum ChangeType
-            {
-                Add,
-                Remove
-            }
-
-            internal MyPhysicalInventoryItem Item;
-            internal int Amount;
-            internal int OldId;
-            internal ChangeType Change;
-        }
-
         internal Weapon(MyEntity entity, WeaponSystem system, int partId, WeaponComponent comp, RecursiveSubparts parts, MyEntity elevationPart, MyEntity azimuthPart, MyEntity spinPart, string azimuthPartName, string elevationPartName)
         {
             Comp = comp;

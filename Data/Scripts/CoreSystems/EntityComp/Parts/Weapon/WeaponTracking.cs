@@ -936,7 +936,6 @@ namespace CoreSystems.Platform
 
             if (Comp.FakeMode) return true;
 
-
             if (Target.TargetState == Target.TargetStates.IsProjectile)
             {
                 if (!Comp.Ai.LiveProjectile.Contains(Target.Projectile))
@@ -946,6 +945,7 @@ namespace CoreSystems.Platform
                     return false;
                 }
             }
+
             if (Target.TargetState != Target.TargetStates.IsProjectile)
             {
                 var character = Target.TargetEntity as IMyCharacter;
@@ -959,12 +959,13 @@ namespace CoreSystems.Platform
                 var cube = Target.TargetEntity as MyCubeBlock;
                 if (cube != null)
                 {
-                    var invalidCube = !cube.IsWorking || cube.MarkedForClose;
                     var rootAi = Comp.Ai.Construct.RootAi;
-                    var focusFailed = overrides.FocusTargets && !rootAi.Construct.Focus.EntityIsFocused(rootAi, cube.CubeGrid);
+                    var invalidCube = (!cube.IsWorking && rootAi.Construct.LastFocusEntity != cube.CubeGrid) || cube.MarkedForClose;
+                    var focusFailed = overrides.FocusTargets && !rootAi.Construct.HadFocus;
                     var checkSubsystem = overrides.FocusSubSystem && overrides.SubSystem != WeaponDefinition.TargetingDef.BlockTypes.Any;
                     if (invalidCube || focusFailed || ((uint)cube.CubeGrid.Flags & 0x1000000) > 0 || checkSubsystem && !ValidSubSystemTarget(cube, overrides.SubSystem))
                     {
+                        Log.Line($"invalidCube:{invalidCube} - focusFailed:{focusFailed} - flag:{((uint)cube.CubeGrid.Flags & 0x1000000) > 0} - checkSub:{checkSubsystem} - checkValid:{checkSubsystem && !ValidSubSystemTarget(cube, overrides.SubSystem)}");
                         masterWeapon.Target.Reset(Comp.Session.Tick, Target.States.RayCheckDeadBlock);
                         if (masterWeapon != this) Target.Reset(Comp.Session.Tick, Target.States.RayCheckDeadBlock);
                         FastTargetResetTick = System.Session.Tick;

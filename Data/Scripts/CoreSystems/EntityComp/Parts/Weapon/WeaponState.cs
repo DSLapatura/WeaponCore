@@ -4,7 +4,9 @@ using VRage.Game;
 using VRage.Game.Components;
 using VRage.Game.Entity;
 using VRageMath;
+using WeaponCore.Data.Scripts.CoreSystems.Ui.Hud;
 using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetDef;
+
 namespace CoreSystems.Platform
 {
     public partial class Weapon 
@@ -233,6 +235,52 @@ namespace CoreSystems.Platform
                 Comp.CloseCondition = true;
                 //Temporarily set Comp.Entity.Parent as a destroyed block does not properly spawn a phantom
                 Comp.Session.CreatePhantomEntity(Comp.SubtypeName, 3600, true, 1, System.Values.HardPoint.HardWare.CriticalReaction.AmmoRound, CoreComponent.Trigger.Once, null, Comp.CoreEntity, false, false, Comp.Ai.AiOwner);
+            }
+        }
+
+        internal enum FriendlyNames
+        {
+            Normal,
+            NoAmmo,
+            NoSubSystems,
+            NoTarget,
+        }
+
+        internal string UpdateAndGetFriendlyName(FriendlyNames type)
+        {
+
+            string weaponName;
+            var update = LastFriendlyNameTick == 0;
+            LastFriendlyNameTick = Comp.Session.Tick;
+
+            if (Comp.Ai.AiType == Ai.AiTypes.Grid && Comp.Collection.Count == 1)
+            {
+                weaponName = Comp.FunctionalBlock.CustomName;
+                update = !weaponName.Equals(FriendlyName);
+            }
+            else
+            {
+                weaponName = System.ShortName;
+            }
+
+            if (update)
+            {
+                FriendlyName = weaponName;
+                FriendlyNameNoTarget = weaponName + Hud.NoTargetStr;
+                FriendlyNameNoAmmo = weaponName + Hud.NoAmmoStr;
+                FriendlyNameNoSubsystem = weaponName + Hud.NoSubSystemStr;
+            }
+
+            switch (type)
+            {
+                case FriendlyNames.NoAmmo:
+                    return FriendlyNameNoAmmo;
+                case FriendlyNames.NoTarget:
+                    return FriendlyNameNoTarget;
+                case FriendlyNames.NoSubSystems:
+                    return FriendlyNameNoSubsystem;
+                default:
+                    return FriendlyName;
             }
         }
     }

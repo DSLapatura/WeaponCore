@@ -118,11 +118,14 @@ namespace CoreSystems.Support
             internal readonly RunningAverage DamageAverage = new RunningAverage(10);
             internal readonly Dictionary<int, WeaponGroup> WeaponGroups = new Dictionary<int, WeaponGroup>();
             internal readonly Ai Ai;
+            internal MyEntity LastFocusEntity;
+
             internal float OptimalDps;
             internal int BlockCount;
             internal Ai RootAi;
             internal Ai LargestAi;
             internal bool NewInventoryDetected;
+            internal bool HadFocus;
             internal int DroneCount;
             internal uint LastDroneTick;
             internal uint LastEffectUpdateTick;
@@ -592,8 +595,10 @@ namespace CoreSystems.Support
                 TargetResetTick = 0;
                 LastTargetInfoTick = 0;
                 DirtyWeaponGroups = false;
+                HadFocus = false;
                 RootAi = null;
                 LargestAi = null;
+                LastFocusEntity = null;
                 Counter.Clear();
                 PreviousTargets.Clear();
                 ControllingPlayers.Clear();

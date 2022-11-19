@@ -151,7 +151,7 @@ namespace CoreSystems.Platform
                         if (System.BarrelEffect1 && muzzle.LastAv1Tick == 0 && !muzzle.Av1Looping) {
 
                             muzzle.LastAv1Tick = tick;
-                            var avBarrel = s.Av.AvEffectPool.Get();
+                            var avBarrel = s.Av.AvEffectPool.Count > 0 ? s.Av.AvEffectPool.Pop() : new RunAv.AvEffect();
                             avBarrel.Weapon = this;
                             avBarrel.Muzzle = muzzle;
                             avBarrel.StartTick = tick;
@@ -160,7 +160,7 @@ namespace CoreSystems.Platform
                         if (System.BarrelEffect2 && muzzle.LastAv2Tick == 0 && !muzzle.Av2Looping) {
 
                             muzzle.LastAv2Tick = tick;
-                            var avBarrel = s.Av.AvEffectPool.Get();
+                            var avBarrel = s.Av.AvEffectPool.Count > 0 ? s.Av.AvEffectPool.Pop() : new RunAv.AvEffect();
                             avBarrel.Weapon = this;
                             avBarrel.Muzzle = muzzle;
                             avBarrel.StartTick = tick;
@@ -251,8 +251,7 @@ namespace CoreSystems.Platform
 
                                 var maxTrajectory = ammoPattern.Const.MaxTrajectoryGrows && FireCounter < ammoPattern.Trajectory.MaxTrajectoryTime ? ammoPattern.Const.TrajectoryStep * FireCounter : ammoPattern.Const.MaxTrajectory;
                                 var info = s.Projectiles.VirtInfoPool.Get();
-                                
-                                info.AvShot = s.Av.AvShotPool.Get();
+                                info.AvShot = s.Av.AvShotPool.Count > 0 ? s.Av.AvShotPool.Pop() : new AvShot();
                                 info.InitVirtual(this, ammoPattern, primeE, triggerE, muzzle, maxTrajectory, shotFade);
                                 vProList.Add(new NewVirtual { Info = info, Rotate = !ammoPattern.Const.RotateRealBeam && i == _nextVirtual, Muzzle = muzzle, VirtualId = _nextVirtual });
                             }

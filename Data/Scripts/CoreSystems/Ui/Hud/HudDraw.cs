@@ -225,10 +225,10 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
             _textureAddList.Add(backgroundTexture);
         }
 
-        private const string EmptyStr = "";
-        private const string NoAmmoStr = ": No Ammo";
-        private const string NoTargetStr = ": No Target";
-        private const string NoSubsystem = ": No Subsystem";
+        public const string EmptyStr = "";
+        public const string NoAmmoStr = ": No Ammo";
+        public const string NoTargetStr = ": No Target";
+        public const string NoSubSystemStr = ": No Subsystem";
 
         private void WeaponsToAdd(bool reset, Vector2D currWeaponDisplayPos, double bgStartPosX)
         {
@@ -255,29 +255,30 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
                 var needsTarget =  !weapon.Target.HasTarget && masterOverrides.Grids && (comp.DetectOtherSignals && masterAi.DetectionInfo.OtherInRange || masterAi.DetectionInfo.PriorityInRange) && report && comp.Data.Repo.Values.Set.ReportTarget && delayNoTarget && masterAi.DetectionInfo.TargetInRange(weapon);
                 var showReloadIcon = (weapon.Loading || weapon.Reload.WaitForClient || s.Tick - weapon.LastLoadedTick < 60);
                 
-                string noTagetReason = EmptyStr;
+                string noTagetReason;
+                var needNameUpdate = weapon.LastFriendlyNameTick == 0 || s.Tick - weapon.LastFriendlyNameTick > 600;
                 if (needsTarget)
                 {
                     if (weapon.NoAmmo && !showReloadIcon)
-                        noTagetReason = NoAmmoStr;
+                        noTagetReason = needNameUpdate ? weapon.UpdateAndGetFriendlyName(Weapon.FriendlyNames.NoAmmo) : weapon.FriendlyNameNoAmmo;
 
                     else if (masterOverrides.FocusSubSystem && !showReloadIcon && notAnyBlock && weapon.FoundTopMostTarget)
-                        noTagetReason = NoSubsystem;
+                        noTagetReason = needNameUpdate ? weapon.UpdateAndGetFriendlyName(Weapon.FriendlyNames.NoSubSystems) : weapon.FriendlyNameNoSubsystem;
 
                     else 
-                        noTagetReason = NoTargetStr;
+                        noTagetReason = needNameUpdate ? weapon.UpdateAndGetFriendlyName(Weapon.FriendlyNames.NoTarget) : weapon.FriendlyNameNoTarget;
                 }
-
-                var weaponName = masterAi.AiType == Ai.AiTypes.Grid && comp.Collection.Count == 1 ? ((IMyFunctionalBlock)comp.Cube).CustomName : weapon.System.ShortName;
-
-                var name = weaponName + noTagetReason;
+                else
+                {
+                    noTagetReason = needNameUpdate ? weapon.UpdateAndGetFriendlyName(Weapon.FriendlyNames.Normal) : weapon.FriendlyName;
+                }
 
                 var textOffset = bgStartPosX - _bgWidth + _reloadWidth + _padding;
                 var hasHeat = weapon.HeatPerc > 0;
                 
                 var textInfo = _textDrawPool.Count > 0 ? _textDrawPool.Dequeue() :  new TextDrawRequest();
 
-                textInfo.Text = name;
+                textInfo.Text = noTagetReason;
                 var color = new Vector4(1, 1, 1, 1);
                 textInfo.Color = color;
                 textInfo.Position.X = textOffset;
@@ -294,7 +295,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
 
                     textInfo.Text = $"(x{stackedInfo.WeaponStack})";
                     textInfo.Color = new Vector4(0.5f, 0.5f, 1, 1);
-                    textInfo.Position.X = textOffset + (name.Length * ((_textSize * s.AspectRatioInv) * 0.6f) * ShadowSizeScaler);
+                    textInfo.Position.X = textOffset + (noTagetReason.Length * ((_textSize * s.AspectRatioInv) * 0.6f) * ShadowSizeScaler);
 
                     textInfo.Position.Y = currWeaponDisplayPos.Y;
                     textInfo.FontSize = _sTextSize;

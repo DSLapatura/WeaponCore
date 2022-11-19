@@ -149,7 +149,7 @@ namespace CoreSystems
             }
 
             Av.Glows.Clear();
-            Av.AvShotPool.Clean();
+            Av.AvShotPool.Clear();
 
             DeferedUpBlockTypeCleanUp(true);
             BlockTypeCleanUp.Clear();
@@ -273,9 +273,9 @@ namespace CoreSystems
 
             foreach (var av in Av.AvShots) {
                 av.GlowSteps.Clear();
-                Av.AvShotPool.Return(av);
+                av.Close(Av.AvShotPool);
             }
-            Av.AvShotPool.Clean();
+            Av.AvShotPool.Clear();
             Av.Effects1.Clear();
             Av.Effects2.Clear();
             Av.AvShots.Clear();

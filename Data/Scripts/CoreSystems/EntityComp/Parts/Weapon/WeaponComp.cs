@@ -10,8 +10,6 @@ using Sandbox.ModAPI.Weapons;
 using VRage.Game;
 using VRage.Game.Entity;
 using VRageMath;
-using static CoreSystems.Support.PartAnimation;
-using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetDef;
 namespace CoreSystems.Platform
 {
     public partial class Weapon

@@ -211,14 +211,13 @@ namespace CoreSystems.Platform
                     
                     var failSafeTimer = s.Tick - LastInventoryTick > 600;
                     
-                    if (pullAmmo && (CheckInventorySystem || failSafeTimer && Comp.Ai.Construct.RootAi.Construct.OutOfAmmoWeapons.Contains(this)) && !s.PartToPullConsumable.Contains(this)) {
+                    if (pullAmmo && (CheckInventorySystem || failSafeTimer && Comp.Ai.Construct.RootAi.Construct.OutOfAmmoWeapons.Contains(this)) && s.PartToPullConsumable.TryAdd(this, byte.MaxValue)) {
 
                         CheckInventorySystem = false;
                         LastInventoryTick = s.Tick;
-                        s.PartToPullConsumable.Add(this);
                         s.GridsToUpdateInventories.Add(Comp.Ai);
                     }
-                    else if (CheckInventorySystem && failSafeTimer && !s.PartToPullConsumable.Contains(this))
+                    else if (CheckInventorySystem && failSafeTimer && !s.PartToPullConsumable.ContainsKey(this))
                         CheckInventorySystem = false;
                 }
             }

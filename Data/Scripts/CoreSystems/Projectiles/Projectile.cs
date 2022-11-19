@@ -324,7 +324,7 @@ namespace CoreSystems.Projectiles
             if (EnableAv)
             {
                 var originDir = !Info.IsFragment ? AccelDir : Info.Direction;
-                Info.AvShot = session.Av.AvShotPool.Get();
+                Info.AvShot = session.Av.AvShotPool.Count > 0 ? session.Av.AvShotPool.Pop() : new AvShot();
                 Info.AvShot.Init(Info, AccelInMetersPerSec * StepConst, MaxSpeed, ref originDir);
                 Info.AvShot.SetupSounds(DistanceFromCameraSqr); //Pool initted sounds per Projectile type... this is expensive
                 if (aConst.HitParticle && !aConst.IsBeamWeapon || aConst.EndOfLifeAoe && !ammoDef.AreaOfDamage.EndOfLife.NoVisuals)
@@ -407,7 +407,7 @@ namespace CoreSystems.Projectiles
                 if (ModelState == EntityState.Exists)
                     ModelState = EntityState.None;
                 if (!Info.AvShot.Active)
-                    session.Av.AvShotPool.Return(Info.AvShot);
+                    Info.AvShot.Close(session.Av.AvShotPool);
                 else Info.AvShot.EndState = new AvClose { EndPos = Position, Dirty = true, DetonateEffect = detExp };
             }
             else if (Info.AmmoDef.Const.VirtualBeams)
@@ -416,7 +416,7 @@ namespace CoreSystems.Projectiles
                 {
                     var vp = VrPros[i];
                     if (!vp.AvShot.Active)
-                        session.Av.AvShotPool.Return(vp.AvShot);
+                        vp.AvShot.Close(session.Av.AvShotPool);
                     else vp.AvShot.EndState = new AvClose { EndPos = Position, Dirty = true, DetonateEffect = detExp };
 
                     session.Projectiles.VirtInfoPool.Return(vp);
@@ -598,7 +598,7 @@ namespace CoreSystems.Projectiles
                                 s.NavTargetEnt = tasks.Enemy;
                                 s.NavTargetBound = s.NavTargetEnt.PositionComp.WorldVolume;
                                 var tTargetDist = Vector3D.Distance(Position, tasks.Enemy.PositionComp.WorldVolume.Center);
-                                target.Set(tasks.Enemy, tasks.Enemy.PositionComp.WorldVolume.Center, Position, tTargetDist, tTargetDist, tasks.EnemyId);
+                                target.Set(tasks.Enemy, tasks.Enemy.PositionComp.WorldVolume.Center, tTargetDist, tTargetDist, tasks.EnemyId);
                                 break;
                             case ProtoWeaponCompTasks.Tasks.Defend:
                                 s.DroneMsn = DroneMission.Defend;
@@ -2570,7 +2570,7 @@ namespace CoreSystems.Projectiles
                     MyEntity targetEnt;
                     if (sync.ProStateSync.TargetId > 0 && (target.TargetId != sync.ProStateSync.TargetId) && MyEntities.TryGetEntityById(sync.ProStateSync.TargetId, out targetEnt))
                     {
-                        target.Set(targetEnt, targetEnt.PositionComp.WorldAABB.Center, Position, 0, 0, targetEnt.GetTopMostParent()?.EntityId ?? 0);
+                        target.Set(targetEnt, targetEnt.PositionComp.WorldAABB.Center, 0, 0, targetEnt.GetTopMostParent()?.EntityId ?? 0);
                        
                         if (w.System.WConst.DebugMode)
                             Log.Line($"ProSyn: Id:{Info.Id} - age:{Info.Age} - targetSetTo:{targetEnt.DebugName}");

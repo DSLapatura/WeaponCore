@@ -114,7 +114,7 @@ namespace CoreSystems
 
         internal readonly HashSet<MyCubeGrid> DirtyGridInfos = new HashSet<MyCubeGrid>();
 
-        internal readonly MyConcurrentHashSet<Weapon> PartToPullConsumable = new MyConcurrentHashSet<Weapon>();
+        internal readonly ConcurrentDictionary<Weapon, byte> PartToPullConsumable = new ConcurrentDictionary<Weapon, byte>();
 
         internal readonly ConcurrentCachingList<CoreComponent> CompsToStart = new ConcurrentCachingList<CoreComponent>();
         internal readonly ConcurrentCachingList<Ai> DelayedAiClean = new ConcurrentCachingList<Ai>();
@@ -151,7 +151,7 @@ namespace CoreSystems
         internal readonly Dictionary<ulong, long> SteamToPlayer = new Dictionary<ulong, long>();
         internal readonly Dictionary<MyStringHash, DamageInfoLog> DmgLog = new Dictionary<MyStringHash, DamageInfoLog>(MyStringHash.Comparer);
         internal readonly Dictionary<IMyGridGroupData, GridGroupMap> GridGroupMap = new Dictionary<IMyGridGroupData, GridGroupMap>();
-        internal readonly Dictionary<string, Dictionary<string, WeaponSystem.AmmoType>> AmmoMaps = new Dictionary<string, Dictionary<string, WeaponSystem.AmmoType>>();
+        internal readonly Dictionary<string, Dictionary<string, AmmoType>> AmmoMaps = new Dictionary<string, Dictionary<string, WeaponSystem.AmmoType>>();
         internal readonly Dictionary<string, string> ModelMaps = new Dictionary<string, string>();
         internal readonly Dictionary<string, Dictionary<long, Weapon.WeaponComponent>> PhantomDatabase = new Dictionary<string, Dictionary<long, Weapon.WeaponComponent>>();
         internal readonly Dictionary<CoreStructure, int> PowerGroups = new Dictionary<CoreStructure, int>();

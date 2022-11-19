@@ -92,8 +92,9 @@ namespace CoreSystems
         {
             try
             {
-                foreach (var part in PartToPullConsumable) { 
-
+                foreach (var pair in PartToPullConsumable)
+                {
+                    var part = pair.Key;
                     using (part.BaseComp.TopEntity.Pin())
                     using (part.BaseComp.CoreEntity.Pin()) {
 
