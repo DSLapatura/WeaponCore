@@ -1231,7 +1231,7 @@ namespace CoreSystems.Support
 
                         ai.Session.NewThreat(w);
 
-                        if (ai.Session.MpActive)
+                        if (ai.Session.MpActive && ai.Session.IsServer)
                             w.Target.PushTargetToClient(w);
                     }
 

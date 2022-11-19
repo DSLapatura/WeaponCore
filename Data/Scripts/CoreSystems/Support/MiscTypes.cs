@@ -81,16 +81,12 @@ namespace CoreSystems.Support
 
         internal void PushTargetToClient(Weapon w)
         {
-            if (!w.System.Session.MpActive || w.System.Session.IsClient)
-                return;
-
             w.TargetData.TargetPos = TargetPos;
             w.TargetData.PartId = w.PartId;
             w.TargetData.EntityId = w.Target.TargetId;
             
             if (!w.ActiveAmmoDef.AmmoDef.Const.Reloadable && w.Target.TargetId != 0)
                 w.ProjectileCounter = 0;
-
             w.System.Session.SendTargetChange(w.Comp, w.PartId);
         }
 
@@ -104,6 +100,7 @@ namespace CoreSystems.Support
                     w.TargetData.WeaponRandom.AcquireRandom = new XorShiftRandomStruct((ulong)w.TargetData.WeaponRandom.CurrentSeed);
                     w.Target.SoftProjetileReset = false;
                 }
+
 
                 if (first || w.System.Session.Tick20)
                 {
@@ -134,13 +131,12 @@ namespace CoreSystems.Support
                 else
                 {
                     StateChange(true, tData.EntityId == -2 ? States.Fake : States.Acquired);
-
                     if (w.Target.TargetState == TargetStates.None && tData.EntityId != 0)
                         w.TargetData.SyncTarget(w);
 
                     if (w.Target.TargetState == TargetStates.IsProjectile)
                     {
-                        if (Ai.AcquireProjectile(w))
+                        if (!Ai.AcquireProjectile(w))
                         {
                             if (w.NewTarget.CurrentState != States.NoTargetsSeen)
                                 w.NewTarget.Reset(w.Comp.Session.Tick, States.NoTargetsSeen);
