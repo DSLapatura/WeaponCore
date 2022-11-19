@@ -686,7 +686,7 @@ namespace CoreSystems.Support
             {
                 var q = LineRequests[i];
 
-                if (BillLineIndex++ > billBoardPool.Length)
+                if (++BillLineIndex >= billBoardPool.Length)
                     continue;
 
                 if (billBoardPool[BillLineIndex] == null)

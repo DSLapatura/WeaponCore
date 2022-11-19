@@ -402,7 +402,7 @@ namespace CoreSystems
         internal float AspectRatioInv;
         internal float UiBkOpacity;
         internal float UiOpacity;
-        internal float UIHudOpacity;
+        internal float UiHudOpacity;
         internal float CurrentFovWithZoom;
         internal float LastOptimalDps;
         internal float ServerSimulation;

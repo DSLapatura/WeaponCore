@@ -152,7 +152,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             float fontScale;
             MyStringId textureName;
 
-            var hudOpacity = MathHelper.Clamp(_session.UIHudOpacity, 0.25f, 1f);
+            var hudOpacity = MathHelper.Clamp(_session.UiHudOpacity, 0.25f, 1f);
             var color = new Vector4(1, 1, 1, hudOpacity);
 
             _alertHudInfo.GetTextureInfo(s, out textureName, out scale, out screenScale, out fontScale, out offset, out localOffset);

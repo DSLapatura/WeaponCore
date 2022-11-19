@@ -108,6 +108,16 @@ namespace CoreSystems.Platform
                         Ai.SmartHandheld = w.System.HasGuidedAmmo;
                         Ai.OnlyWeaponComp = w.Comp;
                     }
+                    else if (TypeSpecific == CompTypeSpecific.Phantom)
+                    {
+                        Ai.OnlyWeaponComp = w.Comp;
+                        var maxRange = w.Comp.PrimaryWeapon.GetMaxWeaponRange();
+                        if (maxRange > w.Comp.Ai.MaxTargetingRange)
+                        {
+                            w.Comp.Ai.MaxTargetingRange = maxRange;
+                            w.Comp.Ai.MaxTargetingRangeSqr = maxRange * maxRange;
+                        }
+                    }
 
                     if (w.TurretAttached) {
                         w.Azimuth = w.System.HomeAzimuth;
