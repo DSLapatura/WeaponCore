@@ -96,7 +96,7 @@ namespace CoreSystems.Platform
                 if (fakeTarget == null)
                     return false;
 
-                fakeTargetInfo = fakeTarget.LastInfoTick != Comp.Session.Tick ? fakeTarget.GetFakeTargetInfo(Comp.Ai) : fakeTarget.FakeInfo;
+                fakeTargetInfo = fakeTarget.LastInfoTick != Comp.Session.Tick ? fakeTarget.GetFakeTargetInfo(Comp.MasterAi) : fakeTarget.FakeInfo;
             }
 
             return fakeTargetInfo != null;

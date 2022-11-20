@@ -59,7 +59,7 @@ namespace CoreSystems.Platform
                     return false;
                 }
 
-                fakeTargetInfo = fakeTarget.LastInfoTick != System.Session.Tick ? fakeTarget.GetFakeTargetInfo(Comp.Ai) : fakeTarget.FakeInfo;
+                fakeTargetInfo = fakeTarget.LastInfoTick != System.Session.Tick ? fakeTarget.GetFakeTargetInfo(Comp.MasterAi) : fakeTarget.FakeInfo;
             }
 
             return fakeTargetInfo != null;

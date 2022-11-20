@@ -22,7 +22,7 @@ namespace CoreSystems.Support
         internal bool TargetChanged;
         internal bool ClientDirty;
         internal bool IsDrone;
-        internal uint ResetTick;
+        internal uint ChangeTick;
         internal uint ProjectileEndTick;
         internal long TargetId;
         internal long TopEntityId;
@@ -155,7 +155,7 @@ namespace CoreSystems.Support
                 ClientDirty = false;
             }
 
-            w.Target.ResetTick = w.System.Session.Tick;
+            w.Target.ChangeTick = w.System.Session.Tick;
         }
 
         internal void TransferTo(Target target, uint expireTick, bool drone = false)
@@ -220,21 +220,22 @@ namespace CoreSystems.Support
                     TargetState = TargetStates.None;
                     break;
             }
+
             IsDrone = false;
-            TargetEntity = null;
             IsAligned = false;
-            Projectile = null;
             TargetPos = Vector3D.Zero;
             HitShortDist = 0;
             OrigDistance = 0;
             TargetId = 0;
-            TopEntityId = 0;
-            ResetTick = expiredTick;
+            ChangeTick = expiredTick;
             SoftProjetileReset = false;
             if (expire)
             {
                 StateChange(false, reason);
             }
+            TopEntityId = 0;
+            TargetEntity = null;
+            Projectile = null;
         }
 
         internal void StateChange(bool setTarget, States reason)
@@ -242,13 +243,23 @@ namespace CoreSystems.Support
             SetTargetId(setTarget, reason);
             TargetChanged = !HasTarget && setTarget || HasTarget && !setTarget;
 
-            if (TargetChanged && Weapon != null) {
-
+            if (TargetChanged && Weapon != null)
+            {
+                ChangeTick = Weapon.System.Session.Tick;
+                var targetObj = TargetEntity != null ? (object)TargetEntity : Projectile;
                 if (setTarget) {
+
+                    if (Weapon.System.UniqueTargetPerWeapon && targetObj != null)
+                        Weapon.Comp.ActiveTargets.Add(targetObj);
+
                     Weapon.BaseComp.Ai.WeaponsTracking++;
                     Weapon.BaseComp.PartTracking++;
                 }
                 else {
+
+                    if (Weapon.System.UniqueTargetPerWeapon && targetObj != null)
+                        Weapon.Comp.ActiveTargets.Remove(targetObj);
+
                     Weapon.BaseComp.Ai.WeaponsTracking--;
                     Weapon.BaseComp.PartTracking--;
                 }

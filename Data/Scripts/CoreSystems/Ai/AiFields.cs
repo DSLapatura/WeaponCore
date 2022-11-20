@@ -6,7 +6,6 @@ using CoreSystems.Projectiles;
 using Sandbox.Game;
 using Sandbox.Game.Entities;
 using Sandbox.Game.EntityComponents;
-using Sandbox.Game.Weapons;
 using Sandbox.ModAPI;
 using VRage;
 using VRage.Game;
@@ -46,6 +45,8 @@ namespace CoreSystems.Support
 
         internal readonly Dictionary<MyStringHash, PartCounter> PartCounting = new Dictionary<MyStringHash, PartCounter>(MyStringHash.Comparer);
         internal readonly Dictionary<MyEntity, TargetInfo> Targets = new Dictionary<MyEntity, TargetInfo>(32);
+        internal readonly Dictionary<MyEntity, DetectInfo> ObstructionLookup = new Dictionary<MyEntity, DetectInfo>(32);
+
         internal readonly Dictionary<long, PlayerControllerEntity> PlayerControl = new Dictionary<long, PlayerControllerEntity>();
         internal readonly Dictionary<WeaponComponent, int> CompWeaponGroups = new Dictionary<WeaponComponent, int>();
         internal readonly ConcurrentDictionary<MyEntity, MyInventory> InventoryMonitor = new ConcurrentDictionary<MyEntity, MyInventory>();
@@ -70,40 +71,39 @@ namespace CoreSystems.Support
         internal readonly List<MyEntity> NearByFriendlyShields = new List<MyEntity>();
         internal readonly List<MyEntity> TestShields = new List<MyEntity>();
         internal readonly List<MyEntity> EntitiesInRange = new List<MyEntity>();
-        internal readonly List<MyEntity> ObstructionsTmp = new List<MyEntity>();
+        internal readonly List<DetectInfo> ObstructionsTmp = new List<DetectInfo>();
+        internal readonly List<DetectInfo> Obstructions = new List<DetectInfo>();
         internal readonly List<MyEntity> StaticsInRangeTmp = new List<MyEntity>();
         internal readonly List<Projectile> ProjetileCache = new List<Projectile>();
-        internal readonly List<MyEntity> StaticsInRange = new List<MyEntity>();
-        internal readonly List<MyEntity> Obstructions = new List<MyEntity>();
         internal readonly List<Ai> TargetAis = new List<Ai>(32);
         internal readonly List<TargetInfo> SortedTargets = new List<TargetInfo>();
         internal readonly List<DetectInfo> NewEntities = new List<DetectInfo>();
 
         internal readonly MyDefinitionId GId = MyResourceDistributorComponent.ElectricityId;
         internal readonly AiData Data = new AiData();
-        internal TargetStatus TargetState = new TargetStatus();
+        internal readonly TargetStatus TargetState = new TargetStatus();
         internal readonly AiComponent AiComp;
         internal readonly AiCharger Charger;
         internal readonly Session Session;
+        
+        internal MyCubeGrid.MyCubeGridHitInfo GridHitInfo = new MyCubeGrid.MyCubeGridHitInfo();
+
+
         internal MyEntity TopEntity;
         internal MyCubeGrid GridEntity;
         internal TopMap TopEntityMap;
         internal IMyCubeGrid ImyGridEntity;
-        internal MyCubeBlock PowerBlock;
-        internal WeaponComponent RootFixedWeaponComp;
+        internal WeaponComponent RootComp;
         internal WeaponComponent OnlyWeaponComp;
-        internal MyCubeGrid.MyCubeGridHitInfo GridHitInfo = new MyCubeGrid.MyCubeGridHitInfo();
-        internal uint CreatedTick;
-        internal Vector3 TopEntityVel;
-        internal IMyGridTerminalSystem TerminalSystem;
         internal IMyTerminalBlock LastTerminal;
-        internal MyEntity MyShield;
         internal IMyTerminalBlock ShieldBlock;
+        internal MyEntity MyShield;
         internal MyPlanet MyPlanetTmp;
         internal MyPlanet MyPlanet;
+
+        internal Vector3 TopEntityVel;
         internal Vector3D PlanetClosestPoint;
         internal Vector3D ClosestPlanetCenter;
-        internal BoundingSphereD NearByEntitySphere;
         internal BoundingSphereD TopEntityVolume;
         internal BoundingSphereD ScanVolume;
         internal BoundingSphereD WaterVolume;
@@ -115,7 +115,6 @@ namespace CoreSystems.Support
         internal bool EnemiesNear;
         internal bool BlockMonitoring;
         internal bool AiSleep;
-        internal bool Aiming;
         internal bool DbUpdated;
         internal bool DetectOtherSignals;
         internal bool PointDefense;
@@ -147,6 +146,7 @@ namespace CoreSystems.Support
         internal bool ModOverride;
         internal bool AcquireTargets;
         internal bool RotorTurretAimed;
+        internal uint CreatedTick;
         internal uint RotorCommandTick;
         internal uint TargetsUpdatedTick;
         internal uint VelocityUpdateTick;

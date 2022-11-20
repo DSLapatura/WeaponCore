@@ -240,7 +240,9 @@ namespace CoreSystems.Support
                 Grids,
                 Neutrals,
                 Meteors,
-                Other
+                Other,
+                NonThreatsOther,
+                NonThreatsFriend,
             }
 
             public enum BlockTypes
@@ -267,6 +269,8 @@ namespace CoreSystems.Support
             [ProtoMember(10)] internal float MinTargetDistance;
             [ProtoMember(11)] internal bool IgnoreDumbProjectiles;
             [ProtoMember(12)] internal bool LockedSmartOnly;
+            [ProtoMember(13)] internal bool UniqueTargetPerWeapon;
+            [ProtoMember(14)] internal int MaxTrackingTime;
         }
 
 

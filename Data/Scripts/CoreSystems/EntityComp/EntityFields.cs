@@ -47,6 +47,7 @@ namespace CoreSystems.Support
         internal CompData BaseData;
 
         internal Ai Ai;
+        internal Ai MasterAi;
         internal CorePlatform Platform;
         internal MyEntity TopEntity;
         internal MyEntity InventoryEntity;

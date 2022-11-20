@@ -241,18 +241,13 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
                     continue;
                 var s = _session;
                 var aConst = weapon.ActiveAmmoDef.AmmoDef.Const;
-                var ai = weapon.Comp.Ai;
-                var wValues = comp.Data.Repo.Values;
 
-                Ai masterAi = ai;
-                ControlSys.ControlComponent controlComp = null;
-                var masterOverrides = !comp.OnCustomTurret ? wValues.Set.Overrides : ControlSys.ControlComponent.GetControlInfo(comp, out masterAi, out controlComp);
 
                 var report = weapon.ActiveAmmoDef.AmmoDef.Const.CanReportTargetStatus || comp.OnCustomTurret;
 
                 var delayNoTarget = !weapon.System.WConst.GiveUpAfter || s.Tick - weapon.LastShootTick > weapon.System.WConst.DelayAfterBurst;
-                var notAnyBlock = masterOverrides.SubSystem != WeaponDefinition.TargetingDef.BlockTypes.Any;
-                var needsTarget =  !weapon.Target.HasTarget && masterOverrides.Grids && (comp.DetectOtherSignals && masterAi.DetectionInfo.OtherInRange || masterAi.DetectionInfo.PriorityInRange) && report && comp.Data.Repo.Values.Set.ReportTarget && delayNoTarget && masterAi.DetectionInfo.TargetInRange(weapon);
+                var notAnyBlock = comp.MasterOverrides.SubSystem != WeaponDefinition.TargetingDef.BlockTypes.Any;
+                var needsTarget =  !weapon.Target.HasTarget && comp.MasterOverrides.Grids && (comp.DetectOtherSignals && comp.MasterAi.DetectionInfo.OtherInRange || comp.MasterAi.DetectionInfo.PriorityInRange) && report && comp.Data.Repo.Values.Set.ReportTarget && delayNoTarget && comp.MasterAi.DetectionInfo.TargetInRange(weapon);
                 var showReloadIcon = (weapon.Loading || weapon.Reload.WaitForClient || s.Tick - weapon.LastLoadedTick < 60);
                 
                 string noTagetReason;
@@ -262,7 +257,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
                     if (weapon.NoAmmo && !showReloadIcon)
                         noTagetReason = needNameUpdate ? weapon.UpdateAndGetFriendlyName(Weapon.FriendlyNames.NoAmmo) : weapon.FriendlyNameNoAmmo;
 
-                    else if (masterOverrides.FocusSubSystem && !showReloadIcon && notAnyBlock && weapon.FoundTopMostTarget)
+                    else if (comp.MasterOverrides.FocusSubSystem && !showReloadIcon && notAnyBlock && weapon.FoundTopMostTarget)
                         noTagetReason = needNameUpdate ? weapon.UpdateAndGetFriendlyName(Weapon.FriendlyNames.NoSubSystems) : weapon.FriendlyNameNoSubsystem;
 
                     else 

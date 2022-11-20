@@ -54,8 +54,8 @@ namespace CoreSystems.Platform
 
                 UpdatedState = true;
 
-                if (Ai.Session.IsServer && Data.Repo.Values.Set.Range < 0 && Platform.Control.TrackingWeapon != null && Platform.Control.TrackingWeapon.Comp.Ai.MaxTargetingRange > 0)
-                    BlockUi.RequestSetRangeControl(TerminalBlock, (float)Platform.Control.TrackingWeapon.Comp.Ai.MaxTargetingRange);
+                if (Ai.Session.IsServer && Data.Repo.Values.Set.Range < 0 && Platform.Control.WeaponComp != null && Platform.Control.WeaponComp.Ai.MaxTargetingRange > 0)
+                    BlockUi.RequestSetRangeControl(TerminalBlock, (float)Platform.Control.WeaponComp.Ai.MaxTargetingRange);
 
                 DetectOtherSignals = false;
                 if (DetectOtherSignals)
@@ -85,17 +85,6 @@ namespace CoreSystems.Platform
                 }
                 else
                     Ai.AwakeComps++;
-            }
-
-            internal void AddThings(Ai topAi)
-            {
-                Controller.ClearTools();
-                foreach (var t in topAi.Tools)
-                {
-                    Controller.AddTool(t);
-                }
-
-                LastAddTick = Session.Tick;
             }
 
             internal void StopRotors()
@@ -315,18 +304,9 @@ namespace CoreSystems.Platform
                 }
             }
 
-            internal static ProtoWeaponOverrides GetControlInfo(Weapon.WeaponComponent wComp, out Ai masterAi, out ControlComponent cComp)
-            {
-                var ai = wComp.Ai;
-                cComp = ai.RootFixedWeaponComp?.PrimaryWeapon?.MasterComp;
-                masterAi = cComp != null ? cComp.Ai : ai;
-
-                return cComp != null ? cComp.Data.Repo.Values.Set.Overrides : wComp.Data.Repo.Values.Set.Overrides;
-            }
-
             internal bool TrackTarget(Ai topAi, IMyMotorStator root, IMyMotorStator other, bool isRoot, ref Vector3D desiredDirection)
             {
-                var trackingWeapon = isRoot? Platform.Control.TrackingWeapon : topAi.RootFixedWeaponComp.PrimaryWeapon;
+                var trackingWeapon = isRoot? Platform.Control.WeaponComp.PrimaryWeapon : topAi.RootComp.PrimaryWeapon;
                 RotorsMoving = true;
 
                 var targetPos = topAi.RotorTargetPosition;
@@ -398,7 +378,7 @@ namespace CoreSystems.Platform
                     var targetDir = targetPos - scopeInfo.Position;
 
                     topAi.RotorTurretAimed = MathFuncs.IsDotProductWithinTolerance(ref scopeInfo.Direction, ref targetDir, topAi.Session.ApproachDegrees);
-                    trackingWeapon.MasterComp.Platform.Control.IsAimed = topAi.RotorTurretAimed;
+                    trackingWeapon.Comp.MasterComp.Platform.Control.IsAimed = topAi.RotorTurretAimed;
                 }
 
                 return true;

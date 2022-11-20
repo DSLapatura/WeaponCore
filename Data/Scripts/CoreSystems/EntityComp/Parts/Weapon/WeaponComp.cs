@@ -25,11 +25,14 @@ namespace CoreSystems.Platform
             internal readonly WeaponCompData Data;
             internal readonly WeaponStructure Structure;
             internal readonly List<Weapon> Collection;
+            internal readonly HashSet<object> ActiveTargets = new HashSet<object>();
             internal readonly List<MyEntity> Friends = new List<MyEntity>();
             internal readonly List<MyEntity> Enemies = new List<MyEntity>();
             internal readonly Dictionary<string, Vector3D> Positions = new Dictionary<string, Vector3D>();
             internal readonly int TotalWeapons;
 
+            internal ControlSys.ControlComponent MasterComp;
+            internal ProtoWeaponOverrides MasterOverrides;
             internal Weapon PrimaryWeapon;
             internal int DefaultAmmoId;
             internal int DefaultReloads;
@@ -129,19 +132,19 @@ namespace CoreSystems.Platform
 
             internal void OnAddedToSceneWeaponTasks(bool firstRun)
             {
+                UpdateControlInfo();
                 var maxTrajectory1 = 0f;
-
                 var weaponStructure = (WeaponStructure)Platform.Structure;
                 if (weaponStructure.MaxLockRange > Ai.Construct.MaxLockRange)
                     Ai.Construct.MaxLockRange = weaponStructure.MaxLockRange;
 
                 if (firstRun && TypeSpecific == CompTypeSpecific.Phantom)
                     Ai.AiOwner = CustomIdentity;
-                
+
+
                 for (int i = 0; i < Collection.Count; i++)
                 {
                     var w = Collection[i];
-                    w.MasterComp = null;
                     w.RotorTurretTracking = false;
 
                     if (Session.IsServer)
@@ -343,7 +346,7 @@ namespace CoreSystems.Platform
                     Session.SendState(this);
             }
 
-            internal void DetectStateChanges()
+            internal void DetectStateChanges(bool masterChange)
             {
                 if (Platform.State != CorePlatform.PlatformState.Ready)
                     return;
@@ -362,14 +365,14 @@ namespace CoreSystems.Platform
                     if (distSqr < Ai.ClosestFixedWeaponCompSqr)
                     {
                         Ai.ClosestFixedWeaponCompSqr = distSqr;
-                        Ai.RootFixedWeaponComp = this;
+                        Ai.RootComp = this;
                     }
                 }
 
                 ActivePlayer = Ai.Construct.RootAi.Construct.ControllingPlayers.ContainsKey(Data.Repo.Values.State.PlayerId);
                 UpdatedState = true;
 
-                var overRides = !OnCustomTurret ? Data.Repo.Values.Set.Overrides : Ai.RootFixedWeaponComp.PrimaryWeapon.MasterComp.Data.Repo.Values.Set.Overrides;
+                var overRides = !OnCustomTurret ? Data.Repo.Values.Set.Overrides : Ai.RootComp.MasterComp.Data.Repo.Values.Set.Overrides;
                 var attackNeutrals = overRides.Neutrals;
                 var attackNoOwner = overRides.Unowned;
                 var attackFriends = overRides.Friendly;
@@ -1097,6 +1100,32 @@ namespace CoreSystems.Platform
                     }
                 }
             }
+
+
+            internal bool UpdateControlInfo()
+            {
+                var cComp = Ai.RootComp?.MasterComp;
+                var oldAi = MasterAi;
+                var oldComp = MasterComp;
+                OnCustomTurret = cComp != null;
+                if (cComp != null)
+                {
+                    MasterAi = cComp.Ai;
+                    MasterOverrides = cComp.Data.Repo.Values.Set.Overrides;
+                    OnCustomTurret = true;
+                    MasterComp = cComp;
+                }
+                else
+                {
+                    MasterAi = Ai;
+                    MasterOverrides = Data.Repo.Values.Set.Overrides;
+                    OnCustomTurret = false;
+                    MasterComp = null;
+                }
+
+                return oldAi != MasterAi || oldComp != MasterComp;
+            }
+
         }
     }
 }

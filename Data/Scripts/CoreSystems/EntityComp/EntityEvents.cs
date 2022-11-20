@@ -322,10 +322,10 @@ namespace CoreSystems.Support
 
                 stringBuilder.Append("\n==== ControlSys ====\n");
 
-                var ai = Platform.Control?.TrackingWeapon?.Comp?.Ai;
+                var ai = Platform.Control?.WeaponComp?.Ai;
                 var initted = ai != null;
 
-                stringBuilder.Append($"Ai Detected:{initted && !Platform.Control.TrackingWeapon.Comp.Ai.MarkedForClose}\n\n");
+                stringBuilder.Append($"Ai Detected:{initted && !Platform.Control.WeaponComp.Ai.MarkedForClose}\n\n");
 
                 if (initted)
                 {

@@ -111,11 +111,13 @@ namespace CoreSystems
                         ai.Targets.Clear();
 
                         var newEntCnt = ai.NewEntities.Count;
-                        ai.SortedTargets.Capacity = newEntCnt;
+                        if (ai.SortedTargets.Capacity < newEntCnt)
+                            ai.SortedTargets.Capacity = newEntCnt;
+
                         for (int i = 0; i < newEntCnt; i++)
                         {
                             var detectInfo = ai.NewEntities[i];
-                            var ent = detectInfo.Parent;
+                            var ent = detectInfo.Target;
                             if (ent.Physics == null) continue;
 
                             var grid = ent as MyCubeGrid;
@@ -167,19 +169,24 @@ namespace CoreSystems
                         ai.TargetAisTmp.Clear();
 
                         ai.Obstructions.Clear();
-                        ai.Obstructions.AddRange(ai.ObstructionsTmp);
+                        ai.ObstructionLookup.Clear();
+
+                        var obstructCnt = ai.ObstructionsTmp.Count;
+                        if (ai.Obstructions.Capacity < obstructCnt)
+                            ai.Obstructions.Capacity = obstructCnt;
+
+                        for (int i = 0; i < ai.ObstructionsTmp.Count; i++) {
+                            var obj = ai.ObstructionsTmp[i];
+                            ai.Obstructions.Add(obj);
+                            ai.ObstructionLookup[obj.Target] = obj;
+                        }
                         ai.ObstructionsTmp.Clear();
 
                         ai.MyShield = null;
                         ai.ShieldNear = false;
                         ai.FriendlyShieldNear = false;
-                        if (ai.NearByShieldsTmp.Count > 0)
-                            ai.NearByShield();
 
-                        ai.StaticsInRange.Clear();
-                        ai.StaticsInRange.AddRange(ai.StaticsInRangeTmp);
-                        ai.StaticsInRangeTmp.Clear();
-                        ai.StaticEntitiesInRange = ai.StaticsInRange.Count > 0;
+                        ai.NearByShield();
                         ai.MyStaticInfo();
 
                         ai.BlockCount = ai.AiType == Ai.AiTypes.Grid ? ai.GridEntity.BlocksCount : 0;

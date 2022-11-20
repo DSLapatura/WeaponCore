@@ -419,8 +419,10 @@ namespace CoreSystems.Support
             Batteries.Clear();
             NoTargetLos.Clear();
             Targets.Clear();
-
+            WeaponAmmoCountStorage.Clear();
+            PartCounting.Clear();
             TrackingComps.Clear();
+            PlayerControl.Clear();
             WeaponComps.Clear();
             UpgradeComps.Clear();
             SupportComps.Clear();
@@ -435,17 +437,18 @@ namespace CoreSystems.Support
             CompBase.Clear();
             Stators.Clear();
             Tools.Clear();
+            ProjetileCache.Clear();
             CompWeaponGroups.Clear();
-
+            SortedTargets.Clear();
             LiveProjectile.Clear();
             DeadProjectiles.Clear();
             NearByShieldsTmp.Clear();
             NearByFriendlyShields.Clear();
-            StaticsInRange.Clear();
             StaticsInRangeTmp.Clear();
             TestShields.Clear();
             NewEntities.Clear();
             SubGridsRegistered.Clear();
+            ObstructionLookup.Clear();
             SourceCount = 0;
             PartCount = 0;
             AiOwner = 0;
@@ -472,16 +475,15 @@ namespace CoreSystems.Support
             EnemyProjectiles = false;
             Data.Clean();
 
-            RootFixedWeaponComp = null;
+            RootComp = null;
             OnlyWeaponComp = null;
             GridEntity = null;
             ImyGridEntity = null;
             MyShield = null;
             MyPlanetTmp = null;
             MyPlanet = null;
-            TerminalSystem = null;
+            ShieldBlock = null;
             LastTerminal = null;
-            PowerBlock = null;
             TopEntity = null;
             TopEntityMap = null;
             Closed = true;

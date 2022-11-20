@@ -132,9 +132,13 @@ namespace CoreSystems.Support
                     StaticsInRangeTmp.Add(ent);
 
                 TopMap map;
-                if (grid != null && AiType != AiTypes.Phantom && (TopEntityMap.GroupMap.Construct.ContainsKey(grid) || ValidGrids.Contains(ent) || grid.PositionComp.LocalVolume.Radius <= 7.5 || Session.TopEntityToInfoMap.TryGetValue(grid, out map) && map.Trash || grid.BigOwners.Count == 0)) continue;
+                if (grid != null && AiType != AiTypes.Phantom && (TopEntityMap.GroupMap.Construct.ContainsKey(grid) || ValidGrids.Contains(ent) || grid.PositionComp.LocalVolume.Radius <= 7.5 || Session.TopEntityToInfoMap.TryGetValue(grid, out map) && map.Trash)) continue;
 
-                ObstructionsTmp.Add(ent);
+                Sandbox.ModAPI.Ingame.MyDetectedEntityInfo entInfo;
+                if (CreateEntInfo(ent, AiOwner, out entInfo))
+                {
+                    ObstructionsTmp.Add(new DetectInfo(Session, ent, entInfo, 2, 2, false, false));
+                }
             }
 
             foreach (var pair in NoTargetLos) {
@@ -243,15 +247,16 @@ namespace CoreSystems.Support
 
         internal void MyStaticInfo()
         {
+            StaticEntitiesInRange = StaticsInRangeTmp.Count > 0;
             ClosestStaticSqr = double.MaxValue;
             StaticGridInRange = false;
             MyEntity closestEnt = null;
             var closestCenter = Vector3D.Zero;
             double closestDistSqr = double.MaxValue;
             CanShoot = true;
-            for (int i = 0; i < StaticsInRange.Count; i++) {
+            for (int i = 0; i < StaticsInRangeTmp.Count; i++) {
 
-                var ent = StaticsInRange[i];
+                var ent = StaticsInRangeTmp[i];
                 if (ent == null) continue;
                 if (ent.MarkedForClose) continue;
                 var safeZone = ent as MySafeZone;
@@ -288,6 +293,8 @@ namespace CoreSystems.Support
                 ClosestStaticSqr = distSqr;
             }
             else if (ClosestPlanetSqr < ClosestStaticSqr) ClosestStaticSqr = ClosestPlanetSqr;
+
+            StaticsInRangeTmp.Clear();
         }
 
         private bool TouchingSafeZone(MySafeZone safeZone)

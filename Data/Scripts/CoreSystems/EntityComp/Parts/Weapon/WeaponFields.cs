@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using CoreSystems.Support;
 using Sandbox.Game.Entities;
+using SpaceEngineers.Game.ModAPI;
 using VRage.Game;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
@@ -61,6 +62,7 @@ namespace CoreSystems.Platform
         private uint _spinUpTick;
         private uint _ticksBeforeSpinUp;
 
+        internal bool TrackNonThreats;
         internal bool AlternateForward;
         internal bool BurstAvDelay;
         internal bool HeatLoopRunning;
@@ -128,9 +130,7 @@ namespace CoreSystems.Platform
         internal WeaponSystem.AmmoType ActiveAmmoDef;
         internal int[] AmmoShufflePattern = {0};
         internal ParallelRayCallBack RayCallBack;
-        internal ControlSys.ControlComponent MasterComp;
-
-
+        
         internal IHitInfo LastHitInfo;
         internal EventTriggers LastEvent;
 
@@ -308,6 +308,7 @@ namespace CoreSystems.Platform
             if (System.TurretMovement != WeaponSystem.TurretType.Fixed)
                 Comp.HasAim = true;
 
+            TrackNonThreats = System.TrackNonThreatsOther || System.TrackNonThreatFriend;
             PrimaryWeaponGroup = PartId % 2 == 0;
             TurretAttached = System.Values.HardPoint.Ai.TurretAttached;
             TurretController = System.Values.HardPoint.Ai.TurretController;

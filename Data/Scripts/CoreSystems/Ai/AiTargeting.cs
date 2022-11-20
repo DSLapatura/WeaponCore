@@ -15,39 +15,52 @@ using static CoreSystems.Support.WeaponDefinition.TargetingDef;
 using static CoreSystems.Support.WeaponDefinition.TargetingDef.BlockTypes;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef;
 using static CoreSystems.Platform.Weapon.ApiShootRequest;
+using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace CoreSystems.Support
 {
     public partial class Ai
     {
-        internal static void AcquireTarget(Weapon w, bool forceFocus, MyEntity targetEntity = null, ProtoWeaponOverrides overrides = null)
+        internal static void AcquireTarget(Weapon w, bool forceFocus, MyEntity targetEntity = null)
         {
             var foundTarget = false;
 
             if (w.PosChangedTick != w.Comp.Session.SimulationCount) 
                 w.UpdatePivotPos();
 
+            var comp = w.Comp;
+            var masterAi = w.Comp.MasterAi;
+            var mOverrides = comp.MasterOverrides;
+            var cMode = mOverrides.Control;
+
             FakeTarget.FakeWorldTargetInfo fakeInfo = null;
-            overrides = overrides ?? w.Comp.Data.Repo.Values.Set.Overrides;
-            var cMode =  overrides.Control;
             if (cMode == ProtoWeaponOverrides.ControlModes.Auto || cMode == ProtoWeaponOverrides.ControlModes.Painter && !w.Comp.PainterMode)
             {
                 w.AimCone.ConeDir = w.MyPivotFwd;
                 w.AimCone.ConeTip = w.BarrelOrigin + (w.MyPivotFwd * w.MuzzleDistToBarrelCenter);
                 var request = w.ShootRequest;
                 var projectileRequest = request.Type == TargetType.Projectile;
-                var pCount = w.Comp.Ai.LiveProjectile.Count;
-                var shootProjectile = pCount > 0 && (w.System.TrackProjectile || projectileRequest || w.Comp.OnCustomTurret) && overrides.Projectiles;
+                var pCount = masterAi.LiveProjectile.Count;
+                var shootProjectile = pCount > 0 && (w.System.TrackProjectile || projectileRequest || w.Comp.OnCustomTurret) && mOverrides.Projectiles;
                 var projectilesFirst = !forceFocus && shootProjectile && w.System.Values.Targeting.Threats.Length > 0 && w.System.Values.Targeting.Threats[0] == Threat.Projectiles;
                 var onlyCheckProjectile = projectileRequest || w.ProjectilesNear && !w.Target.TargetChanged && w.Comp.Session.Count != w.Acquire.SlotId && !forceFocus;
-                
+                var checkObstructions = w.TrackNonThreats && masterAi.Obstructions.Count > 0;
                 if (!projectilesFirst && w.System.TrackTopMostEntities && !onlyCheckProjectile)
-                    foundTarget = AcquireTopMostEntity(w, overrides, forceFocus, targetEntity);
+                    foundTarget = AcquireTopMostEntity(w, mOverrides, forceFocus, targetEntity);
                 else if (!forceFocus && shootProjectile)
                     foundTarget = AcquireProjectile(w, request.ProjectileId);
 
                 if (projectilesFirst && !foundTarget && !onlyCheckProjectile)
-                    foundTarget = AcquireTopMostEntity(w, overrides, false, targetEntity);
+                    foundTarget = AcquireTopMostEntity(w, mOverrides, false, targetEntity);
+
+                if (!foundTarget && checkObstructions)
+                {
+                    foundTarget = AcquireObstruction(w, mOverrides);
+                    if (foundTarget)
+                        Log.Line($"found Obstruction");
+                    else
+                        Log.Line($"no obstruction");
+                }
             }
             else if (w.ValidFakeTargetInfo(w.Comp.Data.Repo.Values.State.PlayerId, out fakeInfo))
             {
@@ -71,7 +84,7 @@ namespace CoreSystems.Support
                 if (w.Target.CurrentState != Target.States.NoTargetsSeen)
                     w.Target.Reset(w.Comp.Session.Tick, Target.States.NoTargetsSeen, fakeInfo == null);
 
-                w.LastBlockCount = w.Comp.Ai.BlockCount;
+                w.LastBlockCount = masterAi.BlockCount;
             }
             else 
                 w.WakeTargets();
@@ -81,8 +94,7 @@ namespace CoreSystems.Support
         {
             var s = w.System;
             var comp = w.Comp;
-            var ai = comp.Ai;
-
+            var ai = comp.MasterAi;
             TargetInfo gridInfo = null;
             var forceTarget = false;
             if (targetEntity != null)
@@ -103,7 +115,6 @@ namespace CoreSystems.Support
             session.TargetRequests++;
 
             var weaponPos = w.BarrelOrigin + (w.MyPivotFwd * w.MuzzleDistToBarrelCenter);
-            var aimOrigin = w.MyPivotPos;
 
             var target = w.NewTarget;
             var accelPrediction = (int)s.Values.HardPoint.AimLeadingPrediction > 1;
@@ -159,7 +170,7 @@ namespace CoreSystems.Support
                         info = ai.SortedTargets[deck[x - offset]];
                 }
 
-                if (info?.Target == null || info.Target.MarkedForClose || hasOffset && x > lastOffset && (info.Target == alphaInfo?.Target) || !attackNeutrals && info.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Neutral || !attackNoOwner && info.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.NoOwnership)
+                if (info?.Target == null || info.Target.MarkedForClose || hasOffset && x > lastOffset && (info.Target == alphaInfo?.Target) || !attackNeutrals && info.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Neutral || !attackNoOwner && info.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.NoOwnership || w.System.UniqueTargetPerWeapon && comp.ActiveTargets.Contains(info.Target))
                     continue;
 
                 if (movingMode && info.VelLenSqr < 1 || !fireOnStation && info.IsStatic || stationOnly && !info.IsStatic)
@@ -263,15 +274,132 @@ namespace CoreSystems.Support
             return attemptReset && w.Target.HasTarget;
         }
 
+        private static bool AcquireObstruction(Weapon w, ProtoWeaponOverrides overRides)
+        {
+            var s = w.System;
+            var comp = w.Comp;
+            var ai = comp.MasterAi;
+            var ammoDef = w.ActiveAmmoDef.AmmoDef;
+            var aConst = ammoDef.Const;
+            var attackNeutrals = overRides.Neutrals;
+            var attackFriends = overRides.Friendly;
+            var attackNoOwner = overRides.Unowned;
+            var session = comp.Session;
+            session.TargetRequests++;
+
+            var weaponPos = w.BarrelOrigin + (w.MyPivotFwd * w.MuzzleDistToBarrelCenter);
+
+            var target = w.NewTarget;
+            var accelPrediction = (int)s.Values.HardPoint.AimLeadingPrediction > 1;
+            var minRadius = overRides.MinSize * 0.5f;
+            var maxRadius = overRides.MaxSize * 0.5f;
+            var minTargetRadius = minRadius > 0 ? minRadius : s.MinTargetRadius;
+            var maxTargetRadius = maxRadius < s.MaxTargetRadius ? maxRadius : s.MaxTargetRadius;
+
+            var moveMode = overRides.MoveMode;
+            var movingMode = moveMode == ProtoWeaponOverrides.MoveModes.Moving;
+            var fireOnStation = moveMode == ProtoWeaponOverrides.MoveModes.Any || moveMode == ProtoWeaponOverrides.MoveModes.Moored;
+            var stationOnly = moveMode == ProtoWeaponOverrides.MoveModes.Moored;
+
+            w.FoundTopMostTarget = false;
+
+            var numOfTargets = ai.Obstructions.Count;
+            var adjTargetCount =  numOfTargets;
+
+            var deck = GetDeck(ref session.TargetDeck, 0, numOfTargets, w.System.Values.Targeting.TopTargets, ref w.TargetData.WeaponRandom.AcquireRandom);
+            for (int x = 0; x < adjTargetCount; x++)
+            {
+                if (aConst.SkipAimChecks)
+                    break;
+
+                var info = ai.Obstructions[deck[x]];
+
+                if (info.Target?.Physics == null || info.Target.MarkedForClose || (!attackFriends || !w.System.TrackNonThreatFriend) && (info.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Friends || info.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.FactionShare) || (!attackNeutrals || !w.System.TrackNonThreatsOther) && info.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Neutral || !attackNoOwner && info.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.NoOwnership || w.System.UniqueTargetPerWeapon && comp.ActiveTargets.Contains(info.Target))
+                    continue;
+
+                if (movingMode && !info.Target.Physics.IsMoving|| !fireOnStation && info.Target.Physics.IsStatic || stationOnly && !info.Target.Physics.IsStatic)
+                    continue;
+
+                var character = info.Target as IMyCharacter;
+
+                var targetRadius = character != null ? info.Target.PositionComp.LocalVolume.Radius * 5 : info.Target.PositionComp.LocalVolume.Radius;
+                if (targetRadius < minTargetRadius || targetRadius > maxTargetRadius && maxTargetRadius < 8192) continue;
+
+                var targetCenter = info.Target.PositionComp.WorldAABB.Center;
+                var targetDistSqr = Vector3D.DistanceSquared(targetCenter, weaponPos);
+
+                if (targetDistSqr > (w.MaxTargetDistance + targetRadius) * (w.MaxTargetDistance + targetRadius) || targetDistSqr < w.MinTargetDistanceSqr) continue;
+
+                session.TargetChecks++;
+                Vector3D targetLinVel = info.Target.Physics?.LinearVelocity ?? Vector3D.Zero;
+                Vector3D targetAccel = accelPrediction ? info.Target.Physics?.LinearAcceleration ?? Vector3D.Zero : Vector3.Zero;
+                double rayDist;
+                if (info.IsGrid)
+                {
+                    var grid = (MyCubeGrid) info.Target;
+                    if (!s.TrackGrids || !overRides.Grids || (!overRides.LargeGrid && info.LargeGrid) || (!overRides.SmallGrid && !info.LargeGrid) || grid.CubeBlocks.Count == 0) continue;
+                    session.CanShoot++;
+                    Vector3D newCenter;
+                    if (!w.TurretController && !w.RotorTurretTracking)
+                    {
+
+                        var validEstimate = true;
+                        newCenter = w.System.Prediction != HardPointDef.Prediction.Off && (!aConst.IsBeamWeapon && aConst.DesiredProjectileSpeed > 0) ? Weapon.TrajectoryEstimation(w, targetCenter, targetLinVel, targetAccel, Vector3D.Zero, out validEstimate) : targetCenter;
+                        var targetSphere = info.Target.PositionComp.WorldVolume;
+                        targetSphere.Center = newCenter;
+
+                        if (!validEstimate || (!aConst.SkipAimChecks || w.System.LockOnFocus) && !MathFuncs.TargetSphereInCone(ref targetSphere, ref w.AimCone)) continue;
+                    }
+                    else if (!Weapon.CanShootTargetObb(w, info.Target, targetLinVel, targetAccel, out newCenter)) continue;
+
+                    w.FoundTopMostTarget = true;
+                    var pos = grid.PositionComp.WorldVolume.Center;
+                    Vector3D.Distance(ref weaponPos, ref pos, out rayDist);
+                    target.Set(grid, pos, rayDist, rayDist, grid.EntityId);
+
+                    target.TransferTo(w.Target, comp.Session.Tick);
+                    if (w.Target.TargetState == Target.TargetStates.IsEntity)
+                        ai.Session.NewThreat(w);
+
+                    return true;
+                }
+
+                var meteor = info.Target as MyMeteor;
+                if (meteor != null && (!s.TrackMeteors || !overRides.Meteors)) continue;
+
+                if (character != null && (!overRides.Biologicals || character.IsDead || character.Integrity <= 0 || session.AdminMap.ContainsKey(character))) continue;
+
+                Vector3D predictedPos;
+                if (!Weapon.CanShootTarget(w, ref targetCenter, targetLinVel, targetAccel, out predictedPos, true, info.Target)) continue;
+
+                session.TopRayCasts++;
+
+                Vector3D.Distance(ref weaponPos, ref targetCenter, out rayDist);
+                var shortDist = rayDist;
+                var origDist = rayDist;
+                var topEntId = info.Target.GetTopMostParent().EntityId;
+                target.Set(info.Target, targetCenter, shortDist, origDist, topEntId);
+                target.TransferTo(w.Target, comp.Session.Tick);
+
+                w.FoundTopMostTarget = true;
+
+                if (w.Target.TargetState == Target.TargetStates.IsEntity)
+                    ai.Session.NewThreat(w);
+
+                return true;
+            }
+
+            return w.Target.HasTarget;
+        }
+
         internal static bool AcquireProjectile(Weapon w, ulong id = ulong.MaxValue)
         {
-            var ai = w.Comp.Ai;
+            var ai = w.Comp.MasterAi;
             var system = w.System;
             var s = ai.Session;
             var physics = system.Session.Physics;
             var target = w.NewTarget;
             var weaponPos = w.BarrelOrigin;
-            var aimOrigin = w.MyPivotPos;
 
             var collection = ai.GetProCache();
 
@@ -319,7 +447,7 @@ namespace CoreSystems.Support
                 var lpaConst = lp.Info.AmmoDef.Const;
                 var smart = lpaConst.IsDrone || lpaConst.IsSmart;
                 var cube = lp.Info.Target.TargetEntity as MyCubeBlock;
-                if (smartOnly && !smart || lockedOnly && (!smart || cube != null && w.Comp.Ai.AiType == AiTypes.Grid && cube.CubeGrid.IsSameConstructAs(w.Comp.Ai.GridEntity)) || lp.MaxSpeed > system.MaxTargetSpeed || lp.MaxSpeed <= 0 || lp.State != Projectile.ProjectileState.Alive || Vector3D.DistanceSquared(lp.Position, weaponPos) > w.MaxTargetDistanceSqr || Vector3D.DistanceSquared(lp.Position, weaponPos) < w.MinTargetDistanceBufferSqr) continue;
+                if (smartOnly && !smart || lockedOnly && (!smart || cube != null && w.Comp.IsBlock && cube.CubeGrid.IsSameConstructAs(w.Comp.Ai.GridEntity)) || lp.MaxSpeed > system.MaxTargetSpeed || lp.MaxSpeed <= 0 || lp.State != Projectile.ProjectileState.Alive || Vector3D.DistanceSquared(lp.Position, weaponPos) > w.MaxTargetDistanceSqr || Vector3D.DistanceSquared(lp.Position, weaponPos) < w.MinTargetDistanceBufferSqr || w.System.UniqueTargetPerWeapon && w.Comp.ActiveTargets.Contains(lp)) continue;
 
                 Vector3D predictedPos;
                 if (Weapon.CanShootTarget(w, ref lp.Position, lp.Velocity, lp.MaxAccelVelocity, out predictedPos))
@@ -327,7 +455,8 @@ namespace CoreSystems.Support
                     var needsCast = false;
                     for (int i = 0; i < ai.Obstructions.Count; i++)
                     {
-                        var ent = ai.Obstructions[i];
+                        var ent = ai.Obstructions[i].Target;
+
                         var obsSphere = ent.PositionComp.WorldVolume;
 
                         var dir = lp.Position - weaponPos;
@@ -364,7 +493,7 @@ namespace CoreSystems.Support
                     else
                     {
                         Vector3D? hitInfo;
-                        if (ai.AiType == AiTypes.Grid && GridIntersection.BresenhamGridIntersection(ai.GridEntity, ref weaponPos, ref lp.Position, out hitInfo, w.Comp.Cube, w.Comp.Ai))
+                        if (ai.AiType == AiTypes.Grid && GridIntersection.BresenhamGridIntersection(ai.GridEntity, ref weaponPos, ref lp.Position, out hitInfo, w.Comp.Cube, ai))
                             continue;
 
                         double hitDist;
@@ -413,7 +542,6 @@ namespace CoreSystems.Support
             var session = ai.Session;
 
             var aConst = info.AmmoDef.Const;
-            var weaponPos = p.Position;
             var overRides = w.Comp.Data.Repo.Values.Set.Overrides;
             var attackNeutrals = overRides.Neutrals;
             var attackFriends = overRides.Friendly;
@@ -577,7 +705,8 @@ namespace CoreSystems.Support
                 var needsCast = false;
                 for (int i = 0; i < ai.Obstructions.Count; i++)
                 {
-                    var ent = ai.Obstructions[i];
+                    var ent = ai.Obstructions[i].Target;
+
                     var obsSphere = ent.PositionComp.WorldVolume;
 
                     var dir = lp.Position - weaponPos;
@@ -673,10 +802,8 @@ namespace CoreSystems.Support
         {
             var totalBlocks = subSystemList.Count;
             var system = w.System;
-            var ai = w.Comp.Ai;
+            var ai = w.Comp.MasterAi;
             var s = ai.Session;
-
-            var aimOrigin = p?.Position ?? w.MyPivotPos;
 
             Vector3D weaponPos;
             if (p != null)
@@ -847,7 +974,7 @@ namespace CoreSystems.Support
                 var targetNormDir = Vector3D.Normalize(info.Target.PositionComp.WorldAABB.Center - barrelPos);
                 weaponPos = barrelPos + (targetNormDir * w.MuzzleDistToBarrelCenter);
             }
-            var ai = w.Comp.Ai;
+            var ai = w.Comp.MasterAi;
             var s = ai.Session;
             var bestCubePos = Vector3D.Zero;
             var top5Count = w.Top5.Count;
@@ -1046,7 +1173,7 @@ namespace CoreSystems.Support
             var topEntity = p.Info.Weapon.Comp.TopEntity;
             for (int j = 0; j < ai.Obstructions.Count; j++)
             {
-                var ent = ai.Obstructions[j];
+                var ent = ai.Obstructions[j].Target;
 
                 var voxel = ent as MyVoxelBase;
                 var dir = (targetPos - p.Position);
@@ -1145,7 +1272,7 @@ namespace CoreSystems.Support
             var attackNeutrals = overRides.Neutrals;
             var attackNoOwner = overRides.Unowned;
             var session = w.Comp.Session;
-            var ai = comp.Ai;
+            var ai = comp.MasterAi;
             session.TargetRequests++;
             var ammoDef = w.ActiveAmmoDef.AmmoDef;
             var aConst = ammoDef.Const;
@@ -1214,7 +1341,7 @@ namespace CoreSystems.Support
                     }
                     else if (!Weapon.CanShootTargetObb(w, info.Target, targetLinVel, targetAccel, out newCenter)) continue;
 
-                    if (w.Comp.Ai.FriendlyShieldNear)
+                    if (w.Comp.MasterAi.FriendlyShieldNear)
                     {
                         var targetDir = newCenter - weaponPos;
                         if (w.HitFriendlyShield(weaponPos, newCenter, targetDir))

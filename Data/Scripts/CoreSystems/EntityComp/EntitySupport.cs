@@ -1,15 +1,10 @@
 ﻿using System;
-using System.Runtime.Remoting.Metadata.W3cXsd2001;
 using CoreSystems.Platform;
 using Sandbox.Game.Entities;
-using Sandbox.Game.Weapons;
 using Sandbox.ModAPI.Weapons;
 using VRage.Game.Entity;
-using VRage.Game.ModAPI.Interfaces;
-using VRage.Game.ObjectBuilders.Definitions;
 using VRageMath;
 using static CoreSystems.Support.Ai;
-using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace CoreSystems.Support
 {
@@ -79,6 +74,7 @@ namespace CoreSystems.Support
                             }
 
                             Constructs.WeaponGroupsMarkDirty(Ai.TopEntityMap.GroupMap);
+                            wComp.MasterOverrides = null;
                         }
 
                         PartCounter wCount;
@@ -134,6 +130,7 @@ namespace CoreSystems.Support
                             Session.TerminalMon.Clean(true);
 
                         Ai = null;
+                        MasterAi = null;
                     }
                     catch (Exception ex) { Log.Line($"Exception in RemoveComp Inner: {ex} - AiNull:{Ai == null} - SessionNull:{Session == null} - CoreEntNull:{CoreEntity == null} - PlatformNull: {Platform == null} - TopEntityNull:{TopEntity == null}", null, true); }
 

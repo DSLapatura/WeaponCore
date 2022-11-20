@@ -559,7 +559,7 @@ namespace CoreSystems.Support
 
             //var epsilon = targetDistSqr <= 640000 ? 1E-03d : targetDistSqr <= 3240000 ? 1E-04d : 1E-05d;
 
-            var currentDirection = controlPart.TrackingWeapon.GetScope.Info.Direction;
+            var currentDirection = controlPart.WeaponComp.PrimaryWeapon.GetScope.Info.Direction;
             var axis = Vector3D.Cross(desiredDirection, currentDirection);
 
             Vector3D up = root.PositionComp.WorldMatrixRef.Up;

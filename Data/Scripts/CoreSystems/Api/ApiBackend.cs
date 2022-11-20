@@ -235,7 +235,7 @@ namespace CoreSystems.Api
             if (grid != null && collection != null && _session.EntityAIs.TryGetValue(grid, out gridAi))
             {
                 for (int i = 0; i < gridAi.Obstructions.Count; i++)
-                    collection.Add(gridAi.Obstructions[i]);
+                    collection.Add(gridAi.Obstructions[i].Target);
             }
         }
 
@@ -1392,7 +1392,7 @@ namespace CoreSystems.Api
             var comp = weaponBlock.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp?.Platform != null && comp.Platform.State == Ready) {
                 
-                var ai = comp.Ai;
+                var ai = comp.MasterAi;
                 
                 Ai.TargetInfo targetInfo;
                 if (ai.Targets.TryGetValue(targetEntity, out targetInfo)) {

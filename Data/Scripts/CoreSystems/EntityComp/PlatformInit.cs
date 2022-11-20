@@ -74,9 +74,9 @@ namespace CoreSystems.Platform
             State = PlatformState.Fresh;
             Comp = null;
 
-            if (Control?.TrackingWeapon != null) {
-                Control.TrackingWeapon.MasterComp = null;
-                Control.TrackingWeapon.RotorTurretTracking = false;
+            if (Control?.WeaponComp != null) {
+                Control.WeaponComp.MasterComp = null;
+                Control.WeaponComp.PrimaryWeapon.RotorTurretTracking = false;
             }
 
         }

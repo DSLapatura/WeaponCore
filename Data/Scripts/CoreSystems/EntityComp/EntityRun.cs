@@ -152,7 +152,6 @@ namespace CoreSystems.Support
                     if (Ai != null) {
 
                         Ai.FirstRun = true;
-
                         if (Type == CompType.Weapon && Platform.State == CorePlatform.PlatformState.Inited)
                             Platform.ResetParts();
 
@@ -217,9 +216,9 @@ namespace CoreSystems.Support
                 if (Type == CompType.Control)
                 {
                     var cComp = ((ControlSys.ControlComponent) this);
-                    if (cComp.Platform.Control.TrackingWeapon != null) {
-                        cComp.Platform.Control.TrackingWeapon.MasterComp = null;
-                        cComp.Platform.Control.TrackingWeapon.RotorTurretTracking = false;
+                    if (cComp.Platform.Control.WeaponComp != null) {
+                        cComp.Platform.Control.WeaponComp.MasterComp = null;
+                        cComp.Platform.Control.WeaponComp.PrimaryWeapon.RotorTurretTracking = false;
                     }
                 }
 

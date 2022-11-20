@@ -779,13 +779,13 @@ namespace CoreSystems.Support
                 var length = dir.Length();
                 var normDir = dir / length;
 
-                var line = Weapon.Comp.Session.Av.LineReqPool.Count > 0 ? Weapon.Comp.Session.Av.LineReqPool.Pop() : new LineReqCache();
+                var line = Weapon.Comp.Session.Av.QuadReqPool.Count > 0 ? Weapon.Comp.Session.Av.QuadReqPool.Pop() : new QuadReqCache();
                 line.Material = offsetMaterial;
                 line.Color = color;
                 line.StartPos = fromBeam;
-                line.Direction = normDir;
-                line.Length = length;
-                line.Thickness = beamRadius;
+                line.Up = normDir;
+                line.Width = length;
+                line.Height = beamRadius;
                 Weapon.Comp.Session.Av.LineRequests.Add(line);
 
                 //MyTransparentGeometry.AddLineBillboard(offsetMaterial, color, fromBeam, normDir, length, beamRadius);

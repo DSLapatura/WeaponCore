@@ -8,7 +8,6 @@ using VRage.Collections;
 using VRage.Game;
 using VRage.Game.Components;
 using VRage.Game.Entity;
-using VRage.Game.ModAPI;
 using VRage.Utils;
 using VRageMath;
 using static Sandbox.Definitions.MyDefinitionManager;
@@ -311,6 +310,7 @@ namespace CoreSystems
                 }
 
                 Av.Run();
+                Av.Draw();
                 DrawDisabledGuns();
                 DsUtil.Complete("draw", true);
             }

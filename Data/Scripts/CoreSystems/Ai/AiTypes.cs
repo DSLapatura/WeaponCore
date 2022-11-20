@@ -327,7 +327,7 @@ namespace CoreSystems.Support
             internal bool ValidSignalExists(Weapon w)
             {
                 var signalInRange = !w.Comp.DetectOtherSignals ? PriorityRangeSqr <= w.MaxTargetDistanceSqr : (OtherRangeSqr <= w.MaxTargetDistanceSqr || PriorityRangeSqr <= w.MaxTargetDistanceSqr);
-                return signalInRange || w.Comp.Ai.Construct.Data.Repo.FocusData.HasFocus || w.Comp.Ai.LiveProjectile.Count > 0 && (w.System.TrackProjectile || w.Comp.OnCustomTurret) && w.Comp.Data.Repo.Values.Set.Overrides.Projectiles; 
+                return signalInRange || w.Comp.MasterAi.Construct.HadFocus || w.Comp.MasterAi.LiveProjectile.Count > 0 && (w.System.TrackProjectile || w.Comp.OnCustomTurret) && w.Comp.Data.Repo.Values.Set.Overrides.Projectiles; 
             }
 
             internal bool TargetInRange(Weapon w)
@@ -366,24 +366,12 @@ namespace CoreSystems.Support
                 if (rootConstruct.DroneCount != 0 && ai.Session.Tick - rootConstruct.LastDroneTick > 30) //Was 200, dropped for faster updates on current threats
                     rootConstruct.DroneCleanup();
             }
-
-            internal bool ValidSignalExists(SupportSys a)
-            {
-                var signalInRange = true;
-                return signalInRange;
-            }
-
-            internal bool ValidSignalExists(Upgrades u)
-            {
-                var signalInRange = true;
-                return signalInRange;
-            }
         }
 
 
         internal struct DetectInfo
         {
-            internal readonly MyEntity Parent;
+            internal readonly MyEntity Target;
             internal readonly MyDetectedEntityInfo EntInfo;
             internal readonly int PartCount;
             internal readonly int FatCount;
@@ -392,9 +380,9 @@ namespace CoreSystems.Support
             internal readonly bool LargeGrid;
             internal readonly bool SuspectedDrone;
 
-            public DetectInfo(Session session, MyEntity parent, MyDetectedEntityInfo entInfo, int partCount, int fatCount, bool suspectedDrone, bool loneWarhead)
+            public DetectInfo(Session session, MyEntity target, MyDetectedEntityInfo entInfo, int partCount, int fatCount, bool suspectedDrone, bool loneWarhead)
             {
-                Parent = parent;
+                Target = target;
                 EntInfo = entInfo;
                 PartCount = partCount;
                 FatCount = fatCount;
@@ -402,13 +390,13 @@ namespace CoreSystems.Support
                 var armed = false;
                 var isGrid = false;
                 var largeGrid = false;
-                var grid = parent as MyCubeGrid;
+                var grid = target as MyCubeGrid;
                 if (grid != null)
                 {
                     isGrid = true;
                     largeGrid = grid.GridSizeEnum == MyCubeSize.Large;
                     ConcurrentDictionary<WeaponDefinition.TargetingDef.BlockTypes, ConcurrentCachingList<MyCubeBlock>> blockTypeMap;
-                    if (session.GridToBlockTypeMap.TryGetValue((MyCubeGrid)Parent, out blockTypeMap))
+                    if (session.GridToBlockTypeMap.TryGetValue((MyCubeGrid)Target, out blockTypeMap))
                     {
                         ConcurrentCachingList<MyCubeBlock> weaponBlocks;
                         if (blockTypeMap.TryGetValue(WeaponDefinition.TargetingDef.BlockTypes.Offense, out weaponBlocks) && weaponBlocks.Count > 0)
@@ -417,7 +405,7 @@ namespace CoreSystems.Support
                             armed = true;
                     }
                 }
-                else if (parent is MyMeteor || parent is IMyCharacter || loneWarhead) armed = true;
+                else if (target is MyMeteor || target is IMyCharacter || loneWarhead) armed = true;
 
                 Armed = armed;
                 IsGrid = isGrid;
@@ -476,9 +464,10 @@ namespace CoreSystems.Support
             internal void Init(ref DetectInfo detectInfo, Ai myAi, Ai targetAi)
             {
                 EntInfo = detectInfo.EntInfo;
-                Target = detectInfo.Parent;
+                Target = detectInfo.Target;
                 PartCount = detectInfo.PartCount;
                 FatCount = detectInfo.FatCount;
+
                 IsStatic = Target.Physics.IsStatic;
                 IsGrid = detectInfo.IsGrid;
                 LargeGrid = detectInfo.LargeGrid;

@@ -1,10 +1,4 @@
-﻿using System;
-using CoreSystems.Support;
-using Sandbox.Engine.Physics;
-using Sandbox.ModAPI;
-using VRage.Game;
-using VRage.Game.ObjectBuilders.Components;
-using VRage.Utils;
+﻿using CoreSystems.Support;
 using VRageMath;
 namespace CoreSystems.Platform
 {
@@ -12,7 +6,7 @@ namespace CoreSystems.Platform
     {
         internal static bool TrajectoryEstimation(Ai topAi, ControlSys control, out Vector3D targetDirection)
         {
-            var weapon = control.TrackingWeapon;
+            var weapon = control.WeaponComp.PrimaryWeapon;
             var cValues = control.Comp.Data.Repo.Values;
 
             Vector3D targetCenter;

@@ -16,11 +16,11 @@ namespace CoreSystems.Support
 {
     class RunAv
     {
-        internal readonly MyBillboard[][] BillBoardLinePool = new MyBillboard[5][];
+        internal readonly MyBillboard[][] BillBoardQuadPool = new MyBillboard[5][];
         internal readonly Dictionary<ulong, MyParticleEffect> BeamEffects = new Dictionary<ulong, MyParticleEffect>();
         internal readonly Stack<AvShot> AvShotPool = new Stack<AvShot>(1024);
         internal readonly Stack<AvEffect> AvEffectPool = new Stack<AvEffect>(128);
-        internal readonly Stack<LineReqCache> LineReqPool = new Stack<LineReqCache>(1024);
+        internal readonly Stack<QuadReqCache> QuadReqPool = new Stack<QuadReqCache>(1024);
         internal readonly Stack<AfterGlow> Glows = new Stack<AfterGlow>(128);
         internal readonly Stack<MyEntity3DSoundEmitter> FireEmitters = new Stack<MyEntity3DSoundEmitter>();
         internal readonly Stack<MyEntity3DSoundEmitter> TravelEmitters = new Stack<MyEntity3DSoundEmitter>();
@@ -31,19 +31,22 @@ namespace CoreSystems.Support
         internal readonly List<AvEffect> Effects2 = new List<AvEffect>(128);
         internal readonly List<ParticleEvent> ParticlesToProcess = new List<ParticleEvent>(128);
         internal readonly List<AvShot> AvShots = new List<AvShot>(1024);
-        internal readonly List<LineReqCache> LineRequests = new List<LineReqCache>(1024);
-        internal readonly List<MyBillboard> LinesToAdd = new List<MyBillboard>(1024);
+        internal readonly List<QuadReqCache> LineRequests = new List<QuadReqCache>(1024);
+        internal readonly List<QuadReqCache> OrientedRequests = new List<QuadReqCache>(1024);
+
+        internal readonly List<MyBillboard> QuadsToAdd = new List<MyBillboard>(1024);
         internal readonly int BillBoardPoolDelay = 5;
 
         internal Session Session;
 
-        internal int BillPoolLineIndex = -1;
-        internal int BillLineIndex = -1;
+        internal int BillPoolQuadIndex = -1;
+        internal int BillQuadIndex = -1;
         //internal int BillPoolQuadIndex = -1;
         //internal int BillQuadIndex = -1;
         internal int ExplosionCounter;
         internal int MaxExplosions = 100;
         internal int NearBillBoardLimit;
+        internal int BillBoardRequests;
 
 
         internal bool ExplosionReady
@@ -62,8 +65,8 @@ namespace CoreSystems.Support
         internal RunAv(Session session)
         {
             Session = session;
-            for (int i = 0; i < BillBoardLinePool.Length; i++)
-                BillBoardLinePool[i] = new MyBillboard[32000];
+            for (int i = 0; i < BillBoardQuadPool.Length; i++)
+                BillBoardQuadPool[i] = new MyBillboard[32000];
         }
 
 
@@ -215,6 +218,23 @@ namespace CoreSystems.Support
             }
         }
 
+        internal void Draw()
+        {
+            BillPoolQuadIndex = BillBoardPoolDelay + 1 < BillBoardPoolDelay ? BillBoardPoolDelay + 1 : 0;
+
+            AddBillBoardLines();
+            AddBillBoardsOriented();
+
+            MyTransparentGeometry.AddBillboards(QuadsToAdd, false);
+            
+            BillQuadIndex = 0;
+            BillBoardRequests = 0;
+            QuadsToAdd.Clear();
+
+            LineRequests.Clear();
+            OrientedRequests.Clear();
+        }
+
         internal void Run()
         {
             if (Session.Tick180)
@@ -251,30 +271,25 @@ namespace CoreSystems.Support
                         {
                             if (aConst.TracerMode == AmmoConstants.Texture.Normal)
                             {
-                                var line = LineReqPool.Count > 0 ? LineReqPool.Pop() : new LineReqCache();
+                                var line = QuadReqPool.Count > 0 ? QuadReqPool.Pop() : new QuadReqCache();
                                 line.Material = aConst.TracerTextures[0];
                                 line.Color = color;
                                 line.StartPos = av.TracerBack;
-                                line.Direction = av.VisualDir;
-                                line.Length = (float) av.VisualLength;
-                                line.Thickness = (float) av.TracerWidth;
+                                line.Up = av.VisualDir;
+                                line.Width = (float) av.VisualLength;
+                                line.Height = (float) av.TracerWidth;
                                 LineRequests.Add(line);
-
-                                //MyTransparentGeometry.AddLineBillboard(aConst.TracerTextures[0], color, av.TracerBack, av.VisualDir, (float)av.VisualLength, (float)av.TracerWidth);
                             }
                             else if (aConst.TracerMode != AmmoConstants.Texture.Resize)
                             {
-                                var line = LineReqPool.Count > 0 ? LineReqPool.Pop() : new LineReqCache();
+                                var line = QuadReqPool.Count > 0 ? QuadReqPool.Pop() : new QuadReqCache();
                                 line.Material = aConst.TracerTextures[av.TextureIdx];
                                 line.Color = color;
                                 line.StartPos = av.TracerBack;
-                                line.Direction = av.VisualDir;
-                                line.Length = (float)av.VisualLength;
-                                line.Thickness = (float)av.TracerWidth;
+                                line.Up = av.VisualDir;
+                                line.Width = (float)av.VisualLength;
+                                line.Height = (float)av.TracerWidth;
                                 LineRequests.Add(line);
-
-                                //MyTransparentGeometry.AddLineBillboard(aConst.TracerTextures[av.TextureIdx], color, av.TracerBack, av.VisualDir, (float)av.VisualLength, (float)av.TracerWidth);
-
                             }
                             else
                             {
@@ -320,16 +335,14 @@ namespace CoreSystems.Support
                                     var clampStep = !gap ? MathHelperD.Clamp((int)((len / segStepLen) + 0.5) - 1, 0, segTextureCnt - 1) : MathHelperD.Clamp((int)((len / gapStepLen) + 0.5) - 1, 0, gapTextureCnt - 1);
                                     var material = !gap ? aConst.SegmentTextures[(int)clampStep] : aConst.TracerTextures[(int)clampStep];
 
-                                    var line = LineReqPool.Count > 0 ? LineReqPool.Pop() : new LineReqCache();
+                                    var line = QuadReqPool.Count > 0 ? QuadReqPool.Pop() : new QuadReqCache();
                                     line.Material = material;
                                     line.Color = dyncColor;
                                     line.StartPos = stepPos;
-                                    line.Direction = av.VisualDir;
-                                    line.Length = (float)len;
-                                    line.Thickness = (float)width;
+                                    line.Up = av.VisualDir;
+                                    line.Width = (float)len;
+                                    line.Height = (float)width;
                                     LineRequests.Add(line);
-
-                                    //MyTransparentGeometry.AddLineBillboard(material, dyncColor, stepPos, av.VisualDir, (float)len, (float)width);
                                     if (!notLast)
                                         travel = av.VisualLength;
                                     else
@@ -362,16 +375,14 @@ namespace CoreSystems.Support
                             var length = dir.Length();
                             var normDir = dir / length;
 
-                            var line = LineReqPool.Count > 0 ? LineReqPool.Pop() : new LineReqCache();
+                            var line = QuadReqPool.Count > 0 ? QuadReqPool.Pop() : new QuadReqCache();
                             line.Material = aConst.TracerTextures[0];
                             line.Color = color;
                             line.StartPos = fromBeam;
-                            line.Direction = normDir;
-                            line.Length = length;
-                            line.Thickness = (float)av.TracerWidth;
+                            line.Up = normDir;
+                            line.Width = length;
+                            line.Height = (float)av.TracerWidth;
                             LineRequests.Add(line);
-
-                            //MyTransparentGeometry.AddLineBillboard(aConst.TracerTextures[0], color, fromBeam, normDir, length, (float)av.TracerWidth);
 
                             if (Vector3D.DistanceSquared(av.OffsetMatrix.Translation, toBeam) > av.TracerLengthSqr) break;
                         }
@@ -412,16 +423,14 @@ namespace CoreSystems.Support
                                 color *= MathHelper.Clamp(1f - reduction, 0.01f, 1f);
                             }
 
-                            var line = LineReqPool.Count > 0 ? LineReqPool.Pop() : new LineReqCache();
+                            var line = QuadReqPool.Count > 0 ? QuadReqPool.Pop() : new QuadReqCache();
                             line.Material = aConst.TrailTextures[0];
                             line.Color = color;
                             line.StartPos = glow.Line.From;
-                            line.Direction = glow.Line.Direction;
-                            line.Length = (float) glow.Line.Length;
-                            line.Thickness = width;
+                            line.Up = glow.Line.Direction;
+                            line.Width = (float) glow.Line.Length;
+                            line.Height = width;
                             LineRequests.Add(line);
-
-                            //MyTransparentGeometry.AddLineBillboard(aConst.TrailTextures[0], color, glow.Line.From, glow.Line.Direction, (float)glow.Line.Length, width);
                         }
 
                         if (++glow.Step >= steps)
@@ -443,8 +452,6 @@ namespace CoreSystems.Support
                     AvShots.RemoveAtFast(i);
                 }
             }
-
-            AddBillBoardLines();
         }
 
         private void RunShrinks(AvShot av)
@@ -456,17 +463,14 @@ namespace CoreSystems.Support
                 {
                     if (av.OnScreen != AvShot.Screen.None)
                     {
-                        var line = LineReqPool.Count > 0 ? LineReqPool.Pop() : new LineReqCache();
+                        var line = QuadReqPool.Count > 0 ? QuadReqPool.Pop() : new QuadReqCache();
                         line.Material = av.AmmoDef.Const.TracerTextures[0];
                         line.Color = s.Color;
                         line.StartPos = s.NewFront;
-                        line.Direction = av.VisualDir;
-                        line.Length = s.Length;
-                        line.Thickness = s.Thickness;
+                        line.Up = av.VisualDir;
+                        line.Width = s.Length;
+                        line.Height = s.Thickness;
                         LineRequests.Add(line);
-
-                        //MyTransparentGeometry.AddLineBillboard(av.AmmoDef.Const.TracerTextures[0], s.Color, s.NewFront, av.VisualDir, s.Length, s.Thickness);
-
                     }
                 }
                 else if (av.OnScreen != AvShot.Screen.None)
@@ -631,76 +635,84 @@ namespace CoreSystems.Support
                 }
             }
         }
-        /*
-        internal void AddBillboardsOriented()
+
+        internal void AddBillBoardsOriented()
         {
-            BillPoolQuadIndex = BillBoardPoolDelay + 1 < BillBoardPoolDelay ? BillBoardPoolDelay + 1 : 0;
-            BillQuadIndex = 0;
-            for (int i = 0; i < QuadRequests.Count; i++)
+            var billBoardPool = BillBoardQuadPool[BillPoolQuadIndex];
+
+            BillBoardRequests += OrientedRequests.Count;
+            if (BillBoardRequests > NearBillBoardLimit)
+                NearBillBoardLimit = BillBoardRequests;
+
+            for (int i = 0; i < OrientedRequests.Count; i++)
             {
-                var q = QuadRequests[i];
-                var billBoardPool = BillBoardQuadPool[BillPoolQuadIndex];
-
-                if (BillQuadIndex++ > billBoardPool.Length)
+                var q = OrientedRequests[i];
+                if (++BillQuadIndex >= billBoardPool.Length)
+                {
+                    QuadReqPool.Push(q);
                     continue;
+                }
 
-                MyQuadD quad;
-                Vector3 lv3 = q.Left;
-                Vector3 uv3 = q.Up;
+                var width = q.Left * q.Width / 2f;
+                var height = q.Up * q.Height / 2f;
+                var quad = new MyQuadD
+                {
+                    Point0 = q.StartPos + height + width,
+                    Point1 = q.StartPos + height - width,
+                    Point2 = q.StartPos - height - width,
+                    Point3 = q.StartPos - height + width
+                };
 
-                MyUtils.GetBillboardQuadOriented(out quad, ref q.TextPos, q.Width / 2f, q.Height / 2f, ref lv3, ref uv3);
+                if (billBoardPool[BillQuadIndex] == null)
+                    billBoardPool[BillQuadIndex] = new MyBillboard();
 
-                var billBoard = billBoardPool[BillLineIndex];
-                if (billBoard == null)
-                    billBoardPool[BillLineIndex] = billBoard = new MyBillboard();
+                var billBoard = billBoardPool[BillQuadIndex];
 
                 billBoard.UVOffset = q.UvOff / q.TextureSize;
                 billBoard.UVSize = q.UvSize / q.TextureSize;
                 billBoard.LocalType = LocalTypeEnum.Custom;
                 billBoard.Reflectivity = 0f;
                 billBoard.SoftParticleDistanceScale = 0f;
-                billBoard.DistanceSquared = (float)Vector3D.DistanceSquared(q.TextPos, Session.CameraPos);
-                billBoard.Material = q.V1;
+                billBoard.DistanceSquared = (float)Vector3D.DistanceSquared(q.StartPos, Session.CameraPos);
+                billBoard.Material = q.Material;
                 billBoard.Position0 = quad.Point0;
                 billBoard.Position1 = quad.Point1;
                 billBoard.Position2 = quad.Point2;
                 billBoard.Position3 = quad.Point3;
                 billBoard.ColorIntensity = 1f;
-                billBoard.Color = q.FontColor;
+                billBoard.Color = q.Color;
                 billBoard.BlendType = q.Blend;
                 billBoard.ParentID = uint.MaxValue;
                 billBoard.CustomViewProjection = -1;
                 QuadsToAdd.Add(billBoard);
+                QuadReqPool.Push(q);
             }
-            MyTransparentGeometry.AddBillboards(QuadsToAdd, false);
-            QuadsToAdd.Clear();
-            QuadRequests.Clear();
+
         }
-        */
+
         internal void AddBillBoardLines()
         {
-            BillPoolLineIndex = BillBoardPoolDelay + 1 < BillBoardPoolDelay ? BillBoardPoolDelay + 1 : 0;
-            var billBoardPool = BillBoardLinePool[BillPoolLineIndex];
+            BillPoolQuadIndex = BillBoardPoolDelay + 1 < BillBoardPoolDelay ? BillBoardPoolDelay + 1 : 0;
+            var billBoardPool = BillBoardQuadPool[BillPoolQuadIndex];
 
-            BillLineIndex = 0;
-            var requestCount = LineRequests.Count;
-            if (requestCount > NearBillBoardLimit)
-                NearBillBoardLimit = requestCount;
+            BillBoardRequests += LineRequests.Count;
+            if (BillBoardRequests > NearBillBoardLimit)
+                NearBillBoardLimit = BillBoardRequests;
 
-            for (int i = 0; i < requestCount; i++)
+            for (int i = 0; i < LineRequests.Count; i++)
             {
                 var q = LineRequests[i];
 
-                if (++BillLineIndex >= billBoardPool.Length)
+                if (++BillQuadIndex >= billBoardPool.Length)
                 {
-                    LineReqPool.Push(q);
+                    QuadReqPool.Push(q);
                     continue;
                 }
 
-                if (billBoardPool[BillLineIndex] == null)
-                    billBoardPool[BillLineIndex] = new MyBillboard();
+                if (billBoardPool[BillQuadIndex] == null)
+                    billBoardPool[BillQuadIndex] = new MyBillboard();
 
-                var billBoard = billBoardPool[BillLineIndex];
+                var billBoard = billBoardPool[BillQuadIndex];
 
                 billBoard.BlendType = q.Blend;
                 billBoard.UVOffset = Vector2.Zero;
@@ -710,10 +722,10 @@ namespace CoreSystems.Support
 
                 var polyLine = new MyPolyLineD
                 {
-                    LineDirectionNormalized = q.Direction,
+                    LineDirectionNormalized = q.Up,
                     Point0 = q.StartPos,
-                    Point1 = q.StartPos + q.Direction * q.Length,
-                    Thickness = q.Thickness
+                    Point1 = q.StartPos + q.Up * q.Width,
+                    Thickness = q.Height
                 };
 
                 var scaledVector = Vector3D.Cross(polyLine.LineDirectionNormalized, Vector3D.Normalize(Session.CameraPos - polyLine.Point0)) * polyLine.Thickness;
@@ -739,20 +751,16 @@ namespace CoreSystems.Support
                 billBoard.CustomViewProjection = -1;
                 billBoard.SoftParticleDistanceScale = 1f;
 
-                LinesToAdd.Add(billBoard);
-                LineReqPool.Push(q);
+                QuadsToAdd.Add(billBoard);
+                QuadReqPool.Push(q);
             }
-            MyTransparentGeometry.AddBillboards(LinesToAdd, false);
-
-            LinesToAdd.Clear();
-            LineRequests.Clear();
         }
 
         public class QuadReqCache
         {
-            public MyStringId V1;
-            public Vector4 FontColor;
-            public Vector3D TextPos;
+            public MyStringId Material;
+            public Vector4 Color;
+            public Vector3D StartPos;
             public Vector3D Up;
             public Vector3D Left;
             public Vector2 UvOff;
@@ -760,18 +768,6 @@ namespace CoreSystems.Support
             public float Width;
             public float Height;
             public float TextureSize;
-            public BlendTypeEnum Blend;
-        }
-
-        public class LineReqCache
-        {
-            public MyStringId Material;
-            public Vector4 Color;
-            public Vector3D StartPos;
-            public Vector3D Direction;
-            public float Length;
-            public float Thickness;
-            public float Intensity;
             public BlendTypeEnum Blend;
         }
 

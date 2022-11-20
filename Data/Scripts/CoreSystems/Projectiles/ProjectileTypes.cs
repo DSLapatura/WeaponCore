@@ -75,8 +75,8 @@ namespace CoreSystems.Support
         internal void InitVirtual(Weapon weapon, AmmoDef ammodef, MyEntity primeEntity, MyEntity triggerEntity, Weapon.Muzzle muzzle, double maxTrajectory, float shotFade)
         {
             Weapon = weapon;
-            Ai = weapon.BaseComp.Ai;
-            MyPlanet = weapon.BaseComp.Ai.MyPlanet;
+            Ai = weapon.BaseComp.MasterAi;
+            MyPlanet = Ai.MyPlanet;
             AmmoDef = ammodef;
             Target.TargetEntity = weapon.Target.TargetEntity;
             Target.Projectile = weapon.Target.Projectile;

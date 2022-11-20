@@ -129,7 +129,7 @@ namespace CoreSystems.Support
         public readonly string AltEjectorName;
         public readonly string ShortName;
         public readonly string[] Muzzles;
-
+        public readonly uint MaxTrackingTicks;
         public readonly int MaxActiveProjectiles;
         public readonly int MaxReloads;
         public readonly int DelayToFire;
@@ -145,6 +145,7 @@ namespace CoreSystems.Support
         public readonly int BarrelSpinRate;
         public readonly int ShotsPerBurst;
         public readonly int MaxAmmoCount;
+        public readonly bool MaxTrackingTime;
         public readonly bool HasAntiSmart;
         public readonly bool HasAmmoSelection;
         public readonly bool HasEjector;
@@ -162,7 +163,10 @@ namespace CoreSystems.Support
         public readonly bool TrackGrids;
         public readonly bool TrackCharacters;
         public readonly bool TrackMeteors;
+        public readonly bool UniqueTargetPerWeapon;
         public readonly bool TrackNeutrals;
+        public readonly bool TrackNonThreatsOther;
+        public readonly bool TrackNonThreatFriend;
         public readonly bool TrackTargets;
         public readonly bool HasRequiresTarget;
         public readonly bool HasDrone;
@@ -248,6 +252,7 @@ namespace CoreSystems.Support
             StayCharged = values.HardPoint.Loading.StayCharged || WConst.ReloadTime == 0;
             MaxTargetSpeed = values.Targeting.StopTrackingSpeed > 0 ? values.Targeting.StopTrackingSpeed : double.MaxValue;
             ClosestFirst = values.Targeting.ClosestFirst;
+            UniqueTargetPerWeapon = Values.Targeting.UniqueTargetPerWeapon;
             AlwaysFireFull = values.HardPoint.Loading.FireFull;
             Prediction = Values.HardPoint.AimLeadingPrediction;
             //LockOnFocus = Values.HardPoint.Ai.LockOnFocus && !Values.HardPoint.Ai.TrackTargets;
@@ -255,6 +260,7 @@ namespace CoreSystems.Support
 
             MaxReloads = Values.HardPoint.Loading.MaxReloads;
             MaxActiveProjectiles = Values.HardPoint.Loading.MaxActiveProjectiles > 0 ? Values.HardPoint.Loading.MaxActiveProjectiles : int.MaxValue;
+
 
             SuppressFire = Values.HardPoint.Ai.SuppressFire;
             PartType = Values.HardPoint.HardWare.Type;
@@ -266,7 +272,7 @@ namespace CoreSystems.Support
             Heat(out DegRof, out MaxHeat, out WepCoolDown);
             BarrelValues(out BarrelsPerShot, out ShotsPerBurst);
             BarrelsAv(out BarrelEffect1, out BarrelEffect2, out Barrel1AvTicks, out Barrel2AvTicks, out BarrelSpinRate, out HasBarrelRotation);
-            Track(out TrackProjectile, out TrackGrids, out TrackCharacters, out TrackMeteors, out TrackNeutrals, out TrackTopMostEntities);
+            Track(out TrackProjectile, out TrackGrids, out TrackCharacters, out TrackMeteors, out TrackNeutrals, out TrackNonThreatsOther, out TrackNonThreatFriend, out MaxTrackingTime, out MaxTrackingTicks, out TrackTopMostEntities);
             SubSystems(out TargetSubSystems, out OnlySubSystems);
             ValidTargetSize(out MinTargetRadius, out MaxTargetRadius);
             Session.CreateAnimationSets(Values.Animations, this, out WeaponAnimationSet, out PartEmissiveSet, out PartLinearMoveSet, out AnimationIdLookup, out PartAnimationLengths, out HeatingSubparts, out ParticleEvents);
@@ -518,13 +524,17 @@ namespace CoreSystems.Support
                 turretMove = TurretType.Fixed;
         }
 
-        private void Track(out bool trackProjectile, out bool trackGrids, out bool trackCharacters, out bool trackMeteors, out bool trackNeutrals, out bool trackTopMostEntities)
+        private void Track(out bool trackProjectile, out bool trackGrids, out bool trackCharacters, out bool trackMeteors, out bool trackNeutrals, out bool trackNonThreatsOther, out bool trackNonThreatsFriend, out bool maxTrackingTime, out uint maxTrackingTicks, out bool trackTopMostEntities)
         {
             trackProjectile = false;
             trackGrids = false;
             trackCharacters = false;
             trackMeteors = false;
             trackNeutrals = false;
+            trackNonThreatsOther = false;
+            trackNonThreatsFriend = false;
+            maxTrackingTicks = (uint)Values.Targeting.MaxTrackingTime;
+            maxTrackingTime = maxTrackingTicks > 0;
             trackTopMostEntities = false;
 
             var threats = Values.Targeting.Threats;
@@ -550,6 +560,16 @@ namespace CoreSystems.Support
                 else if (threat == TargetingDef.Threat.Neutrals)
                 {
                     trackNeutrals = true;
+                    trackTopMostEntities = true;
+                }
+                else if (threat == TargetingDef.Threat.NonThreatsOther)
+                {
+                    trackNonThreatsOther = true;
+                    trackTopMostEntities = true;
+                }
+                else if (threat == TargetingDef.Threat.NonThreatsFriend)
+                {
+                    trackNonThreatsFriend = true;
                     trackTopMostEntities = true;
                 }
             }

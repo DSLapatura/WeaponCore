@@ -17,7 +17,7 @@ namespace CoreSystems.Projectiles
                 var w = muzzle.Weapon;
                 var comp = w.Comp;
                 var repo = comp.Data.Repo;
-                var ai = comp.Ai;
+                var ai = comp.MasterAi;
                 var wTarget = w.Target;
 
                 var a = gen.AmmoDef;
@@ -36,7 +36,7 @@ namespace CoreSystems.Projectiles
                 info.Id = Session.Projectiles.CurrentProjectileId++;
                 info.Weapon = w;
                 info.CompSceneVersion = comp.SceneVersion;
-                info.Ai = comp.Ai;
+                info.Ai = ai;
                 info.AimedShot = aimed;
                 info.AmmoDef = a;
                 info.DoDamage = Session.IsServer && (!aConst.ClientPredictedAmmo || t == Kind.Client || !comp.ActivePlayer ); // shrapnel do not run this loop, but do inherit DoDamage from parent.

@@ -465,7 +465,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             {
                 for (int i = 0; i < ai.Obstructions.Count; i++)
                 {
-                    var otherEnt = ai.Obstructions[i];
+                    var otherEnt = ai.Obstructions[i].Target;
                     if (otherEnt is MyCubeGrid)
                     {
                         var ray = new RayD(origin, dir);

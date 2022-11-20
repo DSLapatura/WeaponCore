@@ -109,14 +109,15 @@ namespace CoreSystems.Support
             internal readonly HashSet<MyDefinitionId> RecentItems = new HashSet<MyDefinitionId>(MyDefinitionId.Comparer);
             internal readonly HashSet<Weapon> OutOfAmmoWeapons = new HashSet<Weapon>();
             internal readonly Dictionary<MyStringHash, int> Counter = new Dictionary<MyStringHash, int>(MyStringHash.Comparer);
-            internal readonly Focus Focus = new Focus();
+            internal readonly Focus Focus;
             internal readonly ConstructData Data = new ConstructData();
             internal readonly Dictionary<long, PlayerController> ControllingPlayers = new Dictionary<long, PlayerController>();
             internal readonly Dictionary<MyEntity, TargetInfo> ConstructTargetInfoCache = new Dictionary<MyEntity, TargetInfo>();
 
             internal readonly HashSet<MyEntity> PreviousTargets = new HashSet<MyEntity>();
-            internal readonly RunningAverage DamageAverage = new RunningAverage(10);
             internal readonly Dictionary<int, WeaponGroup> WeaponGroups = new Dictionary<int, WeaponGroup>();
+            internal readonly RunningAverage DamageAverage = new RunningAverage(10);
+
             internal readonly Ai Ai;
             internal MyEntity LastFocusEntity;
 
@@ -156,6 +157,7 @@ namespace CoreSystems.Support
             public Constructs(Ai ai)
             {
                 Ai = ai;
+                Focus = new Focus(ai);
             }
 
             internal void Refresh()
@@ -603,6 +605,7 @@ namespace CoreSystems.Support
                 PreviousTargets.Clear();
                 ControllingPlayers.Clear();
                 ConstructTargetInfoCache.Clear();
+                OutOfAmmoWeapons.Clear();
             }
 
             public bool GiveAllCompsInfiniteResources()
@@ -622,6 +625,12 @@ namespace CoreSystems.Support
 
     public class Focus
     {
+
+        public Focus(Ai ai)
+        {
+            Ai = ai;
+        }
+
         public enum ChangeMode
         {
             Add,
@@ -629,6 +638,7 @@ namespace CoreSystems.Support
             Lock,
         }
 
+        public readonly Ai Ai;
         public long PrevTarget;
         public long OldTarget;
         public LockModes OldLocked;
@@ -804,11 +814,12 @@ namespace CoreSystems.Support
             if (w.PosChangedTick != w.Comp.Session.SimulationCount)
                 w.UpdatePivotPos();
 
-            var fd = w.Comp.Ai.Construct.Data.Repo.FocusData;
+            var fd = Ai.Construct.Data.Repo.FocusData;
             
             fd.DistToNearestFocusSqr = float.MaxValue;
-                if (fd.Target <= 0)
-                    return false;
+
+            if (fd.Target <= 0)
+                return false;
 
             MyEntity target;
             if (MyEntities.TryGetEntityById(fd.Target, out target))
@@ -842,7 +853,7 @@ namespace CoreSystems.Support
 
         internal bool ValidFocusTarget(Weapon w)
         {
-            var targets = w.Comp.Ai.Construct.Data.Repo.FocusData?.Target;
+            var targets = Ai.Construct.Data.Repo.FocusData?.Target;
 
             var targetEnt = w.Target.TargetEntity;
             if (w.PosChangedTick != w.Comp.Session.SimulationCount)
@@ -871,7 +882,7 @@ namespace CoreSystems.Support
                     
                     if (rangeToTarget <= maxRangeSqr && rangeToTarget >= minRangeSqr)
                     {
-                        var overrides = w.Comp.Ai.RootFixedWeaponComp?.PrimaryWeapon?.MasterComp != null ? w.Comp.Ai.RootFixedWeaponComp.PrimaryWeapon.MasterComp.Data.Repo.Values.Set.Overrides : w.Comp.Data.Repo.Values.Set.Overrides;
+                        var overrides = w.Comp.MasterOverrides;
 
                         if (overrides.FocusSubSystem && overrides.SubSystem != WeaponDefinition.TargetingDef.BlockTypes.Any && block != null && !w.ValidSubSystemTarget(block, overrides.SubSystem))
                             return false;

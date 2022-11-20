@@ -42,7 +42,7 @@ namespace CoreSystems.Platform
             bool isTracking;
 
             if (weapon.RotorTurretTracking)
-                canTrack = validEstimate && MathFuncs.RotorTurretLookAt(weapon.MasterComp.Platform.Control, ref targetDir, rangeToTarget);
+                canTrack = validEstimate && MathFuncs.RotorTurretLookAt(weapon.Comp.MasterComp.Platform.Control, ref targetDir, rangeToTarget);
             else if (weapon == trackingWeapon)
                 canTrack = validEstimate && MathFuncs.WeaponLookAt(weapon, ref targetDir, rangeToTarget, false, true, MathFuncs.DebugCaller.CanShootTarget , out isTracking);
             else
@@ -216,7 +216,7 @@ namespace CoreSystems.Platform
             {
                 var targetDir = targetPos - weapon.MyPivotPos;
                 if (weapon.RotorTurretTracking)
-                    canTrack = MathFuncs.RotorTurretLookAt(weapon.MasterComp.Platform.Control, ref targetDir, rangeToTarget);
+                    canTrack = MathFuncs.RotorTurretLookAt(weapon.Comp.MasterComp.Platform.Control, ref targetDir, rangeToTarget);
                 else if (weapon == trackingWeapon)
                 {
                     double checkAzimuth;
@@ -322,7 +322,7 @@ namespace CoreSystems.Platform
 
             var baseData = w.Comp.Data.Repo.Values;
             var session = w.System.Session;
-            var ai = w.Comp.Ai;
+            var ai = w.Comp.MasterAi;
 
             Ai.FakeTarget.FakeWorldTargetInfo fakeTargetInfo = null;
             if (w.Comp.FakeMode && w.ValidFakeTargetInfo(baseData.State.PlayerId, out fakeTargetInfo))
@@ -426,7 +426,7 @@ namespace CoreSystems.Platform
 
             var rayCheckTest = !w.Comp.Session.IsClient && targetLock && baseData.State.Control != ProtoWeaponState.ControlMode.Camera && (w.ActiveAmmoDef.AmmoDef.Trajectory.Guidance != TrajectoryDef.GuidanceType.Smart && w.ActiveAmmoDef.AmmoDef.Trajectory.Guidance != TrajectoryDef.GuidanceType.DroneAdvanced) && (!w.Casting && session.Tick - w.Comp.LastRayCastTick > 29 || w.System.Values.HardPoint.Other.MuzzleCheck && session.Tick - w.LastMuzzleCheck > 29);
 
-            if (rayCheckTest && !w.RayCheckTest())
+            if (rayCheckTest && !w.RayCheckTest() || w.System.MaxTrackingTime && session.Tick - w.Target.ChangeTick > w.System.MaxTrackingTicks)
                 return false;
 
             return isTracking;
@@ -804,7 +804,7 @@ namespace CoreSystems.Platform
                     verticalDistance = Math.Tan(angle1) * horizontalDistance;
                     gravityOffset = new Vector3D((verticalDistance + Math.Abs(elevationDifference)) * -weapon.GravityUnitDir);
                 }
-                else if (weapon.RotorTurretTracking && !MathFuncs.RotorTurretLookAt(weapon.MasterComp.Platform.Control, ref targetDirection, deltaLength * deltaLength))
+                else if (weapon.RotorTurretTracking && !MathFuncs.RotorTurretLookAt(weapon.Comp.MasterComp.Platform.Control, ref targetDirection, deltaLength * deltaLength))
                 {
                     verticalDistance = Math.Tan(angle1) * horizontalDistance;
                     gravityOffset = new Vector3D((verticalDistance + Math.Abs(elevationDifference)) * -weapon.GravityUnitDir);
@@ -973,7 +973,7 @@ namespace CoreSystems.Platform
 
                 }
                 var topMostEnt = Target.TargetEntity.GetTopMostParent();
-                if (Target.TopEntityId != topMostEnt.EntityId || !Comp.Ai.Targets.ContainsKey(topMostEnt))
+                if (Target.TopEntityId != topMostEnt.EntityId || !Comp.Ai.Targets.ContainsKey(topMostEnt) && (!TrackNonThreats || !Comp.Ai.ObstructionLookup.ContainsKey(topMostEnt)))
                 {
                     masterWeapon.Target.Reset(Comp.Session.Tick, Target.States.RayCheckFailed);
                     if (masterWeapon != this) Target.Reset(Comp.Session.Tick, Target.States.RayCheckFailed);
