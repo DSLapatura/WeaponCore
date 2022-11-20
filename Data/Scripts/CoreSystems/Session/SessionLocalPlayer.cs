@@ -119,7 +119,7 @@ namespace CoreSystems
 
                 foreach (var comp in ai.WeaponComps)
                 {
-                    if (comp.CoreEntity == null || comp.CoreEntity.MarkedForClose || comp.OnCustomTurret)
+                    if (comp.CoreEntity == null || comp.CoreEntity.MarkedForClose || comp.Ai.ControlComp != null)
                         continue;
 
                     var collection = comp.TypeSpecific != CoreComponent.CompTypeSpecific.Phantom ? comp.Platform.Weapons : comp.Platform.Phantoms;

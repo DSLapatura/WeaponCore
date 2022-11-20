@@ -1,11 +1,6 @@
-﻿using System.Collections.Concurrent;
-using System.Collections.Generic;
-using CoreSystems.Support;
+﻿using CoreSystems.Support;
 using Sandbox.ModAPI;
-using SpaceEngineers.Game.ModAPI;
-using VRage.Game.ModAPI;
 using VRage.Utils;
-using VRageMath;
 namespace CoreSystems.Platform
 {
     public partial class ControlSys : Part
@@ -16,7 +11,7 @@ namespace CoreSystems.Platform
 
         internal IMyMotorStator BaseMap;
         internal IMyMotorStator OtherMap;
-        internal Weapon.WeaponComponent WeaponComp;
+        internal Ai TopAi;
         internal ProtoControlPartState PartState;
         internal bool IsAimed;
 
@@ -26,6 +21,24 @@ namespace CoreSystems.Platform
             Comp = comp;
             Init(comp, system, partId);
             PartHash = Comp.Structure.PartHashes[partId];
+        }
+
+
+        internal void CleanControl()
+        {
+            if (TopAi != null)
+            {
+                if (TopAi?.RootComp?.PrimaryWeapon != null)
+                    TopAi.RootComp.PrimaryWeapon.RotorTurretTracking = false;
+
+                if (TopAi?.RootComp?.Ai?.ControlComp != null)
+                    TopAi.RootComp.Ai.ControlComp = null;
+
+                if (TopAi?.RootComp != null)
+                    TopAi.RootComp = null;
+
+                TopAi = null;
+            }
         }
     }
 }

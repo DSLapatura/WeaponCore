@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using ProtoBuf;
 using VRageMath;
+using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetDef;
 
 namespace CoreSystems.Api
 {
@@ -270,6 +271,8 @@ namespace CoreSystems.Api
                 [ProtoMember(12)] internal bool LockedSmartOnly;
                 [ProtoMember(13)] internal bool UniqueTargetPerWeapon;
                 [ProtoMember(14)] internal int MaxTrackingTime;
+                [ProtoMember(15)] internal bool ShootBlanks;
+
             }
 
 
@@ -301,6 +304,14 @@ namespace CoreSystems.Api
                         LockDelay,
                     }
 
+                    public enum ResetConditions
+                    {
+                        None,
+                        Home,
+                        Off,
+                        On,
+                        Reloaded
+                    }
 
                     [ProtoMember(1)] internal string[] SubpartId;
                     [ProtoMember(2)] internal string BarrelId;
@@ -311,6 +322,7 @@ namespace CoreSystems.Api
                     [ProtoMember(7)] internal Dictionary<EventTriggers, RelMove[]> EventMoveSets;
                     [ProtoMember(8)] internal EventTriggers[] TriggerOnce;
                     [ProtoMember(9)] internal EventTriggers[] ResetEmissives;
+                    [ProtoMember(10)] internal ResetConditions Resets;
 
                 }
 

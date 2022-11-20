@@ -94,6 +94,7 @@ namespace CoreSystems.Support
         internal TopMap TopEntityMap;
         internal IMyCubeGrid ImyGridEntity;
         internal WeaponComponent RootComp;
+        internal ControlSys.ControlComponent ControlComp;
         internal WeaponComponent OnlyWeaponComp;
         internal IMyTerminalBlock LastTerminal;
         internal IMyTerminalBlock ShieldBlock;
@@ -145,7 +146,6 @@ namespace CoreSystems.Support
         internal bool SmartHandheld;
         internal bool ModOverride;
         internal bool AcquireTargets;
-        internal bool RotorTurretAimed;
         internal uint CreatedTick;
         internal uint RotorCommandTick;
         internal uint TargetsUpdatedTick;

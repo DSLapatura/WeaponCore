@@ -459,7 +459,6 @@ namespace CoreSystems.Support
             MyProjectiles = 0;
             ClosestFixedWeaponCompSqr = double.MaxValue;
             RotorTargetPosition = Vector3D.MaxValue;
-            RotorTurretAimed = false;
             RotorManualControlId = -1;
             RotorCommandTick = 0;
             PointDefense = false;
@@ -486,6 +485,7 @@ namespace CoreSystems.Support
             LastTerminal = null;
             TopEntity = null;
             TopEntityMap = null;
+            ControlComp = null;
             Closed = true;
             CanShoot = true;
             Version++;

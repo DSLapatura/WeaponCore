@@ -414,6 +414,8 @@ namespace CoreSystems.Api
             StopTracking,
             LockDelay,
             Init,
+            Homing,
+            TargetAligned,
         }
 
         /// <summary>

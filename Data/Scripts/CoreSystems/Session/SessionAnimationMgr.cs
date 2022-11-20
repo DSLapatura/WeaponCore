@@ -45,7 +45,7 @@ namespace CoreSystems
             if (animations.HeatingEmissiveParts != null && animations.HeatingEmissiveParts.Length > 0)
                 heatingSubpartNames = animations.HeatingEmissiveParts;
             else
-                heatingSubpartNames = new string[0];
+                heatingSubpartNames = Array.Empty<string>();
 
             var wepEmissivesSet = animations.Emissives;
             if (wepEmissivesSet != null) {
@@ -228,7 +228,7 @@ namespace CoreSystems
                 traveled = decay ? distance - step : step;
                 var changed = traveled - lastTraveled;
 
-                var progress = 0f;
+                float progress;
                 if (move.TicksToMove == 1 || j == move.TicksToMove - 1)
                     progress = 1;
                 else
@@ -463,7 +463,7 @@ namespace CoreSystems
 
                 moveSet.Add(matrix);
 
-                var progress = 0f;
+                float progress;
                 if (move.TicksToMove == 1)
                     progress = 1;
                 else

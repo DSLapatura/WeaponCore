@@ -212,53 +212,61 @@ namespace CoreSystems.Platform
                         #endregion
 
                         #region Generate Projectiles
-                        for (int k = 0; k < patternIndex; k++) {
 
-                            var ammoPattern = aConst.WeaponPattern ? aConst.AmmoPattern[AmmoShufflePattern[k]] : ActiveAmmoDef.AmmoDef;
-
-                            if (ammoPattern.DecayPerShot >= float.MaxValue) selfDamage = float.MaxValue;
-                            else selfDamage += ammoPattern.DecayPerShot;
-
-                            long patternCycle = FireCounter;
-                            if (ammoPattern.AmmoGraphics.Lines.Tracer.VisualFadeStart > 0 && ammoPattern.AmmoGraphics.Lines.Tracer.VisualFadeEnd > 0)
-                                patternCycle = ((FireCounter - 1) % ammoPattern.AmmoGraphics.Lines.Tracer.VisualFadeEnd) + 1;
-
-                            if (ammoPattern.Const.VirtualBeams && j == 0) {
-
-                                if (i == 0) {
-                                    vProList = s.Projectiles.VirtInfoPools.Get();
-                                    s.Projectiles.NewProjectiles.Add(new NewProjectile { NewVirts = vProList, AmmoDef = ammoPattern, Muzzle = muzzle, PatternCycle = patternCycle, Direction = muzzle.DeviatedDir, Type = NewProjectile.Kind.Virtual });
-                                }
-
-                                MyEntity primeE = null;
-                                MyEntity triggerE = null;
-
-                                if (ammoPattern.Const.PrimeModel)
-                                    primeE = ammoPattern.Const.PrimeEntityPool.Get();
-
-                                if (ammoPattern.Const.TriggerModel)
-                                    triggerE = s.TriggerEntityPool.Get();
-
-                                float shotFade;
-                                if (ammoPattern.Const.HasShotFade) {
-                                    if (patternCycle > ammoPattern.AmmoGraphics.Lines.Tracer.VisualFadeStart)
-                                        shotFade = MathHelper.Clamp(((patternCycle - ammoPattern.AmmoGraphics.Lines.Tracer.VisualFadeStart)) * ammoPattern.Const.ShotFadeStep, 0, 1);
-                                    else if (System.DelayCeaseFire && CeaseFireDelayTick != tick)
-                                        shotFade = MathHelper.Clamp(((tick - CeaseFireDelayTick) - ammoPattern.AmmoGraphics.Lines.Tracer.VisualFadeStart) * ammoPattern.Const.ShotFadeStep, 0, 1);
-                                    else shotFade = 0;
-                                }
-                                else shotFade = 0;
-
-                                var maxTrajectory = ammoPattern.Const.MaxTrajectoryGrows && FireCounter < ammoPattern.Trajectory.MaxTrajectoryTime ? ammoPattern.Const.TrajectoryStep * FireCounter : ammoPattern.Const.MaxTrajectory;
-                                var info = s.Projectiles.VirtInfoPool.Get();
-                                info.AvShot = s.Av.AvShotPool.Count > 0 ? s.Av.AvShotPool.Pop() : new AvShot();
-                                info.InitVirtual(this, ammoPattern, primeE, triggerE, muzzle, maxTrajectory, shotFade);
-                                vProList.Add(new NewVirtual { Info = info, Rotate = !ammoPattern.Const.RotateRealBeam && i == _nextVirtual, Muzzle = muzzle, VirtualId = _nextVirtual });
-                            }
-                            else
+                        if (!System.ShootBlanks)
+                        {
+                            for (int k = 0; k < patternIndex; k++)
                             {
-                                s.Projectiles.NewProjectiles.Add(new NewProjectile { AmmoDef = ammoPattern, Muzzle = muzzle, PatternCycle = patternCycle, Direction = muzzle.DeviatedDir, Type = NewProjectile.Kind.Normal });
-                                if (aConst.IsDrone) LiveDrones++;
+
+                                var ammoPattern = aConst.WeaponPattern ? aConst.AmmoPattern[AmmoShufflePattern[k]] : ActiveAmmoDef.AmmoDef;
+
+                                if (ammoPattern.DecayPerShot >= float.MaxValue) selfDamage = float.MaxValue;
+                                else selfDamage += ammoPattern.DecayPerShot;
+
+                                long patternCycle = FireCounter;
+                                if (ammoPattern.AmmoGraphics.Lines.Tracer.VisualFadeStart > 0 && ammoPattern.AmmoGraphics.Lines.Tracer.VisualFadeEnd > 0)
+                                    patternCycle = ((FireCounter - 1) % ammoPattern.AmmoGraphics.Lines.Tracer.VisualFadeEnd) + 1;
+
+                                if (ammoPattern.Const.VirtualBeams && j == 0)
+                                {
+
+                                    if (i == 0)
+                                    {
+                                        vProList = s.Projectiles.VirtInfoPools.Get();
+                                        s.Projectiles.NewProjectiles.Add(new NewProjectile { NewVirts = vProList, AmmoDef = ammoPattern, Muzzle = muzzle, PatternCycle = patternCycle, Direction = muzzle.DeviatedDir, Type = NewProjectile.Kind.Virtual });
+                                    }
+
+                                    MyEntity primeE = null;
+                                    MyEntity triggerE = null;
+
+                                    if (ammoPattern.Const.PrimeModel)
+                                        primeE = ammoPattern.Const.PrimeEntityPool.Get();
+
+                                    if (ammoPattern.Const.TriggerModel)
+                                        triggerE = s.TriggerEntityPool.Get();
+
+                                    float shotFade;
+                                    if (ammoPattern.Const.HasShotFade)
+                                    {
+                                        if (patternCycle > ammoPattern.AmmoGraphics.Lines.Tracer.VisualFadeStart)
+                                            shotFade = MathHelper.Clamp(((patternCycle - ammoPattern.AmmoGraphics.Lines.Tracer.VisualFadeStart)) * ammoPattern.Const.ShotFadeStep, 0, 1);
+                                        else if (System.DelayCeaseFire && CeaseFireDelayTick != tick)
+                                            shotFade = MathHelper.Clamp(((tick - CeaseFireDelayTick) - ammoPattern.AmmoGraphics.Lines.Tracer.VisualFadeStart) * ammoPattern.Const.ShotFadeStep, 0, 1);
+                                        else shotFade = 0;
+                                    }
+                                    else shotFade = 0;
+
+                                    var maxTrajectory = ammoPattern.Const.MaxTrajectoryGrows && FireCounter < ammoPattern.Trajectory.MaxTrajectoryTime ? ammoPattern.Const.TrajectoryStep * FireCounter : ammoPattern.Const.MaxTrajectory;
+                                    var info = s.Projectiles.VirtInfoPool.Get();
+                                    info.AvShot = s.Av.AvShotPool.Count > 0 ? s.Av.AvShotPool.Pop() : new AvShot();
+                                    info.InitVirtual(this, ammoPattern, primeE, triggerE, muzzle, maxTrajectory, shotFade);
+                                    vProList.Add(new NewVirtual { Info = info, Rotate = !ammoPattern.Const.RotateRealBeam && i == _nextVirtual, Muzzle = muzzle, VirtualId = _nextVirtual });
+                                }
+                                else
+                                {
+                                    s.Projectiles.NewProjectiles.Add(new NewProjectile { AmmoDef = ammoPattern, Muzzle = muzzle, PatternCycle = patternCycle, Direction = muzzle.DeviatedDir, Type = NewProjectile.Kind.Normal });
+                                    if (aConst.IsDrone) LiveDrones++;
+                                }
                             }
                         }
                         #endregion

@@ -271,6 +271,7 @@ namespace CoreSystems.Support
             [ProtoMember(12)] internal bool LockedSmartOnly;
             [ProtoMember(13)] internal bool UniqueTargetPerWeapon;
             [ProtoMember(14)] internal int MaxTrackingTime;
+            [ProtoMember(15)] internal bool ShootBlanks;
         }
 
 
@@ -301,8 +302,18 @@ namespace CoreSystems.Support
                     StopTracking,
                     LockDelay,
                     Init,
+                    Homing,
+                    TargetAligned,
                 }
 
+                public enum ResetConditions
+                {
+                    None,
+                    Home,
+                    Off,
+                    On,
+                    Reloaded
+                }
 
                 [ProtoMember(1)] internal string[] SubpartId;
                 [ProtoMember(2)] internal string BarrelId;
@@ -313,6 +324,7 @@ namespace CoreSystems.Support
                 [ProtoMember(7)] internal Dictionary<EventTriggers, RelMove[]> EventMoveSets;
                 [ProtoMember(8)] internal EventTriggers[] TriggerOnce;
                 [ProtoMember(9)] internal EventTriggers[] ResetEmissives;
+                [ProtoMember(10)] internal ResetConditions Resets;
 
             }
 

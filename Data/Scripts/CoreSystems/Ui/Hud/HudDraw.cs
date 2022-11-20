@@ -243,7 +243,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
                 var aConst = weapon.ActiveAmmoDef.AmmoDef.Const;
 
 
-                var report = weapon.ActiveAmmoDef.AmmoDef.Const.CanReportTargetStatus || comp.OnCustomTurret;
+                var report = weapon.ActiveAmmoDef.AmmoDef.Const.CanReportTargetStatus || comp.Ai.ControlComp != null;
 
                 var delayNoTarget = !weapon.System.WConst.GiveUpAfter || s.Tick - weapon.LastShootTick > weapon.System.WConst.DelayAfterBurst;
                 var notAnyBlock = comp.MasterOverrides.SubSystem != WeaponDefinition.TargetingDef.BlockTypes.Any;

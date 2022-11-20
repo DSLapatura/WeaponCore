@@ -184,6 +184,7 @@ namespace CoreSystems.Support
         public readonly bool NoSubParts;
         public readonly bool HasSpinPart;
         public readonly bool DebugMode;
+        public readonly bool ShootBlanks;
         public readonly bool HasProjectileSync;
         public readonly double MaxTargetSpeed;
         public readonly double AzStep;
@@ -255,6 +256,7 @@ namespace CoreSystems.Support
             UniqueTargetPerWeapon = Values.Targeting.UniqueTargetPerWeapon;
             AlwaysFireFull = values.HardPoint.Loading.FireFull;
             Prediction = Values.HardPoint.AimLeadingPrediction;
+            ShootBlanks = Values.Targeting.ShootBlanks;
             //LockOnFocus = Values.HardPoint.Ai.LockOnFocus && !Values.HardPoint.Ai.TrackTargets;
             LockOnFocus = false;
 

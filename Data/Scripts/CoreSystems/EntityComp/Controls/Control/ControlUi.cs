@@ -136,10 +136,10 @@ namespace CoreSystems
         internal static float GetMaxRangeControl(IMyTerminalBlock block)
         {
             var comp = block?.Components?.Get<CoreComponent>() as ControlSys.ControlComponent;
-            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready || comp.Platform.Control?.WeaponComp?.MasterAi == null)
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready || comp.Platform.Control.TopAi?.RootComp?.MasterAi == null)
                 return 0;
 
-            return (float) Math.Max(comp.Platform.Control.WeaponComp.MasterAi.MaxTargetingRange, 800);
+            return (float) Math.Max(comp.Platform.Control.TopAi.RootComp.MasterAi.MaxTargetingRange, 800);
         }
 
         internal static void RequestSetReportTargetControl(IMyTerminalBlock block, bool newValue)

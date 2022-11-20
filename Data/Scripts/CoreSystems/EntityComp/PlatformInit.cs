@@ -1,14 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using CoreSystems.Support;
-using Sandbox.Game.Entities;
-using Sandbox.Game.EntityComponents.Renders;
 using Sandbox.ModAPI;
-using VRage.Game.Components;
 using VRage.Game.Entity;
 using VRage.ModAPI;
 using VRageMath;
-using VRageRender;
 using static CoreSystems.Support.CoreComponent.Start;
 using static CoreSystems.Support.CoreComponent.CompTypeSpecific;
 using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetDef;
@@ -74,12 +70,9 @@ namespace CoreSystems.Platform
             State = PlatformState.Fresh;
             Comp = null;
 
-            if (Control?.WeaponComp != null) {
-                Control.WeaponComp.MasterComp = null;
-                Control.WeaponComp.PrimaryWeapon.RotorTurretTracking = false;
-            }
-
+            Control?.CleanControl();
         }
+
 
         internal PlatformState Init()
         {

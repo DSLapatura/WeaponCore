@@ -10,6 +10,8 @@ using Sandbox.ModAPI.Weapons;
 using VRage.Game;
 using VRage.Game.Entity;
 using VRageMath;
+using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
+
 namespace CoreSystems.Platform
 {
     public partial class Weapon
@@ -31,7 +33,6 @@ namespace CoreSystems.Platform
             internal readonly Dictionary<string, Vector3D> Positions = new Dictionary<string, Vector3D>();
             internal readonly int TotalWeapons;
 
-            internal ControlSys.ControlComponent MasterComp;
             internal ProtoWeaponOverrides MasterOverrides;
             internal Weapon PrimaryWeapon;
             internal int DefaultAmmoId;
@@ -55,7 +56,6 @@ namespace CoreSystems.Platform
             internal bool HasTracking;
             internal bool HasRequireTarget;
             internal bool HasDrone;
-            internal bool OnCustomTurret;
             internal bool ShootRequestDirty;
 
             internal WeaponComponent(Session session, MyEntity coreEntity, MyDefinitionId id)
@@ -366,13 +366,14 @@ namespace CoreSystems.Platform
                     {
                         Ai.ClosestFixedWeaponCompSqr = distSqr;
                         Ai.RootComp = this;
+                        UpdateControlInfo();
                     }
                 }
 
                 ActivePlayer = Ai.Construct.RootAi.Construct.ControllingPlayers.ContainsKey(Data.Repo.Values.State.PlayerId);
                 UpdatedState = true;
 
-                var overRides = !OnCustomTurret ? Data.Repo.Values.Set.Overrides : Ai.RootComp.MasterComp.Data.Repo.Values.Set.Overrides;
+                var overRides = Ai.ControlComp == null ? Data.Repo.Values.Set.Overrides : Ai.ControlComp.Data.Repo.Values.Set.Overrides;
                 var attackNeutrals = overRides.Neutrals;
                 var attackNoOwner = overRides.Unowned;
                 var attackFriends = overRides.Friendly;
@@ -1104,26 +1105,21 @@ namespace CoreSystems.Platform
 
             internal bool UpdateControlInfo()
             {
-                var cComp = Ai.RootComp?.MasterComp;
+                var cComp = Ai.ControlComp;
+                var oldOv = MasterOverrides;
                 var oldAi = MasterAi;
-                var oldComp = MasterComp;
-                OnCustomTurret = cComp != null;
-                if (cComp != null)
+                if (Ai.ControlComp != null && !Ai.ControlComp.CoreEntity.MarkedForClose)
                 {
                     MasterAi = cComp.Ai;
                     MasterOverrides = cComp.Data.Repo.Values.Set.Overrides;
-                    OnCustomTurret = true;
-                    MasterComp = cComp;
                 }
                 else
                 {
                     MasterAi = Ai;
                     MasterOverrides = Data.Repo.Values.Set.Overrides;
-                    OnCustomTurret = false;
-                    MasterComp = null;
                 }
 
-                return oldAi != MasterAi || oldComp != MasterComp;
+                return oldAi != MasterAi || oldOv != MasterOverrides;
             }
 
         }

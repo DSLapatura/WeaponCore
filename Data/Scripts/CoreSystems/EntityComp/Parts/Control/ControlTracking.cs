@@ -4,9 +4,10 @@ namespace CoreSystems.Platform
 {
     public partial class ControlSys : Part
     {
-        internal static bool TrajectoryEstimation(Ai topAi, ControlSys control, out Vector3D targetDirection)
+        internal static bool TrajectoryEstimation(ControlSys control, out Vector3D targetDirection)
         {
-            var weapon = control.WeaponComp.PrimaryWeapon;
+            var topAi = control.TopAi;
+            var weapon = topAi.RootComp.PrimaryWeapon;
             var cValues = control.Comp.Data.Repo.Values;
 
             Vector3D targetCenter;

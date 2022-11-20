@@ -54,8 +54,8 @@ namespace CoreSystems.Platform
 
                 UpdatedState = true;
 
-                if (Ai.Session.IsServer && Data.Repo.Values.Set.Range < 0 && Platform.Control.WeaponComp != null && Platform.Control.WeaponComp.Ai.MaxTargetingRange > 0)
-                    BlockUi.RequestSetRangeControl(TerminalBlock, (float)Platform.Control.WeaponComp.Ai.MaxTargetingRange);
+                if (Ai.Session.IsServer && Data.Repo.Values.Set.Range < 0 && Platform.Control.TopAi?.RootComp != null && Platform.Control.TopAi.RootComp.Ai.MaxTargetingRange > 0)
+                    BlockUi.RequestSetRangeControl(TerminalBlock, (float)Platform.Control.TopAi.RootComp.Ai.MaxTargetingRange);
 
                 DetectOtherSignals = false;
                 if (DetectOtherSignals)
@@ -304,11 +304,13 @@ namespace CoreSystems.Platform
                 }
             }
 
-            internal bool TrackTarget(Ai topAi, IMyMotorStator root, IMyMotorStator other, bool isRoot, ref Vector3D desiredDirection)
+            internal bool TrackTarget(IMyMotorStator root, IMyMotorStator other, ref Vector3D desiredDirection)
             {
-                var trackingWeapon = isRoot? Platform.Control.WeaponComp.PrimaryWeapon : topAi.RootComp.PrimaryWeapon;
-                RotorsMoving = true;
+                var topAi = Platform.Control.TopAi;
 
+                var trackingWeapon = topAi.RootComp.PrimaryWeapon;
+
+                RotorsMoving = true;
                 var targetPos = topAi.RotorTargetPosition;
                 var targetDistSqr = Vector3D.DistanceSquared(root.PositionComp.WorldAABB.Center, targetPos);
 
@@ -328,7 +330,7 @@ namespace CoreSystems.Platform
                 var rootOutsideLimits = false;
                 if (MyUtils.IsZero((float) rootAngle, (float)epsilon))
                 {
-                    if (Session.IsServer && isRoot)
+                    if (Session.IsServer)
                         root.TargetVelocityRad = 0;
                 }
                 else
@@ -341,13 +343,11 @@ namespace CoreSystems.Platform
                     if ((desiredAngle < root.LowerLimitRad && desiredAngle + MathHelper.TwoPi < root.UpperLimitRad) || (desiredAngle > root.UpperLimitRad && desiredAngle - MathHelper.TwoPi > root.LowerLimitRad))
                         rootAngle = -Math.Sign(rootAngle) * (MathHelper.TwoPi - Math.Abs(rootAngle));
 
-                    if (Session.IsServer && isRoot)
+                    if (Session.IsServer)
                         root.TargetVelocityRad = rootOutsideLimits ? 0 : Math.Abs(Controller.VelocityMultiplierAzimuthRpm) * (float)rootAngle;
                 }
 
-                var primaryWeapon = topAi.WeaponComps[0].Collection[0];
-
-                currentDirection = primaryWeapon.GetScope.Info.Direction;
+                currentDirection = trackingWeapon.GetScope.Info.Direction;
                 up = other.PositionComp.WorldMatrixRef.Up;
                 upZero = Vector3D.IsZero(up);
                 desiredFlat = upZero || Vector3D.IsZero(desiredDirection) ? Vector3D.Zero : desiredDirection - desiredDirection.Dot(up) * up;
@@ -371,14 +371,12 @@ namespace CoreSystems.Platform
                     if (Session.IsServer)
                         other.TargetVelocityRad = subOutsideLimits ? 0 : Math.Abs(Controller.VelocityMultiplierElevationRpm) * (float)subAngle;
                 }
-
                 if (rootAngle * rootAngle + subAngle * subAngle < deviationRads * deviationRads)
                 {
                     var scopeInfo = trackingWeapon.GetScope.Info;
                     var targetDir = targetPos - scopeInfo.Position;
 
-                    topAi.RotorTurretAimed = MathFuncs.IsDotProductWithinTolerance(ref scopeInfo.Direction, ref targetDir, topAi.Session.ApproachDegrees);
-                    trackingWeapon.Comp.MasterComp.Platform.Control.IsAimed = topAi.RotorTurretAimed;
+                    Platform.Control.IsAimed = MathFuncs.IsDotProductWithinTolerance(ref scopeInfo.Direction, ref targetDir, topAi.Session.ApproachDegrees);
                 }
 
                 return true;

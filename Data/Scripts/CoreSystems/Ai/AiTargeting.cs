@@ -41,7 +41,7 @@ namespace CoreSystems.Support
                 var request = w.ShootRequest;
                 var projectileRequest = request.Type == TargetType.Projectile;
                 var pCount = masterAi.LiveProjectile.Count;
-                var shootProjectile = pCount > 0 && (w.System.TrackProjectile || projectileRequest || w.Comp.OnCustomTurret) && mOverrides.Projectiles;
+                var shootProjectile = pCount > 0 && (w.System.TrackProjectile || projectileRequest || w.Comp.Ai.ControlComp != null) && mOverrides.Projectiles;
                 var projectilesFirst = !forceFocus && shootProjectile && w.System.Values.Targeting.Threats.Length > 0 && w.System.Values.Targeting.Threats[0] == Threat.Projectiles;
                 var onlyCheckProjectile = projectileRequest || w.ProjectilesNear && !w.Target.TargetChanged && w.Comp.Session.Count != w.Acquire.SlotId && !forceFocus;
                 var checkObstructions = w.TrackNonThreats && masterAi.Obstructions.Count > 0;

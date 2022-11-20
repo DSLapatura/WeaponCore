@@ -246,7 +246,7 @@ namespace CoreSystems.Support
             if (TargetChanged && Weapon != null)
             {
                 ChangeTick = Weapon.System.Session.Tick;
-                var targetObj = TargetEntity != null ? (object)TargetEntity : Projectile;
+                var targetObj = TargetEntity != null ? (object)TargetEntity.GetTopMostParent() : Projectile;
                 if (setTarget) {
 
                     if (Weapon.System.UniqueTargetPerWeapon && targetObj != null)

@@ -18,98 +18,103 @@ namespace CoreSystems.Support
     {
         internal void RegisterEvents(bool register = true)
         {
-            if (register)
+            try
             {
-                if (Registered)
-                    Log.Line("BaseComp RegisterEvents error");
-                //TODO change this
-                Registered = true;
-                if (IsBlock)
+                if (register)
                 {
-                    if (Type == CompType.Weapon)
-                        TerminalBlock.AppendingCustomInfo += AppendingCustomInfoWeapon;
-                    else if (TypeSpecific == CompTypeSpecific.Support)
-                        TerminalBlock.AppendingCustomInfo += AppendingCustomInfoSupport;
-                    else if (TypeSpecific == CompTypeSpecific.Upgrade)
-                        TerminalBlock.AppendingCustomInfo += AppendingCustomInfoUpgrade;
-                    else if (TypeSpecific == CompTypeSpecific.Control)
-                        TerminalBlock.AppendingCustomInfo += AppendingCustomInfoControl;
-
-                    Cube.IsWorkingChanged += IsWorkingChanged;
-                    IsWorkingChanged(Cube);
-                }
-
-                if (CoreInventory == null)
-                {
-                    if (TypeSpecific != CompTypeSpecific.Phantom && TypeSpecific != CompTypeSpecific.Control && !IsBomb)
-                        Log.Line("BlockInventory is null");
-                }
-                else
-                {
-                    CoreInventory.InventoryContentChanged += OnContentsChanged;
-                    Session.CoreInventoryItems[CoreInventory] = new ConcurrentDictionary<uint, BetterInventoryItem>();
-                    Session.ConsumableItemList[CoreInventory] = Session.BetterItemsListPool.Get();
-
-                    var items = CoreInventory.GetItems();
-                    for (int i = 0; i < items.Count; i++)
-                    {
-                        var bItem = Session.BetterInventoryItems.Get();
-                        var item = items[i];
-                        bItem.Amount = (int)item.Amount;
-                        bItem.Item = item;
-                        bItem.Content = item.Content;
-
-                        Session.CoreInventoryItems[CoreInventory][items[i].ItemId] = bItem;
-                    }
-                }
-            }
-            else
-            {
-                if (!Registered)
-                    Log.Line("BaseComp UnRegisterEvents error");
-
-                if (Registered)
-                {
+                    if (Registered)
+                        Log.Line("BaseComp RegisterEvents error");
                     //TODO change this
-                    Registered = false;
-
-                    if (IsBlock) {
-
+                    Registered = true;
+                    if (IsBlock)
+                    {
                         if (Type == CompType.Weapon)
-                            TerminalBlock.AppendingCustomInfo -= AppendingCustomInfoWeapon;
+                            TerminalBlock.AppendingCustomInfo += AppendingCustomInfoWeapon;
                         else if (TypeSpecific == CompTypeSpecific.Support)
-                            TerminalBlock.AppendingCustomInfo -= AppendingCustomInfoSupport;
+                            TerminalBlock.AppendingCustomInfo += AppendingCustomInfoSupport;
                         else if (TypeSpecific == CompTypeSpecific.Upgrade)
-                            TerminalBlock.AppendingCustomInfo -= AppendingCustomInfoUpgrade;
+                            TerminalBlock.AppendingCustomInfo += AppendingCustomInfoUpgrade;
                         else if (TypeSpecific == CompTypeSpecific.Control)
-                            TerminalBlock.AppendingCustomInfo -= AppendingCustomInfoControl;
-                        Cube.IsWorkingChanged -= IsWorkingChanged;
+                            TerminalBlock.AppendingCustomInfo += AppendingCustomInfoControl;
+
+                        Cube.IsWorkingChanged += IsWorkingChanged;
+                        IsWorkingChanged(Cube);
                     }
 
                     if (CoreInventory == null)
                     {
-                        if ((TypeSpecific != CompTypeSpecific.Control || TypeSpecific != CompTypeSpecific.Phantom) && !IsBomb)
+                        if (TypeSpecific != CompTypeSpecific.Phantom && TypeSpecific != CompTypeSpecific.Control && !IsBomb)
                             Log.Line("BlockInventory is null");
                     }
                     else
                     {
-                        CoreInventory.InventoryContentChanged -= OnContentsChanged;
-                        ConcurrentDictionary<uint, BetterInventoryItem> removedItems;
-                        MyConcurrentList<BetterInventoryItem> removedList;
+                        CoreInventory.InventoryContentChanged += OnContentsChanged;
+                        Session.CoreInventoryItems[CoreInventory] = new ConcurrentDictionary<uint, BetterInventoryItem>();
+                        Session.ConsumableItemList[CoreInventory] = Session.BetterItemsListPool.Get();
 
-                        if (Session.CoreInventoryItems.TryRemove(CoreInventory, out removedItems))
+                        var items = CoreInventory.GetItems();
+                        for (int i = 0; i < items.Count; i++)
                         {
-                            foreach (var inventoryItems in removedItems)
-                                Session.BetterInventoryItems.Return(inventoryItems.Value);
+                            var bItem = Session.BetterInventoryItems.Get();
+                            var item = items[i];
+                            bItem.Amount = (int)item.Amount;
+                            bItem.Item = item;
+                            bItem.Content = item.Content;
 
-                            removedItems.Clear();
+                            Session.CoreInventoryItems[CoreInventory][items[i].ItemId] = bItem;
+                        }
+                    }
+                }
+                else
+                {
+                    if (!Registered)
+                        Log.Line("BaseComp UnRegisterEvents error");
+
+                    if (Registered)
+                    {
+                        //TODO change this
+                        Registered = false;
+
+                        if (IsBlock)
+                        {
+
+                            if (Type == CompType.Weapon)
+                                TerminalBlock.AppendingCustomInfo -= AppendingCustomInfoWeapon;
+                            else if (TypeSpecific == CompTypeSpecific.Support)
+                                TerminalBlock.AppendingCustomInfo -= AppendingCustomInfoSupport;
+                            else if (TypeSpecific == CompTypeSpecific.Upgrade)
+                                TerminalBlock.AppendingCustomInfo -= AppendingCustomInfoUpgrade;
+                            else if (TypeSpecific == CompTypeSpecific.Control)
+                                TerminalBlock.AppendingCustomInfo -= AppendingCustomInfoControl;
+                            Cube.IsWorkingChanged -= IsWorkingChanged;
                         }
 
-                        if (Session.ConsumableItemList.TryRemove(CoreInventory, out removedList))
-                            Session.BetterItemsListPool.Return(removedList);
+                        if (CoreInventory == null)
+                        {
+                            if ((TypeSpecific != CompTypeSpecific.Control && TypeSpecific != CompTypeSpecific.Phantom) && !IsBomb)
+                                Log.Line("BlockInventory is null");
+                        }
+                        else
+                        {
+                            CoreInventory.InventoryContentChanged -= OnContentsChanged;
+                            ConcurrentDictionary<uint, BetterInventoryItem> removedItems;
+                            MyConcurrentList<BetterInventoryItem> removedList;
+
+                            if (Session.CoreInventoryItems.TryRemove(CoreInventory, out removedItems))
+                            {
+                                foreach (var inventoryItems in removedItems)
+                                    Session.BetterInventoryItems.Return(inventoryItems.Value);
+
+                                removedItems.Clear();
+                            }
+
+                            if (Session.ConsumableItemList.TryRemove(CoreInventory, out removedList))
+                                Session.BetterItemsListPool.Return(removedList);
+                        }
                     }
                 }
             }
+            catch (Exception ex) { Log.Line($"Exception in RegisterEvents: {ex}", null, true); }
         }
 
         private void OnContentsChanged(MyInventoryBase inv, MyPhysicalInventoryItem item, MyFixedPoint amount)
@@ -322,10 +327,10 @@ namespace CoreSystems.Support
 
                 stringBuilder.Append("\n==== ControlSys ====\n");
 
-                var ai = Platform.Control?.WeaponComp?.Ai;
+                var ai = Platform.Control?.TopAi?.RootComp?.Ai;
                 var initted = ai != null;
 
-                stringBuilder.Append($"Ai Detected:{initted && !Platform.Control.WeaponComp.Ai.MarkedForClose}\n\n");
+                stringBuilder.Append($"Ai Detected:{initted && !Platform.Control.TopAi.RootComp.Ai.MarkedForClose}\n\n");
 
                 if (initted)
                 {
