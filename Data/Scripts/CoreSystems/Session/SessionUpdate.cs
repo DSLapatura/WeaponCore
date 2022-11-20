@@ -14,6 +14,7 @@ using System;
 using Sandbox.ModAPI.Weapons;
 using SpaceEngineers.Game.ModAPI;
 using VRage.Game.Entity;
+using System.Runtime.Remoting.Metadata.W3cXsd2001;
 
 namespace CoreSystems
 {
@@ -22,11 +23,14 @@ namespace CoreSystems
         private void AiLoop()
         { //Fully Inlined due to keen's mod profiler
 
-            foreach (var ai in EntityAIs.Values)
+            foreach (var pair in EntityAIs)
             {
                 ///
                 /// GridAi update section
                 ///
+
+                var ai = pair.Value;
+
                 ai.MyProjectiles = 0;
                 var activeTurret = false;
 
@@ -90,7 +94,6 @@ namespace CoreSystems
 
                 construct.HadFocus = rootConstruct.Data.Repo.FocusData.Target > 0 && MyEntities.TryGetEntityById(rootConstruct.Data.Repo.FocusData.Target, out rootConstruct.LastFocusEntity);
                 var constructResetTick = rootConstruct.TargetResetTick == Tick;
-
                 ///
                 /// Upgrade update section
                 ///
@@ -113,6 +116,7 @@ namespace CoreSystems
                         var u = uComp.Platform.Upgrades[j];
                     }
                 }
+
                 ///
                 /// Support update section
                 ///
@@ -267,7 +271,7 @@ namespace CoreSystems
                             if (el == null && cValues.Other.Rotor2 > 0 && MyEntities.TryGetEntityById(cValues.Other.Rotor2, out rotorEnt))
                                 el = (IMyMotorStator)rotorEnt;
                         }
-                        
+
                         if (az == null || el == null)
                             continue;
 
@@ -289,43 +293,40 @@ namespace CoreSystems
 
                         }
 
-                        var controlPart = cComp.Platform.Control;
-                        controlPart.IsAimed = false;
-                        controlPart.TopAi = null;
+                        var cPart = cComp.Platform.Control;
+                        cPart.IsAimed = false;
+                        if (cPart.TopAi != null)
+                            cPart.TopAi.ControlComp = null;
+                        cPart.TopAi = null;
+                        cPart.BaseMap = az.TopGrid == el.CubeGrid ? az : el;
+                        cPart.OtherMap = cPart.BaseMap == az ? el : az;
+                        var topGrid = cPart.BaseMap.TopGrid as MyCubeGrid;
+                        var otherGrid = cPart.OtherMap.TopGrid as MyCubeGrid;
 
-                        controlPart.BaseMap = az.TopGrid == el.CubeGrid ? az : el;
-                        controlPart.OtherMap = controlPart.BaseMap == az ? el : az;
-                        var topGrid = controlPart.BaseMap.TopGrid as MyCubeGrid;
-                        var otherGrid = controlPart.OtherMap.TopGrid as MyCubeGrid;
-                        Ai topAi;
-                        if (controlPart.BaseMap == null || controlPart.OtherMap == null  || topGrid == null || otherGrid == null || !EntityAIs.TryGetValue(otherGrid, out topAi) || topAi.RootComp == null) {
+                        if (cPart.BaseMap == null || cPart.OtherMap == null  || topGrid == null || topGrid.MarkedForClose || otherGrid == null || otherGrid.MarkedForClose || !EntityAIs.TryGetValue(otherGrid, out cPart.TopAi))  {
                             if (cComp.RotorsMoving)
                                 cComp.StopRotors();
 
-                            if (controlPart.TopAi != null)
-                                controlPart.CleanControl();
-
+                            if (cPart.TopAi != null)
+                                cPart.CleanControl();
                             continue;
                         }
 
-                        controlPart.TopAi = topAi;
+                        cPart.TopAi.ControlComp = cComp;
+                        cPart.TopAi.RotorCommandTick = Tick;
+                        
+                        if (cPart.TopAi.MaxTargetingRange > ai.MaxTargetingRange)
+                            cComp.ReCalculateMaxTargetingRange(cPart.TopAi.MaxTargetingRange);
 
-                        if (Tick180) {
+                        if (Tick180)
+                        {
                             cComp.ToolsAndWeapons.Clear();
-                            foreach (var comp in topAi.WeaponComps)
+                            foreach (var comp in cPart.TopAi.WeaponComps)
                                 cComp.ToolsAndWeapons.Add(comp.CoreEntity);
-                            foreach (var tool in topAi.Tools)
-                                cComp.ToolsAndWeapons.Add((MyEntity) tool);
+                            foreach (var tool in cPart.TopAi.Tools)
+                                cComp.ToolsAndWeapons.Add((MyEntity)tool);
                         }
 
-                        if (controlPart.TopAi.RootComp.Ai.MaxTargetingRange > ai.MaxTargetingRange)
-                            cComp.ReCalculateMaxTargetingRange(controlPart.TopAi.RootComp.Ai.MaxTargetingRange);
-
-                        topAi.RotorCommandTick = Tick;
-                        controlPart.TopAi.RootComp.Ai.ControlComp = cComp;
-                        controlPart.TopAi.RootComp.PrimaryWeapon.RotorTurretTracking = true;
-                        
-                        var isUnderControl = cComp.Controller.IsUnderControl;
                         var cPlayerId = cValues.State.PlayerId;
                         Ai.PlayerController pControl;
                         pControl.ControlEntity = null;
@@ -333,9 +334,9 @@ namespace CoreSystems
                         var activePlayer = PlayerId == cPlayerId && playerControl;
 
                         var hasControl = activePlayer && pControl.ControlEntity == cComp.CoreEntity;
-                        topAi.RotorManualControlId = hasControl ? PlayerId : topAi.RotorManualControlId != -2 ? -1 : -2;
+                        cPart.TopAi.RotorManualControlId = hasControl ? PlayerId : cPart.TopAi.RotorManualControlId != -2 ? -1 : -2;
                         var cMode = cValues.Set.Overrides.Control;
-                        if (HandlesInput && (cPlayerId == PlayerId || !controlPart.Comp.HasAim && ai.RotorManualControlId == PlayerId))
+                        if (HandlesInput && (cPlayerId == PlayerId || !cPart.Comp.HasAim && ai.RotorManualControlId == PlayerId))
                         {
                             var overrides = cValues.Set.Overrides;
 
@@ -343,39 +344,43 @@ namespace CoreSystems
                             var track = !InMenu && (playerAim && !UiInput.CameraBlockView || pControl.ControlEntity is IMyTurretControlBlock || UiInput.CameraChannelId > 0 && UiInput.CameraChannelId == overrides.CameraChannel);
 
                             if (cValues.State.TrackingReticle != track)
-                                TrackReticleUpdateCtc(controlPart.Comp, track);
+                                TrackReticleUpdateCtc(cPart.Comp, track);
                         }
 
-                        if (isUnderControl)
+                        if (cComp.Controller.IsUnderControl)
                         {
                             cComp.RotorsMoving = true;
                             continue;
                         }
 
-                        if (!cComp.Data.Repo.Values.Set.Overrides.AiEnabled || topAi.RootComp.PrimaryWeapon.Comp.CoreEntity.MarkedForClose) {
+                        if (!cComp.Data.Repo.Values.Set.Overrides.AiEnabled || !cPart.RefreshRootComp()) {
+                            
                             if (cComp.RotorsMoving)
                                 cComp.StopRotors();
                             continue;
                         }
 
-                        var validTarget = controlPart.TopAi.RootComp.PrimaryWeapon.Target.TargetState == TargetStates.IsEntity || controlPart.TopAi.RootComp.PrimaryWeapon.Target.TargetState == TargetStates.IsFake;
+                        var primaryWeapon = cPart.TopAi.RootComp.PrimaryWeapon;
+                        primaryWeapon.RotorTurretTracking = true;
+
+                        var validTarget = primaryWeapon.Target.TargetState == TargetStates.IsEntity || primaryWeapon.Target.TargetState == TargetStates.IsFake;
 
                         var noTarget = false;
                         var desiredDirection = Vector3D.Zero;
                         
                         if (!validTarget)
                             noTarget = true;
-                        else if (!ControlSys.TrajectoryEstimation(controlPart, out desiredDirection))
+                        else if (!ControlSys.TrajectoryEstimation(cPart, out desiredDirection))
                         {
                             noTarget = true;
                         }
 
                         if (noTarget) {
-                            
-                            topAi.RotorTargetPosition = Vector3D.MaxValue;
 
-                            if (IsServer && controlPart.TopAi.RootComp.PrimaryWeapon.Target.HasTarget)
-                                controlPart.TopAi.RootComp.PrimaryWeapon.Target.Reset(Tick, States.ServerReset);
+                            cPart.TopAi.RotorTargetPosition = Vector3D.MaxValue;
+
+                            if (IsServer && primaryWeapon.Target.HasTarget)
+                                primaryWeapon.Target.Reset(Tick, States.ServerReset);
 
                             if (cComp.RotorsMoving)
                                 cComp.StopRotors();
@@ -388,10 +393,7 @@ namespace CoreSystems
                     }
 
                 }
-                catch (Exception ex)
-                {
-                    Log.Line($"Caught exception in Control loop: {ex}");
-                }
+                catch (Exception ex) { Log.Line($"Exception in CTC: {ex}", null, true); }
 
                 ///
                 /// WeaponComp update section
@@ -408,7 +410,7 @@ namespace CoreSystems
                     var masterChange = false;
                     if (ai.ControlComp != null)
                         masterChange = wComp.UpdateControlInfo();
-                    
+
                     if (ai.DbUpdated || !wComp.UpdatedState || masterChange) 
                         wComp.DetectStateChanges(masterChange);
 
@@ -739,6 +741,7 @@ namespace CoreSystems
 
                 if (Tick - VanillaTurretTick < 3 && ai.TopEntityMap.Targeting != null)
                     ai.TopEntityMap.Targeting.AllowScanning = false;
+
             }
 
             if (DbTask.IsComplete && DbsToUpdate.Count > 0 && !DbUpdating)

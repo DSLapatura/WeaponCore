@@ -359,17 +359,6 @@ namespace CoreSystems.Platform
                     Ai.DetectOtherSignals = false;
                 }
 
-                if (IsBlock && !HasAim)
-                {
-                    var distSqr = Vector3.DistanceSquared(Cube.PositionComp.LocalAABB.Center, TopEntity.PositionComp.LocalAABB.Center);
-                    if (distSqr < Ai.ClosestFixedWeaponCompSqr)
-                    {
-                        Ai.ClosestFixedWeaponCompSqr = distSqr;
-                        Ai.RootComp = this;
-                        UpdateControlInfo();
-                    }
-                }
-
                 ActivePlayer = Ai.Construct.RootAi.Construct.ControllingPlayers.ContainsKey(Data.Repo.Values.State.PlayerId);
                 UpdatedState = true;
 

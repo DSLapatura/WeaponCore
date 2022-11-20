@@ -54,9 +54,6 @@ namespace CoreSystems.Platform
 
                 UpdatedState = true;
 
-                if (Ai.Session.IsServer && Data.Repo.Values.Set.Range < 0 && Platform.Control.TopAi?.RootComp != null && Platform.Control.TopAi.RootComp.Ai.MaxTargetingRange > 0)
-                    BlockUi.RequestSetRangeControl(TerminalBlock, (float)Platform.Control.TopAi.RootComp.Ai.MaxTargetingRange);
-
                 DetectOtherSignals = false;
                 if (DetectOtherSignals)
                     Ai.DetectOtherSignals = true;

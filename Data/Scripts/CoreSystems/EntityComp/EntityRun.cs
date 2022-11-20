@@ -214,13 +214,7 @@ namespace CoreSystems.Support
                 }
 
                 if (Type == CompType.Control)
-                {
-                    var cComp = ((ControlSys.ControlComponent) this);
-                    if (cComp.Platform.Control.TopAi?.RootComp != null) {
-                        cComp.Platform.Control.TopAi.RootComp.Ai.ControlComp = null;
-                        cComp.Platform.Control.TopAi.RootComp.PrimaryWeapon.RotorTurretTracking = false;
-                    }
-                }
+                    ((ControlSys.ControlComponent)this).Platform.Control.CleanControl();
 
                 if (Type == CompType.Weapon)
                     ((Weapon.WeaponComponent)this).OnAddedToSceneWeaponTasks(firstRun);

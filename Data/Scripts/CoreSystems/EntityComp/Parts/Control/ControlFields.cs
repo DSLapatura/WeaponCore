@@ -1,6 +1,9 @@
 ﻿using CoreSystems.Support;
 using Sandbox.ModAPI;
+using System.Runtime.Remoting.Metadata.W3cXsd2001;
 using VRage.Utils;
+using VRageMath;
+
 namespace CoreSystems.Platform
 {
     public partial class ControlSys : Part
@@ -39,6 +42,25 @@ namespace CoreSystems.Platform
 
                 TopAi = null;
             }
+        }
+
+        internal bool RefreshRootComp()
+        {
+            for (int i = 0; i < TopAi.WeaponComps.Count; i++)
+            {
+                var comp = TopAi.WeaponComps[i];
+                if (comp.Ai.ControlComp != null)
+                {
+                    var distSqr = Vector3.DistanceSquared(comp.Cube.PositionComp.LocalAABB.Center, comp.TopEntity.PositionComp.LocalAABB.Center);
+                    if (distSqr < comp.Ai.ClosestFixedWeaponCompSqr)
+                    {
+                        comp.Ai.ClosestFixedWeaponCompSqr = distSqr;
+                        comp.Ai.RootComp = comp;
+                        comp.UpdateControlInfo();
+                    }
+                }
+            }
+            return TopAi.RootComp?.CoreEntity != null && !TopAi.RootComp.CoreEntity.MarkedForClose;
         }
     }
 }

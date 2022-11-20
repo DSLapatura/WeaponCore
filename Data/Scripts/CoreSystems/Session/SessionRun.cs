@@ -234,8 +234,6 @@ namespace CoreSystems
                         SendEwaredBlocks();
                     DsUtil.Complete("network1", true);
                 }
-
-
             }
             catch (Exception ex) { Log.Line($"Exception in SessionSim: {ex}", null, true); }
         }
