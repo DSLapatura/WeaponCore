@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using CoreSystems.Platform;
 using Sandbox.Game.Entities;
+using Sandbox.Game.World;
 using Sandbox.ModAPI;
 using VRage.Collections;
 using VRage.Game;
@@ -9,20 +10,30 @@ using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRage.Utils;
 using VRageMath;
-using static CoreSystems.Support.RunAv;
+using VRageRender;
+using static VRageRender.MyBillboard;
 
 namespace CoreSystems.Support
 {
-    internal class AvShot
+    public class AvShot
     {
+        public AvShot(Session session)
+        {
+            Session = session;
+            QuadCache.Owner = this;
+        }
+
+        internal readonly Session Session;
+        internal readonly Queue<Shrink> TracerShrinks = new Queue<Shrink>(8);
+        internal readonly QuadCache QuadCache = new QuadCache();
+        internal readonly MyQueue<AfterTrail> TrailSteps = new MyQueue<AfterTrail>();
         internal WeaponDefinition.AmmoDef AmmoDef;
         internal MyEntity PrimeEntity;
         internal MyEntity TriggerEntity;
         internal MyEntity3DSoundEmitter FireEmitter;
         internal MyEntity3DSoundEmitter TravelEmitter;
-        internal MyQueue<AfterGlow> GlowSteps = new MyQueue<AfterGlow>(64);
-        internal Queue<Shrinks> TracerShrinks = new Queue<Shrinks>(64);
-        internal List<Vector3D> Offsets = new List<Vector3D>(64);
+
+        internal List<Vector3D> Offsets;
         internal MyParticleEffect AmmoEffect;
         internal MyParticleEffect FieldEffect;
         internal Weapon Weapon;
@@ -66,7 +77,7 @@ namespace CoreSystems.Support
         internal double MaxTrajectory;
         internal float ShotFade;
         internal float TrailScaler;
-        internal float GlowShrinkSize;
+        internal float TrailShrinkSize;
         internal float DistanceToLine;
         internal ulong UniqueMuzzleId;
         internal int LifeTime;
@@ -74,6 +85,7 @@ namespace CoreSystems.Support
         internal int TracerStep;
         internal int TracerSteps;
         internal int DecayTime;
+        internal int ActiveBillBoards;
         internal uint LastTick;
         internal uint LastHit = uint.MaxValue / 2;
         internal ParticleState HitParticle;
@@ -100,7 +112,6 @@ namespace CoreSystems.Support
         internal BoundingSphereD ModelSphereCurrent;
         internal MatrixD TriggerMatrix = MatrixD.Identity;
         internal BoundingSphereD TestSphere = new BoundingSphereD(Vector3D.Zero, 200f);
-        internal Shrinks EmptyShrink;
 
         public bool SegmentGaped;
         public bool TextureReverse;
@@ -167,17 +178,16 @@ namespace CoreSystems.Support
             OriginDir = originDir;
             StageIdx = info.Storage.RequestedStage;
             var defaultDecayTime = AmmoDef.Const.DecayTime;
-            var s = Weapon.System.Session;
-            if (defaultDecayTime > 1 && s.ClientAvLevel > 0)
+            if (defaultDecayTime > 1 && Session.ClientAvLevel > 0)
             {
                 if (AmmoDef.Const.RareTrail)
                     DecayTime = defaultDecayTime;
                 else if (AmmoDef.Const.ShortTrail)
-                    DecayTime = MathHelper.Clamp(defaultDecayTime - s.ClientAvLevel, 1, int.MaxValue);
-                else if (AmmoDef.Const.TinyTrail && s.ClientAvLevel > 5)
-                    DecayTime = MathHelper.Clamp(defaultDecayTime + 5 - s.ClientAvLevel, 1, int.MaxValue);
+                    DecayTime = MathHelper.Clamp(defaultDecayTime - Session.ClientAvLevel, 1, int.MaxValue);
+                else if (AmmoDef.Const.TinyTrail && Session.ClientAvLevel > 5)
+                    DecayTime = MathHelper.Clamp(defaultDecayTime + 5 - Session.ClientAvLevel, 1, int.MaxValue);
                 else if (AmmoDef.Const.LongTrail)
-                    DecayTime = MathHelper.Clamp(defaultDecayTime /s.ClientAvDivisor, 1, int.MaxValue);
+                    DecayTime = MathHelper.Clamp(defaultDecayTime / Session.ClientAvDivisor, 1, int.MaxValue);
                 else
                     DecayTime = defaultDecayTime;
             }
@@ -191,36 +201,15 @@ namespace CoreSystems.Support
             {
                 MaxGlowLength = MathHelperD.Clamp(DecayTime * MaxSpeed * MyEngineConstants.PHYSICS_STEP_SIZE_IN_SECONDS, 0.1f, MaxTrajectory);
                 Trail = AmmoDef.AmmoGraphics.Lines.Trail.Back ? TrailState.Back : Trail = TrailState.Front;
-                GlowShrinkSize = !AmmoDef.AmmoGraphics.Lines.Trail.UseColorFade ? AmmoDef.Const.TrailWidth / DecayTime : 1f / DecayTime;
+                TrailShrinkSize = !AmmoDef.AmmoGraphics.Lines.Trail.UseColorFade ? AmmoDef.Const.TrailWidth / DecayTime : 1f / DecayTime;
                 Back = Trail == TrailState.Back;
             }
             else Trail = TrailState.Off;
             TotalLength = MathHelperD.Clamp(MaxTracerLength + MaxGlowLength, 0.1f, MaxTrajectory);
 
             AvInfoCache infoCache;
-            if (AmmoDef.Const.IsBeamWeapon && AmmoDef.Const.TracerMode != AmmoConstants.Texture.Normal && s.AvShotCache.TryGetValue(info.UniqueMuzzleId, out infoCache))
+            if (AmmoDef.Const.IsBeamWeapon && AmmoDef.Const.TracerMode != AmmoConstants.Texture.Normal && Session.AvShotCache.TryGetValue(info.UniqueMuzzleId, out infoCache))
                 UpdateCache(infoCache);
-        }
-        static void ShellSort(List<DeferedAv> list)
-        {
-            int length = list.Count;
-
-            for (int h = length / 2; h > 0; h /= 2)
-            {
-                for (int i = h; i < length; i += 1)
-                {
-                    var tempValue = list[i];
-                    var temp = Vector3D.DistanceSquared(tempValue.TracerFront, tempValue.AvShot.Weapon.System.Session.CameraPos);
-
-                    int j;
-                    for (j = i; j >= h && Vector3D.DistanceSquared(list[j - h].TracerFront, tempValue.AvShot.Weapon.System.Session.CameraPos) > temp; j -= h)
-                    {
-                        list[j] = list[j - h];
-                    }
-
-                    list[j] = tempValue;
-                }
-            }
         }
 
         internal static void DeferedAvStateUpdates(Session s)
@@ -419,7 +408,7 @@ namespace CoreSystems.Support
 
                 var backAndGrowing = a.Back && a.Tracer == TracerState.Grow;
                 if (a.Trail != TrailState.Off && !backAndGrowing && lineOnScreen)
-                    a.RunGlow(ref a.EmptyShrink, false, saveHit);
+                    a.RunTrail(null, false, saveHit);
 
                 if (aConst.AmmoParticle && a.Active)
                 {
@@ -448,10 +437,10 @@ namespace CoreSystems.Support
             s.Projectiles.DeferedAvDraw.Clear();
         }
 
-        internal void RunGlow(ref Shrinks shrink, bool shrinking = false, bool hit = false)
+        internal void RunTrail(Shrink shrink, bool shrinking = false, bool hit = false)
         {
-            var glowCount = GlowSteps.Count;
-            var firstStep = glowCount == 0;
+            var trailCount = TrailSteps.Count;
+            var firstStep = trailCount == 0;
             var onlyStep = firstStep && LastStep;
             var extEnd = !Back && Hitting;
             var extStart = Back && firstStep && VisualLength < ShortStepSize;
@@ -474,30 +463,30 @@ namespace CoreSystems.Support
                 backPos = Back && !extStart ? TracerBack : TracerFront + pastStep;
             }
 
-            if (glowCount <= DecayTime)
+            if (trailCount <= DecayTime)
             {
-                var glow = Weapon.System.Session.Av.Glows.Count > 0 ? Weapon.System.Session.Av.Glows.Pop() : new AfterGlow();
-
-                glow.TailPos = backPos;
-                GlowSteps.Enqueue(glow);
-                ++glowCount;
+                var av = Session.Av;
+                var trail = av.Trails.Count > 0 ? av.Trails.Pop() : new AfterTrail();
+                trail.TailPos = backPos;
+                TrailSteps.Enqueue(trail);
+                ++trailCount;
             }
-            var idxStart = glowCount - 1;
+            var idxStart = trailCount - 1;
             var idxEnd = 0;
             for (int i = idxStart; i >= idxEnd; i--)
             {
-                var g = GlowSteps[i];
+                var t = TrailSteps[i];
 
                 if (i != idxEnd)
                 {
                     var extend = extEnd && i == idxStart;
-                    g.Parent = GlowSteps[i - 1];
-                    g.Line = new LineD(extend ? g.Parent.TailPos: g.Parent.TailPos += velStep, extend ? TracerFront + velStep : g.TailPos);
+                    t.Parent = TrailSteps[i - 1];
+                    t.Line = new LineD(extend ? t.Parent.TailPos: t.Parent.TailPos += velStep, extend ? TracerFront + velStep : t.TailPos);
                 }
                 else if (i != idxStart)
-                    g.Line = new LineD(g.Line.From + velStep, g.TailPos);
+                    t.Line = new LineD(t.Line.From + velStep, t.TailPos);
                 else
-                    g.Line = new LineD(frontPos, backPos);
+                    t.Line = new LineD(frontPos, backPos);
             }
         }
 
@@ -507,10 +496,9 @@ namespace CoreSystems.Support
             for (int i = 0; i < TracerSteps; i++)
             {
                 var last = (i == TracerSteps - 1);
-                var shrunk = GetLine();
-                if (shrunk.HasValue)
+                var shrink = GetLine();
+                if (shrink != null)
                 {
-                    if (shrunk.Value.Reduced < 0.1) continue;
 
                     var color = AmmoDef.AmmoGraphics.Lines.Tracer.Color;
                     if (AmmoDef.Const.LineColorVariance)
@@ -533,8 +521,11 @@ namespace CoreSystems.Support
                         width += randomValue;
                     }
 
-                    width = (float)Math.Max(width, 0.10f * Weapon.System.Session.ScaleFov * (DistanceToLine / 100));
-                    TracerShrinks.Enqueue(new Shrinks { NewFront = shrunk.Value.NewTracerFront, Color = color, Length = shrunk.Value.Reduced, Thickness = width, Last = last });
+                    width = (float)Math.Max(width, 0.10f * Session.ScaleFov * (DistanceToLine / 100));
+                    shrink.Color = color;
+                    shrink.Thickness = width;
+                    shrink.Last = last;
+                    TracerShrinks.Enqueue(shrink);
                 }
             }
         }
@@ -550,14 +541,21 @@ namespace CoreSystems.Support
                 Tracer = TracerState.Off;
         }
 
-        internal Shrunk? GetLine()
+        internal Shrink GetLine()
         {
             if (TracerStep > 0)
             {
                 Hit.LastHit += ShootVelStep;
                 var newTracerFront = Hit.LastHit + -(VisualDir * (TracerStep * StepSize));
                 var reduced = TracerStep-- * StepSize;
-                return new Shrunk(ref newTracerFront, (float)reduced);
+                if (reduced >= 0.1)
+                {
+                    var av = Session.Av;
+                    var shrink = av.Shrinks.Count > 0 ? av.Shrinks.Pop() : new Shrink();
+                    shrink.NewFront = newTracerFront;
+                    shrink.Length = (float) reduced;
+                    return shrink;
+                }
             }
             return null;
         }
@@ -565,12 +563,12 @@ namespace CoreSystems.Support
 
         internal void LineVariableEffects()
         {
-            if (AmmoDef.Const.TracerMode != AmmoConstants.Texture.Normal && TextureLastUpdate != Weapon.System.Session.Tick)
+            if (AmmoDef.Const.TracerMode != AmmoConstants.Texture.Normal && TextureLastUpdate != Session.Tick)
             {
-                if (Weapon.System.Session.Tick - TextureLastUpdate > 1)
+                if (Session.Tick - TextureLastUpdate > 1)
                     AmmoInfoClean();
 
-                TextureLastUpdate = Weapon.System.Session.Tick;
+                TextureLastUpdate = Session.Tick;
 
                 switch (AmmoDef.Const.TracerMode) {
                     case AmmoConstants.Texture.Resize:
@@ -622,7 +620,7 @@ namespace CoreSystems.Support
                 }
 
                 if (AmmoDef.Const.IsBeamWeapon)
-                    Weapon.System.Session.AvShotCache[UniqueMuzzleId] = new AvInfoCache {SegMeasureStep = SegMeasureStep, SegmentGaped = SegmentGaped, SegmentLenTranserved = SegmentLenTranserved, TextureIdx = TextureIdx, TextureLastUpdate = TextureLastUpdate, TextureReverse = TextureReverse};
+                    Session.AvShotCache[UniqueMuzzleId] = new AvInfoCache {SegMeasureStep = SegMeasureStep, SegmentGaped = SegmentGaped, SegmentLenTranserved = SegmentLenTranserved, TextureIdx = TextureIdx, TextureLastUpdate = TextureLastUpdate, TextureReverse = TextureReverse};
             }
 
             var color = AmmoDef.Const.LinearTracerColor;
@@ -668,7 +666,7 @@ namespace CoreSystems.Support
 
                 var segStart = AmmoDef.Const.LinearSegmentColorStart;
                 var segEnd = AmmoDef.Const.LinearSegmentColorEnd;
-                var randomValue = MyUtils.GetRandomFloat(cv.Start, cv.End);
+                //var randomValue = MyUtils.GetRandomFloat(cv.Start, cv.End);
                 Vector4.Lerp(ref segStart, ref segEnd, (float)result, out segmentColor);
             }
 
@@ -686,21 +684,21 @@ namespace CoreSystems.Support
             }
 
             var checkPos = TracerFront + (-VisualDir * TotalLength);
-            var closestPointOnLine = MyUtils.GetClosestPointOnLine(ref TracerFront, ref checkPos, ref Weapon.System.Session.CameraPos);
-            DistanceToLine = (float)Vector3D.Distance(closestPointOnLine, Weapon.System.Session.CameraMatrix.Translation);
+            var closestPointOnLine = MyUtils.GetClosestPointOnLine(ref TracerFront, ref checkPos, ref Session.CameraPos);
+            DistanceToLine = (float)Vector3D.Distance(closestPointOnLine, Session.CameraMatrix.Translation);
 
             if (AmmoDef.Const.IsBeamWeapon && Vector3D.DistanceSquared(TracerFront, TracerBack) > 640000)
             {
                 checkPos = TracerFront + (-VisualDir * (TotalLength - MathHelperD.Clamp(DistanceToLine * 6, DistanceToLine, MaxTrajectory * 0.5)));
-                closestPointOnLine = MyUtils.GetClosestPointOnLine(ref TracerFront, ref checkPos, ref Weapon.System.Session.CameraPos);
-                DistanceToLine = (float)Vector3D.Distance(closestPointOnLine, Weapon.System.Session.CameraMatrix.Translation);
+                closestPointOnLine = MyUtils.GetClosestPointOnLine(ref TracerFront, ref checkPos, ref Session.CameraPos);
+                DistanceToLine = (float)Vector3D.Distance(closestPointOnLine, Session.CameraMatrix.Translation);
             }
 
             double scale = 0.1f;
-            var widthScaler = !Weapon.System.Session.GunnerBlackList ? 1f : (Weapon.System.Session.ScaleFov * 1.3f);
+            var widthScaler = !Session.GunnerBlackList ? 1f : (Session.ScaleFov * 1.3f);
 
-            TracerWidth = MathHelperD.Clamp(scale * Weapon.System.Session.ScaleFov * (DistanceToLine / 100), tracerWidth * widthScaler, double.MaxValue);
-            TrailWidth = MathHelperD.Clamp(scale * Weapon.System.Session.ScaleFov * (DistanceToLine / 100), trailWidth * widthScaler, double.MaxValue);
+            TracerWidth = MathHelperD.Clamp(scale * Session.ScaleFov * (DistanceToLine / 100), tracerWidth * widthScaler, double.MaxValue);
+            TrailWidth = MathHelperD.Clamp(scale * Session.ScaleFov * (DistanceToLine / 100), trailWidth * widthScaler, double.MaxValue);
 
             TrailScaler = ((float)TrailWidth / trailWidth);
 
@@ -722,8 +720,12 @@ namespace CoreSystems.Support
             TracerLengthSqr = tracerLength * tracerLength;
             var maxOffset = AmmoDef.Const.MaxOffset;
             var minLength = AmmoDef.Const.MinOffsetLength;
-            var dyncMaxLength = MathHelperD.Clamp(AmmoDef.Const.MaxOffsetLength * Weapon.System.Session.ClientAvDivisor, 0, Math.Max(tracerLength * 0.5d, AmmoDef.Const.MaxOffsetLength));
+            var dyncMaxLength = MathHelperD.Clamp(AmmoDef.Const.MaxOffsetLength * Session.ClientAvDivisor, 0, Math.Max(tracerLength * 0.5d, AmmoDef.Const.MaxOffsetLength));
             var maxLength = MathHelperD.Clamp(dyncMaxLength, 0, tracerLength);
+            var av = Session.Av;
+
+            if (Offsets == null)
+                Offsets = av.OffSetLists.Count > 0 ? av.OffSetLists.Pop() : new List<Vector3D>();
 
             double currentForwardDistance = 0;
             while (currentForwardDistance <= tracerLength)
@@ -746,19 +748,22 @@ namespace CoreSystems.Support
             var tracerLengthSqr = tracerLength * tracerLength;
             var maxOffset = AmmoDef.Const.MaxOffset;
             var minLength = AmmoDef.Const.MinOffsetLength;
-            var dyncMaxLength = MathHelperD.Clamp(AmmoDef.Const.MaxOffsetLength * Weapon.System.Session.ClientAvDivisor, 0, Math.Max(tracerLength * 0.5d, AmmoDef.Const.MaxOffsetLength));
+            var dyncMaxLength = MathHelperD.Clamp(AmmoDef.Const.MaxOffsetLength * Session.ClientAvDivisor, 0, Math.Max(tracerLength * 0.5d, AmmoDef.Const.MaxOffsetLength));
 
             var maxLength = MathHelperD.Clamp(dyncMaxLength, 0, tracerLength);
 
             double currentForwardDistance = 0;
+            var av = Session.Av;
 
             while (currentForwardDistance < tracerLength)
             {
                 currentForwardDistance += MyUtils.GetRandomDouble(minLength, maxLength);
                 var lateralXDistance = MyUtils.GetRandomDouble(maxOffset * -1, maxOffset);
                 var lateralYDistance = MyUtils.GetRandomDouble(maxOffset * -1, maxOffset);
+
                 Offsets.Add(new Vector3D(lateralXDistance, lateralYDistance, currentForwardDistance * -1));
             }
+
             for (int i = 0; i < Offsets.Count; i++)
             {
                 Vector3D fromBeam;
@@ -778,17 +783,27 @@ namespace CoreSystems.Support
                 Vector3 dir = (toBeam - fromBeam);
                 var length = dir.Length();
                 var normDir = dir / length;
+                var qc = av.QuadCachePool.Count > 0 ? av.QuadCachePool.Pop() : new QuadCache();
 
-                var line = Weapon.Comp.Session.Av.QuadReqPool.Count > 0 ? Weapon.Comp.Session.Av.QuadReqPool.Pop() : new QuadReqCache();
-                line.Material = offsetMaterial;
-                line.Color = color;
-                line.StartPos = fromBeam;
-                line.Up = normDir;
-                line.Width = length;
-                line.Height = beamRadius;
-                Weapon.Comp.Session.Av.LineRequests.Add(line);
-
-                //MyTransparentGeometry.AddLineBillboard(offsetMaterial, color, fromBeam, normDir, length, beamRadius);
+                qc.Shot = this;
+                qc.Material = offsetMaterial;
+                qc.Color = color;
+                qc.StartPos = fromBeam;
+                qc.Up = normDir;
+                qc.Width = length;
+                qc.Height = beamRadius;
+                if (!qc.Added)
+                {
+                    qc.Added = true;
+                    qc.MarkedForCloseIn = int.MaxValue;
+                    qc.Age = 0;
+                    qc.Type = QuadCache.EffectTypes.Offset;
+                    qc.LifeTime = 1;
+                    Session.Av.PreAddOneFrame.Add(qc);
+                    ++ActiveBillBoards;
+                }
+                else
+                    qc.Updated = true;
 
                 if (Vector3D.DistanceSquared(matrix.Translation, toBeam) > tracerLengthSqr) break;
             }
@@ -834,15 +849,15 @@ namespace CoreSystems.Support
             VisualLength = remainingTracer;
             ShortStepSize = stepSizeToHit;
 
-            Weapon.System.Session.Projectiles.DeferedAvDraw.Add(new DeferedAv { AvShot = this, Info = info, TracerFront = endPos, Hit = hit,  Direction = info.Direction });
+            Session.Projectiles.DeferedAvDraw.Add(new DeferedAv { AvShot = this, Info = info, TracerFront = endPos, Hit = hit,  Direction = info.Direction });
         }
 
         internal void HitEffects(bool force = false)
         {
-            if (Weapon.System.Session.Tick - LastHit > 4 || force) {
+            if (Session.Tick - LastHit > 4 || force) {
 
                 double distToCameraSqr;
-                Vector3D.DistanceSquared(ref Hit.SurfaceHit, ref Weapon.System.Session.CameraPos, out distToCameraSqr);
+                Vector3D.DistanceSquared(ref Hit.SurfaceHit, ref Session.CameraPos, out distToCameraSqr);
 
                 if (Hit.EventType == HitEntity.Type.Water) 
                 {
@@ -882,14 +897,14 @@ namespace CoreSystems.Support
 
                     if (pair != null) {
 
-                        var hitEmitter = Weapon.System.Session.Av.PersistentEmitters.Count > 0 ? Weapon.System.Session.Av.PersistentEmitters.Pop() : new MyEntity3DSoundEmitter(null);
+                        var hitEmitter = Session.Av.PersistentEmitters.Count > 0 ? Session.Av.PersistentEmitters.Pop() : new MyEntity3DSoundEmitter(null);
 
-                        var pos = Weapon.System.Session.Tick - Hit.HitTick <= 1 && !MyUtils.IsZero(Hit.SurfaceHit) ? Hit.SurfaceHit : TracerFront;
+                        var pos = Session.Tick - Hit.HitTick <= 1 && !MyUtils.IsZero(Hit.SurfaceHit) ? Hit.SurfaceHit : TracerFront;
                         hitEmitter.Entity = Hit.Entity;
                         hitEmitter.SetPosition(pos);
                         hitEmitter.PlaySound(pair);
 
-                        Weapon.System.Session.SoundsToClean.Add(new Session.CleanSound { DelayedReturn = true, Emitter = hitEmitter, Pair = pair, EmitterPool = Weapon.System.Session.Av.PersistentEmitters, SpawnTick = Weapon.System.Session.Tick });
+                        Session.SoundsToClean.Add(new Session.CleanSound { DelayedReturn = true, Emitter = hitEmitter, Pair = pair, EmitterPool = Weapon.System.Session.Av.PersistentEmitters, SpawnTick = Weapon.System.Session.Tick });
 
                         HitSoundInitted = true;
                     }
@@ -904,7 +919,7 @@ namespace CoreSystems.Support
 
             if (!AmmoDef.Const.IsBeamWeapon && AmmoDef.Const.AmmoTravelSound) {
                 HasTravelSound = true;
-                TravelEmitter = Weapon.System.Session.Av.TravelEmitters.Count > 0 ? Weapon.System.Session.Av.TravelEmitters.Pop() : new MyEntity3DSoundEmitter(null);
+                TravelEmitter = Session.Av.TravelEmitters.Count > 0 ? Session.Av.TravelEmitters.Pop() : new MyEntity3DSoundEmitter(null);
 
                 TravelEmitter.CanPlayLoopSounds = true;
             }
@@ -922,7 +937,7 @@ namespace CoreSystems.Support
                 {
                     if (AmmoDef.Const.ShotSound && distanceFromCameraSqr <= AmmoDef.Const.ShotSoundDistSqr)
                     {
-                        FireEmitter = Weapon.System.Session.Av.FireEmitters.Count > 0 ? Weapon.System.Session.Av.FireEmitters.Pop() : new MyEntity3DSoundEmitter(null);
+                        FireEmitter = Session.Av.FireEmitters.Count > 0 ? Session.Av.FireEmitters.Pop() : new MyEntity3DSoundEmitter(null);
                         FireEmitter.CanPlayLoopSounds = true;
                         FireEmitter.Entity = null;
                         FireEmitter.SetPosition(Origin);
@@ -933,7 +948,7 @@ namespace CoreSystems.Support
                 else if (Weapon.System.FiringSound == WeaponSystem.FiringSoundState.PerShot && distanceFromCameraSqr <= Weapon.System.FiringSoundDistSqr)
                 {
 
-                    FireEmitter = Weapon.System.Session.Av.FireEmitters.Count > 0 ? Weapon.System.Session.Av.FireEmitters.Pop() : new MyEntity3DSoundEmitter(null);
+                    FireEmitter = Session.Av.FireEmitters.Count > 0 ? Session.Av.FireEmitters.Pop() : new MyEntity3DSoundEmitter(null);
                     FireEmitter.CanPlayLoopSounds = true;
                     FireEmitter.Entity = Weapon.Comp.CoreEntity;
                     FireEmitter.SetPosition(Origin);
@@ -1073,7 +1088,7 @@ namespace CoreSystems.Support
             MyParticleEffect effect;
             MatrixD matrix;
             var vel = HitVelocity;
-            if (!Weapon.System.Session.Av.BeamEffects.TryGetValue(UniqueMuzzleId, out effect)) {
+            if (!Session.Av.BeamEffects.TryGetValue(UniqueMuzzleId, out effect)) {
 
                 MatrixD.CreateTranslation(ref TracerFront, out matrix);
                 if (!MyParticlesManager.TryCreateParticleEffect(AmmoDef.AmmoGraphics.Particles.Hit.Name, ref matrix, ref TracerFront, uint.MaxValue, out effect)) {
@@ -1081,7 +1096,7 @@ namespace CoreSystems.Support
                 }
 
                 if (effect.Loop || effect.DurationMax <= 0)
-                    Weapon.System.Session.Av.BeamEffects[UniqueMuzzleId] = effect;
+                    Session.Av.BeamEffects[UniqueMuzzleId] = effect;
 
                 effect.UserScale = AmmoDef.AmmoGraphics.Particles.Hit.Extras.Scale;
 
@@ -1115,18 +1130,18 @@ namespace CoreSystems.Support
                 {
                     var a = AmmoDef;
                     var c = a.Const;
-                    var hit = Weapon.System.Session.Tick - Hit.HitTick <= 1 && !MyUtils.IsZero(Hit.SurfaceHit) && Hit.Entity != null;
+                    var hit = Session.Tick - Hit.HitTick <= 1 && !MyUtils.IsZero(Hit.SurfaceHit) && Hit.Entity != null;
                     var pos = hit ? Hit.SurfaceHit : TracerFront;
-                    if (a.Const.DetonationSound && Vector3D.DistanceSquared(Weapon.System.Session.CameraPos, pos) < a.Const.DetonationSoundDistSqr)
+                    if (a.Const.DetonationSound && Vector3D.DistanceSquared(Session.CameraPos, pos) < a.Const.DetonationSoundDistSqr)
                     {
-                        var detEmitter = Weapon.System.Session.Av.PersistentEmitters.Count > 0 ? Weapon.System.Session.Av.PersistentEmitters.Pop() : new MyEntity3DSoundEmitter(null);
+                        var detEmitter = Session.Av.PersistentEmitters.Count > 0 ? Session.Av.PersistentEmitters.Pop() : new MyEntity3DSoundEmitter(null);
                         detEmitter.Entity = Hit.Entity;
                         detEmitter.SetPosition(pos);
                         detEmitter.PlaySound(a.Const.DetSoundPair);
-                        Weapon.System.Session.SoundsToClean.Add(new Session.CleanSound { DelayedReturn = true, Emitter = detEmitter, EmitterPool = Weapon.System.Session.Av.PersistentEmitters, SpawnTick = Weapon.System.Session.Tick });
+                        Session.SoundsToClean.Add(new Session.CleanSound { DelayedReturn = true, Emitter = detEmitter, EmitterPool = Session.Av.PersistentEmitters, SpawnTick = Weapon.System.Session.Tick });
                     }
 
-                    if (a.Const.CustomDetParticle || Weapon.System.Session.Av.ExplosionReady)
+                    if (a.Const.CustomDetParticle || Session.Av.ExplosionReady)
                     {
                         var particle = AmmoDef.AmmoGraphics.Particles.Hit;
                         var keenStrikesAgain = particle.Offset == Vector3D.MaxValue;
@@ -1157,7 +1172,7 @@ namespace CoreSystems.Support
                     FireEmitter.PlaySound(AmmoDef.Const.ShotSoundPair, stopPrevious: false, skipIntro: true, force2D: false, alwaysHearOnRealistic: false, skipToEnd: true);
                 }
 
-                Weapon.System.Session.SoundsToClean.Add(new Session.CleanSound { DelayedReturn = true, Emitter = FireEmitter, EmitterPool = Weapon.System.Session.Av.FireEmitters, SpawnTick = Weapon.System.Session.Tick });
+                Session.SoundsToClean.Add(new Session.CleanSound { DelayedReturn = true, Emitter = FireEmitter, EmitterPool = Session.Av.FireEmitters, SpawnTick = Session.Tick });
 
                 FireEmitter = null;
             }
@@ -1175,7 +1190,7 @@ namespace CoreSystems.Support
                     }
                 }
 
-                Weapon.System.Session.SoundsToClean.Add(new Session.CleanSound { JustClean = !TravelSound, DelayedReturn = TravelSound, Emitter = TravelEmitter, EmitterPool = Weapon.System.Session.Av.TravelEmitters, SpawnTick = Weapon.System.Session.Tick });
+                Session.SoundsToClean.Add(new Session.CleanSound { JustClean = !TravelSound, DelayedReturn = TravelSound, Emitter = TravelEmitter, EmitterPool = Session.Av.TravelEmitters, SpawnTick = Session.Tick });
 
                 TravelSound = false;
                 TravelEmitter = null;
@@ -1217,7 +1232,7 @@ namespace CoreSystems.Support
         }
 
 
-        internal void Close(Stack<AvShot> shotPool)
+        internal void Close()
         {
             // Reset only vars that are not always set
             Hit = new Hit();
@@ -1233,7 +1248,7 @@ namespace CoreSystems.Support
                     FireEmitter.PlaySound(AmmoDef.Const.ShotSoundPair, stopPrevious: false, skipIntro: true, force2D: false, alwaysHearOnRealistic: false, skipToEnd: true);
                 }
 
-                Weapon.System.Session.SoundsToClean.Add(new Session.CleanSound { DelayedReturn = true, Emitter = FireEmitter, EmitterPool = Weapon.System.Session.Av.FireEmitters, SpawnTick = Weapon.System.Session.Tick });
+                Session.SoundsToClean.Add(new Session.CleanSound { DelayedReturn = true, Emitter = FireEmitter, EmitterPool = Session.Av.FireEmitters, SpawnTick = Session.Tick });
             }
 
             if (TravelEmitter != null) {
@@ -1249,7 +1264,7 @@ namespace CoreSystems.Support
                     }
                 }
 
-                Weapon.System.Session.SoundsToClean.Add(new Session.CleanSound { JustClean = !TravelSound, DelayedReturn = TravelSound, Emitter = TravelEmitter, EmitterPool = Weapon.System.Session.Av.TravelEmitters, SpawnTick = Weapon.System.Session.Tick });
+                Session.SoundsToClean.Add(new Session.CleanSound { JustClean = !TravelSound, DelayedReturn = TravelSound, Emitter = TravelEmitter, EmitterPool = Session.Av.TravelEmitters, SpawnTick = Session.Tick });
                 
                 TravelSound = false;
             }
@@ -1277,8 +1292,37 @@ namespace CoreSystems.Support
 
             if (TriggerEntity != null)
             {
-                Weapon.System.Session.TriggerEntityPool.Return(TriggerEntity);
+                Session.TriggerEntityPool.Return(TriggerEntity);
             }
+
+            for (int j = TrailSteps.Count - 1; j >= 0; j--)
+            {
+                var t = TrailSteps[j];
+                if (t.Cache != null) {
+                    var c = t.Cache;
+                    c.Owner = null;
+                    c.LifeTime = int.MaxValue;
+                    c.MarkedForCloseIn = int.MaxValue;
+                    c.Added = false;
+                    c.Age = 0;
+                    c.Updated = false;
+                }
+                t.Cache = null;
+            }
+            TrailSteps.Clear();
+
+            if (Offsets != null)
+            {
+                Offsets.Clear();
+                Session.Av.OffSetLists.Push(Offsets);
+            }
+
+
+            QuadCache.LifeTime = int.MaxValue;
+            QuadCache.MarkedForCloseIn = int.MaxValue;
+            QuadCache.Added = false;
+            QuadCache.Age = 0;
+            QuadCache.Updated = false;
 
             HitVelocity = Vector3D.Zero;
             TracerBack = Vector3D.Zero;
@@ -1326,8 +1370,7 @@ namespace CoreSystems.Support
             MarkForClose = false;
             ProEnded = false;
             TracerShrinks.Clear();
-            GlowSteps.Clear();
-            Offsets.Clear();
+
             //
             SegmentGaped = false;
             TextureReverse = false;
@@ -1336,36 +1379,68 @@ namespace CoreSystems.Support
             StageIdx = -1;
             SegMeasureStep = 0;
             TextureLastUpdate = 0;
-
+            ActiveBillBoards = 0;
             //
 
             Weapon = null;
             PrimeEntity = null;
             TriggerEntity = null;
             AmmoDef = null;
-            Weapon = null;
             FireEmitter = null;
             TravelEmitter = null;
-            shotPool.Push(this);
+            Session.Av.AvShotCoolDown[Session.Tick % Session.Av.AvShotCoolDown.Length].Add(this);
         }
     }
 
-    internal class AfterGlow
+    public class QuadCache
     {
-        internal AfterGlow Parent;
+        public enum EffectTypes
+        {
+            Tracer,
+            Trail,
+            Shrink,
+            Offset,
+            Segment,
+        }
+
+        public readonly MyBillboard BillBoard = new MyBillboard();
+        public object Owner;
+        public AvShot Shot;
+        public EffectTypes Type;
+        public MyStringId Material;
+        public Vector4 Color;
+        public Vector3D StartPos;
+        public Vector3D Up;
+        public Vector3D Left;
+        public Vector2 UvOff;
+        public Vector2 UvSize;
+        public float Width;
+        public float Height;
+        public float TextureSize;
+        public bool Updated;
+        public bool Added;
+        public int Age;
+        public int MarkedForCloseIn = int.MaxValue;
+        public int LifeTime = int.MaxValue;
+        public BlendTypeEnum Blend = BlendTypeEnum.Standard;
+    }
+
+    internal class AfterTrail
+    {
+        internal QuadCache Cache;
+        internal AfterTrail Parent;
         internal Vector3D TailPos;
         internal LineD Line;
         internal int Step;
     }
 
-    internal struct Shrinks
+    internal class Shrink
     {
         internal Vector3D NewFront;
         internal Vector4 Color;
         internal float Length;
         internal float Thickness;
         internal bool Last;
-
     }
 
     internal struct AvInfoCache
@@ -1392,17 +1467,5 @@ namespace CoreSystems.Support
         internal bool Hit;
         internal Vector3D TracerFront;
         internal Vector3D Direction;
-    }
-
-    internal struct Shrunk
-    {
-        internal readonly Vector3D NewTracerFront;
-        internal readonly float Reduced;
-
-        internal Shrunk(ref Vector3D newTracerFront, float reduced)
-        {
-            NewTracerFront = newTracerFront;
-            Reduced = reduced;
-        }
     }
 }

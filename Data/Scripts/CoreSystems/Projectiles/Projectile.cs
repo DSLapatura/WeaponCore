@@ -324,7 +324,7 @@ namespace CoreSystems.Projectiles
             if (EnableAv)
             {
                 var originDir = !Info.IsFragment ? AccelDir : Info.Direction;
-                Info.AvShot = session.Av.AvShotPool.Count > 0 ? session.Av.AvShotPool.Pop() : new AvShot();
+                Info.AvShot = session.Av.AvShotPool.Count > 0 ? session.Av.AvShotPool.Pop() : new AvShot(session);
                 Info.AvShot.Init(Info, AccelInMetersPerSec * StepConst, MaxSpeed, ref originDir);
                 Info.AvShot.SetupSounds(DistanceFromCameraSqr); //Pool initted sounds per Projectile type... this is expensive
                 if (aConst.HitParticle && !aConst.IsBeamWeapon || aConst.EndOfLifeAoe && !ammoDef.AreaOfDamage.EndOfLife.NoVisuals)
@@ -407,7 +407,7 @@ namespace CoreSystems.Projectiles
                 if (ModelState == EntityState.Exists)
                     ModelState = EntityState.None;
                 if (!Info.AvShot.Active)
-                    Info.AvShot.Close(session.Av.AvShotPool);
+                    Info.AvShot.Close();
                 else Info.AvShot.EndState = new AvClose { EndPos = Position, Dirty = true, DetonateEffect = detExp };
             }
             else if (Info.AmmoDef.Const.VirtualBeams)
@@ -416,7 +416,7 @@ namespace CoreSystems.Projectiles
                 {
                     var vp = VrPros[i];
                     if (!vp.AvShot.Active)
-                        vp.AvShot.Close(session.Av.AvShotPool);
+                        vp.AvShot.Close();
                     else vp.AvShot.EndState = new AvClose { EndPos = Position, Dirty = true, DetonateEffect = detExp };
 
                     session.Projectiles.VirtInfoPool.Return(vp);

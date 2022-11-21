@@ -122,9 +122,6 @@ namespace CoreSystems
                 e.StopSound(true);
 
             Emitters.Clear();
-            Av.PersistentEmitters.Clear();
-            Av.FireEmitters.Clear();
-            Av.TravelEmitters.Clear();
 
             foreach (var item in EffectedCubes)
             {
@@ -147,9 +144,6 @@ namespace CoreSystems
             {
                 EffectedCubes.Remove(_effectPurge.Dequeue());
             }
-
-            Av.Glows.Clear();
-            Av.AvShotPool.Clear();
 
             DeferedUpBlockTypeCleanUp(true);
             BlockTypeCleanUp.Clear();
@@ -271,14 +265,7 @@ namespace CoreSystems
             _subTypeMaps.Clear();
             _tmpNearByBlocks.Clear();
 
-            foreach (var av in Av.AvShots) {
-                av.GlowSteps.Clear();
-                av.Close(Av.AvShotPool);
-            }
-            Av.AvShotPool.Clear();
-            Av.Effects1.Clear();
-            Av.Effects2.Clear();
-            Av.AvShots.Clear();
+
 
             foreach (var errorpkt in ClientSideErrorPkt)
                 errorpkt.Packet.CleanUp();
@@ -306,8 +293,7 @@ namespace CoreSystems
             VoxelCaches.Clear();
             ArmorCubes.Clear();
 
-            foreach (var p in Projectiles.ProjectilePool)
-                p.Info?.AvShot?.AmmoEffect?.Stop();
+            Av.Clean();
 
             Projectiles.ShrapnelToSpawn.Clear();
             Projectiles.ShrapnelPool.Clear();

@@ -96,8 +96,6 @@ namespace CoreSystems
                 StartComps();
 
             EarlyInitControls(this);
-
-
         }
 
         internal void GenerateButtonMap()

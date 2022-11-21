@@ -539,6 +539,7 @@ namespace CoreSystems.Api
                     [ProtoMember(6)] internal double RestrictionRadius;
                     [ProtoMember(7)] internal bool CheckInflatedBox;
                     [ProtoMember(8)] internal bool CheckForAnyWeapon;
+                    [ProtoMember(9)] internal bool DisableLosCheck;
                 }
 
                 [ProtoContract]

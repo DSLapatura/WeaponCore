@@ -166,6 +166,7 @@ namespace CoreSystems.Support
         public readonly bool UniqueTargetPerWeapon;
         public readonly bool TrackNeutrals;
         public readonly bool TrackNonThreatsOther;
+        public readonly bool DisableLosCheck;
         public readonly bool TrackNonThreatFriend;
         public readonly bool TrackTargets;
         public readonly bool HasRequiresTarget;
@@ -229,7 +230,8 @@ namespace CoreSystems.Support
             Session = session;
 
             WConst = new WeaponConstants(session, values);
-            
+
+            DisableLosCheck = values.HardPoint.Other.DisableLosCheck;
             DebugMode = values.HardPoint.Other.Debug;
             PartNameIdHash = partNameIdHash;
             MuzzlePartName = muzzlePartName;

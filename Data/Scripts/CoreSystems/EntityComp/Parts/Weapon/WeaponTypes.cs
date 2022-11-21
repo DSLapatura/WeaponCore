@@ -172,7 +172,9 @@ namespace CoreSystems.Platform
 
             public bool Update(object target, double extraShotAngle)
             {
-                if (Dirty)
+                var weaponBusy = Weapon.ProtoWeaponAmmo.CurrentAmmo == 0 || Weapon.Loading || Weapon.Reload.WaitForClient || (Weapon.System.MaxReloads > 0 && Weapon.Reload.LifetimeLoads >= Weapon.System.MaxReloads);
+
+                if (Dirty || weaponBusy)
                     return false;
 
                 Dirty = true;
@@ -542,7 +544,6 @@ namespace CoreSystems.Platform
                 FreezeClientShoot = false;
                 WaitingShootResponse = false;
                 Signal = Signals.None;
-
                 if (Comp.Session.IsServer)
                 {
                     wValues.State.Trigger = CoreComponent.Trigger.Off;

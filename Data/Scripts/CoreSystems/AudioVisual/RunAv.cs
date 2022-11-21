@@ -1,5 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Linq;
 using CoreSystems.Platform;
 using Jakaria.API;
 using Sandbox.Game;
@@ -16,12 +16,18 @@ namespace CoreSystems.Support
 {
     class RunAv
     {
-        internal readonly MyBillboard[][] BillBoardQuadPool = new MyBillboard[5][];
         internal readonly Dictionary<ulong, MyParticleEffect> BeamEffects = new Dictionary<ulong, MyParticleEffect>();
         internal readonly Stack<AvShot> AvShotPool = new Stack<AvShot>(1024);
+        internal readonly List<AvShot>[] AvShotCoolDown = new List<AvShot>[5];
+        internal readonly List<QuadCache>[] QuadCacheCoolDown = new List<QuadCache>[5];
+
         internal readonly Stack<AvEffect> AvEffectPool = new Stack<AvEffect>(128);
-        internal readonly Stack<QuadReqCache> QuadReqPool = new Stack<QuadReqCache>(1024);
-        internal readonly Stack<AfterGlow> Glows = new Stack<AfterGlow>(128);
+        internal readonly Stack<AfterTrail> Trails = new Stack<AfterTrail>(128);
+        internal readonly Stack<Shrink> Shrinks = new Stack<Shrink>(128);
+        internal readonly Stack<QuadCache> QuadCachePool = new Stack<QuadCache>(128);
+        internal readonly Stack<List<Vector3D>> OffSetLists = new Stack<List<Vector3D>>(128);
+
+
         internal readonly Stack<MyEntity3DSoundEmitter> FireEmitters = new Stack<MyEntity3DSoundEmitter>();
         internal readonly Stack<MyEntity3DSoundEmitter> TravelEmitters = new Stack<MyEntity3DSoundEmitter>();
         internal readonly Stack<MyEntity3DSoundEmitter> PersistentEmitters = new Stack<MyEntity3DSoundEmitter>();
@@ -31,16 +37,24 @@ namespace CoreSystems.Support
         internal readonly List<AvEffect> Effects2 = new List<AvEffect>(128);
         internal readonly List<ParticleEvent> ParticlesToProcess = new List<ParticleEvent>(128);
         internal readonly List<AvShot> AvShots = new List<AvShot>(1024);
-        internal readonly List<QuadReqCache> LineRequests = new List<QuadReqCache>(1024);
-        internal readonly List<QuadReqCache> OrientedRequests = new List<QuadReqCache>(1024);
 
-        internal readonly List<MyBillboard> QuadsToAdd = new List<MyBillboard>(1024);
-        internal readonly int BillBoardPoolDelay = 5;
+        internal readonly List<QuadCache> PreAddPersistent = new List<QuadCache>();
+        internal readonly List<QuadCache> PreAddOneFrame = new List<QuadCache>();
+
+        internal readonly List<QuadCache> ActiveBillBoards = new List<QuadCache>();
+
+        internal readonly List<MyBillboard> BillBoardsToAdd = new List<MyBillboard>();
+        internal readonly List<MyBillboard> BillBoardsToRemove = new List<MyBillboard>();
+        //internal readonly List<QuadReqCache> LineRequests = new List<QuadReqCache>(1024);
+        //internal readonly List<QuadReqCache> OrientedRequests = new List<QuadReqCache>(1024);
+
+        // internal readonly List<MyBillboard> QuadsToAdd = new List<MyBillboard>(1024);
+        //internal readonly int BillBoardPoolDelay = 5;
 
         internal Session Session;
 
-        internal int BillPoolQuadIndex = -1;
-        internal int BillQuadIndex = -1;
+        //internal int BillPoolQuadIndex = -1;
+        //internal int BillQuadIndex = -1;
         //internal int BillPoolQuadIndex = -1;
         //internal int BillQuadIndex = -1;
         internal int ExplosionCounter;
@@ -65,14 +79,16 @@ namespace CoreSystems.Support
         internal RunAv(Session session)
         {
             Session = session;
-            for (int i = 0; i < BillBoardQuadPool.Length; i++)
-                BillBoardQuadPool[i] = new MyBillboard[32000];
-        }
+            for (int i = 0; i < AvShotCoolDown.Length; i++)
+                AvShotCoolDown[i] = new List<AvShot>();
 
+            for (int i = 0; i < QuadCacheCoolDown.Length; i++)
+                QuadCacheCoolDown[i] = new List<QuadCache>();
+        }
 
         private int _onScreens;
         private int _shrinks;
-        private int _glows;
+        private int _previousTrailCount;
         private int _models;
 
         internal void End()
@@ -220,27 +236,18 @@ namespace CoreSystems.Support
 
         internal void Draw()
         {
-            BillPoolQuadIndex = BillBoardPoolDelay + 1 < BillBoardPoolDelay ? BillBoardPoolDelay + 1 : 0;
+            UpdateOneFrameQuads();
 
-            AddBillBoardLines();
-            AddBillBoardsOriented();
-
-            MyTransparentGeometry.AddBillboards(QuadsToAdd, false);
-            
-            BillQuadIndex = 0;
-            BillBoardRequests = 0;
-            QuadsToAdd.Clear();
-
-            LineRequests.Clear();
-            OrientedRequests.Clear();
+                if (ActiveBillBoards.Count > 0 || PreAddPersistent.Count > 0)
+                MyTransparentGeometry.ApplyActionOnPersistentBillboards(UpdatePersistentQuads);
         }
 
         internal void Run()
         {
             if (Session.Tick180)
             {
-                Log.LineShortDate($"(DRAWS) --------------- AvShots:[{AvShots.Count}] OnScreen:[{_onScreens}] Shrinks:[{_shrinks}] Glows:[{_glows}] Models:[{_models}] P:[{Session.Projectiles.ActiveProjetiles.Count}] P-Pool:[{Session.Projectiles.ProjectilePool.Count}] AvPool:[{AvShotPool.Count}] (AvBarrels 1:[{Effects1.Count}] 2:[{Effects2.Count}])", "stats");
-                _glows = 0;
+                Log.LineShortDate($"(DRAWS) --------------- AvShots:[{AvShots.Count}] OnScreen:[{_onScreens}] Shrinks:[{_shrinks}] Glows:[{_previousTrailCount}] Models:[{_models}] P:[{Session.Projectiles.ActiveProjetiles.Count}] P-Pool:[{Session.Projectiles.ProjectilePool.Count}] AvPool:[{AvShotPool.Count}] (AvBarrels 1:[{Effects1.Count}] 2:[{Effects2.Count}])", "stats");
+                _previousTrailCount = 0;
                 _shrinks = 0;
             }
 
@@ -271,25 +278,44 @@ namespace CoreSystems.Support
                         {
                             if (aConst.TracerMode == AmmoConstants.Texture.Normal)
                             {
-                                var line = QuadReqPool.Count > 0 ? QuadReqPool.Pop() : new QuadReqCache();
-                                line.Material = aConst.TracerTextures[0];
-                                line.Color = color;
-                                line.StartPos = av.TracerBack;
-                                line.Up = av.VisualDir;
-                                line.Width = (float) av.VisualLength;
-                                line.Height = (float) av.TracerWidth;
-                                LineRequests.Add(line);
+                                var qc = av.QuadCache;
+
+                                qc.Shot = av;
+                                qc.Material = aConst.TracerTextures[0];
+                                qc.Color = color;
+                                qc.StartPos = av.TracerBack;
+                                qc.Up = av.VisualDir;
+                                qc.Width = (float) av.VisualLength;
+                                qc.Height = (float) av.TracerWidth;
+                                if (!qc.Added) {
+                                    qc.Added = true;
+                                    qc.Type = QuadCache.EffectTypes.Tracer;
+                                    PreAddOneFrame.Add(qc);
+                                    ++av.ActiveBillBoards;
+                                }
+                                else
+                                    qc.Updated = true;
                             }
                             else if (aConst.TracerMode != AmmoConstants.Texture.Resize)
                             {
-                                var line = QuadReqPool.Count > 0 ? QuadReqPool.Pop() : new QuadReqCache();
-                                line.Material = aConst.TracerTextures[av.TextureIdx];
-                                line.Color = color;
-                                line.StartPos = av.TracerBack;
-                                line.Up = av.VisualDir;
-                                line.Width = (float)av.VisualLength;
-                                line.Height = (float)av.TracerWidth;
-                                LineRequests.Add(line);
+                                var qc = av.QuadCache;
+
+                                qc.Shot = av;
+                                qc.Material = aConst.TracerTextures[av.TextureIdx];
+                                qc.Color = color;
+                                qc.StartPos = av.TracerBack;
+                                qc.Up = av.VisualDir;
+                                qc.Width = (float)av.VisualLength;
+                                qc.Height = (float)av.TracerWidth;
+                                if (!qc.Added) {
+                                    qc.Added = true;
+                                    qc.Type = QuadCache.EffectTypes.Tracer;
+
+                                    PreAddOneFrame.Add(qc);
+                                    ++av.ActiveBillBoards;
+                                }
+                                else
+                                    qc.Updated = true;
                             }
                             else
                             {
@@ -335,14 +361,28 @@ namespace CoreSystems.Support
                                     var clampStep = !gap ? MathHelperD.Clamp((int)((len / segStepLen) + 0.5) - 1, 0, segTextureCnt - 1) : MathHelperD.Clamp((int)((len / gapStepLen) + 0.5) - 1, 0, gapTextureCnt - 1);
                                     var material = !gap ? aConst.SegmentTextures[(int)clampStep] : aConst.TracerTextures[(int)clampStep];
 
-                                    var line = QuadReqPool.Count > 0 ? QuadReqPool.Pop() : new QuadReqCache();
-                                    line.Material = material;
-                                    line.Color = dyncColor;
-                                    line.StartPos = stepPos;
-                                    line.Up = av.VisualDir;
-                                    line.Width = (float)len;
-                                    line.Height = (float)width;
-                                    LineRequests.Add(line);
+                                    var qc = QuadCachePool.Count > 0 ? QuadCachePool.Pop() : new QuadCache();
+
+                                    qc.Shot = av;
+                                    qc.Material = material;
+                                    qc.Color = dyncColor;
+                                    qc.StartPos = stepPos;
+                                    qc.Up = av.VisualDir;
+                                    qc.Width = (float)len;
+                                    qc.Height = (float)width;
+                                    if (!qc.Added) {
+                                        qc.Added = true;
+                                        qc.MarkedForCloseIn = int.MaxValue;
+                                        qc.Age = 0;
+                                        qc.Type = QuadCache.EffectTypes.Segment;
+
+                                        qc.LifeTime = 1;
+                                        PreAddOneFrame.Add(qc);
+                                        ++av.ActiveBillBoards;
+                                    }
+                                    else
+                                        qc.Updated = true;
+
                                     if (!notLast)
                                         travel = av.VisualLength;
                                     else
@@ -352,14 +392,14 @@ namespace CoreSystems.Support
                             }
                         }
                     }
-                    else
+                    else if (av.Offsets != null)
                     {
                         var list = av.Offsets;
                         for (int x = 0; x < list.Count; x++)
                         {
+
                             Vector3D fromBeam;
                             Vector3D toBeam;
-
                             if (x == 0)
                             {
                                 fromBeam = av.OffsetMatrix.Translation;
@@ -367,6 +407,7 @@ namespace CoreSystems.Support
                             }
                             else
                             {
+
                                 fromBeam = Vector3D.Transform(list[x - 1], av.OffsetMatrix);
                                 toBeam = Vector3D.Transform(list[x], av.OffsetMatrix);
                             }
@@ -375,14 +416,28 @@ namespace CoreSystems.Support
                             var length = dir.Length();
                             var normDir = dir / length;
 
-                            var line = QuadReqPool.Count > 0 ? QuadReqPool.Pop() : new QuadReqCache();
-                            line.Material = aConst.TracerTextures[0];
-                            line.Color = color;
-                            line.StartPos = fromBeam;
-                            line.Up = normDir;
-                            line.Width = length;
-                            line.Height = (float)av.TracerWidth;
-                            LineRequests.Add(line);
+                            var qc = QuadCachePool.Count > 0 ? QuadCachePool.Pop() : new QuadCache();
+
+                            qc.Shot = av;
+                            qc.Material = aConst.TracerTextures[0];
+                            qc.Color = color;
+                            qc.StartPos = fromBeam;
+                            qc.Up = normDir;
+                            qc.Width = length;
+                            qc.Height = (float)av.TracerWidth;
+                            if (!qc.Added) 
+                            {
+                                qc.Added = true;
+                                qc.MarkedForCloseIn = int.MaxValue;
+                                qc.Age = 0;
+                                qc.Type = QuadCache.EffectTypes.Offset;
+
+                                qc.LifeTime = 1;
+                                PreAddOneFrame.Add(qc);
+                                ++av.ActiveBillBoards;
+                            }
+                            else
+                                qc.Updated = true;
 
                             if (Vector3D.DistanceSquared(av.OffsetMatrix.Translation, toBeam) > av.TracerLengthSqr) break;
                         }
@@ -396,26 +451,27 @@ namespace CoreSystems.Support
                 if (shrinkCnt > 0)
                     RunShrinks(av);
 
-                var glowCnt = av.GlowSteps.Count;
+                var trailCount = av.TrailSteps?.Count ?? 0;
 
-                if (glowCnt > _glows)
-                    _glows = glowCnt;
+                if (trailCount > _previousTrailCount)
+                    _previousTrailCount = trailCount;
 
                 if (av.Trail != AvShot.TrailState.Off)
                 {
                     var steps = av.DecayTime;
                     var widthScaler = !aConst.TrailColorFade;
                     var remove = false;
-                    for (int j = glowCnt - 1; j >= 0; j--)
+                    for (int j = trailCount - 1; j >= 0; j--)
                     {
-                        var glow = av.GlowSteps[j];
+                        var trail = av.TrailSteps[j];
 
                         if (!refreshed)
-                            glow.Line = new LineD(glow.Line.From + av.ShootVelStep, glow.Line.To + av.ShootVelStep, glow.Line.Length);
+                            trail.Line = new LineD(trail.Line.From + av.ShootVelStep, trail.Line.To + av.ShootVelStep, trail.Line.Length);
+
 
                         if (av.OnScreen != AvShot.Screen.None)
                         {
-                            var reduction = (av.GlowShrinkSize * glow.Step);
+                            var reduction = (av.TrailShrinkSize * trail.Step);
                             var width = widthScaler ? (aConst.TrailWidth - reduction) * av.TrailScaler : aConst.TrailWidth * av.TrailScaler;
                             var color = aConst.LinearTrailColor;
                             if (!widthScaler)
@@ -423,33 +479,60 @@ namespace CoreSystems.Support
                                 color *= MathHelper.Clamp(1f - reduction, 0.01f, 1f);
                             }
 
-                            var line = QuadReqPool.Count > 0 ? QuadReqPool.Pop() : new QuadReqCache();
-                            line.Material = aConst.TrailTextures[0];
-                            line.Color = color;
-                            line.StartPos = glow.Line.From;
-                            line.Up = glow.Line.Direction;
-                            line.Width = (float) glow.Line.Length;
-                            line.Height = width;
-                            LineRequests.Add(line);
+                            if (trail.Cache?.Owner != trail) {
+                                trail.Cache = QuadCachePool.Count > 0 ? QuadCachePool.Pop() : new QuadCache();
+                                trail.Cache.Owner = trail;
+                            }
+
+                            trail.Cache.Shot = av;
+                            trail.Cache.Material = aConst.TrailTextures[0];
+                            trail.Cache.Color = color;
+                            trail.Cache.StartPos = trail.Line.From;
+                            trail.Cache.Up = trail.Line.Direction;
+                            trail.Cache.Width = (float) trail.Line.Length;
+                            trail.Cache.Height = width;
+                            if (!trail.Cache.Added)
+                            {
+                                trail.Cache.Added = true;
+                                trail.Cache.MarkedForCloseIn = int.MaxValue;
+                                trail.Cache.Age = 0;
+                                trail.Cache.LifeTime = int.MaxValue;
+                                trail.Cache.Type = QuadCache.EffectTypes.Trail;
+                                PreAddOneFrame.Add(trail.Cache);
+                                ++av.ActiveBillBoards;
+                            }
+                            else
+                                trail.Cache.Updated = true;
                         }
 
-                        if (++glow.Step >= steps)
+                        if (++trail.Step >= steps)
                         {
-                            glow.Parent = null;
-                            glow.Step = 0;
+                            trail.Parent = null;
+                            trail.Step = 0;
                             remove = true;
-                            glowCnt--;
-                            Glows.Push(glow);
+                            trailCount--;
+
+                            if (trail.Cache?.Owner == trail) {
+                                trail.Cache.MarkedForCloseIn = 1;
+                                trail.Cache.Owner = null;
+                                trail.Cache = null;
+                            }
+
+                            Trails.Push(trail);
                         }
                     }
 
-                    if (remove) av.GlowSteps.Dequeue();
+                    if (remove) av.TrailSteps.Dequeue();
                 }
 
-                if (glowCnt == 0 && shrinkCnt == 0 && av.MarkForClose)
+                if (trailCount == 0 && shrinkCnt == 0 && av.MarkForClose)
                 {
-                    av.Close(AvShotPool);
-                    AvShots.RemoveAtFast(i);
+                    av.QuadCache.MarkedForCloseIn = 0;
+                    if (av.ActiveBillBoards == 0)
+                    {
+                        av.Close();
+                        AvShots.RemoveAtFast(i);
+                    }
                 }
             }
         }
@@ -463,21 +546,34 @@ namespace CoreSystems.Support
                 {
                     if (av.OnScreen != AvShot.Screen.None)
                     {
-                        var line = QuadReqPool.Count > 0 ? QuadReqPool.Pop() : new QuadReqCache();
-                        line.Material = av.AmmoDef.Const.TracerTextures[0];
-                        line.Color = s.Color;
-                        line.StartPos = s.NewFront;
-                        line.Up = av.VisualDir;
-                        line.Width = s.Length;
-                        line.Height = s.Thickness;
-                        LineRequests.Add(line);
+                        var qc = QuadCachePool.Count > 0 ? QuadCachePool.Pop() : new QuadCache();
+
+                        qc.Shot = av;
+                        qc.Material = av.AmmoDef.Const.TracerTextures[0];
+                        qc.Color = s.Color;
+                        qc.StartPos = s.NewFront;
+                        qc.Up = av.VisualDir;
+                        qc.Width = s.Length;
+                        qc.Height = s.Thickness;
+
+                        if (!qc.Added) {
+                            qc.Added = true;
+                            qc.MarkedForCloseIn = int.MaxValue;
+                            qc.Age = 0;
+                            qc.Type = QuadCache.EffectTypes.Shrink;
+                            qc.LifeTime = 1;
+                            PreAddOneFrame.Add(qc);
+                            ++av.ActiveBillBoards;
+                        }
+                        else
+                            qc.Updated = true;
                     }
                 }
                 else if (av.OnScreen != AvShot.Screen.None)
                     av.DrawLineOffsetEffect(s.NewFront, -av.Direction, s.Length, s.Thickness, s.Color);
 
                 if (av.Trail != AvShot.TrailState.Off && av.Back)
-                    av.RunGlow(ref s, true);
+                    av.RunTrail(s, true);
             }
 
             if (av.TracerShrinks.Count == 0) av.ResetHit();
@@ -636,89 +732,51 @@ namespace CoreSystems.Support
             }
         }
 
-        internal void AddBillBoardsOriented()
+        internal void UpdateOneFrameQuads()
         {
-            var billBoardPool = BillBoardQuadPool[BillPoolQuadIndex];
-
-            BillBoardRequests += OrientedRequests.Count;
-            if (BillBoardRequests > NearBillBoardLimit)
-                NearBillBoardLimit = BillBoardRequests;
-
-            for (int i = 0; i < OrientedRequests.Count; i++)
-            {
-                var q = OrientedRequests[i];
-                if (++BillQuadIndex >= billBoardPool.Length)
-                {
-                    QuadReqPool.Push(q);
-                    continue;
-                }
-
-                var width = q.Left * q.Width / 2f;
-                var height = q.Up * q.Height / 2f;
-                var quad = new MyQuadD
-                {
-                    Point0 = q.StartPos + height + width,
-                    Point1 = q.StartPos + height - width,
-                    Point2 = q.StartPos - height - width,
-                    Point3 = q.StartPos - height + width
-                };
-
-                if (billBoardPool[BillQuadIndex] == null)
-                    billBoardPool[BillQuadIndex] = new MyBillboard();
-
-                var billBoard = billBoardPool[BillQuadIndex];
-
-                billBoard.UVOffset = q.UvOff / q.TextureSize;
-                billBoard.UVSize = q.UvSize / q.TextureSize;
-                billBoard.LocalType = LocalTypeEnum.Custom;
-                billBoard.Reflectivity = 0f;
-                billBoard.SoftParticleDistanceScale = 0f;
-                billBoard.DistanceSquared = (float)Vector3D.DistanceSquared(q.StartPos, Session.CameraPos);
-                billBoard.Material = q.Material;
-                billBoard.Position0 = quad.Point0;
-                billBoard.Position1 = quad.Point1;
-                billBoard.Position2 = quad.Point2;
-                billBoard.Position3 = quad.Point3;
-                billBoard.ColorIntensity = 1f;
-                billBoard.Color = q.Color;
-                billBoard.BlendType = q.Blend;
-                billBoard.ParentID = uint.MaxValue;
-                billBoard.CustomViewProjection = -1;
-                QuadsToAdd.Add(billBoard);
-                QuadReqPool.Push(q);
-            }
-
+            if (PreAddOneFrame.Count > 0)
+                BillBoardOneFrameQuads();
         }
 
-        internal void AddBillBoardLines()
+        internal void UpdatePersistentQuads()
         {
-            BillPoolQuadIndex = BillBoardPoolDelay + 1 < BillBoardPoolDelay ? BillBoardPoolDelay + 1 : 0;
-            var billBoardPool = BillBoardQuadPool[BillPoolQuadIndex];
+            PersistentQuadsUpdate(BillBoardRequest.Update);
 
-            BillBoardRequests += LineRequests.Count;
-            if (BillBoardRequests > NearBillBoardLimit)
-                NearBillBoardLimit = BillBoardRequests;
+            if (PreAddPersistent.Count > 0)
+                BillBoardPrePersistentQuads();
+        }
 
-            for (int i = 0; i < LineRequests.Count; i++)
+        public enum BillBoardRequest
+        {
+            Add,
+            Update,
+            Purge
+        }
+
+        internal void BillBoardOneFrameQuads()
+        {
+            for (int i = PreAddOneFrame.Count - 1; i >= 0; i--)
             {
-                var q = LineRequests[i];
+                var q = PreAddOneFrame[i];
+                var b = q.BillBoard;
+                var a = q.Shot;
 
-                if (++BillQuadIndex >= billBoardPool.Length)
+                if (q.Age > 0 || q.LifeTime == 0 || q.Updated)
                 {
-                    QuadReqPool.Push(q);
-                    continue;
+                    Log.Line($"should not be possible: updated:{q.Updated} - age:{q.Age} - lifeTime:{q.LifeTime} - type:{q.Type} - marked:{q.MarkedForCloseIn} - owner:{q.Owner != null}");
+                }
+                else
+                {
+                    if (q.MarkedForCloseIn <= 0)
+                        Log.Line($"adding while marked: {q.Type} - age:{q.Age} - marked:{q.MarkedForCloseIn} - owner:{q.Owner != null}");
                 }
 
-                if (billBoardPool[BillQuadIndex] == null)
-                    billBoardPool[BillQuadIndex] = new MyBillboard();
+                q.Updated = true;
 
-                var billBoard = billBoardPool[BillQuadIndex];
+                var cameraPosition = Session.CameraPos;
+                if (Vector3D.IsZero(cameraPosition - q.StartPos, 1E-06))
+                    return;
 
-                billBoard.BlendType = q.Blend;
-                billBoard.UVOffset = Vector2.Zero;
-                billBoard.UVSize = Vector2.One;
-                billBoard.LocalType = LocalTypeEnum.Custom;
-                billBoard.ParentID = uint.MaxValue;
 
                 var polyLine = new MyPolyLineD
                 {
@@ -728,62 +786,245 @@ namespace CoreSystems.Support
                     Thickness = q.Height
                 };
 
-                var scaledVector = Vector3D.Cross(polyLine.LineDirectionNormalized, Vector3D.Normalize(Session.CameraPos - polyLine.Point0)) * polyLine.Thickness;
-                var retQuad = new MyQuadD
+                MyQuadD retQuad;
+                MyUtils.GetPolyLineQuad(out retQuad, ref polyLine, cameraPosition);
+
+                b.Material = q.Material;
+                b.LocalType = LocalTypeEnum.Custom;
+                b.Position0 = retQuad.Point0;
+                b.Position1 = retQuad.Point1;
+                b.Position2 = retQuad.Point2;
+                b.Position3 = retQuad.Point3;
+                b.UVOffset = Vector2.Zero;
+                b.UVSize = Vector2.One;
+                b.DistanceSquared = (float)Vector3D.DistanceSquared(cameraPosition, q.StartPos);
+                b.Color = q.Color;
+                b.Reflectivity = 0;
+                b.CustomViewProjection = -1;
+                b.ParentID = uint.MaxValue;
+                b.ColorIntensity = 1f;
+                b.SoftParticleDistanceScale = 1f;
+                b.BlendType = BlendTypeEnum.Standard;
+
+                --a.ActiveBillBoards;
+                switch (q.Type)
                 {
-                    Point0 = polyLine.Point0 - scaledVector,
-                    Point1 = polyLine.Point1 - scaledVector,
-                    Point2 = polyLine.Point1 + scaledVector,
-                    Point3 = polyLine.Point0 + scaledVector
+                    case QuadCache.EffectTypes.Tracer:
+                        break;
+                    default:
+                        q.LifeTime = 0;
+                        QuadCacheCoolDown[Session.Tick % QuadCacheCoolDown.Length].Add(q);
+                        q.LifeTime = int.MaxValue;
+                        q.Added = false;
+                        q.MarkedForCloseIn = int.MaxValue;
+                        q.Age = 0;
+                        q.Updated = false;
+                        q.Owner = null;
+                        q.Shot = null;
+                        break;
+                }
+
+                BillBoardsToAdd.Add(b);
+            }
+
+            MyTransparentGeometry.AddBillboards(BillBoardsToAdd, false);
+            BillBoardsToAdd.Clear();
+            PreAddOneFrame.Clear();
+        }
+
+
+        internal void BillBoardPrePersistentQuads()
+        {
+            for (int i = PreAddPersistent.Count - 1; i >= 0; i--)
+            {
+                var q = PreAddPersistent[i];
+                var b = q.BillBoard;
+
+                if (q.Age > 0 || q.LifeTime == 0 || q.Updated)
+                {
+                    Log.Line($"should not be possible: updated:{q.Updated} - age:{q.Age} - lifeTime:{q.LifeTime} - type:{q.Type} - marked:{q.MarkedForCloseIn} - owner:{q.Owner != null}");
+                }
+                else
+                {
+                    if (q.MarkedForCloseIn <= 0)
+                        Log.Line($"adding while marked: {q.Type} - age:{q.Age} - marked:{q.MarkedForCloseIn} - owner:{q.Owner != null}");
+                }
+
+                q.Updated = true;
+
+                var cameraPosition = Session.CameraPos;
+                if (Vector3D.IsZero(cameraPosition - q.StartPos, 1E-06))
+                    return;
+
+
+                var polyLine = new MyPolyLineD
+                {
+                    LineDirectionNormalized = q.Up,
+                    Point0 = q.StartPos,
+                    Point1 = q.StartPos + q.Up * q.Width,
+                    Thickness = q.Height
                 };
 
-                var color = q.Color;
+                MyQuadD retQuad;
+                MyUtils.GetPolyLineQuad(out retQuad, ref polyLine, cameraPosition);
 
-                billBoard.ColorIntensity = 1f;
-                billBoard.Material = q.Material;
-                billBoard.Position0 = retQuad.Point0;
-                billBoard.Position1 = retQuad.Point1;
-                billBoard.Position2 = retQuad.Point2;
-                billBoard.Position3 = retQuad.Point3;
-                billBoard.DistanceSquared = (float)Vector3D.DistanceSquared(Session.CameraPos, q.StartPos);
-                billBoard.Color = color;
-                billBoard.Reflectivity = 0;
-                billBoard.CustomViewProjection = -1;
-                billBoard.SoftParticleDistanceScale = 1f;
+                b.Material = q.Material;
+                b.LocalType = LocalTypeEnum.Custom;
+                b.Position0 = retQuad.Point0;
+                b.Position1 = retQuad.Point1;
+                b.Position2 = retQuad.Point2;
+                b.Position3 = retQuad.Point3;
+                b.UVOffset = Vector2.Zero;
+                b.UVSize = Vector2.One;
+                b.DistanceSquared = (float)Vector3D.DistanceSquared(cameraPosition, q.StartPos);
+                b.Color = q.Color;
+                b.Reflectivity = 0;
+                b.CustomViewProjection = -1;
+                b.ParentID = uint.MaxValue;
+                b.ColorIntensity = 1f;
+                b.SoftParticleDistanceScale = 1f;
+                b.BlendType = BlendTypeEnum.Standard;
 
-                QuadsToAdd.Add(billBoard);
-                QuadReqPool.Push(q);
+                BillBoardsToAdd.Add(b);
+                ActiveBillBoards.Add(q);
+
+            }
+
+            MyTransparentGeometry.AddBillboards(BillBoardsToAdd, true);
+            BillBoardsToAdd.Clear();
+            PreAddPersistent.Clear();
+        }
+
+        internal void PersistentQuadsUpdate(BillBoardRequest request)
+        {
+            for (int i = ActiveBillBoards.Count - 1; i >= 0; i--)
+            {
+                var q = ActiveBillBoards[i];
+                var b = q.BillBoard;
+                var a = q.Shot;
+
+                if (request == BillBoardRequest.Purge)
+                {
+                    BillBoardsToRemove.Add(b);
+                    continue;
+                }
+                var timeExpired = ++q.Age >= q.LifeTime;
+                if (timeExpired || q.MarkedForCloseIn-- == 0 || !q.Updated)
+                {
+                    --a.ActiveBillBoards;
+                    BillBoardsToRemove.Add(b);
+                    ActiveBillBoards.RemoveAtFast(i);
+                    switch (q.Type)
+                    {
+                        case QuadCache.EffectTypes.Tracer:
+                            break;
+                        default:
+                            q.LifeTime = 0;
+                            QuadCacheCoolDown[Session.Tick % QuadCacheCoolDown.Length].Add(q);
+                            q.LifeTime = int.MaxValue;
+                            q.Added = false;
+                            q.MarkedForCloseIn = int.MaxValue;
+                            q.Age = 0;
+                            q.Updated = false;
+                            q.Owner = null;
+                            q.Shot = null;
+                            break;
+                    }
+                    continue;
+                }
+                
+                q.Updated = false;
+
+                var cameraPosition = Session.CameraPos;
+                if (Vector3D.IsZero(cameraPosition - q.StartPos, 1E-06))
+                    return;
+
+                var polyLine = new MyPolyLineD
+                {
+                    LineDirectionNormalized = q.Up,
+                    Point0 = q.StartPos,
+                    Point1 = q.StartPos + q.Up * q.Width,
+                    Thickness = q.Height
+                };
+
+                MyQuadD retQuad;
+                MyUtils.GetPolyLineQuad(out retQuad, ref polyLine, cameraPosition);
+
+                b.Material = q.Material;
+                b.LocalType = LocalTypeEnum.Custom;
+                b.Position0 = retQuad.Point0;
+                b.Position1 = retQuad.Point1;
+                b.Position2 = retQuad.Point2;
+                b.Position3 = retQuad.Point3;
+                b.UVOffset = Vector2.Zero;
+                b.UVSize = Vector2.One;
+                b.DistanceSquared = (float)Vector3D.DistanceSquared(cameraPosition, q.StartPos);
+                b.Color = q.Color;
+                b.Reflectivity = 0;
+                b.CustomViewProjection = -1;
+                b.ParentID = uint.MaxValue;
+                b.ColorIntensity = 1f;
+                b.SoftParticleDistanceScale = 1f;
+                b.BlendType = BlendTypeEnum.Standard;
+
+            }
+
+            if (BillBoardsToRemove.Count > 0)
+            {
+                MyTransparentGeometry.RemovePersistentBillboards(BillBoardsToRemove);
+                BillBoardsToRemove.Clear();
             }
         }
 
-        public class QuadReqCache
+        internal void AvShotCleanUp()
         {
-            public MyStringId Material;
-            public Vector4 Color;
-            public Vector3D StartPos;
-            public Vector3D Up;
-            public Vector3D Left;
-            public Vector2 UvOff;
-            public Vector2 UvSize;
-            public float Width;
-            public float Height;
-            public float TextureSize;
-            public BlendTypeEnum Blend;
+            var avShotCollection = AvShotCoolDown[Session.Tick % AvShotCoolDown.Length];
+
+            for (int i = 0; i < avShotCollection.Count; i++)
+                AvShotPool.Push(avShotCollection[i]);
+            avShotCollection.Clear();
+
+            var quadCacheCollection = QuadCacheCoolDown[Session.Tick % QuadCacheCoolDown.Length];
+
+            for (int i = 0; i < quadCacheCollection.Count; i++)
+                QuadCachePool.Push(quadCacheCollection[i]);
+            quadCacheCollection.Clear();
+        }
+        internal void Clean()
+        {
+            foreach (var p in Session.Projectiles.ProjectilePool)
+                p.Info?.AvShot?.AmmoEffect?.Stop();
+
+            foreach (var av in AvShots)
+                av.Close();
+            AvShots.Clear();
+
+            BeamEffects.Clear();
+            AvShotPool.Clear();
+            AvEffectPool.Clear();
+            Trails.Clear();
+            Shrinks.Clear();
+            QuadCachePool.Clear();
+            OffSetLists.Clear();
+
+            FireEmitters.Clear();
+            TravelEmitters.Clear();
+            PersistentEmitters.Clear();
+
+            Effects1.Clear();
+            Effects2.Clear();
+
+            ParticlesToProcess.Clear();
+            PreAddPersistent.Clear();
+            BillBoardsToAdd.Clear();
+            BillBoardsToRemove.Clear();
+
+            AvShotPool.Clear();
+
+            Log.Line($"activeBillboards during purge: {ActiveBillBoards.Count}");
+            ActiveBillBoards.Clear();
         }
 
-        /*
-        public static void GetBillboardTriOriented(out MyTriangle tri, ref Vector3D position, Vector2 uvP0, Vector2 uvP1, Vector2 uvP2, float width, float height, ref Vector3 leftVector, ref Vector3 upVector)
-        {
-            Vector3D billboardAxisX = leftVector * width;
-            Vector3D billboardAxisY = upVector * height;
-
-            //    Coordinates of four points of a billboard's quad
-            //tri.Edge0 = position - uvP0.X * billboardAxisX - uvP0.Y * billboardAxisY;
-            //tri.Edge1 = position - uvP1.X * billboardAxisX - uvP1.Y * billboardAxisY;
-            //tri.Edge2 = position - uvP2.X * billboardAxisX - uvP2.Y * billboardAxisY;
-            //quad.Point3 = position - billboardAxisY + billboardAxisX;
-        }
-        */
         internal class AvEffect
         {
             internal Weapon Weapon;

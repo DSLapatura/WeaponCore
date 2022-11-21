@@ -240,14 +240,12 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
                 if (comp.Ai == null || comp.Ai.MarkedForClose || comp.CoreEntity.MarkedForClose || comp.Data.Repo?.Values == null || weapon.ActiveAmmoDef?.AmmoDef?.Const == null)
                     continue;
                 var s = _session;
-                var aConst = weapon.ActiveAmmoDef.AmmoDef.Const;
-
 
                 var report = weapon.ActiveAmmoDef.AmmoDef.Const.CanReportTargetStatus || comp.Ai.ControlComp != null;
 
                 var delayNoTarget = !weapon.System.WConst.GiveUpAfter || s.Tick - weapon.LastShootTick > weapon.System.WConst.DelayAfterBurst;
                 var notAnyBlock = comp.MasterOverrides.SubSystem != WeaponDefinition.TargetingDef.BlockTypes.Any;
-                var needsTarget =  !weapon.Target.HasTarget && comp.MasterOverrides.Grids && (comp.DetectOtherSignals && comp.MasterAi.DetectionInfo.OtherInRange || comp.MasterAi.DetectionInfo.PriorityInRange) && report && comp.Data.Repo.Values.Set.ReportTarget && delayNoTarget && comp.MasterAi.DetectionInfo.TargetInRange(weapon);
+                var needsTarget =  (!weapon.Target.HasTarget || comp.Session.Tick - weapon.Target.ChangeTick <= 30) && comp.MasterOverrides.Grids && (comp.DetectOtherSignals && comp.MasterAi.DetectionInfo.OtherInRange || comp.MasterAi.DetectionInfo.PriorityInRange) && report && comp.Data.Repo.Values.Set.ReportTarget && delayNoTarget && comp.MasterAi.DetectionInfo.TargetInRange(weapon);
                 var showReloadIcon = (weapon.Loading || weapon.Reload.WaitForClient || s.Tick - weapon.LastLoadedTick < 60);
                 
                 string noTagetReason;
@@ -305,7 +303,6 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
                     ShowReloadIcon(weapon, stackedInfo, ref currWeaponDisplayPos, textOffset, reset);
 
                 currWeaponDisplayPos.Y -= _infoPaneloffset + (_padding * .6f);
-
                 if (reset)
                     _weaponStackedInfoPool.Enqueue(stackedInfo);
             }

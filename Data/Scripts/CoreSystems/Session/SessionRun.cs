@@ -60,6 +60,7 @@ namespace CoreSystems
                     DeformProtection.Clear();
 
                 Timings();
+                
 
                 if (IsClient) {
 
@@ -121,8 +122,12 @@ namespace CoreSystems
                 if (Tick180) 
                     ProfilePerformance();
 
-                if (Tick90 && HandlesInput && Settings.ClientConfig.ClientOptimizations)
-                    ClientMonitor();
+                if (HandlesInput)
+                {
+                    Av.AvShotCleanUp();
+                    if (Tick90 && Settings.ClientConfig.ClientOptimizations)
+                        ClientMonitor();
+                }
 
                 FutureEvents.Tick(Tick);
 

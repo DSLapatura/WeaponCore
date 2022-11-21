@@ -5,9 +5,7 @@ using CoreSystems.Support;
 using Sandbox.Game.Entities;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
-using VRage.Utils;
 using VRageMath;
-using static WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting.TargetUi;
 
 namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
 {
