@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices.ComTypes;
 using CoreSystems.Platform;
 using Jakaria.API;
 using Sandbox.Game;
@@ -287,7 +288,8 @@ namespace CoreSystems.Support
                                 qc.Up = av.VisualDir;
                                 qc.Width = (float) av.VisualLength;
                                 qc.Height = (float) av.TracerWidth;
-                                if (!qc.Added) {
+
+                                if (true) {
                                     qc.Added = true;
                                     qc.Type = QuadCache.EffectTypes.Tracer;
                                     PreAddOneFrame.Add(qc);
@@ -307,7 +309,7 @@ namespace CoreSystems.Support
                                 qc.Up = av.VisualDir;
                                 qc.Width = (float)av.VisualLength;
                                 qc.Height = (float)av.TracerWidth;
-                                if (!qc.Added) {
+                                if (true) {
                                     qc.Added = true;
                                     qc.Type = QuadCache.EffectTypes.Tracer;
 
@@ -370,7 +372,7 @@ namespace CoreSystems.Support
                                     qc.Up = av.VisualDir;
                                     qc.Width = (float)len;
                                     qc.Height = (float)width;
-                                    if (!qc.Added) {
+                                    if (true) {
                                         qc.Added = true;
                                         qc.MarkedForCloseIn = int.MaxValue;
                                         qc.Age = 0;
@@ -425,7 +427,7 @@ namespace CoreSystems.Support
                             qc.Up = normDir;
                             qc.Width = length;
                             qc.Height = (float)av.TracerWidth;
-                            if (!qc.Added) 
+                            if (true) 
                             {
                                 qc.Added = true;
                                 qc.MarkedForCloseIn = int.MaxValue;
@@ -491,7 +493,7 @@ namespace CoreSystems.Support
                             trail.Cache.Up = trail.Line.Direction;
                             trail.Cache.Width = (float) trail.Line.Length;
                             trail.Cache.Height = width;
-                            if (!trail.Cache.Added)
+                            if (true)
                             {
                                 trail.Cache.Added = true;
                                 trail.Cache.MarkedForCloseIn = int.MaxValue;
@@ -556,7 +558,7 @@ namespace CoreSystems.Support
                         qc.Width = s.Length;
                         qc.Height = s.Thickness;
 
-                        if (!qc.Added) {
+                        if (true) {
                             qc.Added = true;
                             qc.MarkedForCloseIn = int.MaxValue;
                             qc.Age = 0;
@@ -760,16 +762,6 @@ namespace CoreSystems.Support
                 var q = PreAddOneFrame[i];
                 var b = q.BillBoard;
                 var a = q.Shot;
-
-                if (q.Age > 0 || q.LifeTime == 0 || q.Updated)
-                {
-                    Log.Line($"should not be possible: updated:{q.Updated} - age:{q.Age} - lifeTime:{q.LifeTime} - type:{q.Type} - marked:{q.MarkedForCloseIn} - owner:{q.Owner != null}");
-                }
-                else
-                {
-                    if (q.MarkedForCloseIn <= 0)
-                        Log.Line($"adding while marked: {q.Type} - age:{q.Age} - marked:{q.MarkedForCloseIn} - owner:{q.Owner != null}");
-                }
 
                 q.Updated = true;
 

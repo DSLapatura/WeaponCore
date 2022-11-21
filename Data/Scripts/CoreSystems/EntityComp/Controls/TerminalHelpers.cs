@@ -496,7 +496,8 @@ namespace CoreSystems.Control
 
         internal static bool NotWcBlock(IMyTerminalBlock block)
         {
-            return !block.Components.Has<CoreComponent>(); 
+            CoreComponent comp;
+            return !block.Components.TryGet(out comp); 
         }
 
         internal static bool NotWcOrIsTurret(IMyTerminalBlock block)

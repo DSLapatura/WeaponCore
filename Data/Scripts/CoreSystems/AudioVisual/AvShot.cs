@@ -792,7 +792,7 @@ namespace CoreSystems.Support
                 qc.Up = normDir;
                 qc.Width = length;
                 qc.Height = beamRadius;
-                if (!qc.Added)
+                if (true)
                 {
                     qc.Added = true;
                     qc.MarkedForCloseIn = int.MaxValue;
