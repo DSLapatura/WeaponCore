@@ -266,7 +266,7 @@ namespace CoreSystems
 
                 if (a.Id.Equals(ShootOnceModeStr) || !a.Id.Contains(ShootModeStr) && !a.Id.Contains("OnOff") && !a.Id.Contains("WC_") && !a.Id.Contains("Control"))
                 {
-                    a.Enabled = TerminalHelpers.NotWcBlock;
+                    a.Enabled = TerminalHelpers.NotWcBlock; // dont think this is needed and its really expensive
                     session.AlteredActions.Add(a);
                 }
                 else if (a.Id.Equals("Control")) {

@@ -529,8 +529,8 @@ namespace CoreSystems.Support
 
                 if (trailCount == 0 && shrinkCnt == 0 && av.MarkForClose)
                 {
-                    av.QuadCache.MarkedForCloseIn = 0;
-                    if (av.ActiveBillBoards == 0)
+                    //av.QuadCache.MarkedForCloseIn = 0;
+                    //if (av.ActiveBillBoards == 0)
                     {
                         av.Close();
                         AvShots.RemoveAtFast(i);
@@ -736,8 +736,14 @@ namespace CoreSystems.Support
 
         internal void UpdateOneFrameQuads()
         {
-            if (PreAddOneFrame.Count > 0)
+            var requestCount = PreAddOneFrame.Count;
+            if (requestCount > 0)
+            {
+                if (requestCount > NearBillBoardLimit)
+                    NearBillBoardLimit = requestCount;
+                
                 BillBoardOneFrameQuads();
+            }
         }
 
         internal void UpdatePersistentQuads()
