@@ -75,7 +75,7 @@ namespace CoreSystems.Support
         internal double EstTravel;
         internal double ShortEstTravel;
         internal double MaxTrajectory;
-        internal float ShotFade;
+        internal double ShotFade;
         internal float TrailScaler;
         internal float TrailShrinkSize;
         internal float DistanceToLine;
@@ -511,7 +511,7 @@ namespace CoreSystems.Support
                     }
 
                     if (ShotFade > 0)
-                        color *= MathHelper.Clamp(1f - ShotFade, 0.005f, 1f);
+                        color *= (float)MathHelperD.Clamp(1d - ShotFade, 0.005d, 1d);
 
                     var width = AmmoDef.AmmoGraphics.Lines.Tracer.Width;
                     if (AmmoDef.Const.LineWidthVariance)
@@ -792,18 +792,9 @@ namespace CoreSystems.Support
                 qc.Up = normDir;
                 qc.Width = length;
                 qc.Height = beamRadius;
-                if (true)
-                {
-                    qc.Added = true;
-                    qc.MarkedForCloseIn = int.MaxValue;
-                    qc.Age = 0;
-                    qc.Type = QuadCache.EffectTypes.Offset;
-                    qc.LifeTime = 1;
-                    Session.Av.PreAddOneFrame.Add(qc);
-                    ++ActiveBillBoards;
-                }
-                else
-                    qc.Updated = true;
+                qc.Type = QuadCache.EffectTypes.Offset;
+                Session.Av.PreAddOneFrame.Add(qc);
+                ++ActiveBillBoards;
 
                 if (Vector3D.DistanceSquared(matrix.Translation, toBeam) > tracerLengthSqr) break;
             }
@@ -1301,11 +1292,6 @@ namespace CoreSystems.Support
                 if (t.Cache != null) {
                     var c = t.Cache;
                     c.Owner = null;
-                    c.LifeTime = int.MaxValue;
-                    c.MarkedForCloseIn = int.MaxValue;
-                    c.Added = false;
-                    c.Age = 0;
-                    c.Updated = false;
                 }
                 t.Cache = null;
             }
@@ -1316,13 +1302,6 @@ namespace CoreSystems.Support
                 Offsets.Clear();
                 Session.Av.OffSetLists.Push(Offsets);
             }
-
-
-            QuadCache.LifeTime = int.MaxValue;
-            QuadCache.MarkedForCloseIn = int.MaxValue;
-            QuadCache.Added = false;
-            QuadCache.Age = 0;
-            QuadCache.Updated = false;
 
             HitVelocity = Vector3D.Zero;
             TracerBack = Vector3D.Zero;
@@ -1393,6 +1372,34 @@ namespace CoreSystems.Support
     }
 
     public class QuadCache
+    {
+        public enum EffectTypes
+        {
+            Tracer,
+            Trail,
+            Shrink,
+            Offset,
+            Segment,
+        }
+
+        public readonly MyBillboard BillBoard = new MyBillboard();
+        public object Owner;
+        public AvShot Shot;
+        public EffectTypes Type;
+        public MyStringId Material;
+        public Vector4 Color;
+        public Vector3D StartPos;
+        public Vector3D Up;
+        public Vector3D Left;
+        public Vector2 UvOff;
+        public Vector2 UvSize;
+        public float Width;
+        public float Height;
+        public float TextureSize;
+        public BlendTypeEnum Blend = BlendTypeEnum.Standard;
+    }
+
+    public class QuadPersistentCache
     {
         public enum EffectTypes
         {

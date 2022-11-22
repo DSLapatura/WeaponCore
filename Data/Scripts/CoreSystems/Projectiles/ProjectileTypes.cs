@@ -53,7 +53,7 @@ namespace CoreSystems.Support
         internal long DamageDoneAoe;
         internal long DamageDoneShld;
         internal long DamageDoneProj;
-        internal float ShotFade;
+        internal double ShotFade;
         internal float BaseDamagePool;
         internal float BaseHealthPool;
         internal float BaseEwarPool;
@@ -72,7 +72,7 @@ namespace CoreSystems.Support
 
         internal MatrixD TriggerMatrix = MatrixD.Identity;
 
-        internal void InitVirtual(Weapon weapon, AmmoDef ammodef, MyEntity primeEntity, MyEntity triggerEntity, Weapon.Muzzle muzzle, double maxTrajectory, float shotFade)
+        internal void InitVirtual(Weapon weapon, AmmoDef ammodef,  Weapon.Muzzle muzzle, double maxTrajectory, double shotFade)
         {
             Weapon = weapon;
             Ai = weapon.BaseComp.MasterAi;

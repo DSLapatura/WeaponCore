@@ -136,8 +136,7 @@ namespace CoreSystems.Platform
                         muzzle.Position = newInfo.Position;
                         muzzle.LastUpdateTick = tick;
 
-                        if (forceShotDirection)
-                            muzzle.Direction = Vector3D.Normalize(ShootRequest.Position - muzzle.Position);
+
 
                         //if (Comp.Session.DebugVersion && Comp.Ai.AiType == Ai.AiTypes.Player)
                         //    Comp.Session.AddHandHitDebug(muzzle.Position, muzzle.Position + (muzzle.Direction * 10), true);
@@ -167,6 +166,9 @@ namespace CoreSystems.Platform
                             s.Av.Effects2.Add(avBarrel);
                         }
                     }
+
+                    if (forceShotDirection)
+                        muzzle.Direction = Vector3D.Normalize(ShootRequest.Position - muzzle.Position);
 
                     for (int j = 0; j < loading.TrajectilesPerBarrel; j++) {
 
@@ -236,16 +238,7 @@ namespace CoreSystems.Platform
                                         s.Projectiles.NewProjectiles.Add(new NewProjectile { NewVirts = vProList, AmmoDef = ammoPattern, Muzzle = muzzle, PatternCycle = patternCycle, Direction = muzzle.DeviatedDir, Type = NewProjectile.Kind.Virtual });
                                     }
 
-                                    MyEntity primeE = null;
-                                    MyEntity triggerE = null;
-
-                                    if (ammoPattern.Const.PrimeModel)
-                                        primeE = ammoPattern.Const.PrimeEntityPool.Get();
-
-                                    if (ammoPattern.Const.TriggerModel)
-                                        triggerE = s.TriggerEntityPool.Get();
-
-                                    float shotFade;
+                                    double shotFade;
                                     if (ammoPattern.Const.HasShotFade)
                                     {
                                         if (patternCycle > ammoPattern.AmmoGraphics.Lines.Tracer.VisualFadeStart)
@@ -259,7 +252,7 @@ namespace CoreSystems.Platform
                                     var maxTrajectory = ammoPattern.Const.MaxTrajectoryGrows && FireCounter < ammoPattern.Trajectory.MaxTrajectoryTime ? ammoPattern.Const.TrajectoryStep * FireCounter : ammoPattern.Const.MaxTrajectory;
                                     var info = s.Projectiles.VirtInfoPool.Get();
                                     info.AvShot = s.Av.AvShotPool.Count > 0 ? s.Av.AvShotPool.Pop() : new AvShot(s);
-                                    info.InitVirtual(this, ammoPattern, primeE, triggerE, muzzle, maxTrajectory, shotFade);
+                                    info.InitVirtual(this, ammoPattern,  muzzle, maxTrajectory, shotFade);
                                     vProList.Add(new NewVirtual { Info = info, Rotate = !ammoPattern.Const.RotateRealBeam && i == _nextVirtual, Muzzle = muzzle, VirtualId = _nextVirtual });
                                 }
                                 else

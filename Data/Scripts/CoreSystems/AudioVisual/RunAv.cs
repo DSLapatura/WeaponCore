@@ -1,6 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices.ComTypes;
 using CoreSystems.Platform;
 using Jakaria.API;
 using Sandbox.Game;
@@ -21,6 +19,7 @@ namespace CoreSystems.Support
         internal readonly Stack<AvShot> AvShotPool = new Stack<AvShot>(1024);
         internal readonly List<AvShot>[] AvShotCoolDown = new List<AvShot>[5];
         internal readonly List<QuadCache>[] QuadCacheCoolDown = new List<QuadCache>[5];
+        internal readonly List<QuadPersistentCache>[] QuadPersistentCacheCoolDown = new List<QuadPersistentCache>[5];
 
         internal readonly Stack<AvEffect> AvEffectPool = new Stack<AvEffect>(128);
         internal readonly Stack<AfterTrail> Trails = new Stack<AfterTrail>(128);
@@ -39,10 +38,10 @@ namespace CoreSystems.Support
         internal readonly List<ParticleEvent> ParticlesToProcess = new List<ParticleEvent>(128);
         internal readonly List<AvShot> AvShots = new List<AvShot>(1024);
 
-        internal readonly List<QuadCache> PreAddPersistent = new List<QuadCache>();
+        internal readonly List<QuadPersistentCache> PreAddPersistent = new List<QuadPersistentCache>();
+        internal readonly List<QuadPersistentCache> ActiveBillBoards = new List<QuadPersistentCache>();
         internal readonly List<QuadCache> PreAddOneFrame = new List<QuadCache>();
 
-        internal readonly List<QuadCache> ActiveBillBoards = new List<QuadCache>();
 
         internal readonly List<MyBillboard> BillBoardsToAdd = new List<MyBillboard>();
         internal readonly List<MyBillboard> BillBoardsToRemove = new List<MyBillboard>();
@@ -251,7 +250,6 @@ namespace CoreSystems.Support
                 _previousTrailCount = 0;
                 _shrinks = 0;
             }
-
             _onScreens = 0;
             _models = 0;
             for (int i = AvShots.Count - 1; i >= 0; i--)
@@ -260,15 +258,20 @@ namespace CoreSystems.Support
                 if (av.OnScreen != AvShot.Screen.None) _onScreens++;
                 var refreshed = av.LastTick == Session.Tick;
                 var aConst = av.AmmoDef.Const;
+                var overDrawLimit = PreAddOneFrame.Count > 32000;
+                if (overDrawLimit && av.Offsets?.Count > 0)
+                    av.Offsets.Clear();
 
-                if (refreshed && av.Tracer != AvShot.TracerState.Off && av.OnScreen != AvShot.Screen.None)
+
+
+                if (refreshed && av.Tracer != AvShot.TracerState.Off && av.OnScreen != AvShot.Screen.None && !overDrawLimit)
                 {
                     var color = av.Color;
                     var segColor = av.SegmentColor;
 
                     if (av.ShotFade > 0)
                     {
-                        var fade = MathHelper.Clamp(1f - av.ShotFade, 0.005f, 1f);
+                        var fade = (float)MathHelperD.Clamp(1d - av.ShotFade, 0.005d, 1d);
                         color *= fade;
                         segColor *= fade;
                     }
@@ -289,14 +292,10 @@ namespace CoreSystems.Support
                                 qc.Width = (float) av.VisualLength;
                                 qc.Height = (float) av.TracerWidth;
 
-                                if (true) {
-                                    qc.Added = true;
-                                    qc.Type = QuadCache.EffectTypes.Tracer;
-                                    PreAddOneFrame.Add(qc);
-                                    ++av.ActiveBillBoards;
-                                }
-                                else
-                                    qc.Updated = true;
+                                qc.Type = QuadCache.EffectTypes.Tracer;
+                                PreAddOneFrame.Add(qc);
+                                ++av.ActiveBillBoards;
+
                             }
                             else if (aConst.TracerMode != AmmoConstants.Texture.Resize)
                             {
@@ -309,15 +308,11 @@ namespace CoreSystems.Support
                                 qc.Up = av.VisualDir;
                                 qc.Width = (float)av.VisualLength;
                                 qc.Height = (float)av.TracerWidth;
-                                if (true) {
-                                    qc.Added = true;
-                                    qc.Type = QuadCache.EffectTypes.Tracer;
+                                qc.Type = QuadCache.EffectTypes.Tracer;
 
-                                    PreAddOneFrame.Add(qc);
-                                    ++av.ActiveBillBoards;
-                                }
-                                else
-                                    qc.Updated = true;
+                                PreAddOneFrame.Add(qc);
+                                ++av.ActiveBillBoards;
+   
                             }
                             else
                             {
@@ -372,18 +367,10 @@ namespace CoreSystems.Support
                                     qc.Up = av.VisualDir;
                                     qc.Width = (float)len;
                                     qc.Height = (float)width;
-                                    if (true) {
-                                        qc.Added = true;
-                                        qc.MarkedForCloseIn = int.MaxValue;
-                                        qc.Age = 0;
-                                        qc.Type = QuadCache.EffectTypes.Segment;
+                                    qc.Type = QuadCache.EffectTypes.Segment;
 
-                                        qc.LifeTime = 1;
-                                        PreAddOneFrame.Add(qc);
-                                        ++av.ActiveBillBoards;
-                                    }
-                                    else
-                                        qc.Updated = true;
+                                    PreAddOneFrame.Add(qc);
+                                    ++av.ActiveBillBoards;
 
                                     if (!notLast)
                                         travel = av.VisualLength;
@@ -427,19 +414,10 @@ namespace CoreSystems.Support
                             qc.Up = normDir;
                             qc.Width = length;
                             qc.Height = (float)av.TracerWidth;
-                            if (true) 
-                            {
-                                qc.Added = true;
-                                qc.MarkedForCloseIn = int.MaxValue;
-                                qc.Age = 0;
-                                qc.Type = QuadCache.EffectTypes.Offset;
+                            qc.Type = QuadCache.EffectTypes.Offset;
+                            PreAddOneFrame.Add(qc);
+                            ++av.ActiveBillBoards;
 
-                                qc.LifeTime = 1;
-                                PreAddOneFrame.Add(qc);
-                                ++av.ActiveBillBoards;
-                            }
-                            else
-                                qc.Updated = true;
 
                             if (Vector3D.DistanceSquared(av.OffsetMatrix.Translation, toBeam) > av.TracerLengthSqr) break;
                         }
@@ -451,7 +429,7 @@ namespace CoreSystems.Support
                 if (shrinkCnt > _shrinks) _shrinks = shrinkCnt;
 
                 if (shrinkCnt > 0)
-                    RunShrinks(av);
+                    RunShrinks(av, overDrawLimit);
 
                 var trailCount = av.TrailSteps?.Count ?? 0;
 
@@ -471,7 +449,7 @@ namespace CoreSystems.Support
                             trail.Line = new LineD(trail.Line.From + av.ShootVelStep, trail.Line.To + av.ShootVelStep, trail.Line.Length);
 
 
-                        if (av.OnScreen != AvShot.Screen.None)
+                        if (av.OnScreen != AvShot.Screen.None && !overDrawLimit)
                         {
                             var reduction = (av.TrailShrinkSize * trail.Step);
                             var width = widthScaler ? (aConst.TrailWidth - reduction) * av.TrailScaler : aConst.TrailWidth * av.TrailScaler;
@@ -493,18 +471,10 @@ namespace CoreSystems.Support
                             trail.Cache.Up = trail.Line.Direction;
                             trail.Cache.Width = (float) trail.Line.Length;
                             trail.Cache.Height = width;
-                            if (true)
-                            {
-                                trail.Cache.Added = true;
-                                trail.Cache.MarkedForCloseIn = int.MaxValue;
-                                trail.Cache.Age = 0;
-                                trail.Cache.LifeTime = int.MaxValue;
-                                trail.Cache.Type = QuadCache.EffectTypes.Trail;
-                                PreAddOneFrame.Add(trail.Cache);
-                                ++av.ActiveBillBoards;
-                            }
-                            else
-                                trail.Cache.Updated = true;
+                            trail.Cache.Type = QuadCache.EffectTypes.Trail;
+                            PreAddOneFrame.Add(trail.Cache);
+                            ++av.ActiveBillBoards;
+
                         }
 
                         if (++trail.Step >= steps)
@@ -515,7 +485,6 @@ namespace CoreSystems.Support
                             trailCount--;
 
                             if (trail.Cache?.Owner == trail) {
-                                trail.Cache.MarkedForCloseIn = 1;
                                 trail.Cache.Owner = null;
                                 trail.Cache = null;
                             }
@@ -539,14 +508,14 @@ namespace CoreSystems.Support
             }
         }
 
-        private void RunShrinks(AvShot av)
+        private void RunShrinks(AvShot av, bool overDrawLimit)
         {
             var s = av.TracerShrinks.Dequeue();
             if (av.LastTick != Session.Tick)
             {
                 if (!av.AmmoDef.Const.OffsetEffect)
                 {
-                    if (av.OnScreen != AvShot.Screen.None)
+                    if (av.OnScreen != AvShot.Screen.None && !overDrawLimit)
                     {
                         var qc = QuadCachePool.Count > 0 ? QuadCachePool.Pop() : new QuadCache();
 
@@ -557,21 +526,12 @@ namespace CoreSystems.Support
                         qc.Up = av.VisualDir;
                         qc.Width = s.Length;
                         qc.Height = s.Thickness;
-
-                        if (true) {
-                            qc.Added = true;
-                            qc.MarkedForCloseIn = int.MaxValue;
-                            qc.Age = 0;
-                            qc.Type = QuadCache.EffectTypes.Shrink;
-                            qc.LifeTime = 1;
-                            PreAddOneFrame.Add(qc);
-                            ++av.ActiveBillBoards;
-                        }
-                        else
-                            qc.Updated = true;
+                        qc.Type = QuadCache.EffectTypes.Shrink;
+                        PreAddOneFrame.Add(qc);
+                        ++av.ActiveBillBoards;
                     }
                 }
-                else if (av.OnScreen != AvShot.Screen.None)
+                else if (av.OnScreen != AvShot.Screen.None && !overDrawLimit)
                     av.DrawLineOffsetEffect(s.NewFront, -av.Direction, s.Length, s.Thickness, s.Color);
 
                 if (av.Trail != AvShot.TrailState.Off && av.Back)
@@ -769,8 +729,6 @@ namespace CoreSystems.Support
                 var b = q.BillBoard;
                 var a = q.Shot;
 
-                q.Updated = true;
-
                 var cameraPosition = Session.CameraPos;
                 if (Vector3D.IsZero(cameraPosition - q.StartPos, 1E-06))
                     return;
@@ -810,13 +768,7 @@ namespace CoreSystems.Support
                     case QuadCache.EffectTypes.Tracer:
                         break;
                     default:
-                        q.LifeTime = 0;
                         QuadCacheCoolDown[Session.Tick % QuadCacheCoolDown.Length].Add(q);
-                        q.LifeTime = int.MaxValue;
-                        q.Added = false;
-                        q.MarkedForCloseIn = int.MaxValue;
-                        q.Age = 0;
-                        q.Updated = false;
                         q.Owner = null;
                         q.Shot = null;
                         break;
@@ -914,11 +866,11 @@ namespace CoreSystems.Support
                     ActiveBillBoards.RemoveAtFast(i);
                     switch (q.Type)
                     {
-                        case QuadCache.EffectTypes.Tracer:
+                        case QuadPersistentCache.EffectTypes.Tracer:
                             break;
                         default:
                             q.LifeTime = 0;
-                            QuadCacheCoolDown[Session.Tick % QuadCacheCoolDown.Length].Add(q);
+                            QuadPersistentCacheCoolDown[Session.Tick % QuadPersistentCacheCoolDown.Length].Add(q);
                             q.LifeTime = int.MaxValue;
                             q.Added = false;
                             q.MarkedForCloseIn = int.MaxValue;
@@ -988,6 +940,7 @@ namespace CoreSystems.Support
                 QuadCachePool.Push(quadCacheCollection[i]);
             quadCacheCollection.Clear();
         }
+
         internal void Clean()
         {
             foreach (var p in Session.Projectiles.ProjectilePool)
@@ -1019,7 +972,6 @@ namespace CoreSystems.Support
 
             AvShotPool.Clear();
 
-            Log.Line($"activeBillboards during purge: {ActiveBillBoards.Count}");
             ActiveBillBoards.Clear();
         }
 

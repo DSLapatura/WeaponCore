@@ -292,7 +292,7 @@ namespace CoreSystems.Platform
                 ServerRequested,
                 ServerAhead,
                 Failed,
-                Finished,
+                ShootSync,
                 Rejected,
             }
 
@@ -455,7 +455,7 @@ namespace CoreSystems.Platform
                     var overCount = CompletedCycles >= LastCycle;
 
                     if (!toggled || overCount)
-                        EndShootMode(EndReason.Finished);
+                        EndShootMode(EndReason.ShootSync);
                     else
                     {
                         MakeReadyToShoot(true);
@@ -532,7 +532,7 @@ namespace CoreSystems.Platform
                     var w = Comp.Collection[i];
                     if (Comp.Session.MpActive) Log.Line($"[clear] Reason:{reason} - ammo:{w.ProtoWeaponAmmo.CurrentAmmo} - Trigger:{wValues.State.Trigger} - Signal:{Signal} - Cycles:{CompletedCycles}[{LastCycle}] - Count:{wValues.State.ToggleCount}[{ClientToggleCount}] - WeaponsFired:{WeaponsFired}", Session.InputLog);
 
-                    if (w.ShootRequest.Dirty)
+                    if (w.ShootRequest.Dirty && reason != EndReason.ShootSync)
                         w.ShootRequest.Clean();
 
                     w.ShootCount = 0;
