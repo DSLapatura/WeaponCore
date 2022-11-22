@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using CoreSystems.Support;
 using VRage.Game;
+using VRage.Library.Utils;
 using VRageMath;
 using static CoreSystems.Support.PartAnimation;
 using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetDef;
@@ -130,15 +131,17 @@ namespace CoreSystems.Platform
             EventTriggerStateChanged(state, true);
         }
 
+        internal readonly bool[] EventStatus;
         internal void EventTriggerStateChanged(EventTriggers state, bool active, HashSet<string> muzzles = null)
         {
             if (Comp.Data.Repo == null || Comp.CoreEntity == null || Comp.CoreEntity.MarkedForClose || Comp.Ai == null || Comp.Platform.State != CorePlatform.PlatformState.Ready && Comp.Platform.State != CorePlatform.PlatformState.Inited) return;
             try
             {
+                EventStatus[(int) state] = active;
                 var session = Comp.Session;
                 var distance = Vector3D.DistanceSquared(session.CameraPos, Comp.CoreEntity.PositionComp.WorldAABB.Center);
                 var canPlay = !session.DedicatedServer && 64000000 >= distance; //8km max range, will play regardless of range if it moves PivotPos and is loaded
-
+                Log.Line($"{Comp.Session.Tick}: event:{state} - state:{active}");
                 switch (state)
                 {
                     case EventTriggers.Firing:

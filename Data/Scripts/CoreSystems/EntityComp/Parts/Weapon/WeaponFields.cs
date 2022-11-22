@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using CoreSystems.Support;
 using Sandbox.Game.Entities;
-using SpaceEngineers.Game.ModAPI;
 using VRage.Game;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
+using VRage.Library.Utils;
 using VRage.Utils;
 using VRageMath;
 using static CoreSystems.Session;
@@ -238,7 +237,6 @@ namespace CoreSystems.Platform
             Comp = comp;
             System = system;
             Init(comp, system, partId);
-
             MyStringHash subtype;
             if (comp.Session.VanillaIds.TryGetValue(comp.Id, out subtype)) {
                 if (subtype.String.Contains("Gatling"))
@@ -330,6 +328,8 @@ namespace CoreSystems.Platform
             else Target = new Target(this);
 
             _numOfMuzzles = System.Muzzles.Length;
+
+            EventStatus = new EventTriggers[Enum.GetNames(typeof(EventTriggers)).Length];
             ShootRequest = new ApiShootRequest(this);
             BeamSlot = new uint[_numOfMuzzles];
             Muzzles = new Muzzle[_numOfMuzzles];

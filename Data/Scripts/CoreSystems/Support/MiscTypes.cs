@@ -5,6 +5,7 @@ using Sandbox.Game.Entities;
 using VRage.Game;
 using VRage.Game.Entity;
 using VRageMath;
+using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace CoreSystems.Support
 {
@@ -245,23 +246,23 @@ namespace CoreSystems.Support
 
             if (TargetChanged && Weapon != null)
             {
+                Log.Line($"{Weapon.Comp.Session.Tick}: set:{setTarget} - reason:{reason}");
                 ChangeTick = Weapon.System.Session.Tick;
-                var targetObj = TargetEntity != null ? (object)TargetEntity.GetTopMostParent() : Projectile;
                 if (setTarget) {
-
-                    if (Weapon.System.UniqueTargetPerWeapon && targetObj != null)
-                        Weapon.Comp.ActiveTargets.Add(targetObj);
-
                     Weapon.BaseComp.Ai.WeaponsTracking++;
                     Weapon.BaseComp.PartTracking++;
                 }
                 else {
-
-                    if (Weapon.System.UniqueTargetPerWeapon && targetObj != null)
-                        Weapon.Comp.ActiveTargets.Remove(targetObj);
-
                     Weapon.BaseComp.Ai.WeaponsTracking--;
                     Weapon.BaseComp.PartTracking--;
+                }
+
+                if (Weapon.System.UniqueTargetPerWeapon) {
+                    var targetObj = TargetEntity != null ? (object)TargetEntity.GetTopMostParent() : Projectile;
+                    if (setTarget && targetObj != null)
+                        Weapon.Comp.ActiveTargets.Add(targetObj);
+                    else if (targetObj != null)
+                        Weapon.Comp.ActiveTargets.Remove(targetObj);
                 }
             }
             HasTarget = setTarget;

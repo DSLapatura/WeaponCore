@@ -9,12 +9,12 @@ using static CoreSystems.Support.CoreComponent.Start;
 using static CoreSystems.Support.CoreComponent.Trigger;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.TrajectoryDef.GuidanceType;
 using static CoreSystems.ProtoWeaponState;
+using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetDef;
 using Sandbox.Game.Entities;
 using System;
 using Sandbox.ModAPI.Weapons;
 using SpaceEngineers.Game.ModAPI;
 using VRage.Game.Entity;
-using System.Runtime.Remoting.Metadata.W3cXsd2001;
 
 namespace CoreSystems
 {
@@ -824,8 +824,12 @@ namespace CoreSystems
 
                         w.TargetAcquireTick = uint.MaxValue;
                         AcquireTargets.RemoveAtFast(i);
-                        if (w.Target.HasTarget && MpActive) {
-                            w.Target.PushTargetToClient(w);
+                        if (w.Target.HasTarget) {
+
+                            w.EventTriggerStateChanged(EventTriggers.Tracking, true);
+
+                            if (MpActive)
+                                w.Target.PushTargetToClient(w);
                         }
                     }
                 }

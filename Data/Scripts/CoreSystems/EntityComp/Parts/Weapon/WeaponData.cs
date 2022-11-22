@@ -30,7 +30,7 @@ namespace CoreSystems.Platform
                     {
                         var base64 = Convert.FromBase64String(rawData);
                         load = MyAPIGateway.Utilities.SerializeFromBinary<ProtoWeaponRepo>(base64);
-                        validData = load != null;
+                        validData = load != null && load.Ammos.Length == Comp.Collection.Count;
                     }
                     catch (Exception e)
                     {

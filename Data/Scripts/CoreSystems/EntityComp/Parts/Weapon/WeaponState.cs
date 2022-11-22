@@ -29,10 +29,11 @@ namespace CoreSystems.Platform
 
         internal void TargetChanged()
         {
-            EventTriggerStateChanged(EventTriggers.Tracking, Target.HasTarget);
-            EventTriggerStateChanged(EventTriggers.StopTracking, !Target.HasTarget);
+
             if (!Target.HasTarget)
             {
+                EventTriggerStateChanged(EventTriggers.Tracking, Target.HasTarget);
+                EventTriggerStateChanged(EventTriggers.StopTracking, !Target.HasTarget);
                 if (InCharger) 
                     ExitCharger = true;
 
@@ -40,6 +41,10 @@ namespace CoreSystems.Platform
                     TargetData.ClearTarget();
                     Target.PushTargetToClient(this);
                 } 
+            }
+            else
+            {
+
             }
 
             Target.TargetChanged = false;

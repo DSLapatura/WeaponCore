@@ -56,10 +56,6 @@ namespace CoreSystems.Support
                 if (!foundTarget && checkObstructions)
                 {
                     foundTarget = AcquireObstruction(w, mOverrides);
-                    if (foundTarget)
-                        Log.Line($"found Obstruction");
-                    else
-                        Log.Line($"no obstruction");
                 }
             }
             else if (w.ValidFakeTargetInfo(w.Comp.Data.Repo.Values.State.PlayerId, out fakeInfo))
