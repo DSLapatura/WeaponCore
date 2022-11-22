@@ -330,6 +330,22 @@ namespace CoreSystems
             Weapon.WeaponComponent.RequestSetValue(comp, "Unowned", value, comp.Session.PlayerId);
         }
 
+        internal static bool GetFriendly(IMyTerminalBlock block)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return false;
+            return comp.Data.Repo.Values.Set.Overrides.Friendly;
+        }
+
+        internal static void RequestSetFriendly(IMyTerminalBlock block, bool newValue)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
+
+            var value = newValue ? 1 : 0;
+            Weapon.WeaponComponent.RequestSetValue(comp, "Friendly", value, comp.Session.PlayerId);
+        }
+
         internal static bool GetFocusFire(IMyTerminalBlock block)
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;

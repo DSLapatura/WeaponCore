@@ -50,6 +50,7 @@ namespace CoreSystems.Platform
             internal float DetDps;
             internal bool HasEnergyWeapon;
             internal bool HasGuidance;
+            internal bool HasTrackNonThreats;
             internal bool HasDisabledBurst;
             internal bool HasRofSlider;
             internal bool ShootSubmerged;

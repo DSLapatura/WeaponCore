@@ -59,6 +59,7 @@ namespace CoreSystems.Platform
                 {
                     if (ignoreTargets)
                         return;
+                    Log.Line($"{Weapon.Target.TargetEntity?.DebugName}");
                     masterWeapon.Target.Reset(Weapon.Comp.Session.Tick, Target.States.RayCheckMiss);
                     if (masterWeapon != Weapon) Weapon.Target.Reset(Weapon.Comp.Session.Tick, Target.States.RayCheckMiss);
                     return;
@@ -73,7 +74,7 @@ namespace CoreSystems.Platform
 
                 if (unexpectedHit)
                 {
-                    if (hitTopEnt is MyVoxelBase)
+                    if (hitTopEnt is MyVoxelBase && !Weapon.System.TrackNonThreatsOther)
                     {
                         masterWeapon.Target.Reset(Weapon.Comp.Session.Tick, Target.States.RayCheckVoxel);
                         if (masterWeapon != Weapon) Weapon.Target.Reset(Weapon.Comp.Session.Tick, Target.States.RayCheckVoxel);
@@ -89,7 +90,7 @@ namespace CoreSystems.Platform
                         Weapon.PauseShoot = true;
                         return;
                     }
-                    if (!topAsGrid.DestructibleBlocks || topAsGrid.Immune || topAsGrid.GridGeneralDamageModifier <= 0 || !Session.GridEnemy(Weapon.Comp.Ai.AiOwner, topAsGrid))
+                    if (!Weapon.System.TrackNonThreatsOther && (!topAsGrid.DestructibleBlocks || topAsGrid.Immune || topAsGrid.GridGeneralDamageModifier <= 0 || !Session.GridEnemy(Weapon.Comp.Ai.AiOwner, topAsGrid)))
                     {
                         masterWeapon.Target.Reset(Weapon.Comp.Session.Tick, Target.States.RayCheckFriendly);
                         if (masterWeapon != Weapon) Weapon.Target.Reset(Weapon.Comp.Session.Tick, Target.States.RayCheckFriendly);

@@ -246,7 +246,6 @@ namespace CoreSystems.Support
 
             if (TargetChanged && Weapon != null)
             {
-                Log.Line($"{Weapon.Comp.Session.Tick}: set:{setTarget} - reason:{reason}");
                 ChangeTick = Weapon.System.Session.Tick;
                 if (setTarget) {
                     Weapon.BaseComp.Ai.WeaponsTracking++;

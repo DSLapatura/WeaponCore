@@ -131,7 +131,6 @@ namespace CoreSystems.Platform
             EventTriggerStateChanged(state, true);
         }
 
-        internal readonly bool[] EventStatus;
         internal void EventTriggerStateChanged(EventTriggers state, bool active, HashSet<string> muzzles = null)
         {
             if (Comp.Data.Repo == null || Comp.CoreEntity == null || Comp.CoreEntity.MarkedForClose || Comp.Ai == null || Comp.Platform.State != CorePlatform.PlatformState.Ready && Comp.Platform.State != CorePlatform.PlatformState.Inited) return;
@@ -141,7 +140,6 @@ namespace CoreSystems.Platform
                 var session = Comp.Session;
                 var distance = Vector3D.DistanceSquared(session.CameraPos, Comp.CoreEntity.PositionComp.WorldAABB.Center);
                 var canPlay = !session.DedicatedServer && 64000000 >= distance; //8km max range, will play regardless of range if it moves PivotPos and is loaded
-                Log.Line($"{Comp.Session.Tick}: event:{state} - state:{active}");
                 switch (state)
                 {
                     case EventTriggers.Firing:
@@ -234,39 +232,44 @@ namespace CoreSystems.Platform
                                 _muzzlesFiring.Clear();
                             break;
                         }
-                    case EventTriggers.StopTracking:
                     case EventTriggers.Tracking:
                         {
-                            for (int i = 0; i < AnimationsSet[state].Length; i++)
+                            for (int x = 0; x < 2; x++)
                             {
-                                var animation = AnimationsSet[state][i];
-                                if (active)
+                                var statex = x == 0 ? EventTriggers.Tracking : EventTriggers.StopTracking;
+                                var activex = statex == EventTriggers.Tracking && active || statex == EventTriggers.StopTracking && false;
+                                for (int i = 0; i < AnimationsSet[statex].Length; i++)
                                 {
-                                    if (animation.TriggerOnce && animation.Triggered) continue;
+                                    var animation = AnimationsSet[statex][i];
+                                    if (activex)
+                                    {
+                                        if (animation.TriggerOnce && animation.Triggered) continue;
 
-                                    set = true;
-                                    animation.Triggered = true;
-                                    animation.CanPlay = canPlay;
+                                        set = true;
+                                        animation.Triggered = true;
+                                        animation.CanPlay = canPlay;
 
-                                    startDelay = TrackingDelayTick > session.Tick ? (TrackingDelayTick - session.Tick) : 0;
+                                        startDelay = TrackingDelayTick > session.Tick ? (TrackingDelayTick - session.Tick) : 0;
 
-                                    if (!animation.Running)
-                                        animation.PlayTicks[0] = session.Tick + animation.MotionDelay + startDelay;
+                                        if (!animation.Running)
+                                            animation.PlayTicks[0] = session.Tick + animation.MotionDelay + startDelay;
+                                        else
+                                            animation.PlayTicks.Add(session.Tick + animation.MotionDelay + startDelay);
+
+                                        Comp.Session.AnimationsToProcess.Add(animation);
+                                        animation.Running = true;
+
+                                        if (animation.DoesLoop)
+                                            animation.Looping = true;
+                                    }
                                     else
-                                        animation.PlayTicks.Add(session.Tick + animation.MotionDelay + startDelay);
-
-                                    Comp.Session.AnimationsToProcess.Add(animation);
-                                    animation.Running = true;
-                                    
-                                    if (animation.DoesLoop)
-                                        animation.Looping = true;
-                                }
-                                else
-                                {
-                                    animation.Looping = false;
-                                    animation.Triggered = false;
+                                    {
+                                        animation.Looping = false;
+                                        animation.Triggered = false;
+                                    }
                                 }
                             }
+
                             break;
                         }
                     case EventTriggers.TurnOn:
@@ -335,9 +338,10 @@ namespace CoreSystems.Platform
                             break;
                         }
                 }
-                if (active && set)
+
+                if ((active || state == EventTriggers.Tracking) && set)
                 {
-                    var animationLength = 0u;
+                    uint animationLength;
 
                     LastEvent = state;
 
@@ -346,7 +350,7 @@ namespace CoreSystems.Platform
                         var delay = session.Tick + animationLength + startDelay;
                         if (delay > AnimationDelayTick)
                             AnimationDelayTick = delay;
-                        if ((state == EventTriggers.Tracking || state == EventTriggers.StopTracking) && delay > TrackingDelayTick)
+                        if (state == EventTriggers.Tracking && delay > TrackingDelayTick)
                             TrackingDelayTick = delay;
                     }
 

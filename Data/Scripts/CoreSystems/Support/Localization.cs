@@ -48,6 +48,8 @@ namespace CoreSystems.Support
                         { "TerminalNeutralsTooltip", "Fire on targets that are neutral" },
                         { "TerminalUnownedTitle", "Target Unowned" },
                         { "TerminalUnownedTooltip", "Fire on targets with no owner" },
+                        { "TerminalFriendlyTitle", "Track NonThreats" },
+                        { "TerminalFriendlyTooltip", "Track non-threating objects" },
                         { "TerminalBiologicalsTitle", "Target Biologicals" },
                         { "TerminalBiologicalsTooltip", "Fire on players and biological NPCs" },
                         { "TerminalProjectilesTitle", "Target Projectiles" },

@@ -44,7 +44,7 @@ namespace CoreSystems.Support
                 var shootProjectile = pCount > 0 && (w.System.TrackProjectile || projectileRequest || w.Comp.Ai.ControlComp != null) && mOverrides.Projectiles;
                 var projectilesFirst = !forceFocus && shootProjectile && w.System.Values.Targeting.Threats.Length > 0 && w.System.Values.Targeting.Threats[0] == Threat.Projectiles;
                 var onlyCheckProjectile = projectileRequest || w.ProjectilesNear && !w.Target.TargetChanged && w.Comp.Session.Count != w.Acquire.SlotId && !forceFocus;
-                var checkObstructions = w.TrackNonThreats && masterAi.Obstructions.Count > 0;
+                var checkObstructions = w.System.TrackNonThreats && mOverrides.Friendly && masterAi.Obstructions.Count > 0;
                 if (!projectilesFirst && w.System.TrackTopMostEntities && !onlyCheckProjectile)
                     foundTarget = AcquireTopMostEntity(w, mOverrides, forceFocus, targetEntity);
                 else if (!forceFocus && shootProjectile)
@@ -278,7 +278,6 @@ namespace CoreSystems.Support
             var ammoDef = w.ActiveAmmoDef.AmmoDef;
             var aConst = ammoDef.Const;
             var attackNeutrals = overRides.Neutrals;
-            var attackFriends = overRides.Friendly;
             var attackNoOwner = overRides.Unowned;
             var session = comp.Session;
             session.TargetRequests++;
@@ -300,23 +299,28 @@ namespace CoreSystems.Support
             w.FoundTopMostTarget = false;
 
             var numOfTargets = ai.Obstructions.Count;
-            var adjTargetCount =  numOfTargets;
 
             var deck = GetDeck(ref session.TargetDeck, 0, numOfTargets, w.System.Values.Targeting.TopTargets, ref w.TargetData.WeaponRandom.AcquireRandom);
-            for (int x = 0; x < adjTargetCount; x++)
+            for (int x = 0; x < numOfTargets; x++)
             {
                 if (aConst.SkipAimChecks)
                     break;
 
                 var info = ai.Obstructions[deck[x]];
 
-                if (info.Target?.Physics == null || info.Target.MarkedForClose || (!attackFriends || !w.System.TrackNonThreatFriend) && (info.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Friends || info.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.FactionShare) || (!attackNeutrals || !w.System.TrackNonThreatsOther) && info.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Neutral || !attackNoOwner && info.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.NoOwnership || w.System.UniqueTargetPerWeapon && comp.ActiveTargets.Contains(info.Target))
+                if (info.Target?.Physics == null || info.Target.MarkedForClose || !w.System.TrackNonThreatsFriend && (info.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Friends || info.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.FactionShare) || (!attackNeutrals || !w.System.TrackNonThreatsOther) && info.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Neutral || !attackNoOwner && info.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.NoOwnership || w.System.UniqueTargetPerWeapon && comp.ActiveTargets.Contains(info.Target))
                     continue;
 
-                if (movingMode && !info.Target.Physics.IsMoving|| !fireOnStation && info.Target.Physics.IsStatic || stationOnly && !info.Target.Physics.IsStatic)
+                if (movingMode && !info.Target.Physics.IsMoving || !fireOnStation && info.Target.Physics.IsStatic || stationOnly && !info.Target.Physics.IsStatic)
                     continue;
 
                 var character = info.Target as IMyCharacter;
+                if (character != null && !w.System.TrackNonThreatsCharacter)
+                    continue;
+
+                var voxel = info.Target as MyVoxelBase;
+                if (voxel != null && !w.System.TrackNonThreatsVoxel)
+                    continue;
 
                 var targetRadius = character != null ? info.Target.PositionComp.LocalVolume.Radius * 5 : info.Target.PositionComp.LocalVolume.Radius;
                 if (targetRadius < minTargetRadius || targetRadius > maxTargetRadius && maxTargetRadius < 8192) continue;
@@ -330,12 +334,14 @@ namespace CoreSystems.Support
                 Vector3D targetLinVel = info.Target.Physics?.LinearVelocity ?? Vector3D.Zero;
                 Vector3D targetAccel = accelPrediction ? info.Target.Physics?.LinearAcceleration ?? Vector3D.Zero : Vector3.Zero;
                 double rayDist;
+
                 if (info.IsGrid)
                 {
                     var grid = (MyCubeGrid) info.Target;
-                    if (!s.TrackGrids || !overRides.Grids || (!overRides.LargeGrid && info.LargeGrid) || (!overRides.SmallGrid && !info.LargeGrid) || grid.CubeBlocks.Count == 0) continue;
+                    if (!overRides.Grids || (!overRides.LargeGrid && info.LargeGrid) || (!overRides.SmallGrid && !info.LargeGrid) || grid.CubeBlocks.Count == 0) continue;
                     session.CanShoot++;
                     Vector3D newCenter;
+
                     if (!w.TurretController && !w.RotorTurretTracking)
                     {
 
@@ -363,7 +369,7 @@ namespace CoreSystems.Support
                 var meteor = info.Target as MyMeteor;
                 if (meteor != null && (!s.TrackMeteors || !overRides.Meteors)) continue;
 
-                if (character != null && (!overRides.Biologicals || character.IsDead || character.Integrity <= 0 || session.AdminMap.ContainsKey(character))) continue;
+                if (character != null && (false && !overRides.Biologicals || character.IsDead || character.Integrity <= 0)) continue;
 
                 Vector3D predictedPos;
                 if (!Weapon.CanShootTarget(w, ref targetCenter, targetLinVel, targetAccel, out predictedPos, true, info.Target)) continue;

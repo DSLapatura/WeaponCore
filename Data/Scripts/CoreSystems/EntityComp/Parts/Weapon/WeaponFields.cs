@@ -5,7 +5,6 @@ using Sandbox.Game.Entities;
 using VRage.Game;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
-using VRage.Library.Utils;
 using VRage.Utils;
 using VRageMath;
 using static CoreSystems.Session;
@@ -49,6 +48,7 @@ namespace CoreSystems.Platform
         internal readonly MyEntity3DSoundEmitter BarrelRotateEmitter;
         internal readonly MyEntity3DSoundEmitter HardPointEmitter;
 
+        internal readonly bool[] EventStatus;
         internal readonly Dictionary<EventTriggers, PartAnimation[]> AnimationsSet;
         internal readonly bool PrimaryWeaponGroup;
         internal readonly bool AiOnlyWeapon;
@@ -61,17 +61,7 @@ namespace CoreSystems.Platform
         private uint _spinUpTick;
         private uint _ticksBeforeSpinUp;
 
-        internal bool TrackNonThreats;
-        internal bool AlternateForward;
-        internal bool BurstAvDelay;
-        internal bool HeatLoopRunning;
-        internal bool PreFired;
-        internal bool FinishShots;
-        internal bool LockOnFireState;
-        internal bool ScheduleAmmoChange;
-        internal bool CriticalReaction;
-        internal bool FoundTopMostTarget;
-        internal bool NoAmmo;
+
         internal uint LastMagSeenTick;
         internal uint GravityTick;
         internal uint ShootTick;
@@ -188,6 +178,16 @@ namespace CoreSystems.Platform
         internal double MuzzleDistToBarrelCenter;
         internal double ScopeDistToCheckPos;
         internal double GravityLength;
+        internal bool AlternateForward;
+        internal bool BurstAvDelay;
+        internal bool HeatLoopRunning;
+        internal bool PreFired;
+        internal bool FinishShots;
+        internal bool LockOnFireState;
+        internal bool ScheduleAmmoChange;
+        internal bool CriticalReaction;
+        internal bool FoundTopMostTarget;
+        internal bool NoAmmo;
         internal bool TurretActive;
         internal bool TargetLock;
         internal bool ClientReloading;
@@ -306,7 +306,6 @@ namespace CoreSystems.Platform
             if (System.TurretMovement != WeaponSystem.TurretType.Fixed)
                 Comp.HasAim = true;
 
-            TrackNonThreats = System.TrackNonThreatsOther || System.TrackNonThreatFriend;
             PrimaryWeaponGroup = PartId % 2 == 0;
             TurretAttached = System.Values.HardPoint.Ai.TurretAttached;
             TurretController = System.Values.HardPoint.Ai.TurretController;
@@ -329,7 +328,7 @@ namespace CoreSystems.Platform
 
             _numOfMuzzles = System.Muzzles.Length;
 
-            EventStatus = new EventTriggers[Enum.GetNames(typeof(EventTriggers)).Length];
+            EventStatus = new bool[Enum.GetNames(typeof(EventTriggers)).Length];
             ShootRequest = new ApiShootRequest(this);
             BeamSlot = new uint[_numOfMuzzles];
             Muzzles = new Muzzle[_numOfMuzzles];

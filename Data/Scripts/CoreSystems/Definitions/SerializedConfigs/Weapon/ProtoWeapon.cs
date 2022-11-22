@@ -9,7 +9,6 @@ using VRageMath;
 using static CoreSystems.Support.WeaponDefinition.TargetingDef;
 using static CoreSystems.Support.CoreComponent;
 using static CoreSystems.Platform.Weapon.WeaponComponent;
-using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace CoreSystems
 {

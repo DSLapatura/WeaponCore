@@ -721,6 +721,8 @@ namespace CoreSystems.Platform
         {
             var ui = w.System.Values.HardPoint.Ui;
             w.Comp.HasGuidance = w.Comp.HasGuidance || w.System.HasGuidedAmmo;
+            w.Comp.HasTrackNonThreats = w.Comp.HasTrackNonThreats || w.System.TrackNonThreats;
+
             //w.BaseComp.HasStrengthSlider = w.BaseComp.HasStrengthSlider || ui.DamageModifier; // this has exploits
             w.Comp.HasRofSlider = w.Comp.HasRofSlider || ui.RateOfFire;
             w.Comp.HasDrone = w.Comp.HasDrone || w.System.HasDrone;

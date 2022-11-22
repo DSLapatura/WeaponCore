@@ -32,8 +32,7 @@ namespace CoreSystems.Platform
 
             if (!Target.HasTarget)
             {
-                EventTriggerStateChanged(EventTriggers.Tracking, Target.HasTarget);
-                EventTriggerStateChanged(EventTriggers.StopTracking, !Target.HasTarget);
+                EventTriggerStateChanged(EventTriggers.Tracking, false);
                 if (InCharger) 
                     ExitCharger = true;
 
@@ -42,10 +41,8 @@ namespace CoreSystems.Platform
                     Target.PushTargetToClient(this);
                 } 
             }
-            else
-            {
-
-            }
+            else if (Comp.Session.IsClient)
+                EventTriggerStateChanged(EventTriggers.Tracking, true);
 
             Target.TargetChanged = false;
         }

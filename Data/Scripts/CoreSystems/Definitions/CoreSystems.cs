@@ -165,9 +165,12 @@ namespace CoreSystems.Support
         public readonly bool TrackMeteors;
         public readonly bool UniqueTargetPerWeapon;
         public readonly bool TrackNeutrals;
-        public readonly bool TrackNonThreatsOther;
         public readonly bool DisableLosCheck;
-        public readonly bool TrackNonThreatFriend;
+        public readonly bool TrackNonThreatsOther;
+        public readonly bool TrackNonThreatsFriend;
+        public readonly bool TrackNonThreatsVoxel;
+        public readonly bool TrackNonThreatsCharacter;
+        public readonly bool TrackNonThreats;
         public readonly bool TrackTargets;
         public readonly bool HasRequiresTarget;
         public readonly bool HasDrone;
@@ -276,12 +279,12 @@ namespace CoreSystems.Support
             Heat(out DegRof, out MaxHeat, out WepCoolDown);
             BarrelValues(out BarrelsPerShot, out ShotsPerBurst);
             BarrelsAv(out BarrelEffect1, out BarrelEffect2, out Barrel1AvTicks, out Barrel2AvTicks, out BarrelSpinRate, out HasBarrelRotation);
-            Track(out TrackProjectile, out TrackGrids, out TrackCharacters, out TrackMeteors, out TrackNeutrals, out TrackNonThreatsOther, out TrackNonThreatFriend, out MaxTrackingTime, out MaxTrackingTicks, out TrackTopMostEntities);
+            Track(out TrackProjectile, out TrackGrids, out TrackCharacters, out TrackMeteors, out TrackNeutrals, out TrackNonThreatsOther, out TrackNonThreatsFriend, out TrackNonThreatsVoxel, out TrackNonThreatsCharacter, out TrackNonThreats, out MaxTrackingTime, out MaxTrackingTicks, out TrackTopMostEntities);
             SubSystems(out TargetSubSystems, out OnlySubSystems);
             ValidTargetSize(out MinTargetRadius, out MaxTargetRadius);
             Session.CreateAnimationSets(Values.Animations, this, out WeaponAnimationSet, out PartEmissiveSet, out PartLinearMoveSet, out AnimationIdLookup, out PartAnimationLengths, out HeatingSubparts, out ParticleEvents);
 
-           // CheckForBadAnimations();
+            // CheckForBadAnimations();
 
             ApproximatePeakPower = WConst.IdlePower;
 
@@ -528,7 +531,7 @@ namespace CoreSystems.Support
                 turretMove = TurretType.Fixed;
         }
 
-        private void Track(out bool trackProjectile, out bool trackGrids, out bool trackCharacters, out bool trackMeteors, out bool trackNeutrals, out bool trackNonThreatsOther, out bool trackNonThreatsFriend, out bool maxTrackingTime, out uint maxTrackingTicks, out bool trackTopMostEntities)
+        private void Track(out bool trackProjectile, out bool trackGrids, out bool trackCharacters, out bool trackMeteors, out bool trackNeutrals, out bool trackNonThreatsOther, out bool trackNonThreatsFriend, out bool trackNonThreatsVoxel, out bool trackNonThreatsCharacter, out bool trackNonThreats, out bool maxTrackingTime, out uint maxTrackingTicks, out bool trackTopMostEntities)
         {
             trackProjectile = false;
             trackGrids = false;
@@ -537,6 +540,8 @@ namespace CoreSystems.Support
             trackNeutrals = false;
             trackNonThreatsOther = false;
             trackNonThreatsFriend = false;
+            trackNonThreatsVoxel = false;
+            trackNonThreatsCharacter = false;
             maxTrackingTicks = (uint)Values.Targeting.MaxTrackingTime;
             maxTrackingTime = maxTrackingTicks > 0;
             trackTopMostEntities = false;
@@ -576,7 +581,19 @@ namespace CoreSystems.Support
                     trackNonThreatsFriend = true;
                     trackTopMostEntities = true;
                 }
+                else if (threat == TargetingDef.Threat.NonThreatsVoxel)
+                {
+                    trackNonThreatsVoxel = true;
+                    trackTopMostEntities = true;
+                }
+                else if (threat == TargetingDef.Threat.NonThreatCharacter)
+                {
+                    trackNonThreatsCharacter = true;
+                    trackTopMostEntities = true;
+                }
             }
+            trackNonThreats = trackNonThreatsFriend || trackNonThreatsOther || trackNonThreatsCharacter || trackNonThreatsVoxel;
+
         }
 
         private void SubSystems(out bool targetSubSystems, out bool onlySubSystems)

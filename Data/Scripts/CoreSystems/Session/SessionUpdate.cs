@@ -653,7 +653,7 @@ namespace CoreSystems
                             var acquireReady = !aConst.SkipAimChecks && myTimeSlot || focusRequest;
 
                             var somethingNearBy = wComp.DetectOtherSignals && wComp.MasterAi.DetectionInfo.OtherInRange || wComp.MasterAi.DetectionInfo.PriorityInRange;
-                            var trackObstructions = w.TrackNonThreats && wComp.MasterAi.Obstructions.Count > 0;
+                            var trackObstructions = w.System.TrackNonThreats && wComp.MasterAi.Obstructions.Count > 0;
                             var weaponReady = !w.NoAmmo && (wComp.MasterAi.EnemiesNear && somethingNearBy || trackObstructions) && (!w.Target.HasTarget || rootConstruct.HadFocus && constructResetTick);
 
                             var seek = weaponReady && (acquireReady || w.ProjectilesNear);
@@ -804,7 +804,7 @@ namespace CoreSystems
 
                 if (checkTime || requiresFocus && w.Target.HasTarget) {
 
-                    var checkObstructions = w.TrackNonThreats && ai.Obstructions.Count > 0;
+                    var checkObstructions = w.System.TrackNonThreats && ai.Obstructions.Count > 0;
 
                     if (seekProjectile || comp.Data.Repo.Values.State.TrackingReticle || checkObstructions || (comp.DetectOtherSignals && ai.DetectionInfo.OtherInRange || ai.DetectionInfo.PriorityInRange) && ai.DetectionInfo.ValidSignalExists(w))
                     {

@@ -54,6 +54,8 @@ namespace CoreSystems.Control
 
             AddOnOffSwitchNoAction<T>(session, "Unowned", Localization.GetText("TerminalUnownedTitle"), Localization.GetText("TerminalUnownedTooltip"), BlockUi.GetUnowned, BlockUi.RequestSetUnowned, true, HasTracking);
 
+            AddOnOffSwitchNoAction<T>(session, "Friendly", Localization.GetText("TerminalFriendlyTitle"), Localization.GetText("TerminalFriendlyTooltip"), BlockUi.GetFriendly, BlockUi.RequestSetFriendly, true, HasTrackingAndTrackFriendly);
+
             AddOnOffSwitchNoAction<T>(session, "Biologicals", Localization.GetText("TerminalBiologicalsTitle"), Localization.GetText("TerminalBiologicalsTooltip"), BlockUi.GetBiologicals, BlockUi.RequestSetBiologicals, true, TrackBiologicals);
 
             AddOnOffSwitchNoAction<T>(session,  "Projectiles", Localization.GetText("TerminalProjectilesTitle"), Localization.GetText("TerminalProjectilesTooltip"), BlockUi.GetProjectiles, BlockUi.RequestSetProjectiles, true, TrackProjectiles);
@@ -398,6 +400,17 @@ namespace CoreSystems.Control
             return (comp.HasTracking || comp.HasGuidance);
         }
 
+        internal static bool HasTrackingAndTrackFriendly(IMyTerminalBlock block)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+
+            var valid = comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Data?.Repo != null;
+
+            if (!valid || comp.Session.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
+                return false;
+
+            return (comp.HasTracking || comp.HasGuidance || comp.HasTrackNonThreats);
+        }
 
         internal static bool IsArmed(IMyTerminalBlock block)
         {
@@ -613,7 +626,6 @@ namespace CoreSystems.Control
             CreateCustomActions<T>.CreateSliderActionSet(session, c, title, 0, 1, .1f, visibleGetter, group);
             return c;
         }
-
 
         internal static IMyTerminalControlSlider AddWeaponCameraSliderRange<T>(Session session, string name, string title, string tooltip, Func<IMyTerminalBlock, float> getter, Action<IMyTerminalBlock, float> setter, Func<IMyTerminalBlock, bool> visibleGetter, Func<IMyTerminalBlock, float> minGetter = null, Func<IMyTerminalBlock, float> maxGetter = null, bool group = false) where T : IMyTerminalBlock
         {

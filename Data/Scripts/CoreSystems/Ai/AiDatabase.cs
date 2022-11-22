@@ -124,8 +124,8 @@ namespace CoreSystems.Support
                 var voxel = ent as MyVoxelBase;
                 var grid = ent as MyCubeGrid;
                 var safeZone = ent as MySafeZone;
-
-                var blockingThings = safeZone != null || ent.Physics != null && grid != null || voxel != null && voxel == voxel.RootVoxel;
+                var character = ent as IMyCharacter;
+                var blockingThings = safeZone != null || ent.Physics != null && (grid != null || character != null) || voxel != null && voxel == voxel.RootVoxel;
                 if (!blockingThings || voxel != null && (voxel.RootVoxel is MyPlanet || voxel.PositionComp.LocalVolume.Radius < 15) || ((uint)ent.Flags & 0x1000000) > 0) continue;
 
                 if (voxel != null || safeZone != null || ent.Physics.IsStatic)

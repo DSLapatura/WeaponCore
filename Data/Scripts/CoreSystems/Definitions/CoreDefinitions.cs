@@ -243,6 +243,8 @@ namespace CoreSystems.Support
                 Other,
                 NonThreatsOther,
                 NonThreatsFriend,
+                NonThreatsVoxel,
+                NonThreatCharacter,
             }
 
             public enum BlockTypes
