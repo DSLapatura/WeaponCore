@@ -1323,8 +1323,9 @@ namespace CoreSystems.Projectiles
                 else
                 {
                     var roam = smarts.Roam;
+                    var straightAhead = roam || TargetPosition == Vector3D.Zero;
 
-                    TargetPosition = roam ? TargetPosition : Position + (Info.Direction * Info.MaxTrajectory);
+                    TargetPosition = straightAhead ? TargetPosition : Position + (Info.Direction * Info.MaxTrajectory);
 
                     if (s.ZombieLifeTime++ > aConst.TargetLossTime && !smarts.KeepAliveAfterTargetLoss && (smarts.NoTargetExpire || hadTarget))
                     {
@@ -1378,17 +1379,8 @@ namespace CoreSystems.Projectiles
                 }
                 else
                 {
-                    double maxLateralThrust = accelMpsMulti * Math.Min(1, Math.Max(0, aConst.MaxLateralThrust));
-                    if (lateralAcceleration.LengthSquared() > maxLateralThrust * maxLateralThrust)
-                    {
-                        Vector3D.Normalize(ref lateralAcceleration, out lateralAcceleration);
-                        lateralAcceleration *= maxLateralThrust;
-                    }
-
-
                     var diff = accelMpsMulti * accelMpsMulti - lateralAcceleration.LengthSquared();
                     commandedAccel = diff < 0 ? Vector3D.Normalize(lateralAcceleration) * accelMpsMulti : lateralAcceleration + Math.Sqrt(diff) * missileToTargetNorm;
-
                 }
 
                 if (Gravity.LengthSquared() > 1e-3)
@@ -1408,6 +1400,7 @@ namespace CoreSystems.Projectiles
                     }
                 }
 
+                var offset = false;
                 if (smarts.OffsetTime > 0)
                 {
                     if (Info.Age % smarts.OffsetTime == 0)
@@ -1424,12 +1417,21 @@ namespace CoreSystems.Projectiles
                     if (distSqr > VelocityLengthSqr * 2)
                     {
                         commandedAccel += accelMpsMulti * s.RandOffsetDir;
-                        commandedAccel = Vector3D.Normalize(commandedAccel) * accelMpsMulti;
+                        offset = true;
                     }
                 }
 
                 if (accelMpsMulti > 0)
                 {
+                    var commandNorm = Vector3D.Normalize(commandedAccel);
+                    var dot = Vector3D.Dot(Info.Direction, commandNorm);
+                    if (dot < 0.98 || offset) {
+                        var maxRotationsPerTickInRads = aConst.MaxLateralThrust;
+                        var radPerTickDelta = Math.Acos(dot);
+                        if (radPerTickDelta > maxRotationsPerTickInRads)
+                            commandedAccel = commandNorm * (accelMpsMulti * (maxRotationsPerTickInRads / radPerTickDelta));
+                    }
+
                     proposedVel = Velocity + (commandedAccel * StepConst);
                     var accelDir = commandedAccel / accelMpsMulti;
 

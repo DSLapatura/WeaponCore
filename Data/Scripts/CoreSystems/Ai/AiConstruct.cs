@@ -120,6 +120,7 @@ namespace CoreSystems.Support
 
             internal readonly Ai Ai;
             internal MyEntity LastFocusEntity;
+            internal MyEntity LastFocusEntityChecked;
 
             internal float OptimalDps;
             internal int BlockCount;
@@ -133,6 +134,7 @@ namespace CoreSystems.Support
             internal uint TargetResetTick;
             internal uint LastRefreshTick;
             internal uint LastTargetInfoTick;
+            internal uint LastFocusConstructTick;
             internal bool DirtyWeaponGroups;
             internal bool DroneAlert;
             internal bool InfiniteResources;
@@ -596,11 +598,13 @@ namespace CoreSystems.Support
                 LastRefreshTick = 0;
                 TargetResetTick = 0;
                 LastTargetInfoTick = 0;
+                LastFocusConstructTick = 0;
                 DirtyWeaponGroups = false;
                 HadFocus = false;
                 RootAi = null;
                 LargestAi = null;
                 LastFocusEntity = null;
+                LastFocusEntityChecked = null;
                 Counter.Clear();
                 PreviousTargets.Clear();
                 ControllingPlayers.Clear();

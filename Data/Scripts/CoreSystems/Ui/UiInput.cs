@@ -2,12 +2,9 @@
 using CoreSystems;
 using CoreSystems.Platform;
 using CoreSystems.Support;
-using Sandbox.Game;
 using Sandbox.ModAPI;
 using VRage.Input;
-using VRage.Utils;
 using VRageMath;
-using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace WeaponCore.Data.Scripts.CoreSystems.Ui
 {

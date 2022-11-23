@@ -195,6 +195,7 @@ namespace CoreSystems.Support
         internal Vector3D RandOffsetDir;
         internal Vector3D OffsetDir;
         internal Vector3D LookAtPos;
+        internal Vector3D TestAccelDir;
         internal FakeTargets DummyTargets;
         internal MyEntity ClosestObstacle;
         internal MyEntity NavTargetEnt;

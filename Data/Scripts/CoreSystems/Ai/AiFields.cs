@@ -78,6 +78,7 @@ namespace CoreSystems.Support
         internal readonly List<Ai> TargetAis = new List<Ai>(32);
         internal readonly List<TargetInfo> SortedTargets = new List<TargetInfo>();
         internal readonly List<DetectInfo> NewEntities = new List<DetectInfo>();
+        internal readonly List<TargetInfo> FocusSortedConstruct = new List<TargetInfo>();
 
         internal readonly MyDefinitionId GId = MyResourceDistributorComponent.ElectricityId;
         internal readonly AiData Data = new AiData();

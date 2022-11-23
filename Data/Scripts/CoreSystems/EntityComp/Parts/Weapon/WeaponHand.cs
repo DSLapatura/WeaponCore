@@ -138,16 +138,6 @@ namespace CoreSystems.Platform
                             PrimaryWeapon.ProtoWeaponAmmo.CurrentAmmo = storage.CurrentMagazineAmmunition;
                             Rifle.CurrentMagazineAmount = storage.CurrentMagazineAmount;
                         }
-
-                        /*
-                        var whateverThisIs = physGunOb.GunEntity as IMyObjectBuilder_GunObject<MyObjectBuilder_GunBase>;
-                        if (whateverThisIs != null)
-                        {
-                            var gunbaseOB = whateverThisIs.GetDevice();
-
-                            Log.Line($"{gunbaseOB.RemainingAmmo}");
-                        }
-                        */
                     }
                 }
             }

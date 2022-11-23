@@ -449,6 +449,7 @@ namespace CoreSystems.Support
             NewEntities.Clear();
             SubGridsRegistered.Clear();
             ObstructionLookup.Clear();
+            FocusSortedConstruct.Clear();
             SourceCount = 0;
             PartCount = 0;
             AiOwner = 0;
@@ -473,7 +474,6 @@ namespace CoreSystems.Support
             EnemyEntities = false;
             EnemyProjectiles = false;
             Data.Clean();
-
             RootComp = null;
             OnlyWeaponComp = null;
             GridEntity = null;

@@ -264,7 +264,6 @@ namespace CoreSystems
 
                 var a = actions[i];
 
-                a.Enabled = MyAPIGateway.Entities.Equals;
                 if (a.Id.Equals(ShootOnceModeStr) || !a.Id.Contains(ShootModeStr) && !a.Id.Contains("OnOff") && !a.Id.Contains("WC_") && !a.Id.Contains("Control"))
                 {
                     a.Enabled = TerminalHelpers.NotWcBlock; // dont think this is needed and its really expensive

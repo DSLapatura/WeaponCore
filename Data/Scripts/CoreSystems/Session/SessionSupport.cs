@@ -20,6 +20,7 @@ using VRage.Input;
 using VRage.ModAPI;
 using VRage.Utils;
 using VRageMath;
+using static CoreSystems.Support.Ai;
 using static CoreSystems.Support.CoreComponent;
 using static CoreSystems.Support.CoreComponent.Trigger;
 
@@ -1086,6 +1087,34 @@ namespace CoreSystems
                 }
             }
             catch (Exception ex) { Log.Line($"NewThreatLogging in SessionDraw: {ex}", null, true); }
+        }
+
+        public void GetSortedConstructCollection(Ai ai, MyCubeGrid targetGrid)
+        {
+            ai.FocusSortedConstruct.Clear();
+            TopMap map;
+            if (targetGrid != null && !targetGrid.MarkedForClose && TopEntityToInfoMap.TryGetValue(targetGrid, out map))
+            {
+                foreach (var myEntity in map.GroupMap.Construct.Keys) {
+                    TargetInfo info;
+                    if (ai.Targets.TryGetValue(myEntity, out info))
+                        ai.FocusSortedConstruct.Add(info);
+                }
+
+                var n = ai.FocusSortedConstruct.Count;
+                for (int i = 1; i < n; ++i)
+                {
+                    var key = ai.FocusSortedConstruct[i];
+                    var j = i - 1;
+
+                    while (j >= 0 && (int)ai.FocusSortedConstruct[j].OffenseRating > key.OffenseRating)
+                    {
+                        ai.FocusSortedConstruct[j + 1] = ai.FocusSortedConstruct[j];
+                        j -= 1;
+                    }
+                    ai.FocusSortedConstruct[j + 1] = key;
+                }
+            }
         }
 
         internal MyEntity CreatePhantomEntity(string phantomType, uint maxAge = 0, bool closeWhenOutOfAmmo = false, long defaultReloads = int.MaxValue, string ammoName = null, Trigger trigger = Off, float? modelScale = null, MyEntity parent = null, bool addToPrunning = false, bool shadows = false, long identity = 0, bool sync = false)

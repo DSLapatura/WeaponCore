@@ -128,45 +128,60 @@ namespace CoreSystems.Support
             if (session.WaterApiLoaded && !ammoDef.IgnoreWater && ai.InPlanetGravity && ai.MyPlanet != null && session.WaterMap.TryGetValue(ai.MyPlanet.EntityId, out water))
                 waterSphere = new BoundingSphereD(ai.MyPlanet.PositionComp.WorldAABB.Center, water.MinRadius);
 
+            int offset = 0;
             w.FoundTopMostTarget = false;
 
-            TargetInfo alphaInfo = null;
-            int offset = 0;
+            var rootConstruct = ai.Construct.RootAi.Construct;
+            var focusGrid = rootConstruct.LastFocusEntity as MyCubeGrid;
+            var lastFocusGrid = rootConstruct.LastFocusEntityChecked as MyCubeGrid;
 
-            MyEntity fTarget;
-            if (ai.Construct.Data.Repo.FocusData.Target > 0 && MyEntities.TryGetEntityById(ai.Construct.Data.Repo.FocusData.Target, out fTarget) && ai.Targets.TryGetValue(fTarget, out alphaInfo))
-                offset++;
+            var focusSortedConstructCollection = rootConstruct.RootAi.FocusSortedConstruct;
+            if (rootConstruct.HadFocus) 
+            {
+                if (focusGrid != null) {
+                    if (focusSortedConstructCollection.Count == 0 || session.Tick - rootConstruct.LastFocusConstructTick > 180 || lastFocusGrid == null || !focusGrid.IsSameConstructAs(lastFocusGrid))
+                    {
+                        rootConstruct.LastFocusEntityChecked = focusGrid;
+                        rootConstruct.LastFocusConstructTick = session.Tick;
+                        session.GetSortedConstructCollection(ai, focusGrid);
+                    }
 
-            var hasOffset = offset > 0;
+                    offset = focusSortedConstructCollection.Count;
+                }
+                else if (rootConstruct.LastFocusEntity != null)
+                {
+                    offset = 1;
+                }
+            }
+
             var numOfTargets = ai.SortedTargets.Count;
-            var adjTargetCount = forceFoci && hasOffset ? offset : numOfTargets + offset;
+            var adjTargetCount = forceFoci && offset > 0 ? offset : numOfTargets + offset;
 
             var deck = GetDeck(ref session.TargetDeck, 0, numOfTargets, w.System.Values.Targeting.TopTargets, ref w.TargetData.WeaponRandom.AcquireRandom);
             for (int x = 0; x < adjTargetCount; x++)
             {
-                var focusTarget = hasOffset && x < offset;
+                var focusTarget = offset > 0 && x < offset;
                 var lastOffset = offset - 1;
                 if (!focusTarget && (attemptReset || aConst.SkipAimChecks)) 
                     break;
 
-                TargetInfo info = null;
+                TargetInfo info;
+                if (focusTarget && focusSortedConstructCollection.Count > 0)
+                    info = focusSortedConstructCollection[x];
+                else if (focusTarget)
+                    ai.Targets.TryGetValue(rootConstruct.LastFocusEntity, out info);
+                else 
+                    info = ai.SortedTargets[deck[x - offset]];
+                    
+
                 if (forceTarget && !focusTarget) 
                     info = gridInfo;
-                else
-                {
-                    if (focusTarget)
-                    {
-                        if (x == 0 && alphaInfo != null) 
-                            info = alphaInfo;
+                else if (focusTarget && !attackFriends && info.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Friends)
+                    continue;
 
-                        if (!attackFriends && info.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Friends) 
-                            continue;
-                    }
-                    else 
-                        info = ai.SortedTargets[deck[x - offset]];
-                }
+                var grid = info.Target as MyCubeGrid;
 
-                if (info?.Target == null || info.Target.MarkedForClose || hasOffset && x > lastOffset && (info.Target == alphaInfo?.Target) || !attackNeutrals && info.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Neutral || !attackNoOwner && info.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.NoOwnership || w.System.UniqueTargetPerWeapon && comp.ActiveTargets.Contains(info.Target))
+                if (info?.Target == null || info.Target.MarkedForClose || offset > 0 && x > lastOffset && (grid != null && focusGrid != null && grid.IsSameConstructAs(focusGrid)) || !attackNeutrals && info.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Neutral || !attackNoOwner && info.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.NoOwnership || w.System.UniqueTargetPerWeapon && comp.ActiveTargets.Contains(info.Target))
                     continue;
 
                 if (movingMode && info.VelLenSqr < 1 || !fireOnStation && info.IsStatic || stationOnly && !info.IsStatic)

@@ -59,7 +59,6 @@ namespace CoreSystems.Platform
                 {
                     if (ignoreTargets)
                         return;
-                    Log.Line($"{Weapon.Target.TargetEntity?.DebugName}");
                     masterWeapon.Target.Reset(Weapon.Comp.Session.Tick, Target.States.RayCheckMiss);
                     if (masterWeapon != Weapon) Weapon.Target.Reset(Weapon.Comp.Session.Tick, Target.States.RayCheckMiss);
                     return;
