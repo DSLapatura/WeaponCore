@@ -195,7 +195,7 @@ namespace CoreSystems.Support
         internal Vector3D RandOffsetDir;
         internal Vector3D OffsetDir;
         internal Vector3D LookAtPos;
-        internal Vector3D TestAccelDir;
+        internal Vector3D TotalAcceleration;
         internal FakeTargets DummyTargets;
         internal MyEntity ClosestObstacle;
         internal MyEntity NavTargetEnt;
@@ -227,6 +227,7 @@ namespace CoreSystems.Support
             SetTargetPos = Vector3D.Zero;
             RandOffsetDir = Vector3D.Zero;
             OffsetDir = Vector3D.Zero;
+            TotalAcceleration = Vector3D.Zero;
             NavTargetEnt = null;
             ClosestObstacle = null;
             NavTargetBound = new BoundingSphereD(Vector3D.Zero,0);

@@ -4,11 +4,9 @@ using CoreSystems.Support;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
 using VRage.Collections;
-using VRage.Game;
 using VRage.Utils;
 using VRageMath;
 using static CoreSystems.Projectiles.Projectile;
-using static CoreSystems.Settings.CoreSettings.ServerSettings;
 using static CoreSystems.Support.AvShot;
 
 namespace CoreSystems.Projectiles
@@ -223,27 +221,29 @@ namespace CoreSystems.Projectiles
                         else {
                             var accel = true;
                             Vector3D newVel;
+                            var accelThisTick = info.Direction * aConst.DeltaVelocityPerTick;
+                            var maxSpeedSqr = p.MaxSpeed * p.MaxSpeed;
                             if (p.DeaccelRate > 0) {
 
                                 var distToMax = info.MaxTrajectory - info.DistanceTraveled;
 
-                                var stopDist = p.VelocityLengthSqr / 2 / (p.AccelInMetersPerSec);
+                                var stopDist = p.VelocityLengthSqr / 2 / aConst.AccelInMetersPerSec;
                                 if (distToMax <= stopDist)
                                     accel = false;
 
-                                newVel = accel ? p.Velocity + p.MaxAccelVelocity : p.Velocity - p.MaxAccelVelocity;
+                                newVel = accel ? p.Velocity + accelThisTick : p.Velocity - accelThisTick;
                                 p.VelocityLengthSqr = newVel.LengthSquared();
 
-                                if (accel && p.VelocityLengthSqr > p.MaxSpeedSqr) newVel = info.Direction * p.MaxSpeed;
+                                if (accel && p.VelocityLengthSqr > maxSpeedSqr) newVel = info.Direction * p.MaxSpeed;
                                 else if (!accel && distToMax <= 0) {
                                     newVel = Vector3D.Zero;
                                     p.VelocityLengthSqr = 0;
                                 }
                             }
                             else {
-                                newVel = p.Velocity + p.MaxAccelVelocity;
+                                newVel = p.Velocity + accelThisTick;
                                 p.VelocityLengthSqr = newVel.LengthSquared();
-                                if (p.VelocityLengthSqr > p.MaxSpeedSqr) newVel = info.Direction * p.MaxSpeed;
+                                if (p.VelocityLengthSqr > maxSpeedSqr) newVel = info.Direction * p.MaxSpeed;
                             }
 
                             p.Velocity = newVel;
@@ -337,7 +337,7 @@ namespace CoreSystems.Projectiles
                 var aConst = aDef.Const;
                 var target = info.Target;
 
-                if (p.ModelState == EntityState.Exists)
+                if (p.HasModel)
                 {
                     MatrixD matrix;
                     MatrixD.CreateWorld(ref p.Position, ref info.Direction, ref info.OriginUp, out matrix);
@@ -472,7 +472,7 @@ namespace CoreSystems.Projectiles
                         var vs = vp.AvShot;
 
                         vp.TracerLength = info.TracerLength;
-                        vs.Init(vp, p.AccelInMetersPerSec * Session.StepConst, p.MaxSpeed, ref p.AccelDir);
+                        vs.Init(vp, aConst.DeltaVelocityPerTick, p.MaxSpeed, ref p.AccelDir);
 
                         if (info.BaseDamagePool <= 0 || p.State == ProjectileState.Depleted)
                             vs.ProEnded = true;
@@ -525,7 +525,7 @@ namespace CoreSystems.Projectiles
 
                     if (aConst.DrawLine || aConst.PrimeModel || aConst.TriggerModel)
                     {
-                        var useCollisionSize = p.ModelState == EntityState.None && aConst.AmmoParticle && !aConst.DrawLine;
+                        var useCollisionSize = !p.HasModel && aConst.AmmoParticle && !aConst.DrawLine;
                         info.AvShot.TestSphere.Center = info.Hit.LastHit;
                         info.AvShot.ShortStepAvUpdate(info, useCollisionSize, true, p.EarlyEnd, p.Position);
                     }
@@ -540,7 +540,7 @@ namespace CoreSystems.Projectiles
                 if ((int)p.State > 3)
                     continue;
 
-                if (p.LineOrNotModel)
+                if (aConst.DrawLine || !p.HasModel && aConst.AmmoParticle)
                 {
                     if (p.State == ProjectileState.OneAndDone)
                     {
@@ -549,7 +549,7 @@ namespace CoreSystems.Projectiles
 
                         DeferedAvDraw.Add(new DeferedAv { AvShot = info.AvShot, Info = info, TracerFront = p.Position,  Direction = info.Direction });
                     }
-                    else if (p.ModelState == EntityState.None && aConst.AmmoParticle && !aConst.DrawLine)
+                    else if (!p.HasModel && aConst.AmmoParticle && !aConst.DrawLine)
                     {
                         if (p.AtMaxRange) info.AvShot.ShortStepAvUpdate(p.Info,true, false, p.EarlyEnd, p.Position);
                         else

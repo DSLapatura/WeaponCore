@@ -1195,6 +1195,7 @@ namespace CoreSystems.Api
                     [ProtoMember(13)] internal float GravityMultiplier;
                     [ProtoMember(14)] internal uint MaxTrajectoryTime;
                     [ProtoMember(15)] internal ApproachDef[] Approaches;
+                    [ProtoMember(16)] internal double TotalAcceleration;
 
                     [ProtoContract]
                     public struct SmartsDef
@@ -1214,6 +1215,7 @@ namespace CoreSystems.Api
                         [ProtoMember(13)] internal bool CheckFutureIntersection;
                         [ProtoMember(14)] internal double NavAcceleration;
                         [ProtoMember(15)] internal bool AccelClearance;
+                        [ProtoMember(16)] internal double MaxDeAccelPerSec;
                     }
 
                     [ProtoContract]

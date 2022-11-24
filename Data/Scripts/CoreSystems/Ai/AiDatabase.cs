@@ -58,13 +58,7 @@ namespace CoreSystems.Support
                             continue;
 
                         if (!Session.TopEntityToInfoMap.TryGetValue(grid, out topMap) || topMap.Trash && topMap.GroupMap.Construct.Count <= 1)
-                        {
-                            foreach (IMySlimBlock s in grid.CubeBlocks)
-                            {
-                                Log.Line($"{s.BlockDefinition.Id.SubtypeName}");
-                            }
                             continue;
-                        }
                     }
 
                     Sandbox.ModAPI.Ingame.MyDetectedEntityInfo entInfo;
