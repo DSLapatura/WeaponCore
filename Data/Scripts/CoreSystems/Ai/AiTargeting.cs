@@ -103,13 +103,12 @@ namespace CoreSystems.Support
 
             var ammoDef = w.ActiveAmmoDef.AmmoDef;
             var aConst = ammoDef.Const;
-            var attackNeutrals = overRides.Neutrals;
-            var attackFriends = overRides.Friendly;
-            var attackNoOwner = overRides.Unowned;
+            var attackNeutrals = overRides.Neutrals || w.System.TrackNonThreatsOther;
+            var attackFriends = overRides.Friendly || w.System.TrackNonThreatsFriend;
+            var attackNoOwner = overRides.Unowned || w.System.TrackNonThreatsOther;
             var forceFoci = overRides.FocusTargets;
             var session = comp.Session;
             session.TargetRequests++;
-
             var weaponPos = w.BarrelOrigin + (w.MyPivotFwd * w.MuzzleDistToBarrelCenter);
 
             var target = w.NewTarget;
@@ -180,8 +179,11 @@ namespace CoreSystems.Support
                     continue;
 
                 var grid = info.Target as MyCubeGrid;
+                Weapon.TargetOwner tOwner;
+                if (w.System.UniqueTargetPerWeapon && w.Comp.ActiveTargets.TryGetValue(info.Target, out tOwner) && tOwner.Weapon != w)
+                    continue;
 
-                if (info?.Target == null || info.Target.MarkedForClose || offset > 0 && x > lastOffset && (grid != null && focusGrid != null && grid.IsSameConstructAs(focusGrid)) || !attackNeutrals && info.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Neutral || !attackNoOwner && info.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.NoOwnership || w.System.UniqueTargetPerWeapon && comp.ActiveTargets.Contains(info.Target))
+                if (info?.Target == null || info.Target.MarkedForClose || offset > 0 && x > lastOffset && (grid != null && focusGrid != null && grid.IsSameConstructAs(focusGrid)) || !attackNeutrals && info.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Neutral || !attackNoOwner && info.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.NoOwnership)
                     continue;
 
                 if (movingMode && info.VelLenSqr < 1 || !fireOnStation && info.IsStatic || stationOnly && !info.IsStatic)
@@ -205,7 +207,23 @@ namespace CoreSystems.Support
                 session.TargetChecks++;
                 Vector3D targetLinVel = info.Target.Physics?.LinearVelocity ?? Vector3D.Zero;
                 Vector3D targetAccel = accelPrediction ? info.Target.Physics?.LinearAcceleration ?? Vector3D.Zero : Vector3.Zero;
-                
+                Vector3D predictedPos;
+                if (w.System.TargetGridCenter)
+                {
+                    if (!Weapon.CanShootTarget(w, ref targetCenter, targetLinVel, targetAccel, out predictedPos, false)) continue;
+                    double rayDist;
+                    Vector3D.Distance(ref weaponPos, ref targetCenter, out rayDist);
+                    var shortDist = rayDist;
+                    var origDist = rayDist;
+                    var topEntId = info.Target.GetTopMostParent().EntityId;
+                    target.Set(info.Target, targetCenter, shortDist, origDist, topEntId);
+                    target.TransferTo(w.Target, comp.Session.Tick);
+                    if (w.Target.TargetState == Target.TargetStates.IsEntity)
+                        ai.Session.NewThreat(w);
+
+                    return true;
+                }
+
                 if (info.IsGrid)
                 {
                     if (!s.TrackGrids || !overRides.Grids || (!overRides.LargeGrid && info.LargeGrid) || (!overRides.SmallGrid && !info.LargeGrid) || !focusTarget && info.FatCount < 2) continue;
@@ -246,7 +264,7 @@ namespace CoreSystems.Support
                 
                 if (character != null && (!overRides.Biologicals || character.IsDead || character.Integrity <= 0 || session.AdminMap.ContainsKey(character))) continue;
 
-                Vector3D predictedPos;
+                
                 if (!Weapon.CanShootTarget(w, ref targetCenter, targetLinVel, targetAccel, out predictedPos, true, info.Target)) continue;
                 
                 if (ai.FriendlyShieldNear)
@@ -292,8 +310,6 @@ namespace CoreSystems.Support
             var ai = comp.MasterAi;
             var ammoDef = w.ActiveAmmoDef.AmmoDef;
             var aConst = ammoDef.Const;
-            var attackNeutrals = overRides.Neutrals;
-            var attackNoOwner = overRides.Unowned;
             var session = comp.Session;
             session.TargetRequests++;
 
@@ -322,8 +338,13 @@ namespace CoreSystems.Support
                     break;
 
                 var info = ai.Obstructions[deck[x]];
+                var grid = info.Target as MyCubeGrid;
 
-                if (info.Target?.Physics == null || info.Target.MarkedForClose || !w.System.TrackNonThreatsFriend && (info.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Friends || info.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.FactionShare) || (!attackNeutrals || !w.System.TrackNonThreatsOther) && info.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Neutral || !attackNoOwner && info.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.NoOwnership || w.System.UniqueTargetPerWeapon && comp.ActiveTargets.Contains(info.Target))
+                Weapon.TargetOwner tOwner;
+                if (w.System.UniqueTargetPerWeapon && w.Comp.ActiveTargets.TryGetValue(info.Target, out tOwner) && tOwner.Weapon != w)
+                    continue;
+
+                if (info.Target?.Physics == null || info.Target.MarkedForClose || !w.System.TrackNonThreatsFriend && (info.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Friends || info.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.FactionShare) || !w.System.TrackNonThreatsOther && (info.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Neutral ||  info.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.NoOwnership))
                     continue;
 
                 if (movingMode && !info.Target.Physics.IsMoving || !fireOnStation && info.Target.Physics.IsStatic || stationOnly && !info.Target.Physics.IsStatic)
@@ -350,9 +371,8 @@ namespace CoreSystems.Support
                 Vector3D targetAccel = accelPrediction ? info.Target.Physics?.LinearAcceleration ?? Vector3D.Zero : Vector3.Zero;
                 double rayDist;
 
-                if (info.IsGrid)
+                if (grid != null)
                 {
-                    var grid = (MyCubeGrid) info.Target;
                     if (!overRides.Grids || (!overRides.LargeGrid && info.LargeGrid) || (!overRides.SmallGrid && !info.LargeGrid) || grid.CubeBlocks.Count == 0) continue;
                     session.CanShoot++;
                     Vector3D newCenter;
@@ -464,7 +484,8 @@ namespace CoreSystems.Support
                 var lpaConst = lp.Info.AmmoDef.Const;
                 var smart = lpaConst.IsDrone || lpaConst.IsSmart;
                 var cube = lp.Info.Target.TargetEntity as MyCubeBlock;
-                if (smartOnly && !smart || lockedOnly && (!smart || cube != null && w.Comp.IsBlock && cube.CubeGrid.IsSameConstructAs(w.Comp.Ai.GridEntity)) || lp.MaxSpeed > system.MaxTargetSpeed || lp.MaxSpeed <= 0 || lp.State != Projectile.ProjectileState.Alive || Vector3D.DistanceSquared(lp.Position, weaponPos) > w.MaxTargetDistanceSqr || Vector3D.DistanceSquared(lp.Position, weaponPos) < w.MinTargetDistanceBufferSqr || w.System.UniqueTargetPerWeapon && w.Comp.ActiveTargets.Contains(lp)) continue;
+                Weapon.TargetOwner tOwner;
+                if (smartOnly && !smart || lockedOnly && (!smart || cube != null && w.Comp.IsBlock && cube.CubeGrid.IsSameConstructAs(w.Comp.Ai.GridEntity)) || lp.MaxSpeed > system.MaxTargetSpeed || lp.MaxSpeed <= 0 || lp.State != Projectile.ProjectileState.Alive || Vector3D.DistanceSquared(lp.Position, weaponPos) > w.MaxTargetDistanceSqr || Vector3D.DistanceSquared(lp.Position, weaponPos) < w.MinTargetDistanceBufferSqr || w.System.UniqueTargetPerWeapon && w.Comp.ActiveTargets.TryGetValue(lp, out tOwner) && tOwner.Weapon != w) continue;
 
                 Vector3D predictedPos;
                 if (Weapon.CanShootTarget(w, ref lp.Position, lp.Velocity, lp.Velocity - lp.PrevVelocity, out predictedPos))

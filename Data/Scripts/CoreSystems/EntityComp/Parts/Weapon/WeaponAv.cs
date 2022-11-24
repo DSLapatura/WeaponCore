@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using CoreSystems.Support;
 using VRage.Game;
-using VRage.Library.Utils;
 using VRageMath;
 using static CoreSystems.Support.PartAnimation;
 using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetDef;
@@ -237,7 +236,7 @@ namespace CoreSystems.Platform
                             for (int x = 0; x < 2; x++)
                             {
                                 var statex = x == 0 ? EventTriggers.Tracking : EventTriggers.StopTracking;
-                                var activex = statex == EventTriggers.Tracking && active || statex == EventTriggers.StopTracking && false;
+                                var activex = statex == EventTriggers.Tracking && active || statex == EventTriggers.StopTracking && !active;
                                 for (int i = 0; i < AnimationsSet[statex].Length; i++)
                                 {
                                     var animation = AnimationsSet[statex][i];

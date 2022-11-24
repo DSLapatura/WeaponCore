@@ -190,6 +190,7 @@ namespace CoreSystems.Support
         public readonly bool DebugMode;
         public readonly bool ShootBlanks;
         public readonly bool HasProjectileSync;
+        public readonly bool TargetGridCenter;
         public readonly double MaxTargetSpeed;
         public readonly double AzStep;
         public readonly double ElStep;
@@ -267,7 +268,7 @@ namespace CoreSystems.Support
 
             MaxReloads = Values.HardPoint.Loading.MaxReloads;
             MaxActiveProjectiles = Values.HardPoint.Loading.MaxActiveProjectiles > 0 ? Values.HardPoint.Loading.MaxActiveProjectiles : int.MaxValue;
-
+            TargetGridCenter = Values.HardPoint.Ai.TargetGridCenter;
 
             SuppressFire = Values.HardPoint.Ai.SuppressFire;
             PartType = Values.HardPoint.HardWare.Type;

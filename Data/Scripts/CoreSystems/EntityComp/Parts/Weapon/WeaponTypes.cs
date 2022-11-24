@@ -144,6 +144,12 @@ namespace CoreSystems.Platform
 
         }
 
+        internal struct TargetOwner
+        {
+            internal Weapon Weapon;
+            internal bool Released;
+        }
+
         public class ApiShootRequest
         {
             public ApiShootRequest(Weapon weapon)

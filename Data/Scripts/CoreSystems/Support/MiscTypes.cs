@@ -4,8 +4,9 @@ using CoreSystems.Projectiles;
 using Sandbox.Game.Entities;
 using VRage.Game;
 using VRage.Game.Entity;
+using VRage.Game.ModAPI;
 using VRageMath;
-using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
+using static CoreSystems.Platform.Weapon.TargetOwner;
 
 namespace CoreSystems.Support
 {
@@ -255,17 +256,68 @@ namespace CoreSystems.Support
                     Weapon.BaseComp.Ai.WeaponsTracking--;
                     Weapon.BaseComp.PartTracking--;
                 }
-
-                if (Weapon.System.UniqueTargetPerWeapon) {
-                    var targetObj = TargetEntity != null ? (object)TargetEntity.GetTopMostParent() : Projectile;
-                    if (setTarget && targetObj != null)
-                        Weapon.Comp.ActiveTargets.Add(targetObj);
-                    else if (targetObj != null)
-                        Weapon.Comp.ActiveTargets.Remove(targetObj);
-                }
             }
+
+            if (Weapon != null && Weapon.System.UniqueTargetPerWeapon)
+            {
+                StoreTarget(setTarget);
+            }
+
             HasTarget = setTarget;
             CurrentState = reason;
+        }
+
+        private void StoreTarget(bool setTarget)
+        {
+            var targetObj = TargetEntity != null ? (object)TargetEntity.GetTopMostParent() : Projectile;
+
+            if (targetObj != null)
+            {
+                if (setTarget)
+                {
+                    var grid = targetObj as MyCubeGrid;
+                    TopMap map;
+                    if (grid != null && Weapon.System.Session.TopEntityToInfoMap.TryGetValue(grid, out map))
+                    {
+                        foreach (var target in map.GroupMap.Construct.Keys)
+                        {
+                            Weapon.Comp.ActiveTargets[target] = new Weapon.TargetOwner { Weapon = Weapon, Released = false };
+                        }
+                    }
+                    else
+                    {
+                        Weapon.Comp.ActiveTargets[targetObj] = new Weapon.TargetOwner { Weapon = Weapon, Released = false };
+                    }
+                }
+                else 
+                {
+
+                    var grid = targetObj as MyCubeGrid;
+                    TopMap map;
+                    if (grid != null && Weapon.System.Session.TopEntityToInfoMap.TryGetValue(grid, out map))
+                    {
+                        foreach (var target in map.GroupMap.Construct.Keys)
+                        {
+                            Weapon.Comp.ActiveTargets[target] = new Weapon.TargetOwner { Weapon = Weapon,  Released = true };
+                            Weapon.Comp.Session.FutureEvents.Schedule(TryRemoveActiveTarget, target, 61);
+                        }
+                    }
+                    else
+                    {
+                        Weapon.Comp.ActiveTargets[targetObj] = new Weapon.TargetOwner { Weapon = Weapon, Released = true };
+                        Weapon.Comp.Session.FutureEvents.Schedule(TryRemoveActiveTarget, targetObj, 61);
+                    }
+
+
+                }
+            }
+        }
+
+        private void TryRemoveActiveTarget(object o)
+        {
+            Weapon.TargetOwner tOwner;
+            if (Weapon.Comp.ActiveTargets.TryGetValue(o, out tOwner) && tOwner.Released && tOwner.Weapon == Weapon)
+                Weapon.Comp.ActiveTargets.Remove(o);
         }
 
         internal void SetTargetId(bool setTarget, States reason)

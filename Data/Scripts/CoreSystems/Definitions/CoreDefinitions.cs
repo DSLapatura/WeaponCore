@@ -480,6 +480,7 @@ namespace CoreSystems.Support
                 [ProtoMember(6)] internal bool SuppressFire;
                 [ProtoMember(7)] internal bool OverrideLeads;
                 [ProtoMember(8)] internal int DefaultLeadGroup;
+                [ProtoMember(9)] internal bool TargetGridCenter;
             }
 
             [ProtoContract]

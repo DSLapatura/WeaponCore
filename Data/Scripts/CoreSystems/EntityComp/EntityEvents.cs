@@ -216,9 +216,10 @@ namespace CoreSystems.Support
 
                 var status = GetSystemStatus();
                 var debug = Debug || comp.Data.Repo.Values.Set.Overrides.Debug;
-                var advanced = comp.Session.Settings.ClientConfig.AdvancedMode || debug;
+                var advanced = (comp.Session.Settings.ClientConfig.AdvancedMode || debug) && !comp.HasTrackNonThreats;
                 
-                stringBuilder.Append(advanced ? $"{status}\n" : $"{status}");
+                if (!comp.HasTrackNonThreats)
+                    stringBuilder.Append(advanced ? $"{status}\n" : $"{status}");
 
                 if (HasServerOverrides)
                     stringBuilder.Append("\nWeapon modified by server!\n")
@@ -239,7 +240,8 @@ namespace CoreSystems.Support
                 }
                 else
                 {
-                    stringBuilder.Append($"\n{Localization.GetText("WeaponInfoPeakDps")}: " + comp.PeakDps.ToString("0.0"));
+                    if (!comp.HasTrackNonThreats)
+                        stringBuilder.Append($"\n{Localization.GetText("WeaponInfoPeakDps")}: " + comp.PeakDps.ToString("0.0"));
                 }
 
 
@@ -249,9 +251,12 @@ namespace CoreSystems.Support
                         .Append($"\n{Localization.GetText("WeaponInfoHeatDissipated")}: {HeatSinkRate:0.0} W ({(HeatSinkRate / MaxHeat):P}/s)")
                         .Append($"\n{Localization.GetText("WeaponInfoCurrentHeat")}: {CurrentHeat:0.0} J ({(CurrentHeat / MaxHeat):P})");
 
-                stringBuilder.Append(advanced ? "\n__________________________________\n" : string.Empty)
-                    .Append($"\n{Localization.GetText("WeaponInfoShotsPerSec")}: " + comp.RealShotsPerSec.ToString("0.00") + " (" + comp.ShotsPerSec.ToString("0.00") + ")")
-                    .Append($"\n{Localization.GetText("WeaponInfoCurrentDraw")}: " + SinkPower.ToString("0.000") + " MW");
+                if (!comp.HasTrackNonThreats)
+                {
+                    stringBuilder.Append(advanced ? "\n__________________________________\n" : string.Empty)
+                        .Append($"\n{Localization.GetText("WeaponInfoShotsPerSec")}: " + comp.RealShotsPerSec.ToString("0.00") + " (" + comp.ShotsPerSec.ToString("0.00") + ")")
+                        .Append($"\n{Localization.GetText("WeaponInfoCurrentDraw")}: " + SinkPower.ToString("0.000") + " MW");
+                }
 
                 if (comp.HasEnergyWeapon && advanced)
                     stringBuilder.Append($"\n{Localization.GetText("WeaponInfoRequiredPower")}: " + Platform.Structure.ActualPeakPowerCombined.ToString("0.00") + " MW");
@@ -263,7 +268,7 @@ namespace CoreSystems.Support
                 {
                     var w = collection[i];
                     string shots;
-                    if (w.ActiveAmmoDef.AmmoDef.Const.EnergyAmmo || w.ActiveAmmoDef.AmmoDef.Const.IsHybrid)
+                    if ((w.ActiveAmmoDef.AmmoDef.Const.EnergyAmmo || w.ActiveAmmoDef.AmmoDef.Const.IsHybrid) && !comp.HasTrackNonThreats)
                     {
                         var chargeTime = w.AssignedPower > 0 ? (int)((w.MaxCharge - w.ProtoWeaponAmmo.CurrentCharge) / w.AssignedPower * MyEngineConstants.PHYSICS_STEP_SIZE_IN_SECONDS) : 0;
 
@@ -275,27 +280,33 @@ namespace CoreSystems.Support
 
                     else shots = "\n" + w.ActiveAmmoDef.AmmoDef.AmmoRound + ": " + w.ProtoWeaponAmmo.CurrentAmmo;
 
-                    var burst = w.ActiveAmmoDef.AmmoDef.Const.BurstMode ? $"\nShootMode: " + w.ShotsFired + "(" + w.System.ShotsPerBurst + $") - {Localization.GetText("WeaponInfoDelay")}: " + w .System.Values.HardPoint.Loading.DelayAfterBurst : string.Empty;
+                    var burst = w.ActiveAmmoDef.AmmoDef.Const.BurstMode && !comp.HasTrackNonThreats ? $"\nShootMode: " + w.ShotsFired + "(" + w.System.ShotsPerBurst + $") - {Localization.GetText("WeaponInfoDelay")}: " + w .System.Values.HardPoint.Loading.DelayAfterBurst : string.Empty;
 
                     var endReturn = i + 1 != collection.Count ? "\n" : string.Empty;
 
-                    stringBuilder.Append($"\n{Localization.GetText("WeaponInfoName")}: " + w.System.PartName + shots + burst + $"\n{Localization.GetText("WeaponInfoHasTarget")}: " + (w.ActiveAmmoDef.AmmoDef.Const.RequiresTarget ? w.Target.HasTarget.ToString() : "n/a") + $"\n{Localization.GetText("WeaponInfoReloading")}: " + w.Loading +  $"\n{Localization.GetText("WeaponInfoLoS")}: " + !w.PauseShoot + endReturn);
+                    if (!comp.HasTrackNonThreats)
+                        stringBuilder.Append($"\n{Localization.GetText("WeaponInfoName")}: " + w.System.PartName + shots + burst + $"\n{Localization.GetText("WeaponInfoHasTarget")}: " + (w.ActiveAmmoDef.AmmoDef.Const.RequiresTarget ? w.Target.HasTarget.ToString() : "n/a") + $"\n{Localization.GetText("WeaponInfoReloading")}: " + w.Loading +  $"\n{Localization.GetText("WeaponInfoLoS")}: " + !w.PauseShoot + endReturn);
+                    else
+                        stringBuilder.Append($"\n{Localization.GetText("WeaponInfoName")}: " + w.System.PartName + $"\n{Localization.GetText("WeaponInfoHasTarget")}: " + (w.ActiveAmmoDef.AmmoDef.Const.RequiresTarget ? w.Target.HasTarget.ToString() : "n/a"));
 
                     string otherAmmo = null;
-                    for (int j = 0; j < w.System.AmmoTypes.Length; j++)
+                    if (!comp.HasTrackNonThreats)
                     {
-                        var ammo = w.System.AmmoTypes[j];
-                        if (ammo == w.ActiveAmmoDef || !ammo.AmmoDef.Const.IsTurretSelectable || string.IsNullOrEmpty(ammo.AmmoDef.AmmoRound) || ammo.AmmoDef.AmmoRound == "Energy")
-                            continue;
-                        
-                        if (otherAmmo == null)
-                            otherAmmo = "\n\nAlternate Magazines:";
+                        for (int j = 0; j < w.System.AmmoTypes.Length; j++)
+                        {
+                            var ammo = w.System.AmmoTypes[j];
+                            if (ammo == w.ActiveAmmoDef || !ammo.AmmoDef.Const.IsTurretSelectable || string.IsNullOrEmpty(ammo.AmmoDef.AmmoRound) || ammo.AmmoDef.AmmoRound == "Energy")
+                                continue;
 
-                        otherAmmo += $"\n{ammo.AmmoDef.AmmoRound}";
+                            if (otherAmmo == null)
+                                otherAmmo = "\n\nAlternate Magazines:";
+
+                            otherAmmo += $"\n{ammo.AmmoDef.AmmoRound}";
+                        }
+
+                        if (otherAmmo != null)
+                            stringBuilder.Append(otherAmmo);
                     }
-
-                    if (otherAmmo != null)
-                        stringBuilder.Append(otherAmmo);
                 }
 
                 if (advanced)
