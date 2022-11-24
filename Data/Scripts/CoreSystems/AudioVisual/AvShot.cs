@@ -153,6 +153,7 @@ namespace CoreSystems.Support
         {
             None,
             ModelOnly,
+            ProxyDraw,
             InProximity,
             Tracer,
             Trail,
@@ -215,13 +216,6 @@ namespace CoreSystems.Support
         internal static void DeferedAvStateUpdates(Session s)
         {
             var drawCnt = s.Projectiles.DeferedAvDraw.Count;
-            /*
-            var maxDrawCnt = s.Settings.ClientConfig.ClientOptimizations ? s.Settings.ClientConfig.MaxProjectiles : int.MaxValue;
-            if (drawCnt > maxDrawCnt)
-                ShellSort(s.Projectiles.DeferedAvDraw);
-            */
-            int onScreenCnt = 0;
-
             for (int x = 0; x < drawCnt; x++)
             {
                 var d = s.Projectiles.DeferedAvDraw[x];
@@ -295,7 +289,10 @@ namespace CoreSystems.Support
                     double? dist;
                     s.CameraFrustrum.Intersects(ref rayTracer, out dist);
 
-                    if (aConst.AlwaysDraw || dist != null && dist <= a.VisualLength)
+                    if (aConst.AlwaysDraw)
+                        a.OnScreen = Screen.ProxyDraw;
+
+                    if (dist != null && dist <= a.VisualLength)
                         a.OnScreen = Screen.Tracer;
                     else if (aConst.Trail)
                     {
@@ -303,6 +300,8 @@ namespace CoreSystems.Support
                         if (dist != null && dist <= a.ShortEstTravel + a.ShortStepSize + a.MaxGlowLength)
                             a.OnScreen = Screen.Trail;
                     }
+
+
                     if (a.OnScreen != Screen.None && !a.TrailActivated && aConst.Trail) a.TrailActivated = true;
 
                     if (a.OnScreen == Screen.None && a.TrailActivated) a.OnScreen = Screen.Trail;
@@ -318,7 +317,7 @@ namespace CoreSystems.Support
                     }
                 }
 
-                if (a.OnScreen == Screen.None)
+                if (a.OnScreen == Screen.None || a.OnScreen == Screen.ProxyDraw)
                 {
                     if (aConst.AmmoParticle && aConst.AmmoParticleNoCull)
                     {
@@ -333,12 +332,7 @@ namespace CoreSystems.Support
                             a.OnScreen = Screen.InProximity;
                     }
                 }
-                /*
-                if (maxDrawCnt > 0) {
-                    if (a.OnScreen != Screen.None && ++onScreenCnt > maxDrawCnt)
-                        a.OnScreen = Screen.None;
-                }
-                */
+
                 if (a.MuzzleId == -1)
                     return;
 
@@ -780,11 +774,11 @@ namespace CoreSystems.Support
                     toBeam = Vector3D.Transform(Offsets[i], matrix);
                 }
 
+                var qc = av.QuadCachePool.Count > 0 ? av.QuadCachePool.Pop() : new QuadCache();
+
                 Vector3 dir = (toBeam - fromBeam);
                 var length = dir.Length();
                 var normDir = dir / length;
-                var qc = av.QuadCachePool.Count > 0 ? av.QuadCachePool.Pop() : new QuadCache();
-
                 qc.Shot = this;
                 qc.Material = offsetMaterial;
                 qc.Color = color;
@@ -795,7 +789,6 @@ namespace CoreSystems.Support
                 qc.Type = QuadCache.EffectTypes.Offset;
                 Session.Av.PreAddOneFrame.Add(qc);
                 ++ActiveBillBoards;
-
                 if (Vector3D.DistanceSquared(matrix.Translation, toBeam) > tracerLengthSqr) break;
             }
             Offsets.Clear();

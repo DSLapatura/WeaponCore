@@ -586,7 +586,7 @@ namespace CoreSystems.Support
                     trackNonThreatsVoxel = true;
                     trackTopMostEntities = true;
                 }
-                else if (threat == TargetingDef.Threat.NonThreatCharacter)
+                else if (threat == TargetingDef.Threat.NonThreatsCharacter)
                 {
                     trackNonThreatsCharacter = true;
                     trackTopMostEntities = true;

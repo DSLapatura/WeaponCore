@@ -435,7 +435,7 @@ namespace CoreSystems.Support
             
             AccelInMetersPerSec = ammo.AmmoDef.Trajectory.AccelPerSec;
             DeltaVelocityPerTick = AccelInMetersPerSec * MyEngineConstants.PHYSICS_STEP_SIZE_IN_SECONDS;
-            MaxAcceleration = ammo.AmmoDef.Trajectory.TotalAcceleration;
+            MaxAcceleration = ammo.AmmoDef.Trajectory.TotalAcceleration > 0 ? ammo.AmmoDef.Trajectory.TotalAcceleration : double.MaxValue;
             MaxAccelerationSqr = MaxAcceleration * MaxAcceleration;
             MaxDeAccelPerSec = ammo.AmmoDef.Trajectory.Smarts.MaxDeAccelPerSec;
             DeAccelerationLimit = MathHelperD.Clamp(MaxDeAccelPerSec <= 0 ? double.MinValue : (MaxDeAccelPerSec - 1), -1, 0);

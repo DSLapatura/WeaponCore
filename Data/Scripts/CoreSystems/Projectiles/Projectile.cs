@@ -1208,8 +1208,9 @@ namespace CoreSystems.Projectiles
             var targetLock = false;
             var approachEnded = s.LastActivatedStage >= aConst.ApproachesCount;
             var approachActive = s.LastActivatedStage >= 0 && !approachEnded;
+            var deAccelLimit = aConst.DeAccelerationLimit;
+            var maxDeAccelperSec = aConst.MaxDeAccelPerSec;
             var speedLimitPerTick = aConst.AmmoSkipAccel ? DesiredSpeed : aConst.AccelInMetersPerSec;
-
             if (!startTrack && Info.DistanceTraveled * Info.DistanceTraveled >= aConst.SmartsDelayDistSqr) {
                 var lineCheck = new LineD(Position, LockedTarget ? TargetPosition : Position + (Info.Direction * 10000f));
                 startTrack = !new MyOrientedBoundingBoxD(coreParent.PositionComp.LocalAABB, coreParent.PositionComp.WorldMatrixRef).Intersects(ref lineCheck).HasValue;
@@ -1231,6 +1232,7 @@ namespace CoreSystems.Projectiles
                 var seekNewTarget = timeSlot && hadTarget && !validTarget && !overMaxTargets;
                 var seekFirstTarget = !hadTarget && !validTarget && s.PickTarget && (Info.Age > 120 && timeSlot || Info.Age % checkTime == 0 && Info.IsFragment);
 
+                #region TargetTracking
                 if ((s.PickTarget && timeSlot || seekNewTarget || gaveUpChase && validTarget || isZombie || seekFirstTarget) && NewTarget() || validTarget)
                 {
                     if (s.ZombieLifeTime > 0)
@@ -1333,6 +1335,7 @@ namespace CoreSystems.Projectiles
                         return;
                     }
                 }
+                #endregion
 
                 var accelMpsMulti = speedLimitPerTick;
                 if (aConst.ApproachesCount > 0 && s.RequestedStage < aConst.ApproachesCount)
@@ -1407,13 +1410,14 @@ namespace CoreSystems.Projectiles
                 {
                     var commandNorm = Vector3D.Normalize(commandedAccel);
                     var dot = Vector3D.Dot(Info.Direction, commandNorm);
+
                     if (dot < 0.98 || offset) {
                         var maxRotationsPerTickInRads = aConst.MaxLateralThrust;
                         var radPerTickDelta = Math.Acos(dot);
 
-                        var deaccelLimit = dot < aConst.DeAccelerationLimit;
+                        var deaccelLimit = dot < deAccelLimit;
                         var rotLimit = maxRotationsPerTickInRads / radPerTickDelta;
-                        var accelConstraint = deaccelLimit ? rotLimit * aConst.MaxDeAccelPerSec : rotLimit;
+                        var accelConstraint = deaccelLimit ? rotLimit * maxDeAccelperSec : rotLimit;
 
                         if (radPerTickDelta > maxRotationsPerTickInRads || deaccelLimit)
                             commandedAccel = commandNorm * (accelMpsMulti * accelConstraint);
@@ -1431,18 +1435,20 @@ namespace CoreSystems.Projectiles
                 proposedVel = Velocity + (Info.Direction * aConst.DeltaVelocityPerTick);
             }
 
-            var proposedVelSqr = proposedVel.LengthSquared();
+            VelocityLengthSqr = proposedVel.LengthSquared();
+            if (VelocityLengthSqr <= DesiredSpeed * DesiredSpeed)
+                MaxSpeed = DesiredSpeed;
+
+            var speedCap = speedCapMulti * MaxSpeed;
+            if (VelocityLengthSqr > speedCap * speedCap) {
+                VelocityLengthSqr = proposedVel.LengthSquared();
+                proposedVel = Info.Direction * speedCap;
+            }
 
             PrevVelocity = Velocity;
             s.TotalAcceleration += (proposedVel - PrevVelocity);
             if (s.TotalAcceleration.LengthSquared() > aConst.MaxAccelerationSqr)
                 proposedVel = Velocity;
-
-            var speedCap = speedCapMulti * MaxSpeed;
-            if (proposedVelSqr > MaxSpeed * MaxSpeed || approachActive && proposedVelSqr > speedCap * speedCap)
-                proposedVel = Info.Direction * speedCap;
-                
-            VelocityLengthSqr = proposedVel.LengthSquared();
 
             Velocity = proposedVel;
         }

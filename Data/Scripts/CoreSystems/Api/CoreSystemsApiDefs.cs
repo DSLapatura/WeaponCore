@@ -244,7 +244,7 @@ namespace CoreSystems.Api
                     NonThreatsOther,
                     NonThreatsFriend,
                     NonThreatsVoxel,
-                    NonThreatCharacter,
+                    NonThreatsCharacter,
                 }
 
                 public enum BlockTypes
@@ -1305,6 +1305,8 @@ namespace CoreSystems.Api
                         [ProtoMember(30)] internal ConditionOperators Operators;
                         [ProtoMember(31)] internal StageEvents StartEvent;
                         [ProtoMember(32)] internal StageEvents EndEvent;
+                        [ProtoMember(33)] internal double TotalAccelMulti;
+                        [ProtoMember(34)] internal double DeAccelMulti;
                     }
 
                     [ProtoContract]

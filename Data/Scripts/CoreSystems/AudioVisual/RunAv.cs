@@ -45,22 +45,12 @@ namespace CoreSystems.Support
 
         internal readonly List<MyBillboard> BillBoardsToAdd = new List<MyBillboard>();
         internal readonly List<MyBillboard> BillBoardsToRemove = new List<MyBillboard>();
-        //internal readonly List<QuadReqCache> LineRequests = new List<QuadReqCache>(1024);
-        //internal readonly List<QuadReqCache> OrientedRequests = new List<QuadReqCache>(1024);
-
-        // internal readonly List<MyBillboard> QuadsToAdd = new List<MyBillboard>(1024);
-        //internal readonly int BillBoardPoolDelay = 5;
 
         internal Session Session;
 
-        //internal int BillPoolQuadIndex = -1;
-        //internal int BillQuadIndex = -1;
-        //internal int BillPoolQuadIndex = -1;
-        //internal int BillQuadIndex = -1;
         internal int ExplosionCounter;
         internal int MaxExplosions = 100;
         internal int NearBillBoardLimit;
-        internal int BillBoardRequests;
 
 
         internal bool ExplosionReady
@@ -240,6 +230,34 @@ namespace CoreSystems.Support
 
                 if (ActiveBillBoards.Count > 0 || PreAddPersistent.Count > 0)
                 MyTransparentGeometry.ApplyActionOnPersistentBillboards(UpdatePersistentQuads);
+
+                if (Session.Tick10 && Session.DebugMod && false)
+                {
+                    var os = 0;
+                    var m = 0;
+                    var d = 0;
+                    var p = 0;
+                    var t = 0;
+                    foreach (var a in AvShots)
+                    {
+                        if (a.OnScreen == AvShot.Screen.None)
+                            os++;
+
+                        if (a.MarkForClose)
+                            m++;
+
+                        if (a.EndState.Dirty)
+                            d++;
+
+                        if (a.OnScreen == AvShot.Screen.ProxyDraw)
+                            p++;
+
+                        if (a.TrailSteps.Count > 0)
+                            t++;
+                    }
+                    Session.ShowLocalNotify($"cacheRemaining:{QuadCachePool.Count} - onScreen:{_onScreens}({os})[{p}] - tailCache:{_tailCache} - hasTrail:{t} - dirty:{d} - marked:{m}", 160);
+
+                }
         }
 
         internal void Run()
@@ -255,7 +273,7 @@ namespace CoreSystems.Support
             for (int i = AvShots.Count - 1; i >= 0; i--)
             {
                 var av = AvShots[i];
-                if (av.OnScreen != AvShot.Screen.None) _onScreens++;
+                if (av.OnScreen != AvShot.Screen.None && av.OnScreen != AvShot.Screen.ProxyDraw) _onScreens++;
                 var refreshed = av.LastTick == Session.Tick;
                 var aConst = av.AmmoDef.Const;
                 var overDrawLimit = PreAddOneFrame.Count > 32000;
@@ -278,105 +296,103 @@ namespace CoreSystems.Support
 
                     if (!aConst.OffsetEffect)
                     {
-                        if (av.Tracer != AvShot.TracerState.Shrink)
+                        if (av.OnScreen != AvShot.Screen.ProxyDraw)
                         {
-                            if (aConst.TracerMode == AmmoConstants.Texture.Normal)
+                            if (av.Tracer != AvShot.TracerState.Shrink)
                             {
-                                var qc = av.QuadCache;
-
-                                qc.Shot = av;
-                                qc.Material = aConst.TracerTextures[0];
-                                qc.Color = color;
-                                qc.StartPos = av.TracerBack;
-                                qc.Up = av.VisualDir;
-                                qc.Width = (float) av.VisualLength;
-                                qc.Height = (float) av.TracerWidth;
-
-                                qc.Type = QuadCache.EffectTypes.Tracer;
-                                PreAddOneFrame.Add(qc);
-                                ++av.ActiveBillBoards;
-
-                            }
-                            else if (aConst.TracerMode != AmmoConstants.Texture.Resize)
-                            {
-                                var qc = av.QuadCache;
-
-                                qc.Shot = av;
-                                qc.Material = aConst.TracerTextures[av.TextureIdx];
-                                qc.Color = color;
-                                qc.StartPos = av.TracerBack;
-                                qc.Up = av.VisualDir;
-                                qc.Width = (float)av.VisualLength;
-                                qc.Height = (float)av.TracerWidth;
-                                qc.Type = QuadCache.EffectTypes.Tracer;
-
-                                PreAddOneFrame.Add(qc);
-                                ++av.ActiveBillBoards;
-   
-                            }
-                            else
-                            {
-
-                                var seg = av.AmmoDef.AmmoGraphics.Lines.Tracer.Segmentation;
-                                var stepPos = av.TracerBack;
-                                var segTextureCnt = aConst.SegmentTextures.Length;
-                                var gapTextureCnt = aConst.TracerTextures.Length;
-                                var segStepLen = seg.SegmentLength / segTextureCnt;
-                                var gapStepLen = seg.SegmentGap / gapTextureCnt;
-                                var gapEnabled = gapStepLen > 0;
-                                int j = 0;
-                                double travel = 0;
-                                while (travel < av.VisualLength)
+                                if (aConst.TracerMode == AmmoConstants.Texture.Normal)
                                 {
 
-                                    var mod = j++ % 2;
-                                    var gap = gapEnabled && (av.SegmentGaped && mod == 0 || !av.SegmentGaped && mod == 1);
-                                    var first = travel <= 0;
-
-                                    double width;
-                                    double rawLen;
-                                    Vector4 dyncColor;
-                                    if (!gap)
-                                    {
-                                        rawLen = first ? av.SegmentLenTranserved * Session.ClientAvDivisor : seg.SegmentLength * Session.ClientAvDivisor;
-                                        if (rawLen <= 0)
-                                            break;
-                                        width = av.SegmentWidth;
-                                        dyncColor = segColor;
-                                    }
-                                    else
-                                    {
-                                        rawLen = first ? av.SegmentLenTranserved * Session.ClientAvDivisor : seg.SegmentGap * Session.ClientAvDivisor;
-                                        if (rawLen <= 0)
-                                            break;
-                                        width = av.TracerWidth;
-                                        dyncColor = color;
-                                    }
-
-                                    var notLast = travel + rawLen < av.VisualLength;
-                                    var len = notLast ? rawLen : av.VisualLength - travel;
-                                    var clampStep = !gap ? MathHelperD.Clamp((int)((len / segStepLen) + 0.5) - 1, 0, segTextureCnt - 1) : MathHelperD.Clamp((int)((len / gapStepLen) + 0.5) - 1, 0, gapTextureCnt - 1);
-                                    var material = !gap ? aConst.SegmentTextures[(int)clampStep] : aConst.TracerTextures[(int)clampStep];
-
-                                    var qc = QuadCachePool.Count > 0 ? QuadCachePool.Pop() : new QuadCache();
+                                    var qc = av.QuadCache;
 
                                     qc.Shot = av;
-                                    qc.Material = material;
-                                    qc.Color = dyncColor;
-                                    qc.StartPos = stepPos;
+                                    qc.Material = aConst.TracerTextures[0];
+                                    qc.Color = color;
+                                    qc.StartPos = av.TracerBack;
                                     qc.Up = av.VisualDir;
-                                    qc.Width = (float)len;
-                                    qc.Height = (float)width;
-                                    qc.Type = QuadCache.EffectTypes.Segment;
+                                    qc.Width = (float)av.VisualLength;
+                                    qc.Height = (float)av.TracerWidth;
 
+                                    qc.Type = QuadCache.EffectTypes.Tracer;
                                     PreAddOneFrame.Add(qc);
                                     ++av.ActiveBillBoards;
+                                }
+                                else if (aConst.TracerMode != AmmoConstants.Texture.Resize)
+                                {
+                                    var qc = av.QuadCache;
+                                    qc.Shot = av;
+                                    qc.Material = aConst.TracerTextures[av.TextureIdx];
+                                    qc.Color = color;
+                                    qc.StartPos = av.TracerBack;
+                                    qc.Up = av.VisualDir;
+                                    qc.Width = (float)av.VisualLength;
+                                    qc.Height = (float)av.TracerWidth;
+                                    qc.Type = QuadCache.EffectTypes.Tracer;
+                                    PreAddOneFrame.Add(qc);
+                                    ++av.ActiveBillBoards;
+                                }
+                                else
+                                {
+                                    var seg = av.AmmoDef.AmmoGraphics.Lines.Tracer.Segmentation;
+                                    var stepPos = av.TracerBack;
+                                    var segTextureCnt = aConst.SegmentTextures.Length;
+                                    var gapTextureCnt = aConst.TracerTextures.Length;
+                                    var segStepLen = seg.SegmentLength / segTextureCnt;
+                                    var gapStepLen = seg.SegmentGap / gapTextureCnt;
+                                    var gapEnabled = gapStepLen > 0;
+                                    int j = 0;
+                                    double travel = 0;
+                                    while (travel < av.VisualLength)
+                                    {
 
-                                    if (!notLast)
-                                        travel = av.VisualLength;
-                                    else
-                                        travel += len;
-                                    stepPos += (av.VisualDir * len);
+                                        var mod = j++ % 2;
+                                        var gap = gapEnabled && (av.SegmentGaped && mod == 0 || !av.SegmentGaped && mod == 1);
+                                        var first = travel <= 0;
+
+                                        double width;
+                                        double rawLen;
+                                        Vector4 dyncColor;
+                                        if (!gap)
+                                        {
+                                            rawLen = first ? av.SegmentLenTranserved * Session.ClientAvDivisor : seg.SegmentLength * Session.ClientAvDivisor;
+                                            if (rawLen <= 0)
+                                                break;
+                                            width = av.SegmentWidth;
+                                            dyncColor = segColor;
+                                        }
+                                        else
+                                        {
+                                            rawLen = first ? av.SegmentLenTranserved * Session.ClientAvDivisor : seg.SegmentGap * Session.ClientAvDivisor;
+                                            if (rawLen <= 0)
+                                                break;
+                                            width = av.TracerWidth;
+                                            dyncColor = color;
+                                        }
+
+                                        var notLast = travel + rawLen < av.VisualLength;
+                                        var len = notLast ? rawLen : av.VisualLength - travel;
+                                        var clampStep = !gap ? MathHelperD.Clamp((int)((len / segStepLen) + 0.5) - 1, 0, segTextureCnt - 1) : MathHelperD.Clamp((int)((len / gapStepLen) + 0.5) - 1, 0, gapTextureCnt - 1);
+                                        var material = !gap ? aConst.SegmentTextures[(int)clampStep] : aConst.TracerTextures[(int)clampStep];
+
+                                        var qc = QuadCachePool.Count > 0 ? QuadCachePool.Pop() : new QuadCache();
+                                        qc.Shot = av;
+                                        qc.Material = material;
+                                        qc.Color = dyncColor;
+                                        qc.StartPos = stepPos;
+                                        qc.Up = av.VisualDir;
+                                        qc.Width = (float)len;
+                                        qc.Height = (float)width;
+                                        qc.Type = QuadCache.EffectTypes.Segment;
+
+                                        PreAddOneFrame.Add(qc);
+                                        ++av.ActiveBillBoards;
+
+                                        if (!notLast)
+                                            travel = av.VisualLength;
+                                        else
+                                            travel += len;
+                                        stepPos += (av.VisualDir * len);
+                                    }
                                 }
                             }
                         }
@@ -384,42 +400,41 @@ namespace CoreSystems.Support
                     else if (av.Offsets != null)
                     {
                         var list = av.Offsets;
-                        for (int x = 0; x < list.Count; x++)
+                        if (av.OnScreen != AvShot.Screen.ProxyDraw)
                         {
-
-                            Vector3D fromBeam;
-                            Vector3D toBeam;
-                            if (x == 0)
+                            for (int x = 0; x < list.Count; x++)
                             {
-                                fromBeam = av.OffsetMatrix.Translation;
-                                toBeam = Vector3D.Transform(list[x], av.OffsetMatrix);
+                                Vector3D fromBeam;
+                                Vector3D toBeam;
+                                if (x == 0)
+                                {
+                                    fromBeam = av.OffsetMatrix.Translation;
+                                    toBeam = Vector3D.Transform(list[x], av.OffsetMatrix);
+                                }
+                                else
+                                {
+                                    fromBeam = Vector3D.Transform(list[x - 1], av.OffsetMatrix);
+                                    toBeam = Vector3D.Transform(list[x], av.OffsetMatrix);
+                                }
+
+                                Vector3 dir = (toBeam - fromBeam);
+                                var length = dir.Length();
+                                var normDir = dir / length;
+
+                                var qc = QuadCachePool.Count > 0 ? QuadCachePool.Pop() : new QuadCache();
+                                qc.Shot = av;
+                                qc.Material = aConst.TracerTextures[0];
+                                qc.Color = color;
+                                qc.StartPos = fromBeam;
+                                qc.Up = normDir;
+                                qc.Width = length;
+                                qc.Height = (float)av.TracerWidth;
+                                qc.Type = QuadCache.EffectTypes.Offset;
+                                PreAddOneFrame.Add(qc);
+                                ++av.ActiveBillBoards;
+
+                                if (Vector3D.DistanceSquared(av.OffsetMatrix.Translation, toBeam) > av.TracerLengthSqr) break;
                             }
-                            else
-                            {
-
-                                fromBeam = Vector3D.Transform(list[x - 1], av.OffsetMatrix);
-                                toBeam = Vector3D.Transform(list[x], av.OffsetMatrix);
-                            }
-
-                            Vector3 dir = (toBeam - fromBeam);
-                            var length = dir.Length();
-                            var normDir = dir / length;
-
-                            var qc = QuadCachePool.Count > 0 ? QuadCachePool.Pop() : new QuadCache();
-
-                            qc.Shot = av;
-                            qc.Material = aConst.TracerTextures[0];
-                            qc.Color = color;
-                            qc.StartPos = fromBeam;
-                            qc.Up = normDir;
-                            qc.Width = length;
-                            qc.Height = (float)av.TracerWidth;
-                            qc.Type = QuadCache.EffectTypes.Offset;
-                            PreAddOneFrame.Add(qc);
-                            ++av.ActiveBillBoards;
-
-
-                            if (Vector3D.DistanceSquared(av.OffsetMatrix.Translation, toBeam) > av.TracerLengthSqr) break;
                         }
                         list.Clear();
                     }
@@ -459,21 +474,26 @@ namespace CoreSystems.Support
                                 color *= MathHelper.Clamp(1f - reduction, 0.01f, 1f);
                             }
 
-                            if (trail.Cache?.Owner != trail) {
-                                trail.Cache = QuadCachePool.Count > 0 ? QuadCachePool.Pop() : new QuadCache();
-                                trail.Cache.Owner = trail;
-                            }
+                            if (av.OnScreen != AvShot.Screen.ProxyDraw)
+                            {
+                                if (trail.Cache == null)
+                                {
+                                    _tailCache++;
+                                    trail.Cache = QuadCachePool.Count > 0 ? QuadCachePool.Pop() : new QuadCache();
+                                    trail.Cache.Owner = trail;
+                                }
 
-                            trail.Cache.Shot = av;
-                            trail.Cache.Material = aConst.TrailTextures[0];
-                            trail.Cache.Color = color;
-                            trail.Cache.StartPos = trail.Line.From;
-                            trail.Cache.Up = trail.Line.Direction;
-                            trail.Cache.Width = (float) trail.Line.Length;
-                            trail.Cache.Height = width;
-                            trail.Cache.Type = QuadCache.EffectTypes.Trail;
-                            PreAddOneFrame.Add(trail.Cache);
-                            ++av.ActiveBillBoards;
+                                trail.Cache.Shot = av;
+                                trail.Cache.Material = aConst.TrailTextures[0];
+                                trail.Cache.Color = color;
+                                trail.Cache.StartPos = trail.Line.From;
+                                trail.Cache.Up = trail.Line.Direction;
+                                trail.Cache.Width = (float)trail.Line.Length;
+                                trail.Cache.Height = width;
+                                trail.Cache.Type = QuadCache.EffectTypes.Trail;
+                                PreAddOneFrame.Add(trail.Cache);
+                                ++av.ActiveBillBoards;
+                            }
 
                         }
 
@@ -484,7 +504,9 @@ namespace CoreSystems.Support
                             remove = true;
                             trailCount--;
 
-                            if (trail.Cache?.Owner == trail) {
+                            if (trail.Cache != null) {
+                                _tailCache--;
+                                QuadCacheCoolDown[Session.Tick % QuadCacheCoolDown.Length].Add(trail.Cache);
                                 trail.Cache.Owner = null;
                                 trail.Cache = null;
                             }
@@ -498,200 +520,46 @@ namespace CoreSystems.Support
 
                 if (trailCount == 0 && shrinkCnt == 0 && av.MarkForClose)
                 {
-                    //av.QuadCache.MarkedForCloseIn = 0;
-                    //if (av.ActiveBillBoards == 0)
-                    {
-                        av.Close();
-                        AvShots.RemoveAtFast(i);
-                    }
+                    av.Close();
+                    AvShots.RemoveAtFast(i);
                 }
             }
         }
 
+        private int _tailCache;
         private void RunShrinks(AvShot av, bool overDrawLimit)
         {
             var s = av.TracerShrinks.Dequeue();
             if (av.LastTick != Session.Tick)
             {
-                if (!av.AmmoDef.Const.OffsetEffect)
+                if (av.OnScreen != AvShot.Screen.ProxyDraw)
                 {
-                    if (av.OnScreen != AvShot.Screen.None && !overDrawLimit)
+                    if (!av.AmmoDef.Const.OffsetEffect)
                     {
-                        var qc = QuadCachePool.Count > 0 ? QuadCachePool.Pop() : new QuadCache();
-
-                        qc.Shot = av;
-                        qc.Material = av.AmmoDef.Const.TracerTextures[0];
-                        qc.Color = s.Color;
-                        qc.StartPos = s.NewFront;
-                        qc.Up = av.VisualDir;
-                        qc.Width = s.Length;
-                        qc.Height = s.Thickness;
-                        qc.Type = QuadCache.EffectTypes.Shrink;
-                        PreAddOneFrame.Add(qc);
-                        ++av.ActiveBillBoards;
+                        if (av.OnScreen != AvShot.Screen.None && !overDrawLimit)
+                        {
+                            var qc = QuadCachePool.Count > 0 ? QuadCachePool.Pop() : new QuadCache();
+                            qc.Shot = av;
+                            qc.Material = av.AmmoDef.Const.TracerTextures[0];
+                            qc.Color = s.Color;
+                            qc.StartPos = s.NewFront;
+                            qc.Up = av.VisualDir;
+                            qc.Width = s.Length;
+                            qc.Height = s.Thickness;
+                            qc.Type = QuadCache.EffectTypes.Shrink;
+                            PreAddOneFrame.Add(qc);
+                            ++av.ActiveBillBoards;
+                        }
                     }
+                    else if (av.OnScreen != AvShot.Screen.None && !overDrawLimit)
+                        av.DrawLineOffsetEffect(s.NewFront, -av.Direction, s.Length, s.Thickness, s.Color);
                 }
-                else if (av.OnScreen != AvShot.Screen.None && !overDrawLimit)
-                    av.DrawLineOffsetEffect(s.NewFront, -av.Direction, s.Length, s.Thickness, s.Color);
 
                 if (av.Trail != AvShot.TrailState.Off && av.Back)
                     av.RunTrail(s, true);
             }
 
             if (av.TracerShrinks.Count == 0) av.ResetHit();
-        }
-
-        internal void RunAvEffects1()
-        {
-            for (int i = Effects1.Count - 1; i >= 0; i--)
-            {
-
-                var avEffect = Effects1[i];
-                var weapon = avEffect.Weapon;
-                var muzzle = avEffect.Muzzle;
-                var ticksAgo = weapon.Comp.Session.Tick - avEffect.StartTick;
-                var bAv = weapon.System.Values.HardPoint.Graphics.Effect1;
-                var effect = weapon.Effects1[muzzle.MuzzleId];
-
-                var effectExists = effect != null;
-                if (effectExists && avEffect.EndTick == 0 && weapon.StopBarrelAvTick >= Session.Tick - 1)
-                    avEffect.EndTick = weapon.StopBarrelAvTick;
-
-                var info = weapon.Dummies[muzzle.MuzzleId].Info;
-                var somethingEnded = avEffect.EndTick != 0 && avEffect.EndTick <= Session.Tick || !weapon.PlayTurretAv || info.Entity == null || info.Entity.MarkedForClose || weapon.Comp.Ai == null || weapon.MuzzlePart.Entity?.Parent == null && weapon.Comp.GunBase == null || weapon.Comp.CoreEntity.MarkedForClose || weapon.MuzzlePart.Entity == null || weapon.MuzzlePart.Entity.MarkedForClose;
-
-                var effectStale = effectExists && (effect.IsEmittingStopped || effect.IsStopped) || !effectExists && ticksAgo > 0;
-                if (effectStale || somethingEnded || !weapon.Comp.IsWorking)
-                {
-                    if (effectExists)
-                    {
-                        effect.Stop(bAv.Extras.Restart);
-                        weapon.Effects1[muzzle.MuzzleId] = null;
-                    }
-                    muzzle.Av1Looping = false;
-                    muzzle.LastAv1Tick = 0;
-                    Effects1.RemoveAtFast(i);
-                    avEffect.Clean(AvEffectPool);
-                    continue;
-                }
-
-                if (weapon.Comp.Ai.VelocityUpdateTick != weapon.Comp.Session.Tick)
-                {
-                    weapon.Comp.Ai.TopEntityVolume.Center = weapon.Comp.TopEntity.PositionComp.WorldVolume.Center;
-                    weapon.Comp.Ai.TopEntityVel = weapon.Comp.TopEntity.Physics?.LinearVelocity ?? Vector3D.Zero;
-                    weapon.Comp.Ai.IsStatic = weapon.Comp.TopEntity.Physics?.IsStatic ?? false;
-                    weapon.Comp.Ai.VelocityUpdateTick = weapon.Comp.Session.Tick;
-                }
-
-
-                var particles = weapon.System.Values.HardPoint.Graphics.Effect1;
-                var renderId = info.Entity.Render.GetRenderObjectID();
-                var matrix = info.DummyMatrix;
-                var pos = info.Position;
-                matrix.Translation = info.LocalPosition + particles.Offset;
-
-                if (!effectExists && ticksAgo <= 0)
-                {
-                    MyParticleEffect newEffect;
-                    if (MyParticlesManager.TryCreateParticleEffect(particles.Name, ref matrix, ref pos, renderId, out newEffect))
-                    {
-                        newEffect.UserScale = particles.Extras.Scale;
-                        if (newEffect.Loop)
-                        {
-                            weapon.Effects1[muzzle.MuzzleId] = newEffect;
-                            muzzle.Av1Looping = true;
-                        }
-                        else
-                        {
-                            muzzle.Av1Looping = false;
-                            muzzle.LastAv1Tick = 0;
-                            Effects1.RemoveAtFast(i);
-                            avEffect.Clean(AvEffectPool);
-                        }
-                    }
-                }
-                else if (effectExists)
-                {
-                    effect.WorldMatrix = matrix;
-                }
-            }
-        }
-
-        internal void RunAvEffects2()
-        {
-            for (int i = Effects2.Count - 1; i >= 0; i--)
-            {
-                var av = Effects2[i];
-                var weapon = av.Weapon;
-                var muzzle = av.Muzzle;
-                var ticksAgo = weapon.Comp.Session.Tick - av.StartTick;
-                var bAv = weapon.System.Values.HardPoint.Graphics.Effect2;
-
-                var effect = weapon.Effects2[muzzle.MuzzleId];
-                var effectExists = effect != null;
-                if (effectExists && av.EndTick == 0 && weapon.StopBarrelAvTick >= Session.Tick - 1)
-                    av.EndTick = weapon.StopBarrelAvTick;
-
-                var info = weapon.Dummies[muzzle.MuzzleId].Info;
-                var somethingEnded = av.EndTick != 0 && av.EndTick <= Session.Tick || !weapon.PlayTurretAv || info.Entity == null || info.Entity.MarkedForClose || weapon.Comp.Ai == null || weapon.MuzzlePart.Entity?.Parent == null && weapon.Comp.GunBase == null || weapon.Comp.CoreEntity.MarkedForClose || weapon.MuzzlePart.Entity == null || weapon.MuzzlePart.Entity.MarkedForClose;
-
-                var effectStale = effectExists && (effect.IsEmittingStopped || effect.IsStopped) || !effectExists && ticksAgo > 0;
-
-                if (effectStale || somethingEnded || !weapon.Comp.IsWorking)
-                {
-                    if (effectExists)
-                    {
-                        effect.Stop(bAv.Extras.Restart);
-                        weapon.Effects2[muzzle.MuzzleId] = null;
-                    }
-                    muzzle.Av2Looping = false;
-                    muzzle.LastAv2Tick = 0;
-                    Effects2.RemoveAtFast(i);
-                    av.Clean(AvEffectPool);
-                    continue;
-                }
-
-                if (weapon.Comp.Ai.VelocityUpdateTick != weapon.Comp.Session.Tick)
-                {
-                    weapon.Comp.Ai.TopEntityVolume.Center = weapon.Comp.TopEntity.PositionComp.WorldVolume.Center;
-                    weapon.Comp.Ai.TopEntityVel = weapon.Comp.TopEntity.Physics?.LinearVelocity ?? Vector3D.Zero;
-                    weapon.Comp.Ai.IsStatic = weapon.Comp.TopEntity.Physics?.IsStatic ?? false;
-                    weapon.Comp.Ai.VelocityUpdateTick = weapon.Comp.Session.Tick;
-                }
-
-                var particles = weapon.System.Values.HardPoint.Graphics.Effect2;
-                var renderId = info.Entity.Render.GetRenderObjectID();
-                var matrix = info.DummyMatrix;
-                var pos = info.Position;
-                matrix.Translation = info.LocalPosition + particles.Offset;
-
-                if (!effectExists && ticksAgo <= 0)
-                {
-                    MyParticleEffect newEffect;
-                    if (MyParticlesManager.TryCreateParticleEffect(particles.Name, ref matrix, ref pos, renderId, out newEffect))
-                    {
-                        newEffect.UserScale = particles.Extras.Scale;
-
-                        if (newEffect.Loop)
-                        {
-                            weapon.Effects2[muzzle.MuzzleId] = newEffect;
-                            muzzle.Av2Looping = true;
-                        }
-                        else
-                        {
-                            muzzle.Av2Looping = false;
-                            muzzle.LastAv2Tick = 0;
-                            Effects2.RemoveAtFast(i);
-                            av.Clean(AvEffectPool);
-                        }
-                    }
-                }
-                else if (effectExists)
-                {
-
-                    effect.WorldMatrix = matrix;
-                }
-            }
         }
 
         internal void UpdateOneFrameQuads()
@@ -766,10 +634,10 @@ namespace CoreSystems.Support
                 switch (q.Type)
                 {
                     case QuadCache.EffectTypes.Tracer:
+                    case QuadCache.EffectTypes.Trail:
                         break;
                     default:
                         QuadCacheCoolDown[Session.Tick % QuadCacheCoolDown.Length].Add(q);
-                        q.Owner = null;
                         q.Shot = null;
                         break;
                 }
@@ -925,6 +793,160 @@ namespace CoreSystems.Support
                 BillBoardsToRemove.Clear();
             }
         }
+
+        internal void RunAvEffects1()
+        {
+            for (int i = Effects1.Count - 1; i >= 0; i--)
+            {
+
+                var avEffect = Effects1[i];
+                var weapon = avEffect.Weapon;
+                var muzzle = avEffect.Muzzle;
+                var ticksAgo = weapon.Comp.Session.Tick - avEffect.StartTick;
+                var bAv = weapon.System.Values.HardPoint.Graphics.Effect1;
+                var effect = weapon.Effects1[muzzle.MuzzleId];
+
+                var effectExists = effect != null;
+                if (effectExists && avEffect.EndTick == 0 && weapon.StopBarrelAvTick >= Session.Tick - 1)
+                    avEffect.EndTick = weapon.StopBarrelAvTick;
+
+                var info = weapon.Dummies[muzzle.MuzzleId].Info;
+                var somethingEnded = avEffect.EndTick != 0 && avEffect.EndTick <= Session.Tick || !weapon.PlayTurretAv || info.Entity == null || info.Entity.MarkedForClose || weapon.Comp.Ai == null || weapon.MuzzlePart.Entity?.Parent == null && weapon.Comp.GunBase == null || weapon.Comp.CoreEntity.MarkedForClose || weapon.MuzzlePart.Entity == null || weapon.MuzzlePart.Entity.MarkedForClose;
+
+                var effectStale = effectExists && (effect.IsEmittingStopped || effect.IsStopped) || !effectExists && ticksAgo > 0;
+                if (effectStale || somethingEnded || !weapon.Comp.IsWorking)
+                {
+                    if (effectExists)
+                    {
+                        effect.Stop(bAv.Extras.Restart);
+                        weapon.Effects1[muzzle.MuzzleId] = null;
+                    }
+                    muzzle.Av1Looping = false;
+                    muzzle.LastAv1Tick = 0;
+                    Effects1.RemoveAtFast(i);
+                    avEffect.Clean(AvEffectPool);
+                    continue;
+                }
+
+                if (weapon.Comp.Ai.VelocityUpdateTick != weapon.Comp.Session.Tick)
+                {
+                    weapon.Comp.Ai.TopEntityVolume.Center = weapon.Comp.TopEntity.PositionComp.WorldVolume.Center;
+                    weapon.Comp.Ai.TopEntityVel = weapon.Comp.TopEntity.Physics?.LinearVelocity ?? Vector3D.Zero;
+                    weapon.Comp.Ai.IsStatic = weapon.Comp.TopEntity.Physics?.IsStatic ?? false;
+                    weapon.Comp.Ai.VelocityUpdateTick = weapon.Comp.Session.Tick;
+                }
+
+
+                var particles = weapon.System.Values.HardPoint.Graphics.Effect1;
+                var renderId = info.Entity.Render.GetRenderObjectID();
+                var matrix = info.DummyMatrix;
+                var pos = info.Position;
+                matrix.Translation = info.LocalPosition + particles.Offset;
+
+                if (!effectExists && ticksAgo <= 0)
+                {
+                    MyParticleEffect newEffect;
+                    if (MyParticlesManager.TryCreateParticleEffect(particles.Name, ref matrix, ref pos, renderId, out newEffect))
+                    {
+                        newEffect.UserScale = particles.Extras.Scale;
+                        if (newEffect.Loop)
+                        {
+                            weapon.Effects1[muzzle.MuzzleId] = newEffect;
+                            muzzle.Av1Looping = true;
+                        }
+                        else
+                        {
+                            muzzle.Av1Looping = false;
+                            muzzle.LastAv1Tick = 0;
+                            Effects1.RemoveAtFast(i);
+                            avEffect.Clean(AvEffectPool);
+                        }
+                    }
+                }
+                else if (effectExists)
+                {
+                    effect.WorldMatrix = matrix;
+                }
+            }
+        }
+
+        internal void RunAvEffects2()
+        {
+            for (int i = Effects2.Count - 1; i >= 0; i--)
+            {
+                var av = Effects2[i];
+                var weapon = av.Weapon;
+                var muzzle = av.Muzzle;
+                var ticksAgo = weapon.Comp.Session.Tick - av.StartTick;
+                var bAv = weapon.System.Values.HardPoint.Graphics.Effect2;
+
+                var effect = weapon.Effects2[muzzle.MuzzleId];
+                var effectExists = effect != null;
+                if (effectExists && av.EndTick == 0 && weapon.StopBarrelAvTick >= Session.Tick - 1)
+                    av.EndTick = weapon.StopBarrelAvTick;
+
+                var info = weapon.Dummies[muzzle.MuzzleId].Info;
+                var somethingEnded = av.EndTick != 0 && av.EndTick <= Session.Tick || !weapon.PlayTurretAv || info.Entity == null || info.Entity.MarkedForClose || weapon.Comp.Ai == null || weapon.MuzzlePart.Entity?.Parent == null && weapon.Comp.GunBase == null || weapon.Comp.CoreEntity.MarkedForClose || weapon.MuzzlePart.Entity == null || weapon.MuzzlePart.Entity.MarkedForClose;
+
+                var effectStale = effectExists && (effect.IsEmittingStopped || effect.IsStopped) || !effectExists && ticksAgo > 0;
+
+                if (effectStale || somethingEnded || !weapon.Comp.IsWorking)
+                {
+                    if (effectExists)
+                    {
+                        effect.Stop(bAv.Extras.Restart);
+                        weapon.Effects2[muzzle.MuzzleId] = null;
+                    }
+                    muzzle.Av2Looping = false;
+                    muzzle.LastAv2Tick = 0;
+                    Effects2.RemoveAtFast(i);
+                    av.Clean(AvEffectPool);
+                    continue;
+                }
+
+                if (weapon.Comp.Ai.VelocityUpdateTick != weapon.Comp.Session.Tick)
+                {
+                    weapon.Comp.Ai.TopEntityVolume.Center = weapon.Comp.TopEntity.PositionComp.WorldVolume.Center;
+                    weapon.Comp.Ai.TopEntityVel = weapon.Comp.TopEntity.Physics?.LinearVelocity ?? Vector3D.Zero;
+                    weapon.Comp.Ai.IsStatic = weapon.Comp.TopEntity.Physics?.IsStatic ?? false;
+                    weapon.Comp.Ai.VelocityUpdateTick = weapon.Comp.Session.Tick;
+                }
+
+                var particles = weapon.System.Values.HardPoint.Graphics.Effect2;
+                var renderId = info.Entity.Render.GetRenderObjectID();
+                var matrix = info.DummyMatrix;
+                var pos = info.Position;
+                matrix.Translation = info.LocalPosition + particles.Offset;
+
+                if (!effectExists && ticksAgo <= 0)
+                {
+                    MyParticleEffect newEffect;
+                    if (MyParticlesManager.TryCreateParticleEffect(particles.Name, ref matrix, ref pos, renderId, out newEffect))
+                    {
+                        newEffect.UserScale = particles.Extras.Scale;
+
+                        if (newEffect.Loop)
+                        {
+                            weapon.Effects2[muzzle.MuzzleId] = newEffect;
+                            muzzle.Av2Looping = true;
+                        }
+                        else
+                        {
+                            muzzle.Av2Looping = false;
+                            muzzle.LastAv2Tick = 0;
+                            Effects2.RemoveAtFast(i);
+                            av.Clean(AvEffectPool);
+                        }
+                    }
+                }
+                else if (effectExists)
+                {
+
+                    effect.WorldMatrix = matrix;
+                }
+            }
+        }
+
 
         internal void AvShotCleanUp()
         {
