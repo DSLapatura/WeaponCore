@@ -275,9 +275,6 @@ namespace CoreSystems.Projectiles
             DeaccelRate = aConst.Ewar || aConst.IsMine ? trajectory.DeaccelTime : aConst.IsDrone ? 100: 0;
             State = !aConst.IsBeamWeapon ? ProjectileState.Alive : ProjectileState.OneAndDone;
 
-            //if (ammoDef.AmmoRound == "AryxKineticFrags")
-            //    Log.Line($"vel:{Velocity.Length()} - maxSpeed:{MaxSpeed} - shootVel:{Info.ShooterVel.Length()} - desiredSpeed:{DesiredSpeed}");
-
             if (EnableAv)
             {
                 Info.AvShot = session.Av.AvShotPool.Count > 0 ? session.Av.AvShotPool.Pop() : new AvShot(session);

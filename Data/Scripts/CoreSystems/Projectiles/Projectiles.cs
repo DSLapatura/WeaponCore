@@ -339,7 +339,7 @@ namespace CoreSystems.Projectiles
         {
             _beamCount = 0;
             var apCount = ActiveProjetiles.Count;
-            var minCount = Session.Settings.Enforcement.BaseOptimizations ? 999999 : 99999;
+            var minCount = Session.Settings.Enforcement.BaseOptimizations ? 96 : 99999;
             var targetStride = apCount / 20;
             var stride = apCount < minCount ? 100000 : targetStride > 48 ? targetStride : 48;
 
