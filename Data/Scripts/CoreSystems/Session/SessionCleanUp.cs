@@ -295,13 +295,7 @@ namespace CoreSystems
 
             Av.Clean();
 
-            Projectiles.ShrapnelToSpawn.Clear();
-            Projectiles.ShrapnelPool.Clear();
-            Projectiles.FragmentPool.Clear();
-            Projectiles.ActiveProjetiles.Clear();
-            Projectiles.ProjectilePool.Clear();
-            Projectiles.HitEntityPool.Clean();
-            Projectiles.VirtInfoPool.Clean();
+            Projectiles.Clean();
 
             DbsToUpdate.Clear();
             EntityAIs.Clear();

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using CoreSystems.Platform;
 using Sandbox.Game.Entities;
-using Sandbox.Game.World;
 using Sandbox.ModAPI;
 using VRage.Collections;
 using VRage.Game;
@@ -172,7 +171,7 @@ namespace CoreSystems.Support
             MuzzleId = info.MuzzleId;
             UniqueMuzzleId = info.UniqueMuzzleId;
             MaxSpeed = maxSpeed;
-            ShootVelStep = info.ShooterVel * MyEngineConstants.PHYSICS_STEP_SIZE_IN_SECONDS;
+            ShootVelStep = !info.IsFragment ? info.ShooterVel * MyEngineConstants.PHYSICS_STEP_SIZE_IN_SECONDS : Vector3D.Zero;
             Weapon = info.Weapon;
             MaxTrajectory = info.MaxTrajectory;
             ShotFade = info.ShotFade;

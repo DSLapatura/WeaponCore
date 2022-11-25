@@ -237,6 +237,8 @@ namespace CoreSystems.Platform
                             {
                                 var statex = x == 0 ? EventTriggers.Tracking : EventTriggers.StopTracking;
                                 var activex = statex == EventTriggers.Tracking && active || statex == EventTriggers.StopTracking && !active;
+
+                                Log.Line($"wId:{System.WeaponId} - state:{state} - active{active} --- [statex:{statex} - activex:{activex}]");
                                 for (int i = 0; i < AnimationsSet[statex].Length; i++)
                                 {
                                     var animation = AnimationsSet[statex][i];

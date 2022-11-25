@@ -270,9 +270,13 @@ namespace CoreSystems.Projectiles
             if (Info.IsFragment)
                 Vector3D.Normalize(ref Velocity, out Info.Direction);
 
+
             TravelMagnitude = !Info.IsFragment && aConst.AmmoSkipAccel ? desiredSpeed * StepConst : Velocity * StepConst;
             DeaccelRate = aConst.Ewar || aConst.IsMine ? trajectory.DeaccelTime : aConst.IsDrone ? 100: 0;
             State = !aConst.IsBeamWeapon ? ProjectileState.Alive : ProjectileState.OneAndDone;
+
+            //if (ammoDef.AmmoRound == "AryxKineticFrags")
+            //    Log.Line($"vel:{Velocity.Length()} - maxSpeed:{MaxSpeed} - shootVel:{Info.ShooterVel.Length()} - desiredSpeed:{DesiredSpeed}");
 
             if (EnableAv)
             {
@@ -323,6 +327,7 @@ namespace CoreSystems.Projectiles
         {
             var aConst = Info.AmmoDef.Const;
             var session = Info.Ai.Session;
+
             if ((aConst.FragOnEnd && aConst.FragIgnoreArming || Info.Age >= aConst.MinArmingTime && (aConst.FragOnEnd || aConst.FragOnArmed && Info.ObjectsHit > 0)) && Info.SpawnDepth < aConst.FragMaxChildren)
                 SpawnShrapnel(false);
 

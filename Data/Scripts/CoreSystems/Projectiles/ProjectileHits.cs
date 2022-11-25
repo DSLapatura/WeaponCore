@@ -16,8 +16,6 @@ using static CoreSystems.Support.WeaponDefinition.AmmoDef.EwarDef.EwarType;
 using static CoreSystems.Support.DeferedVoxels;
 using CollisionLayers = Sandbox.Engine.Physics.MyPhysics.CollisionLayers;
 using Jakaria.API;
-using static CoreSystems.Platform.Weapon;
-using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 using static CoreSystems.Projectiles.Projectile;
 
 namespace CoreSystems.Projectiles

@@ -36,6 +36,24 @@ namespace CoreSystems.Projectiles
             Session = session;
         }
 
+        internal void Clean()
+        {
+            VirtInfoPools.Clean();
+            VirtInfoPool.Clean();
+            HitEntityPool.Clean();
+            DeferedVoxels.Clear();
+            FinalHitCheck.Clear();
+            ValidateHits.Clear();
+            AddTargets.Clear();
+            ShrapnelToSpawn.Clear();
+            ActiveProjetiles.Clear();
+            DeferedAvDraw.Clear();
+            NewProjectiles.Clear();
+            ProjectilePool.Clear();
+            ShrapnelPool.Clear();
+            FragmentPool.Clear();
+        }
+
         internal void SpawnAndMove() // Methods highly inlined due to keen's mod profiler
         {
             Session.StallReporter.Start("GenProjectiles", 11);
@@ -321,7 +339,7 @@ namespace CoreSystems.Projectiles
         {
             _beamCount = 0;
             var apCount = ActiveProjetiles.Count;
-            var minCount = Session.Settings.Enforcement.BaseOptimizations ? 96 : 99999;
+            var minCount = Session.Settings.Enforcement.BaseOptimizations ? 999999 : 99999;
             var targetStride = apCount / 20;
             var stride = apCount < minCount ? 100000 : targetStride > 48 ? targetStride : 48;
 
@@ -338,13 +356,13 @@ namespace CoreSystems.Projectiles
                 var aDef = info.AmmoDef;
                 var aConst = aDef.Const;
                 var target = info.Target;
-
-                if (aConst.PrimeModel || aConst.TriggerModel)
+                var primeModelUpdate = aConst.PrimeModel && p.EnableAv;
+                if (primeModelUpdate || aConst.TriggerModel)
                 {
                     MatrixD matrix;
                     MatrixD.CreateWorld(ref p.Position, ref info.Direction, ref info.OriginUp, out matrix);
 
-                    if (aConst.PrimeModel)
+                    if (primeModelUpdate)
                         info.AvShot.PrimeMatrix = matrix;
 
                     if (aConst.TriggerModel)
