@@ -202,6 +202,7 @@ namespace CoreSystems.Support
         internal BoundingSphereD NavTargetBound;
         internal bool SmartReady;
         internal bool WasTracking;
+        internal bool Sleep;
         internal bool PickTarget;
         internal int ProSyncPosMissCount;
         internal int LastProSyncStateAge = int.MinValue;
@@ -237,6 +238,7 @@ namespace CoreSystems.Support
             StartDistanceTraveled = 0;
             LastActivatedStage = -1;
             RequestedStage = -1;
+            Sleep = false;
             if (synced) {
                 for (int i = 0; i < PastProInfos.Length; i++)
                     PastProInfos[i] = Vector3D.Zero;
@@ -568,7 +570,7 @@ namespace CoreSystems.Support
                 info.BaseDamagePool = aConst.BaseDamage;
                 p.TargetPosition = frag.PrevTargetPos;
                 info.Direction = frag.Direction;
-                p.StartSpeed = frag.Velocity;
+                info.ShooterVel = frag.Velocity;
                 p.Gravity = aConst.FeelsGravity && info.Ai.InPlanetGravity ? frag.Weapon.GravityPoint * aConst.GravityMultiplier : Vector3D.Zero;
                 info.LockOnFireState = frag.LockOnFireState;
                 info.MaxTrajectory = aConst.MaxTrajectory;

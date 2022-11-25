@@ -16,6 +16,7 @@ using VRageMath;
 using static CoreSystems.Platform.CorePlatform.PlatformState;
 using VRage.Collections;
 using static CoreSystems.Api.WcApi.DamageHandlerHelper;
+using static CoreSystems.Projectiles.Projectile;
 
 namespace CoreSystems.Api
 {
@@ -1351,7 +1352,7 @@ namespace CoreSystems.Api
             {
                 if (adjustments.Item1)
                 {
-                    p.EarlyEnd = true;
+                    p.EndState = EndStates.EarlyEnd;
                     p.DistanceToTravelSqr = (p.Info.DistanceTraveled * p.Info.DistanceTraveled);
                 }
                 else

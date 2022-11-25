@@ -205,7 +205,7 @@ namespace CoreSystems.Support
                     {
                         if (av.AmmoEffect != null && av.AmmoDef.Const.AmmoParticle && av.AmmoDef.Const.PrimeModel)
                         {
-                            ApproachConstants def = av.StageIdx == -1 ? null : av.AmmoDef.Const.Approaches[av.StageIdx];
+                            ApproachConstants def = av.StageIdx <= -1 ? null : av.AmmoDef.Const.Approaches[av.StageIdx];
                             var particleDef =  def == null || !def.AlternateTravelParticle ? av.AmmoDef.AmmoGraphics.Particles.Ammo : def.Definition.AlternateParticle;
 
                             var offVec = av.TracerFront + Vector3D.Rotate(particleDef.Offset, av.PrimeMatrix);

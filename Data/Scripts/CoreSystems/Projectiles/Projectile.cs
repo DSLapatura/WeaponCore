@@ -29,17 +29,13 @@ namespace CoreSystems.Projectiles
         internal readonly HashSet<Projectile> Seekers = new HashSet<Projectile>();
         internal ProjectileState State;
         internal MyEntityQueryType PruneQuery;
-        internal CheckTypes CheckType;
         internal HadTargetState HadTarget;
-        internal Vector3D AccelDir;
+        internal EndStates EndState;
         internal Vector3D Position;
         internal Vector3D LastPosition;
-        internal Vector3D StartSpeed;
         internal Vector3D Velocity;
         internal Vector3D PrevVelocity;
-        internal Vector3D InitalStep;
         internal Vector3D TravelMagnitude;
-        internal Vector3D LastEntityPos;
         internal Vector3D TargetPosition;
         internal Vector3D OffsetTarget;
         internal Vector3 PrevTargetVel;
@@ -51,28 +47,20 @@ namespace CoreSystems.Projectiles
         internal double DistanceToSurfaceSqr;
         internal double DesiredSpeed;
         internal double MaxSpeed;
+        internal bool EnableAv;
+        internal bool LinePlanetCheck;
+        internal bool Intersecting;
+        internal bool FinalizeIntersection;
         internal int DeaccelRate;
         internal int TargetsSeen;
         internal int PruningProxyId = -1;
-        internal bool EnableAv;
-        internal bool MoveToAndActivate;
-        internal bool LockedTarget;
-        internal bool LinePlanetCheck;
-        internal bool AtMaxRange;
-        internal bool EarlyEnd;
-        internal bool Intersecting;
-        internal bool FinalizeIntersection;
-        internal bool Asleep;
-        internal bool HasModel;
 
-        //internal MyOrientedBoundingBoxD ProjObb;
-
-        internal enum CheckTypes
+        internal enum EndStates
         {
-            Ray,
-            Sphere,
-            CachedSphere,
-            CachedRay,
+            None,
+            AtMaxRange,
+            EarlyEnd,
+            AtMaxEarly,
         }
 
         internal enum ProjectileState
@@ -116,15 +104,14 @@ namespace CoreSystems.Projectiles
                 }
             }
 
+            EndState = EndStates.None;
             Position = Info.Origin;
-            AccelDir = Info.Direction;
 
             var cameraStart = session.CameraPos;
             double distanceFromCameraSqr;
             Vector3D.DistanceSquared(ref cameraStart, ref Info.Origin, out distanceFromCameraSqr);
             var probability = ammoDef.AmmoGraphics.VisualProbability;
             EnableAv = !aConst.VirtualBeams && !session.DedicatedServer && (distanceFromCameraSqr <= session.SyncDistSqr || ai.AiType == Ai.AiTypes.Phantom) && (probability >= 1 || probability >= MyUtils.GetRandomDouble(0.0f, 1f));
-            LastEntityPos = Position;
             Info.AvShot = null;
             Info.Age = -1;
 
@@ -132,10 +119,7 @@ namespace CoreSystems.Projectiles
             PruningProxyId = -1;
 
             LinePlanetCheck = false;
-            HasModel = false;
-            AtMaxRange = false;
             Intersecting = false;
-            Asleep = false;
             Info.PrevDistanceTraveled = 0;
             Info.DistanceTraveled = 0;
             DistanceToSurfaceSqr = double.MaxValue;
@@ -219,22 +203,16 @@ namespace CoreSystems.Projectiles
                 Info.MaxTrajectory -= variance;
             }
 
-            if (!Vector3D.IsZero(TargetPosition))
-            {
-                LockedTarget = true;
-            }
-            else
-            {
-                TargetPosition = Position + (AccelDir * Info.MaxTrajectory);
-            }
+            var lockedTarget = !Vector3D.IsZero(TargetPosition);
+            if (!lockedTarget)
+                TargetPosition = Position + (Info.Direction * Info.MaxTrajectory);
 
-            MoveToAndActivate = LockedTarget && !aConst.IsBeamWeapon && guidance == TrajectoryDef.GuidanceType.TravelTo;
-
-            if (MoveToAndActivate)
+            if (lockedTarget && !aConst.IsBeamWeapon && guidance == TrajectoryDef.GuidanceType.TravelTo)
             {
+                Info.Storage.RequestedStage = -2;
                 if (!MyUtils.IsZero(TargetPosition))
                 {
-                    TargetPosition -= (AccelDir * variance);
+                    TargetPosition -= (Info.Direction * variance);
                 }
                 Vector3D.DistanceSquared(ref Info.Origin, ref TargetPosition, out DistanceToTravelSqr);
             }
@@ -253,7 +231,7 @@ namespace CoreSystems.Projectiles
             }
             else DesiredSpeed = targetSpeed;
 
-            if (aConst.IsSmart && aConst.TargetOffSet && (LockedTarget || Info.Target.TargetState == Target.TargetStates.IsFake))
+            if (aConst.IsSmart && aConst.TargetOffSet && (lockedTarget || Info.Target.TargetState == Target.TargetStates.IsFake))
             {
                 OffSetTarget();
             }
@@ -262,12 +240,9 @@ namespace CoreSystems.Projectiles
                 OffsetTarget = Vector3D.Zero;
             }
 
-            Info.Storage.PickTarget = (aConst.OverrideTarget || comp.ModOverride && !LockedTarget) && Info.Target.TargetState != Target.TargetStates.IsFake;
-            if (Info.Storage.PickTarget || LockedTarget && !Info.IsFragment) TargetsSeen++;
-            if (!Info.IsFragment) StartSpeed = Info.ShooterVel;
-
+            Info.Storage.PickTarget = (aConst.OverrideTarget || comp.ModOverride && !lockedTarget) && Info.Target.TargetState != Target.TargetStates.IsFake;
+            if (Info.Storage.PickTarget || lockedTarget && !Info.IsFragment) TargetsSeen++;
             Info.TracerLength = aConst.TracerLength <= Info.MaxTrajectory ? aConst.TracerLength : Info.MaxTrajectory;
-
 
             var staticIsInRange = ai.ClosestStaticSqr * 0.5 < Info.MaxTrajectory * Info.MaxTrajectory;
             var pruneStaticCheck = ai.ClosestPlanetSqr * 0.5 < Info.MaxTrajectory * Info.MaxTrajectory || ai.StaticGridInRange;
@@ -282,30 +257,27 @@ namespace CoreSystems.Projectiles
             if (aConst.DynamicGuidance && PruneQuery == MyEntityQueryType.Dynamic && staticIsInRange) 
                 CheckForNearVoxel(60);
 
-            var desiredSpeed = (AccelDir * DesiredSpeed);
-            var relativeSpeedCap = StartSpeed + desiredSpeed;
+            var desiredSpeed = (Info.Direction * DesiredSpeed);
+            var relativeSpeedCap = Info.ShooterVel + desiredSpeed;
             MaxSpeed = relativeSpeedCap.Length();
             if (aConst.AmmoSkipAccel)
             {
                 Velocity = relativeSpeedCap;
                 VelocityLengthSqr = MaxSpeed * MaxSpeed;
             }
-            else Velocity = StartSpeed + (AccelDir * aConst.DeltaVelocityPerTick);
+            else Velocity = Info.ShooterVel + (Info.Direction * aConst.DeltaVelocityPerTick);
 
             if (Info.IsFragment)
                 Vector3D.Normalize(ref Velocity, out Info.Direction);
 
-            InitalStep = !Info.IsFragment && aConst.AmmoSkipAccel ? desiredSpeed * StepConst : Velocity * StepConst;
-
-            TravelMagnitude = Velocity * StepConst;
+            TravelMagnitude = !Info.IsFragment && aConst.AmmoSkipAccel ? desiredSpeed * StepConst : Velocity * StepConst;
             DeaccelRate = aConst.Ewar || aConst.IsMine ? trajectory.DeaccelTime : aConst.IsDrone ? 100: 0;
             State = !aConst.IsBeamWeapon ? ProjectileState.Alive : ProjectileState.OneAndDone;
 
             if (EnableAv)
             {
-                var originDir = !Info.IsFragment ? AccelDir : Info.Direction;
                 Info.AvShot = session.Av.AvShotPool.Count > 0 ? session.Av.AvShotPool.Pop() : new AvShot(session);
-                Info.AvShot.Init(Info, aConst.DeltaVelocityPerTick, MaxSpeed, ref originDir);
+                Info.AvShot.Init(Info, aConst.DeltaVelocityPerTick, MaxSpeed, ref Info.Direction);
                 Info.AvShot.SetupSounds(distanceFromCameraSqr); //Pool initted sounds per Projectile type... this is expensive
                 if (aConst.HitParticle && !aConst.IsBeamWeapon || aConst.EndOfLifeAoe && !ammoDef.AreaOfDamage.EndOfLife.NoVisuals)
                 {
@@ -315,9 +287,8 @@ namespace CoreSystems.Projectiles
 
                 if (aConst.PrimeModel || aConst.TriggerModel)
                 {
-                    HasModel = true;
-                    var lineOrNotModel = aConst.DrawLine || !HasModel && aConst.AmmoParticle;
-                    Info.AvShot.ModelOnly = HasModel && !lineOrNotModel;
+                    Info.AvShot.HasModel = true;
+                    Info.AvShot.ModelOnly = !aConst.DrawLine;
                 }
             }
 
@@ -374,8 +345,7 @@ namespace CoreSystems.Projectiles
 
             if (EnableAv)
             {
-                if (HasModel)
-                    HasModel = false;
+                Info.AvShot.HasModel = false;
 
                 if (!Info.AvShot.Active)
                     Info.AvShot.Close();
@@ -445,7 +415,7 @@ namespace CoreSystems.Projectiles
             {
                 if (s.DroneStat == Launch && Info.DistanceTraveled * Info.DistanceTraveled >= aConst.SmartsDelayDistSqr && Info.Ai.AiType == Ai.AiTypes.Grid && parentEnt != null)//Check for LOS & delaytrack after launch
                 {
-                    var lineCheck = new LineD(Position, LockedTarget ? TargetPosition : Position + (Info.Direction * 10000f));
+                    var lineCheck = new LineD(Position, TargetPosition);
                     var startTrack = !new MyOrientedBoundingBoxD(parentEnt.PositionComp.LocalAABB, parentEnt.PositionComp.WorldMatrixRef).Intersects(ref lineCheck).HasValue;
                     if (startTrack) s.DroneStat = Transit;
                 }
@@ -1055,7 +1025,6 @@ namespace CoreSystems.Projectiles
             newVel = Velocity + (commandedAccel * StepConst);
             var accelDir = commandedAccel / speedLimitPerTick;
 
-            AccelDir = accelDir;
             Vector3D.Normalize(ref newVel, out Info.Direction);
         }
 
@@ -1070,7 +1039,7 @@ namespace CoreSystems.Projectiles
             if (Info.Storage.ZombieLifeTime++ > Info.AmmoDef.Const.TargetLossTime && !smarts.KeepAliveAfterTargetLoss && (smarts.NoTargetExpire || hadTaret))
             {
                 DistanceToTravelSqr = Info.DistanceTraveled * Info.DistanceTraveled;
-                EarlyEnd = true;
+                EndState = EndStates.EarlyEnd;
             }
 
             if (roam && Info.Age - Info.Storage.LastOffsetTime > 300 && hadTaret)
@@ -1211,8 +1180,9 @@ namespace CoreSystems.Projectiles
             var deAccelLimit = aConst.DeAccelerationLimit;
             var maxDeAccelperSec = aConst.MaxDeAccelPerSec;
             var speedLimitPerTick = aConst.AmmoSkipAccel ? DesiredSpeed : aConst.AccelInMetersPerSec;
-            if (!startTrack && Info.DistanceTraveled * Info.DistanceTraveled >= aConst.SmartsDelayDistSqr) {
-                var lineCheck = new LineD(Position, LockedTarget ? TargetPosition : Position + (Info.Direction * 10000f));
+            if (!startTrack && Info.DistanceTraveled * Info.DistanceTraveled >= aConst.SmartsDelayDistSqr)
+            {
+                var lineCheck = new LineD(Position, TargetPosition);
                 startTrack = !new MyOrientedBoundingBoxD(coreParent.PositionComp.LocalAABB, coreParent.PositionComp.WorldMatrixRef).Intersects(ref lineCheck).HasValue;
             }
 
@@ -1314,7 +1284,7 @@ namespace CoreSystems.Projectiles
                     if (s.ZombieLifeTime++ > aConst.TargetLossTime && !smarts.KeepAliveAfterTargetLoss && (smarts.NoTargetExpire || hadTarget))
                     {
                         DistanceToTravelSqr = Info.DistanceTraveled * Info.DistanceTraveled;
-                        EarlyEnd = true;
+                        EndState = EndStates.EarlyEnd;
                     }
 
                     if (roam && Info.Age - s.LastOffsetTime > 300 && hadTarget)
@@ -1426,7 +1396,6 @@ namespace CoreSystems.Projectiles
                     proposedVel = Velocity + (commandedAccel * StepConst);
                     var accelDir = commandedAccel / accelMpsMulti;
 
-                    AccelDir = accelDir;
                     Vector3D.Normalize(ref proposedVel, out Info.Direction);
                 }
             }
@@ -1657,7 +1626,7 @@ namespace CoreSystems.Projectiles
                         switch (def.StartEvent)
                         {
                             case StageEvents.EndProjectile:
-                                EarlyEnd = true;
+                                EndState = EndStates.EarlyEnd;
                                 DistanceToTravelSqr = Info.DistanceTraveled * Info.DistanceTraveled;
                                 break;
                             case StageEvents.NoNothing:
@@ -1858,7 +1827,7 @@ namespace CoreSystems.Projectiles
                     var failBackwards = def.Failure == StartFailure.MoveToPrevious && !isActive || def.Failure == StartFailure.ForceReset;
 
                     if (def.EndEvent == StageEvents.EndProjectile || def.EndEvent == StageEvents.EndProjectileOnFailure && (failBackwards || !moveForward && hasNextStep)) {
-                        EarlyEnd = true;
+                        EndState = EndStates.EarlyEnd;
                         DistanceToTravelSqr = Info.DistanceTraveled * Info.DistanceTraveled;
                     }
 
@@ -2066,8 +2035,8 @@ namespace CoreSystems.Projectiles
         internal void ActivateMine()
         {
             var ent = Info.Target.TargetEntity;
-            Info.Storage.RequestedStage = 0;
-            AtMaxRange = false;
+            Info.Storage.RequestedStage = -2;
+            EndState = EndStates.None;
             var targetPos = ent.PositionComp.WorldAABB.Center;
             var deltaPos = targetPos - Position;
             var targetVel = ent.Physics?.LinearVelocity ?? Vector3.Zero;
@@ -2077,7 +2046,6 @@ namespace CoreSystems.Projectiles
             var ammo = Info.AmmoDef;
             var aConst = ammo.Const;
             TargetPosition = predictedPos;
-            LockedTarget = true;
 
             if (ammo.Trajectory.Guidance == TrajectoryDef.GuidanceType.DetectFixed) return;
             Vector3D.DistanceSquared(ref Info.Origin, ref predictedPos, out DistanceToTravelSqr);
@@ -2085,19 +2053,18 @@ namespace CoreSystems.Projectiles
             Info.PrevDistanceTraveled = 0;
 
             Info.Direction = Vector3D.Normalize(predictedPos - Position);
-            AccelDir = Info.Direction;
             VelocityLengthSqr = 0;
 
             if (aConst.AmmoSkipAccel)
             {
-                Velocity = (AccelDir * MaxSpeed);
+                Velocity = (Info.Direction * MaxSpeed);
                 VelocityLengthSqr = MaxSpeed * MaxSpeed;
             }
             else Velocity += Info.Direction * aConst.DeltaVelocityPerTick;
 
             if (ammo.Trajectory.Guidance == TrajectoryDef.GuidanceType.DetectSmart)
             {
-                if (aConst.TargetOffSet && LockedTarget)
+                if (aConst.TargetOffSet)
                 {
                     OffSetTarget();
                 }
@@ -2122,7 +2089,7 @@ namespace CoreSystems.Projectiles
             var inRange = false;
             var activate = false;
             var minDist = double.MaxValue;
-            if (Info.Storage.RequestedStage != 0)
+            if (Info.Storage.RequestedStage != -2)
             {
                 MyEntity closestEnt = null;
                 MyGamePruningStructure.GetAllTopMostEntitiesInSphere(ref PruneSphere, MyEntityList, MyEntityQueryType.Dynamic);
@@ -2174,7 +2141,7 @@ namespace CoreSystems.Projectiles
 
             if (minDist <= Info.AmmoDef.Const.CollisionSize) activate = true;
             if (minDist <= detectRadius) inRange = true;
-            if (Info.Storage.RequestedStage == 0)
+            if (Info.Storage.RequestedStage == -2)
             {
                 if (!inRange)
                     TriggerMine(true);
@@ -2196,12 +2163,12 @@ namespace CoreSystems.Projectiles
             }
 
             if (startTimer) DeaccelRate = Info.AmmoDef.Trajectory.Mines.FieldTime;
-            Info.Storage.RequestedStage = 1; // stage1, Guidance == DetectSmart and DistanceToTravelSqr != double.MaxValue means smart tracking is active.
+            Info.Storage.RequestedStage = -3; // stage1, Guidance == DetectSmart and DistanceToTravelSqr != double.MaxValue means smart tracking is active.
         }
 
         internal void ResetMine()
         {
-            if (Info.Storage.RequestedStage == 1)
+            if (Info.Storage.RequestedStage == -3)
             {
                 Info.DistanceTraveled = double.MaxValue;
                 DeaccelRate = 0;
@@ -2213,16 +2180,14 @@ namespace CoreSystems.Projectiles
 
             Info.AvShot.Triggered = false;
             Info.Storage.LastActivatedStage = Info.Storage.RequestedStage;
-            Info.Storage.RequestedStage = - 1;
-            LockedTarget = false;
-
+            Info.Storage.RequestedStage = -1;
+            TargetPosition = Vector3D.Zero;
             if (Info.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.DetectSmart)
             {
                 OffsetTarget = Vector3D.Zero;
             }
 
             Info.Direction = Vector3D.Zero;
-            AccelDir = Vector3D.Zero;
 
             Velocity = Vector3D.Zero;
             TravelMagnitude = Vector3D.Zero;
@@ -2234,7 +2199,7 @@ namespace CoreSystems.Projectiles
         #region Ewar
         internal void RunEwar()
         {
-            if (Info.AmmoDef.Const.Pulse && !Info.EwarAreaPulse && (VelocityLengthSqr <= 0 || AtMaxRange) && !Info.AmmoDef.Const.IsMine)
+            if (Info.AmmoDef.Const.Pulse && !Info.EwarAreaPulse && (VelocityLengthSqr <= 0 || EndState == EndStates.AtMaxRange) && !Info.AmmoDef.Const.IsMine)
             {
                 Info.EwarAreaPulse = true;
                 PrevVelocity = Velocity;

@@ -11,6 +11,8 @@ using VRage.Input;
 using VRage.Utils;
 using VRageMath;
 using static CoreSystems.Support.Ai;
+using static VRage.Game.MyObjectBuilder_ControllerSchemaDefinition;
+
 namespace CoreSystems
 {
     public partial class Session
@@ -166,7 +168,7 @@ namespace CoreSystems
             }
             else
             {
-                var controlStringR = MyAPIGateway.Input.GetControl(MyKeys.R).GetGameControlEnum().String;
+                var controlStringR = MyAPIGateway.Input.GetControl(UiInput.ControlKey).GetGameControlEnum().String;
                 CustomBlackListRequestBecauseKeenIsBrainDead(controlStringR, PlayerId);
             }
 

@@ -8,19 +8,16 @@ using VRage.Collections;
 using VRage.Game;
 using VRage.Game.Entity;
 using VRage.ModAPI;
-using VRage.ObjectBuilders;
 using VRage.Utils;
 using VRageMath;
 using static CoreSystems.Support.WeaponDefinition;
-using static CoreSystems.Support.WeaponDefinition.AmmoDef.TrajectoryDef;
-using static CoreSystems.Support.WeaponDefinition.AmmoDef.TrajectoryDef.GuidanceType;
+using static CoreSystems.Support.WeaponDefinition.AmmoDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.EwarDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.ShapeDef.Shapes;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.DamageScaleDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.FragmentDef.TimedSpawnDef;
 using static CoreSystems.Support.ValueProcessors;
 using static CoreSystems.Support.WeaponDefinition.HardPointDef;
-using static CoreSystems.Support.CoreComponent;
 
 namespace CoreSystems.Support
 {
@@ -261,6 +258,7 @@ namespace CoreSystems.Support
         public readonly bool IsSmart;
         public readonly bool AccelClearance;
         public readonly bool DynamicGuidance;
+        public readonly bool TravelTo;
         public readonly float PowerPerTick;
         public readonly float DirectAimCone;
         public readonly float FragRadial;
@@ -340,13 +338,13 @@ namespace CoreSystems.Support
 
             ComputeTextures(ammo, out TracerTextures, out SegmentTextures, out TrailTextures, out TracerMode, out TrailMode);
 
-            if (ammo.AmmoDefinitionId.SubtypeId.String != "Energy" || ammo.AmmoDefinitionId.SubtypeId.String == string.Empty) AmmoItem = new MyPhysicalInventoryItem { Amount = 1, Content = MyObjectBuilderSerializer.CreateNewObject<MyObjectBuilder_AmmoMagazine>(ammo.AmmoDefinitionId.SubtypeName) };
+            if (ammo.AmmoDefinitionId.SubtypeId.String != "Energy" || ammo.AmmoDefinitionId.SubtypeId.String == string.Empty) AmmoItem = new MyPhysicalInventoryItem { Amount = 1, Content = VRage.ObjectBuilders.MyObjectBuilderSerializer.CreateNewObject<MyObjectBuilder_AmmoMagazine>(ammo.AmmoDefinitionId.SubtypeName) };
 
             if (!string.IsNullOrEmpty(ammo.EjectionDefinitionId.SubtypeId.String))
             {
                 var itemEffect = ammo.AmmoDef.Ejection.Type == AmmoDef.EjectionDef.SpawnType.Item;
                 if (itemEffect)
-                    EjectItem = new MyPhysicalInventoryItem { Amount = 1, Content = MyObjectBuilderSerializer.CreateNewObject<MyObjectBuilder_Component>(ammo.EjectionDefinitionId.SubtypeId.String) };
+                    EjectItem = new MyPhysicalInventoryItem { Amount = 1, Content = VRage.ObjectBuilders.MyObjectBuilderSerializer.CreateNewObject<MyObjectBuilder_Component>(ammo.EjectionDefinitionId.SubtypeId.String) };
                 HasEjectEffect = itemEffect && EjectItem.Content != null;
             }
             else if (ammo.AmmoDef.Ejection.Type == AmmoDef.EjectionDef.SpawnType.Particle && !string.IsNullOrEmpty(ammo.AmmoDef.AmmoGraphics.Particles.Eject.Name))
@@ -368,7 +366,7 @@ namespace CoreSystems.Support
                 if (ammoType.AmmoRound.Equals(ammo.AmmoDef.Fragment.AmmoRound))
                 {
                     FragmentId = i;
-                    var hasGuidance = ammoType.Trajectory.Guidance != None;
+                    var hasGuidance = ammoType.Trajectory.Guidance != TrajectoryDef.GuidanceType.None;
                     if (hasGuidance)
                         fragGuidedAmmo = true;
 
@@ -392,19 +390,20 @@ namespace CoreSystems.Support
             float shieldBypassRaw;
             GetModifiableValues(ammo.AmmoDef, out BaseDamage, out Health, out GravityMultiplier, out MaxTrajectory, out EnergyBaseDmg, out EnergyAreaDmg, out EnergyDetDmg, out EnergyShieldDmg, out ShieldModifier, out FallOffDistance, out FallOffMinMultiplier, out Mass, out shieldBypassRaw);
 
-            FixedFireAmmo = system.TurretMovement == WeaponSystem.TurretType.Fixed && ammo.AmmoDef.Trajectory.Guidance == None;
-            IsMine = ammo.AmmoDef.Trajectory.Guidance == DetectFixed || ammo.AmmoDef.Trajectory.Guidance == DetectSmart || ammo.AmmoDef.Trajectory.Guidance == DetectTravelTo;
+            FixedFireAmmo = system.TurretMovement == WeaponSystem.TurretType.Fixed && ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.None;
+            IsMine = ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.DetectFixed || ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.DetectSmart || ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.DetectTravelTo;
             IsField = ammo.AmmoDef.Ewar.Mode == EwarMode.Field || ammo.AmmoDef.Trajectory.DeaccelTime > 0;
             IsHybrid = ammo.AmmoDef.HybridRound;
-            IsDrone = ammo.AmmoDef.Trajectory.Guidance == DroneAdvanced;
-            IsSmart = ammo.AmmoDef.Trajectory.Guidance == Smart || ammo.AmmoDef.Trajectory.Guidance == DetectSmart;
+            IsDrone = ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.DroneAdvanced;
+            IsSmart = ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.Smart || ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.DetectSmart;
+            TravelTo = ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.TravelTo;
             IsTurretSelectable = !ammo.IsShrapnel && ammo.AmmoDef.HardPointUsable;
 
             ProjectileSync = ammo.AmmoDef.Synchronize && session.MpActive && (IsDrone || IsSmart);
 
             AccelClearance = ammo.AmmoDef.Trajectory.Smarts.AccelClearance;
             OverrideTarget = ammo.AmmoDef.Trajectory.Smarts.OverideTarget;
-            RequiresTarget = ammo.AmmoDef.Trajectory.Guidance != None && !OverrideTarget || system.TrackTargets;
+            RequiresTarget = ammo.AmmoDef.Trajectory.Guidance != TrajectoryDef.GuidanceType.None && !OverrideTarget || system.TrackTargets;
 
 
             AmmoParticleNoCull = ammo.AmmoDef.AmmoGraphics.Particles.Ammo.DisableCameraCulling;
@@ -510,7 +509,7 @@ namespace CoreSystems.Support
             if (!SlowFireFixedWeapon && system.TurretMovement == WeaponSystem.TurretType.Fixed && predictionEligible)
                 Log.Line($"{ammo.AmmoDef.AmmoRound} does not qualify for fixed weapon client reload verification");
 
-            SkipAimChecks = (ammo.AmmoDef.Trajectory.Guidance == Smart || ammo.AmmoDef.Trajectory.Guidance == DroneAdvanced) && system.TurretMovement == WeaponSystem.TurretType.Fixed;
+            SkipAimChecks = (ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.Smart || ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.DroneAdvanced) && system.TurretMovement == WeaponSystem.TurretType.Fixed;
             Trail = ammo.AmmoDef.AmmoGraphics.Lines.Trail.Enable;
             HasShotFade = ammo.AmmoDef.AmmoGraphics.Lines.Tracer.VisualFadeStart > 0 && ammo.AmmoDef.AmmoGraphics.Lines.Tracer.VisualFadeEnd > 1;
             MaxTrajectoryGrows = ammo.AmmoDef.Trajectory.MaxTrajectoryTime > 1;
@@ -528,7 +527,7 @@ namespace CoreSystems.Support
             MinOffsetLength = ammo.AmmoDef.AmmoGraphics.Lines.OffsetEffect.MinLength;
             MaxOffsetLength = ammo.AmmoDef.AmmoGraphics.Lines.OffsetEffect.MaxLength;
             CanReportTargetStatus = RequiresTarget && system.TrackGrids && !system.DesignatorWeapon && PeakDps > 0;
-            DynamicGuidance = ammo.AmmoDef.Trajectory.Guidance != None && ammo.AmmoDef.Trajectory.Guidance != TravelTo && !IsBeamWeapon;
+            DynamicGuidance = ammo.AmmoDef.Trajectory.Guidance != TrajectoryDef.GuidanceType.None && ammo.AmmoDef.Trajectory.Guidance != TrajectoryDef.GuidanceType.TravelTo && !IsBeamWeapon;
 
             if (CollisionSize > 5 && !session.LocalVersion) Log.Line($"{ammo.AmmoDef.AmmoRound} has large largeCollisionSize: {CollisionSize} meters");
             if (FeelsGravity && !IsSmart && system.TrackTargets && (system.Prediction == Prediction.Off || system.Prediction == Prediction.Basic) && ammo.AmmoDef.Trajectory.MaxTrajectory / ammo.AmmoDef.Trajectory.DesiredSpeed > 0.5f)
@@ -813,7 +812,7 @@ namespace CoreSystems.Support
                         {
                             
                             ammoPattern[indexPos++] = ammoDef;
-                            var hasGuidance = ammoDef.Trajectory.Guidance != None;
+                            var hasGuidance = ammoDef.Trajectory.Guidance != TrajectoryDef.GuidanceType.None;
                             if (!patternGuidedAmmo && hasGuidance)
                                 patternGuidedAmmo = true;
 
@@ -831,7 +830,7 @@ namespace CoreSystems.Support
                 fragmentPattern = false;
             }
 
-            hasGuidedAmmo = fragGuidedAmmo || patternGuidedAmmo || ammo.AmmoDef.Trajectory.Guidance != None;
+            hasGuidedAmmo = fragGuidedAmmo || patternGuidedAmmo || ammo.AmmoDef.Trajectory.Guidance != TrajectoryDef.GuidanceType.None;
             hasAntiSmart = fragAntiSmart || patternAntiSmart || ammo.AmmoDef.Ewar.Type == EwarType.AntiSmart;
             hasTargetOverride = fragTargetOverride || patternTargetOverride || OverrideTarget;
         }
@@ -909,7 +908,7 @@ namespace CoreSystems.Support
 
         private void Beams(AmmoDef ammoDef, out bool isBeamWeapon, out bool virtualBeams, out bool rotateRealBeam, out bool convergeBeams, out bool oneHitParticle, out bool offsetEffect)
         {
-            isBeamWeapon = ammoDef.Beams.Enable && ammoDef.Trajectory.Guidance == None;
+            isBeamWeapon = ammoDef.Beams.Enable && ammoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.None;
             virtualBeams = ammoDef.Beams.VirtualBeams && IsBeamWeapon;
             rotateRealBeam = ammoDef.Beams.RotateRealBeam && VirtualBeams;
             convergeBeams = !RotateRealBeam && ammoDef.Beams.ConvergeBeams && VirtualBeams;
@@ -1706,7 +1705,7 @@ namespace CoreSystems.Support
         public readonly int Index;
         public readonly MySoundPair SoundPair;
         public readonly MyConcurrentPool<MyEntity> ModelPool;
-        public readonly ApproachDef Definition;
+        public readonly TrajectoryDef.ApproachDef Definition;
         public readonly string ModelPath;
         public readonly bool AlternateTravelSound;
         public readonly bool AlternateTravelParticle;
@@ -1751,23 +1750,23 @@ namespace CoreSystems.Support
             GetOperators(def, out StartAnd, out EndAnd);
         }
 
-        private static void GetOperators(ApproachDef def, out bool startAnd, out bool endAnd)
+        private static void GetOperators(TrajectoryDef.ApproachDef def, out bool startAnd, out bool endAnd)
         {
             switch (def.Operators)
             {
-                case ApproachDef.ConditionOperators.StartEnd_And:
+                case TrajectoryDef.ApproachDef.ConditionOperators.StartEnd_And:
                     startAnd = true;
                     endAnd = true;
                     return;
-                case ApproachDef.ConditionOperators.StartEnd_Or:
+                case TrajectoryDef.ApproachDef.ConditionOperators.StartEnd_Or:
                     startAnd = false;
                     endAnd = false;
                     return;
-                case ApproachDef.ConditionOperators.StartAnd_EndOr:
+                case TrajectoryDef.ApproachDef.ConditionOperators.StartAnd_EndOr:
                     startAnd = true;
                     endAnd = false;
                     return;
-                case ApproachDef.ConditionOperators.StartOr_EndAnd:
+                case TrajectoryDef.ApproachDef.ConditionOperators.StartOr_EndAnd:
                     startAnd = false;
                     endAnd = true;
                     return;

@@ -18,6 +18,7 @@ using CollisionLayers = Sandbox.Engine.Physics.MyPhysics.CollisionLayers;
 using Jakaria.API;
 using static CoreSystems.Platform.Weapon;
 using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
+using static CoreSystems.Projectiles.Projectile;
 
 namespace CoreSystems.Projectiles
 {
@@ -52,26 +53,23 @@ namespace CoreSystems.Projectiles
                 var offensiveEwar = (info.EwarActive && aConst.NonAntiSmartEwar);
                 bool projetileInShield = false;
                 var tick = Session.Tick;
-                var useEntityCollection = p.CheckType != Projectile.CheckTypes.Ray;
                 var entityCollection = p.MyEntityList;
-                var collectionCount = !useEntityCollection ? p.MySegmentList.Count : entityCollection.Count;
-                var ray = new RayD(ref p.Beam.From, ref p.Beam.Direction);
+                var collectionCount = aConst.CollisionIsLine ? p.MySegmentList.Count : entityCollection.Count;
+
+                var beamLen = p.Beam.Length;
+                var beamFrom = p.Beam.From;
+                var beamTo = p.Beam.To;
+                var direction = p.Beam.Direction;
+                var beamLenSqr = beamLen * beamLen;
+
+                var ray = new RayD(ref beamFrom, ref direction);
                 var firingCube = coreEntity as MyCubeBlock;
                 var goCritical = aConst.IsCriticalReaction;
                 var selfDamage = aConst.SelfDamage;
                 var ignoreVoxels = aDef.IgnoreVoxels;
                 var isGrid = ai.AiType == Ai.AiTypes.Grid;
-                var beamLen = p.Beam.Length;
-                var beamLenSqr = beamLen * beamLen;
-                var closestFutureDistSqr = double.MaxValue;
 
-                //New Obb, have fun!
-                //var lastpos = p.LastPosition;
-                //var curpos = p.Position;
-                //var thickness = p.Info.AmmoDef.Const.CollisionSize;
-                //p.ProjObb.Center = curpos + (curpos - lastpos) * 0.5f;
-                //p.ProjObb.Orientation = Quaternion.CreateFromTwoVectors(lastpos, curpos);
-                //p.ProjObb.HalfExtent = new Vector3D(p.ProjObb.Orientation.Length() / 2 + thickness, thickness, thickness);
+                var closestFutureDistSqr = double.MaxValue;
 
                 WaterData water = null;
                 if (Session.WaterApiLoaded && info.MyPlanet != null)
@@ -80,7 +78,7 @@ namespace CoreSystems.Projectiles
                 MyEntity closestFutureEnt = null;
                 IMyTerminalBlock iShield = null;
                 for (int i = 0; i < collectionCount; i++) {
-                    var ent = !useEntityCollection ? p.MySegmentList[i].Element : entityCollection[i];
+                    var ent = aConst.CollisionIsLine ? p.MySegmentList[i].Element : entityCollection[i];
 
                     var grid = ent as MyCubeGrid;
                     var entIsSelf = grid != null && firingCube != null && (grid == firingCube.CubeGrid || firingCube.CubeGrid.IsSameConstructAs(grid));
@@ -91,37 +89,22 @@ namespace CoreSystems.Projectiles
                     if (info.EwarActive && character != null && !genericFields) continue;
 
                     var entSphere = ent.PositionComp.WorldVolume;
-                    //DsDebugDraw.DrawSphere(entSphere, Color.Blue);
-                        if (aConst.CheckFutureIntersection)
+                    if (aConst.CheckFutureIntersection)
+                    {
+                        var distSqrToSphere = Vector3D.DistanceSquared(beamFrom, entSphere.Center);
+                        if (distSqrToSphere > beamLenSqr)
                         {
-                            var distSqrToSphere = Vector3D.DistanceSquared(p.Beam.From, entSphere.Center);
-                            if (distSqrToSphere > p.Beam.Length * p.Beam.Length)
+                            if (distSqrToSphere < closestFutureDistSqr)
                             {
-                                if (distSqrToSphere < closestFutureDistSqr)
-                                {
-                                    closestFutureDistSqr = distSqrToSphere;
-                                    closestFutureEnt = ent;                        
-                                }
-                                //continue;
+                                closestFutureDistSqr = distSqrToSphere;
+                                closestFutureEnt = ent;                        
                             }
                         }
-
-                    if (useEntityCollection)
-                    {
-
-                        if (p.CheckType == Projectile.CheckTypes.CachedRay)
-                        {
-                            var dist = ray.Intersects(entSphere);
-                            if (!dist.HasValue || dist > p.Beam.Length)
-                                continue;
-                        }
-                        else if (p.CheckType == Projectile.CheckTypes.CachedSphere && p.PruneSphere.Contains(entSphere) == ContainmentType.Disjoint)
-                            continue;
                     }
 
                     if (grid != null || character != null)
                     {
-                        var extBeam = new LineD(p.Beam.From - p.Beam.Direction * (entSphere.Radius * 2), p.Beam.To);
+                        var extBeam = new LineD(beamFrom - direction * (entSphere.Radius * 2), beamTo);
                         var transform = ent.PositionComp.WorldMatrixRef;
                         var box = ent.PositionComp.LocalAABB;
                         var obb = new MyOrientedBoundingBoxD(box, transform);
@@ -141,7 +124,7 @@ namespace CoreSystems.Projectiles
                             {
                                 var sphere = new BoundingSphereD(safeZone.PositionComp.WorldVolume.Center, safeZone.Radius);
                                 var dist = ray.Intersects(sphere);
-                                intersects = dist != null && dist <= p.Beam.Length;
+                                intersects = dist != null && dist <= beamLen;
                             }
                             else
                                 intersects = new MyOrientedBoundingBoxD(safeZone.PositionComp.LocalAABB, safeZone.PositionComp.WorldMatrixRef).Intersects(ref p.Beam) != null;
@@ -149,8 +132,8 @@ namespace CoreSystems.Projectiles
                             if (intersects)
                             {
 
-                                p.State = Projectile.ProjectileState.Depleted;
-                                p.EarlyEnd = true;
+                                p.State = ProjectileState.Depleted;
+                                p.EndState = EndStates.EarlyEnd;
 
                                 if (p.EnableAv)
                                     info.AvShot.ForceHitParticle = true;
@@ -175,19 +158,19 @@ namespace CoreSystems.Projectiles
                                 if (Vector3D.Transform(!shrapnelSpawn ? info.Origin : coreEntity.PositionComp.WorldMatrixRef.Translation, shieldInfo.Value.Item3.Item1).LengthSquared() > 1)
                                 {
 
-                                    var dist = MathFuncs.IntersectEllipsoid(shieldInfo.Value.Item3.Item1, shieldInfo.Value.Item3.Item2, new RayD(p.Beam.From, p.Beam.Direction));
+                                    var dist = MathFuncs.IntersectEllipsoid(shieldInfo.Value.Item3.Item1, shieldInfo.Value.Item3.Item2, new RayD(beamFrom, direction));
                                     if (target.TargetState == Target.TargetStates.IsProjectile && Vector3D.Transform(target.Projectile.Position, shieldInfo.Value.Item3.Item1).LengthSquared() <= 1)
                                         projetileInShield = true;
 
-                                    var shieldIntersect = dist != null && (dist.Value < p.Beam.Length || info.EwarActive);
+                                    var shieldIntersect = dist != null && (dist.Value < beamLen || info.EwarActive);
                                     info.ShieldKeepBypass = shieldIntersect;
                                     if (shieldIntersect && !info.ShieldBypassed)
                                     {
 
                                         hitEntity = HitEntityPool.Get();
                                         hitEntity.EventType = Shield;
-                                        var hitPos = p.Beam.From + (p.Beam.Direction * dist.Value);
-                                        hitEntity.HitPos = p.Beam.From + (p.Beam.Direction * dist.Value);
+                                        var hitPos = beamFrom + (direction * dist.Value);
+                                        hitEntity.HitPos = beamFrom + (direction * dist.Value);
                                         hitEntity.HitDist = dist;
                                         if (shieldInfo.Value.Item2.Item2)
                                         {
@@ -239,15 +222,15 @@ namespace CoreSystems.Projectiles
                         {
                             var hitSphere = info.VoxelCache.HitSphere;
                             var cacheDist = ray.Intersects(hitSphere);
-                            if (cacheDist.HasValue && cacheDist.Value <= p.Beam.Length)
+                            if (cacheDist <= beamLen)
                             {
                                 var sphereRadius = hitSphere.Radius;
                                 var sphereRadiusSqr = sphereRadius * sphereRadius;
 
-                                var overPenDist = p.Beam.Length - cacheDist.Value;
+                                var overPenDist = beamLen - cacheDist.Value;
                                 var proposedDist = overPenDist >= sphereRadius ? sphereRadius : overPenDist;
-                                var testPos1 = p.Beam.From + (p.Beam.Direction * (cacheDist.Value + proposedDist));
-                                var testPos2 = p.Beam.From + (p.Beam.Direction * (cacheDist.Value + (proposedDist * 0.5d)));
+                                var testPos1 = beamFrom + (direction * (cacheDist.Value + proposedDist));
+                                var testPos2 = beamFrom + (direction * (cacheDist.Value + (proposedDist * 0.5d)));
 
                                 var testPos2DistSqr = Vector3D.DistanceSquared(hitSphere.Center, testPos2);
                                 var testPos1DistSqr = Vector3D.DistanceSquared(hitSphere.Center, testPos1);
@@ -257,13 +240,13 @@ namespace CoreSystems.Projectiles
                                 voxelState = VoxelIntersectBranch.PseudoHit1;
                             }
                             else if (cacheDist.HasValue)
-                                info.VoxelCache.MissSphere.Center = p.Beam.To;
+                                info.VoxelCache.MissSphere.Center = beamTo;
                         }
 
                         if (voxelState != VoxelIntersectBranch.PseudoHit1)
                         {
 
-                            if (voxel == info.MyPlanet && info.VoxelCache.MissSphere.Contains(p.Beam.To) == ContainmentType.Disjoint)
+                            if (voxel == info.MyPlanet && info.VoxelCache.MissSphere.Contains(beamTo) == ContainmentType.Disjoint)
                             {
 
                                 if (p.LinePlanetCheck)
@@ -271,11 +254,11 @@ namespace CoreSystems.Projectiles
                                     if (water != null && info.FirstWaterHitTick == 0)
                                     {
                                         var waterOuterSphere = new BoundingSphereD(info.MyPlanet.PositionComp.WorldAABB.Center, water.MaxRadius);
-                                        if (ray.Intersects(waterOuterSphere).HasValue || waterOuterSphere.Contains(p.Beam.From) == ContainmentType.Contains || waterOuterSphere.Contains(p.Beam.To) == ContainmentType.Contains)
+                                        if (ray.Intersects(waterOuterSphere).HasValue || waterOuterSphere.Contains(beamFrom) == ContainmentType.Contains || waterOuterSphere.Contains(beamTo) == ContainmentType.Contains)
                                         {
                                             if (WaterModAPI.LineIntersectsWater(p.Beam, water.Planet) != 0)
                                             {
-                                                voxelHit = WaterModAPI.GetClosestSurfacePoint(p.Beam.To, water.Planet);
+                                                voxelHit = WaterModAPI.GetClosestSurfacePoint(beamTo, water.Planet);
                                                 voxelState = VoxelIntersectBranch.PseudoHit2;
                                                 info.FirstWaterHitTick = tick;
                                             }
@@ -347,8 +330,8 @@ namespace CoreSystems.Projectiles
                             if (!voxelHit.HasValue)
                             {
 
-                                if (info.VoxelCache.MissSphere.Contains(p.Beam.To) == ContainmentType.Disjoint)
-                                    info.VoxelCache.MissSphere.Center = p.Beam.To;
+                                if (info.VoxelCache.MissSphere.Contains(beamTo) == ContainmentType.Disjoint)
+                                    info.VoxelCache.MissSphere.Center = beamTo;
                                 continue;
                             }
 
@@ -358,7 +341,7 @@ namespace CoreSystems.Projectiles
                             hitEntity.HitPos = hitPos;
 
                             double dist;
-                            Vector3D.Distance(ref p.Beam.From, ref hitPos, out dist);
+                            Vector3D.Distance(ref beamFrom, ref hitPos, out dist);
                             hitEntity.HitDist = dist;
                             hitEntity.EventType = info.FirstWaterHitTick != tick ? Voxel : Water;
                         }
@@ -378,7 +361,7 @@ namespace CoreSystems.Projectiles
                             hitEntity = HitEntityPool.Get();
                             if (entIsSelf && !selfDamage && !info.Storage.SmartReady)
                             {
-                                if (!isBeam && p.Beam.Length <= grid.GridSize * 2 && !goCritical)
+                                if (!isBeam && beamLen <= grid.GridSize * 2 && !goCritical)
                                 {
                                     MyCube cube;
                                     if (!(grid.TryGetCube(grid.WorldToGridInteger(p.Position), out cube) && isGrid && cube.CubeBlock != firingCube.SlimBlock || grid.TryGetCube(grid.WorldToGridInteger(p.LastPosition), out cube) && isGrid && cube.CubeBlock != firingCube.SlimBlock))
@@ -391,7 +374,7 @@ namespace CoreSystems.Projectiles
                                 if (!p.Info.EwarAreaPulse)
                                 {
 
-                                    var forwardPos = p.Info.Age != 1 ? p.Beam.From : p.Beam.From + (p.Beam.Direction * Math.Min(grid.GridSizeHalf, info.DistanceTraveled - info.PrevDistanceTraveled));
+                                    var forwardPos = p.Info.Age != 1 ? beamFrom : beamFrom + (direction * Math.Min(grid.GridSizeHalf, info.DistanceTraveled - info.PrevDistanceTraveled));
                                     grid.RayCastCells(forwardPos, p.Beam.To, hitEntity.Vector3ICache, null, true, true);
 
                                     if (hitEntity.Vector3ICache.Count > 0)
@@ -422,7 +405,7 @@ namespace CoreSystems.Projectiles
                                         IHitInfo hitInfo = null;
                                         if (!goCritical)
                                         {
-                                            Session.Physics.CastRay(forwardPos, p.Beam.To, out hitInfo, CollisionLayers.DefaultCollisionLayer);
+                                            Session.Physics.CastRay(forwardPos, beamTo, out hitInfo, CollisionLayers.DefaultCollisionLayer);
                                             var hitGrid = hitInfo?.HitEntity?.GetTopMostParent() as MyCubeGrid;
                                             if (hitGrid == null || firingCube == null || !firingCube.CubeGrid.IsSameConstructAs(hitGrid))
                                             {
@@ -431,14 +414,14 @@ namespace CoreSystems.Projectiles
                                             }
                                         }
 
-                                        hitEntity.HitPos = hitInfo?.Position ?? p.Beam.From;
+                                        hitEntity.HitPos = hitInfo?.Position ?? beamFrom;
                                         var posI = hitEntity.Vector3ICache[0];
                                         hitEntity.Blocks.Add(new HitEntity.RootBlocks { Block = grid.GetCubeBlock(hitEntity.Vector3ICache[0]), QueryPos = posI});
                                     }
                                 }
                             }
                             else
-                                grid.RayCastCells(p.Beam.From, p.Beam.To, hitEntity.Vector3ICache, null, true, true);
+                                grid.RayCastCells(beamFrom, beamTo, hitEntity.Vector3ICache, null, true, true);
 
                             if (!offensiveEwar)
                             {
@@ -501,7 +484,7 @@ namespace CoreSystems.Projectiles
                     if (useLine)
                     {
                         var dist = sphere.Intersects(new RayD(p.LastPosition, info.Direction));
-                        if (dist <= hitTolerance || isBeam && dist <= p.Beam.Length)
+                        if (dist <= hitTolerance || isBeam && dist <= beamLen)
                             rayCheck = true;
                     }
 
@@ -514,9 +497,9 @@ namespace CoreSystems.Projectiles
                     }
                 }
 
-                if (!useEntityCollection)
+                if (aConst.CollisionIsLine)
                     p.MySegmentList.Clear();
-                else if (p.CheckType == Projectile.CheckTypes.Sphere)
+                else 
                     entityCollection.Clear();
 
                 if (p.FinalizeIntersection) {

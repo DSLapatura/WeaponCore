@@ -120,7 +120,7 @@ namespace CoreSystems.Support
         public readonly MySoundPair ReloadSoundPairs;
         public readonly MySoundPair BarrelRotateSoundPair;
         public readonly MySoundPair NoSoundPair;
-
+        public readonly HashSet<int> Threats = new HashSet<int>();
         public readonly Prediction Prediction;
         public readonly TurretType TurretMovement;
         public readonly FiringSoundState FiringSound;
@@ -282,7 +282,7 @@ namespace CoreSystems.Support
             BarrelValues(out BarrelsPerShot, out ShotsPerBurst);
             BarrelsAv(out BarrelEffect1, out BarrelEffect2, out Barrel1AvTicks, out Barrel2AvTicks, out BarrelSpinRate, out HasBarrelRotation);
             Track(out ScanTrackOnly, out NonThreatsOnly, out TrackProjectile, out TrackGrids, out TrackCharacters, out TrackMeteors, out TrackNeutrals, out ScanNonThreats, out ScanThreats, out MaxTrackingTime, out MaxTrackingTicks, out TrackTopMostEntities);
-            
+            GetThreats(out Threats);
             SubSystems(out TargetSubSystems, out OnlySubSystems);
             ValidTargetSize(out MinTargetRadius, out MaxTargetRadius);
             Session.CreateAnimationSets(Values.Animations, this, out WeaponAnimationSet, out PartEmissiveSet, out PartLinearMoveSet, out AnimationIdLookup, out PartAnimationLengths, out HeatingSubparts, out ParticleEvents);
@@ -456,6 +456,15 @@ namespace CoreSystems.Support
                     return EwarType.JumpNull;
                 default:
                     return EwarType.Offense;
+            }
+        }
+
+        private void GetThreats(out HashSet<int> set)
+        {
+            set = new HashSet<int>(Values.Targeting.Threats.Length);
+            foreach (var t in Values.Targeting.Threats)
+            {
+                set.Add((int)t);
             }
         }
 

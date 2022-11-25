@@ -16,7 +16,6 @@ using static CoreSystems.Support.WeaponDefinition.TargetingDef;
 using static CoreSystems.Support.WeaponDefinition.TargetingDef.BlockTypes;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef;
 using static CoreSystems.Platform.Weapon.ApiShootRequest;
-using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 using IMyWarhead = Sandbox.ModAPI.IMyWarhead;
 
 namespace CoreSystems.Support
@@ -1318,15 +1317,15 @@ namespace CoreSystems.Support
                     case MyRelationsBetweenPlayerAndBlock.FactionShare:
                     case MyRelationsBetweenPlayerAndBlock.Friends:
                     case MyRelationsBetweenPlayerAndBlock.Owner:
-                        if (!w.System.Values.Targeting.Threats.Contains(Threat.ScanFriendlyCharacter))
+                        if (!w.System.Threats.Contains((int) Threat.ScanFriendlyCharacter))
                             return false;
                         break;
                     case MyRelationsBetweenPlayerAndBlock.Neutral:
-                        if (!w.System.Values.Targeting.Threats.Contains(Threat.ScanNeutralCharacter))
+                        if (!w.System.Threats.Contains((int) Threat.ScanNeutralCharacter))
                             return false;
                         break;
                     case MyRelationsBetweenPlayerAndBlock.Enemies:
-                        if (!w.System.Values.Targeting.Threats.Contains(Threat.ScanEnemyCharacter))
+                        if (!w.System.Threats.Contains((int) Threat.ScanEnemyCharacter))
                             return false;
                         break;
                     default:
@@ -1338,9 +1337,9 @@ namespace CoreSystems.Support
             if (voxel != null)
             {
                 var planet = voxel as MyPlanet;
-                if (planet != null && !w.System.Values.Targeting.Threats.Contains(Threat.ScanPlanet))
+                if (planet != null && !w.System.Threats.Contains((int) Threat.ScanPlanet))
                     return false;
-                if (!w.System.Values.Targeting.Threats.Contains(Threat.ScanRoid))
+                if (!w.System.Threats.Contains((int) Threat.ScanRoid))
                     return false;
             }
 
@@ -1351,23 +1350,23 @@ namespace CoreSystems.Support
                 {
                     case MyRelationsBetweenPlayerAndBlock.FactionShare:
                     case MyRelationsBetweenPlayerAndBlock.Friends:
-                        if (!w.System.Values.Targeting.Threats.Contains(Threat.ScanFriendlyGrid))
+                        if (!w.System.Threats.Contains((int) Threat.ScanFriendlyGrid))
                             return false;
                         break;
                     case MyRelationsBetweenPlayerAndBlock.Neutral:
-                        if (!w.System.Values.Targeting.Threats.Contains(Threat.ScanNeutralGrid))
+                        if (!w.System.Threats.Contains((int) Threat.ScanNeutralGrid))
                             return false;
                         break;
                     case MyRelationsBetweenPlayerAndBlock.Enemies:
-                        if (!w.System.Values.Targeting.Threats.Contains(Threat.ScanEnemyGrid))
+                        if (!w.System.Threats.Contains((int) Threat.ScanEnemyGrid))
                             return false;
                         break;
                     case MyRelationsBetweenPlayerAndBlock.NoOwnership:
-                        if (!w.System.Values.Targeting.Threats.Contains(Threat.ScanUnOwnedGrid))
+                        if (!w.System.Threats.Contains((int) Threat.ScanUnOwnedGrid))
                             return false;
                         break;
                     case MyRelationsBetweenPlayerAndBlock.Owner:
-                        if (!w.System.Values.Targeting.Threats.Contains(Threat.ScanOwnersGrid))
+                        if (!w.System.Threats.Contains((int) Threat.ScanOwnersGrid))
                             return false;
                         break;
                     default:

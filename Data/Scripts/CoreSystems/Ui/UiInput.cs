@@ -370,7 +370,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
                 var addKey = MyAPIGateway.Input.GetControl(MyKeys.Add);
                 var subKey = MyAPIGateway.Input.GetControl(MyKeys.Subtract);
                 var actionKey = MyAPIGateway.Input.GetControl(MyKeys.NumPad0);
-                var controlKey = MyAPIGateway.Input.GetControl(MyKeys.R);
+                var controlKey = MyAPIGateway.Input.GetControl(ControlKey);
                 var detailKey = MyAPIGateway.Input.GetControl(MyKeys.Decimal);
 
                 if (upKey != null)

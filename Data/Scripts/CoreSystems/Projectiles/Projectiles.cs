@@ -148,14 +148,14 @@ namespace CoreSystems.Projectiles
                         p.SyncStateServerProjectile(ProtoProStateSync.ProSyncState.Alive);
                 }
 
-                if (p.Asleep)
+                if (storage.Sleep)
                 {
                     if (p.DeaccelRate > 300 && info.Age % 100 != 0)
                     {
                         p.DeaccelRate--;
                         continue;
                     }
-                    p.Asleep = false;
+                    storage.Sleep = false;
                 }
                 switch (p.State) {
                     case ProjectileState.Destroy:
@@ -182,7 +182,7 @@ namespace CoreSystems.Projectiles
                 }
 
 
-                if (!p.AtMaxRange) {
+                if (p.EndState == EndStates.None) {
 
                     if (aConst.FeelsGravity) {
 
@@ -266,7 +266,7 @@ namespace CoreSystems.Projectiles
                         if (aConst.AmmoSkipAccel || p.VelocityLengthSqr > 0)
                             p.LastPosition = p.Position;
 
-                        p.TravelMagnitude = info.Age != 0 ? p.Velocity * Session.StepConst : p.InitalStep;
+                        p.TravelMagnitude = info.Age != 0 ? p.Velocity * Session.StepConst : p.TravelMagnitude;
                         p.Position += p.TravelMagnitude;
                     }
 
@@ -291,23 +291,25 @@ namespace CoreSystems.Projectiles
                 {
                     if (info.Age > aConst.MaxLifeTime) {
                         p.DistanceToTravelSqr = (info.DistanceTraveled * info.DistanceTraveled);
-                        p.EarlyEnd = true;
+                        p.EndState =  EndStates.EarlyEnd;
                     }
 
                     if (info.DistanceTraveled * info.DistanceTraveled >= p.DistanceToTravelSqr) {
 
-                        p.AtMaxRange = !aConst.IsMine || storage.LastActivatedStage < 0;
+                        if (!aConst.IsMine || storage.LastActivatedStage == -1)
+                            p.EndState = p.EndState == EndStates.EarlyEnd ? EndStates.AtMaxEarly : EndStates.AtMaxRange;
+
                         if (p.DeaccelRate > 0) {
 
                             p.DeaccelRate--;
-                            if (aConst.IsMine && storage.LastActivatedStage < 0 && info.Storage.RequestedStage != 0) {
+                            if (aConst.IsMine && storage.LastActivatedStage == -1 && info.Storage.RequestedStage != -2) {
                                 if (p.EnableAv) info.AvShot.Cloaked = info.AmmoDef.Trajectory.Mines.Cloak;
-                                storage.LastActivatedStage = 0;
+                                storage.LastActivatedStage = -2;
                             }
                         }
                     }
                 }
-                else p.AtMaxRange = true;
+                else p.EndState = EndStates.AtMaxRange;
 
                 if (aConst.Ewar)
                     p.RunEwar();
@@ -326,18 +328,18 @@ namespace CoreSystems.Projectiles
             MyAPIGateway.Parallel.For(0, apCount, i =>
             {
                 var p = ActiveProjetiles[i];
-
-                if ((int)p.State > 3 || p.Asleep)
-                    return;
-
                 var info = p.Info;
                 var storage = info.Storage;
+
+                if ((int)p.State > 3 || storage.Sleep)
+                    return;
+
                 var ai = info.Ai;
                 var aDef = info.AmmoDef;
                 var aConst = aDef.Const;
                 var target = info.Target;
 
-                if (p.HasModel)
+                if (aConst.PrimeModel || aConst.TriggerModel)
                 {
                     MatrixD matrix;
                     MatrixD.CreateWorld(ref p.Position, ref info.Direction, ref info.OriginUp, out matrix);
@@ -361,7 +363,7 @@ namespace CoreSystems.Projectiles
                     p.PruneSphere.Center = p.Position;
                     p.PruneSphere.Radius = aConst.EndOfLifeRadius;
 
-                    if (p.MoveToAndActivate || aConst.EndOfLifeAoe && info.Age >= aConst.MinArmingTime && (!aConst.ArmOnlyOnHit || info.ObjectsHit > 0))
+                    if (aConst.TravelTo && storage.RequestedStage == -2 || aConst.EndOfLifeAoe && info.Age >= aConst.MinArmingTime && (!aConst.ArmOnlyOnHit || info.ObjectsHit > 0))
                     {
                         MyGamePruningStructure.GetAllTopMostEntitiesInSphere(ref p.PruneSphere, p.MyEntityList, p.PruneQuery);
 
@@ -378,14 +380,12 @@ namespace CoreSystems.Projectiles
                     else
                         p.State = ProjectileState.Detonate;
 
-                    p.EarlyEnd = true;
+                    p.EndState = p.EndState == EndStates.AtMaxRange ? EndStates.AtMaxEarly : EndStates.EarlyEnd;
                     info.Hit.SurfaceHit = p.Position;
                     info.Hit.LastHit = p.Position;
                 }
 
-                var sphereCheck = false;
-
-                if (aConst.IsMine && storage.LastActivatedStage >= 0 && storage.RequestedStage != 1)
+                if (aConst.IsMine && storage.LastActivatedStage <= -2 && storage.RequestedStage != -3)
                     p.SeekEnemy();
                 else if (useEwarSphere)
                 {
@@ -404,7 +404,6 @@ namespace CoreSystems.Projectiles
                     else
                         p.PruneSphere = new BoundingSphereD(p.Position, triggerRange);
 
-                    sphereCheck = true;
                 }
                 else if (aConst.CollisionIsLine)
                 {
@@ -419,7 +418,6 @@ namespace CoreSystems.Projectiles
                 }
                 else
                 {
-                    sphereCheck = true;
                     p.PruneSphere = new BoundingSphereD(p.Position, 0).Include(new BoundingSphereD(p.LastPosition, 0));
                     if (p.PruneSphere.Radius < aConst.CollisionSize)
                     {
@@ -428,25 +426,23 @@ namespace CoreSystems.Projectiles
                     }
                 }
 
-                if (sphereCheck) {
+                if (!aConst.CollisionIsLine) {
                     if (aConst.DynamicGuidance && p.PruneQuery == MyEntityQueryType.Dynamic && Session.Tick60)
                         p.CheckForNearVoxel(60);
                     MyGamePruningStructure.GetAllTopMostEntitiesInSphere(ref p.PruneSphere, p.MyEntityList, p.PruneQuery);
                 }
 
-                p.CheckType = sphereCheck ? CheckTypes.Sphere : CheckTypes.Ray;
-
                 info.ShieldBypassed = info.ShieldKeepBypass;
                 info.ShieldKeepBypass = false;
 
-                if (target.TargetState == Target.TargetStates.IsProjectile || p.CheckType == CheckTypes.Ray && p.MySegmentList.Count > 0 || p.CheckType == CheckTypes.Sphere && p.MyEntityList.Count > 0)
+                if (target.TargetState == Target.TargetStates.IsProjectile || aConst.CollisionIsLine && p.MySegmentList.Count > 0 || !aConst.CollisionIsLine && p.MyEntityList.Count > 0)
                 {
                     lock (ValidateHits)
                         ValidateHits.Add(p);
                 }
-                else if (aConst.IsMine && storage.LastActivatedStage >= 0 && storage.RequestedStage != 1 && info.Age - storage.ChaseAge > 600)
+                else if (aConst.IsMine && storage.LastActivatedStage <= -2 && storage.RequestedStage != -3 && info.Age - storage.ChaseAge > 600)
                 {
-                    p.Asleep = true;
+                    storage.Sleep = true;
                 }
             },stride);
         }
@@ -472,7 +468,7 @@ namespace CoreSystems.Projectiles
                         var vs = vp.AvShot;
 
                         vp.TracerLength = info.TracerLength;
-                        vs.Init(vp, aConst.DeltaVelocityPerTick, p.MaxSpeed, ref p.AccelDir);
+                        vs.Init(vp, aConst.DeltaVelocityPerTick, p.MaxSpeed, ref info.Direction);
 
                         if (info.BaseDamagePool <= 0 || p.State == ProjectileState.Depleted)
                             vs.ProEnded = true;
@@ -525,9 +521,9 @@ namespace CoreSystems.Projectiles
 
                     if (aConst.DrawLine || aConst.PrimeModel || aConst.TriggerModel)
                     {
-                        var useCollisionSize = !p.HasModel && aConst.AmmoParticle && !aConst.DrawLine;
+                        var useCollisionSize = !info.AvShot.HasModel && aConst.AmmoParticle && !aConst.DrawLine;
                         info.AvShot.TestSphere.Center = info.Hit.LastHit;
-                        info.AvShot.ShortStepAvUpdate(info, useCollisionSize, true, p.EarlyEnd, p.Position);
+                        info.AvShot.ShortStepAvUpdate(info, useCollisionSize, true, p.EndState == EndStates.EarlyEnd, p.Position);
                     }
 
                     if (info.BaseDamagePool <= 0 || p.State == ProjectileState.Depleted)
@@ -540,7 +536,7 @@ namespace CoreSystems.Projectiles
                 if ((int)p.State > 3)
                     continue;
 
-                if (aConst.DrawLine || !p.HasModel && aConst.AmmoParticle)
+                if (aConst.DrawLine || !info.AvShot.HasModel && aConst.AmmoParticle)
                 {
                     if (p.State == ProjectileState.OneAndDone)
                     {
@@ -549,9 +545,13 @@ namespace CoreSystems.Projectiles
 
                         DeferedAvDraw.Add(new DeferedAv { AvShot = info.AvShot, Info = info, TracerFront = p.Position,  Direction = info.Direction });
                     }
-                    else if (!p.HasModel && aConst.AmmoParticle && !aConst.DrawLine)
+                    else if (!info.AvShot.HasModel && aConst.AmmoParticle && !aConst.DrawLine)
                     {
-                        if (p.AtMaxRange) info.AvShot.ShortStepAvUpdate(p.Info,true, false, p.EarlyEnd, p.Position);
+                        if (p.EndState != EndStates.None)
+                        {
+                            var earlyEnd = p.EndState > (EndStates)1;
+                            info.AvShot.ShortStepAvUpdate(p.Info,true, false, earlyEnd, p.Position);
+                        }
                         else
                         {
                             info.AvShot.StepSize = stepSize;
@@ -561,7 +561,7 @@ namespace CoreSystems.Projectiles
                     }
                     else
                     {
-                        var dir = (p.Velocity - p.StartSpeed) * Session.StepConst;
+                        var dir = (p.Velocity - info.ShooterVel) * Session.StepConst;
                         double distChanged;
                         Vector3D.Dot(ref info.Direction, ref dir, out distChanged);
 
@@ -569,7 +569,11 @@ namespace CoreSystems.Projectiles
                         var displaceDiff = info.ProjectileDisplacement - info.TracerLength;
                         if (info.ProjectileDisplacement < info.TracerLength && Math.Abs(displaceDiff) > 0.0001)
                         {
-                            if (p.AtMaxRange) p.Info.AvShot.ShortStepAvUpdate(p.Info,false, false, p.EarlyEnd, p.Position);
+                            if (p.EndState != EndStates.None)
+                            {
+                                var earlyEnd = p.EndState > (EndStates) 1;
+                                p.Info.AvShot.ShortStepAvUpdate(p.Info,false, false, earlyEnd, p.Position);
+                            }
                             else
                             {
                                 info.AvShot.StepSize = stepSize;
@@ -579,7 +583,11 @@ namespace CoreSystems.Projectiles
                         }
                         else
                         {
-                            if (p.AtMaxRange) info.AvShot.ShortStepAvUpdate(info, false, false, p.EarlyEnd, p.Position);
+                            if (p.EndState != EndStates.None)
+                            {
+                                var earlyEnd = p.EndState > (EndStates)1;
+                                info.AvShot.ShortStepAvUpdate(info, false, false, earlyEnd, p.Position);
+                            }
                             else
                             {
                                 info.AvShot.StepSize = stepSize;
