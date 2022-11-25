@@ -73,7 +73,7 @@ namespace CoreSystems.Platform
 
                 if (unexpectedHit)
                 {
-                    if (hitTopEnt is MyVoxelBase && !Weapon.System.TrackNonThreatsOther)
+                    if (hitTopEnt is MyVoxelBase && !Weapon.System.ScanNonThreats)
                     {
                         masterWeapon.Target.Reset(Weapon.Comp.Session.Tick, Target.States.RayCheckVoxel);
                         if (masterWeapon != Weapon) Weapon.Target.Reset(Weapon.Comp.Session.Tick, Target.States.RayCheckVoxel);
@@ -89,7 +89,7 @@ namespace CoreSystems.Platform
                         Weapon.PauseShoot = true;
                         return;
                     }
-                    if (!Weapon.System.TrackNonThreatsOther && (!topAsGrid.DestructibleBlocks || topAsGrid.Immune || topAsGrid.GridGeneralDamageModifier <= 0 || !Session.GridEnemy(Weapon.Comp.Ai.AiOwner, topAsGrid)))
+                    if (!Weapon.System.ScanNonThreats && (!topAsGrid.DestructibleBlocks || topAsGrid.Immune || topAsGrid.GridGeneralDamageModifier <= 0 || !Session.GridEnemy(Weapon.Comp.Ai.AiOwner, topAsGrid)))
                     {
                         masterWeapon.Target.Reset(Weapon.Comp.Session.Tick, Target.States.RayCheckFriendly);
                         if (masterWeapon != Weapon) Weapon.Target.Reset(Weapon.Comp.Session.Tick, Target.States.RayCheckFriendly);
@@ -147,7 +147,7 @@ namespace CoreSystems.Platform
         internal struct TargetOwner
         {
             internal Weapon Weapon;
-            internal bool Released;
+            internal uint ReleasedTick;
         }
 
         public class ApiShootRequest

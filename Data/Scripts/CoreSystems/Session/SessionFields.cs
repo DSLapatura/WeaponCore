@@ -216,6 +216,7 @@ namespace CoreSystems
 
         internal readonly List<Projectile> Hits = new List<Projectile>(16);
         internal readonly List<Weapon> AcquireTargets = new List<Weapon>(128);
+        internal readonly List<Weapon> TmpWeaponEventSortingList = new List<Weapon>();
         internal readonly List<Weapon> HomingWeapons = new List<Weapon>(128);
         internal readonly List<Ai> AimingAi = new List<Ai>(128);
         internal readonly List<IHitInfo> HitInfoTmpList = new List<IHitInfo>();

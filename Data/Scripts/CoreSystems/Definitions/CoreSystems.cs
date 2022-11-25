@@ -159,6 +159,10 @@ namespace CoreSystems.Support
         public readonly bool ClosestFirst;
         public readonly bool DegRof;
         public readonly bool TrackProjectile;
+        public readonly bool ScanTrackOnly;
+        public readonly bool AlternateUi;
+        public readonly bool NonThreatsOnly;
+
         public readonly bool TrackTopMostEntities;
         public readonly bool TrackGrids;
         public readonly bool TrackCharacters;
@@ -166,11 +170,9 @@ namespace CoreSystems.Support
         public readonly bool UniqueTargetPerWeapon;
         public readonly bool TrackNeutrals;
         public readonly bool DisableLosCheck;
-        public readonly bool TrackNonThreatsOther;
-        public readonly bool TrackNonThreatsFriend;
-        public readonly bool TrackNonThreatsVoxel;
-        public readonly bool TrackNonThreatsCharacter;
-        public readonly bool TrackNonThreats;
+        public readonly bool ScanNonThreats;
+        public readonly bool TargetGridCenter;
+        public readonly bool ScanThreats;
         public readonly bool TrackTargets;
         public readonly bool HasRequiresTarget;
         public readonly bool HasDrone;
@@ -190,7 +192,6 @@ namespace CoreSystems.Support
         public readonly bool DebugMode;
         public readonly bool ShootBlanks;
         public readonly bool HasProjectileSync;
-        public readonly bool TargetGridCenter;
         public readonly double MaxTargetSpeed;
         public readonly double AzStep;
         public readonly double ElStep;
@@ -265,7 +266,7 @@ namespace CoreSystems.Support
             ShootBlanks = Values.Targeting.ShootBlanks;
             //LockOnFocus = Values.HardPoint.Ai.LockOnFocus && !Values.HardPoint.Ai.TrackTargets;
             LockOnFocus = false;
-
+            AlternateUi = Values.HardPoint.Ui.AlternateUi;
             MaxReloads = Values.HardPoint.Loading.MaxReloads;
             MaxActiveProjectiles = Values.HardPoint.Loading.MaxActiveProjectiles > 0 ? Values.HardPoint.Loading.MaxActiveProjectiles : int.MaxValue;
             TargetGridCenter = Values.HardPoint.Ai.TargetGridCenter;
@@ -280,7 +281,8 @@ namespace CoreSystems.Support
             Heat(out DegRof, out MaxHeat, out WepCoolDown);
             BarrelValues(out BarrelsPerShot, out ShotsPerBurst);
             BarrelsAv(out BarrelEffect1, out BarrelEffect2, out Barrel1AvTicks, out Barrel2AvTicks, out BarrelSpinRate, out HasBarrelRotation);
-            Track(out TrackProjectile, out TrackGrids, out TrackCharacters, out TrackMeteors, out TrackNeutrals, out TrackNonThreatsOther, out TrackNonThreatsFriend, out TrackNonThreatsVoxel, out TrackNonThreatsCharacter, out TrackNonThreats, out MaxTrackingTime, out MaxTrackingTicks, out TrackTopMostEntities);
+            Track(out ScanTrackOnly, out NonThreatsOnly, out TrackProjectile, out TrackGrids, out TrackCharacters, out TrackMeteors, out TrackNeutrals, out ScanNonThreats, out ScanThreats, out MaxTrackingTime, out MaxTrackingTicks, out TrackTopMostEntities);
+            
             SubSystems(out TargetSubSystems, out OnlySubSystems);
             ValidTargetSize(out MinTargetRadius, out MaxTargetRadius);
             Session.CreateAnimationSets(Values.Animations, this, out WeaponAnimationSet, out PartEmissiveSet, out PartLinearMoveSet, out AnimationIdLookup, out PartAnimationLengths, out HeatingSubparts, out ParticleEvents);
@@ -532,22 +534,21 @@ namespace CoreSystems.Support
                 turretMove = TurretType.Fixed;
         }
 
-        private void Track(out bool trackProjectile, out bool trackGrids, out bool trackCharacters, out bool trackMeteors, out bool trackNeutrals, out bool trackNonThreatsOther, out bool trackNonThreatsFriend, out bool trackNonThreatsVoxel, out bool trackNonThreatsCharacter, out bool trackNonThreats, out bool maxTrackingTime, out uint maxTrackingTicks, out bool trackTopMostEntities)
+        private void Track(out bool scanTrackOnly, out bool nonThreatsOnly, out bool trackProjectile, out bool trackGrids, out bool trackCharacters, out bool trackMeteors, out bool trackNeutrals, out bool scanNonThreats, out bool scanThreats, out bool maxTrackingTime, out uint maxTrackingTicks, out bool trackTopMostEntities)
         {
             trackProjectile = false;
             trackGrids = false;
             trackCharacters = false;
             trackMeteors = false;
             trackNeutrals = false;
-            trackNonThreatsOther = false;
-            trackNonThreatsFriend = false;
-            trackNonThreatsVoxel = false;
-            trackNonThreatsCharacter = false;
             maxTrackingTicks = (uint)Values.Targeting.MaxTrackingTime;
             maxTrackingTime = maxTrackingTicks > 0;
             trackTopMostEntities = false;
-
             var threats = Values.Targeting.Threats;
+            scanTrackOnly = Values.HardPoint.ScanTrackOnly;
+            nonThreatsOnly = false;
+            scanNonThreats = false;
+            scanThreats = false;
             foreach (var threat in threats)
             {
                 if (threat == TargetingDef.Threat.Projectiles)
@@ -572,29 +573,23 @@ namespace CoreSystems.Support
                     trackNeutrals = true;
                     trackTopMostEntities = true;
                 }
-                else if (threat == TargetingDef.Threat.NonThreatsOther)
+                else if (threat == TargetingDef.Threat.ScanEnemyGrid || threat == TargetingDef.Threat.ScanNeutralCharacter || threat == TargetingDef.Threat.ScanEnemyCharacter || threat == TargetingDef.Threat.ScanNeutralGrid || threat == TargetingDef.Threat.ScanUnOwnedGrid)
                 {
-                    trackNonThreatsOther = true;
                     trackTopMostEntities = true;
+                    scanThreats = true;
                 }
-                else if (threat == TargetingDef.Threat.NonThreatsFriend)
+                else if (threat == TargetingDef.Threat.ScanFriendlyCharacter || threat == TargetingDef.Threat.ScanFriendlyGrid || threat == TargetingDef.Threat.ScanOwnersGrid)
                 {
-                    trackNonThreatsFriend = true;
                     trackTopMostEntities = true;
+                    scanNonThreats = true;
                 }
-                else if (threat == TargetingDef.Threat.NonThreatsVoxel)
+                else if (threat == TargetingDef.Threat.ScanRoid || threat == TargetingDef.Threat.ScanPlanet)
                 {
-                    trackNonThreatsVoxel = true;
                     trackTopMostEntities = true;
+                    scanNonThreats = true;
                 }
-                else if (threat == TargetingDef.Threat.NonThreatsCharacter)
-                {
-                    trackNonThreatsCharacter = true;
-                    trackTopMostEntities = true;
-                }
+                nonThreatsOnly = scanNonThreats && !scanThreats && !trackNeutrals && !trackMeteors && !trackCharacters && !trackGrids && !trackProjectile;
             }
-            trackNonThreats = trackNonThreatsFriend || trackNonThreatsOther || trackNonThreatsCharacter || trackNonThreatsVoxel;
-
         }
 
         private void SubSystems(out bool targetSubSystems, out bool onlySubSystems)

@@ -139,8 +139,6 @@ namespace CoreSystems.Platform
 
                     Repo.Values.Set.Range = -1;
 
-                    Repo.Values.Set.Overrides.Friendly = Comp.HasTrackNonThreats;
-
                     if (Comp.Session.IsClient)
                         Comp.ShootManager.ClientToggleCount = Repo.Values.State.ToggleCount;
                 }

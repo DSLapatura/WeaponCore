@@ -1,9 +1,10 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using CoreSystems.Platform;
 using CoreSystems.Projectiles;
 using Sandbox.Game.Entities;
-using Sandbox.ModAPI;
+using Sandbox.ModAPI.Ingame;
 using VRage.Collections;
 using VRage.Game;
 using VRage.Game.Entity;
@@ -16,6 +17,7 @@ using static CoreSystems.Support.WeaponDefinition.TargetingDef.BlockTypes;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef;
 using static CoreSystems.Platform.Weapon.ApiShootRequest;
 using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
+using IMyWarhead = Sandbox.ModAPI.IMyWarhead;
 
 namespace CoreSystems.Support
 {
@@ -43,14 +45,15 @@ namespace CoreSystems.Support
                 var pCount = masterAi.LiveProjectile.Count;
                 var shootProjectile = pCount > 0 && (w.System.TrackProjectile || projectileRequest || w.Comp.Ai.ControlComp != null) && mOverrides.Projectiles;
                 var projectilesFirst = !forceFocus && shootProjectile && w.System.Values.Targeting.Threats.Length > 0 && w.System.Values.Targeting.Threats[0] == Threat.Projectiles;
-                var onlyCheckProjectile = projectileRequest || w.ProjectilesNear && !w.Target.TargetChanged && w.Comp.Session.Count != w.Acquire.SlotId && !forceFocus;
-                var checkObstructions = w.System.TrackNonThreats && mOverrides.Friendly && masterAi.Obstructions.Count > 0;
-                if (!projectilesFirst && w.System.TrackTopMostEntities && !onlyCheckProjectile)
+                var projectilesOnly =  projectileRequest || w.ProjectilesNear && !w.Target.TargetChanged && w.Comp.Session.Count != w.Acquire.SlotId && !forceFocus;
+                var checkObstructions = w.System.ScanNonThreats && masterAi.Obstructions.Count > 0;
+                
+                if (!projectilesFirst && w.System.TrackTopMostEntities && !projectilesOnly && !w.System.NonThreatsOnly)
                     foundTarget = AcquireTopMostEntity(w, mOverrides, forceFocus, targetEntity);
                 else if (!forceFocus && shootProjectile)
                     foundTarget = AcquireProjectile(w, request.ProjectileId);
 
-                if (projectilesFirst && !foundTarget && !onlyCheckProjectile)
+                if (projectilesFirst && !foundTarget && !projectilesOnly && !w.System.NonThreatsOnly)
                     foundTarget = AcquireTopMostEntity(w, mOverrides, false, targetEntity);
 
                 if (!foundTarget && checkObstructions)
@@ -58,7 +61,7 @@ namespace CoreSystems.Support
                     foundTarget = AcquireObstruction(w, mOverrides);
                 }
             }
-            else if (w.ValidFakeTargetInfo(w.Comp.Data.Repo.Values.State.PlayerId, out fakeInfo))
+            else if (!w.System.ScanTrackOnly && w.ValidFakeTargetInfo(w.Comp.Data.Repo.Values.State.PlayerId, out fakeInfo))
             {
                 Vector3D predictedPos;
                 if (Weapon.CanShootTarget(w, ref fakeInfo.WorldPosition, fakeInfo.LinearVelocity, fakeInfo.Acceleration, out predictedPos))
@@ -103,10 +106,10 @@ namespace CoreSystems.Support
 
             var ammoDef = w.ActiveAmmoDef.AmmoDef;
             var aConst = ammoDef.Const;
-            var attackNeutrals = overRides.Neutrals || w.System.TrackNonThreatsOther;
-            var attackFriends = overRides.Friendly || w.System.TrackNonThreatsFriend;
-            var attackNoOwner = overRides.Unowned || w.System.TrackNonThreatsOther;
-            var forceFoci = overRides.FocusTargets;
+            var attackNeutrals = overRides.Neutrals || w.System.ScanTrackOnly;
+            var attackFriends = overRides.Friendly || w.System.ScanTrackOnly;
+            var attackNoOwner = overRides.Unowned || w.System.ScanTrackOnly;
+            var forceFoci = overRides.FocusTargets || w.System.ScanTrackOnly;
             var session = comp.Session;
             session.TargetRequests++;
             var weaponPos = w.BarrelOrigin + (w.MyPivotFwd * w.MuzzleDistToBarrelCenter);
@@ -135,7 +138,7 @@ namespace CoreSystems.Support
             var lastFocusGrid = rootConstruct.LastFocusEntityChecked as MyCubeGrid;
 
             var focusSortedConstructCollection = rootConstruct.RootAi.FocusSortedConstruct;
-            if (rootConstruct.HadFocus) 
+            if (rootConstruct.HadFocus && !w.System.ScanTrackOnly) 
             {
                 if (focusGrid != null) {
                     if (focusSortedConstructCollection.Count == 0 || session.Tick - rootConstruct.LastFocusConstructTick > 180 || lastFocusGrid == null || !focusGrid.IsSameConstructAs(lastFocusGrid))
@@ -179,11 +182,16 @@ namespace CoreSystems.Support
                     continue;
 
                 var grid = info.Target as MyCubeGrid;
+
+                if (info?.Target == null || info.Target.MarkedForClose || offset > 0 && x > lastOffset && (grid != null && focusGrid != null && grid.IsSameConstructAs(focusGrid)) || !attackNeutrals && info.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Neutral || !attackNoOwner && info.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.NoOwnership)
+                    continue;
+
                 Weapon.TargetOwner tOwner;
                 if (w.System.UniqueTargetPerWeapon && w.Comp.ActiveTargets.TryGetValue(info.Target, out tOwner) && tOwner.Weapon != w)
                     continue;
 
-                if (info?.Target == null || info.Target.MarkedForClose || offset > 0 && x > lastOffset && (grid != null && focusGrid != null && grid.IsSameConstructAs(focusGrid)) || !attackNeutrals && info.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Neutral || !attackNoOwner && info.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.NoOwnership)
+
+                if (w.System.ScanTrackOnly && !ValidScanEntity(w, info.EntInfo, info.Target, true))
                     continue;
 
                 if (movingMode && info.VelLenSqr < 1 || !fireOnStation && info.IsStatic || stationOnly && !info.IsStatic)
@@ -338,25 +346,20 @@ namespace CoreSystems.Support
                     break;
 
                 var info = ai.Obstructions[deck[x]];
+
+
+                if (info.Target?.Physics == null || info.Target.MarkedForClose)
+                    continue;
+
+                if (!ValidScanEntity(w, info.EntInfo, info.Target))
+                    continue;
+
                 var grid = info.Target as MyCubeGrid;
-
-                Weapon.TargetOwner tOwner;
-                if (w.System.UniqueTargetPerWeapon && w.Comp.ActiveTargets.TryGetValue(info.Target, out tOwner) && tOwner.Weapon != w)
-                    continue;
-
-                if (info.Target?.Physics == null || info.Target.MarkedForClose || !w.System.TrackNonThreatsFriend && (info.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Friends || info.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.FactionShare) || !w.System.TrackNonThreatsOther && (info.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Neutral ||  info.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.NoOwnership))
-                    continue;
+                var character = info.Target as IMyCharacter;
 
                 if (movingMode && !info.Target.Physics.IsMoving || !fireOnStation && info.Target.Physics.IsStatic || stationOnly && !info.Target.Physics.IsStatic)
                     continue;
 
-                var character = info.Target as IMyCharacter;
-                if (character != null && !w.System.TrackNonThreatsCharacter)
-                    continue;
-
-                var voxel = info.Target as MyVoxelBase;
-                if (voxel != null && !w.System.TrackNonThreatsVoxel)
-                    continue;
 
                 var targetRadius = character != null ? info.Target.PositionComp.LocalVolume.Radius * 5 : info.Target.PositionComp.LocalVolume.Radius;
                 if (targetRadius < minTargetRadius || targetRadius > maxTargetRadius && maxTargetRadius < 8192) continue;
@@ -1298,6 +1301,81 @@ namespace CoreSystems.Support
                 }
             }
             return obstruction;
+        }
+
+        internal static bool ValidScanEntity(Weapon w, MyDetectedEntityInfo info, MyEntity target, bool skipUnique = false)
+        {
+            Weapon.TargetOwner tOwner;
+            if (!skipUnique && w.System.UniqueTargetPerWeapon && w.Comp.ActiveTargets.TryGetValue(target, out tOwner) && tOwner.Weapon != w)
+                return false;
+
+            var character = target as IMyCharacter;
+
+            if (character != null)
+            {
+                switch (info.Relationship)
+                {
+                    case MyRelationsBetweenPlayerAndBlock.FactionShare:
+                    case MyRelationsBetweenPlayerAndBlock.Friends:
+                    case MyRelationsBetweenPlayerAndBlock.Owner:
+                        if (!w.System.Values.Targeting.Threats.Contains(Threat.ScanFriendlyCharacter))
+                            return false;
+                        break;
+                    case MyRelationsBetweenPlayerAndBlock.Neutral:
+                        if (!w.System.Values.Targeting.Threats.Contains(Threat.ScanNeutralCharacter))
+                            return false;
+                        break;
+                    case MyRelationsBetweenPlayerAndBlock.Enemies:
+                        if (!w.System.Values.Targeting.Threats.Contains(Threat.ScanEnemyCharacter))
+                            return false;
+                        break;
+                    default:
+                        return false;
+                }
+            }
+
+            var voxel = target as MyVoxelBase;
+            if (voxel != null)
+            {
+                var planet = voxel as MyPlanet;
+                if (planet != null && !w.System.Values.Targeting.Threats.Contains(Threat.ScanPlanet))
+                    return false;
+                if (!w.System.Values.Targeting.Threats.Contains(Threat.ScanRoid))
+                    return false;
+            }
+
+            var grid = target as MyCubeGrid;
+            if (grid != null)
+            {
+                switch (info.Relationship)
+                {
+                    case MyRelationsBetweenPlayerAndBlock.FactionShare:
+                    case MyRelationsBetweenPlayerAndBlock.Friends:
+                        if (!w.System.Values.Targeting.Threats.Contains(Threat.ScanFriendlyGrid))
+                            return false;
+                        break;
+                    case MyRelationsBetweenPlayerAndBlock.Neutral:
+                        if (!w.System.Values.Targeting.Threats.Contains(Threat.ScanNeutralGrid))
+                            return false;
+                        break;
+                    case MyRelationsBetweenPlayerAndBlock.Enemies:
+                        if (!w.System.Values.Targeting.Threats.Contains(Threat.ScanEnemyGrid))
+                            return false;
+                        break;
+                    case MyRelationsBetweenPlayerAndBlock.NoOwnership:
+                        if (!w.System.Values.Targeting.Threats.Contains(Threat.ScanUnOwnedGrid))
+                            return false;
+                        break;
+                    case MyRelationsBetweenPlayerAndBlock.Owner:
+                        if (!w.System.Values.Targeting.Threats.Contains(Threat.ScanOwnersGrid))
+                            return false;
+                        break;
+                    default:
+                        return false;
+                }
+            }
+
+            return true;
         }
 
         internal static bool SwitchToDrone(Weapon w)

@@ -1,14 +1,17 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Text;
 using CoreSystems.Control;
 using CoreSystems.Platform;
+using CoreSystems.Projectiles;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
 using VRage;
 using VRage.Collections;
 using VRage.Game;
 using VRage.Game.Entity;
+using VRage.Game.ModAPI;
 using static CoreSystems.Platform.CorePlatform;
 using static CoreSystems.Session;
 
@@ -216,9 +219,9 @@ namespace CoreSystems.Support
 
                 var status = GetSystemStatus();
                 var debug = Debug || comp.Data.Repo.Values.Set.Overrides.Debug;
-                var advanced = (comp.Session.Settings.ClientConfig.AdvancedMode || debug) && !comp.HasTrackNonThreats;
+                var advanced = (comp.Session.Settings.ClientConfig.AdvancedMode || debug) && !comp.HasAlternateUi;
                 
-                if (!comp.HasTrackNonThreats)
+                if (!comp.HasAlternateUi)
                     stringBuilder.Append(advanced ? $"{status}\n" : $"{status}");
 
                 if (HasServerOverrides)
@@ -240,7 +243,7 @@ namespace CoreSystems.Support
                 }
                 else
                 {
-                    if (!comp.HasTrackNonThreats)
+                    if (!comp.HasAlternateUi)
                         stringBuilder.Append($"\n{Localization.GetText("WeaponInfoPeakDps")}: " + comp.PeakDps.ToString("0.0"));
                 }
 
@@ -251,7 +254,7 @@ namespace CoreSystems.Support
                         .Append($"\n{Localization.GetText("WeaponInfoHeatDissipated")}: {HeatSinkRate:0.0} W ({(HeatSinkRate / MaxHeat):P}/s)")
                         .Append($"\n{Localization.GetText("WeaponInfoCurrentHeat")}: {CurrentHeat:0.0} J ({(CurrentHeat / MaxHeat):P})");
 
-                if (!comp.HasTrackNonThreats)
+                if (!comp.HasAlternateUi)
                 {
                     stringBuilder.Append(advanced ? "\n__________________________________\n" : string.Empty)
                         .Append($"\n{Localization.GetText("WeaponInfoShotsPerSec")}: " + comp.RealShotsPerSec.ToString("0.00") + " (" + comp.ShotsPerSec.ToString("0.00") + ")")
@@ -261,14 +264,15 @@ namespace CoreSystems.Support
                 if (comp.HasEnergyWeapon && advanced)
                     stringBuilder.Append($"\n{Localization.GetText("WeaponInfoRequiredPower")}: " + Platform.Structure.ActualPeakPowerCombined.ToString("0.00") + " MW");
 
-                stringBuilder.Append($"\n\n{Localization.GetText("WeaponInfoDividerLineWeapon")}");
+                if (!comp.HasAlternateUi)
+                    stringBuilder.Append($"\n\n{Localization.GetText("WeaponInfoDividerLineWeapon")}");
 
-                var collection = TypeSpecific != CompTypeSpecific.Phantom ? Platform.Weapons : Platform.Phantoms;
+                var collection = comp.HasAlternateUi ? SortAndGetTargetTypes() : TypeSpecific != CompTypeSpecific.Phantom ? Platform.Weapons : Platform.Phantoms;
                 for (int i = 0; i < collection.Count; i++)
                 {
                     var w = collection[i];
                     string shots;
-                    if ((w.ActiveAmmoDef.AmmoDef.Const.EnergyAmmo || w.ActiveAmmoDef.AmmoDef.Const.IsHybrid) && !comp.HasTrackNonThreats)
+                    if ((w.ActiveAmmoDef.AmmoDef.Const.EnergyAmmo || w.ActiveAmmoDef.AmmoDef.Const.IsHybrid) && !comp.HasAlternateUi)
                     {
                         var chargeTime = w.AssignedPower > 0 ? (int)((w.MaxCharge - w.ProtoWeaponAmmo.CurrentCharge) / w.AssignedPower * MyEngineConstants.PHYSICS_STEP_SIZE_IN_SECONDS) : 0;
 
@@ -280,17 +284,17 @@ namespace CoreSystems.Support
 
                     else shots = "\n" + w.ActiveAmmoDef.AmmoDef.AmmoRound + ": " + w.ProtoWeaponAmmo.CurrentAmmo;
 
-                    var burst = w.ActiveAmmoDef.AmmoDef.Const.BurstMode && !comp.HasTrackNonThreats ? $"\nShootMode: " + w.ShotsFired + "(" + w.System.ShotsPerBurst + $") - {Localization.GetText("WeaponInfoDelay")}: " + w .System.Values.HardPoint.Loading.DelayAfterBurst : string.Empty;
+                    var burst = w.ActiveAmmoDef.AmmoDef.Const.BurstMode && !comp.HasAlternateUi ? $"\nShootMode: " + w.ShotsFired + "(" + w.System.ShotsPerBurst + $") - {Localization.GetText("WeaponInfoDelay")}: " + w .System.Values.HardPoint.Loading.DelayAfterBurst : string.Empty;
 
                     var endReturn = i + 1 != collection.Count ? "\n" : string.Empty;
 
-                    if (!comp.HasTrackNonThreats)
+                    if (!comp.HasAlternateUi)
                         stringBuilder.Append($"\n{Localization.GetText("WeaponInfoName")}: " + w.System.PartName + shots + burst + $"\n{Localization.GetText("WeaponInfoHasTarget")}: " + (w.ActiveAmmoDef.AmmoDef.Const.RequiresTarget ? w.Target.HasTarget.ToString() : "n/a") + $"\n{Localization.GetText("WeaponInfoReloading")}: " + w.Loading +  $"\n{Localization.GetText("WeaponInfoLoS")}: " + !w.PauseShoot + endReturn);
                     else
-                        stringBuilder.Append($"\n{Localization.GetText("WeaponInfoName")}: " + w.System.PartName + $"\n{Localization.GetText("WeaponInfoHasTarget")}: " + (w.ActiveAmmoDef.AmmoDef.Const.RequiresTarget ? w.Target.HasTarget.ToString() : "n/a"));
+                        stringBuilder.Append($"\n{Localization.GetText("WeaponInfoName")}: " + w.System.PartName + (w.Target.HasTarget ? $"\n{Localization.GetText("WeaponInfoTargetState")}: " + w.Target.CurrentState : string.Empty));
 
                     string otherAmmo = null;
-                    if (!comp.HasTrackNonThreats)
+                    if (!comp.HasAlternateUi)
                     {
                         for (int j = 0; j < w.System.AmmoTypes.Length; j++)
                         {
@@ -328,6 +332,74 @@ namespace CoreSystems.Support
                 }
             }
             catch (Exception ex) { Log.Line($"Exception in Weapon AppendingCustomInfo: {ex}", null, true); }
+        }
+
+        private List<Weapon> SortAndGetTargetTypes()
+        {
+            var collection = TypeSpecific != CompTypeSpecific.Phantom ? Platform.Weapons : Platform.Phantoms;
+
+            Session.TmpWeaponEventSortingList.Clear();
+            foreach (var w in collection)
+            {
+                if (!w.Target.HasTarget)
+                    continue;
+
+                w.Target.CurrentState = GetTargetState(w);
+                Session.TmpWeaponEventSortingList.Add(w);
+            }
+            var n = Session.TmpWeaponEventSortingList.Count;
+            for (int i = 1; i < n; ++i)
+            {
+                var key = Session.TmpWeaponEventSortingList[i];
+                var j = i - 1;
+
+                while (j >= 0 && Session.TmpWeaponEventSortingList[j].Target.CurrentState != key.Target.CurrentState)
+                {
+                    Session.TmpWeaponEventSortingList[j + 1] = Session.TmpWeaponEventSortingList[j];
+                    j -= 1;
+                }
+                Session.TmpWeaponEventSortingList[j + 1] = key;
+            }
+            return Session.TmpWeaponEventSortingList;
+        }
+
+        private Target.States GetTargetState(Weapon w)
+        {
+            var targetObj = (object)w.Target.TargetEntity ?? w.Target.Projectile;
+            if (targetObj != null)
+            {
+                if (targetObj is MyPlanet)
+                    return Target.States.Planet;
+
+                if (targetObj is MyVoxelBase)
+                    return Target.States.Roid;
+
+                if (targetObj is Projectile)
+                    return Target.States.Projectile;
+
+                var entity = targetObj as MyEntity;
+                if (entity == null)
+                    return Target.States.Fake;
+
+                Sandbox.ModAPI.Ingame.MyDetectedEntityInfo entInfo;
+                Ai.CreateEntInfo(entity, w.Comp.Ai.AiOwner, out entInfo);
+                if (entInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Owner)
+                    return Target.States.YourGrid;
+
+                if (entInfo.Relationship == MyRelationsBetweenPlayerAndBlock.FactionShare || entInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Friends)
+                    return entity is IMyCharacter ? Target.States.FriendlyCharacter : Target.States.FriendlyGrid;
+
+                if (entInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Neutral)
+                    return entity is IMyCharacter ? Target.States.NeutralCharacter : Target.States.NeutralGrid;
+
+                if (entInfo.Relationship == MyRelationsBetweenPlayerAndBlock.NoOwnership)
+                    return entity is IMyCharacter ? Target.States.NeutralCharacter : Target.States.UnOwnedGrid;
+
+                if (entInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Enemies)
+                    return entity is IMyCharacter ? Target.States.EnemyCharacter : Target.States.EnemyGrid;
+            }
+
+            return Target.States.NotSet;
         }
 
         private void AppendingCustomInfoControl(IMyTerminalBlock block, StringBuilder stringBuilder)

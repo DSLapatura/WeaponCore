@@ -176,6 +176,7 @@ namespace CoreSystems.Support
                         { "TerminalOverrideTitle", "Override" },
                         { "TerminalOverrideTooltip", "Allow dumb firing weapons that otherwise require a target, for target practice only" },
                         { "WeaponInfoHasTarget", "HasTarget" },
+                        { "WeaponInfoTargetState", "TargetType" },
 
                     }
                 },

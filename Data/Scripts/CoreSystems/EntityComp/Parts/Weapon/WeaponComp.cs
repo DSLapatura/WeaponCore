@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using CoreSystems.Support;
 using Jakaria.API;
@@ -27,7 +28,7 @@ namespace CoreSystems.Platform
             internal readonly WeaponCompData Data;
             internal readonly WeaponStructure Structure;
             internal readonly List<Weapon> Collection;
-            internal readonly Dictionary<object, TargetOwner> ActiveTargets = new Dictionary<object, TargetOwner>();
+            internal readonly ConcurrentDictionary<object, TargetOwner> ActiveTargets = new ConcurrentDictionary<object, TargetOwner>();
             internal readonly List<MyEntity> Friends = new List<MyEntity>();
             internal readonly List<MyEntity> Enemies = new List<MyEntity>();
             internal readonly Dictionary<string, Vector3D> Positions = new Dictionary<string, Vector3D>();
@@ -50,7 +51,9 @@ namespace CoreSystems.Platform
             internal float DetDps;
             internal bool HasEnergyWeapon;
             internal bool HasGuidance;
-            internal bool HasTrackNonThreats;
+            internal bool HasAlternateUi;
+            internal bool HasScanTrackOnly;
+
             internal bool HasDisabledBurst;
             internal bool HasRofSlider;
             internal bool ShootSubmerged;
@@ -360,6 +363,9 @@ namespace CoreSystems.Platform
                     Ai.DetectOtherSignals = false;
                 }
 
+                if (ActiveTargets.Count > 0 && Session.Tick180)
+                    ActiveTargetCleanUp();
+
                 ActivePlayer = Ai.Construct.RootAi.Construct.ControllingPlayers.ContainsKey(Data.Repo.Values.State.PlayerId);
                 UpdatedState = true;
 
@@ -401,6 +407,17 @@ namespace CoreSystems.Platform
                 }
                 else
                     Ai.AwakeComps++;
+            }
+
+            private void ActiveTargetCleanUp()
+            {
+                foreach (var at in ActiveTargets) {
+                    if (at.Value.ReleasedTick > 0 && Session.Tick - at.Value.ReleasedTick > 120)
+                    {
+                        Log.Line($"removed:{at.Key.GetHashCode()}");
+                        ActiveTargets.Remove(at);
+                    }
+                }
             }
 
             internal static void RequestCountDown(WeaponComponent comp, bool value)

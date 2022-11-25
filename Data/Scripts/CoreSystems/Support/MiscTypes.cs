@@ -74,6 +74,17 @@ namespace CoreSystems.Support
             ProjetileIntercept,
             ProjectileClose,
             ProjectileNewTarget,
+            Projectile,
+            Roid,
+            Planet,
+            FriendlyGrid,
+            NeutralGrid,
+            EnemyGrid,
+            UnOwnedGrid,
+            YourGrid,
+            FriendlyCharacter,
+            NeutralCharacter,
+            EnemyCharacter,
         }
 
         internal Target(Weapon weapon = null)
@@ -281,43 +292,33 @@ namespace CoreSystems.Support
                     {
                         foreach (var target in map.GroupMap.Construct.Keys)
                         {
-                            Weapon.Comp.ActiveTargets[target] = new Weapon.TargetOwner { Weapon = Weapon, Released = false };
+                            Weapon.TargetOwner tOwner;
+                            if (!Weapon.Comp.ActiveTargets.TryGetValue(target, out tOwner) || tOwner.Weapon != Weapon)
+                                Log.Line($"[claiming] - wId:{Weapon.System.WeaponId} - obj:{target.GetHashCode()} - unique:{Weapon.System.UniqueTargetPerWeapon} - noOwner:{tOwner.Weapon == null}");
+                            Weapon.Comp.ActiveTargets[target] = new Weapon.TargetOwner { Weapon = Weapon, ReleasedTick = 0 };
                         }
                     }
                     else
                     {
-                        Weapon.Comp.ActiveTargets[targetObj] = new Weapon.TargetOwner { Weapon = Weapon, Released = false };
+                        Weapon.TargetOwner tOwner;
+                        if (!Weapon.Comp.ActiveTargets.TryGetValue(targetObj, out tOwner) || tOwner.Weapon != Weapon)
+                            Log.Line($"[claiming] - wId:{Weapon.System.WeaponId} - obj:{targetObj.GetHashCode()} - unique:{Weapon.System.UniqueTargetPerWeapon} - noOwner:{tOwner.Weapon == null}");
+
+                        Weapon.Comp.ActiveTargets[targetObj] = new Weapon.TargetOwner { Weapon = Weapon, ReleasedTick = 0 };
                     }
                 }
                 else 
                 {
-
                     var grid = targetObj as MyCubeGrid;
                     TopMap map;
-                    if (grid != null && Weapon.System.Session.TopEntityToInfoMap.TryGetValue(grid, out map))
-                    {
+                    if (grid != null && Weapon.System.Session.TopEntityToInfoMap.TryGetValue(grid, out map)) {
                         foreach (var target in map.GroupMap.Construct.Keys)
-                        {
-                            Weapon.Comp.ActiveTargets[target] = new Weapon.TargetOwner { Weapon = Weapon,  Released = true };
-                            Weapon.Comp.Session.FutureEvents.Schedule(TryRemoveActiveTarget, target, 61);
-                        }
+                            Weapon.Comp.ActiveTargets[target] = new Weapon.TargetOwner { Weapon = Weapon, ReleasedTick = Weapon.System.Session.Tick };
                     }
                     else
-                    {
-                        Weapon.Comp.ActiveTargets[targetObj] = new Weapon.TargetOwner { Weapon = Weapon, Released = true };
-                        Weapon.Comp.Session.FutureEvents.Schedule(TryRemoveActiveTarget, targetObj, 61);
-                    }
-
-
+                        Weapon.Comp.ActiveTargets[targetObj] = new Weapon.TargetOwner { Weapon = Weapon, ReleasedTick = Weapon.System.Session.Tick };
                 }
             }
-        }
-
-        private void TryRemoveActiveTarget(object o)
-        {
-            Weapon.TargetOwner tOwner;
-            if (Weapon.Comp.ActiveTargets.TryGetValue(o, out tOwner) && tOwner.Released && tOwner.Weapon == Weapon)
-                Weapon.Comp.ActiveTargets.Remove(o);
         }
 
         internal void SetTargetId(bool setTarget, States reason)

@@ -578,6 +578,12 @@ namespace CoreSystems.Support
                         }
                         SegMeasureStep += AmmoDef.Const.SegmentStep;
                         SegmentLenTranserved = wasGapped ? MathHelperD.Clamp(segSize.SegmentGap, 0, Math.Min(SegMeasureStep, segSize.SegmentGap)) : MathHelperD.Clamp(segSize.SegmentLength, 0, Math.Min(SegMeasureStep, segSize.SegmentLength));
+                        if (Weapon.Comp.CoreEntity.EntityId == 122067844246066014)
+                        {
+                            Log.Line($"{SegMeasureStep} - {SegmentLenTranserved} - {SegmentGaped}");
+                            if (SegMeasureStep < 1 && Weapon.Comp.Session.Tick10)
+                                Weapon.Comp.Session.ShowLocalNotify("NOW!", 160);
+                        }
                         break;
                     case AmmoConstants.Texture.Cycle:
                     case AmmoConstants.Texture.Wave:
@@ -698,6 +704,7 @@ namespace CoreSystems.Support
 
             var seg = AmmoDef.AmmoGraphics.Lines.Tracer.Segmentation;
             SegmentWidth = seg.WidthMultiplier > 0 ? TracerWidth * seg.WidthMultiplier : TracerWidth;
+
             if (AmmoDef.Const.SegmentWidthVariance)
             {
                 var wv = AmmoDef.AmmoGraphics.Lines.Tracer.Segmentation.WidthVariance;

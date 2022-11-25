@@ -208,7 +208,7 @@ namespace CoreSystems.Control
         {
 
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-            return comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.HasRofSlider && !comp.HasTrackNonThreats;
+            return comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.HasRofSlider && !comp.HasAlternateUi;
         }
 
         internal static bool UiOverLoad(IMyTerminalBlock block)
@@ -222,35 +222,35 @@ namespace CoreSystems.Control
         {
 
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-            return comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.HasRequireTarget && !comp.HasTrackNonThreats;
+            return comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.HasRequireTarget && !comp.HasAlternateUi;
         }
 
         internal static bool TrackMeteors(IMyTerminalBlock block)
         {
 
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-            return comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.IsBlock && (comp.HasTurret || comp.PrimaryWeapon.System.HasGuidedAmmo) && comp.PrimaryWeapon.System.TrackMeteors &&!comp.HasTrackNonThreats;
+            return comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.IsBlock && (comp.HasTurret || comp.PrimaryWeapon.System.HasGuidedAmmo) && comp.PrimaryWeapon.System.TrackMeteors &&!comp.HasAlternateUi;
         }
 
         internal static bool TrackGrids(IMyTerminalBlock block)
         {
 
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-            return block is IMyTurretControlBlock || comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.IsBlock && (comp.HasTurret || comp.PrimaryWeapon.System.HasGuidedAmmo) && comp.PrimaryWeapon.System.TrackGrids && !comp.HasTrackNonThreats;
+            return block is IMyTurretControlBlock || comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.IsBlock && (comp.HasTurret || comp.PrimaryWeapon.System.HasGuidedAmmo) && comp.PrimaryWeapon.System.TrackGrids && !comp.HasAlternateUi;
         }
 
         internal static bool TrackProjectiles(IMyTerminalBlock block)
         {
 
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-            return comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.IsBlock && (comp.HasTurret || comp.PrimaryWeapon.System.HasGuidedAmmo) && comp.PrimaryWeapon.System.TrackProjectile && !comp.HasTrackNonThreats;
+            return comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.IsBlock && (comp.HasTurret || comp.PrimaryWeapon.System.HasGuidedAmmo) && comp.PrimaryWeapon.System.TrackProjectile && !comp.HasAlternateUi;
         }
 
         internal static bool TrackBiologicals(IMyTerminalBlock block)
         {
 
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-            return comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.IsBlock && (comp.HasTurret || comp.PrimaryWeapon.System.HasGuidedAmmo) && comp.PrimaryWeapon.System.TrackCharacters && !comp.HasTrackNonThreats;
+            return comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.IsBlock && (comp.HasTurret || comp.PrimaryWeapon.System.HasGuidedAmmo) && comp.PrimaryWeapon.System.TrackCharacters && !comp.HasAlternateUi;
         }
 
         internal static bool AmmoSelection(IMyTerminalBlock block)
@@ -321,7 +321,7 @@ namespace CoreSystems.Control
             if (!valid || comp.Session.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
                 return false;
 
-            return comp.HasTurret && !comp.HasTrackNonThreats;
+            return comp.HasTurret && !comp.HasAlternateUi;
         }
 
         internal static bool NoTurret(IMyTerminalBlock block)
@@ -375,7 +375,7 @@ namespace CoreSystems.Control
             if (!valid || comp.Session.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
                 return false;
 
-            return !comp.HasTrackNonThreats;
+            return !comp.HasAlternateUi;
         }
 
         internal static bool IsDrone(IMyTerminalBlock block)
@@ -407,7 +407,7 @@ namespace CoreSystems.Control
             if (!valid || comp.Session.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
                 return false;
 
-            return (comp.HasTracking || comp.HasGuidance) && !comp.HasTrackNonThreats;
+            return (comp.HasTracking || comp.HasGuidance) && !comp.HasAlternateUi;
         }
 
 
@@ -420,7 +420,7 @@ namespace CoreSystems.Control
             if (!valid || comp.Session.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
                 return false;
 
-            return (comp.HasTracking || comp.HasGuidance) && !comp.HasTrackNonThreats;
+            return (comp.HasTracking || comp.HasGuidance) && !comp.HasAlternateUi;
         }
 
         internal static bool HasTrackingNeutrals(IMyTerminalBlock block)
@@ -432,7 +432,7 @@ namespace CoreSystems.Control
             if (!valid || comp.Session.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
                 return false;
 
-            return (comp.HasTracking || comp.HasGuidance) && !comp.HasTrackNonThreats;
+            return (comp.HasTracking || comp.HasGuidance) && !comp.HasAlternateUi;
         }
         internal static bool HasTrackingAndTrackFriendly(IMyTerminalBlock block)
         {
@@ -443,7 +443,7 @@ namespace CoreSystems.Control
             if (!valid || comp.Session.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
                 return false;
 
-            return (comp.HasTracking || comp.HasGuidance || comp.HasTrackNonThreats);
+            return (comp.HasTracking || comp.HasGuidance || comp.HasAlternateUi);
         }
 
         internal static bool IsArmed(IMyTerminalBlock block)
@@ -465,7 +465,7 @@ namespace CoreSystems.Control
             if (!valid || comp.Session.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
                 return false;
 
-            return comp.HasGuidance && !comp.HasTrackNonThreats;
+            return comp.HasGuidance && !comp.HasAlternateUi;
         }
 
 
@@ -477,7 +477,7 @@ namespace CoreSystems.Control
             if (!valid || comp.Session.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
                 return false;
 
-            return comp.HasRequireTarget && !comp.HasTrackNonThreats;
+            return comp.HasRequireTarget && !comp.HasAlternateUi;
         }
 
         internal static bool IsNotBomb(IMyTerminalBlock block)
@@ -487,7 +487,7 @@ namespace CoreSystems.Control
             if (!valid || comp.Session.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
                 return false;
 
-            return !comp.IsBomb && !comp.HasTrackNonThreats;
+            return !comp.IsBomb && !comp.HasAlternateUi;
         }
         internal static bool HasSupport(IMyTerminalBlock block)
         {
