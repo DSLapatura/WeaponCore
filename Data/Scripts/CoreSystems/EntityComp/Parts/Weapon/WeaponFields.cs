@@ -337,10 +337,11 @@ namespace CoreSystems.Platform
             NewTarget = new Target();
             RayCallBack = new ParallelRayCallBack(this);
             Acquire = new PartAcquire(this);
-            AzimuthPart = new PartInfo {Entity = azimuthPart, IsCoreEntity = azimuthPart == Comp.CoreEntity, ParentIsCoreEntity = azimuthPart?.Parent == Comp.CoreEntity};
-            ElevationPart = new PartInfo {Entity = elevationPart, IsCoreEntity = elevationPart == Comp.CoreEntity, ParentIsCoreEntity = elevationPart?.Parent == Comp.CoreEntity };
-            SpinPart = new PartInfo {Entity = spinPart, IsCoreEntity = spinPart == Comp.CoreEntity, ParentIsCoreEntity = spinPart?.Parent == Comp.CoreEntity };
-            MuzzlePart = new PartInfo { Entity = entity,  IsCoreEntity = entity == Comp.CoreEntity, ParentIsCoreEntity = entity?.Parent == Comp.CoreEntity };
+            AzimuthPart = new PartInfo(azimuthPart, azimuthPart == Comp.CoreEntity, azimuthPart?.Parent == Comp.CoreEntity, PartInfo.PartTypes.Az);
+            ElevationPart = new PartInfo(elevationPart, elevationPart == Comp.CoreEntity, elevationPart?.Parent == Comp.CoreEntity, PartInfo.PartTypes.El);
+            SpinPart = System.HasBarrelRotation ? new PartInfo(spinPart, spinPart == Comp.CoreEntity, spinPart?.Parent == Comp.CoreEntity, PartInfo.PartTypes.Spin) : null;
+
+            MuzzlePart = new PartInfo(entity, entity == Comp.CoreEntity, entity?.Parent == Comp.CoreEntity, PartInfo.PartTypes.Muzzle);
             MiddleMuzzleIndex = Muzzles.Length > 1 ? Muzzles.Length / 2 - 1 : 0;
 
             AnimationsSet = comp.Session.CreateWeaponAnimationSet(system, parts);

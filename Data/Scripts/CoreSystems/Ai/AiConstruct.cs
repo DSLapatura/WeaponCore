@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using CoreSystems.Platform;
+using CoreSystems.Projectiles;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
 using VRage.Game;
@@ -106,6 +107,7 @@ namespace CoreSystems.Support
 
         public class Constructs
         {
+            internal readonly Dictionary<MyStringHash, Dictionary<object, Weapon>> TrackedTargets = new Dictionary<MyStringHash, Dictionary<object, Weapon>>();
             internal readonly HashSet<MyDefinitionId> RecentItems = new HashSet<MyDefinitionId>(MyDefinitionId.Comparer);
             internal readonly HashSet<Weapon> OutOfAmmoWeapons = new HashSet<Weapon>();
             internal readonly Dictionary<MyStringHash, int> Counter = new Dictionary<MyStringHash, int>(MyStringHash.Comparer);
@@ -148,6 +150,12 @@ namespace CoreSystems.Support
             internal double AverageEffect;
             internal double MaxLockRange;
 
+            internal enum ScanType
+            {
+                NonThreats,
+                Projectiles,
+                Threats,
+            }
 
             internal enum UpdateType
             {
@@ -552,6 +560,89 @@ namespace CoreSystems.Support
                     w.CheckInventorySystem = true;
             }
 
+            internal bool TryAddOrUpdateTrackedTarget(Weapon w, object target)
+            {
+                Dictionary<object, Weapon> dict;
+                if (!TrackedTargets.TryGetValue(w.System.PartNameIdHash, out dict))
+                {
+                    dict = Ai.Session.TrackingDictPool.Count > 0 ? Ai.Session.TrackingDictPool.Pop() : new Dictionary<object, Weapon>();
+                    TrackedTargets[w.System.PartNameIdHash] = dict;
+                }
+
+                Weapon tracker;
+                if (!dict.TryGetValue(target, out tracker) || tracker == w)
+                {
+                    dict[target] = w;
+                    return true;
+                }
+
+                return false;
+            }
+
+            internal bool TryRemoveTrackedTarget(Weapon w, object target)
+            {
+                Dictionary<object, Weapon> dict;
+                Weapon tracker;
+                return TrackedTargets.TryGetValue(w.System.PartNameIdHash, out dict) && dict.TryGetValue(target, out tracker) && w == tracker && dict.Remove(target);
+            }
+
+            internal void ClearTrackedTarget()
+            {
+                foreach (var dict in TrackedTargets.Values)
+                {
+                    Ai.Session.TrackingDictPool.Push(dict);
+                    dict.Clear();
+                }
+                TrackedTargets.Clear();
+            }
+
+            internal bool GetExportedCollection(Weapon w, ScanType type)
+            {
+                var ai = w.Comp.MasterAi;
+                var proColletion = ai.ProjectileCollection;
+                var threatColletion = ai.ThreatCollection;
+                var nonThreatCollection = ai.NonThreatCollection;
+                proColletion.Clear();
+                threatColletion.Clear();
+                nonThreatCollection.Clear();
+
+                Dictionary<object, Weapon> masterTargets;
+                if (TrackedTargets.TryGetValue(w.System.ScannerId, out masterTargets))
+                {
+                    foreach (var pair in masterTargets)
+                    {
+                        var scanner = pair.Value;
+                        var scannerAi = scanner.Comp.MasterAi;
+                        var targetEntity = pair.Key as MyEntity;
+                        var targetProjectile = pair.Key as Projectile;
+
+                        if ((type != ScanType.Projectiles && targetEntity != null || targetProjectile != null) && scanner.Target.HasTarget && (!scanner.TurretController || scanner.Target.IsAligned))
+                        {
+                            switch (type)
+                            {
+                                case ScanType.Projectiles:
+                                    if (targetProjectile != null)
+                                        proColletion.Add(targetProjectile);
+                                    break;
+                                case ScanType.Threats:
+                                    TargetInfo tInfo;
+                                    if (targetEntity != null && scannerAi.Targets.TryGetValue(targetEntity, out tInfo))
+                                        threatColletion.Add(tInfo);
+                                    break;
+                                case ScanType.NonThreats:
+                                    DetectInfo dInfo;
+                                    if (targetEntity != null && scannerAi.ObstructionLookup.TryGetValue(targetEntity, out dInfo))
+                                        nonThreatCollection.Add(dInfo);
+                                    break;
+                            }
+                        }
+                    }
+                }
+
+                var hasSomething = threatColletion.Count > 0 || proColletion.Count > 0 ||  nonThreatCollection.Count > 0;
+                return hasSomething;
+            }
+
             internal void Init(Ai ai)
             {
                 RootAi = ai;
@@ -610,6 +701,7 @@ namespace CoreSystems.Support
                 ControllingPlayers.Clear();
                 ConstructTargetInfoCache.Clear();
                 OutOfAmmoWeapons.Clear();
+                ClearTrackedTarget();
             }
 
             public bool GiveAllCompsInfiniteResources()

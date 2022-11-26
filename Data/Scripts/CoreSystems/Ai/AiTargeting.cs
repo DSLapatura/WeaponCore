@@ -136,23 +136,23 @@ namespace CoreSystems.Support
             var focusGrid = rootConstruct.LastFocusEntity as MyCubeGrid;
             var lastFocusGrid = rootConstruct.LastFocusEntityChecked as MyCubeGrid;
 
-            var focusSortedConstructCollection = rootConstruct.RootAi.FocusSortedConstruct;
-            if (rootConstruct.HadFocus && !w.System.ScanTrackOnly) 
-            {
+            var predefinedThreatCollection = rootConstruct.RootAi.ThreatCollection;
+            if (rootConstruct.HadFocus && !w.System.ScanTrackOnly) {
                 if (focusGrid != null) {
-                    if (focusSortedConstructCollection.Count == 0 || session.Tick - rootConstruct.LastFocusConstructTick > 180 || lastFocusGrid == null || !focusGrid.IsSameConstructAs(lastFocusGrid))
-                    {
+                    if (predefinedThreatCollection.Count == 0 || session.Tick - rootConstruct.LastFocusConstructTick > 180 || lastFocusGrid == null || !focusGrid.IsSameConstructAs(lastFocusGrid)) {
                         rootConstruct.LastFocusEntityChecked = focusGrid;
                         rootConstruct.LastFocusConstructTick = session.Tick;
                         session.GetSortedConstructCollection(ai, focusGrid);
                     }
-
-                    offset = focusSortedConstructCollection.Count;
+                    offset = predefinedThreatCollection.Count;
                 }
                 else if (rootConstruct.LastFocusEntity != null)
-                {
                     offset = 1;
-                }
+            }
+            else if (w.System.SlaveToScanner && rootConstruct.GetExportedCollection(w, Constructs.ScanType.Threats))
+            {
+                Log.Line($"collection was not populated");
+                offset = predefinedThreatCollection.Count;
             }
 
             var numOfTargets = ai.SortedTargets.Count;
@@ -167,8 +167,8 @@ namespace CoreSystems.Support
                     break;
 
                 TargetInfo info;
-                if (focusTarget && focusSortedConstructCollection.Count > 0)
-                    info = focusSortedConstructCollection[x];
+                if (focusTarget && predefinedThreatCollection.Count > 0)
+                    info = predefinedThreatCollection[x];
                 else if (focusTarget)
                     ai.Targets.TryGetValue(rootConstruct.LastFocusEntity, out info);
                 else 
@@ -336,7 +336,14 @@ namespace CoreSystems.Support
 
             w.FoundTopMostTarget = false;
 
-            var numOfTargets = ai.Obstructions.Count;
+            if (w.System.SlaveToScanner)
+            {
+                if (!w.Comp.Ai.Construct.RootAi.Construct.GetExportedCollection(w, Constructs.ScanType.NonThreats))
+                    Log.Line($"couldnt export nonthreat collection");
+            }
+
+            var collection = !w.System.SlaveToScanner ? ai.Obstructions : ai.NonThreatCollection;
+            var numOfTargets = collection.Count;
 
             var deck = GetDeck(ref session.TargetDeck, 0, numOfTargets, w.System.Values.Targeting.TopTargets, ref w.TargetData.WeaponRandom.AcquireRandom);
             for (int x = 0; x < numOfTargets; x++)
@@ -344,7 +351,7 @@ namespace CoreSystems.Support
                 if (aConst.SkipAimChecks)
                     break;
 
-                var info = ai.Obstructions[deck[x]];
+                var info = collection[deck[x]];
 
 
                 if (info.Target?.Physics == null || info.Target.MarkedForClose)
@@ -440,7 +447,7 @@ namespace CoreSystems.Support
             var target = w.NewTarget;
             var weaponPos = w.BarrelOrigin;
 
-            var collection = ai.GetProCache();
+            var collection = ai.GetProCache(w);
 
             var lockedOnly = w.System.Values.Targeting.LockedSmartOnly;
             var smartOnly = w.System.Values.Targeting.IgnoreDumbProjectiles;
@@ -684,7 +691,6 @@ namespace CoreSystems.Support
         internal static bool ReAcquireProjectile(Projectile p)
         {
             var info = p.Info;
-            var aConst = info.AmmoDef.Const;
             var w = info.Weapon;
             var comp = w.Comp;
             var s = w.System;
@@ -695,7 +701,7 @@ namespace CoreSystems.Support
             var physics = s.Session.Physics;
             var weaponPos = p.Position;
 
-            var collection = ai.GetProCache();
+            var collection = ai.GetProCache(w);
             var numOfTargets = collection.Count;
             var lockedOnly = s.Values.Targeting.LockedSmartOnly;
             var smartOnly = s.Values.Targeting.IgnoreDumbProjectiles;

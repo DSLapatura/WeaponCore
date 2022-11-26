@@ -224,14 +224,22 @@ namespace CoreSystems.Support
             return deck;
         }
 
-        internal List<Projectile> GetProCache()
+        internal List<Projectile> GetProCache(Weapon w)
         {
-            if (LiveProjectileTick > _pCacheTick) {
-                ProjetileCache.Clear();
-                ProjetileCache.AddRange(LiveProjectile);
-                _pCacheTick = LiveProjectileTick;
+            var collection = !w.System.SlaveToScanner ? ProjetileCache : ProjectileCollection;
+            if (!w.System.SlaveToScanner)
+            {
+                if (LiveProjectileTick > _pCacheTick)
+                {
+                    ProjetileCache.Clear();
+                    ProjetileCache.AddRange(LiveProjectile);
+                    _pCacheTick = LiveProjectileTick;
+                }
             }
-            return ProjetileCache;
+            else if (!Construct.RootAi.Construct.GetExportedCollection(w, Constructs.ScanType.Projectiles))
+                Log.Line($"couldn't get exported projectile collection");
+
+            return collection;
         }
 
         private void WeaponShootOff()
@@ -449,7 +457,9 @@ namespace CoreSystems.Support
             NewEntities.Clear();
             SubGridsRegistered.Clear();
             ObstructionLookup.Clear();
-            FocusSortedConstruct.Clear();
+            ThreatCollection.Clear();
+            ProjectileCollection.Clear();
+            NonThreatCollection.Clear();
             SourceCount = 0;
             PartCount = 0;
             AiOwner = 0;

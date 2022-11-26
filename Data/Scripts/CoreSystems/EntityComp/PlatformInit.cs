@@ -320,7 +320,8 @@ namespace CoreSystems.Platform
                     mPartName = elevationPartName;
                 }
 
-                weapon.MuzzlePart.Entity = muzzlePart;
+                weapon.MuzzlePart.Reset(muzzlePart);
+
                 weapon.HeatingParts = new List<MyEntity> { weapon.MuzzlePart.Entity };
 
                 if (mPartName != "None" && muzzlePart != null)
@@ -336,7 +337,7 @@ namespace CoreSystems.Platform
                     SetupWorldMatrix(weapon.MuzzlePart.Entity, PartType.Muzzle, true);
                 }
 
-                if (weapon.System.HasBarrelRotation && weapon.SpinPart.Entity != null)
+                if (weapon.System.HasBarrelRotation)
                 {
 
                     if (weapon.SpinPart.Entity == muzzlePart)
@@ -547,15 +548,14 @@ namespace CoreSystems.Platform
                     MyEntity azimuthPartEntity;
                     if (Parts.NameToEntity.TryGetValue(azimuthPartName, out azimuthPartEntity))
                     {
-                        weapon.AzimuthPart.Entity = azimuthPartEntity;
-                        weapon.AzimuthPart.Parent = azimuthPartEntity.Parent;
+                        weapon.AzimuthPart.Reset(azimuthPartEntity);
                         SetupWorldMatrix(azimuthPartEntity, PartType.Azimuth, true);
                     }
 
                     MyEntity elevationPartEntity;
                     if (Parts.NameToEntity.TryGetValue(elevationPartName, out elevationPartEntity))
                     {
-                        weapon.ElevationPart.Entity = elevationPartEntity;
+                        weapon.ElevationPart.Reset(elevationPartEntity);
                         SetupWorldMatrix(elevationPartEntity, PartType.Elevation, true);
                     }
 
@@ -566,7 +566,8 @@ namespace CoreSystems.Platform
                             spinPart = muzzlePart;
 
                         if (spinPart != null) {
-                            weapon.SpinPart.Entity = spinPart;
+
+                            weapon.SpinPart.Reset(spinPart);
                             SetupWorldMatrix(weapon.SpinPart.Entity, PartType.Spin, true);
                         }
                     }
@@ -584,7 +585,7 @@ namespace CoreSystems.Platform
                     if (weaponSystem.DesignatorWeapon)
                         muzzlePart = weapon.ElevationPart.Entity;
 
-                    weapon.MuzzlePart.Entity = muzzlePart;
+                    weapon.MuzzlePart.Reset(muzzlePart);
 
                     weapon.HeatingParts.Clear();
                     weapon.HeatingParts.Add(weapon.MuzzlePart.Entity);

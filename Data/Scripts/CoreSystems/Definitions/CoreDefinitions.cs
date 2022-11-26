@@ -280,6 +280,8 @@ namespace CoreSystems.Support
             [ProtoMember(13)] internal bool UniqueTargetPerWeapon;
             [ProtoMember(14)] internal int MaxTrackingTime;
             [ProtoMember(15)] internal bool ShootBlanks;
+            [ProtoMember(16)] internal bool ExportTargets;
+            [ProtoMember(17)] internal string ScannerId;
         }
 
 

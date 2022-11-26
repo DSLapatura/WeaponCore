@@ -1091,28 +1091,28 @@ namespace CoreSystems
 
         public void GetSortedConstructCollection(Ai ai, MyCubeGrid targetGrid)
         {
-            ai.FocusSortedConstruct.Clear();
+            ai.ThreatCollection.Clear();
             TopMap map;
             if (targetGrid != null && !targetGrid.MarkedForClose && TopEntityToInfoMap.TryGetValue(targetGrid, out map))
             {
                 foreach (var myEntity in map.GroupMap.Construct.Keys) {
                     TargetInfo info;
                     if (ai.Targets.TryGetValue(myEntity, out info))
-                        ai.FocusSortedConstruct.Add(info);
+                        ai.ThreatCollection.Add(info);
                 }
 
-                var n = ai.FocusSortedConstruct.Count;
+                var n = ai.ThreatCollection.Count;
                 for (int i = 1; i < n; ++i)
                 {
-                    var key = ai.FocusSortedConstruct[i];
+                    var key = ai.ThreatCollection[i];
                     var j = i - 1;
 
-                    while (j >= 0 && (int)ai.FocusSortedConstruct[j].OffenseRating > key.OffenseRating)
+                    while (j >= 0 && (int)ai.ThreatCollection[j].OffenseRating > key.OffenseRating)
                     {
-                        ai.FocusSortedConstruct[j + 1] = ai.FocusSortedConstruct[j];
+                        ai.ThreatCollection[j + 1] = ai.ThreatCollection[j];
                         j -= 1;
                     }
-                    ai.FocusSortedConstruct[j + 1] = key;
+                    ai.ThreatCollection[j + 1] = key;
                 }
             }
         }

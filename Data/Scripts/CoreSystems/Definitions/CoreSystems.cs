@@ -113,6 +113,7 @@ namespace CoreSystems.Support
         public readonly MyStringHash AzimuthPartName;
         public readonly MyStringHash ElevationPartName;
         public readonly MyStringHash SpinPartName;
+        public readonly MyStringHash ScannerId;
         public readonly WeaponDefinition Values;
         public readonly AmmoType[] AmmoTypes;
         public readonly MySoundPair PreFireSoundPair;
@@ -162,7 +163,7 @@ namespace CoreSystems.Support
         public readonly bool ScanTrackOnly;
         public readonly bool AlternateUi;
         public readonly bool NonThreatsOnly;
-
+        public readonly bool ExportTargets;
         public readonly bool TrackTopMostEntities;
         public readonly bool TrackGrids;
         public readonly bool TrackCharacters;
@@ -192,6 +193,7 @@ namespace CoreSystems.Support
         public readonly bool DebugMode;
         public readonly bool ShootBlanks;
         public readonly bool HasProjectileSync;
+        public readonly bool SlaveToScanner;
         public readonly double MaxTargetSpeed;
         public readonly double AzStep;
         public readonly double ElStep;
@@ -270,6 +272,13 @@ namespace CoreSystems.Support
             MaxReloads = Values.HardPoint.Loading.MaxReloads;
             MaxActiveProjectiles = Values.HardPoint.Loading.MaxActiveProjectiles > 0 ? Values.HardPoint.Loading.MaxActiveProjectiles : int.MaxValue;
             TargetGridCenter = Values.HardPoint.Ai.TargetGridCenter;
+
+            if (!string.IsNullOrEmpty(Values.Targeting.ScannerId))
+            {
+                ScannerId = MyStringHash.GetOrCompute(Values.Targeting.ScannerId);
+                SlaveToScanner = true;
+            }
+            ExportTargets = Values.Targeting.ExportTargets && !string.IsNullOrEmpty(PartName);
 
             SuppressFire = Values.HardPoint.Ai.SuppressFire;
             PartType = Values.HardPoint.HardWare.Type;

@@ -294,7 +294,12 @@ namespace CoreSystems.Support
                         {
                             Weapon.TargetOwner tOwner;
                             if (!Weapon.Comp.ActiveTargets.TryGetValue(target, out tOwner) || tOwner.Weapon != Weapon)
+                            {
+                                if (Weapon.System.ExportTargets && Weapon.Comp.Ai.Construct.RootAi.Construct.TryAddOrUpdateTrackedTarget(Weapon, target))
+                                    Log.Line($"couldn't add target to construct database");
+
                                 Log.Line($"[claiming] - wId:{Weapon.System.WeaponId} - obj:{target.GetHashCode()} - unique:{Weapon.System.UniqueTargetPerWeapon} - noOwner:{tOwner.Weapon == null}");
+                            }
                             Weapon.Comp.ActiveTargets[target] = new Weapon.TargetOwner { Weapon = Weapon, ReleasedTick = 0 };
                         }
                     }
@@ -302,7 +307,12 @@ namespace CoreSystems.Support
                     {
                         Weapon.TargetOwner tOwner;
                         if (!Weapon.Comp.ActiveTargets.TryGetValue(targetObj, out tOwner) || tOwner.Weapon != Weapon)
+                        {
+                            if (Weapon.System.ExportTargets && Weapon.Comp.Ai.Construct.RootAi.Construct.TryAddOrUpdateTrackedTarget(Weapon, targetObj))
+                                Log.Line($"couldn't add target to construct database");
+
                             Log.Line($"[claiming] - wId:{Weapon.System.WeaponId} - obj:{targetObj.GetHashCode()} - unique:{Weapon.System.UniqueTargetPerWeapon} - noOwner:{tOwner.Weapon == null}");
+                        }
 
                         Weapon.Comp.ActiveTargets[targetObj] = new Weapon.TargetOwner { Weapon = Weapon, ReleasedTick = 0 };
                     }
@@ -313,10 +323,20 @@ namespace CoreSystems.Support
                     TopMap map;
                     if (grid != null && Weapon.System.Session.TopEntityToInfoMap.TryGetValue(grid, out map)) {
                         foreach (var target in map.GroupMap.Construct.Keys)
+                        {
+                            if (Weapon.System.ExportTargets && Weapon.Comp.Ai.Construct.RootAi.Construct.TryRemoveTrackedTarget(Weapon, target))
+                                Log.Line($"couldn't add target to construct database");
+
                             Weapon.Comp.ActiveTargets[target] = new Weapon.TargetOwner { Weapon = Weapon, ReleasedTick = Weapon.System.Session.Tick };
+                        }
                     }
                     else
+                    {
+                        if (Weapon.System.ExportTargets && Weapon.Comp.Ai.Construct.RootAi.Construct.TryRemoveTrackedTarget(Weapon, targetObj))
+                            Log.Line($"couldn't add target to construct database");
+                        
                         Weapon.Comp.ActiveTargets[targetObj] = new Weapon.TargetOwner { Weapon = Weapon, ReleasedTick = Weapon.System.Session.Tick };
+                    }
                 }
             }
         }

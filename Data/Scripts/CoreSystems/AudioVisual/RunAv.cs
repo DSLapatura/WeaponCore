@@ -296,7 +296,7 @@ namespace CoreSystems.Support
 
                     if (!aConst.OffsetEffect)
                     {
-                        if (av.OnScreen != AvShot.Screen.ProxyDraw)
+                        if (av.OnScreen != AvShot.Screen.ProxyDraw && av.VisualLength >= 0.1)
                         {
                             if (av.Tracer != AvShot.TracerState.Shrink)
                             {
@@ -419,19 +419,23 @@ namespace CoreSystems.Support
 
                                 Vector3 dir = (toBeam - fromBeam);
                                 var length = dir.Length();
-                                var normDir = dir / length;
+                                if (length >= 0.1)
+                                {
+                                    var normDir = dir / length;
 
-                                var qc = QuadCachePool.Count > 0 ? QuadCachePool.Pop() : new QuadCache();
-                                qc.Shot = av;
-                                qc.Material = aConst.TracerTextures[0];
-                                qc.Color = color;
-                                qc.StartPos = fromBeam;
-                                qc.Up = normDir;
-                                qc.Width = length;
-                                qc.Height = (float)av.TracerWidth;
-                                qc.Type = QuadCache.EffectTypes.Offset;
-                                PreAddOneFrame.Add(qc);
-                                ++av.ActiveBillBoards;
+                                    var qc = QuadCachePool.Count > 0 ? QuadCachePool.Pop() : new QuadCache();
+                                    qc.Shot = av;
+                                    qc.Material = aConst.TracerTextures[0];
+                                    qc.Color = color;
+                                    qc.StartPos = fromBeam;
+                                    qc.Up = normDir;
+                                    qc.Width = length;
+                                    qc.Height = (float)av.TracerWidth;
+                                    qc.Type = QuadCache.EffectTypes.Offset;
+                                    PreAddOneFrame.Add(qc);
+                                    ++av.ActiveBillBoards;
+                                }
+
 
                                 if (Vector3D.DistanceSquared(av.OffsetMatrix.Translation, toBeam) > av.TracerLengthSqr) break;
                             }
@@ -474,7 +478,7 @@ namespace CoreSystems.Support
                                 color *= MathHelper.Clamp(1f - reduction, 0.01f, 1f);
                             }
 
-                            if (av.OnScreen != AvShot.Screen.ProxyDraw)
+                            if (av.OnScreen != AvShot.Screen.ProxyDraw && trail.Line.Length >= 0.1)
                             {
                                 if (trail.Cache == null)
                                 {
@@ -532,7 +536,7 @@ namespace CoreSystems.Support
             var s = av.TracerShrinks.Dequeue();
             if (av.LastTick != Session.Tick)
             {
-                if (av.OnScreen != AvShot.Screen.ProxyDraw)
+                if (av.OnScreen != AvShot.Screen.ProxyDraw && s.Length >= 0.1)
                 {
                     if (!av.AmmoDef.Const.OffsetEffect)
                     {

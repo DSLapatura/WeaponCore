@@ -656,7 +656,8 @@ namespace CoreSystems
                             var trackObstructions = w.System.ScanNonThreats && wComp.MasterAi.Obstructions.Count > 0;
                             var weaponReady = !w.NoAmmo && (wComp.MasterAi.EnemiesNear && somethingNearBy || trackObstructions) && (!w.Target.HasTarget || rootConstruct.HadFocus && constructResetTick);
 
-                            var seek = weaponReady && (acquireReady || w.ProjectilesNear);
+                            Dictionary<object, Weapon> masterTargets;
+                            var seek = weaponReady && (acquireReady || w.ProjectilesNear) && (!w.System.SlaveToScanner  || rootConstruct.TrackedTargets.TryGetValue(w.System.ScannerId, out masterTargets) && masterTargets.Count > 0);
                             var fakeRequest =  wComp.FakeMode && w.Target.TargetState != TargetStates.IsFake && wComp.UserControlled;
                             if (seek || fakeRequest)
                             {
@@ -805,8 +806,10 @@ namespace CoreSystems
                 if (checkTime || requiresFocus && w.Target.HasTarget) {
 
                     var checkObstructions = w.System.ScanNonThreats && ai.Obstructions.Count > 0;
+                    var readyToAcquire = seekProjectile || comp.Data.Repo.Values.State.TrackingReticle || checkObstructions || (comp.DetectOtherSignals && ai.DetectionInfo.OtherInRange || ai.DetectionInfo.PriorityInRange) && ai.DetectionInfo.ValidSignalExists(w);
 
-                    if (seekProjectile || comp.Data.Repo.Values.State.TrackingReticle || checkObstructions || (comp.DetectOtherSignals && ai.DetectionInfo.OtherInRange || ai.DetectionInfo.PriorityInRange) && ai.DetectionInfo.ValidSignalExists(w))
+                    Dictionary<object, Weapon> masterTargets;
+                    if (readyToAcquire && (!w.System.SlaveToScanner || rootConstruct.TrackedTargets.TryGetValue(w.System.ScannerId, out masterTargets) && masterTargets.Count > 0))
                     {
                         if (comp.PrimaryWeapon != null && comp.PrimaryWeapon.System.DesignatorWeapon && comp.PrimaryWeapon != w && comp.PrimaryWeapon.Target.HasTarget) {
 

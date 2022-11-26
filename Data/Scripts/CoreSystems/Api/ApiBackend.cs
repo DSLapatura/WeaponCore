@@ -686,7 +686,7 @@ namespace CoreSystems.Api
             if (comp?.Platform != null && comp.Platform.State == Ready)
             {
                 var weapon = comp.Platform.Weapons[weaponId];
-                var matrix = weapon.AzimuthPart?.Entity?.PositionComp.LocalMatrixRef ?? Matrix.Zero;
+                var matrix = weapon.AzimuthPart.Entity?.PositionComp.LocalMatrixRef ?? Matrix.Zero;
                 return matrix;
             }
 
@@ -700,7 +700,7 @@ namespace CoreSystems.Api
             if (comp?.Platform != null && comp.Platform.State == Ready)
             {
                 var weapon = comp.Platform.Weapons[weaponId];
-                var matrix = weapon.ElevationPart?.Entity?.PositionComp.LocalMatrixRef ?? Matrix.Zero;
+                var matrix = weapon.ElevationPart.Entity?.PositionComp.LocalMatrixRef ?? Matrix.Zero;
                 return matrix;
             }
 

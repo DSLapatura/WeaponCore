@@ -116,7 +116,7 @@ namespace CoreSystems.Platform
         {
             try
             {
-                if (Comp.Session == null || PosChangedTick == Comp.Session.SimulationCount || Comp.CoreEntity == null || Comp.IsBlock && (AzimuthPart?.Entity?.Parent == null || ElevationPart?.Entity?.Parent == null) || ElevationPart?.Entity == null || MuzzlePart?.Entity == null || Comp.Platform.State != CorePlatform.PlatformState.Ready) return;
+                if (Comp.Session == null || PosChangedTick == Comp.Session.SimulationCount || Comp.CoreEntity == null || Comp.IsBlock && (AzimuthPart.Parent == null || ElevationPart.Parent == null) || ElevationPart.Entity == null || MuzzlePart.Entity == null || Comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
                 PosChangedTick = Comp.Session.SimulationCount;
                 
@@ -133,7 +133,7 @@ namespace CoreSystems.Platform
                     if (!AzimuthPart.IsCoreEntity)
                     {
                         var aLocalMatrix = AzimuthPart.Entity.PositionComp.LocalMatrixRef;
-                        azParentMatrix = AzimuthPart.Entity.Parent.PositionComp.WorldMatrixRef;
+                        azParentMatrix = AzimuthPart.Parent.PositionComp.WorldMatrixRef;
 
                         MatrixD.Multiply(ref aLocalMatrix, ref azParentMatrix, out azimuthMatrix);
                     }
@@ -148,7 +148,7 @@ namespace CoreSystems.Platform
                     else if (!ElevationPart.IsCoreEntity)
                     {
                         var eLocalMatrix = ElevationPart.Entity.PositionComp.LocalMatrixRef;
-                        var eParent = ElevationPart.Entity.Parent.WorldMatrix;
+                        var eParent = ElevationPart.Parent.WorldMatrix;
                         MatrixD.Multiply(ref eLocalMatrix, ref eParent, out elevationMatrix);
                     }
                     else
@@ -164,10 +164,10 @@ namespace CoreSystems.Platform
                         var localCenter = MuzzlePart.Entity.PositionComp.LocalAABB.Center;
                         Vector3D.Transform(ref localCenter, ref elevationMatrix, out weaponCenter);
                     }
-                    else if (!MuzzlePart.IsCoreEntity && MuzzlePart.Entity?.Parent != null)
+                    else if (!MuzzlePart.IsCoreEntity && MuzzlePart.Parent != null)
                     {
                         var mLocalMatrix = MuzzlePart.Entity.PositionComp.LocalMatrixRef;
-                        var mParent = MuzzlePart.Entity.Parent.WorldMatrix;
+                        var mParent = MuzzlePart.Parent.WorldMatrix;
                         MatrixD muzzleMatrix;
                         MatrixD.Multiply(ref mLocalMatrix, ref mParent, out muzzleMatrix);
 

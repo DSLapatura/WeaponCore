@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using CoreSystems.Platform;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
@@ -7,6 +8,8 @@ using VRage.Collections;
 using VRage.Game;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
+using VRage.Game.ModAPI.Ingame.Utilities;
+using VRage.Library.Utils;
 using VRage.Utils;
 using VRageMath;
 using VRageRender;
@@ -488,6 +491,7 @@ namespace CoreSystems.Support
         internal void Shrink()
         {
             ShrinkInit();
+            var rnd = AmmoDef.Const.Random;
             for (int i = 0; i < TracerSteps; i++)
             {
                 var last = (i == TracerSteps - 1);
@@ -499,7 +503,16 @@ namespace CoreSystems.Support
                     if (AmmoDef.Const.LineColorVariance)
                     {
                         var cv = AmmoDef.AmmoGraphics.Lines.ColorVariance;
-                        var randomValue = MyUtils.GetRandomFloat(cv.Start, cv.End);
+                        // gross inlined random
+                        var tempX = rnd.Y;
+                        rnd.X ^= rnd.X << 23;
+                        var tempY = rnd.X ^ rnd.Y ^ (rnd.X >> 17) ^ (rnd.Y >> 26);
+                        var tempZ = tempY + rnd.Y;
+                        rnd.X = tempX;
+                        rnd.Y = tempY;
+
+                        var randomValue = (float)XorShiftRandom.DoubleUnit * (0x7FFFFFFF & tempZ) * (cv.End - cv.Start) + cv.Start;
+
                         color.X *= randomValue;
                         color.Y *= randomValue;
                         color.Z *= randomValue;
@@ -512,7 +525,15 @@ namespace CoreSystems.Support
                     if (AmmoDef.Const.LineWidthVariance)
                     {
                         var wv = AmmoDef.AmmoGraphics.Lines.WidthVariance;
-                        var randomValue = MyUtils.GetRandomFloat(wv.Start, wv.End);
+                        // gross inlined random
+                        var tempX = rnd.Y;
+                        rnd.X ^= rnd.X << 23;
+                        var tempY = rnd.X ^ rnd.Y ^ (rnd.X >> 17) ^ (rnd.Y >> 26);
+                        var tempZ = tempY + rnd.Y;
+                        rnd.X = tempX;
+                        rnd.Y = tempY;
+
+                        var randomValue = (float)XorShiftRandom.DoubleUnit * (0x7FFFFFFF & tempZ) * (wv.End - wv.Start) + wv.Start;
                         width += randomValue;
                     }
 
@@ -558,14 +579,17 @@ namespace CoreSystems.Support
 
         internal void LineVariableEffects()
         {
-            if (AmmoDef.Const.TracerMode != AmmoConstants.Texture.Normal && TextureLastUpdate != Session.Tick)
+            var aConst = AmmoDef.Const;
+            var rnd = aConst.Random;
+
+            if (aConst.TracerMode != AmmoConstants.Texture.Normal && TextureLastUpdate != Session.Tick)
             {
                 if (Session.Tick - TextureLastUpdate > 1)
                     AmmoInfoClean();
 
                 TextureLastUpdate = Session.Tick;
 
-                switch (AmmoDef.Const.TracerMode) {
+                switch (aConst.TracerMode) {
                     case AmmoConstants.Texture.Resize:
                         var wasGapped = SegmentGaped;
                         var segSize = AmmoDef.AmmoGraphics.Lines.Tracer.Segmentation;
@@ -577,14 +601,14 @@ namespace CoreSystems.Support
                             SegmentGaped = wasGapped;
                             SegMeasureStep = 0;
                         }
-                        SegMeasureStep += AmmoDef.Const.SegmentStep;
+                        SegMeasureStep += aConst.SegmentStep;
                         SegmentLenTranserved = wasGapped ? MathHelperD.Clamp(segSize.SegmentGap, 0, Math.Min(SegMeasureStep, segSize.SegmentGap)) : MathHelperD.Clamp(segSize.SegmentLength, 0, Math.Min(SegMeasureStep, segSize.SegmentLength));
                         break;
                     case AmmoConstants.Texture.Cycle:
                     case AmmoConstants.Texture.Wave:
-                        if (AmmoDef.Const.TracerMode == AmmoConstants.Texture.Cycle) {
+                        if (aConst.TracerMode == AmmoConstants.Texture.Cycle) {
                             var current = TextureIdx;
-                            if (current + 1 < AmmoDef.Const.TracerTextures.Length)
+                            if (current + 1 < aConst.TracerTextures.Length)
                                 TextureIdx = current + 1;
                             else
                                 TextureIdx = 0;
@@ -592,7 +616,7 @@ namespace CoreSystems.Support
                         else {
                             var current = TextureIdx;
                             if (!TextureReverse) {
-                                if (current + 1 < AmmoDef.Const.TracerTextures.Length)
+                                if (current + 1 < aConst.TracerTextures.Length)
                                     TextureIdx = current + 1;
                                 else {
                                     TextureReverse = true;
@@ -610,84 +634,83 @@ namespace CoreSystems.Support
                         }
                         break;
                     case AmmoConstants.Texture.Chaos:
-                        TextureIdx = MyUtils.GetRandomInt(0, AmmoDef.Const.TracerTextures.Length);
+                        TextureIdx = MyUtils.GetRandomInt(0, aConst.TracerTextures.Length);
                         break;
                 }
 
-                if (AmmoDef.Const.IsBeamWeapon)
+                if (aConst.IsBeamWeapon)
                     Session.AvShotCache[UniqueMuzzleId] = new AvInfoCache {SegMeasureStep = SegMeasureStep, SegmentGaped = SegmentGaped, SegmentLenTranserved = SegmentLenTranserved, TextureIdx = TextureIdx, TextureLastUpdate = TextureLastUpdate, TextureReverse = TextureReverse};
             }
 
-            var color = AmmoDef.Const.LinearTracerColor;
-            var segmentColor = AmmoDef.Const.LinearSegmentColor;
+            var color = aConst.LinearTracerColor;
+            var segmentColor = aConst.LinearSegmentColor;
 
-            if (AmmoDef.Const.LineColorVariance)
+            if (aConst.LineColorVariance)
             {
-                var tracerStart = AmmoDef.Const.LinearTracerColorStart;
-                var tracerEnd = AmmoDef.Const.LinearTracerColorEnd;
-                var rnd = AmmoDef.Const.Random;
-
+                var tracerStart = aConst.LinearTracerColorStart;
+                var tracerEnd = aConst.LinearTracerColorEnd;
+                // gross inlined random
                 var tempX = rnd.Y;
                 rnd.X ^= rnd.X << 23; 
                 var tempY = rnd.X ^ rnd.Y ^ (rnd.X >> 17) ^ (rnd.Y >> 26);
                 var tempZ = tempY + rnd.Y;
-                var result = XorShiftRandom.DoubleUnit * (0x7FFFFFFF & tempZ);
                 rnd.X = tempX;
                 rnd.Y = tempY;
-
+                
+                var result = XorShiftRandom.DoubleUnit * (0x7FFFFFFF & tempZ);
 
                 Vector4.Lerp(ref tracerStart, ref tracerEnd, (float)result, out color);
-                if (AmmoDef.Const.TracerMode == AmmoConstants.Texture.Resize && AmmoDef.AmmoGraphics.Lines.Tracer.Segmentation.UseLineVariance)
+                if (aConst.TracerMode == AmmoConstants.Texture.Resize && AmmoDef.AmmoGraphics.Lines.Tracer.Segmentation.UseLineVariance)
                 {
-                    var segStart = AmmoDef.Const.LinearSegmentColorStart;
-                    var segEnd = AmmoDef.Const.LinearSegmentColorEnd;
+                    var segStart = aConst.LinearSegmentColorStart;
+                    var segEnd = aConst.LinearSegmentColorEnd;
                     Vector4.Lerp(ref segStart, ref segEnd, (float)result, out segmentColor);
                 }
             }
 
-            if (AmmoDef.Const.SegmentColorVariance)
+            if (aConst.SegmentColorVariance)
             {
-                var cv = AmmoDef.AmmoGraphics.Lines.Tracer.Segmentation.ColorVariance;
-
-                var rnd = AmmoDef.Const.Random;
-
+                // gross inlined random
                 var tempX = rnd.Y;
                 rnd.X ^= rnd.X << 23;
                 var tempY = rnd.X ^ rnd.Y ^ (rnd.X >> 17) ^ (rnd.Y >> 26);
                 var tempZ = tempY + rnd.Y;
-                var result = XorShiftRandom.DoubleUnit * (0x7FFFFFFF & tempZ);
                 rnd.X = tempX;
                 rnd.Y = tempY;
 
-                var segStart = AmmoDef.Const.LinearSegmentColorStart;
-                var segEnd = AmmoDef.Const.LinearSegmentColorEnd;
-                //var randomValue = MyUtils.GetRandomFloat(cv.Start, cv.End);
+                var result = XorShiftRandom.DoubleUnit * (0x7FFFFFFF & tempZ);
+
+                var segStart = aConst.LinearSegmentColorStart;
+                var segEnd = aConst.LinearSegmentColorEnd;
                 Vector4.Lerp(ref segStart, ref segEnd, (float)result, out segmentColor);
             }
 
             Color = color;
             SegmentColor = segmentColor;
             var tracerWidth = AmmoDef.AmmoGraphics.Lines.Tracer.Width;
-            var trailWidth = AmmoDef.Const.TrailWidth;
-            if (AmmoDef.Const.LineWidthVariance)
+            var trailWidth = aConst.TrailWidth;
+            if (aConst.LineWidthVariance)
             {
                 var wv = AmmoDef.AmmoGraphics.Lines.WidthVariance;
-                var randomValue = MyUtils.GetRandomFloat(wv.Start, wv.End);
+                // gross inlined random
+                var tempX = rnd.Y;
+                rnd.X ^= rnd.X << 23;
+                var tempY = rnd.X ^ rnd.Y ^ (rnd.X >> 17) ^ (rnd.Y >> 26);
+                var tempZ = tempY + rnd.Y;
+                rnd.X = tempX;
+                rnd.Y = tempY;
+
+                var randomValue = (float)XorShiftRandom.DoubleUnit * (0x7FFFFFFF & tempZ) * (wv.End - wv.Start) + wv.Start;
                 tracerWidth += randomValue;
                 if (AmmoDef.AmmoGraphics.Lines.Trail.UseWidthVariance)
                     trailWidth += randomValue;
             }
 
-            var checkPos = TracerFront + (-VisualDir * TotalLength);
+            var longBeam = aConst.IsBeamWeapon && Vector3D.DistanceSquared(TracerFront, TracerBack) > 640000; //800meters
+            var checkPos = TracerFront + (!longBeam ? -VisualDir * TotalLength : -VisualDir * (TotalLength - MathHelperD.Clamp(DistanceToLine * 6, DistanceToLine, MaxTrajectory * 0.5)));
+
             var closestPointOnLine = MyUtils.GetClosestPointOnLine(ref TracerFront, ref checkPos, ref Session.CameraPos);
             DistanceToLine = (float)Vector3D.Distance(closestPointOnLine, Session.CameraMatrix.Translation);
-
-            if (AmmoDef.Const.IsBeamWeapon && Vector3D.DistanceSquared(TracerFront, TracerBack) > 640000)
-            {
-                checkPos = TracerFront + (-VisualDir * (TotalLength - MathHelperD.Clamp(DistanceToLine * 6, DistanceToLine, MaxTrajectory * 0.5)));
-                closestPointOnLine = MyUtils.GetClosestPointOnLine(ref TracerFront, ref checkPos, ref Session.CameraPos);
-                DistanceToLine = (float)Vector3D.Distance(closestPointOnLine, Session.CameraMatrix.Translation);
-            }
 
             double scale = 0.1f;
             var widthScaler = !Session.GunnerBlackList ? 1f : (Session.ScaleFov * 1.3f);
@@ -700,10 +723,19 @@ namespace CoreSystems.Support
             var seg = AmmoDef.AmmoGraphics.Lines.Tracer.Segmentation;
             SegmentWidth = seg.WidthMultiplier > 0 ? TracerWidth * seg.WidthMultiplier : TracerWidth;
 
-            if (AmmoDef.Const.SegmentWidthVariance)
+            if (aConst.SegmentWidthVariance)
             {
                 var wv = AmmoDef.AmmoGraphics.Lines.Tracer.Segmentation.WidthVariance;
-                var randomValue = MyUtils.GetRandomFloat(wv.Start, wv.End);
+
+                // gross inlined random
+                var tempX = rnd.Y;
+                rnd.X ^= rnd.X << 23;
+                var tempY = rnd.X ^ rnd.Y ^ (rnd.X >> 17) ^ (rnd.Y >> 26);
+                var tempZ = tempY + rnd.Y;
+                rnd.X = tempX;
+                rnd.Y = tempY;
+
+                var randomValue = XorShiftRandom.DoubleUnit * (0x7FFFFFFF & tempZ) * (wv.End - wv.Start) + wv.Start;
                 SegmentWidth += randomValue;
             }
         }
@@ -715,10 +747,14 @@ namespace CoreSystems.Support
             MatrixD.CreateWorld(ref startPos, ref direction, ref up, out OffsetMatrix);
             TracerLengthSqr = tracerLength * tracerLength;
             var maxOffset = AmmoDef.Const.MaxOffset;
+            var negMaxOffset = maxOffset * -1;
             var minLength = AmmoDef.Const.MinOffsetLength;
+
             var dyncMaxLength = MathHelperD.Clamp(AmmoDef.Const.MaxOffsetLength * Session.ClientAvDivisor, 0, Math.Max(tracerLength * 0.5d, AmmoDef.Const.MaxOffsetLength));
             var maxLength = MathHelperD.Clamp(dyncMaxLength, 0, tracerLength);
             var av = Session.Av;
+            var aConst = AmmoDef.Const;
+            var rnd = aConst.Random;
 
             if (Offsets == null)
                 Offsets = av.OffSetLists.Count > 0 ? av.OffSetLists.Pop() : new List<Vector3D>();
@@ -726,9 +762,35 @@ namespace CoreSystems.Support
             double currentForwardDistance = 0;
             while (currentForwardDistance <= tracerLength)
             {
-                currentForwardDistance += MyUtils.GetRandomDouble(minLength, maxLength);
-                var lateralXDistance = MyUtils.GetRandomDouble(maxOffset * -1, maxOffset);
-                var lateralYDistance = MyUtils.GetRandomDouble(maxOffset * -1, maxOffset);
+                // grossly inlined fast random
+
+                var tempX = rnd.Y;
+                rnd.X ^= rnd.X << 23;
+                var tempY = rnd.X ^ rnd.Y ^ (rnd.X >> 17) ^ (rnd.Y >> 26);
+                var tempZ = tempY + rnd.Y;
+                rnd.X = tempX;
+                rnd.Y = tempY;
+
+                currentForwardDistance += XorShiftRandom.DoubleUnit * (0x7FFFFFFF & tempZ) * (maxLength - minLength) + minLength;
+
+                tempX = rnd.Y;
+                rnd.X ^= rnd.X << 23;
+                tempY = rnd.X ^ rnd.Y ^ (rnd.X >> 17) ^ (rnd.Y >> 26);
+                tempZ = tempY + rnd.Y;
+                rnd.X = tempX;
+                rnd.Y = tempY;
+
+                var lateralXDistance = XorShiftRandom.DoubleUnit * (0x7FFFFFFF & tempZ) * (maxOffset - negMaxOffset) + negMaxOffset;
+
+                tempX = rnd.Y;
+                rnd.X ^= rnd.X << 23;
+                tempY = rnd.X ^ rnd.Y ^ (rnd.X >> 17) ^ (rnd.Y >> 26);
+                tempZ = tempY + rnd.Y;
+                rnd.X = tempX;
+                rnd.Y = tempY;
+
+                var lateralYDistance = XorShiftRandom.DoubleUnit * (0x7FFFFFFF & tempZ) * (maxOffset - negMaxOffset) + negMaxOffset;
+
                 Offsets.Add(new Vector3D(lateralXDistance, lateralYDistance, currentForwardDistance * -1));
             }
         }
@@ -743,19 +805,47 @@ namespace CoreSystems.Support
             var offsetMaterial = AmmoDef.Const.TracerTextures[0];
             var tracerLengthSqr = tracerLength * tracerLength;
             var maxOffset = AmmoDef.Const.MaxOffset;
+            var negMaxOffset = maxOffset * -1;
+
             var minLength = AmmoDef.Const.MinOffsetLength;
             var dyncMaxLength = MathHelperD.Clamp(AmmoDef.Const.MaxOffsetLength * Session.ClientAvDivisor, 0, Math.Max(tracerLength * 0.5d, AmmoDef.Const.MaxOffsetLength));
-
+            var aConst = AmmoDef.Const;
             var maxLength = MathHelperD.Clamp(dyncMaxLength, 0, tracerLength);
 
             double currentForwardDistance = 0;
             var av = Session.Av;
+            var rnd = aConst.Random;
 
             while (currentForwardDistance < tracerLength)
             {
-                currentForwardDistance += MyUtils.GetRandomDouble(minLength, maxLength);
-                var lateralXDistance = MyUtils.GetRandomDouble(maxOffset * -1, maxOffset);
-                var lateralYDistance = MyUtils.GetRandomDouble(maxOffset * -1, maxOffset);
+                // grossly inlined fast random
+
+                var tempX = rnd.Y;
+                rnd.X ^= rnd.X << 23;
+                var tempY = rnd.X ^ rnd.Y ^ (rnd.X >> 17) ^ (rnd.Y >> 26);
+                var tempZ = tempY + rnd.Y;
+                rnd.X = tempX;
+                rnd.Y = tempY;
+
+                currentForwardDistance += XorShiftRandom.DoubleUnit * (0x7FFFFFFF & tempZ) * (maxLength - minLength) + minLength;
+
+                tempX = rnd.Y;
+                rnd.X ^= rnd.X << 23;
+                tempY = rnd.X ^ rnd.Y ^ (rnd.X >> 17) ^ (rnd.Y >> 26);
+                tempZ = tempY + rnd.Y;
+                rnd.X = tempX;
+                rnd.Y = tempY;
+
+                var lateralXDistance = XorShiftRandom.DoubleUnit * (0x7FFFFFFF & tempZ) * (maxOffset - negMaxOffset) + negMaxOffset;
+
+                tempX = rnd.Y;
+                rnd.X ^= rnd.X << 23;
+                tempY = rnd.X ^ rnd.Y ^ (rnd.X >> 17) ^ (rnd.Y >> 26);
+                tempZ = tempY + rnd.Y;
+                rnd.X = tempX;
+                rnd.Y = tempY;
+
+                var lateralYDistance = XorShiftRandom.DoubleUnit * (0x7FFFFFFF & tempZ) * (maxOffset - negMaxOffset) + negMaxOffset;
 
                 Offsets.Add(new Vector3D(lateralXDistance, lateralYDistance, currentForwardDistance * -1));
             }
@@ -915,7 +1005,6 @@ namespace CoreSystems.Support
                 var hitSoundChance = AmmoDef.AmmoAudio.HitPlayChance;
                 HitSoundActive = (hitSoundChance >= 1 || hitSoundChance >= MyUtils.GetRandomDouble(0.0f, 1f));
             }
-            //Log.Line($"{AmmoDef.AmmoRound} - IsFragment:{IsFragment} - ShotSound: {AmmoDef.Const.ShotSound}");
 
             if (AmmoDef.Const.ShotSound)
             {
