@@ -283,6 +283,38 @@ namespace CoreSystems.Api
                 [ProtoMember(16)] internal bool ExportTargets;
                 [ProtoMember(17)] internal string ChannelId;
                 [ProtoMember(18)] internal int ExportLimit;
+                [ProtoMember(19)] internal CommunicationDef Communications;
+
+                [ProtoContract]
+                public struct CommunicationDef
+                {
+                    public enum Comms
+                    {
+                        NoComms,
+                        BroadCast,
+                        Relay,
+                        Jamming,
+                        RelayAndBroadCast,
+                    }
+
+                    public enum SecurityMode
+                    {
+                        Public,
+                        Private,
+                        Secure,
+                    }
+
+                    [ProtoMember(1)] internal bool StoreTargets;
+                    [ProtoMember(2)] internal int StorageLimit;
+                    [ProtoMember(3)] internal string StorageLocation;
+                    [ProtoMember(4)] internal Comms Mode;
+                    [ProtoMember(5)] internal SecurityMode Security;
+                    [ProtoMember(6)] internal string BroadCastChannel;
+                    [ProtoMember(7)] internal double BroadCastRange;
+                    [ProtoMember(8)] internal double JammingStrength;
+                    [ProtoMember(9)] internal string RelayChannel;
+                    [ProtoMember(10)] internal double RelayRange;
+                }
             }
 
 

@@ -113,7 +113,7 @@ namespace CoreSystems.Support
         public readonly MyStringHash AzimuthPartName;
         public readonly MyStringHash ElevationPartName;
         public readonly MyStringHash SpinPartName;
-        public readonly MyStringHash ChannelId;
+        public readonly MyStringHash StorageLocation;
         public readonly WeaponDefinition Values;
         public readonly AmmoType[] AmmoTypes;
         public readonly MySoundPair PreFireSoundPair;
@@ -132,7 +132,7 @@ namespace CoreSystems.Support
         public readonly string[] Muzzles;
         public readonly uint MaxTrackingTicks;
         public readonly int MaxActiveProjectiles;
-        public readonly int MaxExportTargets;
+        public readonly int StorageLimit;
         public readonly int MaxReloads;
         public readonly int DelayToFire;
         public readonly int CeaseFireDelay;
@@ -164,7 +164,7 @@ namespace CoreSystems.Support
         public readonly bool ScanTrackOnly;
         public readonly bool AlternateUi;
         public readonly bool NonThreatsOnly;
-        public readonly bool ExportTargets;
+        public readonly bool StoreTargets;
         public readonly bool TrackTopMostEntities;
         public readonly bool TrackGrids;
         public readonly bool TrackCharacters;
@@ -275,10 +275,10 @@ namespace CoreSystems.Support
             TargetGridCenter = Values.HardPoint.Ai.TargetGridCenter;
             if (!string.IsNullOrEmpty(Values.Targeting.ChannelId))
             {
-                MaxExportTargets = Values.Targeting.ExportLimit > 0 ? Values.Targeting.ExportLimit : int.MaxValue;
-                ExportTargets = Values.Targeting.ExportTargets;
-                ChannelId = MyStringHash.GetOrCompute(Values.Targeting.ChannelId);
-                SlaveToScanner = !ExportTargets;
+                StorageLimit = Values.Targeting.Communications.StorageLimit > 0 ? Values.Targeting.Communications.StorageLimit : int.MaxValue;
+                StoreTargets = Values.Targeting.Communications.StoreTargets;
+                StorageLocation = MyStringHash.GetOrCompute(Values.Targeting.Communications.StorageLocation);
+                SlaveToScanner = !StoreTargets;
             }
 
             SuppressFire = Values.HardPoint.Ai.SuppressFire;

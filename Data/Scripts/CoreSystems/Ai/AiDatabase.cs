@@ -57,7 +57,7 @@ namespace CoreSystems.Support
                         if (AiType == AiTypes.Grid && GridEntity.IsSameConstructAs(grid))
                             continue;
 
-                        if (!Session.TopEntityToInfoMap.TryGetValue(grid, out topMap) || topMap.Trash && topMap.GroupMap.Construct.Count <= 1)
+                        if (!Session.TopEntityToInfoMap.TryGetValue(grid, out topMap) || topMap.Trash && topMap.GroupMap?.Construct.Count <= 1)
                             continue;
                     }
 

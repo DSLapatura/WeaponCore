@@ -657,7 +657,7 @@ namespace CoreSystems
                             var weaponReady = !w.NoAmmo && (wComp.MasterAi.EnemiesNear && somethingNearBy || trackObstructions) && (!w.Target.HasTarget || rootConstruct.HadFocus && constructResetTick);
 
                             Dictionary<object, Weapon> masterTargets;
-                            var seek = weaponReady && (acquireReady || w.ProjectilesNear) && (!w.System.SlaveToScanner || rootConstruct.TrackedTargets.TryGetValue(w.System.ChannelId, out masterTargets) && masterTargets.Count > 0);
+                            var seek = weaponReady && (acquireReady || w.ProjectilesNear) && (!w.System.SlaveToScanner || rootConstruct.TrackedTargets.TryGetValue(w.System.StorageLocation, out masterTargets) && masterTargets.Count > 0);
                             var fakeRequest =  wComp.FakeMode && w.Target.TargetState != TargetStates.IsFake && wComp.UserControlled;
                             if (seek || fakeRequest)
                             {
@@ -809,7 +809,7 @@ namespace CoreSystems
                     var readyToAcquire = seekProjectile || comp.Data.Repo.Values.State.TrackingReticle || checkObstructions || (comp.DetectOtherSignals && ai.DetectionInfo.OtherInRange || ai.DetectionInfo.PriorityInRange) && ai.DetectionInfo.ValidSignalExists(w);
 
                     Dictionary<object, Weapon> masterTargets;
-                    if (readyToAcquire && (!w.System.SlaveToScanner || rootConstruct.TrackedTargets.TryGetValue(w.System.ChannelId, out masterTargets) && masterTargets.Count > 0))
+                    if (readyToAcquire && (!w.System.SlaveToScanner || rootConstruct.TrackedTargets.TryGetValue(w.System.StorageLocation, out masterTargets) && masterTargets.Count > 0))
                     {
                         if (comp.PrimaryWeapon != null && comp.PrimaryWeapon.System.DesignatorWeapon && comp.PrimaryWeapon != w && comp.PrimaryWeapon.Target.HasTarget) {
 
