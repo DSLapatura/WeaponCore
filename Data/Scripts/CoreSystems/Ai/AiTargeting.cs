@@ -63,7 +63,7 @@ namespace CoreSystems.Support
             else if (!w.System.ScanTrackOnly && w.ValidFakeTargetInfo(w.Comp.Data.Repo.Values.State.PlayerId, out fakeInfo))
             {
                 Vector3D predictedPos;
-                if (Weapon.CanShootTarget(w, ref fakeInfo.WorldPosition, fakeInfo.LinearVelocity, fakeInfo.Acceleration, out predictedPos))
+                if (Weapon.CanShootTarget(w, ref fakeInfo.WorldPosition, fakeInfo.LinearVelocity, fakeInfo.Acceleration, out predictedPos, false, null, MathFuncs.DebugCaller.CanShootTarget1))
                 {
                     w.Target.SetFake(w.Comp.Session.Tick, predictedPos, w.MyPivotPos);
                     if (w.ActiveAmmoDef.AmmoDef.Trajectory.Guidance != TrajectoryDef.GuidanceType.None || !w.MuzzleHitSelf())
@@ -173,6 +173,9 @@ namespace CoreSystems.Support
                     ai.Targets.TryGetValue(rootConstruct.LastFocusEntity, out info);
                 else 
                     info = ai.SortedTargets[deck[x - offset]];
+
+                if (info?.Target == null || info.Target.MarkedForClose)
+                    continue;
                     
 
                 if (forceTarget && !focusTarget) 
@@ -182,13 +185,12 @@ namespace CoreSystems.Support
 
                 var grid = info.Target as MyCubeGrid;
 
-                if (info?.Target == null || info.Target.MarkedForClose || offset > 0 && x > lastOffset && (grid != null && focusGrid != null && grid.IsSameConstructAs(focusGrid)) || !attackNeutrals && info.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Neutral || !attackNoOwner && info.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.NoOwnership)
+                if (offset > 0 && x > lastOffset && (grid != null && focusGrid != null && grid.IsSameConstructAs(focusGrid)) || !attackNeutrals && info.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Neutral || !attackNoOwner && info.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.NoOwnership)
                     continue;
 
                 Weapon.TargetOwner tOwner;
                 if (w.System.UniqueTargetPerWeapon && w.Comp.ActiveTargets.TryGetValue(info.Target, out tOwner) && tOwner.Weapon != w)
                     continue;
-
 
                 if (w.System.ScanTrackOnly && !ValidScanEntity(w, info.EntInfo, info.Target, true))
                     continue;
@@ -217,7 +219,7 @@ namespace CoreSystems.Support
                 Vector3D predictedPos;
                 if (w.System.TargetGridCenter)
                 {
-                    if (!Weapon.CanShootTarget(w, ref targetCenter, targetLinVel, targetAccel, out predictedPos, false)) continue;
+                    if (!Weapon.CanShootTarget(w, ref targetCenter, targetLinVel, targetAccel, out predictedPos, false, null, MathFuncs.DebugCaller.CanShootTarget2)) continue;
                     double rayDist;
                     Vector3D.Distance(ref weaponPos, ref targetCenter, out rayDist);
                     var shortDist = rayDist;
@@ -272,7 +274,7 @@ namespace CoreSystems.Support
                 if (character != null && (!overRides.Biologicals || character.IsDead || character.Integrity <= 0 || session.AdminMap.ContainsKey(character))) continue;
 
                 
-                if (!Weapon.CanShootTarget(w, ref targetCenter, targetLinVel, targetAccel, out predictedPos, true, info.Target)) continue;
+                if (!Weapon.CanShootTarget(w, ref targetCenter, targetLinVel, targetAccel, out predictedPos, true, info.Target, MathFuncs.DebugCaller.CanShootTarget3)) continue;
                 
                 if (ai.FriendlyShieldNear)
                 {
@@ -416,7 +418,7 @@ namespace CoreSystems.Support
                 if (character != null && (false && !overRides.Biologicals || character.IsDead || character.Integrity <= 0)) continue;
 
                 Vector3D predictedPos;
-                if (!Weapon.CanShootTarget(w, ref targetCenter, targetLinVel, targetAccel, out predictedPos, true, info.Target)) continue;
+                if (!Weapon.CanShootTarget(w, ref targetCenter, targetLinVel, targetAccel, out predictedPos, true, info.Target, MathFuncs.DebugCaller.CanShootTarget4)) continue;
 
                 session.TopRayCasts++;
 
@@ -504,7 +506,7 @@ namespace CoreSystems.Support
                     continue;
                 }
                 Vector3D predictedPos;
-                if (Weapon.CanShootTarget(w, ref lp.Position, lp.Velocity, lpAccel, out predictedPos))
+                if (Weapon.CanShootTarget(w, ref lp.Position, lp.Velocity, lpAccel, out predictedPos, false, null, MathFuncs.DebugCaller.CanShootTarget5))
                 {
                     var needsCast = false;
                     for (int i = 0; i < ai.Obstructions.Count; i++)
@@ -927,7 +929,7 @@ namespace CoreSystems.Support
                     ai.Session.CanShoot++;
 
                     Vector3D predictedPos;
-                    if (!Weapon.CanShootTarget(w, ref blockPos, targetLinVel, targetAccel, out predictedPos, w.RotorTurretTracking)) continue;
+                    if (!Weapon.CanShootTarget(w, ref blockPos, targetLinVel, targetAccel, out predictedPos, w.RotorTurretTracking, null, MathFuncs.DebugCaller.CanShootTarget6)) continue;
 
                     if (s.WaterApiLoaded && waterSphere.Radius > 2 && waterSphere.Contains(predictedPos) != ContainmentType.Disjoint)
                         continue;
@@ -1070,7 +1072,7 @@ namespace CoreSystems.Support
                         {
                             ai.Session.CanShoot++;
                             Vector3D predictedPos;
-                            if (Weapon.CanShootTarget(w, ref cubePos, targetLinVel, targetAccel, out predictedPos))
+                            if (Weapon.CanShootTarget(w, ref cubePos, targetLinVel, targetAccel, out predictedPos, false, null, MathFuncs.DebugCaller.CanShootTarget7))
                             {
 
                                 ai.Session.ClosestRayCasts++;

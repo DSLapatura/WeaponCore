@@ -10,6 +10,7 @@ using VRage.Game.Components;
 using VRage.Game.Entity;
 using VRage.Utils;
 using VRageMath;
+using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace CoreSystems
 {
@@ -178,6 +179,7 @@ namespace CoreSystems
                 }
                 else if (delayed.Cube.IsFunctional)
                 {
+                    delayed.Entity.NeedsWorldMatrix = true; // sigh, if the block was in non-functional state at spawn this is never set... even in case where it otherwise is by keen...
                     delayed.PlatformInit();
                     CompsDelayedInit.RemoveAtFast(i);
                 }
@@ -201,7 +203,6 @@ namespace CoreSystems
                 else if (delayed.Cube.IsFunctional && TopEntityToInfoMap.TryGetValue(delayed.Cube.CubeGrid, out topMap) && topMap.GroupMap != null)
                 {
                     CompsDelayedReInit.RemoveAtFast(i);
-                    
                     delayed.InReInit = false;
                     delayed.ReInit(false);
                 }

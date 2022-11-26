@@ -153,7 +153,7 @@ namespace CoreSystems.Platform
         internal int ClientMakeUpShots;
         internal int ClientLastShotId;
         internal int ProjectileCounter;
-
+        internal int LookAtFailCount;
         internal float HeatPShot;
         internal float HsRate;
         internal float CurrentAmmoVolume;

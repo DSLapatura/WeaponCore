@@ -12,12 +12,13 @@ using VRageMath;
 using static CoreSystems.Support.WeaponDefinition.HardPointDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef;
 using CollisionLayers = Sandbox.Engine.Physics.MyPhysics.CollisionLayers;
+using static CoreSystems.Support.MathFuncs;
 
 namespace CoreSystems.Platform
 {
     public partial class Weapon
     {
-        internal static bool CanShootTarget(Weapon weapon, ref Vector3D targetCenter, Vector3D targetLinVel, Vector3D targetAccel, out Vector3D targetPos, bool checkSelfHit = false, MyEntity target = null)
+        internal static bool CanShootTarget(Weapon weapon, ref Vector3D targetCenter, Vector3D targetLinVel, Vector3D targetAccel, out Vector3D targetPos, bool checkSelfHit = false, MyEntity target = null, DebugCaller caller = DebugCaller.CanShootTarget1)
         {
             if (weapon.PosChangedTick != weapon.Comp.Session.SimulationCount)
                 weapon.UpdatePivotPos();
@@ -42,11 +43,11 @@ namespace CoreSystems.Platform
             bool isTracking;
 
             if (weapon.RotorTurretTracking)
-                canTrack = validEstimate && MathFuncs.RotorTurretLookAt(weapon.Comp.Ai.ControlComp.Platform.Control, ref targetDir, rangeToTarget);
+                canTrack = validEstimate && RotorTurretLookAt(weapon.Comp.Ai.ControlComp.Platform.Control, ref targetDir, rangeToTarget);
             else if (weapon == trackingWeapon)
-                canTrack = validEstimate && MathFuncs.WeaponLookAt(weapon, ref targetDir, rangeToTarget, false, true, MathFuncs.DebugCaller.CanShootTarget , out isTracking);
+                canTrack = validEstimate && WeaponLookAt(weapon, ref targetDir, rangeToTarget, false, true, caller, out isTracking);
             else
-                canTrack = validEstimate && MathFuncs.IsDotProductWithinTolerance(ref weapon.MyPivotFwd, ref targetDir, weapon.AimingTolerance);
+                canTrack = validEstimate && IsDotProductWithinTolerance(ref weapon.MyPivotFwd, ref targetDir, weapon.AimingTolerance);
 
             bool selfHit = false;
             weapon.LastHitInfo = null;
@@ -374,22 +375,25 @@ namespace CoreSystems.Platform
 
             var targetDir = targetPos - w.MyPivotPos;
             var readyToTrack = validEstimate && !w.Comp.ResettingSubparts && (baseData.State.TrackingReticle || rangeToTargetSqr <= w.MaxTargetDistanceSqr && rangeToTargetSqr >= w.MinTargetDistanceSqr);
-
             var locked = true;
             var isTracking = false;
 
             if (readyToTrack && w.PosChangedTick != w.Comp.Session.SimulationCount)
-                    w.UpdatePivotPos();
+                w.UpdatePivotPos();
 
             if (readyToTrack && baseData.State.Control != ProtoWeaponState.ControlMode.Camera)
             {
-                if (MathFuncs.WeaponLookAt(w, ref targetDir, rangeToTargetSqr, true, false, MathFuncs.DebugCaller.TrackingTarget, out isTracking))
+                if (WeaponLookAt(w, ref targetDir, rangeToTargetSqr, true, false, DebugCaller.TrackingTarget, out isTracking))
                 {
 
                     w.ReturingHome = false;
                     locked = false;
                     
                     w.AimBarrel();
+                    if (isTracking) 
+                        w.LookAtFailCount = 0;
+                    if (w.LookAtFailCount++ < 1)
+                        isTracking = true;
                 }
             }
 
@@ -401,7 +405,7 @@ namespace CoreSystems.Platform
             var isAligned = false;
 
             if (isTracking)
-                isAligned = locked || MathFuncs.IsDotProductWithinTolerance(ref w.MyPivotFwd, ref targetDir, w.AimingTolerance);
+                isAligned = locked || IsDotProductWithinTolerance(ref w.MyPivotFwd, ref targetDir, w.AimingTolerance);
 
             var wasAligned = w.Target.IsAligned;
             w.Target.IsAligned = isAligned;
@@ -804,12 +808,12 @@ namespace CoreSystems.Platform
                 var targetDirection = targetAimPoint - shooterPos;
 
                 bool isTracking;
-                if (!weapon.RotorTurretTracking && !MathFuncs.WeaponLookAt(weapon, ref targetDirection, deltaLength * deltaLength, false, true, MathFuncs.DebugCaller.TrajectoryEstimation, out isTracking)) //Angle 2 obscured, switch to angle 1
+                if (!weapon.RotorTurretTracking && !WeaponLookAt(weapon, ref targetDirection, deltaLength * deltaLength, false, true, DebugCaller.TrajectoryEstimation, out isTracking)) //Angle 2 obscured, switch to angle 1
                 {
                     verticalDistance = Math.Tan(angle1) * horizontalDistance;
                     gravityOffset = new Vector3D((verticalDistance + Math.Abs(elevationDifference)) * -weapon.GravityUnitDir);
                 }
-                else if (weapon.RotorTurretTracking && !MathFuncs.RotorTurretLookAt(weapon.Comp.Ai.ControlComp.Platform.Control, ref targetDirection, deltaLength * deltaLength))
+                else if (weapon.RotorTurretTracking && !RotorTurretLookAt(weapon.Comp.Ai.ControlComp.Platform.Control, ref targetDirection, deltaLength * deltaLength))
                 {
                     verticalDistance = Math.Tan(angle1) * horizontalDistance;
                     gravityOffset = new Vector3D((verticalDistance + Math.Abs(elevationDifference)) * -weapon.GravityUnitDir);

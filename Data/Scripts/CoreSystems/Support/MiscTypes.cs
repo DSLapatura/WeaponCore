@@ -260,6 +260,7 @@ namespace CoreSystems.Support
             {
                 ChangeTick = Weapon.System.Session.Tick;
                 if (setTarget) {
+                    Weapon.LookAtFailCount = 0;
                     Weapon.BaseComp.Ai.WeaponsTracking++;
                     Weapon.BaseComp.PartTracking++;
                 }

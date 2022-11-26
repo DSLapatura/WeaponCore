@@ -657,7 +657,7 @@ namespace CoreSystems
                             var weaponReady = !w.NoAmmo && (wComp.MasterAi.EnemiesNear && somethingNearBy || trackObstructions) && (!w.Target.HasTarget || rootConstruct.HadFocus && constructResetTick);
 
                             Dictionary<object, Weapon> masterTargets;
-                            var seek = weaponReady && (acquireReady || w.ProjectilesNear) && (!w.System.SlaveToScanner  || rootConstruct.TrackedTargets.TryGetValue(w.System.ScannerId, out masterTargets) && masterTargets.Count > 0);
+                            var seek = weaponReady && (acquireReady || w.ProjectilesNear) && (!w.System.SlaveToScanner || rootConstruct.TrackedTargets.TryGetValue(w.System.ScannerId, out masterTargets) && masterTargets.Count > 0);
                             var fakeRequest =  wComp.FakeMode && w.Target.TargetState != TargetStates.IsFake && wComp.UserControlled;
                             if (seek || fakeRequest)
                             {
@@ -828,7 +828,6 @@ namespace CoreSystems
                         w.TargetAcquireTick = uint.MaxValue;
                         AcquireTargets.RemoveAtFast(i);
                         if (w.Target.HasTarget) {
-
                             w.EventTriggerStateChanged(EventTriggers.Tracking, true);
 
                             if (MpActive)

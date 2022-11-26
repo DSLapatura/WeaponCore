@@ -18,7 +18,6 @@ namespace CoreSystems.Support
                 ++SceneVersion;
                 base.OnAddedToContainer();
                 if (Container.Entity.InScene) {
-
                     LastAddToScene = Session.Tick;
                     if (Platform.State == CorePlatform.PlatformState.Fresh)
                         PlatformInit();

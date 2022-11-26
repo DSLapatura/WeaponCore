@@ -153,12 +153,12 @@ namespace CoreSystems.Support
             
         }
 
+
         private void IsWorkingChanged(MyCubeBlock myCubeBlock)
         {
             try {
                 var wasFunctional = IsFunctional;
                 IsFunctional = myCubeBlock.IsFunctional;
-
                 if (Platform.State == PlatformState.Incomplete) {
                     Log.Line("Init on Incomplete");
                     Init();

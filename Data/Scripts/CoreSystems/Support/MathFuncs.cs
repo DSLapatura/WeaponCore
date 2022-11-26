@@ -374,9 +374,14 @@ namespace CoreSystems.Support
 
         public enum DebugCaller
         {
-
             TrajectoryEstimation,
-            CanShootTarget,
+            CanShootTarget1,
+            CanShootTarget2,
+            CanShootTarget3,
+            CanShootTarget4,
+            CanShootTarget5,
+            CanShootTarget6,
+            CanShootTarget7,
             TrackingTarget,
         }
 
@@ -412,7 +417,7 @@ namespace CoreSystems.Support
                     if (weapon.Comp.Session.Tick - weapon.LastNanTick > 60)
                     {
                         weapon.LastNanTick = weapon.Comp.Session.Tick;
-                        Log.Line($"WeaponLookAt:{weapon.System.PartName} - caller:{caller} - targetDir:{targetDir} - transPoseMatrix:{transposeMatrix} - up:{up} - left:{left} - forward:{forward} - currentVector:{currentVector}");
+                        Log.Line($"WeaponLookAt:{weapon.System.ShortName} - caller:{caller} - targetDir:{targetDir} - MyPivotPos:{weapon.MyPivotPos} - transPoseMatrix:{transposeMatrix} - up:{up} - left:{left} - forward:{forward} - currentVector:{currentVector}");
                     }
                     return false;
                 }
@@ -524,7 +529,6 @@ namespace CoreSystems.Support
 
                 // Weapon has a degree of freedom to move towards target
                 var tracking = !azHitLimit && !elHitLimit;
-
                 if (setWeapon)
                 {
                     isTracking = tracking;
@@ -541,8 +545,6 @@ namespace CoreSystems.Support
                         weapon.ElevationTick = system.Session.Tick;
                     }
                 }
-
-
                 return !locked;
             }
             catch (Exception ex) { Log.Line($"Exception in WeaponLookAt: {ex}", null, true); }

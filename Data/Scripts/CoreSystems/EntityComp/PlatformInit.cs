@@ -85,7 +85,6 @@ namespace CoreSystems.Platform
                 return State;
             }
 
-
             //Get or init Ai
             var newAi = false;
             if (!Comp.Session.EntityAIs.TryGetValue(Comp.TopEntity, out Comp.Ai)) {
@@ -696,7 +695,6 @@ namespace CoreSystems.Platform
         {
             if (Structure.StructureType != CoreStructure.StructureTypes.Weapon || Comp.TypeSpecific == Phantom)
                 return;
-
             Parts.Clean(Comp.Entity as MyEntity);
             Parts.CheckSubparts();
             
