@@ -1,6 +1,5 @@
 ﻿using System;
 using CoreSystems.Platform;
-using ProtoBuf;
 using Sandbox.Game.Entities;
 using VRage.Game.Entity;
 using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetDef;
@@ -24,6 +23,7 @@ namespace CoreSystems.Support
                     if (Type == CompType.Weapon) 
                         Platform.ResetParts();
 
+                    Ai.Construct.RootAi.Construct.DirtyWeaponGroups = true;
                     Status = NeedsWorldReset ? Start.ReInit : Start.Started;
                     NeedsWorldReset = false;
                     break;

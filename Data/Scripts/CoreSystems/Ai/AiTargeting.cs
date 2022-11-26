@@ -513,6 +513,8 @@ namespace CoreSystems.Support
                     {
                         var ent = ai.Obstructions[i].Target;
 
+                        if (ent == null || ent is MyPlanet)
+                            continue;
                         var obsSphere = ent.PositionComp.WorldVolume;
 
                         var dir = lp.Position - weaponPos;
@@ -761,6 +763,8 @@ namespace CoreSystems.Support
                 for (int i = 0; i < ai.Obstructions.Count; i++)
                 {
                     var ent = ai.Obstructions[i].Target;
+                    if (ent == null || ent is MyPlanet)
+                        continue;
 
                     var obsSphere = ent.PositionComp.WorldVolume;
 
@@ -1229,13 +1233,14 @@ namespace CoreSystems.Support
             for (int j = 0; j < ai.Obstructions.Count; j++)
             {
                 var ent = ai.Obstructions[j].Target;
+                if (ent == null || ent is MyPlanet)
+                    continue;
 
                 var voxel = ent as MyVoxelBase;
                 var dir = (targetPos - p.Position);
                 var entWorldVolume = ent.PositionComp.WorldVolume;
                 if (voxel != null)
                 {
-
                     if (!ai.PlanetSurfaceInRange && (entWorldVolume.Contains(p.Position) != ContainmentType.Disjoint || new RayD(ref p.Position, ref dir).Intersects(entWorldVolume) != null))
                     {
                         var dirNorm = Vector3D.Normalize(dir);

@@ -579,7 +579,7 @@ namespace CoreSystems
         [ProtoMember(22)] public bool Override;
         [ProtoMember(23), DefaultValue(1)] public int BurstCount = 1;
         [ProtoMember(24)] public int BurstDelay;
-        [ProtoMember(25)] public int SequenceId;
+        [ProtoMember(25), DefaultValue(-1)] public int SequenceId = -1;
         [ProtoMember(26)] public int ArmedTimer;
         [ProtoMember(27)] public int LeadGroup;
         [ProtoMember(28), DefaultValue(Weapon.ShootManager.ShootModes.AiShoot)] public Weapon.ShootManager.ShootModes ShootMode = Weapon.ShootManager.ShootModes.AiShoot;

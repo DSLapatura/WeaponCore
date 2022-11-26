@@ -229,11 +229,14 @@ namespace CoreSystems.Support
             RandOffsetDir = Vector3D.Zero;
             OffsetDir = Vector3D.Zero;
             TotalAcceleration = Vector3D.Zero;
+            LookAtPos = Vector3D.Zero;
             NavTargetEnt = null;
             ClosestObstacle = null;
+            DummyTargets = null;
             NavTargetBound = new BoundingSphereD(Vector3D.Zero,0);
             SmartReady = false;
             WasTracking = false;
+            PickTarget = false;
             SmartSlot = 0;
             StartDistanceTraveled = 0;
             LastActivatedStage = -1;

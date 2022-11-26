@@ -735,25 +735,16 @@ namespace CoreSystems
         internal static float GetSequenceId(IMyTerminalBlock block)
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return 0;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return -1;
             return comp.Data.Repo.Values.Set.Overrides.SequenceId;
         }
 
-        internal static bool ValidSequenceId(IMyTerminalBlock block, int testValue)
+        internal static bool ValidSequenceId(IMyTerminalBlock block)
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return false;
 
-            Ai.WeaponGroup group;
-            if (comp.Ai.Construct.RootAi != null && comp.Ai.Construct.RootAi.Construct.WeaponGroups.TryGetValue(comp.Data.Repo.Values.Set.Overrides.WeaponGroupId, out group))
-            {
-                Ai.WeaponSequence seq;
-                if (!group.Sequences.TryGetValue(testValue, out seq) || seq.Weapons.Count == 0 && !seq.Weapons.ContainsKey(comp) || seq.Weapons.Count == 1 && seq.Weapons.ContainsKey(comp))
-                {
-                    return true;
-                }
-            }
-            return false;
+            return !comp.DuplicateSequenceId();
         }
 
         internal static void RequestSetSequenceId(IMyTerminalBlock block, float newValue)
@@ -952,7 +943,7 @@ namespace CoreSystems
 
         internal static float GetMinSequenceId(IMyTerminalBlock block)
         {
-            return 0;
+            return -1;
         }
 
         internal static float GetMaxSequenceId(IMyTerminalBlock block)
@@ -960,7 +951,7 @@ namespace CoreSystems
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return 0;
 
-            return 100;
+            return 99;
         }
 
         internal static float GetMinWeaponGroupId(IMyTerminalBlock block)

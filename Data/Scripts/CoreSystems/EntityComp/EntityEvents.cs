@@ -159,6 +159,10 @@ namespace CoreSystems.Support
             try {
                 var wasFunctional = IsFunctional;
                 IsFunctional = myCubeBlock.IsFunctional;
+
+                if (Registered && Ai.Construct.RootAi !=null)
+                    Ai.Construct.RootAi.Construct.DirtyWeaponGroups = true;
+
                 if (Platform.State == PlatformState.Incomplete) {
                     Log.Line("Init on Incomplete");
                     Init();

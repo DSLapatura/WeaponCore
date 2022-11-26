@@ -263,10 +263,16 @@ namespace CoreSystems.Platform
 
                 Ai.WeaponGroup group;
                 Ai.WeaponSequence sequence;
+                Log.Line($"{CoreEntity.EntityId} - func:{IsFunctional} - working:{IsWorking} - seqId:{overrides.SequenceId} - group:{rootConstruct.WeaponGroups.TryGetValue(overrides.WeaponGroupId, out group)} - {group?.OrderSequencesIds[group.SequenceStep] == overrides.SequenceId}({group?.SequenceStep})[{group?.Sequences.Count}] - {group?.Sequences.TryGetValue(overrides.SequenceId, out sequence)}");
 
-                if (rootConstruct.WeaponGroups.TryGetValue(overrides.WeaponGroupId, out group) && group.OrderSequencesIds[group.SequenceStep] == overrides.SequenceId && group.Sequences.TryGetValue(overrides.SequenceId, out sequence))
+                if (rootConstruct.WeaponGroups.TryGetValue(overrides.WeaponGroupId, out group) && overrides.SequenceId >= 0 && group.OrderSequencesIds[group.SequenceStep] == overrides.SequenceId && group.Sequences.TryGetValue(overrides.SequenceId, out sequence))
                 {
-                    if (ShootManager.LastShootTick > ShootManager.PrevShootEventTick)
+                    if (sequence.Weapons.Count > 1 && sequence.Weapons.ContainsKey(this))
+                        return false;
+
+                    var working = IsFunctional && IsWorking && (!TurretController || MasterOverrides.Override || ModOverride || PartTracking == Collection.Count);
+
+                    if (ShootManager.LastShootTick > ShootManager.PrevShootEventTick || !working)
                     {
                         ShootManager.PrevShootEventTick = ShootManager.LastShootTick;
                         ++sequence.ShotsFired;
@@ -350,6 +356,22 @@ namespace CoreSystems.Platform
                     Session.SendState(this);
             }
 
+            internal bool DuplicateSequenceId()
+            {
+                if (Data.Repo.Values.Set.Overrides.SequenceId < 0 || Data.Repo.Values.Set.Overrides.WeaponGroupId <= 0)
+                    return false;
+                Ai.WeaponGroup group;
+                if (Ai.Construct.RootAi != null && Ai.Construct.RootAi.Construct.WeaponGroups.TryGetValue(Data.Repo.Values.Set.Overrides.WeaponGroupId, out group))
+                {
+                    Ai.WeaponSequence seq;
+                    if (!group.Sequences.TryGetValue(Data.Repo.Values.Set.Overrides.SequenceId, out seq) || seq.Weapons.Count == 0 && !seq.Weapons.ContainsKey(this) || seq.Weapons.Count == 1 && seq.Weapons.ContainsKey(this))
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            }
+
             internal void DetectStateChanges(bool masterChange)
             {
                 if (Platform.State != CorePlatform.PlatformState.Ready)
@@ -414,7 +436,6 @@ namespace CoreSystems.Platform
                 foreach (var at in ActiveTargets) {
                     if (at.Value.ReleasedTick > 0 && Session.Tick - at.Value.ReleasedTick > 120)
                     {
-                        Log.Line($"removed:{at.Key.GetHashCode()}");
                         ActiveTargets.Remove(at);
                     }
                 }

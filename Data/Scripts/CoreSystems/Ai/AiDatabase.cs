@@ -43,8 +43,9 @@ namespace CoreSystems.Support
 
             for (int i = 0; i < NearByEntitiesTmp; i++)
             {
-
                 var ent = _possibleTargets[i];
+                if (ent == null)
+                    continue;
                 using (ent.Pin())
                 {
 
@@ -114,31 +115,54 @@ namespace CoreSystems.Support
             StaticsInRangeTmp.Clear();
             for (int i = 0; i < NearByEntitiesTmp; i++) {
 
-                var ent = _possibleTargets[i];
-                if (Session.ShieldApiLoaded && ent.DefinitionId?.SubtypeId == Session.ShieldHash && ent.Render.Visible) {
-
-                    var shieldblock = Session.SApi.MatchEntToShieldFast(ent, false);
-                    if (shieldblock != null)
-                        NearByShieldsTmp.Add(new Shields { Id = ent.Hierarchy.ChildId, ShieldEnt = ent, ShieldBlock = (MyCubeBlock)shieldblock });
-                }
-                var voxel = ent as MyVoxelBase;
-                var grid = ent as MyCubeGrid;
-                var safeZone = ent as MySafeZone;
-                var character = ent as IMyCharacter;
-                var blockingThings = safeZone != null || ent.Physics != null && (grid != null || character != null) || voxel != null && voxel == voxel.RootVoxel;
-                if (!blockingThings || voxel != null && (voxel.RootVoxel is MyPlanet || voxel.PositionComp.LocalVolume.Radius < 15) || ((uint)ent.Flags & 0x1000000) > 0) continue;
-
-                if (voxel != null || safeZone != null || ent.Physics.IsStatic)
-                    StaticsInRangeTmp.Add(ent);
-
-                TopMap map;
-                if (grid != null && AiType != AiTypes.Phantom && (TopEntityMap.GroupMap.Construct.ContainsKey(grid) || ValidGrids.Contains(ent) || grid.PositionComp.LocalVolume.Radius <= 7.5 || Session.TopEntityToInfoMap.TryGetValue(grid, out map) && map.Trash)) continue;
-
-                Sandbox.ModAPI.Ingame.MyDetectedEntityInfo entInfo;
-                if (CreateEntInfo(ent, AiOwner, out entInfo))
+                try
                 {
-                    ObstructionsTmp.Add(new DetectInfo(Session, ent, entInfo, 2, 2, false, false));
+                    var ent = _possibleTargets[i];
+                    if (ent == null)
+                        continue;
+                    using (ent.Pin())
+                    {
+
+                            if (ent is MyFloatingObject || ent.MarkedForClose || !ent.InScene)
+                                continue;
+
+                            if (Session.ShieldApiLoaded && ent.DefinitionId?.SubtypeId == Session.ShieldHash && ent.Render.Visible)
+                            {
+                                var shieldblock = Session.SApi.MatchEntToShieldFast(ent, false);
+                                if (shieldblock != null)
+                                    NearByShieldsTmp.Add(new Shields { Id = ent.Hierarchy.ChildId, ShieldEnt = ent, ShieldBlock = (MyCubeBlock)shieldblock });
+                            }
+
+
+                            var voxel = ent as MyVoxelBase;
+                            var grid = ent as MyCubeGrid;
+                            var safeZone = ent as MySafeZone;
+                            var character = ent as IMyCharacter;
+                            var blockingThings = safeZone != null || ent.Physics != null && !ent.Physics.IsPhantom && (grid != null || character != null) || voxel != null && voxel == voxel.RootVoxel;
+                            if (!blockingThings || voxel != null && (voxel.RootVoxel is MyPlanet || voxel.PositionComp.LocalVolume.Radius < 15) || ent.IsPreview || ((uint)ent.Flags & 0x1000000) > 0) continue;
+
+                            if (voxel != null || safeZone != null || ent.Physics.IsStatic)
+                                StaticsInRangeTmp.Add(ent);
+
+                            TopMap map;
+                            if (grid != null && AiType != AiTypes.Phantom && (TopEntityMap.GroupMap.Construct.ContainsKey(grid) || ValidGrids.Contains(ent) || grid.PositionComp.LocalVolume.Radius <= 7.5 || Session.TopEntityToInfoMap.TryGetValue(grid, out map) && map.Trash && map.GroupMap?.Construct.Count <= 1)) continue;
+
+                            Sandbox.ModAPI.Ingame.MyDetectedEntityInfo entInfo;
+                            if (CreateEntInfo(ent, AiOwner, out entInfo))
+                            {
+                                ObstructionsTmp.Add(new DetectInfo(Session, ent, entInfo, 2, 2, false, false));
+                            }
+
+                    }
                 }
+                catch (Exception ex) { Log.Line($"Exception in FinalizeTargetDb loop: {ex}", null, true); }
+            }
+
+            if (MyPlanetTmp != null)
+            {
+                Sandbox.ModAPI.Ingame.MyDetectedEntityInfo entInfo;
+                if (CreateEntInfo(MyPlanetTmp, AiOwner, out entInfo))
+                    ObstructionsTmp.Add(new DetectInfo(Session, MyPlanetTmp, entInfo, 2, 2, false, false));
             }
 
             foreach (var pair in NoTargetLos) {
