@@ -113,7 +113,7 @@ namespace CoreSystems.Support
         public readonly MyStringHash AzimuthPartName;
         public readonly MyStringHash ElevationPartName;
         public readonly MyStringHash SpinPartName;
-        public readonly MyStringHash ScannerId;
+        public readonly MyStringHash ChannelId;
         public readonly WeaponDefinition Values;
         public readonly AmmoType[] AmmoTypes;
         public readonly MySoundPair PreFireSoundPair;
@@ -132,6 +132,7 @@ namespace CoreSystems.Support
         public readonly string[] Muzzles;
         public readonly uint MaxTrackingTicks;
         public readonly int MaxActiveProjectiles;
+        public readonly int MaxExportTargets;
         public readonly int MaxReloads;
         public readonly int DelayToFire;
         public readonly int CeaseFireDelay;
@@ -272,11 +273,11 @@ namespace CoreSystems.Support
             MaxReloads = Values.HardPoint.Loading.MaxReloads;
             MaxActiveProjectiles = Values.HardPoint.Loading.MaxActiveProjectiles > 0 ? Values.HardPoint.Loading.MaxActiveProjectiles : int.MaxValue;
             TargetGridCenter = Values.HardPoint.Ai.TargetGridCenter;
-
-            if (!string.IsNullOrEmpty(Values.Targeting.ScannerId))
+            if (!string.IsNullOrEmpty(Values.Targeting.ChannelId))
             {
+                MaxExportTargets = Values.Targeting.ExportLimit > 0 ? Values.Targeting.ExportLimit : int.MaxValue;
                 ExportTargets = Values.Targeting.ExportTargets;
-                ScannerId = MyStringHash.GetOrCompute(Values.Targeting.ScannerId);
+                ChannelId = MyStringHash.GetOrCompute(Values.Targeting.ChannelId);
                 SlaveToScanner = !ExportTargets;
             }
 

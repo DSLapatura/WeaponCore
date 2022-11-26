@@ -412,7 +412,7 @@ namespace CoreSystems.Support
                 Vector3D localTargetVector;
                 Vector3D.TransformNormal(ref targetDir, ref transposeMatrix, out localTargetVector);
 
-                if (double.IsNaN(localTargetVector.X))
+                if (weapon.Comp.Session.DebugMod && double.IsNaN(localTargetVector.X))
                 {
                     if (weapon.Comp.Session.Tick - weapon.LastNanTick > 60)
                     {

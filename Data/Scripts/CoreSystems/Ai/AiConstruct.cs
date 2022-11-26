@@ -563,14 +563,14 @@ namespace CoreSystems.Support
             internal bool TryAddOrUpdateTrackedTarget(Weapon w, object target)
             {
                 Dictionary<object, Weapon> dict;
-                if (!TrackedTargets.TryGetValue(w.System.ScannerId, out dict))
+                if (!TrackedTargets.TryGetValue(w.System.ChannelId, out dict))
                 {
                     dict = Ai.Session.TrackingDictPool.Count > 0 ? Ai.Session.TrackingDictPool.Pop() : new Dictionary<object, Weapon>();
-                    TrackedTargets[w.System.ScannerId] = dict;
+                    TrackedTargets[w.System.ChannelId] = dict;
                 }
 
                 Weapon tracker;
-                if (!dict.TryGetValue(target, out tracker) || tracker == w)
+                if ((!dict.TryGetValue(target, out tracker) || tracker == w) && dict.Count < w.System.MaxExportTargets) 
                 {
                     dict[target] = w;
                     return true;
@@ -583,7 +583,7 @@ namespace CoreSystems.Support
             {
                 Dictionary<object, Weapon> dict;
                 Weapon tracker;
-                return TrackedTargets.TryGetValue(w.System.ScannerId, out dict) && dict.TryGetValue(target, out tracker) && w == tracker && dict.Remove(target);
+                return TrackedTargets.TryGetValue(w.System.ChannelId, out dict) && dict.TryGetValue(target, out tracker) && w == tracker && dict.Remove(target);
             }
 
             internal void ClearTrackedTarget()
@@ -607,7 +607,7 @@ namespace CoreSystems.Support
                 nonThreatCollection.Clear();
 
                 Dictionary<object, Weapon> masterTargets;
-                if (TrackedTargets.TryGetValue(w.System.ScannerId, out masterTargets))
+                if (TrackedTargets.TryGetValue(w.System.ChannelId, out masterTargets))
                 {
                     foreach (var pair in masterTargets)
                     {

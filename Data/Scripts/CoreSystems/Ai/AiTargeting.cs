@@ -500,7 +500,7 @@ namespace CoreSystems.Support
 
 
                 var lpAccel = lp.Velocity - lp.PrevVelocity;
-                if (double.IsNaN(lpAccel.X))
+                if (s.DebugMod && double.IsNaN(lpAccel.X))
                 {
                     Log.Line($"projectile was NaN: {lp.Info.AmmoDef.AmmoRound}");
                     continue;
