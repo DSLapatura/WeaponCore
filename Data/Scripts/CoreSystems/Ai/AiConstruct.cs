@@ -563,10 +563,10 @@ namespace CoreSystems.Support
             internal bool TryAddOrUpdateTrackedTarget(Weapon w, object target)
             {
                 Dictionary<object, Weapon> dict;
-                if (!TrackedTargets.TryGetValue(w.System.PartNameIdHash, out dict))
+                if (!TrackedTargets.TryGetValue(w.System.ScannerId, out dict))
                 {
                     dict = Ai.Session.TrackingDictPool.Count > 0 ? Ai.Session.TrackingDictPool.Pop() : new Dictionary<object, Weapon>();
-                    TrackedTargets[w.System.PartNameIdHash] = dict;
+                    TrackedTargets[w.System.ScannerId] = dict;
                 }
 
                 Weapon tracker;
@@ -583,7 +583,7 @@ namespace CoreSystems.Support
             {
                 Dictionary<object, Weapon> dict;
                 Weapon tracker;
-                return TrackedTargets.TryGetValue(w.System.PartNameIdHash, out dict) && dict.TryGetValue(target, out tracker) && w == tracker && dict.Remove(target);
+                return TrackedTargets.TryGetValue(w.System.ScannerId, out dict) && dict.TryGetValue(target, out tracker) && w == tracker && dict.Remove(target);
             }
 
             internal void ClearTrackedTarget()

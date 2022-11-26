@@ -332,8 +332,8 @@ namespace CoreSystems.Projectiles
                 if (aConst.Ewar)
                     p.RunEwar();
 
-                //if (Session.DebugMod && (double.IsNaN(p.Position.X) || double.IsNaN(p.LastPosition.X) || double.IsNaN(p.Info.Direction.X) || double.IsNaN(p.Velocity.X) || double.IsNaN(p.PrevVelocity.X) || double.IsNaN(p.TargetPosition.X)  || double.IsNaN(p.TravelMagnitude.X)))
-                //    Log.Line($"something was NaN");
+                if (Session.DebugMod && (double.IsNaN(p.Position.X) || double.IsNaN(p.LastPosition.X) || double.IsNaN(p.Info.Direction.X) || double.IsNaN(p.Velocity.X) || double.IsNaN(p.PrevVelocity.X) || double.IsNaN(p.TargetPosition.X)  || double.IsNaN(p.TravelMagnitude.X)))
+                    Log.Line($"something was NaN");
             }
         }
 

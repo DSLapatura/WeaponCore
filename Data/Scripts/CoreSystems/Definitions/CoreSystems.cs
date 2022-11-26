@@ -275,10 +275,10 @@ namespace CoreSystems.Support
 
             if (!string.IsNullOrEmpty(Values.Targeting.ScannerId))
             {
+                ExportTargets = Values.Targeting.ExportTargets;
                 ScannerId = MyStringHash.GetOrCompute(Values.Targeting.ScannerId);
-                SlaveToScanner = true;
+                SlaveToScanner = !ExportTargets;
             }
-            ExportTargets = Values.Targeting.ExportTargets && !string.IsNullOrEmpty(PartName);
 
             SuppressFire = Values.HardPoint.Ai.SuppressFire;
             PartType = Values.HardPoint.HardWare.Type;

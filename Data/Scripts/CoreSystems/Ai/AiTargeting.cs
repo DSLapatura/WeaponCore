@@ -496,8 +496,15 @@ namespace CoreSystems.Support
                 Weapon.TargetOwner tOwner;
                 if (smartOnly && !smart || lockedOnly && (!smart || cube != null && w.Comp.IsBlock && cube.CubeGrid.IsSameConstructAs(w.Comp.Ai.GridEntity)) || lp.MaxSpeed > system.MaxTargetSpeed || lp.MaxSpeed <= 0 || lp.State != Projectile.ProjectileState.Alive || Vector3D.DistanceSquared(lp.Position, weaponPos) > w.MaxTargetDistanceSqr || Vector3D.DistanceSquared(lp.Position, weaponPos) < w.MinTargetDistanceBufferSqr || w.System.UniqueTargetPerWeapon && w.Comp.ActiveTargets.TryGetValue(lp, out tOwner) && tOwner.Weapon != w) continue;
 
+
+                var lpAccel = lp.Velocity - lp.PrevVelocity;
+                if (double.IsNaN(lpAccel.X))
+                {
+                    Log.Line($"projectile was NaN: {lp.Info.AmmoDef.AmmoRound}");
+                    continue;
+                }
                 Vector3D predictedPos;
-                if (Weapon.CanShootTarget(w, ref lp.Position, lp.Velocity, lp.Velocity - lp.PrevVelocity, out predictedPos))
+                if (Weapon.CanShootTarget(w, ref lp.Position, lp.Velocity, lpAccel, out predictedPos))
                 {
                     var needsCast = false;
                     for (int i = 0; i < ai.Obstructions.Count; i++)
