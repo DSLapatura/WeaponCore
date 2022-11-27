@@ -684,9 +684,7 @@ namespace CoreSystems.Platform
             Vector3D estimatedImpactPoint = targetPos + timeToIntercept * (targetVel - shooterVel * shooterVelScaleFactor);
             
             if (basic)
-            {
                 return estimatedImpactPoint;
-            }
 
             Vector3D aimDirection = estimatedImpactPoint - shooterPos;
 
@@ -706,9 +704,7 @@ namespace CoreSystems.Platform
             {
 
                 if (targetAcc.LengthSquared() < 1 && !hasGravity)
-                {
                     return estimatedImpactPoint;
-                }
 
                 if (Vector3D.IsZero(deltaPos)) aimDirectionNorm = Vector3D.Zero;
                 else if (Vector3D.IsUnit(ref deltaPos)) aimDirectionNorm = aimDirection;
@@ -792,7 +788,10 @@ namespace CoreSystems.Platform
                 var angleCheck = (v * v * v * v) - 2 * (v * v) * -h * g - (g * g) * (d * d);
 
                 if (angleCheck <= 0)
+                {
                     return estimatedImpactPoint + perpendicularAimOffset + gravityOffset;
+
+                }
 
                 //lord help me
                 var angleSqrt = Math.Sqrt(angleCheck);
@@ -802,7 +801,9 @@ namespace CoreSystems.Platform
                 var verticalDistance = Math.Tan(angle2) * horizontalDistance; //without below-the-horizon modifier
                 gravityOffset = new Vector3D((verticalDistance + Math.Abs(elevationDifference)) * -weapon.GravityUnitDir);
                 if (angle1 > 1.57)
+                {
                     return estimatedImpactPoint + perpendicularAimOffset + gravityOffset;
+                }
 
                 var targetAimPoint = estimatedImpactPoint + perpendicularAimOffset + gravityOffset;
                 var targetDirection = targetAimPoint - shooterPos;

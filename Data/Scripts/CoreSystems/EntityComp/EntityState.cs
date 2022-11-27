@@ -61,7 +61,10 @@ namespace CoreSystems.Support
             try
             {
                 if (ent == null)
+                {
+                    Log.Line($"SubpartClosed had null entity");
                     return;
+                }
 
                 using (CoreEntity.Pin())
                 {

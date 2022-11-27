@@ -10,6 +10,7 @@ using VRage.Game.ModAPI;
 using VRage.ModAPI;
 using VRage.Utils;
 using VRageMath;
+using WeaponCore.Data.Scripts.CoreSystems.Comms;
 using static CoreSystems.FocusData;
 
 namespace CoreSystems.Support
@@ -115,7 +116,7 @@ namespace CoreSystems.Support
             internal readonly ConstructData Data = new ConstructData();
             internal readonly Dictionary<long, PlayerController> ControllingPlayers = new Dictionary<long, PlayerController>();
             internal readonly Dictionary<MyEntity, TargetInfo> ConstructTargetInfoCache = new Dictionary<MyEntity, TargetInfo>();
-
+            internal readonly Dictionary<MyStringHash, Radios> RadioMap = new Dictionary<MyStringHash, Radios>(); 
             internal readonly HashSet<MyEntity> PreviousTargets = new HashSet<MyEntity>();
             internal readonly Dictionary<int, WeaponGroup> WeaponGroups = new Dictionary<int, WeaponGroup>();
             internal readonly RunningAverage DamageAverage = new RunningAverage(10);

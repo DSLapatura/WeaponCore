@@ -687,109 +687,134 @@ namespace CoreSystems.Projectiles
 
         internal bool GenerateHitInfo(Projectile p)
         {
-            var info = p.Info;
-            var count = info.HitList.Count;
-            if (count > 1)
+            try
             {
-                try { info.HitList.Sort((x, y) => GetEntityCompareDist(x, y, info)); } // Unable to sort because the IComparer.Compare() method returns inconsistent results
-                catch (Exception ex) { Log.Line($"p.Info.HitList.Sort failed: {ex} - weapon:{info.Weapon.System.PartName} - ammo:{info.AmmoDef.AmmoRound} - hitCount:{info.HitList.Count}", null, true); } 
-            }
-            else GetEntityCompareDist(info.HitList[0], null, info);
-            var pulseTrigger = false;
-            var voxelFound = false;
-            for (int i = info.HitList.Count - 1; i >= 0; i--)
-            {
-                var ent = info.HitList[i];
-
-                if (ent.EventType == Voxel)
-                    voxelFound = true;
-
-                if (!ent.Hit)
+                var info = p.Info;
+                var count = info.HitList.Count;
+                if (count > 1)
                 {
-                    if (ent.PulseTrigger) pulseTrigger = true;
-                    info.HitList.RemoveAtFast(i);
-                    HitEntityPool.Return(ent);
+                    try { info.HitList.Sort((x, y) => GetEntityCompareDist(x, y, info)); } // Unable to sort because the IComparer.Compare() method returns inconsistent results
+                    catch (Exception ex) { Log.Line($"p.Info.HitList.Sort failed: {ex} - weapon:{info.Weapon.System.PartName} - ammo:{info.AmmoDef.AmmoRound} - hitCount:{info.HitList.Count}", null, true); }
                 }
-                else break;
-            }
-
-            if (pulseTrigger)
-            {
-
-                info.EwarAreaPulse = true;
-                p.DistanceToTravelSqr = info.DistanceTraveled * info.DistanceTraveled;
-                p.PrevVelocity = p.Velocity;
-                p.Velocity = Vector3D.Zero;
-                info.Hit.SurfaceHit = p.Position + info.Direction * info.AmmoDef.Const.EwarTriggerRange;
-                info.Hit.LastHit = info.Hit.SurfaceHit;
-                info.HitList.Clear();
-                return false;
-            }
-
-
-            var finalCount = info.HitList.Count;
-            if (finalCount > 0)
-            {
-                var aConst = info.AmmoDef.Const;
-                if (voxelFound && info.HitList[0].EventType != Voxel && aConst.IsBeamWeapon)
-                    info.VoxelCache.HitRefreshed = 0;
-
-                var checkHit = (!aConst.IsBeamWeapon || !info.ShieldBypassed || finalCount > 1); ;
-
-                var blockingEnt = !info.ShieldBypassed || finalCount == 1 ? 0 : 1;
-                var hitEntity = info.HitList[blockingEnt];
-
-                if (!checkHit)
-                    hitEntity.HitPos = p.Beam.To;
-
-                Vector3D? lastHitVel = Vector3D.Zero;
-                if (hitEntity.EventType == Shield)
+                else GetEntityCompareDist(info.HitList[0], null, info);
+                var pulseTrigger = false;
+                var voxelFound = false;
+                for (int i = info.HitList.Count - 1; i >= 0; i--)
                 {
-                    var cube = hitEntity.Entity as MyCubeBlock;
-                    if (cube?.CubeGrid?.Physics != null)
-                        lastHitVel = cube.CubeGrid.Physics.LinearVelocity;
-                }
-                else if (hitEntity.Projectile != null)
-                    lastHitVel = hitEntity.Projectile?.Velocity;
-                else if (hitEntity.Entity?.Physics != null)
-                    lastHitVel = hitEntity.Entity?.Physics.LinearVelocity;
-                else lastHitVel = Vector3D.Zero;
+                    var ent = info.HitList[i];
 
-                var grid = hitEntity.Entity as MyCubeGrid;
-
-                IMySlimBlock hitBlock = null;
-                Vector3D? visualHitPos;
-                if (grid != null)
-                {
-                    if (aConst.VirtualBeams)
-                        hitBlock = hitEntity.Blocks[0].Block;
-
-                    IHitInfo hitInfo = null;
-                    if (Session.HandlesInput && hitEntity.HitPos.HasValue && Vector3D.DistanceSquared(hitEntity.HitPos.Value, Session.CameraPos) < 22500 && Session.CameraFrustrum.Contains(hitEntity.HitPos.Value) != ContainmentType.Disjoint)
+                    if (ent == null)
                     {
-                        var entSphere = hitEntity.Entity.PositionComp.WorldVolume;
-                        var from = hitEntity.Intersection.From + (hitEntity.Intersection.Direction * MyUtils.GetSmallestDistanceToSphereAlwaysPositive(ref hitEntity.Intersection.From, ref entSphere));
-                        var to = hitEntity.HitPos.Value + (hitEntity.Intersection.Direction * 3f);
-                        Session.Physics.CastRay(from, to, out hitInfo, 15);
+                        Log.Line($"ent was null in GenerateHitInfo");
+                        continue;
                     }
-                    visualHitPos = hitInfo?.HitEntity != null ? hitInfo.Position : hitEntity.HitPos;
+
+                    if (ent.EventType == Voxel)
+                        voxelFound = true;
+
+                    if (!ent.Hit)
+                    {
+                        if (ent.PulseTrigger) pulseTrigger = true;
+                        info.HitList.RemoveAtFast(i);
+                        HitEntityPool.Return(ent);
+                    }
+                    else break;
                 }
-                else visualHitPos = hitEntity.HitPos;
-                info.Hit = new Hit { Block = hitBlock, Entity = hitEntity.Entity, EventType = hitEntity.EventType, LastHit = visualHitPos ?? Vector3D.Zero, SurfaceHit = visualHitPos ?? Vector3D.Zero, HitVelocity = lastHitVel ?? Vector3D.Zero, HitTick = Session.Tick};
 
-                //if (Session.DebugVersion && info.Ai.AiType == Ai.AiTypes.Player)
-                //    Session.AddHandHitDebug(p.Beam.From, p.Beam.To, false);
-
-                if (p.EnableAv)
+                if (pulseTrigger)
                 {
-                    info.AvShot.LastHitShield = hitEntity.EventType == Shield;
-                    info.AvShot.Hit = info.Hit;
-                    if (info.AimedShot && Session.TrackingAi != null && Session.TargetUi.HitIncrease < 0.1d && info.Weapon.Comp.Ai.ControlComp == null && (info.AmmoDef.Const.FixedFireAmmo || info.Weapon.Comp.Data.Repo.Values.Set.Overrides.Control != ProtoWeaponOverrides.ControlModes.Auto))
-                        Session.TargetUi.SetHit(info);
+
+                    info.EwarAreaPulse = true;
+                    p.DistanceToTravelSqr = info.DistanceTraveled * info.DistanceTraveled;
+                    p.PrevVelocity = p.Velocity;
+                    p.Velocity = Vector3D.Zero;
+                    info.Hit.SurfaceHit = p.Position + info.Direction * info.AmmoDef.Const.EwarTriggerRange;
+                    info.Hit.LastHit = info.Hit.SurfaceHit;
+                    info.HitList.Clear();
+                    return false;
                 }
 
-                return true;
+
+                var finalCount = info.HitList.Count;
+                try
+                {
+                    if (finalCount > 0)
+                    {
+                        var aConst = info.AmmoDef.Const;
+                        try
+                        {
+                            if (voxelFound && info.HitList[0].EventType != Voxel && aConst.IsBeamWeapon)
+                                info.VoxelCache.HitRefreshed = 0;
+                        }
+                        catch (Exception ex) { Log.Line($"Exception in HitRefreshed finalCount: {ex}", null, true); }
+
+                        var checkHit = (!aConst.IsBeamWeapon || !info.ShieldBypassed || finalCount > 1); 
+
+                        var blockingEnt = !info.ShieldBypassed || finalCount == 1 ? 0 : 1;
+                        var hitEntity = info.HitList[blockingEnt];
+                        if (hitEntity == null)
+                        {
+                            Log.Line($"null hitEntity");
+                            return false;
+                        }
+                        if (!checkHit)
+                            hitEntity.HitPos = p.Beam.To;
+
+                        Vector3D? lastHitVel = Vector3D.Zero;
+                        if (hitEntity.EventType == Shield)
+                        {
+                            var cube = hitEntity.Entity as MyCubeBlock;
+                            if (cube?.CubeGrid?.Physics != null)
+                                lastHitVel = cube.CubeGrid.Physics.LinearVelocity;
+                        }
+                        else if (hitEntity.Projectile != null)
+                            lastHitVel = hitEntity.Projectile?.Velocity;
+                        else if (hitEntity.Entity?.Physics != null)
+                            lastHitVel = hitEntity.Entity?.Physics.LinearVelocity;
+                        else lastHitVel = Vector3D.Zero;
+
+                        var grid = hitEntity.Entity as MyCubeGrid;
+
+                        IMySlimBlock hitBlock = null;
+                        Vector3D? visualHitPos;
+                        if (grid != null)
+                        {
+                            if (aConst.VirtualBeams)
+                                hitBlock = hitEntity.Blocks[0].Block;
+
+                            IHitInfo hitInfo = null;
+                            if (Session.HandlesInput && hitEntity.HitPos.HasValue && Vector3D.DistanceSquared(hitEntity.HitPos.Value, Session.CameraPos) < 22500 && Session.CameraFrustrum.Contains(hitEntity.HitPos.Value) != ContainmentType.Disjoint)
+                            {
+                                var entSphere = hitEntity.Entity.PositionComp.WorldVolume;
+                                var from = hitEntity.Intersection.From + (hitEntity.Intersection.Direction * MyUtils.GetSmallestDistanceToSphereAlwaysPositive(ref hitEntity.Intersection.From, ref entSphere));
+                                var to = hitEntity.HitPos.Value + (hitEntity.Intersection.Direction * 3f);
+                                Session.Physics.CastRay(from, to, out hitInfo, 15);
+                            }
+                            visualHitPos = hitInfo?.HitEntity != null ? hitInfo.Position : hitEntity.HitPos;
+                        }
+                        else visualHitPos = hitEntity.HitPos;
+                        info.Hit = new Hit { Block = hitBlock, Entity = hitEntity.Entity, EventType = hitEntity.EventType, LastHit = visualHitPos ?? Vector3D.Zero, SurfaceHit = visualHitPos ?? Vector3D.Zero, HitVelocity = lastHitVel ?? Vector3D.Zero, HitTick = Session.Tick };
+
+                        //if (Session.DebugVersion && info.Ai.AiType == Ai.AiTypes.Player)
+                        //    Session.AddHandHitDebug(p.Beam.From, p.Beam.To, false);
+
+                        if (p.EnableAv)
+                        {
+                            info.AvShot.LastHitShield = hitEntity.EventType == Shield;
+                            info.AvShot.Hit = info.Hit;
+                            if (info.AimedShot && Session.TrackingAi != null && Session.TargetUi.HitIncrease < 0.1d && info.Weapon.Comp.Ai.ControlComp == null && (info.AmmoDef.Const.FixedFireAmmo || info.Weapon.Comp.Data.Repo.Values.Set.Overrides.Control != ProtoWeaponOverrides.ControlModes.Auto))
+                                Session.TargetUi.SetHit(info);
+                        }
+
+                        return true;
+                    }
+
+                }
+                catch (Exception ex) { Log.Line($"Exception in GenerateHitInfo finalCount: {ex}", null, true); }
             }
+            catch (Exception ex) { Log.Line($"Exception in GenerateHitInfo: {ex}", null, true); }
+
+
             return false;
         }
 

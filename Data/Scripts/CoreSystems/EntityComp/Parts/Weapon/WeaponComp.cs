@@ -263,8 +263,6 @@ namespace CoreSystems.Platform
 
                 Ai.WeaponGroup group;
                 Ai.WeaponSequence sequence;
-                Log.Line($"{CoreEntity.EntityId} - func:{IsFunctional} - working:{IsWorking} - seqId:{overrides.SequenceId} - group:{rootConstruct.WeaponGroups.TryGetValue(overrides.WeaponGroupId, out group)} - {group?.OrderSequencesIds[group.SequenceStep] == overrides.SequenceId}({group?.SequenceStep})[{group?.Sequences.Count}] - {group?.Sequences.TryGetValue(overrides.SequenceId, out sequence)}");
-
                 if (rootConstruct.WeaponGroups.TryGetValue(overrides.WeaponGroupId, out group) && overrides.SequenceId >= 0 && group.OrderSequencesIds[group.SequenceStep] == overrides.SequenceId && group.Sequences.TryGetValue(overrides.SequenceId, out sequence))
                 {
                     if (sequence.Weapons.Count > 1 && sequence.Weapons.ContainsKey(this))

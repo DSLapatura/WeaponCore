@@ -174,7 +174,7 @@ namespace CoreSystems.Projectiles
                         HadTarget = HadTargetState.None;
                         Info.Target.TargetState = Target.TargetStates.None;
                         TargetPosition = Vector3D.Zero;
-                        Log.Line($"ProjectileStart had invalid entity target state, isFragment: {Info.IsFragment}");
+                        Log.Line($"ProjectileStart had invalid entity target state, isFragment: {Info.IsFragment} - ammo:{ammoDef.AmmoRound} - weapon:{Info.Weapon.System.ShortName}");
                         break;
                     }
 
@@ -1378,15 +1378,27 @@ namespace CoreSystems.Projectiles
                     }
                 }
 
+                if (!MyUtils.IsValid(commandedAccel) || Vector3D.IsZero(commandedAccel))
+                {
+                    Log.Line($"commandedAccel is Zero/NaN - TargetPosition:{TargetPosition} - commandedAccel:{commandedAccel} - Position:{Position} - rndDir:{s.RandOffsetDir} - lateralAcceleration:{lateralAcceleration} - missileToTargetNorm:{missileToTargetNorm} - missileToTargetNorm:{relativeVelocity}");
+                    commandedAccel = Info.Direction * accelMpsMulti;
+                }
+
                 if (accelMpsMulti > 0)
                 {
                     var commandNorm = Vector3D.Normalize(commandedAccel);
                     var dot = Vector3D.Dot(Info.Direction, commandNorm);
 
-                    if (dot < 0.98 || offset) {
+                    if (offset) {
+                        if (MyUtils.IsZero(dot - 1, 1E-04f))
+                            dot = 0.99990d;
+                        else if (MyUtils.IsZero(dot, 1E-04f))
+                            dot = 0.0001d;
+                    }
+
+                    if ((dot < 0.98 && dot > -0.9990d && !MyUtils.IsZero(dot, 1E-04f) || offset)) {
                         var maxRotationsPerTickInRads = aConst.MaxLateralThrust;
                         var radPerTickDelta = Math.Acos(dot);
-
                         var deaccelLimit = dot < deAccelLimit;
                         var rotLimit = maxRotationsPerTickInRads / radPerTickDelta;
                         var accelConstraint = deaccelLimit ? rotLimit * maxDeAccelperSec : rotLimit;
@@ -1396,9 +1408,14 @@ namespace CoreSystems.Projectiles
                     }
 
                     proposedVel = Velocity + (commandedAccel * StepConst);
-                    var accelDir = commandedAccel / accelMpsMulti;
 
+                    if (!MyUtils.IsValid(proposedVel) || Vector3D.IsZero(proposedVel))
+                    {
+                        Log.Line($"Info.Direction is NaN - proposedVel:{proposedVel} - {commandedAccel} - Position:{Position} - Direction:{Info.Direction} - rndDir:{s.RandOffsetDir} - lateralAcceleration:{lateralAcceleration} - missileToTargetNorm:{missileToTargetNorm} - missileToTargetNorm:{relativeVelocity}");
+                        proposedVel = Velocity + (Info.Direction * aConst.DeltaVelocityPerTick);
+                    }
                     Vector3D.Normalize(ref proposedVel, out Info.Direction);
+
                 }
             }
             else if (!smarts.AccelClearance || s.SmartReady)

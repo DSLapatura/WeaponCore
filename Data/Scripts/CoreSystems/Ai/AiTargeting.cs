@@ -500,11 +500,6 @@ namespace CoreSystems.Support
 
 
                 var lpAccel = lp.Velocity - lp.PrevVelocity;
-                if (s.DebugMod && double.IsNaN(lpAccel.X))
-                {
-                    Log.Line($"projectile was NaN: {lp.Info.AmmoDef.AmmoRound}");
-                    continue;
-                }
                 Vector3D predictedPos;
                 if (Weapon.CanShootTarget(w, ref lp.Position, lp.Velocity, lpAccel, out predictedPos, false, null, MathFuncs.DebugCaller.CanShootTarget5))
                 {
@@ -513,7 +508,11 @@ namespace CoreSystems.Support
                     {
                         var ent = ai.Obstructions[i].Target;
 
-                        if (ent == null || ent is MyPlanet)
+                        if (ent == null) {
+                            Log.Line($"AcquireProjectile had null obstruction entity");
+                            continue;
+                        }
+                        if (ent is MyPlanet)
                             continue;
                         var obsSphere = ent.PositionComp.WorldVolume;
 
@@ -763,7 +762,12 @@ namespace CoreSystems.Support
                 for (int i = 0; i < ai.Obstructions.Count; i++)
                 {
                     var ent = ai.Obstructions[i].Target;
-                    if (ent == null || ent is MyPlanet)
+                    if (ent == null)
+                    {
+                        Log.Line($"ReAcquireProjectile had null obstruction entity");
+                        continue;
+                    }
+                    if (ent is MyPlanet)
                         continue;
 
                     var obsSphere = ent.PositionComp.WorldVolume;
@@ -1233,7 +1237,12 @@ namespace CoreSystems.Support
             for (int j = 0; j < ai.Obstructions.Count; j++)
             {
                 var ent = ai.Obstructions[j].Target;
-                if (ent == null || ent is MyPlanet)
+                if (ent == null)
+                {
+                    Log.Line($"Obstruction had null entity");
+                    continue;
+                }
+                if (ent is MyPlanet)
                     continue;
 
                 var voxel = ent as MyVoxelBase;

@@ -12,7 +12,6 @@ namespace CoreSystems.Support
         internal static bool BresenhamGridIntersection(MyCubeGrid grid, ref Vector3D worldStart, ref Vector3D worldEnd, out Vector3D? hitPos, MyEntity part = null, Ai ai = null)
         {
             var weaponBlock = part as MyCubeBlock;
-
             var start = grid.WorldToGridInteger(worldStart);
             var end = grid.WorldToGridInteger(worldEnd);
             Vector3I delta = end - start;

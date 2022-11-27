@@ -45,7 +45,10 @@ namespace CoreSystems.Support
             {
                 var ent = _possibleTargets[i];
                 if (ent == null)
+                {
+                    Log.Line($"scan had null entity");
                     continue;
+                }
                 using (ent.Pin())
                 {
 
@@ -119,7 +122,10 @@ namespace CoreSystems.Support
                 {
                     var ent = _possibleTargets[i];
                     if (ent == null)
+                    {
+                        Log.Line($"FinalizeTargetDb had null entity");
                         continue;
+                    }
                     using (ent.Pin())
                     {
 
@@ -281,7 +287,11 @@ namespace CoreSystems.Support
             for (int i = 0; i < StaticsInRangeTmp.Count; i++) {
 
                 var ent = StaticsInRangeTmp[i];
-                if (ent == null) continue;
+                if (ent == null)
+                {
+                    Log.Line($"MyStaticInfo had null entity");
+                    continue;
+                }
                 if (ent.MarkedForClose) continue;
                 var safeZone = ent as MySafeZone;
                 

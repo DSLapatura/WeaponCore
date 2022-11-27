@@ -17,7 +17,6 @@ using VRage.Game;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRageMath;
-using static CoreSystems.Api.WcApi.DamageHandlerHelper;
 using static CoreSystems.Platform.Part;
 using static CoreSystems.Support.WeaponSystem;
 

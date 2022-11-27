@@ -250,8 +250,8 @@ namespace CoreSystems.Support
                         a.ModelSphereCurrent.Radius = a.TriggerEntity.PositionComp.WorldVolume.Radius * 2;
                 }
 
-                var stagesOver = a.StageIdx <= -1 && aConst.ApproachesCount == stage;
-                if (a.StageIdx != stage && !stagesOver)
+                var stagesOver = aConst.ApproachesCount == stage && a.StageIdx == -1;
+                if (a.StageIdx != stage && !stagesOver && aConst.ApproachesCount > 0)
                     a.StageChange(stage, createdPrimeEntity);
 
                 if (!saveHit)

@@ -412,12 +412,12 @@ namespace CoreSystems.Support
                 Vector3D localTargetVector;
                 Vector3D.TransformNormal(ref targetDir, ref transposeMatrix, out localTargetVector);
 
-                if (weapon.Comp.Session.DebugMod && double.IsNaN(localTargetVector.X))
+                if (!MyUtils.IsValid(localTargetVector))
                 {
                     if (weapon.Comp.Session.Tick - weapon.LastNanTick > 60)
                     {
                         weapon.LastNanTick = weapon.Comp.Session.Tick;
-                        Log.Line($"WeaponLookAt:{weapon.System.ShortName} - caller:{caller} - targetDir:{targetDir} - MyPivotPos:{weapon.MyPivotPos} - transPoseMatrix:{transposeMatrix} - up:{up} - left:{left} - forward:{forward} - currentVector:{currentVector}");
+                        Log.Line($"WeaponLookAt:{weapon.System.ShortName} - ammo:{weapon.ActiveAmmoDef.AmmoDef.AmmoRound} - caller:{caller} - targetDir:{targetDir} - MyPivotPos:{weapon.MyPivotPos} - transPoseMatrix:{transposeMatrix} - up:{up} - left:{left} - forward:{forward} - currentVector:{currentVector}");
                     }
                     return false;
                 }

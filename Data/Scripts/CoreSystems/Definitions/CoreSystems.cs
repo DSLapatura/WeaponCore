@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using Sandbox.Game.Entities;
 using VRage.Game;
-using VRage.Game.ObjectBuilders;
 using VRage.Utils;
 using VRageMath;
 using static CoreSystems.Support.PartAnimation;
@@ -12,6 +11,7 @@ using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetD
 using static CoreSystems.Support.WeaponDefinition.HardPointDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.EwarDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.AreaOfDamageDef;
+using static WeaponCore.Data.Scripts.CoreSystems.Comms.Radios.Radio;
 namespace CoreSystems.Support
 {
     public class CoreSystem
@@ -125,7 +125,7 @@ namespace CoreSystems.Support
         public readonly Prediction Prediction;
         public readonly TurretType TurretMovement;
         public readonly FiringSoundState FiringSound;
-
+        public readonly RadioTypes RadioType;
         public readonly string AltScopeName;
         public readonly string AltEjectorName;
         public readonly string ShortName;
@@ -280,7 +280,8 @@ namespace CoreSystems.Support
                 StorageLocation = MyStringHash.GetOrCompute(Values.Targeting.Communications.StorageLocation);
                 SlaveToScanner = !StoreTargets;
             }
-
+            RadioType = RadioTypes.None;
+            
             SuppressFire = Values.HardPoint.Ai.SuppressFire;
             PartType = Values.HardPoint.HardWare.Type;
             HasEjector = !string.IsNullOrEmpty(Values.Assignments.Ejector);
