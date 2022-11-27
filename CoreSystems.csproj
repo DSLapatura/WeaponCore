@@ -86,6 +86,7 @@
     <Compile Include="Data\Scripts\CoreSystems\AudioVisual\RunAv.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
+    <Compile Include="Data\Scripts\CoreSystems\Comms\SignalProcessing.cs" />
     <Compile Include="Data\Scripts\CoreSystems\Comms\Spectrum.cs" />
     <Compile Include="Data\Scripts\CoreSystems\Coreparts\Definitions\AmmoTypes.cs" />
     <Compile Include="Data\Scripts\CoreSystems\Coreparts\Definitions\Artillery.cs" />
@@ -251,7 +252,7 @@
     <Compile Include="Data\Scripts\CoreSystems\Support\Api\WaterModAPI.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
-    <Compile Include="Data\Scripts\CoreSystems\Support\Space.cs">
+    <Compile Include="Data\Scripts\CoreSystems\Comms\Space.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
     <Compile Include="Data\Scripts\CoreSystems\Support\Localization.cs">

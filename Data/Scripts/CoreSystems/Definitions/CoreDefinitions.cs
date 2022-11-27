@@ -280,9 +280,9 @@ namespace CoreSystems.Support
             [ProtoMember(13)] internal bool UniqueTargetPerWeapon;
             [ProtoMember(14)] internal int MaxTrackingTime;
             [ProtoMember(15)] internal bool ShootBlanks;
-            [ProtoMember(16)] internal bool ExportTargets;
-            [ProtoMember(17)] internal string ChannelId;
-            [ProtoMember(18)] internal int ExportLimit;
+            //[ProtoMember(16)] internal bool ExportTargets;
+            //[ProtoMember(17)] internal string ChannelId;
+            //[ProtoMember(18)] internal int ExportLimit;
             [ProtoMember(19)] internal CommunicationDef Communications;
 
             [ProtoContract]
@@ -291,10 +291,11 @@ namespace CoreSystems.Support
                 public enum Comms
                 {
                     NoComms,
+                    LocalNetwork,
                     BroadCast,
                     Relay,
+                    Repeat,
                     Jamming,
-                    RelayAndBroadCast,
                 }
 
                 public enum SecurityMode

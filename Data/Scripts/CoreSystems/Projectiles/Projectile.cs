@@ -1360,11 +1360,11 @@ namespace CoreSystems.Projectiles
                 var offset = false;
                 if (smarts.OffsetTime > 0)
                 {
-                    if (Info.Age % smarts.OffsetTime == 0)
+                    if (Info.Age % smarts.OffsetTime == 0 && !Vector3D.IsZero(Info.Direction) && MyUtils.IsValid(Info.Direction))
                     {
-                        var angle = Info.Random.NextDouble() * MathHelper.TwoPi;
                         var up = Vector3D.CalculatePerpendicularVector(Info.Direction);
                         var right = Vector3D.Cross(Info.Direction, up);
+                        var angle = Info.Random.NextDouble() * MathHelper.TwoPi;
                         s.RandOffsetDir = Math.Sin(angle) * up + Math.Cos(angle) * right;
                         s.RandOffsetDir *= smarts.OffsetRatio;
                     }

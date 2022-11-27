@@ -25,6 +25,7 @@ using VRage.ModAPI;
 using VRage.Utils;
 using VRage.Voxels;
 using VRageMath;
+using WeaponCore.Data.Scripts.CoreSystems.Comms;
 using WeaponCore.Data.Scripts.CoreSystems.Ui;
 using static CoreSystems.Support.Ai;
 using static CoreSystems.Support.WeaponSystem;
@@ -279,6 +280,9 @@ namespace CoreSystems
         private readonly List<MyMouseButtonsEnum> _pressedButtons = new List<MyMouseButtonsEnum>();
         private readonly List<MyEntity> _tmpNearByBlocks = new List<MyEntity>();
         internal readonly List<IMySlimBlock>[] DamageBlockCache = new List<IMySlimBlock>[512];
+        
+        internal readonly Spectrum Spectrum;
+
         private readonly EwaredBlocksPacket _cachedEwarPacket = new EwaredBlocksPacket();
         private readonly SpinLockRef _dityGridLock = new SpinLockRef();
 
@@ -319,7 +323,6 @@ namespace CoreSystems
         internal NetworkReporter Reporter = new NetworkReporter();
         internal MyStorageData TmpStorage = new MyStorageData();
         internal AcquireManager AcqManager;
-
         internal RunAv Av;
         internal DSUtils DsUtil;
         internal DSUtils DsUtil2;
@@ -584,6 +587,7 @@ namespace CoreSystems
             Projectiles = new Projectiles.Projectiles(this);
             AcqManager = new AcquireManager(this);
             TerminalMon = new TerminalMonitor(this);
+            Spectrum = new Spectrum(this);
             _cachedEwarPacket.Data = new List<EwarValues>(32);
 
             ProblemRep = new ProblemReport(this);

@@ -52,7 +52,7 @@ namespace CoreSystems.Support
                 using (ent.Pin())
                 {
 
-                    if (ent is MyVoxelBase || ent.Physics == null || ent is MyFloatingObject || ent.MarkedForClose || !ent.InScene || ent.IsPreview || ent.Physics.IsPhantom || ((uint)ent.Flags & 0x1000000) > 0) continue;
+                    if (ent is MyVoxelBase || ent is MyFloatingObject || ent.Physics == null || ent.Physics.IsPhantom || ent.MarkedForClose || !ent.InScene || ent.IsPreview  || ((uint)ent.Flags & 0x1000000) > 0) continue;
                     var grid = ent as MyCubeGrid;
 
                     TopMap topMap = null;
@@ -81,8 +81,10 @@ namespace CoreSystems.Support
                     {
 
                         var allFat = topMap.MyCubeBocks;
-                        var fatCount = allFat.Count;
+                        if (allFat == null)
+                            continue;
 
+                        var fatCount = allFat.Count;
                         if (fatCount <= 0)
                             continue;
 
@@ -118,47 +120,39 @@ namespace CoreSystems.Support
             StaticsInRangeTmp.Clear();
             for (int i = 0; i < NearByEntitiesTmp; i++) {
 
-                try
-                {
+                try {
                     var ent = _possibleTargets[i];
-                    if (ent == null)
-                    {
-                        Log.Line($"FinalizeTargetDb had null entity");
-                        continue;
-                    }
-                    using (ent.Pin())
-                    {
+                    using (ent.Pin()) {
 
-                            if (ent is MyFloatingObject || ent.MarkedForClose || !ent.InScene)
-                                continue;
+                        if (ent is MyFloatingObject || ent.MarkedForClose || !ent.InScene)
+                            continue;
 
-                            if (Session.ShieldApiLoaded && ent.DefinitionId?.SubtypeId == Session.ShieldHash && ent.Render.Visible)
-                            {
-                                var shieldblock = Session.SApi.MatchEntToShieldFast(ent, false);
-                                if (shieldblock != null)
-                                    NearByShieldsTmp.Add(new Shields { Id = ent.Hierarchy.ChildId, ShieldEnt = ent, ShieldBlock = (MyCubeBlock)shieldblock });
-                            }
+                        if (Session.ShieldApiLoaded && ent.DefinitionId?.SubtypeId == Session.ShieldHash && ent.Render.Visible)
+                        {
+                            var shieldblock = Session.SApi.MatchEntToShieldFast(ent, false);
+                            if (shieldblock != null)
+                                NearByShieldsTmp.Add(new Shields { Id = ent.Hierarchy.ChildId, ShieldEnt = ent, ShieldBlock = (MyCubeBlock)shieldblock });
+                        }
 
 
-                            var voxel = ent as MyVoxelBase;
-                            var grid = ent as MyCubeGrid;
-                            var safeZone = ent as MySafeZone;
-                            var character = ent as IMyCharacter;
-                            var blockingThings = safeZone != null || ent.Physics != null && !ent.Physics.IsPhantom && (grid != null || character != null) || voxel != null && voxel == voxel.RootVoxel;
-                            if (!blockingThings || voxel != null && (voxel.RootVoxel is MyPlanet || voxel.PositionComp.LocalVolume.Radius < 15) || ent.IsPreview || ((uint)ent.Flags & 0x1000000) > 0) continue;
+                        var voxel = ent as MyVoxelBase;
+                        var grid = ent as MyCubeGrid;
+                        var safeZone = ent as MySafeZone;
+                        var character = ent as IMyCharacter;
+                        var blockingThings = safeZone != null || ent.Physics != null && !ent.Physics.IsPhantom && (grid != null || character != null) || voxel != null && voxel == voxel.RootVoxel;
+                        if (!blockingThings || voxel != null && (voxel.RootVoxel is MyPlanet || voxel.PositionComp.LocalVolume.Radius < 15) || ent.IsPreview || ((uint)ent.Flags & 0x1000000) > 0) continue;
 
-                            if (voxel != null || safeZone != null || ent.Physics.IsStatic)
-                                StaticsInRangeTmp.Add(ent);
+                        if (voxel != null || safeZone != null || ent.Physics.IsStatic)
+                            StaticsInRangeTmp.Add(ent);
 
-                            TopMap map;
-                            if (grid != null && AiType != AiTypes.Phantom && (TopEntityMap.GroupMap.Construct.ContainsKey(grid) || ValidGrids.Contains(ent) || grid.PositionComp.LocalVolume.Radius <= 7.5 || Session.TopEntityToInfoMap.TryGetValue(grid, out map) && map.Trash && map.GroupMap?.Construct.Count <= 1)) continue;
+                        TopMap map;
+                        if (grid != null && AiType != AiTypes.Phantom && (TopEntityMap.GroupMap.Construct.ContainsKey(grid) || ValidGrids.Contains(ent) || grid.PositionComp.LocalVolume.Radius <= 7.5 || Session.TopEntityToInfoMap.TryGetValue(grid, out map) && map.Trash && map.GroupMap?.Construct.Count <= 1)) continue;
 
-                            Sandbox.ModAPI.Ingame.MyDetectedEntityInfo entInfo;
-                            if (CreateEntInfo(ent, AiOwner, out entInfo))
-                            {
-                                ObstructionsTmp.Add(new DetectInfo(Session, ent, entInfo, 2, 2, false, false));
-                            }
-
+                        Sandbox.ModAPI.Ingame.MyDetectedEntityInfo entInfo;
+                        if (CreateEntInfo(ent, AiOwner, out entInfo))
+                        {
+                            ObstructionsTmp.Add(new DetectInfo(Session, ent, entInfo, 2, 2, false, false));
+                        }
                     }
                 }
                 catch (Exception ex) { Log.Line($"Exception in FinalizeTargetDb loop: {ex}", null, true); }

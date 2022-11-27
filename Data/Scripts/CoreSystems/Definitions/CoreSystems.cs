@@ -4,14 +4,16 @@ using Sandbox.Game.Entities;
 using VRage.Game;
 using VRage.Utils;
 using VRageMath;
+using WeaponCore.Data.Scripts.CoreSystems.Comms;
 using static CoreSystems.Support.PartAnimation;
 using static CoreSystems.Support.ValueProcessors;
 using static CoreSystems.Support.WeaponDefinition;
 using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetDef;
 using static CoreSystems.Support.WeaponDefinition.HardPointDef;
+using static CoreSystems.Support.WeaponDefinition.TargetingDef.CommunicationDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.EwarDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.AreaOfDamageDef;
-using static WeaponCore.Data.Scripts.CoreSystems.Comms.Radios.Radio;
+using static WeaponCore.Data.Scripts.CoreSystems.Comms.Radio;
 namespace CoreSystems.Support
 {
     public class CoreSystem
@@ -114,6 +116,8 @@ namespace CoreSystems.Support
         public readonly MyStringHash ElevationPartName;
         public readonly MyStringHash SpinPartName;
         public readonly MyStringHash StorageLocation;
+        public readonly MyStringHash BroadCastChannel;
+        public readonly MyStringHash RelayChannel;
         public readonly WeaponDefinition Values;
         public readonly AmmoType[] AmmoTypes;
         public readonly MySoundPair PreFireSoundPair;
@@ -273,14 +277,47 @@ namespace CoreSystems.Support
             MaxReloads = Values.HardPoint.Loading.MaxReloads;
             MaxActiveProjectiles = Values.HardPoint.Loading.MaxActiveProjectiles > 0 ? Values.HardPoint.Loading.MaxActiveProjectiles : int.MaxValue;
             TargetGridCenter = Values.HardPoint.Ai.TargetGridCenter;
-            if (!string.IsNullOrEmpty(Values.Targeting.ChannelId))
+
+            var comms = Values.Targeting.Communications;
+            if (comms.Mode == Comms.NoComms)
+                RadioType = RadioTypes.None;
+            else
             {
-                StorageLimit = Values.Targeting.Communications.StorageLimit > 0 ? Values.Targeting.Communications.StorageLimit : int.MaxValue;
-                StoreTargets = Values.Targeting.Communications.StoreTargets;
-                StorageLocation = MyStringHash.GetOrCompute(Values.Targeting.Communications.StorageLocation);
-                SlaveToScanner = !StoreTargets;
+                var hasBroadCastChanel = !string.IsNullOrEmpty(comms.BroadCastChannel);
+                var hasRelayChannel = !string.IsNullOrEmpty(comms.RelayChannel);
+                if (!string.IsNullOrEmpty(comms.StorageLocation) && comms.Mode == Comms.LocalNetwork)
+                {
+                    StorageLimit = comms.StorageLimit > 0 ? comms.StorageLimit : int.MaxValue;
+                    StoreTargets = comms.StoreTargets;
+                    StorageLocation = MyStringHash.GetOrCompute(comms.StorageLocation);
+                    SlaveToScanner = !StoreTargets;
+                    RadioType = SlaveToScanner ? RadioTypes.Slave : RadioTypes.Master;
+                }
+                else if (hasBroadCastChanel && comms.BroadCastRange > 0 && comms.Mode == Comms.BroadCast)
+                {
+                    BroadCastChannel = MyStringHash.GetOrCompute(comms.BroadCastChannel);
+                    RadioType = comms.JammingStrength > 0 ? RadioTypes.Jammer : RadioTypes.Transmitter;
+                }
+                else if (hasBroadCastChanel && comms.BroadCastRange > 0 && comms.Mode == Comms.Repeat)
+                {
+                    BroadCastChannel = MyStringHash.GetOrCompute(comms.BroadCastChannel);
+                    RadioType = RadioTypes.Repeater;
+                }
+                else if (hasBroadCastChanel && hasRelayChannel && comms.RelayRange > 0 && comms.Mode == Comms.Relay)
+                {
+                    RelayChannel = MyStringHash.GetOrCompute(comms.RelayChannel);
+                    RadioType = RadioTypes.Relay;
+                }
+                else if (hasBroadCastChanel || hasRelayChannel) {
+
+                    if (hasBroadCastChanel)
+                        BroadCastChannel = MyStringHash.GetOrCompute(comms.BroadCastChannel);
+                    if (hasRelayChannel)
+                        MyStringHash.GetOrCompute(comms.RelayChannel);
+
+                    RadioType = RadioTypes.Receiver;
+                }
             }
-            RadioType = RadioTypes.None;
             
             SuppressFire = Values.HardPoint.Ai.SuppressFire;
             PartType = Values.HardPoint.HardWare.Type;
