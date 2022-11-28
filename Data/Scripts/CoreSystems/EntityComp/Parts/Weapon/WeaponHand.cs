@@ -19,7 +19,7 @@ namespace CoreSystems.Platform
     {
         public partial class WeaponComponent 
         {
-            private void HandInit(IMyAutomaticRifleGun gun, out IMyAutomaticRifleGun rifle, out MyCharacterWeaponPositionComponent characterPosComp, out IMyHandheldGunObject<MyGunBase> gunBase, out MyEntity topEntity)
+            private void HandInit(Session session, IMyAutomaticRifleGun gun, out IMyAutomaticRifleGun rifle, out MyCharacterWeaponPositionComponent characterPosComp, out IMyHandheldGunObject<MyGunBase> gunBase, out MyEntity topEntity)
             {
                 rifle = gun;
                 gunBase = gun;
@@ -28,6 +28,15 @@ namespace CoreSystems.Platform
 
                 gun.GunBase.OnAmmoAmountChanged += KeenGiveModdersSomeMoreLove;
                 gun.OnMarkForClose += OnRifleMarkForClose;
+
+                var character = topEntity as IMyCharacter;
+                if (character != null)
+                {
+                    if (!session.Players.ContainsKey(gun.OwnerIdentityId))
+                    {
+                        IsBot = true;
+                    }
+                }
             }
 
             private void KeenGiveModdersSomeMoreLove()

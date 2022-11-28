@@ -69,7 +69,6 @@ namespace CoreSystems
             TargetGps = MyAPIGateway.Session.GPS.Create("WEAPONCORE", "", Vector3D.MaxValue, true);
             CheckDirtyGridInfos(true);
 
-            ApiServer.Load();
             GenerateButtonMap();
             Settings = new CoreSettings(this);
             CounterKeenLogMessage();

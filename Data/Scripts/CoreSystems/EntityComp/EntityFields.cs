@@ -42,6 +42,7 @@ namespace CoreSystems.Support
         internal string SubtypeName;
         internal string PhantomType;
         internal bool LazyUpdate;
+        internal bool IsBot;
         internal MyInventory CoreInventory;
 
         internal CompData BaseData;

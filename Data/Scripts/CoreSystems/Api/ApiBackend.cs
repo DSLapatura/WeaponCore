@@ -866,12 +866,12 @@ namespace CoreSystems.Api
         private bool SetAiFocusLegacy(IMyEntity shooter, IMyEntity target, int priority = 0) => SetAiFocus((MyEntity) shooter, (MyEntity) target, priority);
         private bool SetAiFocus(MyEntity shooter, MyEntity target, int priority = 0)
         {
-            var shootingGrid = shooter.GetTopMostParent();
+            var topEntity = shooter.GetTopMostParent();
 
-            if (shootingGrid != null)
+            if (topEntity != null)
             {
                 Ai ai;
-                if (_session.EntityToMasterAi.TryGetValue(shootingGrid, out ai))
+                if (_session.EntityToMasterAi.TryGetValue(topEntity, out ai))
                 {
                     if (!ai.Session.IsServer)
                         return false;

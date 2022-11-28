@@ -21,7 +21,7 @@ namespace CoreSystems
         public void ResetToFreshLoadState(Weapon.WeaponComponent comp)
         {
             Values.State.Tasks.Clean();
-            Values.State.TrackingReticle = false;
+            Values.State.TrackingReticle = comp.IsBot;
             Values.State.ToggleCount = 0;
             Values.State.Trigger = Trigger.Off;
             Values.State.Control = ProtoWeaponState.ControlMode.Ui;

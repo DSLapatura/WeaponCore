@@ -462,7 +462,7 @@ namespace CoreSystems
                             if (cMode == ProtoWeaponOverrides.ControlModes.Manual)
                                 TargetUi.LastManualTick = Tick;
 
-                            if (wValues.State.TrackingReticle != track)
+                            if (wValues.State.TrackingReticle != track && !ai.IsBot)
                                 TrackReticleUpdate(wComp, track);
 
                             var active = wComp.ShootManager.ClientToggleCount > wValues.State.ToggleCount || wValues.State.Trigger == On;
@@ -581,11 +581,11 @@ namespace CoreSystems
                         /// 
                         w.NoAmmo = w.NoMagsToLoad && w.ProtoWeaponAmmo.CurrentAmmo == 0 && aConst.Reloadable && !w.System.DesignatorWeapon && Tick - w.LastMagSeenTick > 600;
                         var weaponAcquires = ai.AcquireTargets && (aConst.RequiresTarget || w.RotorTurretTracking || w.ShootRequest.AcquireTarget);
-
                         if (!IsClient)
                         {
                             if (w.Target.HasTarget) 
                             {
+                                Log.Line($"hasTarget");
                                 if (w.NoAmmo)
                                 {
                                     w.Target.Reset(Tick, States.Expired);
@@ -649,8 +649,8 @@ namespace CoreSystems
                         {
                             var myTimeSlot =  Tick == w.FastTargetResetTick || w.Acquire.IsSleeping && AsleepCount == w.Acquire.SlotId || !w.Acquire.IsSleeping && AwakeCount == w.Acquire.SlotId;
 
-                            var focusRequest = rootConstruct.HadFocus && (aConst.SkipAimChecks || constructResetTick);
-                            var acquireReady = !aConst.SkipAimChecks && myTimeSlot || focusRequest;
+                            var focusRequest = rootConstruct.HadFocus && (aConst.SkipAimChecks || constructResetTick || Tick - w.ShootRequest.RequestTick <= 1);
+                            var acquireReady = (!aConst.SkipAimChecks || w.ShootRequest.AcquireTarget) && myTimeSlot || focusRequest;
 
                             var somethingNearBy = wComp.DetectOtherSignals && wComp.MasterAi.DetectionInfo.OtherInRange || wComp.MasterAi.DetectionInfo.PriorityInRange;
                             var trackObstructions = w.System.ScanNonThreats && wComp.MasterAi.Obstructions.Count > 0;
@@ -659,8 +659,12 @@ namespace CoreSystems
                             Dictionary<object, Weapon> masterTargets;
                             var seek = weaponReady && (acquireReady || w.ProjectilesNear) && (!w.System.SlaveToScanner || rootConstruct.TrackedTargets.TryGetValue(w.System.StorageLocation, out masterTargets) && masterTargets.Count > 0);
                             var fakeRequest =  wComp.FakeMode && w.Target.TargetState != TargetStates.IsFake && wComp.UserControlled;
+;
+
                             if (seek || fakeRequest)
                             {
+                                if (wComp.TypeSpecific == CoreComponent.CompTypeSpecific.Rifle)
+                                    Log.Line($"acquire request");
                                 w.TargetAcquireTick = Tick;
                                 AcquireTargets.Add(w);
                             }
@@ -692,7 +696,11 @@ namespace CoreSystems
                         var shotReady = canShoot && (shootRequest && (!w.System.LockOnFocus || w.Comp.ModOverride) || w.LockOnFireState);
                         var shoot = shotReady && ai.CanShoot && (!aConst.RequiresTarget || w.Target.HasTarget || finish || overRide || wComp.ShootManager.Signal == Weapon.ShootManager.Signals.Manual);
 
+                        if (wComp.TypeSpecific == CoreComponent.CompTypeSpecific.Rifle && w.Target.HasTarget)
+                         Log.Line($": shotR:{shotReady}) - canS:{canShoot} - acquire:{w.ShootRequest.AcquireTarget} - signal:{wComp.ShootManager.Signal} - req:{shootRequest} - any:{anyShot} - auto:{autoShot}");
                         if (shoot) {
+                            if (wComp.TypeSpecific == CoreComponent.CompTypeSpecific.Rifle && w.Target.HasTarget)
+                                Log.Line($"shoot");
                             if (w.System.DelayCeaseFire && (autoShot || w.FinishShots))
                                 w.CeaseFireDelayTick = Tick;
                             ShootingWeapons.Add(w);
@@ -789,7 +797,8 @@ namespace CoreSystems
                     continue;
                 }
                 var rootConstruct = ai.Construct.RootAi.Construct;
-                var requiresFocus = w.ActiveAmmoDef.AmmoDef.Const.SkipAimChecks || rootConstruct.TargetResetTick == Tick && !w.System.UniqueTargetPerWeapon;
+                var recentApiRequest = Tick - w.ShootRequest.RequestTick <= 1;
+                var requiresFocus = w.ActiveAmmoDef.AmmoDef.Const.SkipAimChecks || (rootConstruct.TargetResetTick == Tick || recentApiRequest) && !w.System.UniqueTargetPerWeapon;
                 if (requiresFocus && (!rootConstruct.HadFocus)) {
                     w.TargetAcquireTick = uint.MaxValue;
                     AcquireTargets.RemoveAtFast(i);
@@ -801,8 +810,8 @@ namespace CoreSystems
 
                 var acquire = (w.Acquire.IsSleeping && AsleepCount == w.Acquire.SlotId || !w.Acquire.IsSleeping && AwakeCount == w.Acquire.SlotId);
 
-                var seekProjectile = w.ProjectilesNear || Tick == w.ShootRequest.RequestTick && w.ShootRequest.Type == Weapon.ApiShootRequest.TargetType.Position || (w.System.TrackProjectile || w.Comp.Ai.ControlComp != null) && comp.MasterOverrides.Projectiles && ai.CheckProjectiles;
-                var checkTime = w.TargetAcquireTick == Tick || w.Target.TargetChanged || acquire || seekProjectile || w.FastTargetResetTick == Tick || w.ShootRequest.RequestTick == Tick;
+                var seekProjectile = w.ProjectilesNear || recentApiRequest && w.ShootRequest.Type == Weapon.ApiShootRequest.TargetType.Position || (w.System.TrackProjectile || w.Comp.Ai.ControlComp != null) && comp.MasterOverrides.Projectiles && ai.CheckProjectiles;
+                var checkTime = w.TargetAcquireTick == Tick || w.Target.TargetChanged || acquire || seekProjectile || w.FastTargetResetTick == Tick || recentApiRequest;
 
                 if (checkTime || requiresFocus && w.Target.HasTarget) {
 

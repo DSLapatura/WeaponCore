@@ -53,7 +53,6 @@ namespace CoreSystems.Platform
             internal bool HasGuidance;
             internal bool HasAlternateUi;
             internal bool HasScanTrackOnly;
-
             internal bool HasDisabledBurst;
             internal bool HasRofSlider;
             internal bool ShootSubmerged;
@@ -77,7 +76,7 @@ namespace CoreSystems.Platform
                 }
                 else if (coreEntity is IMyAutomaticRifleGun)
                 {
-                    HandInit((IMyAutomaticRifleGun)coreEntity, out Rifle, out CharacterPosComp, out GunBase, out TopEntity);
+                    HandInit(session, (IMyAutomaticRifleGun)coreEntity, out Rifle, out CharacterPosComp, out GunBase, out TopEntity);
                 }
                 //Bellow order is important
                 Data = new WeaponCompData(this);
@@ -114,6 +113,7 @@ namespace CoreSystems.Platform
                         Ai.AiOwner = GunBase.OwnerIdentityId;
                         Ai.SmartHandheld = w.System.HasGuidedAmmo;
                         Ai.OnlyWeaponComp = w.Comp;
+                        Ai.IsBot = IsBot;
                     }
                     else if (TypeSpecific == CompTypeSpecific.Phantom)
                     {

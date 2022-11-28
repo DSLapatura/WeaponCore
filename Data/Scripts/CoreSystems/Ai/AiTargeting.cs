@@ -168,15 +168,20 @@ namespace CoreSystems.Support
 
                 TargetInfo info;
                 if (focusTarget && predefinedThreatCollection.Count > 0)
+                {
                     info = predefinedThreatCollection[x];
+                }
                 else if (focusTarget)
+                {
                     ai.Targets.TryGetValue(rootConstruct.LastFocusEntity, out info);
-                else 
+                }
+                else
+                {
                     info = ai.SortedTargets[deck[x - offset]];
+                }
 
                 if (info?.Target == null || info.Target.MarkedForClose)
                     continue;
-                    
 
                 if (forceTarget && !focusTarget) 
                     info = gridInfo;
@@ -232,7 +237,6 @@ namespace CoreSystems.Support
 
                     return true;
                 }
-
                 if (info.IsGrid)
                 {
                     if (!s.TrackGrids || !overRides.Grids || (!overRides.LargeGrid && info.LargeGrid) || (!overRides.SmallGrid && !info.LargeGrid) || !focusTarget && info.FatCount < 2) continue;
@@ -273,9 +277,10 @@ namespace CoreSystems.Support
                 
                 if (character != null && (!overRides.Biologicals || character.IsDead || character.Integrity <= 0 || session.AdminMap.ContainsKey(character))) continue;
 
-                
-                if (!Weapon.CanShootTarget(w, ref targetCenter, targetLinVel, targetAccel, out predictedPos, true, info.Target, MathFuncs.DebugCaller.CanShootTarget3)) continue;
-                
+
+                if (!Weapon.CanShootTarget(w, ref targetCenter, targetLinVel, targetAccel, out predictedPos, true, info.Target, MathFuncs.DebugCaller.CanShootTarget3))
+                    continue;
+
                 if (ai.FriendlyShieldNear)
                 {
                     var targetDir = predictedPos - weaponPos;

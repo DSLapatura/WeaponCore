@@ -354,7 +354,7 @@ namespace CoreSystems
             try
             {
                 AllDefinitions = Static.GetAllDefinitions();
-
+                ApiServer.Load();
                 foreach (var t in AllDefinitions)
                 {
                     var searchLight = t as MySearchlightDefinition;

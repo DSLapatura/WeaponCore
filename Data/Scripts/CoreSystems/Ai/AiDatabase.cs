@@ -383,7 +383,6 @@ namespace CoreSystems.Support
                     }
                     
                     relationship = MyIDModule.GetRelationPlayerBlock(gridOwner, playerId, MyOwnershipShareModeEnum.Faction);
-                    
                     entInfo = new Sandbox.ModAPI.Ingame.MyDetectedEntityInfo(entity.EntityId, string.Empty, type, null, MatrixD.Zero, Vector3.Zero, relationship, new BoundingBoxD(), Session.Tick);
                     
                     return !myCharacter.IsDead && myCharacter.Integrity > 0;

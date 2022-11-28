@@ -198,6 +198,7 @@ namespace CoreSystems.Platform
                     Type = TargetType.MyEntity;
                     ExtraShotAngle = extraShotAngle;
                     AcquireTarget = Weapon.TurretController;
+                    Weapon.Comp.ShootManager.RequestShootSync(Weapon.Comp.Session.PlayerId, ShootManager.RequestType.Once, ShootManager.Signals.Once);
                     return true;
                 }
 
@@ -216,6 +217,7 @@ namespace CoreSystems.Platform
                     Type = TargetType.Projectile;
                     ExtraShotAngle = extraShotAngle;
                     AcquireTarget = Weapon.TurretController;
+                    Weapon.Comp.ShootManager.RequestShootSync(Weapon.Comp.Session.PlayerId, ShootManager.RequestType.Once, ShootManager.Signals.Once);
                     return true;
                 }
 
