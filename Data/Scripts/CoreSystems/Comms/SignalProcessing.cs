@@ -4,12 +4,20 @@ using System.Collections.Generic;
 using VRage.Utils;
 using static WeaponCore.Data.Scripts.CoreSystems.Comms.Radio;
 using VRageMath;
+using System.Runtime.Remoting.Metadata.W3cXsd2001;
 
 namespace WeaponCore.Data.Scripts.CoreSystems.Comms
 {
     internal class RadioStation
     {
         internal readonly Radios Radios = new Radios();
+        private readonly Dictionary<MyStringHash, List<RadioStation>> _detectedStationsOnChannel = new Dictionary<MyStringHash, List<RadioStation>>();
+        private readonly Dictionary<MyStringHash, List<RadioStation>> _stationAdds = new Dictionary<MyStringHash, List<RadioStation>>();
+        private readonly Dictionary<MyStringHash, List<RadioStation>> _stationRemoves = new Dictionary<MyStringHash, List<RadioStation>>();
+        private readonly Dictionary<RadioStation, MyStringHash> _remoteConnections = new Dictionary<RadioStation, MyStringHash>();
+
+        private readonly List<MyStringHash> _listening = new List<MyStringHash>();
+        private readonly List<MyStringHash> _broadasting = new List<MyStringHash>();
         private readonly Ai.Constructs _station;
         private readonly Spectrum _spectrum;
         private Vector3D _lastUpdatePosition;
@@ -39,6 +47,56 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Comms
                     freq.Tree.OnSignalMoved(this, ref vel, ref volume);
                 }
             }
+        }
+
+        private void DetectStationsInRange()
+        {
+            var center = _station.Ai.TopEntity.PositionComp.WorldAABB.Center;
+            var volume = new BoundingSphereD(center, Radios.MaxInfluenceRange);
+
+            foreach (var channel in _listening)
+            {
+                Frequency freq;
+                if (_spectrum.Channels.TryGetValue(channel, out freq))
+                {
+                    var list = _detectedStationsOnChannel[channel];
+                    freq.Tree.GetAllSignalsInSphere(ref volume, list);
+                    for (int i = list.Count - 1; i >= 0; i--)
+                    {
+                        var station = list[i];
+
+                        if (_remoteConnections.ContainsKey(station)) 
+                            continue;
+
+                        _stationAdds[channel].Add(station);
+                        list.RemoveAtFast(i);
+                    }
+
+                    foreach (var pair in _remoteConnections)
+                    {
+                        var found = false;
+                        var station = pair.Key;
+                        var id = pair.Value;
+                        foreach (var inCommon in list) {
+                            if (inCommon == station) {
+                                found = true;
+                                break;
+                            }
+
+                        }
+
+                        if (!found)
+                            _stationRemoves[id].Add(station);
+                    }
+                }
+            }
+
+            UpdateChannelMatrix();
+        }
+
+        private void UpdateChannelMatrix()
+        {
+
         }
 
         internal void UnRegisterAll()

@@ -80,7 +80,6 @@ namespace CoreSystems.Support
         private int _shrinks;
         private int _previousTrailCount;
         private int _models;
-        private int _highestSeg;
 
         internal void End()
         {
@@ -232,7 +231,7 @@ namespace CoreSystems.Support
                 if (ActiveBillBoards.Count > 0 || PreAddPersistent.Count > 0)
                 MyTransparentGeometry.ApplyActionOnPersistentBillboards(UpdatePersistentQuads);
 
-                if (Session.Tick10 && Session.DebugMod)
+                if (Session.Tick10 && Session.DebugMod && false)
                 {
                     var os = 0;
                     var m = 0;
@@ -256,7 +255,7 @@ namespace CoreSystems.Support
                         if (a.TrailSteps.Count > 0)
                             t++;
                     }
-                    Session.ShowLocalNotify($"cacheRemaining:{QuadCachePool.Count} - segs:{_highestSeg} - onScreen:{_onScreens}({os})[{p}] - tailCache:{_tailCache} - hasTrail:{t} - dirty:{d} - marked:{m}", 160);
+                    Session.ShowLocalNotify($"cacheRemaining:{QuadCachePool.Count} - onScreen:{_onScreens}({os})[{p}] - tailCache:{_tailCache} - hasTrail:{t} - dirty:{d} - marked:{m}", 160);
 
                 }
         }
@@ -375,9 +374,6 @@ namespace CoreSystems.Support
                                         var clampStep = !gap ? MathHelperD.Clamp((int)((len / segStepLen) + 0.5) - 1, 0, segTextureCnt - 1) : MathHelperD.Clamp((int)((len / gapStepLen) + 0.5) - 1, 0, gapTextureCnt - 1);
                                         var material = !gap ? aConst.SegmentTextures[(int)clampStep] : aConst.TracerTextures[(int)clampStep];
                                         var overCount = j > 5000;
-
-                                        if (j > _highestSeg)
-                                            _highestSeg = j;
 
                                         if (overCount || len < 0.1)
                                         {

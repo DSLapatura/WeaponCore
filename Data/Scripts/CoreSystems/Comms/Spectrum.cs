@@ -49,7 +49,6 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Comms
                 Licenses[i] = license;
                 Nodes[license] = new List<RadioStation>();
             }
-
         }
 
         public bool TryAddOrUpdateSource(RadioStation station)
