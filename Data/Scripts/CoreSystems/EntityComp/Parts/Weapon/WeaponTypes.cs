@@ -538,7 +538,8 @@ namespace CoreSystems.Platform
                 for (int i = 0; i < Comp.TotalWeapons; i++)
                 {
                     var w = Comp.Collection[i];
-                    if (Comp.Session.MpActive) Log.Line($"[clear] Reason:{reason} - ammo:{w.ProtoWeaponAmmo.CurrentAmmo} - Trigger:{wValues.State.Trigger} - Signal:{Signal} - Cycles:{CompletedCycles}[{LastCycle}] - Count:{wValues.State.ToggleCount}[{ClientToggleCount}] - WeaponsFired:{WeaponsFired}", Session.InputLog);
+                    if (Comp.Session.MpActive && reason != EndReason.Overheat) 
+                        Log.Line($"[clear] Reason:{reason} - ammo:{w.ProtoWeaponAmmo.CurrentAmmo} - Trigger:{wValues.State.Trigger} - Signal:{Signal} - Cycles:{CompletedCycles}[{LastCycle}] - Count:{wValues.State.ToggleCount}[{ClientToggleCount}] - WeaponsFired:{WeaponsFired}", Session.InputLog);
 
                     if (w.ShootRequest.Dirty && reason != EndReason.ShootSync)
                         w.ShootRequest.Clean();

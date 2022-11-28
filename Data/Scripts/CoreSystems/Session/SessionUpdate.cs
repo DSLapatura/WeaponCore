@@ -585,7 +585,6 @@ namespace CoreSystems
                         {
                             if (w.Target.HasTarget) 
                             {
-                                Log.Line($"hasTarget");
                                 if (w.NoAmmo)
                                 {
                                     w.Target.Reset(Tick, States.Expired);

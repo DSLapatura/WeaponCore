@@ -80,6 +80,7 @@ namespace CoreSystems.Support
         private int _shrinks;
         private int _previousTrailCount;
         private int _models;
+        private int _highestSeg;
 
         internal void End()
         {
@@ -231,7 +232,7 @@ namespace CoreSystems.Support
                 if (ActiveBillBoards.Count > 0 || PreAddPersistent.Count > 0)
                 MyTransparentGeometry.ApplyActionOnPersistentBillboards(UpdatePersistentQuads);
 
-                if (Session.Tick10 && Session.DebugMod && false)
+                if (Session.Tick10 && Session.DebugMod)
                 {
                     var os = 0;
                     var m = 0;
@@ -255,7 +256,7 @@ namespace CoreSystems.Support
                         if (a.TrailSteps.Count > 0)
                             t++;
                     }
-                    Session.ShowLocalNotify($"cacheRemaining:{QuadCachePool.Count} - onScreen:{_onScreens}({os})[{p}] - tailCache:{_tailCache} - hasTrail:{t} - dirty:{d} - marked:{m}", 160);
+                    Session.ShowLocalNotify($"cacheRemaining:{QuadCachePool.Count} - segs:{_highestSeg} - onScreen:{_onScreens}({os})[{p}] - tailCache:{_tailCache} - hasTrail:{t} - dirty:{d} - marked:{m}", 160);
 
                 }
         }
@@ -309,9 +310,9 @@ namespace CoreSystems.Support
                                     qc.Material = aConst.TracerTextures[0];
                                     qc.Color = color;
                                     qc.StartPos = av.TracerBack;
-                                    qc.Up = av.VisualDir;
-                                    qc.Width = (float)av.VisualLength;
-                                    qc.Height = (float)av.TracerWidth;
+                                    qc.Direction = av.VisualDir;
+                                    qc.Length = (float)av.VisualLength;
+                                    qc.Width = (float)av.TracerWidth;
 
                                     qc.Type = QuadCache.EffectTypes.Tracer;
                                     PreAddOneFrame.Add(qc);
@@ -324,14 +325,14 @@ namespace CoreSystems.Support
                                     qc.Material = aConst.TracerTextures[av.TextureIdx];
                                     qc.Color = color;
                                     qc.StartPos = av.TracerBack;
-                                    qc.Up = av.VisualDir;
-                                    qc.Width = (float)av.VisualLength;
-                                    qc.Height = (float)av.TracerWidth;
+                                    qc.Direction = av.VisualDir;
+                                    qc.Length = (float)av.VisualLength;
+                                    qc.Width = (float)av.TracerWidth;
                                     qc.Type = QuadCache.EffectTypes.Tracer;
                                     PreAddOneFrame.Add(qc);
                                     ++av.ActiveBillBoards;
                                 }
-                                else
+                                else if (av.VisualLength >= 0.2)
                                 {
                                     var seg = av.AmmoDef.AmmoGraphics.Lines.Tracer.Segmentation;
                                     var stepPos = av.TracerBack;
@@ -373,15 +374,26 @@ namespace CoreSystems.Support
                                         var len = notLast ? rawLen : av.VisualLength - travel;
                                         var clampStep = !gap ? MathHelperD.Clamp((int)((len / segStepLen) + 0.5) - 1, 0, segTextureCnt - 1) : MathHelperD.Clamp((int)((len / gapStepLen) + 0.5) - 1, 0, gapTextureCnt - 1);
                                         var material = !gap ? aConst.SegmentTextures[(int)clampStep] : aConst.TracerTextures[(int)clampStep];
+                                        var overCount = j > 5000;
+
+                                        if (j > _highestSeg)
+                                            _highestSeg = j;
+
+                                        if (overCount || len < 0.1)
+                                        {
+                                            if (overCount)
+                                                Log.Line($"segment looped until len was less than 0.1 or 5000 times... this is bad:{av.Weapon.System.ShortName} - {av.AmmoDef.AmmoRound} - len:{len}");
+                                            break;
+                                        }
 
                                         var qc = QuadCachePool.Count > 0 ? QuadCachePool.Pop() : new QuadCache();
                                         qc.Shot = av;
                                         qc.Material = material;
                                         qc.Color = dyncColor;
                                         qc.StartPos = stepPos;
-                                        qc.Up = av.VisualDir;
-                                        qc.Width = (float)len;
-                                        qc.Height = (float)width;
+                                        qc.Direction = av.VisualDir;
+                                        qc.Length = (float)len;
+                                        qc.Width = (float)width;
                                         qc.Type = QuadCache.EffectTypes.Segment;
 
                                         PreAddOneFrame.Add(qc);
@@ -392,6 +404,8 @@ namespace CoreSystems.Support
                                         else
                                             travel += len;
                                         stepPos += (av.VisualDir * len);
+
+
                                     }
                                 }
                             }
@@ -428,9 +442,9 @@ namespace CoreSystems.Support
                                     qc.Material = aConst.TracerTextures[0];
                                     qc.Color = color;
                                     qc.StartPos = fromBeam;
-                                    qc.Up = normDir;
-                                    qc.Width = length;
-                                    qc.Height = (float)av.TracerWidth;
+                                    qc.Direction = normDir;
+                                    qc.Length = length;
+                                    qc.Width = (float)av.TracerWidth;
                                     qc.Type = QuadCache.EffectTypes.Offset;
                                     PreAddOneFrame.Add(qc);
                                     ++av.ActiveBillBoards;
@@ -491,9 +505,9 @@ namespace CoreSystems.Support
                                 trail.Cache.Material = aConst.TrailTextures[0];
                                 trail.Cache.Color = color;
                                 trail.Cache.StartPos = trail.Line.From;
-                                trail.Cache.Up = trail.Line.Direction;
-                                trail.Cache.Width = (float)trail.Line.Length;
-                                trail.Cache.Height = width;
+                                trail.Cache.Direction = trail.Line.Direction;
+                                trail.Cache.Length = (float)trail.Line.Length;
+                                trail.Cache.Width = width;
                                 trail.Cache.Type = QuadCache.EffectTypes.Trail;
                                 PreAddOneFrame.Add(trail.Cache);
                                 ++av.ActiveBillBoards;
@@ -547,15 +561,15 @@ namespace CoreSystems.Support
                             qc.Material = av.AmmoDef.Const.TracerTextures[0];
                             qc.Color = s.Color;
                             qc.StartPos = s.NewFront;
-                            qc.Up = av.VisualDir;
-                            qc.Width = s.Length;
-                            qc.Height = s.Thickness;
+                            qc.Direction = av.VisualDir;
+                            qc.Length = s.Length;
+                            qc.Width = s.Thickness;
                             qc.Type = QuadCache.EffectTypes.Shrink;
                             PreAddOneFrame.Add(qc);
                             ++av.ActiveBillBoards;
                         }
                     }
-                    else if (av.OnScreen != AvShot.Screen.None && !overDrawLimit)
+                    else if (av.OnScreen != AvShot.Screen.None && !overDrawLimit && s.Length >= 0.2)
                         av.DrawLineOffsetEffect(s.NewFront, -av.Direction, s.Length, s.Thickness, s.Color);
                 }
 
@@ -608,10 +622,10 @@ namespace CoreSystems.Support
 
                 var polyLine = new MyPolyLineD
                 {
-                    LineDirectionNormalized = q.Up,
+                    LineDirectionNormalized = q.Direction,
                     Point0 = q.StartPos,
-                    Point1 = q.StartPos + q.Up * q.Width,
-                    Thickness = q.Height
+                    Point1 = q.StartPos + q.Direction * q.Length,
+                    Thickness = q.Width
                 };
 
                 MyQuadD retQuad;

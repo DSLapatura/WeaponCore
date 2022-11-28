@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using CoreSystems.Platform;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
@@ -8,8 +7,6 @@ using VRage.Collections;
 using VRage.Game;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
-using VRage.Game.ModAPI.Ingame.Utilities;
-using VRage.Library.Utils;
 using VRage.Utils;
 using VRageMath;
 using VRageRender;
@@ -810,12 +807,12 @@ namespace CoreSystems.Support
             var minLength = AmmoDef.Const.MinOffsetLength;
             var dyncMaxLength = MathHelperD.Clamp(AmmoDef.Const.MaxOffsetLength * Session.ClientAvDivisor, 0, Math.Max(tracerLength * 0.5d, AmmoDef.Const.MaxOffsetLength));
             var aConst = AmmoDef.Const;
-            var maxLength = MathHelperD.Clamp(dyncMaxLength, 0, tracerLength);
+            var maxLength = MathHelperD.Clamp(dyncMaxLength, 0.1, tracerLength);
 
             double currentForwardDistance = 0;
             var av = Session.Av;
             var rnd = aConst.Random;
-
+            var test = 0;
             while (currentForwardDistance < tracerLength)
             {
                 // grossly inlined fast random
@@ -846,8 +843,16 @@ namespace CoreSystems.Support
                 rnd.Y = tempY;
 
                 var lateralYDistance = XorShiftRandom.DoubleUnit * (0x7FFFFFFF & tempZ) * (maxOffset - negMaxOffset) + negMaxOffset;
+                var overCount = ++test > 5000;
+                if (overCount || currentForwardDistance < 0.1) {
+                    
+                    if (overCount)
+                        Log.Line($"this tracer tried offsetting less than 0.1 or more than 5000 times.... this is bad: {Weapon.System.ShortName} - {AmmoDef.AmmoRound} - len:{currentForwardDistance}");
+                    break;
+                }
 
                 Offsets.Add(new Vector3D(lateralXDistance, lateralYDistance, currentForwardDistance * -1));
+
             }
 
             for (int i = 0; i < Offsets.Count; i++)
@@ -875,9 +880,9 @@ namespace CoreSystems.Support
                 qc.Material = offsetMaterial;
                 qc.Color = color;
                 qc.StartPos = fromBeam;
-                qc.Up = normDir;
-                qc.Width = length;
-                qc.Height = beamRadius;
+                qc.Direction = normDir;
+                qc.Length = length;
+                qc.Width = beamRadius;
                 qc.Type = QuadCache.EffectTypes.Offset;
                 Session.Av.PreAddOneFrame.Add(qc);
                 ++ActiveBillBoards;
@@ -1477,12 +1482,12 @@ namespace CoreSystems.Support
         public MyStringId Material;
         public Vector4 Color;
         public Vector3D StartPos;
-        public Vector3D Up;
+        public Vector3D Direction;
         public Vector3D Left;
         public Vector2 UvOff;
         public Vector2 UvSize;
+        public float Length;
         public float Width;
-        public float Height;
         public float TextureSize;
         public BlendTypeEnum Blend = BlendTypeEnum.Standard;
     }

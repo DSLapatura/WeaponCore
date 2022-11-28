@@ -913,7 +913,7 @@ namespace CoreSystems.Support
             rotateRealBeam = ammoDef.Beams.RotateRealBeam && VirtualBeams;
             convergeBeams = !RotateRealBeam && ammoDef.Beams.ConvergeBeams && VirtualBeams;
             oneHitParticle = ammoDef.Beams.OneParticle && IsBeamWeapon && VirtualBeams;
-            offsetEffect = ammoDef.AmmoGraphics.Lines.OffsetEffect.MaxOffset > 0;
+            offsetEffect = ammoDef.AmmoGraphics.Lines.OffsetEffect.MaxOffset > 0.2 && ammoDef.AmmoGraphics.Lines.OffsetEffect.MinLength > 0.1;
         }
 
         private void CollisionShape(AmmoDef ammoDef, out bool collisionIsLine, out double collisionSize, out double tracerLength)

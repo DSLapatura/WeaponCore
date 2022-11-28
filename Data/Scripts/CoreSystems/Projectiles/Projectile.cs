@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using CoreSystems.Support;
 using Jakaria.API;
 using Sandbox.Game.Entities;
+using Sandbox.ModAPI;
 using Sandbox.ModAPI.Ingame;
 using VRage.Game;
 using VRage.Game.Components;
