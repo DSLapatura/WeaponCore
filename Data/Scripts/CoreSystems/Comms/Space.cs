@@ -32,10 +32,5 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
             BoundingBoxD.CreateFromSphere(ref volume, out result);
             DividedSpace.MoveProxy(station.PruningProxyId, ref result, velocity);
         }
-
-        internal void GetAllSignalsInSphere(ref BoundingSphereD sphere, List<RadioStation> result, bool clearList = true)
-        {
-            DividedSpace.OverlapAllBoundingSphere(ref sphere, result, clearList);
-        }
     }
 }

@@ -458,7 +458,7 @@ namespace CoreSystems.Support
             FeelsGravity = GravityMultiplier > 0;
             SmartOffsetSqr = ammo.AmmoDef.Trajectory.Smarts.Inaccuracy * ammo.AmmoDef.Trajectory.Smarts.Inaccuracy;
             HasBackKickForce = !MathHelper.IsZero(ammo.AmmoDef.BackKickForce);
-            MaxLateralThrust = MathHelperD.Clamp(ammo.AmmoDef.Trajectory.Smarts.MaxLateralThrust, 0.01, 1);
+            MaxLateralThrust = MathHelperD.Clamp(ammo.AmmoDef.Trajectory.Smarts.MaxLateralThrust, 0.001, 1);
 
             CustomDetParticle = !string.IsNullOrEmpty(ammo.AmmoDef.AreaOfDamage.EndOfLife.CustomParticle);
             DetParticleStr = !string.IsNullOrEmpty(ammo.AmmoDef.AreaOfDamage.EndOfLife.CustomParticle) ? ammo.AmmoDef.AreaOfDamage.EndOfLife.CustomParticle : "Explosion_Missile";

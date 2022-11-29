@@ -136,7 +136,10 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
 
                     var c = textAdd.Text[j];
 
-                    var cm = CharacterMap[textAdd.Font][c];
+                    var font = CharacterMap[textAdd.Font];
+                    TextureMap cm;
+                    if (!font.TryGetValue(c, out cm))
+                        cm = font[FailSafeChar];
 
                     var tdd = _textureDrawPool.Count > 0 ? _textureDrawPool.Dequeue() : new TextureDrawData();
 

@@ -2,19 +2,16 @@
 using CoreSystems.Support;
 using System.Collections.Generic;
 using VRage.Utils;
-using static WeaponCore.Data.Scripts.CoreSystems.Comms.Radio;
 using VRageMath;
-using System.Runtime.Remoting.Metadata.W3cXsd2001;
 
 namespace WeaponCore.Data.Scripts.CoreSystems.Comms
 {
     internal class RadioStation
     {
         internal readonly Radios Radios = new Radios();
-        private readonly Dictionary<MyStringHash, List<RadioStation>> _detectedStationsOnChannel = new Dictionary<MyStringHash, List<RadioStation>>();
+        private readonly Dictionary<MyStringHash, HashSet<RadioStation>> _detectedStationsOnChannel = new Dictionary<MyStringHash, HashSet<RadioStation>>();
         private readonly Dictionary<MyStringHash, List<RadioStation>> _stationAdds = new Dictionary<MyStringHash, List<RadioStation>>();
         private readonly Dictionary<MyStringHash, List<RadioStation>> _stationRemoves = new Dictionary<MyStringHash, List<RadioStation>>();
-        private readonly Dictionary<RadioStation, MyStringHash> _remoteConnections = new Dictionary<RadioStation, MyStringHash>();
 
         private readonly List<MyStringHash> _listening = new List<MyStringHash>();
         private readonly List<MyStringHash> _broadasting = new List<MyStringHash>();
@@ -49,6 +46,9 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Comms
             }
         }
 
+        private readonly List<RadioStation> _queryList = new List<RadioStation>();
+        private readonly HashSet<RadioStation> _discardSet = new HashSet<RadioStation>();
+
         private void DetectStationsInRange()
         {
             var center = _station.Ai.TopEntity.PositionComp.WorldAABB.Center;
@@ -59,35 +59,37 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Comms
                 Frequency freq;
                 if (_spectrum.Channels.TryGetValue(channel, out freq))
                 {
-                    var list = _detectedStationsOnChannel[channel];
-                    freq.Tree.GetAllSignalsInSphere(ref volume, list);
-                    for (int i = list.Count - 1; i >= 0; i--)
-                    {
-                        var station = list[i];
+                    var detectedOnChannel = _detectedStationsOnChannel[channel];
+                    freq.Tree.DividedSpace.OverlapAllBoundingSphere(ref volume, _queryList, false);
+                    var adds = _stationAdds[channel];
+                    var removes = _stationRemoves[channel];
 
-                        if (_remoteConnections.ContainsKey(station)) 
+                    for (int i = _queryList.Count - 1; i >= 0; i--)
+                    {
+                        var station = _queryList[i];
+
+                        if (detectedOnChannel.Contains(station)) 
                             continue;
 
-                        _stationAdds[channel].Add(station);
-                        list.RemoveAtFast(i);
+                        adds.Add(station);
+                        _queryList.RemoveAtFast(i);
                     }
 
-                    foreach (var pair in _remoteConnections)
-                    {
-                        var found = false;
-                        var station = pair.Key;
-                        var id = pair.Value;
-                        foreach (var inCommon in list) {
-                            if (inCommon == station) {
-                                found = true;
-                                break;
-                            }
+                    for (int i = 0; i < _queryList.Count; i++)
+                        _discardSet.Add(_queryList[i]);
 
-                        }
-
-                        if (!found)
-                            _stationRemoves[id].Add(station);
+                    foreach (var station in detectedOnChannel) {
+                        if (!_discardSet.Contains(station))
+                            removes.Add(station);
                     }
+
+                    foreach (var r in removes)
+                        detectedOnChannel.Remove(r);
+
+                    foreach (var r in adds)
+                        detectedOnChannel.Add(r);
+
+                    _queryList.Clear();
                 }
             }
 
@@ -140,25 +142,25 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Comms
             MaxInfluenceRange = 0;
             foreach (var pair in RadioTypeMap)
             {
-                var type = (RadioTypes)pair.Key;
+                var type = (Radio.RadioTypes)pair.Key;
                 var radio = pair.Value;
                 switch (type)
                 {
-                    case RadioTypes.Transmitter:
+                    case Radio.RadioTypes.Transmitter:
                         if (radio.TransmitRange > FurthestTransmiter)
                             FurthestTransmiter = radio.TransmitRange;
 
                         if (radio.TransmitRange > MaxInfluenceRange)
                             MaxInfluenceRange = radio.TransmitRange;
                         break;
-                    case RadioTypes.Receiver:
+                    case Radio.RadioTypes.Receiver:
                         if (radio.ReceiveRange > FurthestReceiver)
                             FurthestReceiver = radio.ReceiveRange;
 
                         if (radio.ReceiveRange > MaxInfluenceRange)
                             MaxInfluenceRange = radio.ReceiveRange;
                         break;
-                    case RadioTypes.Jammer:
+                    case Radio.RadioTypes.Jammer:
                         if (radio.JamRange > FurthestJammer)
                             FurthestJammer = radio.JamRange;
 

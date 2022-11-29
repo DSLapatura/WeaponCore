@@ -22,7 +22,6 @@ namespace CoreSystems.Platform
             internal readonly ControlStructure Structure;
             internal readonly IMyTurretControlBlock Controller;
             internal bool RotorsMoving;
-            internal bool ToolsActive;
             internal uint LastOwnerRequestTick;
             internal uint LastAddTick;
 
@@ -285,21 +284,6 @@ namespace CoreSystems.Platform
                 return true;
             }
 
-            internal void ToggleTools(Ai topAi, bool on)
-            {
-                if (on)
-                {
-                    ToolsActive = true;
-                    foreach (var t in topAi.Tools)
-                        t.Enabled = true;
-                }
-                else
-                {
-                    ToolsActive = false;
-                    foreach (var t in topAi.Tools)
-                        t.Enabled = false;
-                }
-            }
 
             internal bool TrackTarget(IMyMotorStator root, IMyMotorStator other, ref Vector3D desiredDirection)
             {

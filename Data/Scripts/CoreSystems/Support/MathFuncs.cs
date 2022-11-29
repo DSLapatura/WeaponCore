@@ -653,6 +653,18 @@ namespace CoreSystems.Support
                 angle = MathHelper.TwoPi + angle;
         }
 
+        internal static void DotRepairAndReport(double dot, out double newDot)
+        {
+            if (dot > 1)
+                newDot = 1;
+            else if (dot < -1)
+                newDot = -1;
+            else
+                newDot = dot;
+
+            Log.Line($"dot was invalid: {dot}");
+        }
+
         internal static double CalculateRotorDeviationAngle(Vector3D forwardVector, MatrixD lastOrientation)
         {
             var flattenedForwardVector = Rejection(forwardVector, lastOrientation.Up);

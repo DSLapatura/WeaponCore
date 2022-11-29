@@ -11,8 +11,8 @@ namespace CoreSystems.Platform
             var cValues = control.Comp.Data.Repo.Values;
 
             Vector3D targetCenter;
-            Vector3D targetVel;
-            Vector3D targetAcc;
+            Vector3D targetVel = Vector3D.Zero;
+            Vector3D targetAcc = Vector3D.Zero;
 
             Ai.FakeTarget.FakeWorldTargetInfo fakeTargetInfo = null;
             if (cValues.Set.Overrides.Control != ProtoWeaponOverrides.ControlModes.Auto && control.ValidFakeTargetInfo(cValues.State.PlayerId, out fakeTargetInfo))
@@ -25,8 +25,11 @@ namespace CoreSystems.Platform
             {
                 targetCenter = weapon.Target.TargetEntity.PositionComp.WorldAABB.Center;
                 var topEnt = weapon.Target.TargetEntity.GetTopMostParent();
-                targetVel = topEnt.Physics.LinearVelocity;
-                targetAcc = topEnt.Physics.LinearAcceleration;
+                if (topEnt != null)
+                {
+                    targetVel = topEnt.Physics?.LinearVelocity ?? Vector3D.Zero;
+                    targetAcc = topEnt.Physics?.LinearAcceleration ?? Vector3D.Zero;
+                }
             }
             else 
             {
@@ -35,8 +38,8 @@ namespace CoreSystems.Platform
                 return false;
             }
 
-            var shooterPos = control.OtherMap.Top.PositionComp.WorldAABB.Center;
-            var maxRangeSqr = fakeTargetInfo != null ? topAi.Construct.RootAi.MaxTargetingRangeSqr : (cValues.Set.Range * cValues.Set.Range);
+            var shooterPos = weapon.GetScope.Info.Position;
+            var maxRangeSqr = fakeTargetInfo != null && topAi.Construct.RootAi != null ? topAi.Construct.RootAi.MaxTargetingRangeSqr : cValues.Set.Range * cValues.Set.Range;
 
             bool valid;
             topAi.RotorTargetPosition =  Weapon.TrajectoryEstimation(weapon, targetCenter, targetVel, targetAcc, shooterPos, out valid, true, true, true);

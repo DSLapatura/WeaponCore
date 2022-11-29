@@ -32,6 +32,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
         private const int StackThreshold = 12;
         private const int InitialPoolCapacity = 512;
         private const uint MinUpdateTicks = 60;
+        private const char FailSafeChar = ' ';
 
         private readonly MyConcurrentPool<AgingTextRequest> _agingTextRequestPool = new MyConcurrentPool<AgingTextRequest>(64, data => data.Clean());
         private readonly MyConcurrentPool<TextData> _textDataPool = new MyConcurrentPool<TextData>(128);
