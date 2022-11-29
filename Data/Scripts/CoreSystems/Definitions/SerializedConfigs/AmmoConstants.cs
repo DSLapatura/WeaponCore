@@ -259,6 +259,7 @@ namespace CoreSystems.Support
         public readonly bool AccelClearance;
         public readonly bool DynamicGuidance;
         public readonly bool TravelTo;
+        public readonly bool HasDeacceleration;
         public readonly float PowerPerTick;
         public readonly float DirectAimCone;
         public readonly float FragRadial;
@@ -326,7 +327,6 @@ namespace CoreSystems.Support
         public readonly double MaxAcceleration;
         public readonly double MaxAccelerationSqr;
         public readonly double MaxDeAccelPerSec;
-        public readonly double DeAccelerationLimit;
 
         internal AmmoConstants(WeaponSystem.AmmoType ammo, WeaponDefinition wDef, Session session, WeaponSystem system, int ammoIndex)
         {
@@ -436,8 +436,9 @@ namespace CoreSystems.Support
             DeltaVelocityPerTick = AccelInMetersPerSec * MyEngineConstants.PHYSICS_STEP_SIZE_IN_SECONDS;
             MaxAcceleration = ammo.AmmoDef.Trajectory.TotalAcceleration > 0 ? ammo.AmmoDef.Trajectory.TotalAcceleration : double.MaxValue;
             MaxAccelerationSqr = MaxAcceleration * MaxAcceleration;
-            MaxDeAccelPerSec = ammo.AmmoDef.Trajectory.Smarts.MaxDeAccelPerSec;
-            DeAccelerationLimit = MathHelperD.Clamp(MaxDeAccelPerSec <= 0 ? double.MinValue : (MaxDeAccelPerSec - 1), -1, 0);
+            HasDeacceleration = ammo.AmmoDef.Trajectory.Smarts.MaxDeAccelPerSec > 0;
+            MaxDeAccelPerSec = HasDeacceleration ? ammo.AmmoDef.Trajectory.Smarts.MaxDeAccelPerSec : double.MaxValue;
+            
             MaxChaseTime = ammo.AmmoDef.Trajectory.Smarts.MaxChaseTime > 0 ? ammo.AmmoDef.Trajectory.Smarts.MaxChaseTime : int.MaxValue;
             MaxObjectsHit = ammo.AmmoDef.ObjectsHit.MaxObjectsHit > 0 ? ammo.AmmoDef.ObjectsHit.MaxObjectsHit : int.MaxValue;
             ArmOnlyOnHit = ammo.AmmoDef.AreaOfDamage.EndOfLife.ArmOnlyOnHit;
@@ -458,7 +459,7 @@ namespace CoreSystems.Support
             FeelsGravity = GravityMultiplier > 0;
             SmartOffsetSqr = ammo.AmmoDef.Trajectory.Smarts.Inaccuracy * ammo.AmmoDef.Trajectory.Smarts.Inaccuracy;
             HasBackKickForce = !MathHelper.IsZero(ammo.AmmoDef.BackKickForce);
-            MaxLateralThrust = MathHelperD.Clamp(ammo.AmmoDef.Trajectory.Smarts.MaxLateralThrust, 0.001, 1);
+            MaxLateralThrust = MathHelperD.Clamp(ammo.AmmoDef.Trajectory.Smarts.MaxLateralThrust >= 1 ? double.MaxValue : ammo.AmmoDef.Trajectory.Smarts.MaxLateralThrust, 0.0001, double.MaxValue);
 
             CustomDetParticle = !string.IsNullOrEmpty(ammo.AmmoDef.AreaOfDamage.EndOfLife.CustomParticle);
             DetParticleStr = !string.IsNullOrEmpty(ammo.AmmoDef.AreaOfDamage.EndOfLife.CustomParticle) ? ammo.AmmoDef.AreaOfDamage.EndOfLife.CustomParticle : "Explosion_Missile";
