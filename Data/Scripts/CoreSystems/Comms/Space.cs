@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using VRageMath;
+﻿using VRageMath;
 using WeaponCore.Data.Scripts.CoreSystems.Comms;
 
 namespace WeaponCore.Data.Scripts.CoreSystems.Support
