@@ -1361,27 +1361,19 @@ namespace CoreSystems.Projectiles
                 if (accelMpsMulti > 0)
                 {
                     var maxRotationsPerTickInRads = aConst.MaxLateralThrust;
-                    if (maxRotationsPerTickInRads < 1 || aConst.HasDeacceleration)
+                    if (maxRotationsPerTickInRads < 1)
                     {
                         var commandNorm = Vector3D.Normalize(commandedAccel);
 
                         var dot = Vector3D.Dot(Info.Direction, commandNorm);
-                        if (offset || aConst.HasDeacceleration || dot < 0.98)
+                        if (offset || dot < 0.98)
                         {
                             var radPerTickDelta = Math.Acos(dot);
                             if (radPerTickDelta == 0)
                                 radPerTickDelta = double.Epsilon;
 
-                            if (dot < 0)
-                                accelMpsMulti -= (radPerTickDelta / MathHelperD.Pi) * maxDeAccelPerSec;
-
-                            var rotLimit = maxRotationsPerTickInRads / radPerTickDelta;
-
-                            if (radPerTickDelta > maxRotationsPerTickInRads)
-                                commandedAccel = commandNorm * (accelMpsMulti * rotLimit);
-                            else if (aConst.HasDeacceleration)
-                                commandedAccel = commandNorm * accelMpsMulti;
-
+                            if (radPerTickDelta > maxRotationsPerTickInRads && dot > 0)
+                                commandedAccel = commandNorm * (accelMpsMulti * Math.Abs(radPerTickDelta / MathHelperD.Pi - 1));
                         }
                     }
 
@@ -1884,6 +1876,12 @@ namespace CoreSystems.Projectiles
             return surfacePos + (upDir * approach.Definition.DesiredElevation);
         }
         #endregion
+
+        private void ProNavControl(Vector3D velocity, Vector3D commandAccel)
+        {
+            var heading = Vector3D.Zero;
+
+        }
 
         #region Targeting
         internal void OffSetTarget(bool roam = false)
