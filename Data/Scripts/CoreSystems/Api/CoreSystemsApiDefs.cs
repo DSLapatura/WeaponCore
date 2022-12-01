@@ -314,6 +314,7 @@ namespace CoreSystems.Api
                     [ProtoMember(8)] internal double JammingStrength;
                     [ProtoMember(9)] internal string RelayChannel;
                     [ProtoMember(10)] internal double RelayRange;
+                    [ProtoMember(11)] internal bool TargetPersists;
                 }
             }
 

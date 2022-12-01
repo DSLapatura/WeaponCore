@@ -12,9 +12,11 @@ using static CoreSystems.ProtoWeaponState;
 using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetDef;
 using Sandbox.Game.Entities;
 using System;
+using ProtoBuf;
 using Sandbox.ModAPI.Weapons;
 using SpaceEngineers.Game.ModAPI;
 using VRage.Game.Entity;
+using WeaponCore.Data.Scripts.CoreSystems.Comms;
 
 namespace CoreSystems
 {
@@ -610,6 +612,11 @@ namespace CoreSystems
                                     w.Target.Reset(Tick, States.Expired);
                                     w.FastTargetResetTick = Tick + 6;
                                 }
+                                else if (w.System.TargetSlaving && !w.System.TargetPersists && !rootConstruct.StillTrackingTarget(w))
+                                {
+                                    w.Target.Reset(Tick, States.Expired);
+                                    w.FastTargetResetTick = Tick;
+                                }
                                 else if (!w.TurretController)
                                 {
                                     Vector3D targetPos;
@@ -656,7 +663,7 @@ namespace CoreSystems
                             var weaponReady = !w.NoAmmo && (wComp.MasterAi.EnemiesNear && somethingNearBy || trackObstructions) && (!w.Target.HasTarget || rootConstruct.HadFocus && constructResetTick);
 
                             Dictionary<object, Weapon> masterTargets;
-                            var seek = weaponReady && (acquireReady || w.ProjectilesNear) && (!w.System.SlaveToScanner || rootConstruct.TrackedTargets.TryGetValue(w.System.StorageLocation, out masterTargets) && masterTargets.Count > 0);
+                            var seek = weaponReady && (acquireReady || w.ProjectilesNear) && (!w.System.TargetSlaving || rootConstruct.TrackedTargets.TryGetValue(w.System.StorageLocation, out masterTargets) && masterTargets.Count > 0);
                             var fakeRequest =  wComp.FakeMode && w.Target.TargetState != TargetStates.IsFake && wComp.UserControlled;
 
                             if (seek || fakeRequest)
@@ -692,11 +699,8 @@ namespace CoreSystems
                         var shotReady = canShoot && (shootRequest && (!w.System.LockOnFocus || w.Comp.ModOverride) || w.LockOnFireState);
                         var shoot = shotReady && ai.CanShoot && (!aConst.RequiresTarget || w.Target.HasTarget || finish || overRide || wComp.ShootManager.Signal == Weapon.ShootManager.Signals.Manual);
 
-                        if (wComp.TypeSpecific == CoreComponent.CompTypeSpecific.Rifle && w.Target.HasTarget)
-                         Log.Line($": shotR:{shotReady}) - canS:{canShoot} - acquire:{w.ShootRequest.AcquireTarget} - signal:{wComp.ShootManager.Signal} - req:{shootRequest} - any:{anyShot} - auto:{autoShot}");
-                        if (shoot) {
-                            if (wComp.TypeSpecific == CoreComponent.CompTypeSpecific.Rifle && w.Target.HasTarget)
-                                Log.Line($"shoot");
+                        if (shoot) 
+                        {
                             if (w.System.DelayCeaseFire && (autoShot || w.FinishShots))
                                 w.CeaseFireDelayTick = Tick;
                             ShootingWeapons.Add(w);
@@ -815,7 +819,7 @@ namespace CoreSystems
                     var readyToAcquire = seekProjectile || comp.Data.Repo.Values.State.TrackingReticle || checkObstructions || (comp.DetectOtherSignals && ai.DetectionInfo.OtherInRange || ai.DetectionInfo.PriorityInRange) && ai.DetectionInfo.ValidSignalExists(w);
 
                     Dictionary<object, Weapon> masterTargets;
-                    if (readyToAcquire && (!w.System.SlaveToScanner || rootConstruct.TrackedTargets.TryGetValue(w.System.StorageLocation, out masterTargets) && masterTargets.Count > 0))
+                    if (readyToAcquire && (!w.System.TargetSlaving || rootConstruct.TrackedTargets.TryGetValue(w.System.StorageLocation, out masterTargets) && masterTargets.Count > 0))
                     {
                         if (comp.PrimaryWeapon != null && comp.PrimaryWeapon.System.DesignatorWeapon && comp.PrimaryWeapon != w && comp.PrimaryWeapon.Target.HasTarget) {
 

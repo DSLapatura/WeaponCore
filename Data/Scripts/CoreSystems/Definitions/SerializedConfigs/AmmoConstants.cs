@@ -511,7 +511,7 @@ namespace CoreSystems.Support
             if (!SlowFireFixedWeapon && system.TurretMovement == WeaponSystem.TurretType.Fixed && predictionEligible)
                 Log.Line($"{ammo.AmmoDef.AmmoRound} does not qualify for fixed weapon client reload verification");
 
-            SkipAimChecks = (ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.Smart || ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.DroneAdvanced) && system.TurretMovement == WeaponSystem.TurretType.Fixed && (system.RadioType == Radio.RadioTypes.None || system.RadioType == Radio.RadioTypes.Master);
+            SkipAimChecks = (ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.Smart || ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.DroneAdvanced) && system.TurretMovement == WeaponSystem.TurretType.Fixed && !system.TargetSlaving;
             Trail = ammo.AmmoDef.AmmoGraphics.Lines.Trail.Enable;
             HasShotFade = ammo.AmmoDef.AmmoGraphics.Lines.Tracer.VisualFadeStart > 0 && ammo.AmmoDef.AmmoGraphics.Lines.Tracer.VisualFadeEnd > 1;
             MaxTrajectoryGrows = ammo.AmmoDef.Trajectory.MaxTrajectoryTime > 1;

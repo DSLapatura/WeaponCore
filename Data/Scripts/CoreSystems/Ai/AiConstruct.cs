@@ -579,6 +579,15 @@ namespace CoreSystems.Support
                 return false;
             }
 
+            internal bool StillTrackingTarget(Weapon w)
+            {
+                var targetObj = w.Target.TargetEntity != null ? (object)w.Target.TargetEntity.GetTopMostParent() : w.Target.Projectile;
+                Dictionary<object, Weapon> dict;
+                var containsTarget = targetObj != null && TrackedTargets.TryGetValue(w.System.StorageLocation, out dict) && dict.ContainsKey(targetObj);
+
+                return containsTarget;
+            }
+
             internal bool TryRemoveTrackedTarget(Weapon w, object target)
             {
                 Dictionary<object, Weapon> dict;

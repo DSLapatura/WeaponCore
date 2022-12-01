@@ -198,7 +198,8 @@ namespace CoreSystems.Support
         public readonly bool DebugMode;
         public readonly bool ShootBlanks;
         public readonly bool HasProjectileSync;
-        public readonly bool SlaveToScanner;
+        public readonly bool TargetSlaving;
+        public readonly bool TargetPersists;
         public readonly double MaxTargetSpeed;
         public readonly double AzStep;
         public readonly double ElStep;
@@ -290,8 +291,7 @@ namespace CoreSystems.Support
                     StorageLimit = comms.StorageLimit > 0 ? comms.StorageLimit : int.MaxValue;
                     StoreTargets = comms.StoreTargets;
                     StorageLocation = MyStringHash.GetOrCompute(comms.StorageLocation);
-                    SlaveToScanner = !StoreTargets;
-                    RadioType = SlaveToScanner ? RadioTypes.Slave : RadioTypes.Master;
+                    RadioType = !StoreTargets ? RadioTypes.Slave : RadioTypes.Master;
                 }
                 else if (hasBroadCastChanel && comms.BroadCastRange > 0 && comms.Mode == Comms.BroadCast)
                 {
@@ -317,8 +317,11 @@ namespace CoreSystems.Support
 
                     RadioType = RadioTypes.Receiver;
                 }
+                
+                TargetPersists = comms.TargetPersists;
+                TargetSlaving = RadioType != RadioTypes.Master;
             }
-            
+
             SuppressFire = Values.HardPoint.Ai.SuppressFire;
             PartType = Values.HardPoint.HardWare.Type;
             HasEjector = !string.IsNullOrEmpty(Values.Assignments.Ejector);

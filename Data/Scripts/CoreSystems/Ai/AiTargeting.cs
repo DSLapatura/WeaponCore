@@ -148,7 +148,7 @@ namespace CoreSystems.Support
                 else if (rootConstruct.LastFocusEntity != null)
                     offset = 1;
             }
-            else if (w.System.SlaveToScanner && rootConstruct.GetExportedCollection(w, Constructs.ScanType.Threats))
+            else if (w.System.TargetSlaving && rootConstruct.GetExportedCollection(w, Constructs.ScanType.Threats))
             {
                 offset = predefinedThreatCollection.Count;
             }
@@ -341,13 +341,13 @@ namespace CoreSystems.Support
 
             w.FoundTopMostTarget = false;
 
-            if (w.System.SlaveToScanner)
+            if (w.System.TargetSlaving)
             {
                 if (!w.Comp.Ai.Construct.RootAi.Construct.GetExportedCollection(w, Constructs.ScanType.NonThreats))
                     Log.Line($"couldnt export nonthreat collection");
             }
 
-            var collection = !w.System.SlaveToScanner ? ai.Obstructions : ai.NonThreatCollection;
+            var collection = !w.System.TargetSlaving ? ai.Obstructions : ai.NonThreatCollection;
             var numOfTargets = collection.Count;
 
             var deck = GetDeck(ref session.TargetDeck, 0, numOfTargets, w.System.Values.Targeting.TopTargets, ref w.TargetData.WeaponRandom.AcquireRandom);

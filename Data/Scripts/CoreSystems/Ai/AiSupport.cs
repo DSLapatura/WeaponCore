@@ -226,8 +226,8 @@ namespace CoreSystems.Support
 
         internal List<Projectile> GetProCache(Weapon w)
         {
-            var collection = !w.System.SlaveToScanner ? ProjetileCache : ProjectileCollection;
-            if (!w.System.SlaveToScanner)
+            var collection = !w.System.TargetSlaving ? ProjetileCache : ProjectileCollection;
+            if (!w.System.TargetSlaving)
             {
                 if (LiveProjectileTick > _pCacheTick)
                 {
