@@ -292,7 +292,6 @@ namespace CoreSystems.Support
                     StorageLocation = MyStringHash.GetOrCompute(comms.StorageLocation);
                     SlaveToScanner = !StoreTargets;
                     RadioType = SlaveToScanner ? RadioTypes.Slave : RadioTypes.Master;
-                    Log.Line($"radio:{RadioType} - slave:{SlaveToScanner} - storage:{StorageLocation} - limit:{StorageLimit} - sTargets:{StoreTargets}");
                 }
                 else if (hasBroadCastChanel && comms.BroadCastRange > 0 && comms.Mode == Comms.BroadCast)
                 {
