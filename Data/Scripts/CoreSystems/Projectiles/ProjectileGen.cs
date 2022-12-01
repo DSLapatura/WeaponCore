@@ -173,7 +173,6 @@ namespace CoreSystems.Projectiles
 
                 for (int t = 0; t < ai.TargetAis.Count; t++)
                 {
-
                     var targetAi = ai.TargetAis[t];
 
                     if (targetAi.PointDefense)

@@ -492,8 +492,6 @@ namespace CoreSystems.Projectiles
                             vs.ProEnded = true;
 
                         vs.Hit = info.Hit;
-
-
                         vs.StepSize = stepSize;
 
                         if (aConst.ConvergeBeams)

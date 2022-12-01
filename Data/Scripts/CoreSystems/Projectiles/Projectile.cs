@@ -20,7 +20,6 @@ using static CoreSystems.Support.WeaponDefinition.AmmoDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.EwarDef.EwarType;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.FragmentDef.TimedSpawnDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.TrajectoryDef.ApproachDef;
-using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace CoreSystems.Projectiles
 {
@@ -427,9 +426,9 @@ namespace CoreSystems.Projectiles
                 newVel = Velocity + (Info.Direction * aConst.DeltaVelocityPerTick);
                 VelocityLengthSqr = newVel.LengthSquared();
                 
-                if (VelocityLengthSqr > MaxSpeed * MaxSpeed) 
-                    newVel = Info.Direction * 1.05f * MaxSpeed;
-                
+                if (VelocityLengthSqr > MaxSpeed * MaxSpeed)
+                    newVel = (Info.Direction * 0.95 + Vector3D.CalculatePerpendicularVector(Info.Direction) * 0.05) * MaxSpeed;
+
                 Velocity = newVel;
             }
         }
@@ -441,7 +440,9 @@ namespace CoreSystems.Projectiles
             {
                 var lineCheck = new LineD(Position, TargetPosition);
                 var startTrack = !new MyOrientedBoundingBoxD(parentEnt.PositionComp.LocalAABB, parentEnt.PositionComp.WorldMatrixRef).Intersects(ref lineCheck).HasValue;
-                if (startTrack) s.DroneStat = Transit;
+                
+                if (startTrack) 
+                    s.DroneStat = Transit;
             }
             else if (parentEnt == null || Info.Ai.AiType != Ai.AiTypes.Grid)
                 s.DroneStat = Transit;
@@ -1156,7 +1157,6 @@ namespace CoreSystems.Projectiles
             var startTrack = s.SmartReady || coreParent == null || coreParent.MarkedForClose;
             
             var speedCapMulti = 1d;
-            var maxDeAccelPerSec = aConst.MaxDeAccelPerSec;
 
             var targetLock = false;
             var approachEnded = s.LastActivatedStage >= aConst.ApproachesCount;
@@ -1236,10 +1236,8 @@ namespace CoreSystems.Projectiles
                     else if (Info.Target.TargetState == Target.TargetStates.IsProjectile) tVel = Info.Target.Projectile.Velocity;
                     else if (physics != null) tVel = physics.LinearVelocity;
 
-
                     if (aConst.TargetLossDegree > 0 && Vector3D.DistanceSquared(Info.Origin, Position) >= aConst.SmartsDelayDistSqr)
                     {
-
                         if (s.WasTracking && (Info.Ai.Session.Tick20 || Vector3.Dot(Info.Direction, Position - targetPos) > 0) || !s.WasTracking)
                         {
                             var targetDir = -Info.Direction;
@@ -1295,6 +1293,7 @@ namespace CoreSystems.Projectiles
                     ProcessStage(ref accelMpsMulti, ref speedCapMulti, TargetPosition, s.RequestedStage, targetLock);
                 }
 
+                #region Navigation
                 Vector3D targetAcceleration = Vector3D.Zero;
                 if (s.Navigation.LastVelocity.HasValue)
                     targetAcceleration = (PrevTargetVel - s.Navigation.LastVelocity.Value) * 60;
@@ -1361,23 +1360,32 @@ namespace CoreSystems.Projectiles
                 if (accelMpsMulti > 0)
                 {
                     var maxRotationsPerTickInRads = aConst.MaxLateralThrust;
-                    if (maxRotationsPerTickInRads < 1)
+
+                    if (aConst.AdvancedSmartSteering)
                     {
-                        var commandNorm = Vector3D.Normalize(commandedAccel);
-
-                        var dot = Vector3D.Dot(Info.Direction, commandNorm);
-                        if (offset || dot < 0.98)
-                        {
-                            var radPerTickDelta = Math.Acos(dot);
-                            if (radPerTickDelta == 0)
-                                radPerTickDelta = double.Epsilon;
-
-                            if (radPerTickDelta > maxRotationsPerTickInRads && dot > 0)
-                                commandedAccel = commandNorm * (accelMpsMulti * Math.Abs(radPerTickDelta / MathHelperD.Pi - 1));
-                        }
+                        bool isNormalized;
+                        var newHeading = ProNavControl(Info.Direction, Velocity, commandedAccel, aConst.PreComputedMath, out isNormalized);
+                        proposedVel = Velocity + (isNormalized ? newHeading * speedLimitPerTick * StepConst : commandedAccel * StepConst);
                     }
+                    else
+                    {
+                        if (maxRotationsPerTickInRads < 1)
+                        {
+                            var commandNorm = Vector3D.Normalize(commandedAccel);
 
-                    proposedVel = Velocity + (commandedAccel * StepConst);
+                            var dot = Vector3D.Dot(Info.Direction, commandNorm);
+                            if (offset || dot < 0.98)
+                            {
+                                var radPerTickDelta = Math.Acos(dot);
+                                if (radPerTickDelta == 0)
+                                    radPerTickDelta = double.Epsilon;
+
+                                if (radPerTickDelta > maxRotationsPerTickInRads && dot > 0)
+                                    commandedAccel = commandNorm * (accelMpsMulti * Math.Abs(radPerTickDelta / MathHelperD.Pi - 1));
+                            }
+                        }
+                        proposedVel = Velocity + (commandedAccel * StepConst);
+                    }
 
                     if (!MyUtils.IsValid(proposedVel) || Vector3D.IsZero(proposedVel)) {
                         Log.Line($"Info.Direction is NaN - proposedVel:{proposedVel} - {commandedAccel} - Position:{Position} - Direction:{Info.Direction} - rndDir:{s.RandOffsetDir} - lateralAcceleration:{lateralAcceleration} - missileToTargetNorm:{missileToTargetNorm} - missileToTargetNorm:{relativeVelocity}");
@@ -1386,12 +1394,12 @@ namespace CoreSystems.Projectiles
 
                     Vector3D.Normalize(ref proposedVel, out Info.Direction);
                 }
+                #endregion
             }
             else if (!smarts.AccelClearance || s.SmartReady)
             {
                 proposedVel = Velocity + (Info.Direction * aConst.DeltaVelocityPerTick);
             }
-
             VelocityLengthSqr = proposedVel.LengthSquared();
             if (VelocityLengthSqr <= DesiredSpeed * DesiredSpeed)
                 MaxSpeed = DesiredSpeed;
@@ -1877,10 +1885,26 @@ namespace CoreSystems.Projectiles
         }
         #endregion
 
-        private void ProNavControl(Vector3D velocity, Vector3D commandAccel)
+        private static Vector3D ProNavControl(Vector3D currentDir, Vector3D velocity, Vector3D commandAccel, PreComputedMath preComp, out bool isNormalized)
         {
-            var heading = Vector3D.Zero;
+            Vector3D actualHeading;
+            isNormalized = false;
+            if (velocity.LengthSquared() < MathHelper.EPSILON10 || commandAccel.LengthSquared() < MathHelper.EPSILON10)
+                actualHeading = commandAccel;
+            else if (Vector3D.Dot(currentDir, Vector3D.Normalize(commandAccel)) < preComp.SteeringCos)
+            {
+                isNormalized = true;
+                var normalVec = Vector3D.Normalize(Vector3D.Cross(Vector3D.Cross(currentDir, commandAccel), currentDir));
 
+                if (normalVec.LengthSquared() < MathHelper.EPSILON10)
+                    normalVec = Vector3D.CalculatePerpendicularVector(currentDir);
+
+                actualHeading = preComp.SteeringSign * currentDir * preComp.SteeringParallelLen + normalVec * preComp.SteeringNormLen;
+            }
+            else
+                actualHeading = commandAccel;
+
+            return actualHeading;
         }
 
         #region Targeting

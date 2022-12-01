@@ -18,6 +18,8 @@ using static CoreSystems.Support.WeaponDefinition.AmmoDef.DamageScaleDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.FragmentDef.TimedSpawnDef;
 using static CoreSystems.Support.ValueProcessors;
 using static CoreSystems.Support.WeaponDefinition.HardPointDef;
+using System.Runtime.CompilerServices;
+using WeaponCore.Data.Scripts.CoreSystems.Comms;
 
 namespace CoreSystems.Support
 {
@@ -88,6 +90,7 @@ namespace CoreSystems.Support
         public readonly MyConcurrentPool<MyEntity> PrimeEntityPool;
         public readonly Dictionary<MyDefinitionBase, float> CustomBlockDefinitionBasesToScales;
         public readonly Dictionary<MyStringHash, MyStringHash> TextureHitMap = new Dictionary<MyStringHash, MyStringHash>();
+        public readonly PreComputedMath PreComputedMath;
         public readonly MySoundPair TravelSoundPair;
         public readonly Stack<int[]> PatternShuffleArray = new Stack<int[]>();
         public readonly MySoundPair ShotSoundPair;
@@ -259,7 +262,7 @@ namespace CoreSystems.Support
         public readonly bool AccelClearance;
         public readonly bool DynamicGuidance;
         public readonly bool TravelTo;
-        public readonly bool HasDeacceleration;
+        public readonly bool AdvancedSmartSteering;
         public readonly float PowerPerTick;
         public readonly float DirectAimCone;
         public readonly float FragRadial;
@@ -326,7 +329,6 @@ namespace CoreSystems.Support
         public readonly double AccelInMetersPerSec;
         public readonly double MaxAcceleration;
         public readonly double MaxAccelerationSqr;
-        public readonly double MaxDeAccelPerSec;
 
         internal AmmoConstants(WeaponSystem.AmmoType ammo, WeaponDefinition wDef, Session session, WeaponSystem system, int ammoIndex)
         {
@@ -436,9 +438,8 @@ namespace CoreSystems.Support
             DeltaVelocityPerTick = AccelInMetersPerSec * MyEngineConstants.PHYSICS_STEP_SIZE_IN_SECONDS;
             MaxAcceleration = ammo.AmmoDef.Trajectory.TotalAcceleration > 0 ? ammo.AmmoDef.Trajectory.TotalAcceleration : double.MaxValue;
             MaxAccelerationSqr = MaxAcceleration * MaxAcceleration;
-            HasDeacceleration = ammo.AmmoDef.Trajectory.Smarts.MaxDeAccelPerSec > 0;
-            MaxDeAccelPerSec = HasDeacceleration ? ammo.AmmoDef.Trajectory.Smarts.MaxDeAccelPerSec : double.MaxValue;
-            
+            AdvancedSmartSteering = ammo.AmmoDef.Trajectory.Smarts.SteeringLimit > 0;
+           
             MaxChaseTime = ammo.AmmoDef.Trajectory.Smarts.MaxChaseTime > 0 ? ammo.AmmoDef.Trajectory.Smarts.MaxChaseTime : int.MaxValue;
             MaxObjectsHit = ammo.AmmoDef.ObjectsHit.MaxObjectsHit > 0 ? ammo.AmmoDef.ObjectsHit.MaxObjectsHit : int.MaxValue;
             ArmOnlyOnHit = ammo.AmmoDef.AreaOfDamage.EndOfLife.ArmOnlyOnHit;
@@ -510,7 +511,7 @@ namespace CoreSystems.Support
             if (!SlowFireFixedWeapon && system.TurretMovement == WeaponSystem.TurretType.Fixed && predictionEligible)
                 Log.Line($"{ammo.AmmoDef.AmmoRound} does not qualify for fixed weapon client reload verification");
 
-            SkipAimChecks = (ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.Smart || ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.DroneAdvanced) && system.TurretMovement == WeaponSystem.TurretType.Fixed;
+            SkipAimChecks = (ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.Smart || ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.DroneAdvanced) && system.TurretMovement == WeaponSystem.TurretType.Fixed && (system.RadioType == Radio.RadioTypes.None || system.RadioType == Radio.RadioTypes.Master);
             Trail = ammo.AmmoDef.AmmoGraphics.Lines.Trail.Enable;
             HasShotFade = ammo.AmmoDef.AmmoGraphics.Lines.Tracer.VisualFadeStart > 0 && ammo.AmmoDef.AmmoGraphics.Lines.Tracer.VisualFadeEnd > 1;
             MaxTrajectoryGrows = ammo.AmmoDef.Trajectory.MaxTrajectoryTime > 1;
@@ -536,6 +537,8 @@ namespace CoreSystems.Support
                 var flightTime = ammo.AmmoDef.Trajectory.MaxTrajectory / ammo.AmmoDef.Trajectory.DesiredSpeed;
                 Log.Line($"{ammo.AmmoDef.AmmoRound} has {(int)(0.5 * 9.8 * flightTime * flightTime)}m grav drop at 1g.  {system.PartName} needs Accurate/Advanced aim prediction to account for gravity.");
             }
+
+            PreComputedMath = new PreComputedMath(ammo, this);
         }
 
         internal void Purge()
@@ -1804,6 +1807,37 @@ namespace CoreSystems.Support
             myEntity.Render.RemoveRenderObjects();
         }
 
+    }
+
+    public class PreComputedMath
+    {
+        internal readonly int SteeringSign;
+        internal readonly double SteeringNormLen;
+        internal readonly double SteeringParallelLen;
+        internal readonly double SteeringCos;
+        internal PreComputedMath(WeaponSystem.AmmoType ammo, AmmoConstants aConst)
+        {
+            if (aConst.AdvancedSmartSteering)
+                ComputeSteering(ammo, aConst, out SteeringSign, out SteeringNormLen, out SteeringParallelLen, out SteeringCos);
+        }
+
+        internal void ComputeSteering(WeaponSystem.AmmoType ammo, AmmoConstants aConst, out int steeringSign, out double steeringNormLen, out double steeringParallelLen, out double steeringCos)
+        {
+
+            var steeringMaxAngleRad = MathHelperD.ToRadians(ammo.AmmoDef.Trajectory.Smarts.SteeringLimit);
+            steeringCos = Math.Cos(steeringMaxAngleRad);
+
+            steeringSign = 1;
+            var maxAngleRadMod = steeringMaxAngleRad;
+            if (maxAngleRadMod > Math.PI / 2)
+            {
+                maxAngleRadMod = Math.PI - maxAngleRadMod;
+                steeringSign = -1;
+            }
+
+            steeringNormLen = Math.Sin(maxAngleRadMod);
+            steeringParallelLen = Math.Sqrt(1 - steeringNormLen * steeringNormLen);
+        }
     }
 
     internal class ValueProcessors

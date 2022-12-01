@@ -135,7 +135,6 @@ namespace CoreSystems.Support
             var rootConstruct = ai.Construct.RootAi.Construct;
             var focusGrid = rootConstruct.LastFocusEntity as MyCubeGrid;
             var lastFocusGrid = rootConstruct.LastFocusEntityChecked as MyCubeGrid;
-
             var predefinedThreatCollection = rootConstruct.RootAi.ThreatCollection;
             if (rootConstruct.HadFocus && !w.System.ScanTrackOnly) {
                 if (focusGrid != null) {
@@ -151,7 +150,6 @@ namespace CoreSystems.Support
             }
             else if (w.System.SlaveToScanner && rootConstruct.GetExportedCollection(w, Constructs.ScanType.Threats))
             {
-                Log.Line($"collection was not populated");
                 offset = predefinedThreatCollection.Count;
             }
 

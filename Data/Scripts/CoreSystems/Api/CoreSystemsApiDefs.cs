@@ -1258,7 +1258,7 @@ namespace CoreSystems.Api
                         [ProtoMember(13)] internal bool CheckFutureIntersection;
                         [ProtoMember(14)] internal double NavAcceleration;
                         [ProtoMember(15)] internal bool AccelClearance;
-                        [ProtoMember(16)] internal double MaxDeAccelPerSec;
+                        [ProtoMember(16)] internal double SteeringLimit;
                     }
 
                     [ProtoContract]

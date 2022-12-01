@@ -658,12 +658,9 @@ namespace CoreSystems
                             Dictionary<object, Weapon> masterTargets;
                             var seek = weaponReady && (acquireReady || w.ProjectilesNear) && (!w.System.SlaveToScanner || rootConstruct.TrackedTargets.TryGetValue(w.System.StorageLocation, out masterTargets) && masterTargets.Count > 0);
                             var fakeRequest =  wComp.FakeMode && w.Target.TargetState != TargetStates.IsFake && wComp.UserControlled;
-;
 
                             if (seek || fakeRequest)
                             {
-                                if (wComp.TypeSpecific == CoreComponent.CompTypeSpecific.Rifle)
-                                    Log.Line($"acquire request");
                                 w.TargetAcquireTick = Tick;
                                 AcquireTargets.Add(w);
                             }
