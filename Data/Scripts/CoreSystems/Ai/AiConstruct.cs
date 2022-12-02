@@ -118,6 +118,8 @@ namespace CoreSystems.Support
             internal readonly Dictionary<MyEntity, TargetInfo> ConstructTargetInfoCache = new Dictionary<MyEntity, TargetInfo>();
             internal readonly HashSet<MyEntity> PreviousTargets = new HashSet<MyEntity>();
             internal readonly Dictionary<int, WeaponGroup> WeaponGroups = new Dictionary<int, WeaponGroup>();
+            internal readonly List<TargetInfo> ThreatCacheCollection = new List<TargetInfo>();
+
             internal readonly RunningAverage DamageAverage = new RunningAverage(10);
 
             internal readonly Ai Ai;
@@ -711,6 +713,7 @@ namespace CoreSystems.Support
                 ConstructTargetInfoCache.Clear();
                 OutOfAmmoWeapons.Clear();
                 ClearTrackedTarget();
+                ThreatCacheCollection.Clear();
             }
 
             public bool GiveAllCompsInfiniteResources()

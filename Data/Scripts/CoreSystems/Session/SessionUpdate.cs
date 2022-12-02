@@ -798,6 +798,7 @@ namespace CoreSystems
                 }
                 var rootConstruct = ai.Construct.RootAi.Construct;
                 var recentApiRequest = Tick - w.ShootRequest.RequestTick <= 1;
+
                 var requiresFocus = w.ActiveAmmoDef.AmmoDef.Const.SkipAimChecks || (rootConstruct.TargetResetTick == Tick || recentApiRequest) && !w.System.UniqueTargetPerWeapon;
                 if (requiresFocus && (!rootConstruct.HadFocus)) {
                     w.TargetAcquireTick = uint.MaxValue;

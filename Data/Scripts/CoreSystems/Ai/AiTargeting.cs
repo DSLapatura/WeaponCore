@@ -135,25 +135,25 @@ namespace CoreSystems.Support
             var rootConstruct = ai.Construct.RootAi.Construct;
             var focusGrid = rootConstruct.LastFocusEntity as MyCubeGrid;
             var lastFocusGrid = rootConstruct.LastFocusEntityChecked as MyCubeGrid;
-            var predefinedThreatCollection = rootConstruct.RootAi.ThreatCollection;
-            if (rootConstruct.HadFocus && !w.System.ScanTrackOnly) {
+            var cachedCollection = rootConstruct.ThreatCacheCollection;
+            if (rootConstruct.HadFocus && !w.System.ScanTrackOnly && !w.System.TargetSlaving) {
                 if (focusGrid != null) {
-                    if (predefinedThreatCollection.Count == 0 || session.Tick - rootConstruct.LastFocusConstructTick > 180 || lastFocusGrid == null || !focusGrid.IsSameConstructAs(lastFocusGrid)) {
+                    if (cachedCollection.Count == 0 || session.Tick - rootConstruct.LastFocusConstructTick > 180 || lastFocusGrid == null || !focusGrid.IsSameConstructAs(lastFocusGrid)) {
                         rootConstruct.LastFocusEntityChecked = focusGrid;
                         rootConstruct.LastFocusConstructTick = session.Tick;
                         session.GetSortedConstructCollection(ai, focusGrid);
                     }
-                    offset = predefinedThreatCollection.Count;
+                    offset = cachedCollection.Count;
                 }
                 else if (rootConstruct.LastFocusEntity != null)
                     offset = 1;
             }
-            else if (w.System.TargetSlaving && rootConstruct.GetExportedCollection(w, Constructs.ScanType.Threats))
-            {
-                offset = predefinedThreatCollection.Count;
-            }
+            else if (w.System.TargetSlaving && !rootConstruct.GetExportedCollection(w, Constructs.ScanType.Threats)) 
+                    return false;
 
-            var numOfTargets = ai.SortedTargets.Count;
+            var collection = !w.System.TargetSlaving ? ai.SortedTargets : ai.ThreatCollection;
+
+            var numOfTargets = collection.Count;
             var adjTargetCount = forceFoci && offset > 0 ? offset : numOfTargets + offset;
 
             var deck = GetDeck(ref session.TargetDeck, 0, numOfTargets, w.System.Values.Targeting.TopTargets, ref w.TargetData.WeaponRandom.AcquireRandom);
@@ -165,9 +165,9 @@ namespace CoreSystems.Support
                     break;
 
                 TargetInfo info;
-                if (focusTarget && predefinedThreatCollection.Count > 0)
+                if (focusTarget && cachedCollection.Count > 0)
                 {
-                    info = predefinedThreatCollection[x];
+                    info = cachedCollection[x];
                 }
                 else if (focusTarget)
                 {
@@ -175,7 +175,7 @@ namespace CoreSystems.Support
                 }
                 else
                 {
-                    info = ai.SortedTargets[deck[x - offset]];
+                    info = collection[deck[x - offset]];
                 }
 
                 if (info?.Target == null || info.Target.MarkedForClose)
@@ -341,11 +341,8 @@ namespace CoreSystems.Support
 
             w.FoundTopMostTarget = false;
 
-            if (w.System.TargetSlaving)
-            {
-                if (!w.Comp.Ai.Construct.RootAi.Construct.GetExportedCollection(w, Constructs.ScanType.NonThreats))
-                    Log.Line($"couldnt export nonthreat collection");
-            }
+            if (w.System.TargetSlaving && !w.Comp.Ai.Construct.RootAi.Construct.GetExportedCollection(w, Constructs.ScanType.NonThreats))
+                return false;
 
             var collection = !w.System.TargetSlaving ? ai.Obstructions : ai.NonThreatCollection;
             var numOfTargets = collection.Count;
