@@ -1091,28 +1091,30 @@ namespace CoreSystems
 
         public void GetSortedConstructCollection(Ai ai, MyCubeGrid targetGrid)
         {
-            ai.ThreatCollection.Clear();
+            var rootConstruct = ai.Construct.RootAi.Construct;
+            var collection = rootConstruct.ThreatCacheCollection;
+
             TopMap map;
             if (targetGrid != null && !targetGrid.MarkedForClose && TopEntityToInfoMap.TryGetValue(targetGrid, out map))
             {
                 foreach (var myEntity in map.GroupMap.Construct.Keys) {
                     TargetInfo info;
                     if (ai.Targets.TryGetValue(myEntity, out info))
-                        ai.ThreatCollection.Add(info);
+                        collection.Add(info);
                 }
 
-                var n = ai.ThreatCollection.Count;
+                var n = collection.Count;
                 for (int i = 1; i < n; ++i)
                 {
-                    var key = ai.ThreatCollection[i];
+                    var key = collection[i];
                     var j = i - 1;
 
-                    while (j >= 0 && (int)ai.ThreatCollection[j].OffenseRating > key.OffenseRating)
+                    while (j >= 0 && (int)collection[j].OffenseRating > key.OffenseRating)
                     {
-                        ai.ThreatCollection[j + 1] = ai.ThreatCollection[j];
+                        collection[j + 1] = collection[j];
                         j -= 1;
                     }
-                    ai.ThreatCollection[j + 1] = key;
+                    collection[j + 1] = key;
                 }
             }
         }

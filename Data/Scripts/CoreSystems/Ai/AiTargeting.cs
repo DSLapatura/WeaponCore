@@ -131,7 +131,6 @@ namespace CoreSystems.Support
 
             int offset = 0;
             w.FoundTopMostTarget = false;
-
             var rootConstruct = ai.Construct.RootAi.Construct;
             var focusGrid = rootConstruct.LastFocusEntity as MyCubeGrid;
             var lastFocusGrid = rootConstruct.LastFocusEntityChecked as MyCubeGrid;
