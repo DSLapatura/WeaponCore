@@ -572,13 +572,28 @@ namespace CoreSystems.Support
                 }
 
                 Weapon tracker;
-                if ((!dict.TryGetValue(target, out tracker) || tracker == w) && dict.Count < w.System.StorageLimit) 
+                var limiter = w.System.StorageLimitPerWeapon ? w.Comp.StoredTargets : dict.Count;
+                if ((!dict.TryGetValue(target, out tracker) || tracker == w) && limiter < w.System.StorageLimit) 
                 {
                     dict[target] = w;
+                    w.Comp.StoredTargets++;
                     return true;
                 }
 
                 return false;
+            }
+
+            internal bool TryRemoveTrackedTarget(Weapon w, object target)
+            {
+                Dictionary<object, Weapon> dict;
+                Weapon tracker;
+
+                var removed = TrackedTargets.TryGetValue(w.System.StorageLocation, out dict) && dict.TryGetValue(target, out tracker) && w == tracker && dict.Remove(target);
+                
+                if (removed)
+                    w.Comp.StoredTargets--;
+
+                return removed;
             }
 
             internal bool StillTrackingTarget(Weapon w)
@@ -590,12 +605,7 @@ namespace CoreSystems.Support
                 return containsTarget;
             }
 
-            internal bool TryRemoveTrackedTarget(Weapon w, object target)
-            {
-                Dictionary<object, Weapon> dict;
-                Weapon tracker;
-                return TrackedTargets.TryGetValue(w.System.StorageLocation, out dict) && dict.TryGetValue(target, out tracker) && w == tracker && dict.Remove(target);
-            }
+
 
             internal void ClearTrackedTarget()
             {
@@ -626,6 +636,9 @@ namespace CoreSystems.Support
                         var scannerAi = scanner.Comp.MasterAi;
                         var targetEntity = pair.Key as MyEntity;
                         var targetProjectile = pair.Key as Projectile;
+
+                        if (scanner.ConnectedWeapons >= scanner.System.MaxConnections)
+                            continue;
 
                         if ((type != ScanType.Projectiles && targetEntity != null || targetProjectile != null) && scanner.Target.HasTarget && (!scanner.TurretController || scanner.Target.IsAligned))
                         {

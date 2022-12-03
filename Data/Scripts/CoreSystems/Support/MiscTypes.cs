@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using CoreSystems.Platform;
 using CoreSystems.Projectiles;
 using Sandbox.Game.Entities;
@@ -272,9 +273,11 @@ namespace CoreSystems.Support
             if (Weapon != null)
             {
                 if (Weapon.System.UniqueTargetPerWeapon)
-                    StoreTargetOnBlock(setTarget);
+                    AddTargetToBlock(setTarget);
                 else if (Weapon.System.RadioType == Radio.RadioTypes.Master)
                     StoreTargetOnConstruct(setTarget);
+                else if (Weapon.System.RadioType == Radio.RadioTypes.Slave)
+                    RecordConnection(setTarget);
 
             }
 
@@ -282,7 +285,7 @@ namespace CoreSystems.Support
             CurrentState = reason;
         }
 
-        private void StoreTargetOnBlock(bool setTarget)
+        private void AddTargetToBlock(bool setTarget)
         {
             var targetObj = TargetEntity != null ? (object)TargetEntity.GetTopMostParent() : Projectile;
 
@@ -376,6 +379,30 @@ namespace CoreSystems.Support
                     }
                 }
             }
+        }
+
+        private void RecordConnection(bool setTarget)
+        {
+            var rootConstruct = Weapon.Comp.Ai.Construct.RootAi.Construct;
+            var targetObj = TargetEntity != null ? (object)TargetEntity.GetTopMostParent() : Projectile;
+
+            Dictionary<object, Weapon> dict;
+            if (targetObj == null || !rootConstruct.TrackedTargets.TryGetValue(Weapon.System.StorageLocation, out dict))
+            {
+                Log.Line($"RecordConnection fail1");
+                return;
+            }
+
+            Weapon master;
+            if (dict.TryGetValue(targetObj, out master)) {
+                if (setTarget)
+                    master.ConnectedWeapons++;
+                else
+                    master.ConnectedWeapons--;
+            }
+            else
+                Log.Line($"RecordConnection failed3");
+
         }
 
         internal void SetTargetId(bool setTarget, States reason)

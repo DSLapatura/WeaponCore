@@ -74,6 +74,7 @@ namespace CoreSystems.Platform
         internal uint OverHeatCountDown;
         internal uint DelayedTargetResetTick;
         internal float HeatPerc;
+        internal int ConnectedWeapons;
         internal int BarrelRate;
         internal int ShotsFired;
         internal int NextMuzzle;

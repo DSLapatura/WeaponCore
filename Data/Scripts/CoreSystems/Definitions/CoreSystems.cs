@@ -151,6 +151,8 @@ namespace CoreSystems.Support
         public readonly int BarrelSpinRate;
         public readonly int ShotsPerBurst;
         public readonly int MaxAmmoCount;
+        public readonly int MaxConnections;
+        public readonly bool StorageLimitPerWeapon;
         public readonly bool MaxTrackingTime;
         public readonly bool HasAntiSmart;
         public readonly bool HasAmmoSelection;
@@ -289,6 +291,7 @@ namespace CoreSystems.Support
                 if (!string.IsNullOrEmpty(comms.StorageLocation) && comms.Mode == Comms.LocalNetwork)
                 {
                     StorageLimit = comms.StorageLimit > 0 ? comms.StorageLimit : int.MaxValue;
+                    StorageLimitPerWeapon = comms.StoreLimitPerBlock;
                     StoreTargets = comms.StoreTargets;
                     StorageLocation = MyStringHash.GetOrCompute(comms.StorageLocation);
                     RadioType = !StoreTargets ? RadioTypes.Slave : RadioTypes.Master;
@@ -317,7 +320,8 @@ namespace CoreSystems.Support
 
                     RadioType = RadioTypes.Receiver;
                 }
-                
+
+                MaxConnections = comms.MaxConnections;
                 TargetPersists = comms.TargetPersists;
                 TargetSlaving = RadioType != RadioTypes.Master;
             }
@@ -399,10 +403,7 @@ namespace CoreSystems.Support
             HasBarrelShootAv = BarrelEffect1 || BarrelEffect2 || HardPointRotationSound || FiringSound != FiringSoundState.None;
 
             var nameLen = partName.Length;
-            if (nameLen > 21)
-                ShortName = partName.Remove(21, nameLen - 21);
-            else
-                ShortName = PartName;
+            ShortName = nameLen > 21 ? partName.Remove(21, nameLen - 21) : PartName;
         }
 
 

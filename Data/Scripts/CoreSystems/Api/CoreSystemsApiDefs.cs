@@ -315,6 +315,8 @@ namespace CoreSystems.Api
                     [ProtoMember(9)] internal string RelayChannel;
                     [ProtoMember(10)] internal double RelayRange;
                     [ProtoMember(11)] internal bool TargetPersists;
+                    [ProtoMember(12)] internal bool StoreLimitPerBlock;
+                    [ProtoMember(13)] internal int MaxConnections;
                 }
             }
 

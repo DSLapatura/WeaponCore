@@ -36,6 +36,7 @@ namespace CoreSystems.Platform
 
             internal ProtoWeaponOverrides MasterOverrides;
             internal Weapon PrimaryWeapon;
+            internal int StoredTargets;
             internal int DefaultAmmoId;
             internal int DefaultReloads;
             internal int MaxAmmoCount;
