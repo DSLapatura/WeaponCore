@@ -975,7 +975,7 @@ namespace CoreSystems.Support
                 var block = targetEnt as MyCubeBlock;
 
                 MyEntity target;
-                if (MyEntities.TryGetEntityById(tId, out target) && (target == targetEnt || block != null && target == block.CubeGrid))
+                if (MyEntities.TryGetEntityById(tId, out target) && (target == targetEnt || block != null && target is MyCubeGrid && block.CubeGrid.IsSameConstructAs((MyCubeGrid)target)))
                 {
                     var worldVolume = target.PositionComp.WorldVolume;
                     var targetPos = worldVolume.Center;
