@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using CoreSystems.Platform;
 using CoreSystems.Projectiles;
 using Sandbox.Game.Entities;
@@ -14,7 +13,6 @@ namespace CoreSystems.Support
     {
         internal Weapon Weapon;
         internal object TargetObject;
-        //internal Projectile Projectile;
         internal Vector3D TargetPos;
         internal States CurrentState = States.NotSet;
         internal TargetStates TargetState;

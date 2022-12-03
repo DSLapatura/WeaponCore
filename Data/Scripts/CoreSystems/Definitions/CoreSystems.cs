@@ -192,7 +192,6 @@ namespace CoreSystems.Support
         public readonly bool HardPointRotationSound;
         public readonly bool BarrelRotateSound;
         public readonly bool PreFireSound;
-        public readonly bool LockOnFocus;
         public readonly bool HasGuidedAmmo;
         public readonly bool SuppressFire;
         public readonly bool NoSubParts;
@@ -275,7 +274,6 @@ namespace CoreSystems.Support
             Prediction = Values.HardPoint.AimLeadingPrediction;
             ShootBlanks = Values.Targeting.ShootBlanks;
             //LockOnFocus = Values.HardPoint.Ai.LockOnFocus && !Values.HardPoint.Ai.TrackTargets;
-            LockOnFocus = false;
             AlternateUi = Values.HardPoint.Ui.AlternateUi;
             MaxReloads = Values.HardPoint.Loading.MaxReloads;
             MaxActiveProjectiles = Values.HardPoint.Loading.MaxActiveProjectiles > 0 ? Values.HardPoint.Loading.MaxActiveProjectiles : int.MaxValue;

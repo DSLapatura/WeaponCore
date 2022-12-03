@@ -42,15 +42,6 @@ namespace CoreSystems.Platform
                 if (System.HasBarrelRotation && !SpinBarrel() || ShootTick > tick)
                     return;
 
-                var rootConstruct = Comp.Ai.Construct.RootAi.Construct;
-                var eTarget = Target.TargetObject as MyEntity;
-                if (LockOnFireState && eTarget != null && eTarget.EntityId != rootConstruct.Data.Repo.FocusData.Target) {
-                    
-                    MyEntity focusTarget;
-                    if (!rootConstruct.Focus.GetPriorityTarget(Comp.Ai, out focusTarget) || rootConstruct.Data.Repo.FocusData.Locked == FocusData.LockModes.None)
-                        return;
-                }
-
                 if (PosChangedTick != Comp.Session.SimulationCount)
                     UpdatePivotPos();
 

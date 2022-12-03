@@ -1012,14 +1012,6 @@ namespace CoreSystems.Support
                         if (overrides.FocusSubSystem && overrides.SubSystem != WeaponDefinition.TargetingDef.BlockTypes.Any && block != null && !w.ValidSubSystemTarget(block, overrides.SubSystem))
                             return false;
 
-                        if (w.System.LockOnFocus)
-                        {
-                            var targetSphere = target.PositionComp.WorldVolume;
-                            targetSphere.Center = target.PositionComp.WorldAABB.Center;
-                            w.AimCone.ConeDir = w.MyPivotFwd;
-                            w.AimCone.ConeTip = w.BarrelOrigin;
-                            return MathFuncs.TargetSphereInCone(ref targetSphere, ref w.AimCone);
-                        }
                         return true;
                     }
                 }

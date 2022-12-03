@@ -184,7 +184,6 @@ namespace CoreSystems.Platform
         internal bool HeatLoopRunning;
         internal bool PreFired;
         internal bool FinishShots;
-        internal bool LockOnFireState;
         internal bool ScheduleAmmoChange;
         internal bool CriticalReaction;
         internal bool FoundTopMostTarget;

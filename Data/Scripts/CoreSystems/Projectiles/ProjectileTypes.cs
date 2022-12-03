@@ -60,7 +60,7 @@ namespace CoreSystems.Support
         internal bool IsFragment;
         internal bool EwarAreaPulse;
         internal bool EwarActive;
-        internal bool LockOnFireState;
+        internal bool AcquiredEntity;
         internal bool AimedShot;
         internal bool DoDamage;
         internal bool ShieldBypassed;
@@ -135,7 +135,7 @@ namespace CoreSystems.Support
             IsFragment = false;
             EwarAreaPulse = false;
             EwarActive = false;
-            LockOnFireState = false;
+            AcquiredEntity = false;
             AimedShot = false;
             DoDamage = false;
             ShieldBypassed = false;
@@ -517,7 +517,7 @@ namespace CoreSystems.Support
                 frag.DoDamage = info.DoDamage;
                 frag.PrevTargetPos = p.TargetPosition;
                 frag.Velocity = !aConst.FragDropVelocity ? p.Velocity : Vector3D.Zero;
-                frag.LockOnFireState = info.LockOnFireState;
+                frag.LockOnFireState = info.AcquiredEntity;
                 frag.IgnoreShield = info.ShieldBypassed && aConst.ShieldDamageBypassMod > 0;
                 var posValue = aConst.FragDegrees;
                 posValue *= 0.5f;
@@ -571,7 +571,7 @@ namespace CoreSystems.Support
                 info.Direction = frag.Direction;
                 info.ShooterVel = frag.Velocity;
                 p.Gravity = aConst.FeelsGravity && info.Ai.InPlanetGravity ? frag.Weapon.GravityPoint * aConst.GravityMultiplier : Vector3D.Zero;
-                info.LockOnFireState = frag.LockOnFireState;
+                info.AcquiredEntity = frag.LockOnFireState;
                 info.MaxTrajectory = aConst.MaxTrajectory;
                 info.ShotFade = 0;
                 info.ShieldBypassed = frag.IgnoreShield;

@@ -1950,8 +1950,8 @@ namespace CoreSystems.Projectiles
                 if (giveUp || !Ai.ReacquireTarget(this))
                 {
                     var activeEntity = Info.Target.TargetState == Target.TargetStates.IsEntity && eTarget != null;
-                    var badEntity = !Info.LockOnFireState && activeEntity && eTarget.MarkedForClose || Info.LockOnFireState && activeEntity && (eTarget.GetTopMostParent()?.MarkedForClose ?? true);
-                    if (!giveUp && !Info.LockOnFireState || Info.LockOnFireState && giveUp || !Info.AmmoDef.Trajectory.Smarts.NoTargetExpire || badEntity)
+                    var badEntity = !Info.AcquiredEntity && activeEntity && eTarget.MarkedForClose || Info.AcquiredEntity && activeEntity && (eTarget.GetTopMostParent()?.MarkedForClose ?? true);
+                    if (!giveUp && !Info.AcquiredEntity || Info.AcquiredEntity && giveUp || !Info.AmmoDef.Trajectory.Smarts.NoTargetExpire || badEntity)
                     {
                         if (Info.Target.TargetState == Target.TargetStates.IsEntity)
                             Info.Target.Reset(Info.Ai.Session.Tick, Target.States.ProjectileNewTarget);

@@ -75,7 +75,7 @@ namespace CoreSystems.Projectiles
 
                 info.Random = new XorShiftRandomStruct((ulong)(w.TargetData.WeaponRandom.CurrentSeed + (w.Reload.EndId + w.ProjectileCounter++)));
 
-                info.LockOnFireState = (w.LockOnFireState || !aConst.OverrideTarget && wTarget.TargetState == Target.TargetStates.IsEntity);
+                info.AcquiredEntity = !aConst.OverrideTarget && wTarget.TargetState == Target.TargetStates.IsEntity;
                 info.ShooterVel = ai.TopEntityVel;
 
                 info.OriginUp = t != Kind.Client ? muzzle.UpDirection : gen.OriginUp;

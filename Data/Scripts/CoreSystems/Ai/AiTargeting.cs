@@ -11,7 +11,6 @@ using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRage.Utils;
 using VRageMath;
-using WeaponCore.Data.Scripts.CoreSystems.Comms;
 using static CoreSystems.Support.WeaponDefinition;
 using static CoreSystems.Support.WeaponDefinition.TargetingDef;
 using static CoreSystems.Support.WeaponDefinition.TargetingDef.BlockTypes;
@@ -247,9 +246,11 @@ namespace CoreSystems.Support
                         var targetSphere = info.Target.PositionComp.WorldVolume;
                         targetSphere.Center = newCenter;
 
-                        if (!validEstimate || (!aConst.SkipAimChecks || w.System.LockOnFocus) && !MathFuncs.TargetSphereInCone(ref targetSphere, ref w.AimCone)) continue;
+                        if (!validEstimate || !aConst.SkipAimChecks && !MathFuncs.TargetSphereInCone(ref targetSphere, ref w.AimCone)) 
+                            continue;
                     }
-                    else if (!Weapon.CanShootTargetObb(w, info.Target, targetLinVel, targetAccel, out newCenter)) continue;
+                    else if (!Weapon.CanShootTargetObb(w, info.Target, targetLinVel, targetAccel, out newCenter)) 
+                        continue;
 
                     if (ai.FriendlyShieldNear)
                     {
@@ -260,7 +261,8 @@ namespace CoreSystems.Support
 
                     w.FoundTopMostTarget = true;
 
-                    if (!AcquireBlock(w, target, info,  ref waterSphere, ref w.XorRnd, null, !focusTarget)) continue;
+                    if (!AcquireBlock(w, target, info,  ref waterSphere, ref w.XorRnd, null, !focusTarget))
+                        continue;
                     
                     target.TransferTo(w.Target, comp.Session.Tick);
                     if (w.Target.TargetState == Target.TargetStates.IsEntity)
@@ -270,9 +272,11 @@ namespace CoreSystems.Support
                 }
 
                 var meteor = info.Target as MyMeteor;
-                if (meteor != null && (!s.TrackMeteors || !overRides.Meteors)) continue;
+                if (meteor != null && (!s.TrackMeteors || !overRides.Meteors)) 
+                    continue;
                 
-                if (character != null && (!overRides.Biologicals || character.IsDead || character.Integrity <= 0 || session.AdminMap.ContainsKey(character))) continue;
+                if (character != null && (!overRides.Biologicals || character.IsDead || character.Integrity <= 0 || session.AdminMap.ContainsKey(character))) 
+                    continue;
 
 
                 if (!Weapon.CanShootTarget(w, ref targetCenter, targetLinVel, targetAccel, out predictedPos, true, info.Target, MathFuncs.DebugCaller.CanShootTarget3))
@@ -395,7 +399,7 @@ namespace CoreSystems.Support
                         var targetSphere = info.Target.PositionComp.WorldVolume;
                         targetSphere.Center = newCenter;
 
-                        if (!validEstimate || (!aConst.SkipAimChecks || w.System.LockOnFocus) && !MathFuncs.TargetSphereInCone(ref targetSphere, ref w.AimCone)) continue;
+                        if (!validEstimate || !aConst.SkipAimChecks && !MathFuncs.TargetSphereInCone(ref targetSphere, ref w.AimCone)) continue;
                     }
                     else if (!Weapon.CanShootTargetObb(w, info.Target, targetLinVel, targetAccel, out newCenter)) continue;
 
@@ -612,7 +616,7 @@ namespace CoreSystems.Support
             var fireOnStation = moveMode == ProtoWeaponOverrides.MoveModes.Any || moveMode == ProtoWeaponOverrides.MoveModes.Moored;
             var stationOnly = moveMode == ProtoWeaponOverrides.MoveModes.Moored;
             var acquired = false;
-            var lockedToTarget = info.LockOnFireState;
+            var previousEntity = info.AcquiredEntity;
             BoundingSphereD waterSphere = new BoundingSphereD(Vector3D.Zero, 1f);
             WaterData water = null;
             if (s.Session.WaterApiLoaded && !info.AmmoDef.IgnoreWater && ai.InPlanetGravity && ai.MyPlanet != null && s.Session.WaterMap.TryGetValue(ai.MyPlanet.EntityId, out water))
@@ -625,7 +629,7 @@ namespace CoreSystems.Support
 
 
             MyEntity topTarget = null;
-            if (lockedToTarget && !aConst.OverrideTarget && target.TargetState == Target.TargetStates.IsEntity)
+            if (previousEntity && !aConst.OverrideTarget && target.TargetState == Target.TargetStates.IsEntity)
             {
                 topTarget = ((MyEntity)target.TargetObject).GetTopMostParent() ?? alphaInfo?.Target;
                 if (topTarget != null && topTarget.MarkedForClose)
@@ -693,7 +697,7 @@ namespace CoreSystems.Support
                 acquired = true;
                 break;
             }
-            if (!acquired && !lockedToTarget) target.Reset(s.Session.Tick, Target.States.NoTargetsSeen);
+            if (!acquired && !previousEntity) target.Reset(s.Session.Tick, Target.States.NoTargetsSeen);
             return acquired;
         }
 
