@@ -23,6 +23,7 @@ namespace CoreSystems.Platform
         internal readonly Dictionary<long, ClientProSync> WeaponProSyncs = new Dictionary<long, ClientProSync>();
         internal readonly Dictionary<string, PartAnimation> AnimationLookup = new Dictionary<string, PartAnimation>();
         internal readonly List<MyCubeBlock> Top5 = new List<MyCubeBlock>();
+        internal readonly HashSet<Weapon> Connections = new HashSet<Weapon>();
         internal readonly ApiShootRequest ShootRequest;
         internal readonly WeaponFrameCache WeaponCache;
         internal readonly WeaponSystem System;
@@ -74,7 +75,6 @@ namespace CoreSystems.Platform
         internal uint OverHeatCountDown;
         internal uint DelayedTargetResetTick;
         internal float HeatPerc;
-        internal int ConnectedWeapons;
         internal int BarrelRate;
         internal int ShotsFired;
         internal int NextMuzzle;

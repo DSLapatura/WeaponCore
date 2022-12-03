@@ -974,7 +974,7 @@ namespace CoreSystems.Api
                     return new MyTuple<bool, bool, bool, MyEntity>(true, false, true, null);
                 if (weapon.Target.TargetState == Target.TargetStates.IsProjectile)
                     return new MyTuple<bool, bool, bool, MyEntity>(true, true, false, null);
-                return new MyTuple<bool, bool, bool, MyEntity>(weapon.Target.TargetState == Target.TargetStates.IsEntity, false, false, weapon.Target.TargetEntity);
+                return new MyTuple<bool, bool, bool, MyEntity>(weapon.Target.TargetState == Target.TargetStates.IsEntity, false, false, (MyEntity) weapon.Target.TargetObject);
             }
 
             return new MyTuple<bool, bool, bool, MyEntity>(false, false, false, null);
@@ -1112,7 +1112,7 @@ namespace CoreSystems.Api
             {
                 var w = comp.Platform.Weapons[weaponId];
 
-                w.NewTarget.TargetEntity = (MyEntity) targetEnt;
+                w.NewTarget.TargetObject = targetEnt;
                 var dist = Vector3D.DistanceSquared(comp.CoreEntity.PositionComp.WorldMatrixRef.Translation, targetEnt.PositionComp.WorldMatrixRef.Translation);
                 if (dist > w.MaxTargetDistanceSqr)
                 {
@@ -1132,7 +1132,7 @@ namespace CoreSystems.Api
             {
                 var w = comp.Platform.Weapons[weaponId];
 
-                w.NewTarget.TargetEntity = (MyEntity)targetEnt;
+                w.NewTarget.TargetObject = targetEnt;
 
                 Vector3D targetPos;
                 var targetAligned = Weapon.TargetAligned(w, w.NewTarget, out targetPos);
@@ -1173,7 +1173,7 @@ namespace CoreSystems.Api
             if (comp?.Platform != null && comp.Platform.State == Ready && comp.Platform.Weapons.Count > weaponId)
             {
                 var w = comp.Platform.Weapons[weaponId];
-                w.NewTarget.TargetEntity = (MyEntity)targetEnt;
+                w.NewTarget.TargetObject = targetEnt;
 
                 Vector3D targetPos;
                 Weapon.TargetAligned(w, w.NewTarget, out targetPos);

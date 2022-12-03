@@ -1,4 +1,5 @@
 ﻿using System;
+using CoreSystems.Projectiles;
 using CoreSystems.Support;
 using Jakaria;
 using Sandbox.Game.Entities;
@@ -238,7 +239,7 @@ namespace CoreSystems.Platform
                         weapon.LimitLine = new LineD(weapon.MyPivotPos, weapon.MyPivotPos + (constraintVector * weapon.ActiveAmmoDef.AmmoDef.Const.MaxTrajectory));
                 }
                 else
-                    canTrack = MathFuncs.IsDotProductWithinTolerance(ref weapon.MyPivotFwd, ref targetDir, weapon.AimingTolerance);
+                    canTrack = IsDotProductWithinTolerance(ref weapon.MyPivotFwd, ref targetDir, weapon.AimingTolerance);
             }
             return canTrack;
         }
@@ -254,14 +255,17 @@ namespace CoreSystems.Platform
             Vector3D targetCenter;
 
             Ai.FakeTarget.FakeWorldTargetInfo fakeTargetInfo = null;
+            var pTarget = target.TargetObject as Projectile;
+            var tEntity = target.TargetObject as MyEntity;
+
             if (weapon.Comp.Data.Repo.Values.Set.Overrides.Control != ProtoWeaponOverrides.ControlModes.Auto && weapon.ValidFakeTargetInfo(weapon.Comp.Data.Repo.Values.State.PlayerId, out fakeTargetInfo))
             {
                 targetCenter = fakeTargetInfo.WorldPosition;
             }
             else if (target.TargetState == Target.TargetStates.IsProjectile)
-                targetCenter = target.Projectile?.Position ?? Vector3D.Zero;
+                targetCenter = pTarget?.Position ?? Vector3D.Zero;
             else if (target.TargetState != Target.TargetStates.IsFake)
-                targetCenter = target.TargetEntity?.PositionComp.WorldAABB.Center ?? Vector3D.Zero;
+                targetCenter = tEntity?.PositionComp.WorldAABB.Center ?? Vector3D.Zero;
             else
                 targetCenter = Vector3D.Zero;
 
@@ -277,13 +281,13 @@ namespace CoreSystems.Platform
                 else
                 {
 
-                    var cube = target.TargetEntity as MyCubeBlock;
-                    var topMostEnt = cube != null ? cube.CubeGrid : target.TargetEntity;
+                    var cube = tEntity as MyCubeBlock;
+                    var topMostEnt = cube != null ? cube.CubeGrid : tEntity;
 
-                    if (target.Projectile != null)
+                    if (pTarget != null)
                     {
-                        targetLinVel = target.Projectile.Velocity;
-                        targetAccel = target.Projectile.Velocity - target.Projectile.PrevVelocity;
+                        targetLinVel = pTarget.Velocity;
+                        targetAccel = pTarget.Velocity - pTarget.PrevVelocity;
                     }
                     else if (topMostEnt?.Physics != null)
                     {
@@ -324,14 +328,16 @@ namespace CoreSystems.Platform
             var baseData = w.Comp.Data.Repo.Values;
             var session = w.System.Session;
             var ai = w.Comp.MasterAi;
+            var pTarget = target.TargetObject as Projectile;
+            var tEntity = target.TargetObject as MyEntity;
 
             Ai.FakeTarget.FakeWorldTargetInfo fakeTargetInfo = null;
             if (w.Comp.FakeMode && w.ValidFakeTargetInfo(baseData.State.PlayerId, out fakeTargetInfo))
                 targetCenter = fakeTargetInfo.WorldPosition;
             else if (target.TargetState == Target.TargetStates.IsProjectile)
-                targetCenter = target.Projectile?.Position ?? Vector3D.Zero;
+                targetCenter = pTarget?.Position ?? Vector3D.Zero;
             else if (target.TargetState != Target.TargetStates.IsFake)
-                targetCenter = target.TargetEntity?.PositionComp.WorldAABB.Center ?? Vector3D.Zero;
+                targetCenter = tEntity?.PositionComp.WorldAABB.Center ?? Vector3D.Zero;
             else
                 targetCenter = Vector3D.Zero;
 
@@ -346,13 +352,13 @@ namespace CoreSystems.Platform
                 }
                 else
                 {
-                    var cube = target.TargetEntity as MyCubeBlock;
-                    var topMostEnt = cube != null ? cube.CubeGrid : target.TargetEntity;
+                    var cube = tEntity as MyCubeBlock;
+                    var topMostEnt = cube != null ? cube.CubeGrid : tEntity;
 
-                    if (target.Projectile != null)
+                    if (pTarget != null)
                     {
-                        targetLinVel = target.Projectile.Velocity;
-                        targetAccel = target.Projectile.Velocity - target.Projectile.PrevVelocity;
+                        targetLinVel = pTarget.Velocity;
+                        targetAccel = pTarget.Velocity - pTarget.PrevVelocity;
                     }
                     else if (topMostEnt?.Physics != null)
                     {
@@ -891,12 +897,14 @@ namespace CoreSystems.Platform
             var scopeInfo = GetScope.Info;
             var trackingCheckPosition = ScopeDistToCheckPos > 0 ? scopeInfo.Position - (scopeInfo.Direction * ScopeDistToCheckPos) : scopeInfo.Position;
             var overrides = Comp.Data.Repo.Values.Set.Overrides;
+            var eTarget = Target.TargetObject as MyEntity;
+            var pTarget = Target.TargetObject as Projectile;
 
-            if (System.Session.DebugLos && Target.TargetState == Target.TargetStates.IsEntity)
+            if (System.Session.DebugLos && Target.TargetState == Target.TargetStates.IsEntity && eTarget != null)
             {
                 var trackPos = BarrelOrigin + (MyPivotFwd * MuzzleDistToBarrelCenter);
-                var targetTestPos = Target.TargetEntity.PositionComp.WorldAABB.Center;
-                var topEntity = Target.TargetEntity.GetTopMostParent();
+                var targetTestPos = eTarget.PositionComp.WorldAABB.Center;
+                var topEntity = eTarget.GetTopMostParent();
                 IHitInfo hitInfo;
                 if (System.Session.Physics.CastRay(trackPos, targetTestPos, out hitInfo) && hitInfo.HitEntity == topEntity)
                 {
@@ -928,7 +936,7 @@ namespace CoreSystems.Platform
                 if (tick - Comp.LastRayCastTick <= 29) return true;
             }
 
-            if (Target.TargetEntity is IMyCharacter && !overrides.Biologicals || Target.TargetEntity is MyCubeBlock && !overrides.Grids)
+            if (Target.TargetObject is IMyCharacter && !overrides.Biologicals || Target.TargetObject is MyCubeBlock && !overrides.Grids)
             {
                 masterWeapon.Target.Reset(Comp.Session.Tick, Target.States.RayCheckProjectile);
                 if (masterWeapon != this) Target.Reset(Comp.Session.Tick, Target.States.RayCheckProjectile);
@@ -948,7 +956,7 @@ namespace CoreSystems.Platform
 
             if (Target.TargetState == Target.TargetStates.IsProjectile)
             {
-                if (!Comp.Ai.LiveProjectile.Contains(Target.Projectile))
+                if (pTarget != null && !Comp.Ai.LiveProjectile.Contains(pTarget))
                 {
                     masterWeapon.Target.Reset(Comp.Session.Tick, Target.States.RayCheckProjectile);
                     if (masterWeapon != this) Target.Reset(Comp.Session.Tick, Target.States.RayCheckProjectile);
@@ -958,15 +966,15 @@ namespace CoreSystems.Platform
 
             if (Target.TargetState != Target.TargetStates.IsProjectile)
             {
-                var character = Target.TargetEntity as IMyCharacter;
-                if ((Target.TargetEntity == null || Target.TargetEntity.MarkedForClose) || character != null && (character.IsDead || character.Integrity <= 0 || Comp.Session.AdminMap.ContainsKey(character) || ((uint)character.Flags & 0x1000000) > 0))
+                var character = Target.TargetObject as IMyCharacter;
+                if ((eTarget == null || eTarget.MarkedForClose) || character != null && (character.IsDead || character.Integrity <= 0 || Comp.Session.AdminMap.ContainsKey(character) || ((uint)character.Flags & 0x1000000) > 0))
                 {
                     masterWeapon.Target.Reset(Comp.Session.Tick, Target.States.RayCheckOther);
                     if (masterWeapon != this) Target.Reset(Comp.Session.Tick, Target.States.RayCheckOther);
                     return false;
                 }
 
-                var cube = Target.TargetEntity as MyCubeBlock;
+                var cube = Target.TargetObject as MyCubeBlock;
                 if (cube != null)
                 {
                     var rootAi = Comp.Ai.Construct.RootAi;
@@ -983,7 +991,7 @@ namespace CoreSystems.Platform
                     }
 
                 }
-                var topMostEnt = Target.TargetEntity.GetTopMostParent();
+                var topMostEnt = eTarget.GetTopMostParent();
                 if (Target.TopEntityId != topMostEnt.EntityId || !Comp.Ai.Targets.ContainsKey(topMostEnt) && (!System.ScanNonThreats || !Comp.Ai.ObstructionLookup.ContainsKey(topMostEnt)))
                 {
                     masterWeapon.Target.Reset(Comp.Session.Tick, Target.States.RayCheckFailed);
@@ -992,7 +1000,7 @@ namespace CoreSystems.Platform
                 }
             }
 
-            var targetPos = Target.Projectile?.Position ?? Target.TargetEntity?.PositionComp.WorldAABB.Center ?? Vector3D.Zero;
+            var targetPos = pTarget?.Position ?? eTarget?.PositionComp.WorldAABB.Center ?? Vector3D.Zero;
             var distToTargetSqr = Vector3D.DistanceSquared(targetPos, trackingCheckPosition);
             if (distToTargetSqr > MaxTargetDistanceSqr && distToTargetSqr < MinTargetDistanceSqr)
             {

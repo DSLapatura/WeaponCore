@@ -6,8 +6,6 @@ using Sandbox.Game.Entities;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRageMath;
-using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
-using WeaponCore.Data.Scripts.CoreSystems.Ui;
 
 namespace CoreSystems.Platform
 {
@@ -24,10 +22,15 @@ namespace CoreSystems.Platform
 
             public void NormalShootRayCallBack(IHitInfo hitInfo)
             {
+                var pTarget = Weapon.Target.TargetObject as Projectile;
+                var eTarget = Weapon.Target.TargetObject as MyEntity;
+                if (pTarget == null && eTarget == null)
+                    return;
+
                 Weapon.Casting = false;
                 Weapon.PauseShoot = false;
                 var masterWeapon = Weapon.System.TrackTargets ? Weapon : Weapon.Comp.PrimaryWeapon;
-                var ignoreTargets = Weapon.Target.TargetState == Target.TargetStates.IsProjectile || Weapon.Target.TargetEntity is IMyCharacter;
+                var ignoreTargets = Weapon.Target.TargetState == Target.TargetStates.IsProjectile || Weapon.Target.TargetObject is IMyCharacter;
                 var scope = Weapon.GetScope;
                 var trackingCheckPosition = scope.CachedPos;
                 double rayDist = 0;
@@ -44,7 +47,8 @@ namespace CoreSystems.Platform
                 
                 if (Weapon.Comp.Ai.ShieldNear)
                 {
-                    var targetPos = Weapon.Target.Projectile?.Position ?? Weapon.Target.TargetEntity.PositionComp.WorldMatrixRef.Translation;
+
+                    var targetPos = pTarget?.Position ?? eTarget.PositionComp.WorldMatrixRef.Translation;
                     var targetDir = targetPos - trackingCheckPosition;
                     if (Weapon.HitFriendlyShield(trackingCheckPosition, targetPos, targetDir))
                     {
@@ -64,7 +68,7 @@ namespace CoreSystems.Platform
                     return;
                 }
 
-                var targetTopEnt = Weapon.Target.TargetEntity?.GetTopMostParent();
+                var targetTopEnt = eTarget?.GetTopMostParent();
                 if (targetTopEnt == null)
                     return;
 
@@ -82,7 +86,7 @@ namespace CoreSystems.Platform
 
                     if (topAsGrid == null)
                         return;
-                    if (Weapon.Target.TargetEntity != null && (Weapon.Comp.Ai.AiType == Ai.AiTypes.Grid && topAsGrid.IsSameConstructAs(Weapon.Comp.Ai.GridEntity)))
+                    if (Weapon.Comp.Ai.AiType == Ai.AiTypes.Grid && topAsGrid.IsSameConstructAs(Weapon.Comp.Ai.GridEntity))
                     {
                         masterWeapon.Target.Reset(Weapon.Comp.Session.Tick, Target.States.RayCheckSelfHit);
                         if (masterWeapon != Weapon) Weapon.Target.Reset(Weapon.Comp.Session.Tick, Target.States.RayCheckSelfHit);
@@ -102,7 +106,7 @@ namespace CoreSystems.Platform
                     var halfExtMin = topAsGrid.PositionComp.LocalAABB.HalfExtents.Min();
                     var minSize = topAsGrid.GridSizeR * 8;
                     var maxChange = halfExtMin > minSize ? halfExtMin : minSize;
-                    var targetPos = Weapon.Target.TargetEntity.PositionComp.WorldAABB.Center;
+                    var targetPos = eTarget.PositionComp.WorldAABB.Center;
                     var weaponPos = trackingCheckPosition;
 
                     if (rayDist <= 0) Vector3D.Distance(ref weaponPos, ref targetPos, out rayDist);

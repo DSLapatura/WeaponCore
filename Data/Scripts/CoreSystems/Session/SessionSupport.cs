@@ -1063,7 +1063,7 @@ namespace CoreSystems
         {
             try
             {
-                var topmost = w.Target.TargetEntity.GetTopMostParent();
+                var topmost = ((MyEntity)w.Target.TargetObject).GetTopMostParent();
                 var ai = w.Comp.MasterAi;
                 var ownerId = w.BaseComp.IsBlock ? w.BaseComp.Cube.OwnerId : ai.AiOwner;
                 Ai.TargetInfo info;

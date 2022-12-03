@@ -41,7 +41,7 @@ namespace CoreSystems
                 info.ProHits?.Clear();
 
                 var pInvalid = (int)p.State > 3;
-                var tInvalid = info.Target.TargetState == Target.TargetStates.IsProjectile && (int)info.Target.Projectile.State > 1;
+                var tInvalid = info.Target.TargetState == Target.TargetStates.IsProjectile && (int)((Projectile)info.Target.TargetObject).State > 1;
                 if (tInvalid) info.Target.Reset(Tick, Target.States.ProjectileClean);
                 
                 var skip = pInvalid || tInvalid;

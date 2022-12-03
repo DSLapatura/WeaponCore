@@ -78,8 +78,7 @@ namespace CoreSystems.Support
             Ai = weapon.BaseComp.MasterAi;
             MyPlanet = Ai.MyPlanet;
             AmmoDef = ammodef;
-            Target.TargetEntity = weapon.Target.TargetEntity;
-            Target.Projectile = weapon.Target.Projectile;
+            Target.TargetObject = weapon.Target.TargetObject;
             MuzzleId = muzzle.MuzzleId;
             UniqueMuzzleId = muzzle.UniqueId;
             Direction = muzzle.DeviatedDir;
@@ -507,8 +506,7 @@ namespace CoreSystems.Support
 
                 frag.Depth = info.SpawnDepth + 1;
                 frag.TargetState = target.TargetState;
-                frag.TargetEntity = target.TargetEntity;
-                frag.TargetProjectile = target.Projectile;
+                frag.TargetEntity = target.TargetObject;
 
                 frag.MuzzleId = info.MuzzleId;
                 frag.Radial = aConst.FragRadial;
@@ -556,10 +554,8 @@ namespace CoreSystems.Support
                 var aConst = aDef.Const;
                 info.AmmoDef = aDef;
                 var target = info.Target;
-                target.TargetEntity = frag.TargetEntity;
+                target.TargetObject = frag.TargetEntity;
                 target.TargetState = frag.TargetState;
-                target.Projectile = frag.TargetProjectile;
-
                 target.TargetState = frag.TargetState;
 
                 info.IsFragment = true;
@@ -605,8 +601,7 @@ namespace CoreSystems.Support
         public Weapon Weapon;
         public Ai Ai;
         public AmmoDef AmmoDef;
-        public MyEntity TargetEntity;
-        public Projectile TargetProjectile;
+        public object TargetEntity;
         public FakeTargets DummyTargets;
         public Vector3D Origin;
         public Vector3D OriginUp;

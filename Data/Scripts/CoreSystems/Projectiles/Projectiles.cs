@@ -4,6 +4,7 @@ using CoreSystems.Support;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
 using VRage.Collections;
+using VRage.Game.Entity;
 using VRage.Utils;
 using VRageMath;
 using static CoreSystems.Projectiles.Projectile;
@@ -141,7 +142,6 @@ namespace CoreSystems.Projectiles
                 var storage = info.Storage;
                 var aConst = info.AmmoDef.Const;
                 var target = info.Target;
-                var targetEnt = target.TargetEntity;
                 var targetState = target.TargetState;
                 var ai = p.Info.Ai;
                 ++info.Age;
@@ -194,8 +194,8 @@ namespace CoreSystems.Projectiles
                         continue;
                 }
 
-                if (target.TargetState == Target.TargetStates.IsProjectile && target.Projectile.State != ProjectileState.Alive) {
-                    target.Projectile.Seekers.Remove(p);
+                if (target.TargetState == Target.TargetStates.IsProjectile && ((Projectile)target.TargetObject).State != ProjectileState.Alive) {
+                    ((Projectile)target.TargetObject).Seekers.Remove(p);
                     target.Reset(Session.Tick, Target.States.ProjetileIntercept);
                 }
 
@@ -220,7 +220,7 @@ namespace CoreSystems.Projectiles
                                 p.SpawnShrapnel();
                             else if (targetState == Target.TargetStates.IsEntity)
                             {
-                                var topEnt = targetEnt.GetTopMostParent();
+                                var topEnt = ((MyEntity)target.TargetObject).GetTopMostParent();
                                 var inflatedSize = aConst.FragProximity + topEnt.PositionComp.LocalVolume.Radius;
                                 if (Vector3D.DistanceSquared(topEnt.PositionComp.WorldAABB.Center, p.Position) <= inflatedSize * inflatedSize)
                                     p.SpawnShrapnel();
@@ -386,9 +386,16 @@ namespace CoreSystems.Projectiles
                         MyGamePruningStructure.GetAllTopMostEntitiesInSphere(ref p.PruneSphere, p.MyEntityList, p.PruneQuery);
 
                         if (info.Weapon.System.TrackProjectile)
+                        {
                             foreach (var lp in ai.LiveProjectile)
-                                if (p.PruneSphere.Contains(lp.Position) != ContainmentType.Disjoint && lp != info.Target.Projectile)
+                            {
+                                if (p.PruneSphere.Contains(lp.Position) != ContainmentType.Disjoint && lp != info.Target.TargetObject)
+                                {
                                     ProjectileHit(p, lp, aConst.CollisionIsLine, ref p.Beam);
+                                }
+                            }
+                        }
+
 
                         p.State = ProjectileState.Detonate;
 

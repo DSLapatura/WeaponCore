@@ -11,6 +11,7 @@ using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRage.Utils;
 using VRageMath;
+using WeaponCore.Data.Scripts.CoreSystems.Comms;
 using static CoreSystems.Support.WeaponDefinition;
 using static CoreSystems.Support.WeaponDefinition.TargetingDef;
 using static CoreSystems.Support.WeaponDefinition.TargetingDef.BlockTypes;
@@ -33,7 +34,6 @@ namespace CoreSystems.Support
             var masterAi = w.Comp.MasterAi;
             var mOverrides = comp.MasterOverrides;
             var cMode = mOverrides.Control;
-
             FakeTarget.FakeWorldTargetInfo fakeInfo = null;
             if (cMode == ProtoWeaponOverrides.ControlModes.Auto || cMode == ProtoWeaponOverrides.ControlModes.Painter && !w.Comp.PainterMode)
             {
@@ -114,7 +114,6 @@ namespace CoreSystems.Support
             var session = comp.Session;
             session.TargetRequests++;
             var weaponPos = w.BarrelOrigin + (w.MyPivotFwd * w.MuzzleDistToBarrelCenter);
-
             var target = w.NewTarget;
             var accelPrediction = (int)s.Values.HardPoint.AimLeadingPrediction > 1;
             var minRadius = overRides.MinSize * 0.5f;
@@ -131,9 +130,10 @@ namespace CoreSystems.Support
             if (session.WaterApiLoaded && !ammoDef.IgnoreWater && ai.InPlanetGravity && ai.MyPlanet != null && session.WaterMap.TryGetValue(ai.MyPlanet.EntityId, out water))
                 waterSphere = new BoundingSphereD(ai.MyPlanet.PositionComp.WorldAABB.Center, water.MinRadius);
 
+            var rootConstruct = ai.Construct.RootAi.Construct;
+
             int offset = 0;
             w.FoundTopMostTarget = false;
-            var rootConstruct = ai.Construct.RootAi.Construct;
             var focusGrid = rootConstruct.LastFocusEntity as MyCubeGrid;
             var lastFocusGrid = rootConstruct.LastFocusEntityChecked as MyCubeGrid;
             var cachedCollection = rootConstruct.ThreatCacheCollection;
@@ -493,7 +493,7 @@ namespace CoreSystems.Support
                 var lp = collection[card];
                 var lpaConst = lp.Info.AmmoDef.Const;
                 var smart = lpaConst.IsDrone || lpaConst.IsSmart;
-                var cube = lp.Info.Target.TargetEntity as MyCubeBlock;
+                var cube = lp.Info.Target.TargetObject as MyCubeBlock;
                 Weapon.TargetOwner tOwner;
                 if (smartOnly && !smart || lockedOnly && (!smart || cube != null && w.Comp.IsBlock && cube.CubeGrid.IsSameConstructAs(w.Comp.Ai.GridEntity)) || lp.MaxSpeed > system.MaxTargetSpeed || lp.MaxSpeed <= 0 || lp.State != Projectile.ProjectileState.Alive || Vector3D.DistanceSquared(lp.Position, weaponPos) > w.MaxTargetDistanceSqr || Vector3D.DistanceSquared(lp.Position, weaponPos) < w.MinTargetDistanceBufferSqr || w.System.UniqueTargetPerWeapon && w.Comp.ActiveTargets.TryGetValue(lp, out tOwner) && tOwner.Weapon != w) continue;
 
@@ -541,7 +541,7 @@ namespace CoreSystems.Support
                             Vector3D.Distance(ref weaponPos, ref lp.Position, out hitDist);
                             var shortDist = hitDist;
                             var origDist = hitDist;
-                            target.Set(null, lp.Position, shortDist, origDist, long.MaxValue, lp);
+                            target.Set(lp, lp.Position, shortDist, origDist, long.MaxValue);
                             target.TransferTo(w.Target, w.Comp.Session.Tick);
                             return true;
                         }
@@ -556,7 +556,7 @@ namespace CoreSystems.Support
                         Vector3D.Distance(ref weaponPos, ref lp.Position, out hitDist);
                         var shortDist = hitDist;
                         var origDist = hitDist;
-                        target.Set(null, lp.Position, shortDist, origDist, long.MaxValue, lp);
+                        target.Set(lp, lp.Position, shortDist, origDist, long.MaxValue);
                         target.TransferTo(w.Target, w.Comp.Session.Tick);
                         return true;
                     }
@@ -627,7 +627,7 @@ namespace CoreSystems.Support
             MyEntity topTarget = null;
             if (lockedToTarget && !aConst.OverrideTarget && target.TargetState == Target.TargetStates.IsEntity)
             {
-                topTarget = target.TargetEntity.GetTopMostParent() ?? alphaInfo?.Target;
+                topTarget = ((MyEntity)target.TargetObject).GetTopMostParent() ?? alphaInfo?.Target;
                 if (topTarget != null && topTarget.MarkedForClose)
                     topTarget = null;
             }
@@ -793,9 +793,9 @@ namespace CoreSystems.Support
                     physics.CastRay(weaponPos, lp.Position, out hitInfo, 15);
                     if (hitInfo?.HitEntity == null)
                     {
-                        target.Set(null, lp.Position,  0, 0, long.MaxValue, lp);
-                        p.TargetPosition = target.Projectile.Position;
-                        target.Projectile.Seekers.Add(p);
+                        target.Set(lp, lp.Position,  0, 0, long.MaxValue);
+                        p.TargetPosition = lp.Position;
+                        lp.Seekers.Add(p);
                         found = true;
                         break;
                     }
@@ -806,9 +806,9 @@ namespace CoreSystems.Support
                     if (ai.AiType == AiTypes.Grid && GridIntersection.BresenhamGridIntersection(ai.GridEntity, ref weaponPos, ref lp.Position, out hitInfo, comp.CoreEntity, ai))
                         continue;
 
-                    target.Set(null, lp.Position, 0, 0, long.MaxValue, lp);
-                    p.TargetPosition = target.Projectile.Position;
-                    target.Projectile.Seekers.Add(p);
+                    target.Set(lp, lp.Position, 0, 0, long.MaxValue);
+                    p.TargetPosition = lp.Position;
+                    lp.Seekers.Add(p);
                     found = true;
                     break;
                 }

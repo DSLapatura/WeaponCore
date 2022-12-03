@@ -13,8 +13,8 @@ namespace CoreSystems.Support
     public class Target
     {
         internal Weapon Weapon;
-        internal MyEntity TargetEntity;
-        internal Projectile Projectile;
+        internal object TargetObject;
+        //internal Projectile Projectile;
         internal Vector3D TargetPos;
         internal States CurrentState = States.NotSet;
         internal TargetStates TargetState;
@@ -132,7 +132,7 @@ namespace CoreSystems.Support
             MyEntity targetEntity = null;
             if (tData.EntityId <= 0 || MyEntities.TryGetEntityById(tData.EntityId, out targetEntity, true))
             {
-                TargetEntity = targetEntity;
+                TargetObject = targetEntity;
 
                 if (tData.EntityId == 0)
                 {
@@ -173,9 +173,11 @@ namespace CoreSystems.Support
 
         internal void TransferTo(Target target, uint expireTick, bool drone = false)
         {
+            if (target.Weapon != null && target.Weapon.System.RadioType == Radio.RadioTypes.Master)
+                target.Weapon.CheckForOverLimit();
+
             target.IsDrone = drone;
-            target.TargetEntity = TargetEntity;
-            target.Projectile = Projectile;
+            target.TargetObject = TargetObject;
             target.TargetPos = TargetPos;
 
             target.HitShortDist = HitShortDist;
@@ -187,19 +189,18 @@ namespace CoreSystems.Support
             Reset(expireTick, States.Transfered);
         }
 
-        internal void Set(MyEntity ent, Vector3D pos, double shortDist, double origDist, long topEntId, Projectile projectile = null, bool isFakeTarget = false)
+        internal void Set(object target, Vector3D pos, double shortDist, double origDist, long topEntId, bool isFakeTarget = false)
         {
-            TargetEntity = ent;
-            Projectile = projectile;
+            TargetObject = target;
             TargetPos = pos;
             HitShortDist = shortDist;
             OrigDistance = origDist;
             TopEntityId = topEntId;
-            if (projectile != null)
+            if (TargetObject is Projectile)
                 TargetState = TargetStates.IsProjectile;
             else if (isFakeTarget)
                 TargetState = TargetStates.IsFake;
-            else if (ent != null)
+            else if (TargetObject  is MyEntity)
                 TargetState = TargetStates.IsEntity;
             else
                 TargetState = TargetStates.None;
@@ -247,8 +248,7 @@ namespace CoreSystems.Support
                 StateChange(false, reason);
             }
             TopEntityId = 0;
-            TargetEntity = null;
-            Projectile = null;
+            TargetObject = null;
         }
 
         internal void StateChange(bool setTarget, States reason)
@@ -274,136 +274,16 @@ namespace CoreSystems.Support
             {
 
                 if (Weapon.System.UniqueTargetPerWeapon)
-                    AddTargetToBlock(setTarget);
+                    Weapon.AddTargetToBlock(setTarget);
                 else if (Weapon.System.RadioType == Radio.RadioTypes.Master)
-                    StoreTargetOnConstruct(setTarget);
+                    Weapon.StoreTargetOnConstruct(setTarget);
                 else if (Weapon.System.RadioType == Radio.RadioTypes.Slave)
-                    RecordConnection(setTarget);
+                    Weapon.RecordConnection(setTarget);
 
             }
 
             HasTarget = setTarget;
             CurrentState = reason;
-        }
-
-        private void AddTargetToBlock(bool setTarget)
-        {
-            var targetObj = TargetEntity != null ? (object)TargetEntity.GetTopMostParent() : Projectile;
-
-            if (targetObj != null)
-            {
-                if (setTarget)
-                {
-                    var grid = targetObj as MyCubeGrid;
-                    TopMap map;
-                    if (grid != null && Weapon.System.Session.TopEntityToInfoMap.TryGetValue(grid, out map))
-                    {
-                        foreach (var target in map.GroupMap.Construct.Keys)
-                        {
-                            Weapon.TargetOwner tOwner;
-                            if (!Weapon.Comp.ActiveTargets.TryGetValue(target, out tOwner) || tOwner.Weapon != Weapon)
-                            {
-                                if (Weapon.System.Session.DebugMod) Log.Line($"[claiming] - wId:{Weapon.System.WeaponId} - obj:{target.GetHashCode()} - unique:{Weapon.System.UniqueTargetPerWeapon} - noOwner:{tOwner.Weapon == null}");
-                            }
-                            Weapon.Comp.ActiveTargets[target] = new Weapon.TargetOwner { Weapon = Weapon, ReleasedTick = 0 };
-                        }
-                    }
-                    else
-                    {
-                        Weapon.TargetOwner tOwner;
-                        if (!Weapon.Comp.ActiveTargets.TryGetValue(targetObj, out tOwner) || tOwner.Weapon != Weapon)
-                        {
-                            if (Weapon.System.Session.DebugMod) Log.Line($"[claiming] - wId:{Weapon.System.WeaponId} - obj:{targetObj.GetHashCode()} - unique:{Weapon.System.UniqueTargetPerWeapon} - noOwner:{tOwner.Weapon == null}");
-                        }
-
-                        Weapon.Comp.ActiveTargets[targetObj] = new Weapon.TargetOwner { Weapon = Weapon, ReleasedTick = 0 };
-                    }
-                }
-                else 
-                {
-                    var grid = targetObj as MyCubeGrid;
-                    TopMap map;
-                    if (grid != null && Weapon.System.Session.TopEntityToInfoMap.TryGetValue(grid, out map)) {
-                        foreach (var target in map.GroupMap.Construct.Keys)
-                        {
-                            Weapon.Comp.ActiveTargets[target] = new Weapon.TargetOwner { Weapon = Weapon, ReleasedTick = Weapon.System.Session.Tick };
-                        }
-                    }
-                    else
-                    {
-                        Weapon.Comp.ActiveTargets[targetObj] = new Weapon.TargetOwner { Weapon = Weapon, ReleasedTick = Weapon.System.Session.Tick };
-                    }
-                }
-            }
-        }
-
-        private void StoreTargetOnConstruct(bool setTarget)
-        {
-            var targetObj = TargetEntity != null ? (object)TargetEntity.GetTopMostParent() : Projectile;
-            var rootConstruct = Weapon.Comp.Ai.Construct.RootAi.Construct;
-            if (targetObj != null)
-            {
-                if (setTarget)
-                {
-                    var grid = targetObj as MyCubeGrid;
-                    TopMap map;
-                    if (grid != null && Weapon.System.Session.TopEntityToInfoMap.TryGetValue(grid, out map))
-                    {
-                        foreach (var target in map.GroupMap.Construct.Keys)
-                        {
-                            if (!rootConstruct.TryAddOrUpdateTrackedTarget(Weapon, target))
-                                Log.Line($"couldn't add target to construct database - {Weapon.System.ShortName} - {Weapon.System.RadioType}");
-                        }
-                    }
-                    else
-                    {
-                        if (!rootConstruct.TryAddOrUpdateTrackedTarget(Weapon, targetObj))
-                            Log.Line($"couldn't add target to target database - {Weapon.System.ShortName} - {Weapon.System.RadioType}");
-                    }
-                }
-                else
-                {
-                    var grid = targetObj as MyCubeGrid;
-                    TopMap map;
-                    if (grid != null && Weapon.System.Session.TopEntityToInfoMap.TryGetValue(grid, out map))
-                    {
-                        foreach (var target in map.GroupMap.Construct.Keys)
-                        {
-                            if (!rootConstruct.TryRemoveTrackedTarget(Weapon, target))
-                                Log.Line($"couldn't remove target to construct database - {Weapon.System.ShortName} - {Weapon.System.RadioType}");
-                        }
-                    }
-                    else
-                    {
-                        if (!rootConstruct.TryRemoveTrackedTarget(Weapon, targetObj))
-                            Log.Line($"couldn't remove target to target database - {Weapon.System.ShortName} - {Weapon.System.RadioType}");
-                    }
-                }
-            }
-        }
-
-        private void RecordConnection(bool setTarget)
-        {
-            var rootConstruct = Weapon.Comp.Ai.Construct.RootAi.Construct;
-            var targetObj = TargetEntity != null ? (object)TargetEntity.GetTopMostParent() : Projectile;
-
-            Dictionary<object, Weapon> dict;
-            if (targetObj == null || !rootConstruct.TrackedTargets.TryGetValue(Weapon.System.StorageLocation, out dict))
-            {
-                Log.Line($"RecordConnection fail1");
-                return;
-            }
-
-            Weapon master;
-            if (dict.TryGetValue(targetObj, out master)) {
-                if (setTarget)
-                    master.ConnectedWeapons++;
-                else
-                    master.ConnectedWeapons--;
-            }
-            else
-                Log.Line($"RecordConnection failed3");
-
         }
 
         internal void SetTargetId(bool setTarget, States reason)
@@ -417,7 +297,7 @@ namespace CoreSystems.Support
                     TargetId = -2;
                     break;
                 case TargetStates.IsEntity:
-                    TargetId = TargetEntity.EntityId;
+                    TargetId = ((MyEntity)TargetObject).EntityId;
                     break;
                 default:
                     TargetId = 0;

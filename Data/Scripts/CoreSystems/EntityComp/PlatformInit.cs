@@ -194,7 +194,7 @@ namespace CoreSystems.Platform
 
                 if (!Parts.NameToEntity.TryGetValue(muzzlePartName, out muzzlePartEntity))
                 {
-                    return PlatformCrash(Comp, true, true, $"Your block subTypeId ({Comp.SubtypeName}) Invalid barrelPart, I am crashing now Dave.");
+                    return PlatformCrash(Comp, true, true, $"Your block subTypeId ({Comp.SubtypeName}) Invalid muzzlePart, I am crashing now Dave.");
                 }
 
                 foreach (var part in Parts.NameToEntity)

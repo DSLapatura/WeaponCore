@@ -12,11 +12,10 @@ using static CoreSystems.ProtoWeaponState;
 using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetDef;
 using Sandbox.Game.Entities;
 using System;
-using ProtoBuf;
 using Sandbox.ModAPI.Weapons;
 using SpaceEngineers.Game.ModAPI;
 using VRage.Game.Entity;
-using WeaponCore.Data.Scripts.CoreSystems.Comms;
+using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace CoreSystems
 {
@@ -583,6 +582,8 @@ namespace CoreSystems
                         /// 
                         w.NoAmmo = w.NoMagsToLoad && w.ProtoWeaponAmmo.CurrentAmmo == 0 && aConst.Reloadable && !w.System.DesignatorWeapon && Tick - w.LastMagSeenTick > 600;
                         var weaponAcquires = ai.AcquireTargets && (aConst.RequiresTarget || w.RotorTurretTracking || w.ShootRequest.AcquireTarget);
+                        var eTarget = w.Target.TargetObject as MyEntity;
+                        var pTarget = w.Target.TargetObject as Projectile;
                         if (!IsClient)
                         {
                             if (w.Target.HasTarget) 
@@ -591,23 +592,23 @@ namespace CoreSystems
                                 {
                                     w.Target.Reset(Tick, States.Expired);
                                 }
-                                else if (w.Target.TargetEntity == null && w.Target.Projectile == null && !wComp.FakeMode || wComp.ManualMode && (fakeTargets == null || Tick - fakeTargets.ManualTarget.LastUpdateTick > 120))
+                                else if (w.Target.TargetObject == null && !wComp.FakeMode || wComp.ManualMode && (fakeTargets == null || Tick - fakeTargets.ManualTarget.LastUpdateTick > 120))
                                 {
                                     w.Target.Reset(Tick, States.Expired, !wComp.ManualMode);
                                 }
-                                else if (w.Target.TargetEntity != null && (w.Target.TargetEntity.MarkedForClose || !rootConstruct.HadFocus && weaponAcquires && aConst.SkipAimChecks || wComp.UserControlled && !w.System.SuppressFire))
+                                else if (eTarget != null && (eTarget.MarkedForClose || !rootConstruct.HadFocus && weaponAcquires && aConst.SkipAimChecks || wComp.UserControlled && !w.System.SuppressFire))
                                 {
                                     w.Target.Reset(Tick, States.Expired);
                                 }
-                                else if (w.Target.TargetEntity != null && Tick60 && focusTargets && !focus.ValidFocusTarget(w))
+                                else if (eTarget != null && Tick60 && focusTargets && !focus.ValidFocusTarget(w))
                                 {
                                     w.Target.Reset(Tick, States.Expired);
                                 }
-                                else if (w.Target.TargetEntity != null && Tick60 && !focusTargets && !w.TurretController && weaponAcquires && !w.TargetInRange(w.Target.TargetEntity))
+                                else if (eTarget != null && Tick60 && !focusTargets && !w.TurretController && weaponAcquires && !w.TargetInRange(eTarget))
                                 {
                                     w.Target.Reset(Tick, States.Expired);
                                 }
-                                else if (w.Target.Projectile != null && (!ai.LiveProjectile.Contains(w.Target.Projectile) || w.Target.TargetState == TargetStates.IsProjectile && w.Target.Projectile.State != Projectile.ProjectileState.Alive)) 
+                                else if (pTarget != null && (!ai.LiveProjectile.Contains(pTarget) || w.Target.TargetState == TargetStates.IsProjectile && pTarget.State != Projectile.ProjectileState.Alive)) 
                                 {
                                     w.Target.Reset(Tick, States.Expired);
                                     w.FastTargetResetTick = Tick + 6;
@@ -626,7 +627,7 @@ namespace CoreSystems
                                         {
                                             var trackingWeaponIsFake = wComp.PrimaryWeapon.Target.TargetState == TargetStates.IsFake;
                                             var thisWeaponIsFake = w.Target.TargetState == TargetStates.IsFake;
-                                            if ((wComp.PrimaryWeapon.Target.Projectile != w.Target.Projectile || w.Target.TargetState == TargetStates.IsProjectile && w.Target.Projectile.State != Projectile.ProjectileState.Alive || wComp.PrimaryWeapon.Target.TargetEntity != w.Target.TargetEntity || trackingWeaponIsFake != thisWeaponIsFake))
+                                            if (w.Target.TargetState == TargetStates.IsProjectile && (wComp.PrimaryWeapon.Target.TargetObject != w.Target.TargetObject || pTarget.State != Projectile.ProjectileState.Alive) || wComp.PrimaryWeapon.Target.TargetObject != w.Target.TargetObject || trackingWeaponIsFake != thisWeaponIsFake)
                                                 w.Target.Reset(Tick, States.Expired);
                                             else
                                                 w.TargetLock = true;
@@ -639,7 +640,7 @@ namespace CoreSystems
                                 }
                             }
                         }
-                        else if(w.Target.TargetEntity != null && w.Target.TargetEntity.MarkedForClose || w.DelayedTargetResetTick == Tick && w.TargetData.EntityId == 0 && w.Target.HasTarget)
+                        else if(eTarget != null && eTarget.MarkedForClose || w.DelayedTargetResetTick == Tick && w.TargetData.EntityId == 0 && w.Target.HasTarget)
                             w.Target.Reset(w.System.Session.Tick, States.ServerReset);
 
                         w.ProjectilesNear = ai.EnemyProjectiles && (w.System.TrackProjectile || ai.ControlComp != null) && projectiles && w.Target.TargetState != TargetStates.IsProjectile && (w.Target.TargetChanged || QCount == w.ShortLoadId);
@@ -660,6 +661,7 @@ namespace CoreSystems
 
                             var somethingNearBy = wComp.DetectOtherSignals && wComp.MasterAi.DetectionInfo.OtherInRange || wComp.MasterAi.DetectionInfo.PriorityInRange;
                             var trackObstructions = w.System.ScanNonThreats && wComp.MasterAi.Obstructions.Count > 0;
+                            
                             var weaponReady = !w.NoAmmo && (wComp.MasterAi.EnemiesNear && somethingNearBy || trackObstructions) && (!w.Target.HasTarget || rootConstruct.HadFocus && constructResetTick);
 
                             Dictionary<object, Weapon> masterTargets;
@@ -820,11 +822,13 @@ namespace CoreSystems
                     var readyToAcquire = seekProjectile || comp.Data.Repo.Values.State.TrackingReticle || checkObstructions || (comp.DetectOtherSignals && ai.DetectionInfo.OtherInRange || ai.DetectionInfo.PriorityInRange) && ai.DetectionInfo.ValidSignalExists(w);
 
                     Dictionary<object, Weapon> masterTargets;
+
                     if (readyToAcquire && (!w.System.TargetSlaving || rootConstruct.TrackedTargets.TryGetValue(w.System.StorageLocation, out masterTargets) && masterTargets.Count > 0))
                     {
                         if (comp.PrimaryWeapon != null && comp.PrimaryWeapon.System.DesignatorWeapon && comp.PrimaryWeapon != w && comp.PrimaryWeapon.Target.HasTarget) {
 
-                            var topMost = comp.PrimaryWeapon.Target.TargetEntity?.GetTopMostParent();
+                            var topMost = comp.PrimaryWeapon.Target.TargetObject as MyEntity;
+                            topMost = topMost?.GetTopMostParent();
                             Ai.AcquireTarget(w, false, topMost);
                         }
                         else

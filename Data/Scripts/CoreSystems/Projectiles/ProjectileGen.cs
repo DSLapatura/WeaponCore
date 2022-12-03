@@ -1,5 +1,6 @@
 ﻿using CoreSystems.Support;
 using Sandbox.Game.Entities;
+using VRage.Game.Entity;
 using VRageMath;
 using static CoreSystems.Support.NewProjectile;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef;
@@ -41,13 +42,13 @@ namespace CoreSystems.Projectiles
                 info.AmmoDef = a;
                 info.DoDamage = Session.IsServer && (!aConst.ClientPredictedAmmo || t == Kind.Client || !comp.ActivePlayer ); // shrapnel do not run this loop, but do inherit DoDamage from parent.
 
-                target.Projectile = wTarget.Projectile;
-                target.TargetEntity = t != Kind.Client ? wTarget.TargetEntity : gen.TargetEnt;
+                target.TargetObject = t != Kind.Client ? wTarget.TargetObject : gen.TargetEnt;
 
                 if (t == Kind.Client)
                 {
-                    target.TargetState = target.TargetEntity != null ? Target.TargetStates.IsEntity : Target.TargetStates.None;
-                    target.TargetPos = target.TargetEntity != null ? target.TargetEntity.PositionComp.WorldAABB.Center : Vector3D.Zero;
+                    var tEntity = target.TargetObject as MyEntity;
+                    target.TargetState = tEntity != null ? Target.TargetStates.IsEntity : Target.TargetStates.None;
+                    target.TargetPos = tEntity != null ? tEntity.PositionComp.WorldAABB.Center : Vector3D.Zero;
                 }
                 else
                 {
@@ -205,7 +206,7 @@ namespace CoreSystems.Projectiles
                             }
                         }
 
-                        var cubeTarget = target.TargetEntity as MyCubeBlock;
+                        var cubeTarget = target.TargetObject as MyCubeBlock;
 
                         var condition1 = cubeTarget == null && targetAi.TopEntity.EntityId == target.TopEntityId;
                         var condition2 = targetAi.AiType == Ai.AiTypes.Grid && (targetAi.GridEntity.IsStatic || cubeTarget != null && targetAi.GridEntity.IsSameConstructAs(cubeTarget.CubeGrid));

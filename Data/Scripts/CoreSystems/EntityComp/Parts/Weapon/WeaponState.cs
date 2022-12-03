@@ -1,5 +1,8 @@
 ﻿using System;
+using CoreSystems.Projectiles;
+using System.Collections.Generic;
 using CoreSystems.Support;
+using Sandbox.Game.Entities;
 using VRage.Game;
 using VRage.Game.Components;
 using VRage.Game.Entity;
@@ -237,6 +240,160 @@ namespace CoreSystems.Platform
                 Comp.CloseCondition = true;
                 //Temporarily set Comp.Entity.Parent as a destroyed block does not properly spawn a phantom
                 Comp.Session.CreatePhantomEntity(Comp.SubtypeName, 3600, true, 1, System.Values.HardPoint.HardWare.CriticalReaction.AmmoRound, CoreComponent.Trigger.Once, null, Comp.CoreEntity, false, false, Comp.Ai.AiOwner);
+            }
+        }
+
+
+        internal void AddTargetToBlock(bool setTarget)
+        {
+            var entity = Target.TargetObject as MyEntity;
+            var targetObj = entity != null ? entity.GetTopMostParent() : Target.TargetObject;
+
+            if (targetObj != null)
+            {
+                if (setTarget)
+                {
+                    var grid = targetObj as MyCubeGrid;
+                    TopMap map;
+                    if (grid != null && System.Session.TopEntityToInfoMap.TryGetValue(grid, out map))
+                    {
+                        foreach (var target in map.GroupMap.Construct.Keys)
+                        {
+                            TargetOwner tOwner;
+                            if (!Comp.ActiveTargets.TryGetValue(target, out tOwner) || tOwner.Weapon != this)
+                            {
+                                if (System.Session.DebugMod) Log.Line($"[claiming] - wId:{System.WeaponId} - obj:{target.GetHashCode()} - unique:{System.UniqueTargetPerWeapon} - noOwner:{tOwner.Weapon == null}");
+                            }
+                            Comp.ActiveTargets[target] = new TargetOwner { Weapon = this, ReleasedTick = 0 };
+                        }
+                    }
+                    else
+                    {
+                        TargetOwner tOwner;
+                        if (!Comp.ActiveTargets.TryGetValue(targetObj, out tOwner) || tOwner.Weapon != this)
+                        {
+                            if (System.Session.DebugMod) Log.Line($"[claiming] - wId:{System.WeaponId} - obj:{targetObj.GetHashCode()} - unique:{System.UniqueTargetPerWeapon} - noOwner:{tOwner.Weapon == null}");
+                        }
+
+                        Comp.ActiveTargets[targetObj] = new TargetOwner { Weapon = this, ReleasedTick = 0 };
+                    }
+                }
+                else
+                {
+                    var grid = targetObj as MyCubeGrid;
+                    TopMap map;
+                    if (grid != null && System.Session.TopEntityToInfoMap.TryGetValue(grid, out map))
+                    {
+                        foreach (var target in map.GroupMap.Construct.Keys)
+                        {
+                            Comp.ActiveTargets[target] = new TargetOwner { Weapon = this, ReleasedTick = System.Session.Tick };
+                        }
+                    }
+                    else
+                    {
+                        Comp.ActiveTargets[targetObj] = new TargetOwner { Weapon = this,  ReleasedTick = System.Session.Tick };
+                    }
+                }
+            }
+        }
+
+        internal void CheckForOverLimit()
+        {
+            var entity = Target.TargetObject as MyEntity;
+            var targetObj = entity != null ? entity.GetTopMostParent() : Target.TargetObject;
+
+            if (targetObj != null)
+            {
+                var rootConstruct = Comp.Ai.Construct.RootAi.Construct;
+                if (rootConstruct.OverLimit(this))
+                    StoreTargetOnConstruct(false);
+            }
+
+        }
+
+        internal void StoreTargetOnConstruct(bool setTarget)
+        {
+            var entity = Target.TargetObject as MyEntity;
+            var targetObj = entity != null ? entity.GetTopMostParent() : Target.TargetObject;
+
+            var rootConstruct = Comp.Ai.Construct.RootAi.Construct;
+            var changedSomeThing = false;
+            if (targetObj != null)
+            {
+                if (setTarget)
+                {
+                    var grid = targetObj as MyCubeGrid;
+                    TopMap map;
+                    if (grid != null && System.Session.TopEntityToInfoMap.TryGetValue(grid, out map))
+                    {
+                        foreach (var target in map.GroupMap.Construct.Keys)
+                        {
+                            if (rootConstruct.TryAddOrUpdateTrackedTarget(this, target))
+                                changedSomeThing = true;
+                            else
+                                Log.Line($"couldn't add target to construct database - {System.ShortName} - {System.RadioType}");
+                        }
+
+                    }
+                    else
+                    {
+                        if (!rootConstruct.TryAddOrUpdateTrackedTarget(this, targetObj))
+                            Log.Line($"couldn't add target to target database - {System.ShortName} - {System.RadioType}");
+                    }
+
+                    if (changedSomeThing)
+                        Comp.StoredTargets++;
+                }
+                else
+                {
+                    var grid = targetObj as MyCubeGrid;
+                    TopMap map;
+                    if (grid != null && System.Session.TopEntityToInfoMap.TryGetValue(grid, out map))
+                    {
+                        foreach (var target in map.GroupMap.Construct.Keys)
+                        {
+                            if (rootConstruct.TryRemoveTrackedTarget(this, target))
+                                changedSomeThing = true;
+                            else
+                                Log.Line($"couldn't remove target to construct database - {System.ShortName} - {System.RadioType}");
+                        }
+                    }
+                    else
+                    {
+                        if (rootConstruct.TryRemoveTrackedTarget(this, targetObj))
+                            changedSomeThing = true;
+                        else
+                            Log.Line($"couldn't remove target to target database - {System.ShortName} - {System.RadioType}");
+                    }
+
+                    if (changedSomeThing)
+                        Comp.StoredTargets--;
+                }
+            }
+        }
+
+        internal void RecordConnection(bool setTarget)
+        {
+            var entity = Target.TargetObject as MyEntity;
+            var targetObj = entity != null ? entity.GetTopMostParent() : Target.TargetObject;
+
+            var rootConstruct = Comp.Ai.Construct.RootAi.Construct;
+
+            Dictionary<object, Weapon> dict;
+            if (targetObj == null || !rootConstruct.TrackedTargets.TryGetValue(System.StorageLocation, out dict))
+            {
+                if (targetObj != null)
+                    Log.Line($"RecordConnection fail1");
+                return;
+            }
+
+            Weapon master;
+            if (dict.TryGetValue(targetObj, out master))
+            {
+                if (setTarget)
+                    master.Connections.Add(this);
+                else
+                    master.Connections.Remove(this);
             }
         }
 

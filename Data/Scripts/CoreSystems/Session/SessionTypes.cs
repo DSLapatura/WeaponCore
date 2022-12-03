@@ -426,7 +426,7 @@ namespace CoreSystems
                     },
                     {"TargetIsEntity", () => {
                             var message = string.Empty;
-                            return !TryGetValidPlatform(out TmpPlatform) ? string.Empty : TmpPlatform.Weapons.Aggregate(message, (current, w) => current + $"{w.Target.TargetEntity != null}"); }
+                            return !TryGetValidPlatform(out TmpPlatform) ? string.Empty : TmpPlatform.Weapons.Aggregate(message, (current, w) => current + $"{w.Target.TargetObject != null}"); }
                     },
                     {"TargetEntityId", () => {
                             var message = string.Empty;

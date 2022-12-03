@@ -152,7 +152,7 @@ namespace CoreSystems.Support
         public readonly int ShotsPerBurst;
         public readonly int MaxAmmoCount;
         public readonly int MaxConnections;
-        public readonly bool StorageLimitPerWeapon;
+        public readonly bool StorageLimitPerBlock;
         public readonly bool MaxTrackingTime;
         public readonly bool HasAntiSmart;
         public readonly bool HasAmmoSelection;
@@ -290,9 +290,11 @@ namespace CoreSystems.Support
                 var hasRelayChannel = !string.IsNullOrEmpty(comms.RelayChannel);
                 if (!string.IsNullOrEmpty(comms.StorageLocation) && comms.Mode == Comms.LocalNetwork)
                 {
-                    StorageLimit = comms.StorageLimit > 0 ? comms.StorageLimit : int.MaxValue;
-                    StorageLimitPerWeapon = comms.StoreLimitPerBlock;
+                    StorageLimit = comms.StorageLimit > 0 ? 1 : 1;
                     StoreTargets = comms.StoreTargets;
+                    if (StoreTargets)
+                        StorageLimitPerBlock = true;
+
                     StorageLocation = MyStringHash.GetOrCompute(comms.StorageLocation);
                     RadioType = !StoreTargets ? RadioTypes.Slave : RadioTypes.Master;
                 }
@@ -324,6 +326,7 @@ namespace CoreSystems.Support
                 MaxConnections = comms.MaxConnections == 0 ? int.MaxValue : comms.MaxConnections;
                 TargetPersists = comms.TargetPersists;
                 TargetSlaving = RadioType != RadioTypes.Master;
+
             }
 
             SuppressFire = Values.HardPoint.Ai.SuppressFire;

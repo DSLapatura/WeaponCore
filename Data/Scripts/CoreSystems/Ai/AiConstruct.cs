@@ -562,6 +562,12 @@ namespace CoreSystems.Support
                     w.CheckInventorySystem = true;
             }
 
+            internal bool OverLimit(Weapon w)
+            {
+                Dictionary<object, Weapon> dict;
+                return w.System.StorageLimitPerBlock ? w.Comp.StoredTargets >= w.System.StorageLimit : TrackedTargets.TryGetValue(w.System.StorageLocation, out dict) && dict.Count >= w.System.StorageLimit;
+            }
+
             internal bool TryAddOrUpdateTrackedTarget(Weapon w, object target)
             {
                 Dictionary<object, Weapon> dict;
@@ -572,11 +578,9 @@ namespace CoreSystems.Support
                 }
 
                 Weapon tracker;
-                var limiter = w.System.StorageLimitPerWeapon ? w.Comp.StoredTargets : dict.Count;
-                if ((!dict.TryGetValue(target, out tracker) || tracker == w) && limiter < w.System.StorageLimit) 
+                if (!dict.TryGetValue(target, out tracker) || tracker == w) 
                 {
                     dict[target] = w;
-                    w.Comp.StoredTargets++;
                     return true;
                 }
 
@@ -585,27 +589,27 @@ namespace CoreSystems.Support
 
             internal bool TryRemoveTrackedTarget(Weapon w, object target)
             {
+
                 Dictionary<object, Weapon> dict;
                 Weapon tracker;
 
                 var removed = TrackedTargets.TryGetValue(w.System.StorageLocation, out dict) && dict.TryGetValue(target, out tracker) && w == tracker && dict.Remove(target);
                 
                 if (removed)
-                    w.Comp.StoredTargets--;
+                    w.Connections.Clear();
 
                 return removed;
             }
 
             internal bool StillTrackingTarget(Weapon w)
             {
-                var targetObj = w.Target.TargetEntity != null ? (object)w.Target.TargetEntity.GetTopMostParent() : w.Target.Projectile;
+                var entity = w.Target.TargetObject as MyEntity;
+                var targetObj = entity != null ? entity.GetTopMostParent() : w.Target.TargetObject;
+
                 Dictionary<object, Weapon> dict;
                 var containsTarget = targetObj != null && TrackedTargets.TryGetValue(w.System.StorageLocation, out dict) && dict.ContainsKey(targetObj);
-
                 return containsTarget;
             }
-
-
 
             internal void ClearTrackedTarget()
             {
@@ -637,7 +641,7 @@ namespace CoreSystems.Support
                         var targetEntity = pair.Key as MyEntity;
                         var targetProjectile = pair.Key as Projectile;
 
-                        if (scanner.ConnectedWeapons >= scanner.System.MaxConnections)
+                        if (!scanner.Connections.Contains(w) && scanner.Connections.Count >= scanner.System.MaxConnections)
                             continue;
 
                         if ((type != ScanType.Projectiles && targetEntity != null || targetProjectile != null) && scanner.Target.HasTarget && (!scanner.TurretController || scanner.Target.IsAligned))
@@ -976,7 +980,7 @@ namespace CoreSystems.Support
         {
             var targets = Ai.Construct.Data.Repo.FocusData?.Target;
 
-            var targetEnt = w.Target.TargetEntity;
+            var targetEnt = w.Target.TargetObject;
             if (w.PosChangedTick != w.Comp.Session.SimulationCount)
                 w.UpdatePivotPos();
 
@@ -1010,8 +1014,8 @@ namespace CoreSystems.Support
 
                         if (w.System.LockOnFocus)
                         {
-                            var targetSphere = targetEnt.PositionComp.WorldVolume;
-                            targetSphere.Center = targetEnt.PositionComp.WorldAABB.Center;
+                            var targetSphere = target.PositionComp.WorldVolume;
+                            targetSphere.Center = target.PositionComp.WorldAABB.Center;
                             w.AimCone.ConeDir = w.MyPivotFwd;
                             w.AimCone.ConeTip = w.BarrelOrigin;
                             return MathFuncs.TargetSphereInCone(ref targetSphere, ref w.AimCone);

@@ -157,7 +157,7 @@ namespace CoreSystems.Projectiles
                                 {
 
                                     var dist = MathFuncs.IntersectEllipsoid(shieldInfo.Value.Item3.Item1, shieldInfo.Value.Item3.Item2, new RayD(beamFrom, direction));
-                                    if (target.TargetState == Target.TargetStates.IsProjectile && Vector3D.Transform(target.Projectile.Position, shieldInfo.Value.Item3.Item1).LengthSquared() <= 1)
+                                    if (target.TargetState == Target.TargetStates.IsProjectile && Vector3D.Transform(((Projectile)target.TargetObject).Position, shieldInfo.Value.Item3.Item1).LengthSquared() <= 1)
                                         projetileInShield = true;
 
                                     var shieldIntersect = dist != null && (dist.Value < beamLen || info.EwarActive);
@@ -471,12 +471,12 @@ namespace CoreSystems.Projectiles
 
                 if (target.TargetState == Target.TargetStates.IsProjectile && aConst.NonAntiSmartEwar && !projetileInShield)
                 {
-                    var detonate = p.State == Projectile.ProjectileState.Detonate;
+                    var detonate = p.State == ProjectileState.Detonate;
                     var hitTolerance = detonate ? aConst.EndOfLifeRadius : aConst.ByBlockHitRadius > aConst.CollisionSize ? aConst.ByBlockHitRadius : aConst.CollisionSize;
                     var useLine = aConst.CollisionIsLine && !detonate && aConst.ByBlockHitRadius <= 0;
-
-                    var sphere = new BoundingSphereD(target.Projectile.Position, aConst.CollisionSize);
-                    sphere.Include(new BoundingSphereD(target.Projectile.LastPosition, 1));
+                    var projectile = (Projectile) target.TargetObject;
+                    var sphere = new BoundingSphereD(projectile.Position, aConst.CollisionSize);
+                    sphere.Include(new BoundingSphereD(projectile.LastPosition, 1));
 
                     bool rayCheck = false;
                     if (useLine)
@@ -491,7 +491,7 @@ namespace CoreSystems.Projectiles
 
                     if (rayCheck || sphere.Intersects(testSphere))
                     {
-                        ProjectileHit(p, target.Projectile, lineCheck, ref p.Beam);
+                        ProjectileHit(p, projectile, lineCheck, ref p.Beam);
                     }
                 }
 

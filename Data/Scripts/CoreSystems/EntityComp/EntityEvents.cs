@@ -369,19 +369,18 @@ namespace CoreSystems.Support
 
         private Target.States GetTargetState(Weapon w)
         {
-            var targetObj = (object)w.Target.TargetEntity ?? w.Target.Projectile;
-            if (targetObj != null)
+            if (w.Target.TargetObject != null)
             {
-                if (targetObj is MyPlanet)
+                if (w.Target.TargetObject is MyPlanet)
                     return Target.States.Planet;
 
-                if (targetObj is MyVoxelBase)
+                if (w.Target.TargetObject is MyVoxelBase)
                     return Target.States.Roid;
 
-                if (targetObj is Projectile)
+                if (w.Target.TargetObject is Projectile)
                     return Target.States.Projectile;
 
-                var entity = targetObj as MyEntity;
+                var entity = w.Target.TargetObject as MyEntity;
                 if (entity == null)
                     return Target.States.Fake;
 

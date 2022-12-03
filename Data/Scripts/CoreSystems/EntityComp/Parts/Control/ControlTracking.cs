@@ -1,4 +1,5 @@
 ﻿using CoreSystems.Support;
+using VRage.Game.Entity;
 using VRageMath;
 namespace CoreSystems.Platform
 {
@@ -13,7 +14,7 @@ namespace CoreSystems.Platform
             Vector3D targetCenter;
             Vector3D targetVel = Vector3D.Zero;
             Vector3D targetAcc = Vector3D.Zero;
-
+            var eTarget = weapon.Target.TargetObject as MyEntity;
             Ai.FakeTarget.FakeWorldTargetInfo fakeTargetInfo = null;
             if (cValues.Set.Overrides.Control != ProtoWeaponOverrides.ControlModes.Auto && control.ValidFakeTargetInfo(cValues.State.PlayerId, out fakeTargetInfo))
             {
@@ -21,10 +22,10 @@ namespace CoreSystems.Platform
                 targetVel = fakeTargetInfo.LinearVelocity;
                 targetAcc = fakeTargetInfo.Acceleration;
             }
-            else if (weapon.Target.TargetEntity != null)
+            else if (eTarget != null)
             {
-                targetCenter = weapon.Target.TargetEntity.PositionComp.WorldAABB.Center;
-                var topEnt = weapon.Target.TargetEntity.GetTopMostParent();
+                targetCenter = eTarget.PositionComp.WorldAABB.Center;
+                var topEnt = eTarget.GetTopMostParent();
                 if (topEnt != null)
                 {
                     targetVel = topEnt.Physics?.LinearVelocity ?? Vector3D.Zero;

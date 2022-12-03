@@ -156,7 +156,8 @@ namespace CoreSystems.Projectiles
                     HadTarget = HadTargetState.Projectile;
                     break;
                 case Target.TargetStates.IsProjectile:
-                    if (Info.Target.Projectile == null)
+                    var tProjectile = Info.Target.TargetObject as Projectile;
+                    if (tProjectile == null)
                     {
                         HadTarget = HadTargetState.None;
                         Info.Target.TargetState = Target.TargetStates.None;
@@ -165,15 +166,16 @@ namespace CoreSystems.Projectiles
                         break;
                     }
                     HadTarget = HadTargetState.Projectile;
-                    TargetPosition = Info.Target.Projectile.Position;
-                    Info.Target.Projectile.Seekers.Add(this);
+                    TargetPosition = tProjectile.Position;
+                    tProjectile.Seekers.Add(this);
                     break;
                 case Target.TargetStates.IsFake:
                     TargetPosition = Info.IsFragment ? TargetPosition : Vector3D.Zero;
                     HadTarget = HadTargetState.Fake;
                     break;
                 case Target.TargetStates.IsEntity:
-                    if (Info.Target.TargetEntity == null)
+                    var eTarget = Info.Target.TargetObject as MyEntity;
+                    if (eTarget == null)
                     {
                         HadTarget = HadTargetState.None;
                         Info.Target.TargetState = Target.TargetStates.None;
@@ -186,11 +188,11 @@ namespace CoreSystems.Projectiles
                     {
                         Info.Storage.DroneMsn = DroneMission.Attack;//TODO handle initial defensive assignment?
                         Info.Storage.DroneStat = Launch;
-                        Info.Storage.NavTargetEnt = Info.Target.TargetEntity.GetTopMostParent();
-                        Info.Storage.NavTargetBound = Info.Target.TargetEntity.PositionComp.WorldVolume;
+                        Info.Storage.NavTargetEnt = eTarget.GetTopMostParent();
+                        Info.Storage.NavTargetBound = eTarget.PositionComp.WorldVolume;
                     }
 
-                    TargetPosition = Info.Target.TargetEntity.PositionComp.WorldAABB.Center;
+                    TargetPosition = eTarget.PositionComp.WorldAABB.Center;
                     HadTarget = HadTargetState.Entity;
                     break;
                 default:
@@ -337,7 +339,7 @@ namespace CoreSystems.Projectiles
 
             foreach (var seeker in Seekers)
             {
-                if (seeker.Info.Target.Projectile == this)
+                if (seeker.Info.Target.TargetObject == this)
                     seeker.Info.Target.Reset(session.Tick, Target.States.ProjectileClose);
             }
             Seekers.Clear();
@@ -717,7 +719,7 @@ namespace CoreSystems.Projectiles
 
         private bool DroneTracking(Target target, SmartStorage s, AmmoConstants aConst)
         {
-            var validEntity = target.TargetState == Target.TargetStates.IsEntity && !target.TargetEntity.MarkedForClose;
+            var validEntity = target.TargetState == Target.TargetStates.IsEntity && !((MyEntity)target.TargetObject).MarkedForClose;
             var timeSlot = (Info.Age + s.SmartSlot) % 30 == 0;
             var hadTarget = HadTarget != HadTargetState.None;
             var overMaxTargets = hadTarget && TargetsSeen > aConst.MaxTargets && aConst.MaxTargets != 0;
@@ -751,16 +753,18 @@ namespace CoreSystems.Projectiles
             switch (HadTarget)//Internal drone target reassignment
             {
                 case HadTargetState.Entity:
-                    if (target.TargetEntity != null && !target.TargetEntity.MarkedForClose)
+                    var entity = target.TargetObject as MyEntity;
+                    if (entity != null && !entity.MarkedForClose)
                     {
                         hasTarget = true;
                     }
                     else
                     {
                         NewTarget();
-                        if (target.TargetEntity != null)
+                        var myEntity = target.TargetObject as MyEntity;
+                        if (myEntity != null)
                         {
-                            s.NavTargetEnt = target.TargetEntity.GetTopMostParent();
+                            s.NavTargetEnt = myEntity.GetTopMostParent();
                             s.NavTargetBound = s.NavTargetEnt.PositionComp.WorldVolume;
                             hasTarget = true;
                         }
@@ -808,8 +812,11 @@ namespace CoreSystems.Projectiles
             {
                 if (hasParent && s.DroneMsn == DroneMission.Rtb || tasks.FriendId == 0)
                 {
-                    s.NavTargetBound = parentEnt.PositionComp.WorldVolume;
-                    s.NavTargetEnt = parentEnt;
+                    if (parentEnt != null)
+                    {
+                        s.NavTargetBound = parentEnt.PositionComp.WorldVolume;
+                        s.NavTargetEnt = parentEnt;
+                    }
                 }
                 else if (tasks.Friend != null && s.DroneMsn != DroneMission.Rtb && tasks.Friend != null)//If all else fails, try to protect a friendly
                 {
@@ -1064,6 +1071,9 @@ namespace CoreSystems.Projectiles
                 OffSetTarget();
             }
 
+            var eTarget = Info.Target.TargetObject as MyEntity;
+            var pTarget = Info.Target.TargetObject as Projectile;
+
             var targetPos = Vector3D.Zero;
 
             Ai.FakeTarget.FakeWorldTargetInfo fakeTargetInfo = null;
@@ -1075,16 +1085,16 @@ namespace CoreSystems.Projectiles
                 targetPos = fakeTargetInfo.WorldPosition;
                 HadTarget = HadTargetState.Fake;
             }
-            else if (Info.Target.TargetState == Target.TargetStates.IsProjectile)
+            else if (Info.Target.TargetState == Target.TargetStates.IsProjectile && pTarget != null)
             {
-                targetPos = Info.Target.Projectile.Position;
+                targetPos = pTarget.Position;
                 HadTarget = HadTargetState.Projectile;
             }
-            else if (Info.Target.TargetState == Target.TargetStates.IsEntity)
+            else if (Info.Target.TargetState == Target.TargetStates.IsEntity && eTarget != null)
             {
-                targetPos = Info.Target.TargetEntity.PositionComp.WorldAABB.Center;
+                targetPos = eTarget.PositionComp.WorldAABB.Center;
                 HadTarget = HadTargetState.Entity;
-                physics = Info.Target.TargetEntity.Physics;
+                physics = eTarget.Physics;
 
             }
             else
@@ -1111,9 +1121,9 @@ namespace CoreSystems.Projectiles
             {
                 tVel = fakeTargetInfo.LinearVelocity;
             }
-            else if (Info.Target.TargetState == Target.TargetStates.IsProjectile)
+            else if (Info.Target.TargetState == Target.TargetStates.IsProjectile && pTarget != null)
             {
-                tVel = Info.Target.Projectile.Velocity;
+                tVel = pTarget.Velocity;
             }
             else if (physics != null)
             {
@@ -1176,7 +1186,7 @@ namespace CoreSystems.Projectiles
 
                 var gaveUpChase = !fake && Info.Age - s.ChaseAge > aConst.MaxChaseTime && hadTarget;
                 var overMaxTargets = hadTarget && TargetsSeen > aConst.MaxTargets && aConst.MaxTargets != 0;
-                var validEntity = Info.Target.TargetState == Target.TargetStates.IsEntity && !Info.Target.TargetEntity.MarkedForClose;
+                var validEntity = Info.Target.TargetState == Target.TargetStates.IsEntity && !((MyEntity)Info.Target.TargetObject).MarkedForClose;
                 var validTarget = fake || Info.Target.TargetState == Target.TargetStates.IsProjectile || validEntity && !overMaxTargets;
                 var checkTime = HadTarget != HadTargetState.Projectile ? 30 : 10;
                 var isZombie = aConst.CanZombie && hadTarget && !fake && !validTarget && s.ZombieLifeTime > 0 && (s.ZombieLifeTime + s.SmartSlot) % checkTime == 0;
@@ -1204,12 +1214,12 @@ namespace CoreSystems.Projectiles
                     }
                     else if (Info.Target.TargetState == Target.TargetStates.IsProjectile)
                     {
-                        targetPos = Info.Target.Projectile.Position;
+                        targetPos = ((Projectile)Info.Target.TargetObject).Position;
                         HadTarget = HadTargetState.Projectile;
                     }
                     else if (Info.Target.TargetState == Target.TargetStates.IsEntity)
                     {
-                        targetPos = Info.Target.TargetEntity.PositionComp.WorldAABB.Center;
+                        targetPos = ((MyEntity)Info.Target.TargetObject).PositionComp.WorldAABB.Center;
                         HadTarget = HadTargetState.Entity;
                     }
                     else
@@ -1229,11 +1239,12 @@ namespace CoreSystems.Projectiles
 
                     TargetPosition = targetPos;
                     targetLock = true;
-                    var physics = Info.Target.TargetEntity?.Physics ?? Info.Target.TargetEntity?.Parent?.Physics;
+                    var eTarget = Info.Target.TargetObject as MyEntity;
+                    var physics = eTarget != null ? eTarget?.Physics ?? eTarget?.Parent?.Physics : null;
 
                     var tVel = Vector3.Zero;
                     if (fake && fakeTargetInfo != null) tVel = fakeTargetInfo.LinearVelocity;
-                    else if (Info.Target.TargetState == Target.TargetStates.IsProjectile) tVel = Info.Target.Projectile.Velocity;
+                    else if (Info.Target.TargetState == Target.TargetStates.IsProjectile) tVel = ((Projectile)Info.Target.TargetObject).Velocity;
                     else if (physics != null) tVel = physics.LinearVelocity;
 
                     if (aConst.TargetLossDegree > 0 && Vector3D.DistanceSquared(Info.Origin, Position) >= aConst.SmartsDelayDistSqr)
@@ -1929,16 +1940,17 @@ namespace CoreSystems.Projectiles
             var giveUp = HadTarget != HadTargetState.None && ++TargetsSeen > aConst.MaxTargets && aConst.MaxTargets != 0;
             s.ChaseAge = Info.Age;
             s.PickTarget = false;
-
+            var eTarget = Info.Target.TargetObject as MyEntity;
+            var pTarget = Info.Target.TargetObject as Projectile;
             var newTarget = true;
 
-            var oldTarget = Info.Target.TargetEntity;
+            var oldTarget = Info.Target.TargetObject;
             if (HadTarget != HadTargetState.Projectile)
             {
                 if (giveUp || !Ai.ReacquireTarget(this))
                 {
-                    var activeEntity = Info.Target.TargetState == Target.TargetStates.IsEntity;
-                    var badEntity = !Info.LockOnFireState && activeEntity && Info.Target.TargetEntity.MarkedForClose || Info.LockOnFireState && activeEntity && (Info.Target.TargetEntity.GetTopMostParent()?.MarkedForClose ?? true);
+                    var activeEntity = Info.Target.TargetState == Target.TargetStates.IsEntity && eTarget != null;
+                    var badEntity = !Info.LockOnFireState && activeEntity && eTarget.MarkedForClose || Info.LockOnFireState && activeEntity && (eTarget.GetTopMostParent()?.MarkedForClose ?? true);
                     if (!giveUp && !Info.LockOnFireState || Info.LockOnFireState && giveUp || !Info.AmmoDef.Trajectory.Smarts.NoTargetExpire || badEntity)
                     {
                         if (Info.Target.TargetState == Target.TargetStates.IsEntity)
@@ -1951,7 +1963,7 @@ namespace CoreSystems.Projectiles
             {
 
                 if (Info.Target.TargetState == Target.TargetStates.IsProjectile)
-                    Info.Target.Projectile?.Seekers.Remove(this);
+                    pTarget?.Seekers.Remove(this);
 
                 if (giveUp || !Ai.ReAcquireProjectile(this))
                 {
@@ -1962,7 +1974,7 @@ namespace CoreSystems.Projectiles
                 }
             }
 
-            if (newTarget && aConst.Health > 0 && !aConst.IsBeamWeapon && (Info.Target.TargetState == Target.TargetStates.IsFake || Info.Target.TargetEntity != null && oldTarget != Info.Target.TargetEntity))
+            if (newTarget && aConst.Health > 0 && !aConst.IsBeamWeapon && (Info.Target.TargetState == Target.TargetStates.IsFake || Info.Target.TargetObject != null && oldTarget != Info.Target.TargetObject))
                 Info.Ai.Session.Projectiles.AddProjectileTargets(this);
 
             if (aConst.ProjectileSync && Info.Ai.Session.IsServer && (Info.Target.TargetState != Target.TargetStates.IsFake || Info.Target.TargetState != Target.TargetStates.IsProjectile))
@@ -1982,13 +1994,15 @@ namespace CoreSystems.Projectiles
         internal bool TrajectoryEstimation(WeaponDefinition.AmmoDef ammoDef, ref Vector3D shooterPos, out Vector3D targetDirection)
         {
             var aConst = Info.AmmoDef.Const;
-            if (Info.Target.TargetEntity.GetTopMostParent()?.Physics?.LinearVelocity == null)
+            var eTarget = Info.Target.TargetObject as MyEntity;
+
+            if (eTarget?.GetTopMostParent()?.Physics?.LinearVelocity == null)
             {
                 targetDirection = Vector3D.Zero;
                 return false;
             }
 
-            var targetPos = Info.Target.TargetEntity.PositionComp.WorldAABB.Center;
+            var targetPos = eTarget.PositionComp.WorldAABB.Center;
 
             if (aConst.FragPointType == PointTypes.Direct)
             {
@@ -1997,7 +2011,7 @@ namespace CoreSystems.Projectiles
             }
 
 
-            var targetVel = Info.Target.TargetEntity.GetTopMostParent().Physics.LinearVelocity;
+            var targetVel = eTarget.GetTopMostParent().Physics.LinearVelocity;
             var shooterVel = !Info.AmmoDef.Const.FragDropVelocity ? Velocity : Vector3D.Zero;
 
             var projectileMaxSpeed = ammoDef.Const.DesiredProjectileSpeed;
@@ -2052,9 +2066,10 @@ namespace CoreSystems.Projectiles
         #region Mines
         internal void ActivateMine()
         {
-            var ent = Info.Target.TargetEntity;
             Info.Storage.RequestedStage = -2;
             EndState = EndStates.None;
+            var ent = (MyEntity)Info.Target.TargetObject;
+
             var targetPos = ent.PositionComp.WorldAABB.Center;
             var deltaPos = targetPos - Position;
             var targetVel = ent.Physics?.LinearVelocity ?? Vector3.Zero;
@@ -2102,6 +2117,8 @@ namespace CoreSystems.Projectiles
             var detectRadius = mineInfo.DetectRadius;
             var deCloakRadius = mineInfo.DeCloakRadius;
 
+            var targetEnt = Info.Target.TargetObject as MyEntity;
+
             var wakeRadius = detectRadius > deCloakRadius ? detectRadius : deCloakRadius;
             PruneSphere = new BoundingSphereD(Position, wakeRadius);
             var inRange = false;
@@ -2139,12 +2156,12 @@ namespace CoreSystems.Projectiles
                 if (closestEnt != null)
                 {
                     ForceNewTarget();
-                    Info.Target.TargetEntity = closestEnt;
+                    Info.Target.TargetObject = closestEnt;
                 }
             }
-            else if (Info.Target.TargetState == Target.TargetStates.IsEntity && !Info.Target.TargetEntity.MarkedForClose)
+            else if (Info.Target.TargetState == Target.TargetStates.IsEntity && targetEnt != null && !targetEnt.MarkedForClose)
             {
-                var entSphere = Info.Target.TargetEntity.PositionComp.WorldVolume;
+                var entSphere = targetEnt.PositionComp.WorldVolume;
                 entSphere.Radius += Info.AmmoDef.Const.CollisionSize;
                 minDist = MyUtils.GetSmallestDistanceToSphereAlwaysPositive(ref Position, ref entSphere);
             }
@@ -2157,8 +2174,11 @@ namespace CoreSystems.Projectiles
                 else if (Info.AvShot.AmmoDef.Trajectory.Mines.Cloak && !Info.AvShot.Cloaked && minDist > deCloakRadius) Info.AvShot.Cloaked = true;
             }
 
-            if (minDist <= Info.AmmoDef.Const.CollisionSize) activate = true;
-            if (minDist <= detectRadius) inRange = true;
+            if (minDist <= Info.AmmoDef.Const.CollisionSize) 
+                activate = true;
+            if (minDist <= detectRadius && Info.Target.TargetObject is MyEntity) 
+                inRange = true;
+
             if (Info.Storage.RequestedStage == -2)
             {
                 if (!inRange)
@@ -2169,7 +2189,8 @@ namespace CoreSystems.Projectiles
             if (activate)
             {
                 TriggerMine(false);
-                MyEntityList.Add(Info.Target.TargetEntity);
+                if (targetEnt != null) 
+                    MyEntityList.Add(targetEnt);
             }
         }
         internal void TriggerMine(bool startTimer)
@@ -2283,7 +2304,7 @@ namespace CoreSystems.Projectiles
                                 if (Info.BaseEwarPool <= 0 && Info.BaseHealthPool-- > 0)
                                 {
                                     Info.EwarActive = true;
-                                    netted.Info.Target.Projectile = this;
+                                    netted.Info.Target.TargetObject = this;
                                     netted.Info.Target.TargetState = Target.TargetStates.IsProjectile;
                                     Seekers.Add(netted);
                                 }
@@ -2393,8 +2414,11 @@ namespace CoreSystems.Projectiles
                     pointDir = Info.Direction;
                     if (aConst.IsDrone)
                     {
+                        var eTarget = Info.Target.TargetObject as MyEntity;
+                        var radius = eTarget != null ? eTarget.PositionComp.LocalVolume.Radius : 1;
+                        var targetSphere = new BoundingSphereD(TargetPosition, radius);
+
                         MathFuncs.Cone aimCone;
-                        var targetSphere = new BoundingSphereD(TargetPosition, Info.Target.TargetEntity.PositionComp.LocalVolume.Radius);  
                         aimCone.ConeDir = Info.Direction;
                         aimCone.ConeTip = Position;
                         aimCone.ConeAngle = aConst.DirectAimCone;
