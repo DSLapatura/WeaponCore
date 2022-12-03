@@ -233,9 +233,6 @@ namespace CoreSystems.Support
                     break;
             }
 
-            if (Weapon != null)
-                Weapon.System.Session.ShowLocalNotify($"{reason}", 500);
-
             IsDrone = false;
             IsAligned = false;
             TargetPos = Vector3D.Zero;
