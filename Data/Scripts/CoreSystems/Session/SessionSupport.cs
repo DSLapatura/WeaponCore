@@ -1093,7 +1093,7 @@ namespace CoreSystems
         {
             var rootConstruct = ai.Construct.RootAi.Construct;
             var collection = rootConstruct.ThreatCacheCollection;
-
+            collection.Clear();
             TopMap map;
             if (targetGrid != null && !targetGrid.MarkedForClose && TopEntityToInfoMap.TryGetValue(targetGrid, out map))
             {

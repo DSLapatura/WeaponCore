@@ -272,6 +272,7 @@ namespace CoreSystems.Support
 
             if (Weapon != null)
             {
+
                 if (Weapon.System.UniqueTargetPerWeapon)
                     AddTargetToBlock(setTarget);
                 else if (Weapon.System.RadioType == Radio.RadioTypes.Master)
