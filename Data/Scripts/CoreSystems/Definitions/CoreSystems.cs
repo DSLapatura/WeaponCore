@@ -321,7 +321,7 @@ namespace CoreSystems.Support
                     RadioType = RadioTypes.Receiver;
                 }
 
-                MaxConnections = comms.MaxConnections;
+                MaxConnections = comms.MaxConnections == 0 ? int.MaxValue : comms.MaxConnections;
                 TargetPersists = comms.TargetPersists;
                 TargetSlaving = RadioType != RadioTypes.Master;
             }
