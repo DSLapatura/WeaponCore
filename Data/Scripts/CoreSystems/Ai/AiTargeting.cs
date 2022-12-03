@@ -104,11 +104,13 @@ namespace CoreSystems.Support
             }
 
             var ammoDef = w.ActiveAmmoDef.AmmoDef;
+            var focusOnly = overRides.FocusTargets;
+
             var aConst = ammoDef.Const;
             var attackNeutrals = overRides.Neutrals || w.System.ScanTrackOnly;
             var attackFriends = overRides.Friendly || w.System.ScanTrackOnly;
             var attackNoOwner = overRides.Unowned || w.System.ScanTrackOnly;
-            var forceFoci = overRides.FocusTargets || w.System.ScanTrackOnly;
+            var forceFoci = focusOnly || w.System.ScanTrackOnly;
             var session = comp.Session;
             session.TargetRequests++;
             var weaponPos = w.BarrelOrigin + (w.MyPivotFwd * w.MuzzleDistToBarrelCenter);
@@ -151,16 +153,15 @@ namespace CoreSystems.Support
                     return false;
 
             var collection = !w.System.TargetSlaving ? ai.SortedTargets : ai.ThreatCollection;
-
             var numOfTargets = collection.Count;
-            var adjTargetCount = forceFoci && offset > 0 ? offset : numOfTargets + offset;
+            var adjTargetCount = forceFoci && (offset > 0 || focusOnly) ? offset : numOfTargets + offset;
 
             var deck = GetDeck(ref session.TargetDeck, 0, numOfTargets, w.System.Values.Targeting.TopTargets, ref w.TargetData.WeaponRandom.AcquireRandom);
             for (int x = 0; x < adjTargetCount; x++)
             {
                 var focusTarget = offset > 0 && x < offset;
                 var lastOffset = offset - 1;
-                if (!focusTarget && (attemptReset || aConst.SkipAimChecks)) 
+                if (!focusTarget && (attemptReset || aConst.SkipAimChecks || focusOnly)) 
                     break;
 
                 TargetInfo info;
@@ -231,7 +232,6 @@ namespace CoreSystems.Support
                     target.TransferTo(w.Target, comp.Session.Tick);
                     if (w.Target.TargetState == Target.TargetStates.IsEntity)
                         ai.Session.NewThreat(w);
-
                     return true;
                 }
                 if (info.IsGrid)
@@ -974,7 +974,7 @@ namespace CoreSystems.Support
 
                         if (hitGrid != null)
                         {
-                            if (hitGrid.MarkedForClose || (hitGrid != block.CubeGrid && ai.AiType == AiTypes.Grid && hitGrid.IsSameConstructAs(ai.GridEntity)) || !hitGrid.DestructibleBlocks || hitGrid.Immune || hitGrid.GridGeneralDamageModifier <= 0) continue;
+                            if (hitGrid.MarkedForClose || hitGrid.Physics == null || hitGrid.IsPreview) continue;
                             var isTarget = hitGrid == block.CubeGrid || hitGrid.IsSameConstructAs(block.CubeGrid);
 
                             var bigOwners = hitGrid.BigOwners;
@@ -982,7 +982,7 @@ namespace CoreSystems.Support
 
                             var validTarget = isTarget || noOwner || ai.Targets.TryGetValue(topHitEntity, out otherInfo) && (otherInfo.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Enemies || otherInfo.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Neutral || otherInfo.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.NoOwnership);
 
-                            skip = !validTarget;
+                            skip = !validTarget || hitGrid != block.CubeGrid && (!hitGrid.DestructibleBlocks || hitGrid.Immune || hitGrid.GridGeneralDamageModifier <= 0 || ai.AiType == AiTypes.Grid && hitGrid.IsSameConstructAs(ai.GridEntity));
 
                             if (isTarget)
                                 iHitInfo = hitInfo;

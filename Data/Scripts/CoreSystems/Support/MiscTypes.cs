@@ -4,10 +4,8 @@ using CoreSystems.Projectiles;
 using Sandbox.Game.Entities;
 using VRage.Game;
 using VRage.Game.Entity;
-using VRage.Game.ModAPI;
 using VRageMath;
 using WeaponCore.Data.Scripts.CoreSystems.Comms;
-using static CoreSystems.Platform.Weapon.TargetOwner;
 
 namespace CoreSystems.Support
 {
@@ -235,6 +233,9 @@ namespace CoreSystems.Support
                     break;
             }
 
+            if (Weapon != null)
+                Weapon.System.Session.ShowLocalNotify($"{reason}", 500);
+
             IsDrone = false;
             IsAligned = false;
             TargetPos = Vector3D.Zero;
@@ -301,7 +302,7 @@ namespace CoreSystems.Support
                             Weapon.TargetOwner tOwner;
                             if (!Weapon.Comp.ActiveTargets.TryGetValue(target, out tOwner) || tOwner.Weapon != Weapon)
                             {
-                                Log.Line($"[claiming] - wId:{Weapon.System.WeaponId} - obj:{target.GetHashCode()} - unique:{Weapon.System.UniqueTargetPerWeapon} - noOwner:{tOwner.Weapon == null}");
+                                if (Weapon.System.Session.DebugMod) Log.Line($"[claiming] - wId:{Weapon.System.WeaponId} - obj:{target.GetHashCode()} - unique:{Weapon.System.UniqueTargetPerWeapon} - noOwner:{tOwner.Weapon == null}");
                             }
                             Weapon.Comp.ActiveTargets[target] = new Weapon.TargetOwner { Weapon = Weapon, ReleasedTick = 0 };
                         }
@@ -311,7 +312,7 @@ namespace CoreSystems.Support
                         Weapon.TargetOwner tOwner;
                         if (!Weapon.Comp.ActiveTargets.TryGetValue(targetObj, out tOwner) || tOwner.Weapon != Weapon)
                         {
-                            Log.Line($"[claiming] - wId:{Weapon.System.WeaponId} - obj:{targetObj.GetHashCode()} - unique:{Weapon.System.UniqueTargetPerWeapon} - noOwner:{tOwner.Weapon == null}");
+                            if (Weapon.System.Session.DebugMod) Log.Line($"[claiming] - wId:{Weapon.System.WeaponId} - obj:{targetObj.GetHashCode()} - unique:{Weapon.System.UniqueTargetPerWeapon} - noOwner:{tOwner.Weapon == null}");
                         }
 
                         Weapon.Comp.ActiveTargets[targetObj] = new Weapon.TargetOwner { Weapon = Weapon, ReleasedTick = 0 };

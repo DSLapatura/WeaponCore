@@ -970,7 +970,8 @@ namespace CoreSystems.Platform
                 if (cube != null)
                 {
                     var rootAi = Comp.Ai.Construct.RootAi;
-                    var invalidCube = (!cube.IsWorking && rootAi.Construct.LastFocusEntity != cube.CubeGrid) || cube.MarkedForClose;
+                    var focusGrid = rootAi.Construct.LastFocusEntity as MyCubeGrid;
+                    var invalidCube = cube.MarkedForClose || !cube.IsWorking && (focusGrid == null || !focusGrid.IsSameConstructAs(cube.CubeGrid));
                     var focusFailed = overrides.FocusTargets && !rootAi.Construct.HadFocus;
                     var checkSubsystem = overrides.FocusSubSystem && overrides.SubSystem != WeaponDefinition.TargetingDef.BlockTypes.Any;
                     if (invalidCube || focusFailed || ((uint)cube.CubeGrid.Flags & 0x1000000) > 0 || checkSubsystem && !ValidSubSystemTarget(cube, overrides.SubSystem))

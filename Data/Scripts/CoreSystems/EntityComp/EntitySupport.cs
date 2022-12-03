@@ -72,7 +72,7 @@ namespace CoreSystems.Support
                             wComp.AmmoStorage();
                         }
 
-                        Constructs.WeaponGroupsMarkDirty(Ai.TopEntityMap.GroupMap);
+                        Constructs.WeaponGroupsMarkDirty(Ai.TopEntityMap?.GroupMap);
                         wComp.MasterOverrides = null;
                     }
 
@@ -120,8 +120,13 @@ namespace CoreSystems.Support
 
                     if (Ai.CompBase.Count == 0 && TypeSpecific != CompTypeSpecific.Rifle)
                     {
-                        Ai ai;
-                        Session.EntityAIs.TryRemove(Ai.TopEntity, out ai);
+                        if (Ai.TopEntity != null)
+                        {
+                            Ai ai;
+                            Session.EntityAIs.TryRemove(Ai.TopEntity, out ai);
+                        }
+                        else 
+                            Log.Line($"Ai.TopEntity was Null - marked:{Ai.MarkedForClose} - closed:{Ai.Closed}");
                     }
 
                     if (Session.TerminalMon.Comp == this)
@@ -130,7 +135,7 @@ namespace CoreSystems.Support
                     Ai = null;
                     MasterAi = null;
                 }
-                catch (Exception ex) { Log.Line($"Exception in RemoveComp Inner: {ex} - AiNull:{Ai == null} - SessionNull:{Session == null} - CoreEntNull:{CoreEntity == null} - PlatformNull: {Platform == null} - TopEntityNull:{TopEntity == null}", null, true); }
+                catch (Exception ex) { Log.Line($"Exception in RemoveComp Inner: {ex} - Name:{Platform?.Comp?.SubtypeName} - AiNull:{Ai == null} - SessionNull:{Session == null} - CoreEntNull:{CoreEntity == null} - PlatformNull: {Platform == null} - AiTopNull:{Ai?.TopEntity == null} - TopEntityNull:{TopEntity == null}", null, true); }
 
             }
             else if (Platform.State != CorePlatform.PlatformState.Delay && TypeSpecific != CompTypeSpecific.Rifle) Log.Line($"CompRemove: Ai already null - PartState:{Platform.State} - Status:{Status}");
