@@ -177,6 +177,9 @@ namespace CoreSystems.Platform
             var weaponRange = Math.Min(hardPointMax, ammoMax);
             MaxTargetDistance = Math.Min(range, weaponRange);
             MaxTargetDistanceSqr = MaxTargetDistance * MaxTargetDistance;
+            MaxTargetDistance75Sqr = (MaxTargetDistance * 0.75d) * (MaxTargetDistance * 0.75d);
+            MaxTargetDistance50Sqr = (MaxTargetDistance * 0.5d) * (MaxTargetDistance * 0.5d);
+            MaxTargetDistance25Sqr = (MaxTargetDistance * 0.25d) * (MaxTargetDistance * 0.25d);
             MinTargetDistance = System.WConst.MinTargetDistance;
             MinTargetDistanceSqr = MinTargetDistance * MinTargetDistance;
 

@@ -163,6 +163,8 @@ namespace CoreSystems.Support
                 if (Registered && Ai.Construct.RootAi !=null)
                     Ai.Construct.RootAi.Construct.DirtyWeaponGroups = true;
 
+                var wasWorking = IsWorking;
+
                 if (Platform.State == PlatformState.Incomplete) {
                     Log.Line("Init on Incomplete");
                     Init();
@@ -175,11 +177,13 @@ namespace CoreSystems.Support
                     if (Cube.ResourceSink.CurrentInputByType(GId) < 0) Log.Line($"IsWorking:{IsWorking}(was:{wasFunctional}) - Func:{IsFunctional} - GridAvailPow:{Ai.GridAvailablePower} - SinkPow:{SinkPower} - SinkReq:{Cube.ResourceSink.RequiredInputByType(GId)} - SinkCur:{Cube.ResourceSink.CurrentInputByType(GId)}");
 
                     if (!IsWorking && Registered) {
+
                         var collection = TypeSpecific != CompTypeSpecific.Phantom ? Platform.Weapons : Platform.Phantoms;
                         foreach (var w in collection)
-                            w.StopShooting();
+                                w.StopShooting();
                     }
                     IsWorkingChangedTick = Session.Tick;
+
                 }
 
                 if (Platform.State == PlatformState.Ready) {
@@ -190,7 +194,10 @@ namespace CoreSystems.Support
                         if (wasFunctional && !IsFunctional)
                             wComp.NotFunctional();
 
-                        if (wasFunctional != IsFunctional && wComp.Data.Repo.Values.Set.Overrides.WeaponGroupId > 0)
+                        if (wasWorking != IsWorking)
+                            wComp.UpdateIsWorking();
+
+                        if (wasFunctional != IsFunctional && Ai.Construct.RootAi != null && wComp.Data.Repo.Values.Set.Overrides.WeaponGroupId > 0)
                             Ai.Construct.RootAi.Construct.DirtyWeaponGroups = true;
                     }
                 }

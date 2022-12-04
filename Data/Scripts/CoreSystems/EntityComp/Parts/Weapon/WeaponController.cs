@@ -55,6 +55,7 @@ namespace CoreSystems.Platform
         public void SendTurretHome(object o = null)
         {
             System.Session.HomingWeapons.Add(this);
+            EventTriggerStateChanged(EventTriggers.Homing, true);
         }
 
         public void TurretHomePosition()
@@ -101,7 +102,9 @@ namespace CoreSystems.Platform
                 AimBarrel();
 
                 if (Azimuth > homeAz || Azimuth < homeAz || Elevation > homeEl || Elevation < homeEl)
+                {
                     IsHome = false;
+                }
                 else {
                     IsHome = true;
                     ReturingHome = false;

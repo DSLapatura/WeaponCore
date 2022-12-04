@@ -222,7 +222,18 @@ namespace CoreSystems.Platform
                 }
             }
 
-            var invalidStates = ProtoWeaponAmmo.CurrentAmmo != 0 || Loading || calledFromReload || Reload.WaitForClient || (System.MaxReloads > 0 && Reload.LifetimeLoads >= System.MaxReloads);
+            var outOfAmmo = ProtoWeaponAmmo.CurrentAmmo == 0;
+            var sendHome = System.GoHomeToReload && !IsHome;
+
+            if (outOfAmmo) {
+                if (sendHome && !ReturingHome)
+                    ScheduleWeaponHome(true);
+
+                if (System.DropTargetUntilLoaded && Target.HasTarget)
+                    Target.Reset(System.Session.Tick, Target.States.SendingHome);
+            }
+
+            var invalidStates = !outOfAmmo || sendHome || Loading || calledFromReload || Reload.WaitForClient || (System.MaxReloads > 0 && Reload.LifetimeLoads >= System.MaxReloads);
             return !invalidStates && ServerReload();
         }
 

@@ -743,6 +743,15 @@ namespace CoreSystems.Platform
                 }
             }
 
+            internal void UpdateIsWorking()
+            {
+                for (int i = 0; i < Collection.Count; i++)
+                {
+                    var w = Collection[i];
+                    w.EventTriggerStateChanged(WeaponDefinition.AnimationDef.PartAnimationSetDef.EventTriggers.WhileOn, IsWorking);
+                }
+            }
+
             internal void PowerLoss()
             {
                 Session.SendComp(this);

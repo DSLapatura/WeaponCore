@@ -49,7 +49,6 @@ namespace CoreSystems.Platform
         internal readonly MyEntity3DSoundEmitter BarrelRotateEmitter;
         internal readonly MyEntity3DSoundEmitter HardPointEmitter;
 
-        internal readonly bool[] EventStatus;
         internal readonly Dictionary<EventTriggers, PartAnimation[]> AnimationsSet;
         internal readonly bool PrimaryWeaponGroup;
         internal readonly bool AiOnlyWeapon;
@@ -123,7 +122,7 @@ namespace CoreSystems.Platform
         
         internal IHitInfo LastHitInfo;
         internal EventTriggers LastEvent;
-
+        internal EventTriggers PrevRangeEvent = EventTriggers.TargetRanged100;
         internal float ShotEnergyCost;
         internal float LastHeat;
         internal uint LastFriendlyNameTick;
@@ -173,12 +172,17 @@ namespace CoreSystems.Platform
         internal double MinElevationRadians;
         internal double MaxTargetDistance;
         internal double MaxTargetDistanceSqr;
+        internal double MaxTargetDistance75Sqr;
+        internal double MaxTargetDistance50Sqr;
+        internal double MaxTargetDistance25Sqr;
+
         internal double MinTargetDistance;
         internal double MinTargetDistanceSqr;
         internal double MinTargetDistanceBufferSqr;
         internal double MuzzleDistToBarrelCenter;
         internal double ScopeDistToCheckPos;
         internal double GravityLength;
+        internal bool RangeEventActive;
         internal bool AlternateForward;
         internal bool BurstAvDelay;
         internal bool HeatLoopRunning;
@@ -187,7 +191,7 @@ namespace CoreSystems.Platform
         internal bool ScheduleAmmoChange;
         internal bool CriticalReaction;
         internal bool FoundTopMostTarget;
-        internal bool NoAmmo;
+        internal bool OutOfAmmo;
         internal bool TurretActive;
         internal bool TargetLock;
         internal bool ClientReloading;
@@ -328,7 +332,6 @@ namespace CoreSystems.Platform
 
             _numOfMuzzles = System.Muzzles.Length;
 
-            EventStatus = new bool[Enum.GetNames(typeof(EventTriggers)).Length];
             ShootRequest = new ApiShootRequest(this);
             BeamSlot = new uint[_numOfMuzzles];
             Muzzles = new Muzzle[_numOfMuzzles];

@@ -948,32 +948,6 @@ namespace CoreSystems.Support
             ai.Construct.UpdateConstruct(Ai.Constructs.UpdateType.Focus, ChangeDetected(ai));
         }
 
-        internal bool FocusInRange(Weapon w)
-        {
-
-            if (w.PosChangedTick != w.Comp.Session.SimulationCount)
-                w.UpdatePivotPos();
-
-            var fd = Ai.Construct.Data.Repo.FocusData;
-            
-            fd.DistToNearestFocusSqr = float.MaxValue;
-
-            if (fd.Target <= 0)
-                return false;
-
-            MyEntity target;
-            if (MyEntities.TryGetEntityById(fd.Target, out target))
-            {
-                var sphere = target.PositionComp.WorldVolume;
-                var distSqr = (float)MyUtils.GetSmallestDistanceToSphere(ref w.MyPivotPos, ref sphere);
-                distSqr *= distSqr;
-                if (distSqr < fd.DistToNearestFocusSqr)
-                    fd.DistToNearestFocusSqr = distSqr;
-            }
-
-            return fd.DistToNearestFocusSqr <= w.MaxTargetDistanceSqr;
-        }
-
         internal bool EntityIsFocused(Ai ai, MyEntity entToCheck)
         {
             var targets = ai.Construct?.Data?.Repo?.FocusData?.Target;

@@ -580,7 +580,9 @@ namespace CoreSystems
                         ///
                         /// Check target for expire states
                         /// 
-                        w.NoAmmo = w.NoMagsToLoad && w.ProtoWeaponAmmo.CurrentAmmo == 0 && aConst.Reloadable && !w.System.DesignatorWeapon && Tick - w.LastMagSeenTick > 600;
+                        var noAmmo = w.ProtoWeaponAmmo.CurrentAmmo == 0;
+                        w.OutOfAmmo = w.NoMagsToLoad && noAmmo && aConst.Reloadable && !w.System.DesignatorWeapon && Tick - w.LastMagSeenTick > 600;
+
                         var weaponAcquires = ai.AcquireTargets && (aConst.RequiresTarget || w.RotorTurretTracking || w.ShootRequest.AcquireTarget);
                         var eTarget = w.Target.TargetObject as MyEntity;
                         var pTarget = w.Target.TargetObject as Projectile;
@@ -588,7 +590,7 @@ namespace CoreSystems
                         {
                             if (w.Target.HasTarget) 
                             {
-                                if (w.NoAmmo)
+                                if (w.OutOfAmmo)
                                 {
                                     w.Target.Reset(Tick, States.Expired);
                                 }
@@ -661,8 +663,8 @@ namespace CoreSystems
 
                             var somethingNearBy = wComp.DetectOtherSignals && wComp.MasterAi.DetectionInfo.OtherInRange || wComp.MasterAi.DetectionInfo.PriorityInRange;
                             var trackObstructions = w.System.ScanNonThreats && wComp.MasterAi.Obstructions.Count > 0;
-                            
-                            var weaponReady = !w.NoAmmo && (!w.System.FocusOnly || rootConstruct.HadFocus) && (wComp.MasterAi.EnemiesNear && somethingNearBy || trackObstructions) && (!w.Target.HasTarget || rootConstruct.HadFocus && constructResetTick);
+                            var requiresHome = w.System.GoHomeToReload && !w.IsHome && noAmmo;
+                            var weaponReady = !w.OutOfAmmo && !requiresHome && (!w.System.FocusOnly || rootConstruct.HadFocus) && (wComp.MasterAi.EnemiesNear && somethingNearBy || trackObstructions) && (!w.Target.HasTarget || rootConstruct.HadFocus && constructResetTick);
 
                             Dictionary<object, Weapon> masterTargets;
                             var seek = weaponReady && (acquireReady || w.ProjectilesNear) && (!w.System.TargetSlaving || rootConstruct.TrackedTargets.TryGetValue(w.System.StorageLocation, out masterTargets) && masterTargets.Count > 0);
@@ -685,7 +687,7 @@ namespace CoreSystems
                         ///
                         w.AiShooting = !wComp.UserControlled && !w.System.SuppressFire && (w.TargetLock || ai.ControlComp != null && ai.ControlComp.Platform.Control.IsAimed && Vector3D.DistanceSquared(wComp.CoreEntity.PositionComp.WorldAABB.Center, ai.RotorTargetPosition) <= wComp.MaxDetectDistanceSqr);
 
-                        var reloading = aConst.Reloadable && w.ClientMakeUpShots == 0 && (w.Loading || w.ProtoWeaponAmmo.CurrentAmmo == 0 || w.Reload.WaitForClient);
+                        var reloading = aConst.Reloadable && w.ClientMakeUpShots == 0 && (w.Loading || noAmmo || w.Reload.WaitForClient);
                         var overHeat = w.PartState.Overheated && (w.OverHeatCountDown == 0 || w.OverHeatCountDown != 0 && w.OverHeatCountDown-- == 0);
 
                         var canShoot = !overHeat && !reloading && !w.System.DesignatorWeapon && sequenceReady;
@@ -792,7 +794,7 @@ namespace CoreSystems
                 var w = AcquireTargets[i];
                 var comp = w.Comp;
                 var ai = comp.MasterAi;
-                if (comp.TopEntity.MarkedForClose || comp.CoreEntity.MarkedForClose || ai?.Construct.RootAi == null || w.ActiveAmmoDef == null || comp.IsAsleep || comp.IsBlock && !comp.Ai.HasPower || comp.Ai.Concealed || !comp.Ai.DbReady || !comp.IsWorking || w.NoAmmo) {
+                if (comp.TopEntity.MarkedForClose || comp.CoreEntity.MarkedForClose || ai?.Construct.RootAi == null || w.ActiveAmmoDef == null || comp.IsAsleep || comp.IsBlock && !comp.Ai.HasPower || comp.Ai.Concealed || !comp.Ai.DbReady || !comp.IsWorking || w.OutOfAmmo) {
                     w.TargetAcquireTick = uint.MaxValue;
                     AcquireTargets.RemoveAtFast(i);
                     continue;

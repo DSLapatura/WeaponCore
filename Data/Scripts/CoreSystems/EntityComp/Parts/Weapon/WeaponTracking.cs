@@ -12,6 +12,7 @@ using VRage.Utils;
 using VRageMath;
 using static CoreSystems.Support.WeaponDefinition.HardPointDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef;
+using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetDef;
 using CollisionLayers = Sandbox.Engine.Physics.MyPhysics.CollisionLayers;
 using static CoreSystems.Support.MathFuncs;
 
@@ -174,7 +175,7 @@ namespace CoreSystems.Platform
                         weapon.LimitLine = new LineD(weapon.MyPivotPos, weapon.MyPivotPos + (constraintVector * weapon.ActiveAmmoDef.AmmoDef.Const.MaxTrajectory));
                 }
                 else
-                    canTrack = MathFuncs.IsDotProductWithinTolerance(ref weapon.MyPivotFwd, ref targetDir, weapon.AimingTolerance);
+                    canTrack = IsDotProductWithinTolerance(ref weapon.MyPivotFwd, ref targetDir, weapon.AimingTolerance);
             }
             willHit = canTrack;
         }
@@ -312,7 +313,11 @@ namespace CoreSystems.Platform
             var isAligned = validEstimate && (inRange || weapon.Comp.Data.Repo.Values.State.TrackingReticle) && IsDotProductWithinTolerance(ref weapon.MyPivotFwd, ref targetDir, weapon.AimingTolerance);
 
             weapon.Target.TargetPos = targetPos;
+            var wasAligned = weapon.Target.IsAligned;
             weapon.Target.IsAligned = isAligned;
+
+            if (wasAligned != isAligned)
+                weapon.EventTriggerStateChanged(EventTriggers.TargetAligned, isAligned);
 
             return isAligned;
         }
@@ -378,6 +383,20 @@ namespace CoreSystems.Platform
 
             double rangeToTargetSqr;
             Vector3D.DistanceSquared(ref targetPos, ref w.MyPivotPos, out rangeToTargetSqr);
+
+            var r100 = rangeToTargetSqr >= w.MaxTargetDistance75Sqr;
+            var r25 = rangeToTargetSqr <= w.MaxTargetDistance25Sqr;
+            var r50 = !r25 && !r100  && rangeToTargetSqr < w.MaxTargetDistance50Sqr;
+            var r75 = !r100 && !r50 && !r25;
+
+            if (r100 && (w.PrevRangeEvent != EventTriggers.TargetRanged100 || !w.RangeEventActive))
+                w.EventTriggerStateChanged(EventTriggers.TargetRanged100, true);
+            else if (r75 && (w.PrevRangeEvent != EventTriggers.TargetRanged75 || !w.RangeEventActive))
+                w.EventTriggerStateChanged(EventTriggers.TargetRanged75, true);
+            else if (r50 && (w.PrevRangeEvent != EventTriggers.TargetRanged50 || !w.RangeEventActive))
+                w.EventTriggerStateChanged(EventTriggers.TargetRanged50, true);
+            else if (r25 && (w.PrevRangeEvent != EventTriggers.TargetRanged25 || !w.RangeEventActive))
+                w.EventTriggerStateChanged(EventTriggers.TargetRanged25, true);
 
             var targetDir = targetPos - w.MyPivotPos;
             var readyToTrack = validEstimate && !w.Comp.ResettingSubparts && (baseData.State.TrackingReticle || rangeToTargetSqr <= w.MaxTargetDistanceSqr && rangeToTargetSqr >= w.MinTargetDistanceSqr);

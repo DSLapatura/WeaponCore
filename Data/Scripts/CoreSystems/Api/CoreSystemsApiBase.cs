@@ -397,7 +397,6 @@ namespace CoreSystems.Api
             Canceled,
         }
 
-
         public enum EventTriggers
         {
             Reloading,
@@ -416,6 +415,11 @@ namespace CoreSystems.Api
             Init,
             Homing,
             TargetAligned,
+            WhileOn,
+            TargetRanged100,
+            TargetRanged75,
+            TargetRanged50,
+            TargetRanged25,
         }
 
         /// <summary>

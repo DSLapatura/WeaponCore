@@ -497,7 +497,10 @@ namespace CoreSystems
                 w.TurretHomePosition();
 
                 if (w.IsHome || !w.ReturingHome)
+                {
                     HomingWeapons.RemoveAtFast(i);
+                    w.EventTriggerStateChanged(WeaponDefinition.AnimationDef.PartAnimationSetDef.EventTriggers.Homing, false);
+                }
             }
         }
 

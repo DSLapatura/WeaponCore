@@ -255,7 +255,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
                 var needNameUpdate = weapon.LastFriendlyNameTick == 0 || s.Tick - weapon.LastFriendlyNameTick > 600;
                 if (needsTarget)
                 {
-                    if (weapon.NoAmmo && !showReloadIcon)
+                    if (weapon.OutOfAmmo && !showReloadIcon)
                         noTagetReason = needNameUpdate ? weapon.UpdateAndGetFriendlyName(Weapon.FriendlyNames.NoAmmo) : weapon.FriendlyNameNoAmmo;
 
                     else if (comp.MasterOverrides.FocusSubSystem && !showReloadIcon && notAnyBlock && weapon.FoundTopMostTarget)

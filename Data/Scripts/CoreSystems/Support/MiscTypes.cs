@@ -83,6 +83,7 @@ namespace CoreSystems.Support
             FriendlyCharacter,
             NeutralCharacter,
             EnemyCharacter,
+            SendingHome,
         }
 
         internal Target(Weapon weapon = null)
@@ -231,6 +232,15 @@ namespace CoreSystems.Support
                 default:
                     TargetState = TargetStates.None;
                     break;
+            }
+
+            if (Weapon != null)
+            {
+                if (IsAligned)
+                    Weapon.EventTriggerStateChanged(WeaponDefinition.AnimationDef.PartAnimationSetDef.EventTriggers.TargetAligned, false);
+
+                if (Weapon.RangeEventActive)
+                    Weapon.EventTriggerStateChanged(Weapon.PrevRangeEvent, false);
             }
 
             IsDrone = false;

@@ -204,6 +204,8 @@ namespace CoreSystems.Support
         public readonly bool DisableStatus;
         public readonly bool FocusOnly;
         public readonly bool EvictUniqueTargets;
+        public readonly bool GoHomeToReload;
+        public readonly bool DropTargetUntilLoaded;
         public readonly double MaxTargetSpeed;
         public readonly double AzStep;
         public readonly double ElStep;
@@ -280,6 +282,8 @@ namespace CoreSystems.Support
             EvictUniqueTargets = Values.Targeting.EvictUniqueTargets;
             AlternateUi = Values.HardPoint.Ui.AlternateUi;
             DisableStatus = Values.HardPoint.Ui.DisableStatus;
+            GoHomeToReload = Values.HardPoint.Loading.GoHomeToReload;
+            DropTargetUntilLoaded = Values.HardPoint.Loading.DropTargetUntilLoaded;
 
             MaxReloads = Values.HardPoint.Loading.MaxReloads;
             MaxActiveProjectiles = Values.HardPoint.Loading.MaxActiveProjectiles > 0 ? Values.HardPoint.Loading.MaxActiveProjectiles : int.MaxValue;

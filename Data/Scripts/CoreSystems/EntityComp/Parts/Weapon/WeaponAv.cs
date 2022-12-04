@@ -135,7 +135,6 @@ namespace CoreSystems.Platform
             if (Comp.Data.Repo == null || Comp.CoreEntity == null || Comp.CoreEntity.MarkedForClose || Comp.Ai == null || Comp.Platform.State != CorePlatform.PlatformState.Ready && Comp.Platform.State != CorePlatform.PlatformState.Inited) return;
             try
             {
-                EventStatus[(int) state] = active;
                 var session = Comp.Session;
                 var distance = Vector3D.DistanceSquared(session.CameraPos, Comp.CoreEntity.PositionComp.WorldAABB.Center);
                 var canPlay = !session.DedicatedServer && 64000000 >= distance; //8km max range, will play regardless of range if it moves PivotPos and is loaded
@@ -177,6 +176,34 @@ namespace CoreSystems.Platform
                         monitor[i].Invoke((int) state, active);
                 }
 
+                var prevRangeEvent = PrevRangeEvent;
+                var stopOldEvent = false;
+                switch (state)
+                {
+                    case EventTriggers.TargetRanged100:
+                        PrevRangeEvent = state;
+                        stopOldEvent = prevRangeEvent != PrevRangeEvent && RangeEventActive;
+                        RangeEventActive = active;
+                        break;
+                    case EventTriggers.TargetRanged75:
+                        PrevRangeEvent = state;
+                        stopOldEvent = prevRangeEvent != PrevRangeEvent && RangeEventActive;
+                        RangeEventActive = active;
+                        break;
+
+                    case EventTriggers.TargetRanged50:
+                        PrevRangeEvent = state;
+                        stopOldEvent = prevRangeEvent != PrevRangeEvent && RangeEventActive;
+                        RangeEventActive = active;
+                        break;
+
+                    case EventTriggers.TargetRanged25:
+                        PrevRangeEvent = state;
+                        stopOldEvent = prevRangeEvent != PrevRangeEvent && RangeEventActive;
+                        RangeEventActive = active;
+                        break;
+                }
+
                 if (!AnimationsSet.ContainsKey(state)) return;
                 if (AnimationDelayTick < Comp.Session.Tick)
                     AnimationDelayTick = Comp.Session.Tick;
@@ -186,6 +213,51 @@ namespace CoreSystems.Platform
 
                 switch (state)
                 {
+                    case EventTriggers.TargetRanged100:
+                    case EventTriggers.TargetRanged75:
+                    case EventTriggers.TargetRanged50:
+                    case EventTriggers.TargetRanged25:
+                        {
+                            var loopCount = stopOldEvent ? 2 : 1;
+                            for (int j = 0; j < loopCount; j++)
+                            {
+                                var xstate = stopOldEvent && j == 0 ? prevRangeEvent : PrevRangeEvent;
+                                var xactive = (!stopOldEvent || j != 0) && active;
+
+                                for (int i = 0; i < AnimationsSet[xstate].Length; i++)
+                                {
+                                    var animation = AnimationsSet[xstate][i];
+                                    if (animation == null) continue;
+
+                                    if (xactive && !animation.Running)
+                                    {
+                                        if (animation.TriggerOnce && animation.Triggered) continue;
+                                        animation.Triggered = true;
+
+                                        set = true;
+
+                                        animation.StartTick = session.Tick + animation.MotionDelay;
+
+                                        session.ThreadedAnimations.Enqueue(animation);
+
+                                        animation.Running = true;
+                                        animation.CanPlay = canPlay;
+
+                                        if (animation.DoesLoop)
+                                            animation.Looping = true;
+                                    }
+                                    else if (xactive && animation.DoesLoop)
+                                        animation.Looping = true;
+                                    else if (!xactive)
+                                    {
+                                        animation.Looping = false;
+                                        animation.Triggered = false;
+                                    }
+                                }
+                            }
+
+                            break;
+                        }
                     case EventTriggers.StopFiring:
                     case EventTriggers.PreFire:
                     case EventTriggers.Firing:
@@ -303,40 +375,44 @@ namespace CoreSystems.Platform
                     case EventTriggers.NoMagsToLoad:
                     case EventTriggers.BurstReload:
                     case EventTriggers.Reloading:
+                    case EventTriggers.Homing:
+                    case EventTriggers.TargetAligned:
+                    case EventTriggers.WhileOn:
+                    {
+                        for (int i = 0; i < AnimationsSet[state].Length; i++)
                         {
-                            for (int i = 0; i < AnimationsSet[state].Length; i++)
+                            var animation = AnimationsSet[state][i];
+                            if (animation == null) continue;
+
+                            if (active && !animation.Running)
                             {
-                                var animation = AnimationsSet[state][i];
-                                if (animation == null) continue;
+                                if (animation.TriggerOnce && animation.Triggered) continue;
+                                animation.Triggered = true;
 
-                                if (active && !animation.Running)
-                                {
-                                    if (animation.TriggerOnce && animation.Triggered) continue;
-                                    animation.Triggered = true;
+                                set = true;
 
-                                    set = true;
+                                animation.StartTick = session.Tick + animation.MotionDelay;
 
-                                    animation.StartTick = session.Tick + animation.MotionDelay;
+                                session.ThreadedAnimations.Enqueue(animation);
 
-                                    session.ThreadedAnimations.Enqueue(animation);
+                                animation.Running = true;
+                                animation.CanPlay = canPlay;
 
-                                    animation.Running = true;
-                                    animation.CanPlay = canPlay;
-
-                                    if (animation.DoesLoop)
-                                        animation.Looping = true;
-                                }
-                                else if (active && animation.DoesLoop)
+                                if (animation.DoesLoop)
                                     animation.Looping = true;
-                                else if (!active)
-                                {
-                                    animation.Looping = false;
-                                    animation.Triggered = false;
-                                }
                             }
-
-                            break;
+                            else if (active && animation.DoesLoop)
+                                animation.Looping = true;
+                            else if (!active)
+                            {
+                                animation.Looping = false;
+                                animation.Triggered = false;
+                            }
                         }
+
+                        break;
+                    }
+
                 }
 
                 if ((active || state == EventTriggers.Tracking) && set)
@@ -361,6 +437,7 @@ namespace CoreSystems.Platform
                 Log.Line($"Exception in Event Triggered: {e}");
             }
         }
+
         public void StartPreFiringSound()
         {
             if (PreFiringEmitter == null)
