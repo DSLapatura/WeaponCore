@@ -134,6 +134,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             var manualTarget = ai.Session.PlayerDummyTargets[ai.Session.PlayerId].ManualTarget;
             var paintTarget = ai.Session.PlayerDummyTargets[ai.Session.PlayerId].PaintedTarget;
             var mark = s.UiInput.MouseButtonRightReleased && !ai.SmartHandheld || ai.SmartHandheld && s.UiInput.MouseButtonMenuReleased;
+            var friendCheckVolume = ai.TopEntityVolume;
+            friendCheckVolume.Radius *= 2;
 
             var advanced = s.Settings.ClientConfig.AdvancedMode || s.UiInput.IronLock;
             MyEntity closestEnt = null;
@@ -193,6 +195,9 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                     return possibleTarget;
                 }
 
+                if (ai.TopEntityMap.GroupMap.Construct.ContainsKey(closestEnt) || closestEnt.PositionComp.WorldVolume.Intersects(friendCheckVolume))
+                    continue;
+
                 foundTarget = true;
                 if (!checkOnly)
                     manualTarget.Update(hit.Position, s.Tick, closestEnt);
@@ -237,7 +242,6 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                 var activeColor = closestEnt != null && !_masterTargets.TryGetValue(closestEnt, out tInfo) || foundOther ? Color.DeepSkyBlue : Color.Red;
 
                 var voxel = closestEnt as MyVoxelBase;
-                var character = closestEnt as IMyCharacter;
                 var dumbHand = s.UiInput.PlayerWeapon && !ai.SmartHandheld;
                 var playerIgnore = dumbHand && (tInfo.Item2 != TargetControl.None && tInfo.Item3 != MyRelationsBetweenPlayerAndBlock.Enemies);
                 
@@ -424,7 +428,6 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             var ai = _session.TrackingAi;
             var closestDist1 = double.MaxValue;
             var closestDist2 = double.MaxValue;
-
             closestEnt = null;
             MyEntity backUpEnt = null;
             foreach (var info in _masterTargets.Keys)
@@ -463,9 +466,12 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             foundOther = false;
             if (checkOthers)
             {
+                var friendCheckVolume = ai.TopEntityVolume;
+                friendCheckVolume.Radius *= 2;
                 for (int i = 0; i < ai.Obstructions.Count; i++)
                 {
-                    var otherEnt = ai.Obstructions[i].Target;
+                    var info = ai.Obstructions[i];
+                    var otherEnt = info.Target;
                     if (otherEnt is MyCubeGrid)
                     {
                         var ray = new RayD(origin, dir);
@@ -475,6 +481,10 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                         var dist1 = ray.Intersects(entVolume);
                         if (dist1 < closestDist1)
                         {
+
+                            if (ai.TopEntityMap.GroupMap.Construct.ContainsKey(otherEnt) || otherEnt.PositionComp.WorldVolume.Intersects(friendCheckVolume))
+                                continue;
+
                             closestDist1 = dist1.Value;
                             closestEnt = otherEnt;
                             foundOther = true;
