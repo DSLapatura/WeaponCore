@@ -2,7 +2,6 @@
 using CoreSystems.Platform;
 using CoreSystems.Projectiles;
 using Sandbox.Game.Entities;
-using Sandbox.ModAPI;
 using VRage;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
@@ -10,7 +9,6 @@ using VRageMath;
 using static CoreSystems.Support.HitEntity.Type;
 using static CoreSystems.Support.WeaponDefinition;
 using static CoreSystems.Support.Ai;
-using CollisionLayers = Sandbox.Engine.Physics.MyPhysics.CollisionLayers;
 
 namespace CoreSystems.Support
 {
@@ -166,6 +164,7 @@ namespace CoreSystems.Support
             TriggerMatrix = MatrixD.Identity;
         }
     }
+
     internal enum DroneStatus
     {
         Launch,
@@ -178,12 +177,14 @@ namespace CoreSystems.Support
         Return, //Return to "base"
         Dock,
     }
+
     internal enum DroneMission
     {
         Attack,
         Defend,
         Rtb,
     }
+
     internal class SmartStorage
     {
         internal readonly Vector3D[] PastProInfos = new Vector3D[30];
@@ -331,7 +332,6 @@ namespace CoreSystems.Support
 
     internal struct Hit
     {
-        internal IMySlimBlock Block;
         internal MyEntity Entity;
         internal HitEntity.Type EventType;
         internal Vector3D SurfaceHit;
@@ -340,108 +340,11 @@ namespace CoreSystems.Support
         internal uint HitTick;
     }
 
-    internal class VoxelParallelHits
-    {
-        internal uint RequestTick;
-        internal uint ResultTick;
-        internal uint LastTick;
-        internal IHitInfo HitInfo;
-        private bool _start;
-        private uint _startTick;
-        private int _miss;
-        private int _maxDelay;
-        private bool _idle;
-        private Vector3D _endPos = Vector3D.MinValue;
-
-        internal bool Cached(LineD lineTest, ProInfo i)
-        {
-            double dist;
-            Vector3D.DistanceSquared(ref _endPos, ref lineTest.To, out dist);
-
-            _maxDelay = i.MuzzleId == -1 ? i.Weapon.System.Muzzles.Length : 1;
-
-            var thisTick = (uint)(MyAPIGateway.Session.ElapsedPlayTime.TotalMilliseconds * Session.TickTimeDiv);
-            _start = thisTick - LastTick > _maxDelay || dist > 5;
-
-            LastTick = thisTick;
-
-            if (_start) {
-                _startTick = thisTick;
-                _endPos = lineTest.To;
-            }
-
-            var runTime = thisTick - _startTick;
-
-            var fastPath = runTime > (_maxDelay * 3) + 1;
-            var useCache = runTime > (_maxDelay * 3) + 2;
-            if (fastPath) {
-                if (_miss > 1) {
-                    if (_idle && _miss % 120 == 0) _idle = false;
-                    else _idle = true;
-
-                    if (_idle) return true;
-                }
-                RequestTick = thisTick;
-                MyAPIGateway.Physics.CastRayParallel(ref lineTest.From, ref lineTest.To, CollisionLayers.VoxelCollisionLayer, Results);
-            }
-            return useCache;
-        }
-
-        internal void Results(IHitInfo info)
-        {
-            ResultTick = (uint)(MyAPIGateway.Session.ElapsedPlayTime.TotalMilliseconds * Session.TickTimeDiv);
-            if (info == null)
-            {
-                _miss++;
-                HitInfo = null;
-                return;
-            }
-
-            var voxel = info.HitEntity as MyVoxelBase;
-            if (voxel?.RootVoxel is MyPlanet)
-            {
-                HitInfo = info;
-                _miss = 0;
-                return;
-            }
-            _miss++;
-            HitInfo = null;
-        }
-
-        internal bool NewResult(out IHitInfo cachedPlanetResult)
-        {
-            cachedPlanetResult = null;
-            var thisTick = (uint)(MyAPIGateway.Session.ElapsedPlayTime.TotalMilliseconds * Session.TickTimeDiv);
-
-            if (HitInfo == null)
-            {
-                _miss++;
-                return false;
-            }
-
-            if (thisTick > RequestTick + _maxDelay)
-                return false;
-
-            cachedPlanetResult = HitInfo;
-            return true;
-        }
-    }
-
     internal class WeaponFrameCache
     {
-        internal bool VirtualHit;
         internal int Hits;
         internal double HitDistance;
-        internal HitEntity HitEntity = new HitEntity();
-        internal IMySlimBlock HitBlock;
         internal int VirutalId = -1;
-        internal VoxelParallelHits[] VoxelHits;
-
-        internal WeaponFrameCache(int size)
-        {
-            VoxelHits = new VoxelParallelHits[size];
-            for (int i = 0; i < size; i++) VoxelHits[i] = new VoxelParallelHits();
-        }
     }
 
     internal struct NewVirtual

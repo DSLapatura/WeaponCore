@@ -336,7 +336,7 @@ namespace CoreSystems.Support
                 MaxConnections = comms.MaxConnections == 0 ? int.MaxValue : comms.MaxConnections;
                 TargetPersists = comms.TargetPersists;
                 TargetSlaving = RadioType != RadioTypes.Master;
-                Log.Line($"{partName} - radio:{RadioType} - location:{StorageLocation} - perBlock:{StorageLimitPerBlock} - limit:{StorageLimit} - persists:{TargetPersists} - maxConn:{MaxConnections} - unique:{UniqueTargetPerWeapon}");
+                //Log.Line($"{partName} - radio:{RadioType} - location:{StorageLocation} - perBlock:{StorageLimitPerBlock} - limit:{StorageLimit} - persists:{TargetPersists} - maxConn:{MaxConnections} - unique:{UniqueTargetPerWeapon}");
             }
 
             SuppressFire = Values.HardPoint.Ai.SuppressFire;

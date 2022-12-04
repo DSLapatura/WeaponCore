@@ -24,8 +24,8 @@ namespace CoreSystems.Platform
         internal readonly Dictionary<string, PartAnimation> AnimationLookup = new Dictionary<string, PartAnimation>();
         internal readonly List<MyCubeBlock> Top5 = new List<MyCubeBlock>();
         internal readonly HashSet<Weapon> Connections = new HashSet<Weapon>();
+        internal readonly WeaponFrameCache WeaponCache = new WeaponFrameCache();
         internal readonly ApiShootRequest ShootRequest;
-        internal readonly WeaponFrameCache WeaponCache;
         internal readonly WeaponSystem System;
         internal readonly Target Target;
         internal readonly Target NewTarget;
@@ -333,7 +333,6 @@ namespace CoreSystems.Platform
             BeamSlot = new uint[_numOfMuzzles];
             Muzzles = new Muzzle[_numOfMuzzles];
             Dummies = new Dummy[_numOfMuzzles];
-            WeaponCache = new WeaponFrameCache(_numOfMuzzles);
             NewTarget = new Target();
             RayCallBack = new ParallelRayCallBack(this);
             Acquire = new PartAcquire(this);

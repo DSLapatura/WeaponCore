@@ -314,7 +314,7 @@ namespace CoreSystems.Projectiles
 
         internal void DestroyProjectile()
         {
-            Info.Hit = new Hit { Block = null, Entity = null, SurfaceHit = Position, LastHit = Position, HitVelocity = !Vector3D.IsZero(Gravity) ? Velocity * 0.33f : Velocity, HitTick = Info.Ai.Session.Tick };
+            Info.Hit = new Hit { Entity = null, SurfaceHit = Position, LastHit = Position, HitVelocity = !Vector3D.IsZero(Gravity) ? Velocity * 0.33f : Velocity, HitTick = Info.Ai.Session.Tick };
             if (EnableAv || Info.AmmoDef.Const.VirtualBeams)
             {
                 Info.AvShot.ForceHitParticle = true;

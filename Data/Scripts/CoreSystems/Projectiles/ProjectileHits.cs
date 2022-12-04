@@ -620,13 +620,8 @@ namespace CoreSystems.Projectiles
                     if (aConst.VirtualBeams)
                     {
 
-                        info.Weapon.WeaponCache.VirtualHit = true;
-                        info.Weapon.WeaponCache.HitEntity.Entity = info.Hit.Entity;
-                        info.Weapon.WeaponCache.HitEntity.HitPos = info.Hit.SurfaceHit;
                         info.Weapon.WeaponCache.Hits = p.VrPros.Count;
                         info.Weapon.WeaponCache.HitDistance = Vector3D.Distance(p.LastPosition, info.Hit.SurfaceHit);
-
-                        if (info.Hit.Entity is MyCubeGrid) info.Weapon.WeaponCache.HitBlock = info.Hit.Block;
                     }
 
                     lock (Session.Hits)
@@ -775,13 +770,9 @@ namespace CoreSystems.Projectiles
 
                         var grid = hitEntity.Entity as MyCubeGrid;
 
-                        IMySlimBlock hitBlock = null;
                         Vector3D? visualHitPos;
                         if (grid != null)
                         {
-                            if (aConst.VirtualBeams)
-                                hitBlock = hitEntity.Blocks[0].Block;
-
                             IHitInfo hitInfo = null;
                             if (Session.HandlesInput && hitEntity.HitPos.HasValue && Vector3D.DistanceSquared(hitEntity.HitPos.Value, Session.CameraPos) < 22500 && Session.CameraFrustrum.Contains(hitEntity.HitPos.Value) != ContainmentType.Disjoint)
                             {
@@ -793,7 +784,7 @@ namespace CoreSystems.Projectiles
                             visualHitPos = hitInfo?.HitEntity != null ? hitInfo.Position : hitEntity.HitPos;
                         }
                         else visualHitPos = hitEntity.HitPos;
-                        info.Hit = new Hit { Block = hitBlock, Entity = hitEntity.Entity, EventType = hitEntity.EventType, LastHit = visualHitPos ?? Vector3D.Zero, SurfaceHit = visualHitPos ?? Vector3D.Zero, HitVelocity = lastHitVel ?? Vector3D.Zero, HitTick = Session.Tick };
+                        info.Hit = new Hit { Entity = hitEntity.Entity, EventType = hitEntity.EventType, LastHit = visualHitPos ?? Vector3D.Zero, SurfaceHit = visualHitPos ?? Vector3D.Zero, HitVelocity = lastHitVel ?? Vector3D.Zero, HitTick = Session.Tick };
 
                         //if (Session.DebugVersion && info.Ai.AiType == Ai.AiTypes.Player)
                         //    Session.AddHandHitDebug(p.Beam.From, p.Beam.To, false);

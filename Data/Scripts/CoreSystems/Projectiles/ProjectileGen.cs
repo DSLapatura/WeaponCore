@@ -120,9 +120,7 @@ namespace CoreSystems.Projectiles
                 }
                 else
                 {
-                    w.WeaponCache.VirtualHit = false;
                     w.WeaponCache.Hits = 0;
-                    w.WeaponCache.HitEntity.Entity = null;
                     for (int j = 0; j < virts.Count; j++)
                     {
                         var v = virts[j];
