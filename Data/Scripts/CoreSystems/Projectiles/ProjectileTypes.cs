@@ -517,7 +517,7 @@ namespace CoreSystems.Support
                 frag.DoDamage = info.DoDamage;
                 frag.PrevTargetPos = p.TargetPosition;
                 frag.Velocity = !aConst.FragDropVelocity ? p.Velocity : Vector3D.Zero;
-                frag.LockOnFireState = info.AcquiredEntity;
+                frag.AcquiredEntity = info.AcquiredEntity;
                 frag.IgnoreShield = info.ShieldBypassed && aConst.ShieldDamageBypassMod > 0;
                 var posValue = aConst.FragDegrees;
                 posValue *= 0.5f;
@@ -571,7 +571,7 @@ namespace CoreSystems.Support
                 info.Direction = frag.Direction;
                 info.ShooterVel = frag.Velocity;
                 p.Gravity = aConst.FeelsGravity && info.Ai.InPlanetGravity ? frag.Weapon.GravityPoint * aConst.GravityMultiplier : Vector3D.Zero;
-                info.AcquiredEntity = frag.LockOnFireState;
+                info.AcquiredEntity = frag.AcquiredEntity;
                 info.MaxTrajectory = aConst.MaxTrajectory;
                 info.ShotFade = 0;
                 info.ShieldBypassed = frag.IgnoreShield;
@@ -612,7 +612,7 @@ namespace CoreSystems.Support
         public int Depth;
         public XorShiftRandomStruct Random;
         public bool DoDamage;
-        public bool LockOnFireState;
+        public bool AcquiredEntity;
         public bool IgnoreShield;
         public Target.TargetStates TargetState;
         public float Radial;

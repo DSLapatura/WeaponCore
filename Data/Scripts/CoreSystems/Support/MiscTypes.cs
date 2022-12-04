@@ -270,14 +270,12 @@ namespace CoreSystems.Support
 
             if (Weapon != null)
             {
-
-                if (Weapon.System.UniqueTargetPerWeapon)
+                if (Weapon.System.RadioType == Radio.RadioTypes.None && Weapon.System.UniqueTargetPerWeapon)
                     Weapon.AddTargetToBlock(setTarget);
                 else if (Weapon.System.RadioType == Radio.RadioTypes.Master)
                     Weapon.StoreTargetOnConstruct(setTarget);
                 else if (Weapon.System.RadioType == Radio.RadioTypes.Slave)
                     Weapon.RecordConnection(setTarget);
-
             }
 
             HasTarget = setTarget;

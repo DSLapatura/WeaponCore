@@ -273,13 +273,27 @@ namespace CoreSystems.Support
             AlwaysFireFull = values.HardPoint.Loading.FireFull;
             Prediction = Values.HardPoint.AimLeadingPrediction;
             ShootBlanks = Values.Targeting.ShootBlanks;
-            //LockOnFocus = Values.HardPoint.Ai.LockOnFocus && !Values.HardPoint.Ai.TrackTargets;
             AlternateUi = Values.HardPoint.Ui.AlternateUi;
             MaxReloads = Values.HardPoint.Loading.MaxReloads;
             MaxActiveProjectiles = Values.HardPoint.Loading.MaxActiveProjectiles > 0 ? Values.HardPoint.Loading.MaxActiveProjectiles : int.MaxValue;
             TargetGridCenter = Values.HardPoint.Ai.TargetGridCenter;
-
+                
             var comms = Values.Targeting.Communications;
+            /*
+            if (partName.Contains("HUD Tracker"))
+            {
+                comms.StorageLocation = string.Empty;
+                comms.Mode = Comms.NoComms;
+            }
+
+            if (partName.Contains("Radar"))
+            {
+                comms.StoreLimitPerBlock = true;
+                comms.StorageLimit = 5;
+                comms.MaxConnections = 1;
+                UniqueTargetPerWeapon = true;
+            }
+            */
             if (comms.Mode == Comms.NoComms)
                 RadioType = RadioTypes.None;
             else
@@ -288,11 +302,9 @@ namespace CoreSystems.Support
                 var hasRelayChannel = !string.IsNullOrEmpty(comms.RelayChannel);
                 if (!string.IsNullOrEmpty(comms.StorageLocation) && comms.Mode == Comms.LocalNetwork)
                 {
-                    StorageLimit = comms.StorageLimit > 0 ? 1 : 1;
+                    StorageLimit = comms.StorageLimit > 0 ? comms.StorageLimit : int.MaxValue;
                     StoreTargets = comms.StoreTargets;
-                    if (StoreTargets)
-                        StorageLimitPerBlock = true;
-
+                    StorageLimitPerBlock = comms.StoreLimitPerBlock;
                     StorageLocation = MyStringHash.GetOrCompute(comms.StorageLocation);
                     RadioType = !StoreTargets ? RadioTypes.Slave : RadioTypes.Master;
                 }
@@ -324,7 +336,7 @@ namespace CoreSystems.Support
                 MaxConnections = comms.MaxConnections == 0 ? int.MaxValue : comms.MaxConnections;
                 TargetPersists = comms.TargetPersists;
                 TargetSlaving = RadioType != RadioTypes.Master;
-
+                Log.Line($"{partName} - radio:{RadioType} - location:{StorageLocation} - perBlock:{StorageLimitPerBlock} - limit:{StorageLimit} - persists:{TargetPersists} - maxConn:{MaxConnections} - unique:{UniqueTargetPerWeapon}");
             }
 
             SuppressFire = Values.HardPoint.Ai.SuppressFire;

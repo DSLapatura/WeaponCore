@@ -894,6 +894,20 @@ namespace CoreSystems.Platform
                 Positions.Remove(name);
             }
 
+            internal void AddActiveTarget(Weapon w, object target)
+            {
+                TargetOwner tOwner;
+                if (!ActiveTargets.TryGetValue(target, out tOwner) || tOwner.Weapon != w)
+                    if (w.System.Session.DebugMod) Log.Line($"[claiming] - wId:{w.System.WeaponId} - obj:{target.GetHashCode()} - unique:{w.System.UniqueTargetPerWeapon} - noOwner:{tOwner.Weapon == null}");
+                
+                ActiveTargets[target] = new TargetOwner { Weapon = w, ReleasedTick = 0 };
+            }
+
+            internal void RemoveActiveTarget(Weapon w, object target)
+            {
+                ActiveTargets[target] = new TargetOwner { Weapon = w, ReleasedTick = Session.Tick };
+            }
+
             internal void RequestForceReload()
             {
                 foreach (var w in Collection)

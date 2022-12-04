@@ -255,60 +255,33 @@ namespace CoreSystems.Platform
                 {
                     var grid = targetObj as MyCubeGrid;
                     TopMap map;
-                    if (grid != null && System.Session.TopEntityToInfoMap.TryGetValue(grid, out map))
-                    {
+                    if (grid != null && System.Session.TopEntityToInfoMap.TryGetValue(grid, out map)) {
                         foreach (var target in map.GroupMap.Construct.Keys)
                         {
-                            TargetOwner tOwner;
-                            if (!Comp.ActiveTargets.TryGetValue(target, out tOwner) || tOwner.Weapon != this)
-                            {
-                                if (System.Session.DebugMod) Log.Line($"[claiming] - wId:{System.WeaponId} - obj:{target.GetHashCode()} - unique:{System.UniqueTargetPerWeapon} - noOwner:{tOwner.Weapon == null}");
-                            }
-                            Comp.ActiveTargets[target] = new TargetOwner { Weapon = this, ReleasedTick = 0 };
+                            Comp.AddActiveTarget(this, target);
                         }
                     }
                     else
                     {
-                        TargetOwner tOwner;
-                        if (!Comp.ActiveTargets.TryGetValue(targetObj, out tOwner) || tOwner.Weapon != this)
-                        {
-                            if (System.Session.DebugMod) Log.Line($"[claiming] - wId:{System.WeaponId} - obj:{targetObj.GetHashCode()} - unique:{System.UniqueTargetPerWeapon} - noOwner:{tOwner.Weapon == null}");
-                        }
-
-                        Comp.ActiveTargets[targetObj] = new TargetOwner { Weapon = this, ReleasedTick = 0 };
+                        Comp.AddActiveTarget(this, targetObj);
                     }
                 }
                 else
                 {
                     var grid = targetObj as MyCubeGrid;
                     TopMap map;
-                    if (grid != null && System.Session.TopEntityToInfoMap.TryGetValue(grid, out map))
-                    {
+                    if (grid != null && System.Session.TopEntityToInfoMap.TryGetValue(grid, out map)) {
                         foreach (var target in map.GroupMap.Construct.Keys)
                         {
-                            Comp.ActiveTargets[target] = new TargetOwner { Weapon = this, ReleasedTick = System.Session.Tick };
+                            Comp.RemoveActiveTarget(this, target);
                         }
                     }
                     else
                     {
-                        Comp.ActiveTargets[targetObj] = new TargetOwner { Weapon = this,  ReleasedTick = System.Session.Tick };
+                        Comp.RemoveActiveTarget(this, targetObj);
                     }
                 }
             }
-        }
-
-        internal void CheckForOverLimit()
-        {
-            var entity = Target.TargetObject as MyEntity;
-            var targetObj = entity != null ? entity.GetTopMostParent() : Target.TargetObject;
-
-            if (targetObj != null)
-            {
-                var rootConstruct = Comp.Ai.Construct.RootAi.Construct;
-                if (rootConstruct.OverLimit(this))
-                    StoreTargetOnConstruct(false);
-            }
-
         }
 
         internal void StoreTargetOnConstruct(bool setTarget)
@@ -329,7 +302,11 @@ namespace CoreSystems.Platform
                         foreach (var target in map.GroupMap.Construct.Keys)
                         {
                             if (rootConstruct.TryAddOrUpdateTrackedTarget(this, target))
+                            {
                                 changedSomeThing = true;
+                                if (System.UniqueTargetPerWeapon)
+                                    Comp.AddActiveTarget(this, target);
+                            }
                             else
                                 Log.Line($"couldn't add target to construct database - {System.ShortName} - {System.RadioType}");
                         }
@@ -337,7 +314,13 @@ namespace CoreSystems.Platform
                     }
                     else
                     {
-                        if (!rootConstruct.TryAddOrUpdateTrackedTarget(this, targetObj))
+                        if (rootConstruct.TryAddOrUpdateTrackedTarget(this, targetObj))
+                        {
+                            changedSomeThing = true;
+                            if (System.UniqueTargetPerWeapon)
+                                Comp.AddActiveTarget(this, targetObj);
+                        }
+                        else
                             Log.Line($"couldn't add target to target database - {System.ShortName} - {System.RadioType}");
                     }
 
@@ -353,7 +336,11 @@ namespace CoreSystems.Platform
                         foreach (var target in map.GroupMap.Construct.Keys)
                         {
                             if (rootConstruct.TryRemoveTrackedTarget(this, target))
+                            {
                                 changedSomeThing = true;
+                                if (System.UniqueTargetPerWeapon)
+                                    Comp.RemoveActiveTarget(this, targetObj);
+                            }
                             else
                                 Log.Line($"couldn't remove target to construct database - {System.ShortName} - {System.RadioType}");
                         }
@@ -361,7 +348,11 @@ namespace CoreSystems.Platform
                     else
                     {
                         if (rootConstruct.TryRemoveTrackedTarget(this, targetObj))
+                        {
                             changedSomeThing = true;
+                            if (System.UniqueTargetPerWeapon)
+                                Comp.RemoveActiveTarget(this, targetObj);
+                        }
                         else
                             Log.Line($"couldn't remove target to target database - {System.ShortName} - {System.RadioType}");
                     }
@@ -370,6 +361,20 @@ namespace CoreSystems.Platform
                         Comp.StoredTargets--;
                 }
             }
+        }
+
+        internal void CheckForOverLimit()
+        {
+            var entity = Target.TargetObject as MyEntity;
+            var targetObj = entity != null ? entity.GetTopMostParent() : Target.TargetObject;
+
+            if (targetObj != null)
+            {
+                var rootConstruct = Comp.Ai.Construct.RootAi.Construct;
+                if (rootConstruct.OverLimit(this))
+                    StoreTargetOnConstruct(false);
+            }
+
         }
 
         internal void RecordConnection(bool setTarget)
