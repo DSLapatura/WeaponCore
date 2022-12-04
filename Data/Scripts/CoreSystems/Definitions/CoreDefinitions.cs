@@ -284,6 +284,9 @@ namespace CoreSystems.Support
             //[ProtoMember(17)] internal string ChannelId;
             //[ProtoMember(18)] internal int ExportLimit;
             [ProtoMember(19)] internal CommunicationDef Communications;
+            [ProtoMember(20)] internal bool FocusOnly;
+            [ProtoMember(21)] internal bool EvictUniqueTargets;
+
 
             [ProtoContract]
             public struct CommunicationDef
@@ -514,7 +517,7 @@ namespace CoreSystems.Support
                 [ProtoMember(3)] internal bool ToggleGuidance;
                 [ProtoMember(4)] internal bool EnableOverload;
                 [ProtoMember(5)] internal bool AlternateUi;
-
+                [ProtoMember(6)] internal bool DisableStatus;
             }
 
 

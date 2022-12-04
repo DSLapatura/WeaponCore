@@ -41,10 +41,10 @@ namespace CoreSystems.Support
                 var request = w.ShootRequest;
                 var projectileRequest = request.Type == TargetType.Projectile;
                 var pCount = masterAi.LiveProjectile.Count;
-                var shootProjectile = pCount > 0 && (w.System.TrackProjectile || projectileRequest || w.Comp.Ai.ControlComp != null) && mOverrides.Projectiles;
+                var shootProjectile = pCount > 0 && (w.System.TrackProjectile || projectileRequest || w.Comp.Ai.ControlComp != null) && mOverrides.Projectiles && !w.System.FocusOnly;
                 var projectilesFirst = !forceFocus && shootProjectile && w.System.Values.Targeting.Threats.Length > 0 && w.System.Values.Targeting.Threats[0] == Threat.Projectiles;
                 var projectilesOnly =  projectileRequest || w.ProjectilesNear && !w.Target.TargetChanged && w.Comp.Session.Count != w.Acquire.SlotId && !forceFocus;
-                var checkObstructions = w.System.ScanNonThreats && masterAi.Obstructions.Count > 0;
+                var checkObstructions = w.System.ScanNonThreats && !w.System.FocusOnly && masterAi.Obstructions.Count > 0;
                 
                 if (!projectilesFirst && w.System.TrackTopMostEntities && !projectilesOnly && !w.System.NonThreatsOnly)
                     foundTarget = AcquireTopMostEntity(w, mOverrides, forceFocus, targetEntity);
@@ -103,7 +103,7 @@ namespace CoreSystems.Support
             }
 
             var ammoDef = w.ActiveAmmoDef.AmmoDef;
-            var focusOnly = overRides.FocusTargets;
+            var focusOnly = overRides.FocusTargets || w.System.FocusOnly;
 
             var aConst = ammoDef.Const;
             var attackNeutrals = overRides.Neutrals || w.System.ScanTrackOnly;
@@ -136,7 +136,7 @@ namespace CoreSystems.Support
             var focusGrid = rootConstruct.LastFocusEntity as MyCubeGrid;
             var lastFocusGrid = rootConstruct.LastFocusEntityChecked as MyCubeGrid;
             var cachedCollection = rootConstruct.ThreatCacheCollection;
-            if (rootConstruct.HadFocus && !w.System.ScanTrackOnly && !w.System.TargetSlaving) {
+            if (rootConstruct.HadFocus && (!w.System.ScanTrackOnly || w.System.FocusOnly) && !w.System.TargetSlaving) {
                 if (focusGrid != null) {
                     if (cachedCollection.Count == 0 || session.Tick - rootConstruct.LastFocusConstructTick > 180 || lastFocusGrid == null || !focusGrid.IsSameConstructAs(lastFocusGrid)) {
                         rootConstruct.LastFocusEntityChecked = focusGrid;
@@ -191,8 +191,12 @@ namespace CoreSystems.Support
                     continue;
 
                 Weapon.TargetOwner tOwner;
-                if (w.System.UniqueTargetPerWeapon && w.Comp.ActiveTargets.TryGetValue(info.Target, out tOwner) && tOwner.Weapon != w)
-                    continue;
+                if (w.System.UniqueTargetPerWeapon && w.Comp.ActiveTargets.TryGetValue(info.Target, out tOwner) && tOwner.Weapon != w) {
+                    
+                    var evict = w.System.EvictUniqueTargets && !tOwner.Weapon.System.EvictUniqueTargets;
+                    if (!evict)
+                        continue;
+                }
 
                 if (w.System.ScanTrackOnly && !ValidScanEntity(w, info.EntInfo, info.Target, true))
                     continue;
@@ -204,12 +208,12 @@ namespace CoreSystems.Support
 
                 var targetRadius = character != null ? info.TargetRadius * 5 : info.TargetRadius;
                 if (targetRadius < minTargetRadius || info.TargetRadius > maxTargetRadius && maxTargetRadius < 8192 || !focusTarget && info.OffenseRating <= 0) continue;
-
+                
                 var targetCenter = info.Target.PositionComp.WorldAABB.Center;
                 var targetDistSqr = Vector3D.DistanceSquared(targetCenter, weaponPos);
 
                 if (targetDistSqr > (w.MaxTargetDistance + info.TargetRadius) * (w.MaxTargetDistance + info.TargetRadius) || targetDistSqr < w.MinTargetDistanceSqr) continue;
-
+                
                 if (water != null) {
                     if (new BoundingSphereD(ai.MyPlanet.PositionComp.WorldAABB.Center, water.MinRadius).Contains(new BoundingSphereD(targetCenter, targetRadius)) == ContainmentType.Contains)
                         continue;
@@ -229,10 +233,12 @@ namespace CoreSystems.Support
                     var topEntId = info.Target.GetTopMostParent().EntityId;
                     target.Set(info.Target, targetCenter, shortDist, origDist, topEntId);
                     target.TransferTo(w.Target, comp.Session.Tick);
+
                     if (w.Target.TargetState == Target.TargetStates.IsEntity)
                         ai.Session.NewThreat(w);
                     return true;
                 }
+
                 if (info.IsGrid)
                 {
                     if (!s.TrackGrids || !overRides.Grids || (!overRides.LargeGrid && info.LargeGrid) || (!overRides.SmallGrid && !info.LargeGrid) || !focusTarget && info.FatCount < 2) continue;

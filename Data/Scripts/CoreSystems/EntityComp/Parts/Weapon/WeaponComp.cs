@@ -11,7 +11,6 @@ using Sandbox.ModAPI.Weapons;
 using VRage.Game;
 using VRage.Game.Entity;
 using VRageMath;
-using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace CoreSystems.Platform
 {
@@ -435,7 +434,7 @@ namespace CoreSystems.Platform
                 foreach (var at in ActiveTargets) {
                     if (at.Value.ReleasedTick > 0 && Session.Tick - at.Value.ReleasedTick > 120)
                     {
-                        ActiveTargets.Remove(at);
+                        ActiveTargets.Remove(at.Key);
                     }
                 }
             }
@@ -897,8 +896,11 @@ namespace CoreSystems.Platform
             internal void AddActiveTarget(Weapon w, object target)
             {
                 TargetOwner tOwner;
-                if (!ActiveTargets.TryGetValue(target, out tOwner) || tOwner.Weapon != w)
-                    if (w.System.Session.DebugMod) Log.Line($"[claiming] - wId:{w.System.WeaponId} - obj:{target.GetHashCode()} - unique:{w.System.UniqueTargetPerWeapon} - noOwner:{tOwner.Weapon == null}");
+                if (ActiveTargets.TryGetValue(target, out tOwner))
+                {
+                    if (tOwner.Weapon != w && w.System.EvictUniqueTargets && !tOwner.Weapon.System.EvictUniqueTargets)
+                        ImmediateRemoveActiveTarget(target);
+                }
                 
                 ActiveTargets[target] = new TargetOwner { Weapon = w, ReleasedTick = 0 };
             }
@@ -906,6 +908,12 @@ namespace CoreSystems.Platform
             internal void RemoveActiveTarget(Weapon w, object target)
             {
                 ActiveTargets[target] = new TargetOwner { Weapon = w, ReleasedTick = Session.Tick };
+            }
+
+            internal void ImmediateRemoveActiveTarget(object target)
+            {
+                TargetOwner tOwner;
+                ActiveTargets.TryRemove(target, out tOwner);
             }
 
             internal void RequestForceReload()

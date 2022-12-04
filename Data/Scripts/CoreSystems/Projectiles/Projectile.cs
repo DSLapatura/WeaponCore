@@ -1457,6 +1457,11 @@ namespace CoreSystems.Projectiles
                 }
 
                 var aConst = Info.AmmoDef.Const;
+                if (s.RequestedStage >= aConst.Approaches.Length)
+                {
+                    Log.Line($"ProcessStage outside of bounds: {s.RequestedStage > aConst.Approaches.Length - 1} - lastStage:{lastActiveStage} - {Info.Weapon.System.ShortName} - {Info.Weapon.ActiveAmmoDef.AmmoDef.AmmoRound}");
+                    return;
+                }
                 var approach = aConst.Approaches[s.RequestedStage];
                 var def = approach.Definition;
 
@@ -1830,7 +1835,9 @@ namespace CoreSystems.Projectiles
                 {
                     var hasNextStep = s.RequestedStage + 1 < aConst.ApproachesCount;
                     var isActive = s.LastActivatedStage >= 0;
-                    var moveForward = isActive && hasNextStep && (def.Failure == StartFailure.Wait || def.Failure == StartFailure.MoveToPrevious || def.Failure == StartFailure.MoveToNext) || !isActive && def.Failure == StartFailure.MoveToNext;
+                    var activeNext = isActive && (def.Failure == StartFailure.Wait || def.Failure == StartFailure.MoveToPrevious || def.Failure == StartFailure.MoveToNext);
+                    var inActiveNext = !isActive && def.Failure == StartFailure.MoveToNext;
+                    var moveForward = hasNextStep && (activeNext || inActiveNext);
                     var failBackwards = def.Failure == StartFailure.MoveToPrevious && !isActive || def.Failure == StartFailure.ForceReset;
 
                     if (def.EndEvent == StageEvents.EndProjectile || def.EndEvent == StageEvents.EndProjectileOnFailure && (failBackwards || !moveForward && hasNextStep)) {

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using CoreSystems.Platform;
 using CoreSystems.Projectiles;
 using Sandbox.Game.Entities;
@@ -578,12 +579,26 @@ namespace CoreSystems.Support
                 }
 
                 Weapon tracker;
-                if (!dict.TryGetValue(target, out tracker) || tracker == w) 
+                if (!dict.TryGetValue(target, out tracker) || (tracker == w || EvictUniqueTarget(tracker, w, target)))
                 {
                     dict[target] = w;
                     return true;
                 }
 
+                return false;
+            }
+
+            private bool EvictUniqueTarget(Weapon existing, Weapon requester, object target)
+            {
+                var evict = existing.System.EvictUniqueTargets && requester.System.EvictUniqueTargets;
+                if (evict)
+                {
+                    if (TryRemoveTrackedTarget(existing, target)) {
+                        --existing.Comp.StoredTargets;
+                        return true;
+                    }
+                    Log.Line($"failed to evict");
+                }
                 return false;
             }
 
@@ -978,41 +993,49 @@ namespace CoreSystems.Support
 
         internal bool ValidFocusTarget(Weapon w)
         {
-            var targets = Ai.Construct.Data.Repo.FocusData?.Target;
+            var focusTargetId = Ai.Construct.Data.Repo.FocusData?.Target;
 
-            var targetEnt = w.Target.TargetObject;
+            var existingTarget = w.Target.TargetObject;
             if (w.PosChangedTick != w.Comp.Session.SimulationCount)
                 w.UpdatePivotPos();
 
-            if (targets != null && targetEnt != null)
+            if (focusTargetId != null && existingTarget != null)
             {
-                var tId = targets ?? 0;
+                var tId = focusTargetId ?? 0;
                 if (tId == 0) return false;
 
-                var block = targetEnt as MyCubeBlock;
-
-                MyEntity target;
-                if (MyEntities.TryGetEntityById(tId, out target) && (target == targetEnt || block != null && target is MyCubeGrid && block.CubeGrid.IsSameConstructAs((MyCubeGrid)target)))
+                MyEntity focusTarget;
+                if (MyEntities.TryGetEntityById(tId, out focusTarget))
                 {
-                    var worldVolume = target.PositionComp.WorldVolume;
-                    var targetPos = worldVolume.Center;
-                    var tRadius = worldVolume.Radius;
-                    var maxRangeSqr = tRadius + w.MaxTargetDistance;
-                    var minRangeSqr = tRadius + w.MinTargetDistance;
 
-                    maxRangeSqr *= maxRangeSqr;
-                    minRangeSqr *= minRangeSqr;
-                    double rangeToTarget;
-                    Vector3D.DistanceSquared(ref targetPos, ref w.MyPivotPos, out rangeToTarget);
+                    var existingBlock = existingTarget as MyCubeBlock;
+                    var sameTopLevel = focusTarget == existingTarget || existingBlock != null && existingBlock.CubeGrid == focusTarget;
                     
-                    if (rangeToTarget <= maxRangeSqr && rangeToTarget >= minRangeSqr)
+                    var existingGrid = existingTarget as MyCubeGrid;
+                    var testGrid = existingGrid ?? existingBlock?.CubeGrid;
+                    var focusGrid = focusTarget as MyCubeGrid;
+
+                    if (sameTopLevel || focusGrid != null && testGrid != null && testGrid.IsSameConstructAs(focusGrid))
                     {
-                        var overrides = w.Comp.MasterOverrides;
+                        var worldVolume = focusTarget.PositionComp.WorldVolume;
+                        var targetPos = worldVolume.Center;
+                        var tRadius = worldVolume.Radius;
+                        var maxRangeSqr = tRadius + w.MaxTargetDistance;
+                        var minRangeSqr = tRadius + w.MinTargetDistance;
 
-                        if (overrides.FocusSubSystem && overrides.SubSystem != WeaponDefinition.TargetingDef.BlockTypes.Any && block != null && !w.ValidSubSystemTarget(block, overrides.SubSystem))
-                            return false;
+                        maxRangeSqr *= maxRangeSqr;
+                        minRangeSqr *= minRangeSqr;
+                        double rangeToTarget;
+                        Vector3D.DistanceSquared(ref targetPos, ref w.MyPivotPos, out rangeToTarget);
 
-                        return true;
+                        if (rangeToTarget <= maxRangeSqr && rangeToTarget >= minRangeSqr)
+                        {
+                            var overrides = w.Comp.MasterOverrides;
+                            if (overrides.FocusSubSystem && overrides.SubSystem != WeaponDefinition.TargetingDef.BlockTypes.Any && existingBlock != null && !w.ValidSubSystemTarget(existingBlock, overrides.SubSystem))
+                                return false;
+
+                            return true;
+                        }
                     }
                 }
             }

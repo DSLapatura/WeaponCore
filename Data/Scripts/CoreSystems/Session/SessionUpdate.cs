@@ -564,7 +564,7 @@ namespace CoreSystems
                         ///
                         /// Update Weapon Hud Info
                         /// 
-                        var addWeaponToHud = HandlesInput && (w.HeatPerc >= 0.01 || (w.ShowReload && (w.Loading || w.Reload.WaitForClient)) || ((aConst.CanReportTargetStatus || ai.ControlComp != null) && wValues.Set.ReportTarget && !w.Target.HasTarget && grids && (wComp.DetectOtherSignals && ai.DetectionInfo.OtherInRange || ai.DetectionInfo.PriorityInRange) && ai.DetectionInfo.TargetInRange(w)));
+                        var addWeaponToHud = HandlesInput && !w.System.DisableStatus && (w.HeatPerc >= 0.01 || (w.ShowReload && (w.Loading || w.Reload.WaitForClient)) || ((aConst.CanReportTargetStatus || ai.ControlComp != null) && wValues.Set.ReportTarget && !w.Target.HasTarget && grids && (wComp.DetectOtherSignals && ai.DetectionInfo.OtherInRange || ai.DetectionInfo.PriorityInRange) && ai.DetectionInfo.TargetInRange(w)));
 
                         if (addWeaponToHud && !Session.Config.MinimalHud && !enforcement.DisableHudReload && (ActiveControlBlock != null && ai.SubGridCache.Contains(ActiveControlBlock.CubeGrid) || PlayerHandWeapon != null && IdToCompMap.ContainsKey(((IMyGunBaseUser)PlayerHandWeapon).OwnerId))) {
                             HudUi.TexturesToAdd++;
@@ -600,7 +600,7 @@ namespace CoreSystems
                                 {
                                     w.Target.Reset(Tick, States.Expired);
                                 }
-                                else if (eTarget != null && Tick60 && focusTargets && !focus.ValidFocusTarget(w))
+                                else if (eTarget != null && (Tick60 || constructResetTick) && (focusTargets || w.System.FocusOnly) && !focus.ValidFocusTarget(w))
                                 {
                                     w.Target.Reset(Tick, States.Expired);
                                 }
@@ -643,7 +643,7 @@ namespace CoreSystems
                         else if(eTarget != null && eTarget.MarkedForClose || w.DelayedTargetResetTick == Tick && w.TargetData.EntityId == 0 && w.Target.HasTarget)
                             w.Target.Reset(w.System.Session.Tick, States.ServerReset);
 
-                        w.ProjectilesNear = ai.EnemyProjectiles && (w.System.TrackProjectile || ai.ControlComp != null) && projectiles && w.Target.TargetState != TargetStates.IsProjectile && (w.Target.TargetChanged || QCount == w.ShortLoadId);
+                        w.ProjectilesNear = ai.EnemyProjectiles && (w.System.TrackProjectile || ai.ControlComp != null) && !w.System.FocusOnly && projectiles && w.Target.TargetState != TargetStates.IsProjectile && (w.Target.TargetChanged || QCount == w.ShortLoadId);
 
                         if (wValues.State.Control == ControlMode.Camera && UiInput.MouseButtonPressed)
                             w.Target.TargetPos = Vector3D.Zero;
@@ -662,7 +662,7 @@ namespace CoreSystems
                             var somethingNearBy = wComp.DetectOtherSignals && wComp.MasterAi.DetectionInfo.OtherInRange || wComp.MasterAi.DetectionInfo.PriorityInRange;
                             var trackObstructions = w.System.ScanNonThreats && wComp.MasterAi.Obstructions.Count > 0;
                             
-                            var weaponReady = !w.NoAmmo && (wComp.MasterAi.EnemiesNear && somethingNearBy || trackObstructions) && (!w.Target.HasTarget || rootConstruct.HadFocus && constructResetTick);
+                            var weaponReady = !w.NoAmmo && (!w.System.FocusOnly || rootConstruct.HadFocus) && (wComp.MasterAi.EnemiesNear && somethingNearBy || trackObstructions) && (!w.Target.HasTarget || rootConstruct.HadFocus && constructResetTick);
 
                             Dictionary<object, Weapon> masterTargets;
                             var seek = weaponReady && (acquireReady || w.ProjectilesNear) && (!w.System.TargetSlaving || rootConstruct.TrackedTargets.TryGetValue(w.System.StorageLocation, out masterTargets) && masterTargets.Count > 0);
@@ -800,8 +800,8 @@ namespace CoreSystems
                 var rootConstruct = ai.Construct.RootAi.Construct;
                 var recentApiRequest = Tick - w.ShootRequest.RequestTick <= 1;
 
-                var requiresFocus = w.ActiveAmmoDef.AmmoDef.Const.SkipAimChecks || (rootConstruct.TargetResetTick == Tick || recentApiRequest) && !w.System.UniqueTargetPerWeapon;
-                if (requiresFocus && (!rootConstruct.HadFocus)) {
+                var requiresFocus = w.System.FocusOnly || w.ActiveAmmoDef.AmmoDef.Const.SkipAimChecks || (rootConstruct.TargetResetTick == Tick || recentApiRequest) && !w.System.UniqueTargetPerWeapon;
+                if (requiresFocus && !rootConstruct.HadFocus) {
                     w.TargetAcquireTick = uint.MaxValue;
                     AcquireTargets.RemoveAtFast(i);
                     continue;

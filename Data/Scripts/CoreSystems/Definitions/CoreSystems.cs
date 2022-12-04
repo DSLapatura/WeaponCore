@@ -201,6 +201,9 @@ namespace CoreSystems.Support
         public readonly bool HasProjectileSync;
         public readonly bool TargetSlaving;
         public readonly bool TargetPersists;
+        public readonly bool DisableStatus;
+        public readonly bool FocusOnly;
+        public readonly bool EvictUniqueTargets;
         public readonly double MaxTargetSpeed;
         public readonly double AzStep;
         public readonly double ElStep;
@@ -273,27 +276,16 @@ namespace CoreSystems.Support
             AlwaysFireFull = values.HardPoint.Loading.FireFull;
             Prediction = Values.HardPoint.AimLeadingPrediction;
             ShootBlanks = Values.Targeting.ShootBlanks;
+            FocusOnly = Values.Targeting.FocusOnly;
+            EvictUniqueTargets = Values.Targeting.EvictUniqueTargets;
             AlternateUi = Values.HardPoint.Ui.AlternateUi;
+            DisableStatus = Values.HardPoint.Ui.DisableStatus;
+
             MaxReloads = Values.HardPoint.Loading.MaxReloads;
             MaxActiveProjectiles = Values.HardPoint.Loading.MaxActiveProjectiles > 0 ? Values.HardPoint.Loading.MaxActiveProjectiles : int.MaxValue;
             TargetGridCenter = Values.HardPoint.Ai.TargetGridCenter;
-                
             var comms = Values.Targeting.Communications;
-            /*
-            if (partName.Contains("HUD Tracker"))
-            {
-                comms.StorageLocation = string.Empty;
-                comms.Mode = Comms.NoComms;
-            }
 
-            if (partName.Contains("Radar"))
-            {
-                comms.StoreLimitPerBlock = true;
-                comms.StorageLimit = 5;
-                comms.MaxConnections = 1;
-                UniqueTargetPerWeapon = true;
-            }
-            */
             if (comms.Mode == Comms.NoComms)
                 RadioType = RadioTypes.None;
             else
