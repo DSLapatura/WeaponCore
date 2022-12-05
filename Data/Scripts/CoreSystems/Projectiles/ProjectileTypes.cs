@@ -460,7 +460,7 @@ namespace CoreSystems.Support
                 target.TargetObject = frag.TargetEntity;
                 target.TargetState = frag.TargetState;
                 target.TargetState = frag.TargetState;
-
+                info.Target.TargetPos = frag.PrevTargetPos;
                 info.IsFragment = true;
                 info.MuzzleId = frag.MuzzleId;
                 info.UniqueMuzzleId = session.UniqueMuzzleId.Id;

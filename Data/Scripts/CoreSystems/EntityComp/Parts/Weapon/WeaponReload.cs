@@ -1,5 +1,6 @@
 ﻿using System;
 using CoreSystems.Support;
+using VRageMath;
 using static CoreSystems.Support.CoreComponent;
 using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetDef;
 

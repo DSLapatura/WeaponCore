@@ -1,11 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using BulletXNA;
 using CoreSystems.Support;
 using Jakaria.API;
 using Sandbox.Game.Entities;
-using Sandbox.ModAPI;
 using Sandbox.ModAPI.Ingame;
 using VRage.Game;
 using VRage.Game.Components;
@@ -1102,7 +1099,6 @@ namespace CoreSystems.Projectiles
 
             if (aConst.TargetOffSet && Info.Storage.WasTracking)
             {
-
                 if (Info.Age - Info.Storage.LastOffsetTime > 300)
                 {
 
@@ -1533,9 +1529,7 @@ namespace CoreSystems.Projectiles
                 var heightOffset = s.OffsetDir * def.DesiredElevation;
 
                 var source = s.LookAtPos;
-                var destination = def.VantagePoint != VantagePointRelativeTo.Target
-                    ? (def.AdjustDestinationPosition ? s.SetTargetPos : Info.Target.TargetPos)
-                    : (def.AdjustDestinationPosition ? Position : Info.Origin);
+                var destination = def.VantagePoint != VantagePointRelativeTo.Target ? (def.AdjustDestinationPosition ? s.SetTargetPos : Info.Target.TargetPos) : (def.AdjustDestinationPosition ? Position : Info.Origin);
 
                 var heightStart = source + heightOffset;
                 var heightend = destination + heightOffset;
@@ -1706,7 +1700,6 @@ namespace CoreSystems.Projectiles
                     var destPerspectiveDir = Vector3D.Normalize(heightAdjLeadPos - destination);
 
                     TargetPosition = MyUtils.LinePlaneIntersection(heightAdjLeadPos, heightDir, destination, destPerspectiveDir);
-
                     if (Info.Ai.Session.DebugMod)
                     {
                         DsDebugDraw.DrawLine(heightAdjLeadPos, destination, Color.White, 3);
