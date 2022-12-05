@@ -1225,7 +1225,7 @@ namespace CoreSystems.Projectiles
                     else
                         HadTarget = HadTargetState.Other;
 
-                    if (aConst.TargetOffSet && s.WasTracking)
+                    if (aConst.TargetOffSet)
                     {
                         if (Info.Age - s.LastOffsetTime > 300)
                         {
@@ -1234,6 +1234,7 @@ namespace CoreSystems.Projectiles
                             if (dist < aConst.SmartOffsetSqr + VelocityLengthSqr && Vector3.Dot(Info.Direction, Position - targetPos) > 0)
                                 OffSetTarget();
                         }
+
                         targetPos += OffsetTarget;
                     }
 
