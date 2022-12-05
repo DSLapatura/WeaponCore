@@ -23,7 +23,6 @@ namespace CoreSystems.Support
 
         internal readonly Session Session;
         internal readonly Queue<Shrink> TracerShrinks = new Queue<Shrink>(8);
-        internal readonly QuadCache QuadCache = new QuadCache();
         internal readonly MyQueue<AfterTrail> TrailSteps = new MyQueue<AfterTrail>();
         internal WeaponDefinition.AmmoDef AmmoDef;
         internal MyEntity PrimeEntity;

@@ -303,8 +303,7 @@ namespace CoreSystems.Support
                                 if (aConst.TracerMode == AmmoConstants.Texture.Normal)
                                 {
 
-                                    var qc = av.QuadCache;
-
+                                    var qc = QuadCachePool.Count > 0 ? QuadCachePool.Pop() : new QuadCache();
                                     qc.Shot = av;
                                     qc.Material = aConst.TracerTextures[0];
                                     qc.Color = color;
@@ -319,7 +318,7 @@ namespace CoreSystems.Support
                                 }
                                 else if (aConst.TracerMode != AmmoConstants.Texture.Resize)
                                 {
-                                    var qc = av.QuadCache;
+                                    var qc = QuadCachePool.Count > 0 ? QuadCachePool.Pop() : new QuadCache();
                                     qc.Shot = av;
                                     qc.Material = aConst.TracerTextures[av.TextureIdx];
                                     qc.Color = color;
@@ -631,16 +630,8 @@ namespace CoreSystems.Support
                 b.BlendType = BlendTypeEnum.Standard;
 
                 --a.ActiveBillBoards;
-                switch (q.Type)
-                {
-                    case QuadCache.EffectTypes.Tracer:
-                        break;
-                    default:
-                        QuadCacheCoolDown[Session.Tick % QuadCacheCoolDown.Length].Add(q);
-                        q.Shot = null;
-                        break;
-                }
-
+                QuadCacheCoolDown[Session.Tick % QuadCacheCoolDown.Length].Add(q);
+                q.Shot = null;
                 BillBoardsToAdd.Add(b);
             }
 
