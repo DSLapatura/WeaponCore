@@ -128,14 +128,12 @@ namespace CoreSystems.Platform
                         muzzle.Position = newInfo.Position;
                         muzzle.LastUpdateTick = tick;
 
-
-
                         //if (Comp.Session.DebugVersion && Comp.Ai.AiType == Ai.AiTypes.Player)
                         //    Comp.Session.AddHandHitDebug(muzzle.Position, muzzle.Position + (muzzle.Direction * 10), true);
                     }
                     #endregion
 
-                    if (aConst.HasBackKickForce && !Comp.Ai.IsStatic && !Comp.Ai.ShieldFortified && s.IsServer)
+                    if (aConst.HasBackKickForce && !Comp.Ai.IsStatic && !Comp.Ai.ShieldFortified && s.IsServer && false)
                         Comp.TopEntity.Physics?.AddForce(MyPhysicsForceType.APPLY_WORLD_IMPULSE_AND_WORLD_ANGULAR_IMPULSE, -muzzle.Direction * ActiveAmmoDef.AmmoDef.BackKickForce, muzzle.Position, Vector3D.Zero);
 
                     if (PlayTurretAv) {

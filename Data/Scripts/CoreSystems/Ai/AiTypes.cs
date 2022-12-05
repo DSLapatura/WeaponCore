@@ -598,6 +598,18 @@ namespace CoreSystems.Support
             }
         }
 
+        internal struct QueuedSoundEvent
+        {
+            internal enum SoundTypes
+            {
+                HardPointStart,
+                HardPointStop,
+            }
+
+            internal SoundTypes Type;
+            internal Weapon Weapon;
+        }
+
         internal struct Shields
         {
             internal long Id;

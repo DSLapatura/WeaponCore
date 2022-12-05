@@ -255,7 +255,7 @@ namespace CoreSystems.Support
                         if (a.TrailSteps.Count > 0)
                             t++;
                     }
-                    Session.ShowLocalNotify($"cacheRemaining:{QuadCachePool.Count} - onScreen:{_onScreens}({os})[{p}] - tailCache:{_tailCache} - hasTrail:{t} - dirty:{d} - marked:{m}", 160);
+                    Session.ShowLocalNotify($"cacheRemaining:{QuadCachePool.Count} - onScreen:{_onScreens}({os})[{p}] - hasTrail:{t} - dirty:{d} - marked:{m}", 160);
 
                 }
         }
@@ -490,22 +490,17 @@ namespace CoreSystems.Support
 
                             if (av.OnScreen != AvShot.Screen.ProxyDraw && trail.Line.Length >= 0.1)
                             {
-                                if (trail.Cache == null)
-                                {
-                                    _tailCache++;
-                                    trail.Cache = QuadCachePool.Count > 0 ? QuadCachePool.Pop() : new QuadCache();
-                                    trail.Cache.Owner = trail;
-                                }
+                                var qCache = QuadCachePool.Count > 0 ? QuadCachePool.Pop() : new QuadCache();
 
-                                trail.Cache.Shot = av;
-                                trail.Cache.Material = aConst.TrailTextures[0];
-                                trail.Cache.Color = color;
-                                trail.Cache.StartPos = trail.Line.From;
-                                trail.Cache.Direction = trail.Line.Direction;
-                                trail.Cache.Length = (float)trail.Line.Length;
-                                trail.Cache.Width = width;
-                                trail.Cache.Type = QuadCache.EffectTypes.Trail;
-                                PreAddOneFrame.Add(trail.Cache);
+                                qCache.Shot = av;
+                                qCache.Material = aConst.TrailTextures[0];
+                                qCache.Color = color;
+                                qCache.StartPos = trail.Line.From;
+                                qCache.Direction = trail.Line.Direction;
+                                qCache.Length = (float)trail.Line.Length;
+                                qCache.Width = width;
+                                qCache.Type = QuadCache.EffectTypes.Trail;
+                                PreAddOneFrame.Add(qCache);
                                 ++av.ActiveBillBoards;
                             }
 
@@ -517,14 +512,6 @@ namespace CoreSystems.Support
                             trail.Step = 0;
                             remove = true;
                             trailCount--;
-
-                            if (trail.Cache != null) {
-                                _tailCache--;
-                                QuadCacheCoolDown[Session.Tick % QuadCacheCoolDown.Length].Add(trail.Cache);
-                                trail.Cache.Owner = null;
-                                trail.Cache = null;
-                            }
-
                             Trails.Push(trail);
                         }
                     }
@@ -540,7 +527,6 @@ namespace CoreSystems.Support
             }
         }
 
-        private int _tailCache;
         private void RunShrinks(AvShot av, bool overDrawLimit)
         {
             var s = av.TracerShrinks.Dequeue();
@@ -648,7 +634,6 @@ namespace CoreSystems.Support
                 switch (q.Type)
                 {
                     case QuadCache.EffectTypes.Tracer:
-                    case QuadCache.EffectTypes.Trail:
                         break;
                     default:
                         QuadCacheCoolDown[Session.Tick % QuadCacheCoolDown.Length].Add(q);

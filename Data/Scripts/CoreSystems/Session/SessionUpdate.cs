@@ -62,6 +62,9 @@ namespace CoreSystems
 
                 var enforcement = Settings.Enforcement;
 
+                if (ai.QueuedSounds.Count > 0)
+                    ai.ProcessQueuedSounds();
+
                 if (ai.AiType == Ai.AiTypes.Grid && !ai.HasPower || enforcement.ServerSleepSupport && IsServer && ai.AwakeComps == 0 && ai.WeaponsTracking == 0 && ai.SleepingComps > 0 && !ai.CheckProjectiles && ai.AiSleep && !ai.DbUpdated) 
                     continue;
 

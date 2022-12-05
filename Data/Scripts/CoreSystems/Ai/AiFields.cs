@@ -59,6 +59,7 @@ namespace CoreSystems.Support
         internal readonly HashSet<IMyShipToolBase> Tools = new HashSet<IMyShipToolBase>();
         internal readonly ConcurrentDictionary<MyCubeGrid, byte> SubGridsRegistered = new ConcurrentDictionary<MyCubeGrid, byte>();
 
+        internal readonly List<QueuedSoundEvent> QueuedSounds = new List<QueuedSoundEvent>();
         internal readonly List<WeaponComponent> TrackingComps = new List<WeaponComponent>();
         internal readonly List<WeaponComponent> WeaponComps = new List<WeaponComponent>(32);
         internal readonly List<Upgrade.UpgradeComponent> UpgradeComps = new List<Upgrade.UpgradeComponent>(32);

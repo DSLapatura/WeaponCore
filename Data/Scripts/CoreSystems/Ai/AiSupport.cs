@@ -242,6 +242,24 @@ namespace CoreSystems.Support
             return collection;
         }
 
+        internal void ProcessQueuedSounds()
+        {
+            for (int i = 0; i < QueuedSounds.Count; i++)
+            {
+                var qs = QueuedSounds[i];
+                switch (qs.Type)
+                {
+                    case QueuedSoundEvent.SoundTypes.HardPointStart:
+                        qs.Weapon.StartHardPointSound();
+                        break;
+                    case QueuedSoundEvent.SoundTypes.HardPointStop:
+                        qs.Weapon.StopHardPointSound();
+                        break;
+                }
+            }
+            QueuedSounds.Clear();
+        }
+
         private void WeaponShootOff()
         {
             for (int i = 0; i < WeaponComps.Count; i++) {
@@ -445,6 +463,7 @@ namespace CoreSystems.Support
             CompBase.Clear();
             Stators.Clear();
             Tools.Clear();
+            QueuedSounds.Clear();
             ProjetileCache.Clear();
             CompWeaponGroups.Clear();
             SortedTargets.Clear();

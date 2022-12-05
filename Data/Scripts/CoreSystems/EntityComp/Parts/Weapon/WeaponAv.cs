@@ -469,8 +469,16 @@ namespace CoreSystems.Platform
 
         public void StartHardPointSound()
         {
+
             if (HardPointEmitter == null)
                 return;
+
+            if (Environment.CurrentManagedThreadId != 1)
+            {
+                Comp.Ai.QueuedSounds.Add(new Ai.QueuedSoundEvent {Type = Ai.QueuedSoundEvent.SoundTypes.HardPointStart, Weapon = this});
+                return;
+            }
+
             PlayingHardPointSound = true;
             HardPointEmitter.PlaySound(System.HardPointSoundPair);
         }
@@ -478,8 +486,15 @@ namespace CoreSystems.Platform
 
         public void StopHardPointSound(object o = null)
         {
+            
             if (HardPointEmitter == null)
                 return;
+
+            if (Environment.CurrentManagedThreadId != 1)
+            {
+                Comp.Ai.QueuedSounds.Add(new Ai.QueuedSoundEvent { Type = Ai.QueuedSoundEvent.SoundTypes.HardPointStop, Weapon = this });
+                return;
+            }
 
             PlayingHardPointSound = false;
 

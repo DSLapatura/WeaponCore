@@ -19,7 +19,6 @@ namespace CoreSystems.Support
         public AvShot(Session session)
         {
             Session = session;
-            QuadCache.Owner = this;
         }
 
         internal readonly Session Session;
@@ -1379,14 +1378,8 @@ namespace CoreSystems.Support
             }
 
             for (int j = TrailSteps.Count - 1; j >= 0; j--)
-            {
-                var t = TrailSteps[j];
-                if (t.Cache != null) {
-                    var c = t.Cache;
-                    c.Owner = null;
-                }
-                t.Cache = null;
-            }
+                Session.Av.Trails.Push(TrailSteps[j]);
+
             TrailSteps.Clear();
 
             if (Offsets != null)
@@ -1476,7 +1469,6 @@ namespace CoreSystems.Support
         }
 
         public readonly MyBillboard BillBoard = new MyBillboard();
-        public object Owner;
         public AvShot Shot;
         public EffectTypes Type;
         public MyStringId Material;
@@ -1527,7 +1519,6 @@ namespace CoreSystems.Support
 
     internal class AfterTrail
     {
-        internal QuadCache Cache;
         internal AfterTrail Parent;
         internal Vector3D TailPos;
         internal LineD Line;
