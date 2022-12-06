@@ -207,7 +207,7 @@ namespace CoreSystems.Projectiles
                         if (MyUtils.IsValid(p.Gravity) && !MyUtils.IsZero(ref p.Gravity)) {
 
                             p.Velocity += p.Gravity * Session.StepConst;
-                            if (!aConst.IsSmart)
+                            if (!aConst.IsSmart && !aConst.IsDrone && !aConst.AmmoSkipAccel)
                                 Vector3D.Normalize(ref p.Velocity, out info.Direction);
                         }
                     }
@@ -263,6 +263,7 @@ namespace CoreSystems.Projectiles
                                 p.VelocityLengthSqr = newVel.LengthSquared();
                                 if (p.VelocityLengthSqr > maxSpeedSqr) newVel = info.Direction * p.MaxSpeed;
                             }
+
 
                             p.Velocity = newVel;
                         }
