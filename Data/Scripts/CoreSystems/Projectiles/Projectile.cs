@@ -657,7 +657,8 @@ namespace CoreSystems.Projectiles
                         s.DroneStat = Escape;
                         break;
                     }
-                    else if (s.DroneStat == Escape) s.DroneStat = Transit;
+
+                    if (s.DroneStat == Escape) s.DroneStat = Transit;
 
                     if (s.DroneStat != Return && s.DroneStat != Dock)
                     {
@@ -1152,13 +1153,11 @@ namespace CoreSystems.Projectiles
             var s = Info.Storage;
             var smarts = ammo.Trajectory.Smarts;
             var coreParent = Info.Weapon.Comp.TopEntity;
-            var startTrack = s.SmartReady || coreParent == null || coreParent.MarkedForClose;
+            var startTrack = s.SmartReady || coreParent.MarkedForClose;
             
             var speedCapMulti = 1d;
 
             var targetLock = false;
-            var approachEnded = s.LastActivatedStage >= aConst.ApproachesCount;
-            var approachActive = s.LastActivatedStage >= 0 && !approachEnded;
             var speedLimitPerTick = aConst.AmmoSkipAccel ? DesiredSpeed : aConst.AccelInMetersPerSec;
             if (!startTrack && Info.DistanceTraveled * Info.DistanceTraveled >= aConst.SmartsDelayDistSqr)
             {

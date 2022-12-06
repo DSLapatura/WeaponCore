@@ -220,8 +220,14 @@ namespace CoreSystems
         private void UpdateWaters()
         {
 
-            if (!PlanetTemp.IsEmpty) {
+            if (IsClient && PlayersLoaded) {
+                var character = MyAPIGateway.Session.Player.Character.PositionComp.WorldAABB.Center;
+                var closestPlanet = MyGamePruningStructure.GetClosestPlanet(character);
+                if (closestPlanet.EntityId != 0 && !PlanetMap.ContainsKey(closestPlanet.EntityId))
+                    PlanetTemp.TryAdd(closestPlanet, closestPlanet.EntityId);
+            }
 
+            if (!PlanetTemp.IsEmpty) {
                 foreach (var planetToAdd in PlanetTemp) {
                     if (planetToAdd.Key.EntityId != 0) 
                         PlanetMap.TryAdd(planetToAdd.Key.EntityId, planetToAdd.Key);

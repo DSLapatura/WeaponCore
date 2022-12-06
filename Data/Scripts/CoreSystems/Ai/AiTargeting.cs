@@ -710,8 +710,12 @@ namespace CoreSystems.Support
         internal static bool ReAcquireProjectile(Projectile p)
         {
             var info = p.Info;
+            if (info.CompSceneVersion != info.Weapon.Comp.SceneVersion)
+                return false;
+
             var w = info.Weapon;
             var comp = w.Comp;
+
             var s = w.System;
             var target = info.Target;
             info.Storage.ChaseAge = info.Age;
