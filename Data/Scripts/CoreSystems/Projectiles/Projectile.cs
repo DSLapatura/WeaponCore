@@ -494,7 +494,7 @@ namespace CoreSystems.Projectiles
             var ammo = Info.AmmoDef;
             var speedLimitPerTick = aConst.AmmoSkipAccel ? DesiredSpeed : aConst.AccelInMetersPerSec;
             var fragProx = aConst.FragProximity;
-            var hasObstacle = closestObstacle != parentEnt && comp.Session.Tick - 1 == s.Obstacle.LastSeenTick;
+            var hasObstacle = s.Obstacle.Entity != parentEnt && comp.Session.Tick - 1 == s.Obstacle.LastSeenTick;
             var hasStrafe = ammo.Fragment.TimedSpawns.PointType == PointTypes.Direct && ammo.Fragment.TimedSpawns.PointAtTarget == false;
             var hasKamikaze = ammo.AreaOfDamage.ByBlockHit.Enable || (ammo.AreaOfDamage.EndOfLife.Enable && Info.Age >= ammo.AreaOfDamage.EndOfLife.MinArmingTime); //check for explosive payload on drone
             var maxLife = aConst.MaxLifeTime;
@@ -507,10 +507,10 @@ namespace CoreSystems.Projectiles
                     orbitSphere.Radius += fragProx;
                     orbitSphereFar.Radius += fragProx + speedLimitPerTick + MaxSpeed; //first whack at dynamic setting   
                     orbitSphereClose.Radius += MaxSpeed * 0.3f + ammo.Shape.Diameter; //Magic number, needs logical work?
-                    if (hasObstacle && orbitSphereClose.Contains(closestObstacle.PositionComp.GetPosition()) != ContainmentType.Contains && s.DroneStat != Kamikaze)
+                    if (hasObstacle && orbitSphereClose.Contains(s.Obstacle.Entity.PositionComp.GetPosition()) != ContainmentType.Contains && s.DroneStat != Kamikaze)
                     {
-                        orbitSphereClose = closestObstacle.PositionComp.WorldVolume;
-                        orbitSphereClose.Radius = closestObstacle.PositionComp.WorldVolume.Radius + MaxSpeed * 0.3f;
+                        orbitSphereClose = s.Obstacle.Entity.PositionComp.WorldVolume;
+                        orbitSphereClose.Radius = s.Obstacle.Entity.PositionComp.WorldVolume.Radius + MaxSpeed * 0.3f;
                         s.DroneStat = Escape;
                         break;
                     }
@@ -594,8 +594,8 @@ namespace CoreSystems.Projectiles
                     orbitSphereClose.Radius += MaxSpeed * 0.3f + ammo.Shape.Diameter;
                     if (hasObstacle)
                     {
-                        orbitSphereClose = closestObstacle.PositionComp.WorldVolume;
-                        orbitSphereClose.Radius = closestObstacle.PositionComp.WorldVolume.Radius + MaxSpeed * 0.3f;
+                        orbitSphereClose = s.Obstacle.Entity.PositionComp.WorldVolume;
+                        orbitSphereClose.Radius = s.Obstacle.Entity.PositionComp.WorldVolume.Radius + MaxSpeed * 0.3f;
                         s.DroneStat = Escape;
                         break;
                     }
@@ -652,8 +652,8 @@ namespace CoreSystems.Projectiles
 
                     if (hasObstacle && s.DroneStat != Dock)
                     {
-                        orbitSphereClose = closestObstacle.PositionComp.WorldVolume;
-                        orbitSphereClose.Radius = closestObstacle.PositionComp.WorldVolume.Radius + MaxSpeed * 0.3f;
+                        orbitSphereClose = s.Obstacle.Entity.PositionComp.WorldVolume;
+                        orbitSphereClose.Radius = s.Obstacle.Entity.PositionComp.WorldVolume.Radius + MaxSpeed * 0.3f;
                         s.DroneStat = Escape;
                         break;
                     }
