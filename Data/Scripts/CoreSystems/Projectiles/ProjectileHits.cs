@@ -467,7 +467,10 @@ namespace CoreSystems.Projectiles
                 }
 
                 if (aConst.IsDrone)
-                    info.Storage.ClosestObstacle = closestFutureEnt;
+                {
+                    info.Storage.Obstacle.Entity = closestFutureEnt;
+                    info.Storage.Obstacle.LastSeenTick = Session.Tick;
+                }
 
                 if (target.TargetState == Target.TargetStates.IsProjectile && aConst.NonAntiSmartEwar && !projetileInShield)
                 {

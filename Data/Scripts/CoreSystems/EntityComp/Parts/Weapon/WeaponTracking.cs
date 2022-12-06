@@ -1,7 +1,6 @@
 ﻿using System;
 using CoreSystems.Projectiles;
 using CoreSystems.Support;
-using Jakaria;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
 using SpaceEngineers.Game.ModAPI;
@@ -86,36 +85,6 @@ namespace CoreSystems.Platform
             return !selfHit && (inRange && canTrack || weapon.Comp.Data.Repo.Values.State.TrackingReticle);
         }
 
-        internal static bool CheckSelfHit(Weapon w, ref Vector3D targetPos, ref Vector3D testPos, out Vector3D predictedMuzzlePos)
-        {
-
-            var testLine = new LineD(targetPos, testPos);
-            predictedMuzzlePos = testLine.To + (-testLine.Direction * w.MuzzleDistToBarrelCenter);
-            var ai = w.Comp.Ai;
-            var localPredictedPos = Vector3I.Round(Vector3D.Transform(predictedMuzzlePos, ai.GridEntity.PositionComp.WorldMatrixNormalizedInv) * ai.GridEntity.GridSizeR);
-
-            MyCube cube;
-            var noCubeAtPosition = !ai.GridEntity.TryGetCube(localPredictedPos, out cube);
-            if (noCubeAtPosition || cube.CubeBlock == w.Comp.Cube.SlimBlock)
-            {
-
-                var noCubeInLine = !ai.GridEntity.GetIntersectionWithLine(ref testLine, ref ai.GridHitInfo);
-                var noCubesInLineOrHitSelf = noCubeInLine || ai.GridHitInfo.Position == w.Comp.Cube.Position;
-
-                if (noCubesInLineOrHitSelf)
-                {
-
-                    w.System.Session.Physics.CastRay(predictedMuzzlePos, testLine.From, out w.LastHitInfo, CollisionLayers.DefaultCollisionLayer);
-
-                    if (w.LastHitInfo != null && w.LastHitInfo.HitEntity == ai.GridEntity)
-                        return true;
-                }
-            }
-            else return true;
-
-            return false;
-        }
-
         internal static void LeadTarget(Weapon weapon, MyEntity target, out Vector3D targetPos, out bool couldHit, out bool willHit)
         {
             if (weapon.PosChangedTick != weapon.Comp.Session.SimulationCount)
@@ -158,7 +127,7 @@ namespace CoreSystems.Platform
                     double checkAzimuth;
                     double checkElevation;
 
-                    MathFuncs.GetRotationAngles(ref targetDir, ref weapon.WeaponConstMatrix, out checkAzimuth, out checkElevation);
+                    GetRotationAngles(ref targetDir, ref weapon.WeaponConstMatrix, out checkAzimuth, out checkElevation);
 
                     var azConstraint = Math.Min(weapon.MaxAzToleranceRadians, Math.Max(weapon.MinAzToleranceRadians, checkAzimuth));
                     var elConstraint = Math.Min(weapon.MaxElToleranceRadians, Math.Max(weapon.MinElToleranceRadians, checkElevation));
@@ -219,13 +188,13 @@ namespace CoreSystems.Platform
             {
                 var targetDir = targetPos - weapon.MyPivotPos;
                 if (weapon.RotorTurretTracking)
-                    canTrack = MathFuncs.RotorTurretLookAt(weapon.Comp.Ai.ControlComp.Platform.Control, ref targetDir, rangeToTarget);
+                    canTrack = RotorTurretLookAt(weapon.Comp.Ai.ControlComp.Platform.Control, ref targetDir, rangeToTarget);
                 else if (weapon == trackingWeapon)
                 {
                     double checkAzimuth;
                     double checkElevation;
 
-                    MathFuncs.GetRotationAngles(ref targetDir, ref weapon.WeaponConstMatrix, out checkAzimuth, out checkElevation);
+                    GetRotationAngles(ref targetDir, ref weapon.WeaponConstMatrix, out checkAzimuth, out checkElevation);
                     var azConstraint = Math.Min(weapon.MaxAzToleranceRadians, Math.Max(weapon.MinAzToleranceRadians, checkAzimuth));
                     var elConstraint = Math.Min(weapon.MaxElToleranceRadians, Math.Max(weapon.MinElToleranceRadians, checkElevation));
 
@@ -814,6 +783,7 @@ namespace CoreSystems.Platform
 
                 if (angleCheck <= 0)
                 {
+                    valid = false;
                     return estimatedImpactPoint + perpendicularAimOffset + gravityOffset;
 
                 }

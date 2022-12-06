@@ -189,6 +189,8 @@ namespace CoreSystems.Support
     {
         internal readonly Vector3D[] PastProInfos = new Vector3D[30];
         internal readonly ProNavGuidanceInlined Navigation = new ProNavGuidanceInlined(60);
+        internal readonly ClosestObstacles Obstacle = new ClosestObstacles();
+
         internal DroneStatus DroneStat;
         internal DroneMission DroneMsn;
         internal Vector3D SetTargetPos;
@@ -197,7 +199,6 @@ namespace CoreSystems.Support
         internal Vector3D LookAtPos;
         internal Vector3D TotalAcceleration;
         internal FakeTargets DummyTargets;
-        internal MyEntity ClosestObstacle;
         internal MyEntity NavTargetEnt;
         internal BoundingSphereD NavTargetBound;
         internal bool SmartReady;
@@ -231,7 +232,8 @@ namespace CoreSystems.Support
             TotalAcceleration = Vector3D.Zero;
             LookAtPos = Vector3D.Zero;
             NavTargetEnt = null;
-            ClosestObstacle = null;
+            Obstacle.Entity = null;
+            Obstacle.LastSeenTick = uint.MaxValue;
             DummyTargets = null;
             NavTargetBound = new BoundingSphereD(Vector3D.Zero,0);
             SmartReady = false;
@@ -247,6 +249,12 @@ namespace CoreSystems.Support
                     PastProInfos[i] = Vector3D.Zero;
             }
             Navigation.ClearAcceleration();
+        }
+
+        internal class ClosestObstacles
+        {
+            internal MyEntity Entity;
+            internal uint LastSeenTick = uint.MaxValue;
         }
     }
 
