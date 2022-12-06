@@ -30,6 +30,7 @@ namespace CoreSystems.Support
         internal Vector3D Origin;
         internal Vector3D OriginUp;
         internal Vector3D Direction;
+        internal Vector3D TotalAcceleration;
         internal Hit Hit;
         internal XorShiftRandomStruct Random;
         internal int Age;
@@ -162,6 +163,8 @@ namespace CoreSystems.Support
             Origin = Vector3D.Zero;
             ShooterVel = Vector3D.Zero;
             TriggerMatrix = MatrixD.Identity;
+            TotalAcceleration = Vector3D.Zero;
+
         }
     }
 
@@ -197,7 +200,6 @@ namespace CoreSystems.Support
         internal Vector3D RandOffsetDir;
         internal Vector3D OffsetDir;
         internal Vector3D LookAtPos;
-        internal Vector3D TotalAcceleration;
         internal FakeTargets DummyTargets;
         internal MyEntity NavTargetEnt;
         internal BoundingSphereD NavTargetBound;
@@ -229,7 +231,6 @@ namespace CoreSystems.Support
             SetTargetPos = Vector3D.Zero;
             RandOffsetDir = Vector3D.Zero;
             OffsetDir = Vector3D.Zero;
-            TotalAcceleration = Vector3D.Zero;
             LookAtPos = Vector3D.Zero;
             NavTargetEnt = null;
             Obstacle.Entity = null;

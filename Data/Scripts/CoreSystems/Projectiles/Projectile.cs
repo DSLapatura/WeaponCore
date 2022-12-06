@@ -107,7 +107,6 @@ namespace CoreSystems.Projectiles
 
             EndState = EndStates.None;
             Position = Info.Origin;
-
             var cameraStart = session.CameraPos;
             double distanceFromCameraSqr;
             Vector3D.DistanceSquared(ref cameraStart, ref Info.Origin, out distanceFromCameraSqr);
@@ -1410,8 +1409,8 @@ namespace CoreSystems.Projectiles
             }
 
             PrevVelocity = Velocity;
-            s.TotalAcceleration += (proposedVel - PrevVelocity);
-            if (s.TotalAcceleration.LengthSquared() > aConst.MaxAccelerationSqr)
+            Info.TotalAcceleration += (proposedVel - PrevVelocity);
+            if (Info.TotalAcceleration.LengthSquared() > aConst.MaxAccelerationSqr)
                 proposedVel = Velocity;
 
             Velocity = proposedVel;
