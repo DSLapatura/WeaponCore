@@ -435,7 +435,7 @@ namespace CoreSystems.Projectiles
 
         private void DroneLaunch(MyEntity parentEnt, AmmoConstants aConst, SmartStorage s)
         {
-            if (s.DroneStat == Launch && Info.DistanceTraveled * Info.DistanceTraveled >= aConst.SmartsDelayDistSqr && Info.Ai.AiType == Ai.AiTypes.Grid && parentEnt != null)//Check for LOS & delaytrack after launch
+            if (s.DroneStat == Launch && Info.DistanceTraveled * Info.DistanceTraveled >= aConst.SmartsDelayDistSqr && Info.Ai.AiType == Ai.AiTypes.Grid )//Check for LOS & delaytrack after launch
             {
                 var lineCheck = new LineD(Position, TargetPosition);
                 var startTrack = !new MyOrientedBoundingBoxD(parentEnt.PositionComp.LocalAABB, parentEnt.PositionComp.WorldMatrixRef).Intersects(ref lineCheck).HasValue;
@@ -443,7 +443,7 @@ namespace CoreSystems.Projectiles
                 if (startTrack) 
                     s.DroneStat = Transit;
             }
-            else if (parentEnt == null || Info.Ai.AiType != Ai.AiTypes.Grid)
+            else if (Info.Ai.AiType != Ai.AiTypes.Grid)
                 s.DroneStat = Transit;
         }
 
@@ -460,11 +460,6 @@ namespace CoreSystems.Projectiles
             var updateTask = tasks.UpdatedTick == Info.Ai.Session.Tick - 1;
             var tracking = aConst.DeltaVelocityPerTick <= 0 || (s.DroneStat == Dock || Vector3D.DistanceSquared(Info.Origin, Position) >= aConst.SmartsDelayDistSqr);
             var parentPos = Vector3D.Zero;
-            var hasParent = parentEnt != null && Info.CompSceneVersion == comp.SceneVersion;
-            
-            if (hasParent) 
-                parentEnt = parentEnt.GetTopMostParent();
-
 
             if (!updateTask)//Top level check for a current target or update to tasks
                 UpdateExistingTargetState(parentEnt, target, aConst, s);
@@ -497,16 +492,13 @@ namespace CoreSystems.Projectiles
         {
             var comp = Info.Weapon.Comp;
             var ammo = Info.AmmoDef;
-            var closestObstacle = s.ClosestObstacle;
-            s.ClosestObstacle = null;
             var speedLimitPerTick = aConst.AmmoSkipAccel ? DesiredSpeed : aConst.AccelInMetersPerSec;
             var fragProx = aConst.FragProximity;
-            var hasObstacle = closestObstacle != parentEnt && closestObstacle != null;
+            var hasObstacle = closestObstacle != parentEnt && comp.Session.Tick - 1 == s.Obstacle.LastSeenTick;
             var hasStrafe = ammo.Fragment.TimedSpawns.PointType == PointTypes.Direct && ammo.Fragment.TimedSpawns.PointAtTarget == false;
             var hasKamikaze = ammo.AreaOfDamage.ByBlockHit.Enable || (ammo.AreaOfDamage.EndOfLife.Enable && Info.Age >= ammo.AreaOfDamage.EndOfLife.MinArmingTime); //check for explosive payload on drone
             var maxLife = aConst.MaxLifeTime;
             var orbitSphereFar = orbitSphere; //Indicates start of approach
-            var hasParent = parentEnt != null && Info.CompSceneVersion == comp.SceneVersion;
 
             switch (s.DroneMsn)
             {
@@ -570,7 +562,7 @@ namespace CoreSystems.Projectiles
                             s.DroneStat = Orbit;
                     }
 
-                    if ((hasKamikaze || !hasParent) && s.DroneStat != Kamikaze && maxLife > 0)//Parenthesis for everyone!
+                    if ((hasKamikaze) && s.DroneStat != Kamikaze && maxLife > 0)//Parenthesis for everyone!
                     {
                         var kamiFlightTime = orbitSphere.Radius / MaxSpeed * 60 * 1.05; //time needed for final dive into target
                         if (maxLife - Info.Age <= kamiFlightTime || (Info.Frags >= aConst.MaxFrags))
@@ -578,7 +570,7 @@ namespace CoreSystems.Projectiles
                             s.DroneStat = Kamikaze;
                         }
                     }
-                    else if (!hasKamikaze && s.NavTargetEnt != parentEnt && hasParent)
+                    else if (!hasKamikaze && s.NavTargetEnt != parentEnt)
                     {
                         parentPos = comp.CoreEntity.PositionComp.WorldAABB.Center;
                         if (parentPos != Vector3D.Zero && s.DroneStat != Return)
@@ -628,7 +620,7 @@ namespace CoreSystems.Projectiles
                         s.DroneStat = Approach;
                     }
 
-                    if (hasParent) parentPos = comp.CoreEntity.PositionComp.WorldAABB.Center;
+                    parentPos = comp.CoreEntity.PositionComp.WorldAABB.Center;
                     if (parentPos != Vector3D.Zero && s.DroneStat != Return && !hasKamikaze)//TODO kamikaze return suppressed to prevent damaging parent, until docking mechanism developed
                     {
                         var rtbFlightTime = Vector3D.Distance(Position, parentPos) / MaxSpeed * 60 * 1.05d;//added multiplier to ensure final docking time
@@ -742,10 +734,6 @@ namespace CoreSystems.Projectiles
             var fragProx = aConst.FragProximity;
             var tasks = Info.Weapon.Comp.Data.Repo.Values.State.Tasks;
             var hasTarget = false;
-            var hasParent = parentEnt != null && Info.CompSceneVersion == comp.SceneVersion;
-            
-            if (hasParent) 
-                parentEnt = parentEnt.GetTopMostParent();
 
             switch (HadTarget)//Internal drone target reassignment
             {
@@ -799,7 +787,7 @@ namespace CoreSystems.Projectiles
             if (s.NavTargetEnt != null && hasTarget) 
                 s.NavTargetBound = s.NavTargetEnt.PositionComp.WorldVolume;//Refresh position info
                                                                                                                 //Logic to handle loss of target and reassigment to come home
-            if (!hasTarget && hasParent && s.DroneMsn == DroneMission.Attack)
+            if (!hasTarget && s.DroneMsn == DroneMission.Attack)
             {
                 s.DroneMsn = DroneMission.Defend;//Try to return to parent in defensive state
                 s.NavTargetBound = parentEnt.PositionComp.WorldVolume;
@@ -807,13 +795,10 @@ namespace CoreSystems.Projectiles
             }
             else if (s.DroneMsn == DroneMission.Rtb || s.DroneMsn == DroneMission.Defend)
             {
-                if (hasParent && s.DroneMsn == DroneMission.Rtb || tasks.FriendId == 0)
+                if (s.DroneMsn == DroneMission.Rtb || tasks.FriendId == 0)
                 {
-                    if (parentEnt != null)
-                    {
-                        s.NavTargetBound = parentEnt.PositionComp.WorldVolume;
-                        s.NavTargetEnt = parentEnt;
-                    }
+                    s.NavTargetBound = parentEnt.PositionComp.WorldVolume;
+                    s.NavTargetEnt = parentEnt;
                 }
                 else if (tasks.Friend != null && s.DroneMsn != DroneMission.Rtb && tasks.Friend != null)//If all else fails, try to protect a friendly
                 {
@@ -827,7 +812,6 @@ namespace CoreSystems.Projectiles
         {
             var comp = Info.Weapon.Comp;
             var tasks = comp.Data.Repo.Values.State.Tasks;
-            var hasParent = parentEnt != null && Info.CompSceneVersion == comp.SceneVersion;
             var fragProx = aConst.FragProximity;
 
             switch (tasks.Task)
@@ -845,24 +829,14 @@ namespace CoreSystems.Projectiles
                     s.NavTargetBound = s.NavTargetEnt.PositionComp.WorldVolume;
                     break;
                 case Tasks.Screen:
-                    if (hasParent)
-                    {
-                        s.DroneMsn = DroneMission.Defend;
-                        s.NavTargetEnt = parentEnt;
-                        s.NavTargetBound = s.NavTargetEnt.PositionComp.WorldVolume;
-                    }
-                    else
-                        Log.Line($"Drone Screen failed, no parent");
+                    s.DroneMsn = DroneMission.Defend;
+                    s.NavTargetEnt = parentEnt;
+                    s.NavTargetBound = s.NavTargetEnt.PositionComp.WorldVolume;
                     break;
                 case Tasks.Recall:
-                    if (hasParent)
-                    {
-                        s.DroneMsn = DroneMission.Rtb;
-                        s.NavTargetEnt = parentEnt;
-                        s.NavTargetBound = s.NavTargetEnt.PositionComp.WorldVolume;
-                    }
-                    else
-                        Log.Line($"Drone Recall failed, no parent");
+                    s.DroneMsn = DroneMission.Rtb;
+                    s.NavTargetEnt = parentEnt;
+                    s.NavTargetBound = s.NavTargetEnt.PositionComp.WorldVolume;
                     break;
                 case Tasks.RoamAtPoint:
                     s.DroneMsn = DroneMission.Defend;

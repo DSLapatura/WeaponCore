@@ -450,9 +450,6 @@
     <Compile Include="Data\Scripts\CoreSystems\EntityComp\ModelSupport\Dummies.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
-    <Compile Include="Data\Scripts\CoreSystems\Support\Extensions\EntityExtentions.cs">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Compile>
     <Compile Include="Data\Scripts\CoreSystems\Session\SessionFutureEvents.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
@@ -469,9 +466,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
     <Compile Include="Data\Scripts\CoreSystems\Projectiles\Projectiles.cs">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Compile>
-    <Compile Include="Data\Scripts\CoreSystems\Support\Extensions\ParallelExt.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
     <Compile Include="Data\Scripts\CoreSystems\EntityComp\ModelSupport\RecursiveSubparts.cs">
