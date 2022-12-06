@@ -240,6 +240,7 @@ namespace CoreSystems.Projectiles
                             var accel = true;
                             Vector3D newVel;
                             var accelThisTick = info.Direction * aConst.DeltaVelocityPerTick;
+
                             var maxSpeedSqr = p.MaxSpeed * p.MaxSpeed;
                             if (p.DeaccelRate > 0) {
 
@@ -259,7 +260,13 @@ namespace CoreSystems.Projectiles
                                 }
                             }
                             else {
+
                                 newVel = p.Velocity + accelThisTick;
+                                
+                                storage.TotalAcceleration += (newVel - p.PrevVelocity);
+                                if (storage.TotalAcceleration.LengthSquared() > aConst.MaxAccelerationSqr)
+                                    newVel = p.Velocity;
+
                                 p.VelocityLengthSqr = newVel.LengthSquared();
                                 if (p.VelocityLengthSqr > maxSpeedSqr) newVel = info.Direction * p.MaxSpeed;
                             }
