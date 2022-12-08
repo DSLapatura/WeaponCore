@@ -6,6 +6,7 @@ using Sandbox.Game.EntityComponents;
 using VRage;
 using VRageMath;
 using static CoreSystems.WeaponRandomGenerator;
+using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace CoreSystems.Support
 {
@@ -244,7 +245,7 @@ namespace CoreSystems.Support
 
         internal void ProcessQueuedSounds()
         {
-            if (Session.HandlesInput && Environment.CurrentManagedThreadId == 1)
+            if (Session.HandlesInput && Environment.CurrentManagedThreadId == Session.MainThreadId)
             {
                 for (int i = 0; i < QueuedSounds.Count; i++)
                 {

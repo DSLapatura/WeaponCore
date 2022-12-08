@@ -474,7 +474,7 @@ namespace CoreSystems.Platform
 
             if (HardPointEmitter == null)
                 return;
-            if (Environment.CurrentManagedThreadId != 1)
+            if (Environment.CurrentManagedThreadId != Comp.Session.MainThreadId)
             {
                 Comp.Ai.QueuedSounds.Add(new Ai.QueuedSoundEvent {Type = Ai.QueuedSoundEvent.SoundTypes.HardPointStart, Weapon = this});
                 return;
@@ -491,7 +491,7 @@ namespace CoreSystems.Platform
             if (HardPointEmitter == null)
                 return;
 
-            if (Environment.CurrentManagedThreadId != 1)
+            if (Environment.CurrentManagedThreadId != Comp.Session.MainThreadId)
             {
                 Comp.Ai.QueuedSounds.Add(new Ai.QueuedSoundEvent { Type = Ai.QueuedSoundEvent.SoundTypes.HardPointStop, Weapon = this });
                 return;

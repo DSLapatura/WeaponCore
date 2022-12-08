@@ -89,6 +89,7 @@ namespace CoreSystems
         {
             try
             {
+                session.MainThreadId = Environment.CurrentManagedThreadId;
                 if (ControlsAlreadyExist<T>(session))
                 {
                     return;

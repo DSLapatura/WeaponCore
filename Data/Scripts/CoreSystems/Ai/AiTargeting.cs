@@ -130,7 +130,6 @@ namespace CoreSystems.Support
                 waterSphere = new BoundingSphereD(ai.MyPlanet.PositionComp.WorldAABB.Center, water.MinRadius);
 
             var rootConstruct = ai.Construct.RootAi.Construct;
-
             int offset = 0;
             w.FoundTopMostTarget = false;
             var focusGrid = rootConstruct.LastFocusEntity as MyCubeGrid;
@@ -160,7 +159,7 @@ namespace CoreSystems.Support
             {
                 var focusTarget = offset > 0 && x < offset;
                 var lastOffset = offset - 1;
-                if (!focusTarget && (attemptReset || aConst.SkipAimChecks || focusOnly)) 
+                if (!focusTarget && (attemptReset || aConst.SkipAimChecks && !w.RotorTurretTracking || focusOnly)) 
                     break;
 
                 TargetInfo info;
@@ -895,7 +894,7 @@ namespace CoreSystems.Support
 
             var entSphere = topEnt.PositionComp.WorldVolume;
             var distToEnt = MyUtils.GetSmallestDistanceToSphere(ref weaponPos, ref entSphere);
-            var weaponCheck = p == null && !w.ActiveAmmoDef.AmmoDef.Const.SkipAimChecks;
+            var weaponCheck = p == null && (!w.ActiveAmmoDef.AmmoDef.Const.SkipAimChecks || w.RotorTurretTracking);
             var topBlocks = system.Values.Targeting.TopBlocks;
             var lastBlocks = topBlocks > 10 && distToEnt < 1000 ? topBlocks : 10;
             var isPriroity = false;
@@ -1061,7 +1060,7 @@ namespace CoreSystems.Support
             var top5 = w.Top5;
             var physics = ai.Session.Physics;
             var hitTmpList = ai.Session.HitInfoTmpList;
-            var weaponCheck = p == null && !w.ActiveAmmoDef.AmmoDef.Const.SkipAimChecks;
+            var weaponCheck = p == null && (!w.ActiveAmmoDef.AmmoDef.Const.SkipAimChecks || w.RotorTurretTracking);
             IHitInfo iHitInfo = null;
 
             for (int i = 0; i < cubes.Count + top5Count; i++)

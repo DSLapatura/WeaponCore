@@ -388,6 +388,7 @@ namespace CoreSystems
         internal int ClientAvLevel;
         internal int SimStepsLastSecond;
         internal int MenuDepth;
+        internal int MainThreadId = 1;
         internal ulong MultiplayerId;
         internal ulong MuzzleIdCounter;
         internal ulong PhantomIdCounter;

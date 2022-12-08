@@ -10,7 +10,6 @@ namespace CoreSystems.Platform
             var topAi = control.TopAi;
             var weapon = topAi.RootComp.PrimaryWeapon;
             var cValues = control.Comp.Data.Repo.Values;
-
             Vector3D targetCenter;
             Vector3D targetVel = Vector3D.Zero;
             Vector3D targetAcc = Vector3D.Zero;

@@ -319,6 +319,7 @@ namespace CoreSystems
                         cPart.TopAi.ControlComp = cComp;
                         cPart.TopAi.RotorCommandTick = Tick;
                         
+
                         if (cPart.TopAi.MaxTargetingRange > ai.MaxTargetingRange)
                             cComp.ReCalculateMaxTargetingRange(cPart.TopAi.MaxTargetingRange);
 
@@ -366,6 +367,9 @@ namespace CoreSystems
 
                         var primaryWeapon = cPart.TopAi.RootComp.PrimaryWeapon;
                         primaryWeapon.RotorTurretTracking = true;
+
+                        if (IsServer && cValues.Set.Range < 0 && primaryWeapon.MaxTargetDistance > 0)
+                            BlockUi.RequestSetRangeControl(cComp.TerminalBlock, (float) primaryWeapon.MaxTargetDistance);
 
                         var validTarget = primaryWeapon.Target.TargetState == TargetStates.IsEntity || primaryWeapon.Target.TargetState == TargetStates.IsFake;
 
@@ -601,7 +605,7 @@ namespace CoreSystems
                                 {
                                     w.Target.Reset(Tick, States.Expired, !wComp.ManualMode);
                                 }
-                                else if (eTarget != null && (eTarget.MarkedForClose || !rootConstruct.HadFocus && weaponAcquires && aConst.SkipAimChecks || wComp.UserControlled && !w.System.SuppressFire))
+                                else if (eTarget != null && (eTarget.MarkedForClose || !rootConstruct.HadFocus && weaponAcquires && aConst.SkipAimChecks && !w.RotorTurretTracking || wComp.UserControlled && !w.System.SuppressFire))
                                 {
                                     w.Target.Reset(Tick, States.Expired);
                                 }
@@ -662,7 +666,7 @@ namespace CoreSystems
                             var myTimeSlot =  Tick == w.FastTargetResetTick || w.Acquire.IsSleeping && AsleepCount == w.Acquire.SlotId || !w.Acquire.IsSleeping && AwakeCount == w.Acquire.SlotId;
 
                             var focusRequest = rootConstruct.HadFocus && (aConst.SkipAimChecks || constructResetTick || Tick - w.ShootRequest.RequestTick <= 1);
-                            var acquireReady = (!aConst.SkipAimChecks || w.ShootRequest.AcquireTarget) && myTimeSlot || focusRequest;
+                            var acquireReady = (!aConst.SkipAimChecks || w.RotorTurretTracking || w.ShootRequest.AcquireTarget) && myTimeSlot || focusRequest;
 
                             var somethingNearBy = wComp.DetectOtherSignals && wComp.MasterAi.DetectionInfo.OtherInRange || wComp.MasterAi.DetectionInfo.PriorityInRange;
                             var trackObstructions = w.System.ScanNonThreats && wComp.MasterAi.Obstructions.Count > 0;
@@ -672,7 +676,6 @@ namespace CoreSystems
                             Dictionary<object, Weapon> masterTargets;
                             var seek = weaponReady && (acquireReady || w.ProjectilesNear) && (!w.System.TargetSlaving || rootConstruct.TrackedTargets.TryGetValue(w.System.StorageLocation, out masterTargets) && masterTargets.Count > 0);
                             var fakeRequest =  wComp.FakeMode && w.Target.TargetState != TargetStates.IsFake && wComp.UserControlled;
-
                             if (seek || fakeRequest)
                             {
                                 w.TargetAcquireTick = Tick;
@@ -805,7 +808,7 @@ namespace CoreSystems
                 var rootConstruct = ai.Construct.RootAi.Construct;
                 var recentApiRequest = Tick - w.ShootRequest.RequestTick <= 1;
 
-                var requiresFocus = w.System.FocusOnly || w.ActiveAmmoDef.AmmoDef.Const.SkipAimChecks || (rootConstruct.TargetResetTick == Tick || recentApiRequest) && !w.System.UniqueTargetPerWeapon;
+                var requiresFocus = w.System.FocusOnly || w.ActiveAmmoDef.AmmoDef.Const.SkipAimChecks && !w.RotorTurretTracking || (rootConstruct.TargetResetTick == Tick || recentApiRequest) && !w.System.UniqueTargetPerWeapon;
                 if (requiresFocus && !rootConstruct.HadFocus) {
                     w.TargetAcquireTick = uint.MaxValue;
                     AcquireTargets.RemoveAtFast(i);
