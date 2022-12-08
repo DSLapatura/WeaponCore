@@ -244,19 +244,23 @@ namespace CoreSystems.Support
 
         internal void ProcessQueuedSounds()
         {
-            for (int i = 0; i < QueuedSounds.Count; i++)
+            if (Session.HandlesInput && Environment.CurrentManagedThreadId == 1)
             {
-                var qs = QueuedSounds[i];
-                switch (qs.Type)
+                for (int i = 0; i < QueuedSounds.Count; i++)
                 {
-                    case QueuedSoundEvent.SoundTypes.HardPointStart:
-                        qs.Weapon.StartHardPointSound();
-                        break;
-                    case QueuedSoundEvent.SoundTypes.HardPointStop:
-                        qs.Weapon.StopHardPointSound();
-                        break;
+                    var qs = QueuedSounds[i];
+                    switch (qs.Type)
+                    {
+                        case QueuedSoundEvent.SoundTypes.HardPointStart:
+                            qs.Weapon.StartHardPointSound();
+                            break;
+                        case QueuedSoundEvent.SoundTypes.HardPointStop:
+                            qs.Weapon.StopHardPointSound();
+                            break;
+                    }
                 }
             }
+
             QueuedSounds.Clear();
         }
 

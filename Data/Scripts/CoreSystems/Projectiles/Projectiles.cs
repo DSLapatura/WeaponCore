@@ -490,9 +490,8 @@ namespace CoreSystems.Projectiles
                 var aConst = info.AmmoDef.Const;
                 var stepSize = info.DistanceTraveled - info.PrevDistanceTraveled;
 
+
                 if (aConst.VirtualBeams) {
-
-
                     Vector3D? hitPos = null;
                     if (!Vector3D.IsZero(info.Hit.SurfaceHit)) hitPos = info.Hit.SurfaceHit;
                     for (int v = 0; v < p.VrPros.Count; v++) {

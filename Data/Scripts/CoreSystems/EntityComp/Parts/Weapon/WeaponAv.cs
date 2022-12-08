@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using CoreSystems.Support;
+using Sandbox.ModAPI;
 using VRage.Game;
 using VRageMath;
 using static CoreSystems.Support.PartAnimation;
@@ -60,7 +61,8 @@ namespace CoreSystems.Platform
 
             if (stopSounds)
             {
-                if (AvCapable && BarrelRotateEmitter != null && BarrelRotateEmitter.IsPlaying) StopBarrelRotateSound();
+                if (AvCapable && BarrelRotateEmitter != null && BarrelRotateEmitter.IsPlaying) 
+                    StopBarrelRotateSound();
                 if (HasHardPointSound)
                     StopHardPointSound();
             }
@@ -472,7 +474,6 @@ namespace CoreSystems.Platform
 
             if (HardPointEmitter == null)
                 return;
-
             if (Environment.CurrentManagedThreadId != 1)
             {
                 Comp.Ai.QueuedSounds.Add(new Ai.QueuedSoundEvent {Type = Ai.QueuedSoundEvent.SoundTypes.HardPointStart, Weapon = this});

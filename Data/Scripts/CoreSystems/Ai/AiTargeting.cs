@@ -899,6 +899,7 @@ namespace CoreSystems.Support
             var topBlocks = system.Values.Targeting.TopBlocks;
             var lastBlocks = topBlocks > 10 && distToEnt < 1000 ? topBlocks : 10;
             var isPriroity = false;
+
             if (lastBlocks < 250)
             {
                 TargetInfo priorityInfo;
@@ -924,9 +925,12 @@ namespace CoreSystems.Support
             var blocksChecked = 0;
             var blocksSighted = 0;
             var hitTmpList = s.HitInfoTmpList;
+
+            var checkLimit = ai.PlanetSurfaceInRange ? 128 : 512;
+
             for (int i = 0; i < totalBlocks; i++)
             {
-                if (weaponCheck && (blocksChecked > lastBlocks || isPriroity && (blocksSighted > 100 || blocksChecked > 50 && s.RandomRayCasts > 500 || blocksChecked > 25 && s.RandomRayCasts > 1000)))
+                if (weaponCheck && (blocksChecked > lastBlocks || isPriroity && (blocksSighted > 100 || blocksChecked > 50 && s.RandomRayCasts > checkLimit || blocksChecked > 25 && s.RandomRayCasts > checkLimit * 2)))
                     break;
 
                 var card = deck[i];

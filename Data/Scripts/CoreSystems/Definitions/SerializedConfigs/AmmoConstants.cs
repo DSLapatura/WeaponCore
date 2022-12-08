@@ -694,10 +694,13 @@ namespace CoreSystems.Support
             }
             else trailTextures = new[] { MyStringId.GetOrCompute(ammo.AmmoDef.AmmoGraphics.Lines.Trail.Material) };
 
-            if (ammo.AmmoDef.AmmoGraphics.Decals.Map != null)
+            if (ammo.AmmoDef.AmmoGraphics.Decals.Map != null && ammo.AmmoDef.AmmoGraphics.Decals.MaxAge > 0)
             {
                 foreach (var textureMapDef in ammo.AmmoDef.AmmoGraphics.Decals.Map)
-                    TextureHitMap[MyStringHash.GetOrCompute(textureMapDef.HitMaterial)] = MyStringHash.GetOrCompute(textureMapDef.DecalMaterial);
+                {
+                    if (!string.IsNullOrEmpty(textureMapDef.HitMaterial))
+                        TextureHitMap[MyStringHash.GetOrCompute(textureMapDef.HitMaterial)] = MyStringHash.GetOrCompute(textureMapDef.DecalMaterial);
+                }
             }
         }
 

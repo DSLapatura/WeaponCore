@@ -264,7 +264,7 @@ namespace CoreSystems.Platform
 
             comp.HasEnergyWeapon = comp.HasEnergyWeapon || CanUseEnergyAmmo || CanUseHybridAmmo;
 
-            AvCapable = System.HasBarrelShootAv && !Comp.Session.DedicatedServer || hitParticle;
+            AvCapable = (System.HasBarrelShootAv || hitParticle) && !Comp.Session.DedicatedServer;
 
             if (AvCapable && system.FiringSound == WeaponSystem.FiringSoundState.WhenDone)
             {
