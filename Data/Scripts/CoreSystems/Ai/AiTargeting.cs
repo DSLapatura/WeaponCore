@@ -17,6 +17,8 @@ using static CoreSystems.Support.WeaponDefinition.TargetingDef.BlockTypes;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef;
 using static CoreSystems.Platform.Weapon.ApiShootRequest;
 using IMyWarhead = Sandbox.ModAPI.IMyWarhead;
+using static CoreSystems.Settings.CoreSettings.ServerSettings;
+using Sandbox.Engine.Physics;
 
 namespace CoreSystems.Support
 {
@@ -1253,12 +1255,7 @@ namespace CoreSystems.Support
             for (int j = 0; j < ai.Obstructions.Count; j++)
             {
                 var ent = ai.Obstructions[j].Target;
-                if (ent == null)
-                {
-                    Log.Line($"Obstruction had null entity");
-                    continue;
-                }
-                if (ent is MyPlanet)
+                if (ent == null || ent is MyPlanet)
                     continue;
 
                 var voxel = ent as MyVoxelBase;
@@ -1345,6 +1342,71 @@ namespace CoreSystems.Support
                 }
             }
             return obstruction;
+        }
+
+        private static bool WeaponPlanetArcOk(Weapon w, TargetInfo info, MyCubeBlock block, Vector3D weaponPos, Vector3D blockPos, Vector3D blockDir)
+        {
+            var ai = w.Comp.Ai;
+            var farObb = new MyOrientedBoundingBoxD();
+
+            for (int j = 0; j < ai.Obstructions.Count; j++)
+            {
+                var ent = ai.Obstructions[j].Target;
+                if (ent == null || ent is MyVoxelBase)
+                    continue;
+
+                var transform = ent.PositionComp.WorldMatrixRef;
+                var box = ent.PositionComp.LocalAABB;
+                var obb = new MyOrientedBoundingBoxD(box, transform);
+                if (obb.Intersects(ref farObb))
+                    return false;
+            }
+
+            IHitInfo iHitInfo = null;
+            var arcCheckLen = 1;
+            var hitTmpList = ai.Session.HitInfoTmpList;
+            ai.Session.Physics.CastRay(weaponPos, blockDir * arcCheckLen, hitTmpList, MyPhysics.CollisionLayers.NoVoxelCollisionLayer);
+            var skip = false;
+            for (int j = 0; j < hitTmpList.Count; j++)
+            {
+                var hitInfo = hitTmpList[j];
+
+                var entity = hitInfo.HitEntity as MyEntity;
+                var character = entity as IMyCharacter;
+
+                TargetInfo otherInfo;
+                var enemyCharacter = character != null && (!ai.Targets.TryGetValue(entity, out otherInfo) || !(otherInfo.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Enemies || otherInfo.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Neutral || otherInfo.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.NoOwnership));
+
+                if (entity == null || entity is MyVoxelBase || character != null && !enemyCharacter)
+                {
+                    skip = true;
+                    break;
+                }
+
+                var topHitEntity = entity.GetTopMostParent();
+                var hitGrid = topHitEntity as MyCubeGrid;
+
+                if (hitGrid != null)
+                {
+                    if (hitGrid.MarkedForClose || hitGrid.Physics == null || hitGrid.IsPreview) continue;
+                    var isTarget = hitGrid == block.CubeGrid || hitGrid.IsSameConstructAs(block.CubeGrid);
+
+                    var bigOwners = hitGrid.BigOwners;
+                    var noOwner = bigOwners.Count == 0;
+
+                    var validTarget = isTarget || noOwner || ai.Targets.TryGetValue(topHitEntity, out otherInfo) && (otherInfo.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Enemies || otherInfo.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Neutral || otherInfo.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.NoOwnership);
+
+                    skip = !validTarget || hitGrid != block.CubeGrid && (!hitGrid.DestructibleBlocks || hitGrid.Immune || hitGrid.GridGeneralDamageModifier <= 0 || ai.AiType == AiTypes.Grid && hitGrid.IsSameConstructAs(ai.GridEntity));
+
+                    if (isTarget)
+                        iHitInfo = hitInfo;
+
+                    if (isTarget || skip)
+                        break;
+                }
+            }
+
+            return true;
         }
 
         internal static bool ValidScanEntity(Weapon w, MyDetectedEntityInfo info, MyEntity target, bool skipUnique = false)
