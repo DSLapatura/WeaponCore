@@ -17,9 +17,7 @@ using static CoreSystems.Support.WeaponDefinition.TargetingDef.BlockTypes;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef;
 using static CoreSystems.Platform.Weapon.ApiShootRequest;
 using IMyWarhead = Sandbox.ModAPI.IMyWarhead;
-using static CoreSystems.Settings.CoreSettings.ServerSettings;
-using Sandbox.Engine.Physics;
-
+using CollisionLayers = Sandbox.Engine.Physics.MyPhysics.CollisionLayers;
 namespace CoreSystems.Support
 {
     public partial class Ai
@@ -1365,7 +1363,7 @@ namespace CoreSystems.Support
             IHitInfo iHitInfo = null;
             var arcCheckLen = 1;
             var hitTmpList = ai.Session.HitInfoTmpList;
-            ai.Session.Physics.CastRay(weaponPos, blockDir * arcCheckLen, hitTmpList, MyPhysics.CollisionLayers.NoVoxelCollisionLayer);
+            ai.Session.Physics.CastRay(weaponPos, blockDir * arcCheckLen, hitTmpList, CollisionLayers.NoVoxelCollisionLayer);
             var skip = false;
             for (int j = 0; j < hitTmpList.Count; j++)
             {
