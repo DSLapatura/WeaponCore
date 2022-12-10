@@ -246,8 +246,9 @@ namespace CoreSystems.Support
         internal static bool TargetSphereInCone(ref BoundingSphereD targetSphere, ref Cone cone)
         {
             Vector3D toSphere = targetSphere.Center - cone.ConeTip;
-            var angPos = AngleBetween(cone.ConeDir, toSphere);
             double angRad = Math.Asin(targetSphere.Radius / toSphere.Length());
+            
+            var angPos = AngleBetween(cone.ConeDir, toSphere);
 
             var ang1 = angPos + angRad;
             var ang2 = angPos - angRad;
