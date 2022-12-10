@@ -325,7 +325,7 @@ namespace CoreSystems.Platform
 
                 if (mPartName != "None" && muzzlePart != null)
                 {
-                    var muzzlePartLocation = Comp.Session.GetPartLocation("subpart_" + mPartName, muzzlePart.Parent.Model);
+                    var muzzlePartLocation = Session.GetPartLocation("subpart_" + mPartName, muzzlePart.Parent.Model, Comp.Session.DummyList);
 
                     var muzzlePartPosTo = MatrixD.CreateTranslation(-muzzlePartLocation);
                     var muzzlePartPosFrom = MatrixD.CreateTranslation(muzzlePartLocation);
@@ -347,7 +347,7 @@ namespace CoreSystems.Platform
                     }
                     else
                     {
-                        var spinPartLocation = Comp.Session.GetPartLocation("subpart_" + mPartName, weapon.SpinPart.Entity.Parent.Model);
+                        var spinPartLocation = Session.GetPartLocation("subpart_" + mPartName, weapon.SpinPart.Entity.Parent.Model, Comp.Session.DummyList);
 
                         var spinPartPosTo = MatrixD.CreateTranslation(-spinPartLocation);
                         var spinPartPosFrom = MatrixD.CreateTranslation(spinPartLocation);
@@ -366,8 +366,8 @@ namespace CoreSystems.Platform
                     if (azimuthPart != null && azimuthPartName != "None" && weapon.System.TurretMovement != WeaponSystem.TurretType.ElevationOnly)
                     {
 
-                        var azimuthPartLocation = Comp.Session.GetPartLocation("subpart_" + azimuthPartName, azimuthPart.Parent.Model);
-                        var partDummy = Comp.Session.GetPartDummy("subpart_" + azimuthPartName, azimuthPart.Parent.Model);
+                        var azimuthPartLocation = Session.GetPartLocation("subpart_" + azimuthPartName, azimuthPart.Parent.Model, Comp.Session.DummyList);
+                        var partDummy = Session.GetPartDummy("subpart_" + azimuthPartName, azimuthPart.Parent.Model, Comp.Session.DummyList);
                         if (partDummy == null)
                         {
                             PlatformCrash(Comp, true, true, $"partDummy null: name:{azimuthPartName} - azimuthPartParentNull:{azimuthPart.Parent == null}, I am crashing now Dave.");
@@ -404,8 +404,8 @@ namespace CoreSystems.Platform
 
                     if (elevationPart != null && elevationPartName != "None" && weapon.System.TurretMovement != WeaponSystem.TurretType.AzimuthOnly)
                     {
-                        var elevationPartLocation = Comp.Session.GetPartLocation("subpart_" + elevationPartName, elevationPart.Parent.Model);
-                        var partDummy = Comp.Session.GetPartDummy("subpart_" + elevationPartName, elevationPart.Parent.Model);
+                        var elevationPartLocation = Session.GetPartLocation("subpart_" + elevationPartName, elevationPart.Parent.Model, Comp.Session.DummyList);
+                        var partDummy = Session.GetPartDummy("subpart_" + elevationPartName, elevationPart.Parent.Model, Comp.Session.DummyList);
                         if (partDummy == null)
                         {
                             PlatformCrash(Comp, true, true, $"partDummy null: name:{elevationPartName} - azimuthPartParentNull:{elevationPart.Parent == null}, I am crashing now Dave.");

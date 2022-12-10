@@ -67,7 +67,7 @@ namespace Scripts
             return new WeaponDefinition.AnimationDef.RelMove.XYZ { x = X, y = Y, z = Z };
         }
 
-        internal Dictionary<WeaponDefinition.AnimationDef.PartAnimationSetDef.EventTriggers, uint> Delays(uint FiringDelay = 0, uint ReloadingDelay = 0, uint OverheatedDelay = 0, uint TrackingDelay = 0, uint LockedDelay = 0, uint OnDelay = 0, uint OffDelay = 0, uint BurstReloadDelay = 0, uint OutOfAmmoDelay = 0, uint PreFireDelay = 0, uint StopFiringDelay = 0, uint StopTrackingDelay = 0, uint InitDelay = 0)
+        internal Dictionary<WeaponDefinition.AnimationDef.PartAnimationSetDef.EventTriggers, uint> Delays(uint FiringDelay = 0, uint ReloadingDelay = 0, uint OverheatedDelay = 0, uint TrackingDelay = 0, uint LockedDelay = 0, uint OnDelay = 0, uint OffDelay = 0, uint BurstReloadDelay = 0, uint OutOfAmmoDelay = 0, uint PreFireDelay = 0, uint StopFiringDelay = 0, uint StopTrackingDelay = 0, uint InitDelay = 0, uint HomingDelay = 0, uint TargetAlignedDelay = 0, uint WhileOnDelay = 0, uint TargetRanged100Delay = 0, uint TargetRanged75Delay = 0, uint TargetRanged50Delay = 0, uint TargetRanged25Delay = 0)
         {
             return new Dictionary<WeaponDefinition.AnimationDef.PartAnimationSetDef.EventTriggers, uint>
             {
@@ -85,6 +85,13 @@ namespace Scripts
                 [WeaponDefinition.AnimationDef.PartAnimationSetDef.EventTriggers.StopTracking] = StopTrackingDelay,
                 [WeaponDefinition.AnimationDef.PartAnimationSetDef.EventTriggers.LockDelay] = LockedDelay,
                 [WeaponDefinition.AnimationDef.PartAnimationSetDef.EventTriggers.Init] = InitDelay,
+                [WeaponDefinition.AnimationDef.PartAnimationSetDef.EventTriggers.Homing] = HomingDelay,
+                [WeaponDefinition.AnimationDef.PartAnimationSetDef.EventTriggers.TargetAligned] = TargetAlignedDelay,
+                [WeaponDefinition.AnimationDef.PartAnimationSetDef.EventTriggers.WhileOn] = WhileOnDelay,
+                [WeaponDefinition.AnimationDef.PartAnimationSetDef.EventTriggers.TargetRanged100] = TargetRanged100Delay,
+                [WeaponDefinition.AnimationDef.PartAnimationSetDef.EventTriggers.TargetRanged75] = TargetRanged75Delay,
+                [WeaponDefinition.AnimationDef.PartAnimationSetDef.EventTriggers.TargetRanged50] = TargetRanged50Delay,
+                [WeaponDefinition.AnimationDef.PartAnimationSetDef.EventTriggers.TargetRanged25] = TargetRanged25Delay,
             };
         }
 

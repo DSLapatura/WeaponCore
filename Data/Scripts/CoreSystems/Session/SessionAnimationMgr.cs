@@ -16,7 +16,7 @@ namespace CoreSystems
 {
     public partial class Session
     {
-        internal void CreateAnimationSets(AnimationDef animations, CoreSystem system, out Dictionary<EventTriggers, PartAnimation[]> weaponAnimationSets, out Dictionary<string, EmissiveState> weaponEmissivesSet, out Dictionary<string, Matrix[]> weaponLinearMoveSet, out HashSet<string> animationIdLookup, out Dictionary<EventTriggers, uint> animationLengths, out string[] heatingSubpartNames, out Dictionary<EventTriggers, ParticleEvent[]> particleEvents)
+        internal static void CreateAnimationSets(AnimationDef animations, CoreSystem system, out Dictionary<EventTriggers, PartAnimation[]> weaponAnimationSets, out Dictionary<string, EmissiveState> weaponEmissivesSet, out Dictionary<string, Matrix[]> weaponLinearMoveSet, out HashSet<string> animationIdLookup, out Dictionary<EventTriggers, uint> animationLengths, out string[] heatingSubpartNames, out Dictionary<EventTriggers, ParticleEvent[]> particleEvents)
         {
             weaponAnimationSets = new Dictionary<EventTriggers, PartAnimation[]>();
             particleEvents = new Dictionary<EventTriggers, ParticleEvent[]>();
@@ -39,8 +39,230 @@ namespace CoreSystems
 
             FinalizeAnimationSets(allAnimationSet, weaponAnimationSets);
         }
-        
-        private void CompileHeating(AnimationDef animations, Dictionary<string, PartEmissive> emissiveLookup, out string[] heatingSubpartNames)
+
+        internal static Dictionary<EventTriggers, PartAnimation[]> CreateWeaponAnimationSet(WeaponSystem system, RecursiveSubparts parts)
+        {
+            if (!system.AnimationsInited)
+            {
+                var allAnimationSet = new Dictionary<EventTriggers, PartAnimation[]>();
+                foreach (var animationSet in system.WeaponAnimationSet)
+                {
+                    allAnimationSet[animationSet.Key] = new PartAnimation[animationSet.Value.Length];
+
+                    for (int i = 0; i < animationSet.Value.Length; i++)
+                    {
+                        var animation = animationSet.Value[i];
+
+                        MyEntity part;
+                        if (!parts.NameToEntity.TryGetValue(animation.SubpartId, out part)) continue;
+
+                        var rotations = new Matrix[animation.RotationSet.Length];
+                        var rotCenters = new Matrix[animation.RotCenterSet.Length];
+                        animation.RotationSet.CopyTo(rotations, 0);
+                        animation.RotCenterSet.CopyTo(rotCenters, 0);
+
+                        var rotCenterNames = animation.RotCenterNameSet;
+
+                        if (!animation.SubpartId.Equals("None"))
+                        {
+                            var partMatrix = GetPartDummy("subpart_" + animation.SubpartId, part.Parent.Model, system.Session.DummyList)?.Matrix ?? Matrix.Identity;
+                            var partCenter = partMatrix.Translation;
+
+                            for (int j = 0; j < rotations.Length; j++)
+                            {
+                                if (rotations[j] != Matrix.Zero)
+                                {
+                                    rotations[j] = Matrix.CreateTranslation(-partCenter) * rotations[j] * Matrix.CreateTranslation(partCenter);
+
+                                    Matrix.AlignRotationToAxes(ref rotations[j], ref partMatrix);
+                                }
+                            }
+
+                            for (int j = 0; j < rotCenters.Length; j++)
+                            {
+                                if (rotCenters[j] != Matrix.Zero && rotCenterNames != null)
+                                {
+                                    var dummyMatrix = GetPartDummy(rotCenterNames[j], part.Model, system.Session.DummyList)?.Matrix ?? Matrix.Identity;
+                                    rotCenters[j] = Matrix.CreateTranslation(-(partCenter + dummyMatrix.Translation)) * rotCenters[j] * Matrix.CreateTranslation((partCenter + dummyMatrix.Translation));
+
+
+                                    Matrix.AlignRotationToAxes(ref rotCenters[j], ref dummyMatrix);
+                                }
+                            }
+                        }
+
+                        allAnimationSet[animationSet.Key][i] = new PartAnimation(animation.EventTrigger, animation.AnimationId, rotations, rotCenters,
+                            animation.TypeSet, animation.EmissiveIds, animation.CurrentEmissivePart, animation.MoveToSetIndexer, animation.SubpartId, part, parts.Entity,
+                            animation.Muzzle, animation.MotionDelay, system, animation.DoesLoop,
+                            animation.DoesReverse, animation.TriggerOnce, animation.ResetEmissives);
+                    }
+                }
+
+                system.WeaponAnimationSet.Clear();
+
+                foreach (var animationKv in allAnimationSet)
+                {
+                    system.WeaponAnimationSet[animationKv.Key] = new PartAnimation[animationKv.Value.Length];
+                    animationKv.Value.CopyTo(system.WeaponAnimationSet[animationKv.Key], 0);
+                }
+
+                system.AnimationsInited = true;
+                return allAnimationSet;
+            }
+
+            var returnAnimations = new Dictionary<EventTriggers, PartAnimation[]>();
+            foreach (var animationKv in system.WeaponAnimationSet)
+            {
+                returnAnimations[animationKv.Key] = new PartAnimation[animationKv.Value.Length];
+                for (int i = 0; i < animationKv.Value.Length; i++)
+                {
+                    var animation = animationKv.Value[i];
+                    MyEntity part;
+                    parts.NameToEntity.TryGetValue(animation.SubpartId, out part);
+
+                    if (part == null) continue;
+                    returnAnimations[animationKv.Key][i] = new PartAnimation(animation)
+                    {
+                        Part = part,
+                        MainEnt = parts.Entity,
+                    };
+                }
+            }
+            //Log.Line("Copying Animations");
+            return returnAnimations;
+        }
+
+        internal static Dictionary<EventTriggers, ParticleEvent[]> CreateWeaponParticleEvents(WeaponSystem system, RecursiveSubparts parts)
+        {
+            var particles = new Dictionary<EventTriggers, ParticleEvent[]>();
+
+            foreach (var particleDef in system.ParticleEvents)
+            {
+                var particleEvents = particleDef.Value;
+                particles[particleDef.Key] = new ParticleEvent[particleEvents.Length];
+
+                for (int i = 0; i < particles[particleDef.Key].Length; i++)
+                {
+                    var systemParticle = particleEvents[i];
+
+                    Dummy particleDummy;
+                    string partName;
+                    if (CreateParticleDummy(parts.Entity, systemParticle.EmptyNames, out particleDummy, out partName))
+                    {
+                        Vector3 pos = GetPartLocation(systemParticle.EmptyNames, particleDummy.Entity.Model, system.Session.DummyList);
+                        particles[particleDef.Key][i] = new ParticleEvent(systemParticle, particleDummy, partName, pos);
+                    }
+                }
+            }
+            return particles;
+        }
+
+        internal readonly Dictionary<string, IMyModelDummy> DummyList = new Dictionary<string, IMyModelDummy>();
+        internal static Vector3 GetPartLocation(string partName, IMyModel model, Dictionary<string, IMyModelDummy> dummyList)
+        {
+            dummyList.Clear();
+            model.GetDummies(dummyList);
+
+            IMyModelDummy dummy;
+            if (dummyList.TryGetValue(partName, out dummy))
+                return dummy.Matrix.Translation;
+
+            return Vector3.Zero;
+        }
+
+        internal static IMyModelDummy GetPartDummy(string partName, IMyModel model, Dictionary<string, IMyModelDummy> dummyList)
+        {
+            dummyList.Clear();
+            model.GetDummies(dummyList);
+
+            IMyModelDummy dummy;
+            if (dummyList.TryGetValue(partName, out dummy))
+                return dummy;
+
+            return null;
+        }
+
+        internal void ProcessParticles()
+        {
+            try
+            {
+                for (int i = Av.ParticlesToProcess.Count - 1; i >= 0; i--)
+                {
+                    var particleEvent = Av.ParticlesToProcess[i];
+                    var playedFull = Tick - particleEvent.PlayTick > particleEvent.MaxPlayTime;
+                    var obb = particleEvent.MyDummy.Entity.PositionComp.WorldAABB;
+                    var playable = Vector3D.DistanceSquared(CameraPos, obb.Center) <= particleEvent.Distance;
+                    if (particleEvent.PlayTick <= Tick && !playedFull && !particleEvent.Stop && playable)
+                    {
+                        var dummyInfo = particleEvent.MyDummy.Info;
+                        var ent = particleEvent.MyDummy.Entity;
+                        var pos = dummyInfo.Position;
+                        var matrix = dummyInfo.DummyMatrix;
+                        matrix.Translation = dummyInfo.LocalPosition + particleEvent.Offset;
+                        var renderId = ent.Render.GetRenderObjectID();
+
+                        if (particleEvent.Effect == null)
+                        {
+                            if (ent == null || !MyParticlesManager.TryCreateParticleEffect(particleEvent.ParticleName,
+                                    ref matrix, ref pos, renderId, out particleEvent.Effect))
+                            {
+                                Log.Line($"Failed to Create Particle! Particle: {particleEvent.ParticleName}");
+                                particleEvent.Playing = false;
+                                Av.ParticlesToProcess.RemoveAtFast(i);
+                                continue;
+                            }
+
+                            particleEvent.Effect.WorldMatrix = matrix;
+                            particleEvent.Effect.UserScale = particleEvent.Scale;
+
+                        }
+                        else if (particleEvent.Effect.IsStopped)
+                        {
+                            particleEvent.Effect.StopEmitting();
+                            particleEvent.Effect.Play();
+                        }
+                    }
+                    else if (playedFull && particleEvent.DoesLoop && !particleEvent.Stop && playable)
+                    {
+                        particleEvent.PlayTick = Tick + particleEvent.LoopDelay;
+
+                        if (particleEvent.LoopDelay > 0 && particleEvent.Effect != null &&
+                            !particleEvent.Effect.IsStopped && particleEvent.ForceStop)
+                        {
+                            particleEvent.Effect.Stop();
+                            particleEvent.Effect.StopEmitting();
+                        }
+                    }
+                    else if (playedFull || particleEvent.Stop)
+                    {
+
+                        if (particleEvent.Effect != null)
+                        {
+                            particleEvent.Effect.Stop();
+                            MyParticlesManager.RemoveParticleEffect(particleEvent.Effect);
+                        }
+
+                        particleEvent.Effect = null;
+                        particleEvent.Playing = false;
+                        particleEvent.Stop = false;
+                        Av.ParticlesToProcess.RemoveAtFast(i);
+                    }
+                    else if (!playable && particleEvent.Effect != null && !particleEvent.Effect.IsStopped)
+                    {
+                        particleEvent.Effect.Stop();
+                        particleEvent.Effect.StopEmitting();
+                    }
+
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Line($"Exception in ProcessParticles: {ex}", null, true);
+                Av.ParticlesToProcess.Clear();
+            }
+        }
+
+        private static void CompileHeating(AnimationDef animations, Dictionary<string, PartEmissive> emissiveLookup, out string[] heatingSubpartNames)
         {
             if (animations.HeatingEmissiveParts != null && animations.HeatingEmissiveParts.Length > 0)
                 heatingSubpartNames = animations.HeatingEmissiveParts;
@@ -54,7 +276,7 @@ namespace CoreSystems
             }
         }
         
-        private void CompileParticles(AnimationDef animations, Dictionary<EventTriggers, ParticleEvent[]> particleEvents)
+        private static void CompileParticles(AnimationDef animations, Dictionary<EventTriggers, ParticleEvent[]> particleEvents)
         {
             if (animations.EventParticles != null) {
                 
@@ -69,7 +291,7 @@ namespace CoreSystems
                         var eventParticle = particleEvent.Value[i];
 
                         if (eventParticle.MuzzleNames == null)
-                            eventParticle.MuzzleNames = new string[0];
+                            eventParticle.MuzzleNames = Array.Empty<string>();
 
                         if (eventParticle.EmptyNames.Length == eventParticle.MuzzleNames.Length) {
                             
@@ -89,7 +311,7 @@ namespace CoreSystems
             }  
         }
 
-        private void CompileAnimationSets(CoreSystem system, PartAnimationSetDef[] wepAnimationSets, Dictionary<EventTriggers, HashSet<PartAnimation>> allAnimationSet, Dictionary<EventTriggers, uint> animationLengths, HashSet<string> animationIdLookup, Dictionary<string, EmissiveState> weaponEmissivesSet, Dictionary<string, PartEmissive> emissiveLookup, Dictionary<string, Matrix[]> weaponLinearMoveSet)
+        private static void CompileAnimationSets(CoreSystem system, PartAnimationSetDef[] wepAnimationSets, Dictionary<EventTriggers, HashSet<PartAnimation>> allAnimationSet, Dictionary<EventTriggers, uint> animationLengths, HashSet<string> animationIdLookup, Dictionary<string, EmissiveState> weaponEmissivesSet, Dictionary<string, PartEmissive> emissiveLookup, Dictionary<string, Matrix[]> weaponLinearMoveSet)
         {
             
             foreach (var animationSet in wepAnimationSets) {
@@ -144,7 +366,7 @@ namespace CoreSystems
             }
         }
         
-        private void CompileAnimationMoves(KeyValuePair<EventTriggers, RelMove[]> moves, Dictionary<string, PartEmissive> emissiveLookup, PartAnimationSetDef animationSet, Dictionary<string, EmissiveState> weaponEmissivesSet, Dictionary<EventTriggers, uint> animationLengths, string id, out List<Matrix> moveSet, out List<Matrix> rotationSet, out List<Matrix> rotCenterSet, out List<string> rotCenterNameSet, out List<string> emissiveIdSet, out List<int[]> moveIndexer, out List<int> currentEmissivePart)
+        private static void CompileAnimationMoves(KeyValuePair<EventTriggers, RelMove[]> moves, Dictionary<string, PartEmissive> emissiveLookup, PartAnimationSetDef animationSet, Dictionary<string, EmissiveState> weaponEmissivesSet, Dictionary<EventTriggers, uint> animationLengths, string id, out List<Matrix> moveSet, out List<Matrix> rotationSet, out List<Matrix> rotCenterSet, out List<string> rotCenterNameSet, out List<string> emissiveIdSet, out List<int[]> moveIndexer, out List<int> currentEmissivePart)
         {
             moveSet = new List<Matrix>();
             rotationSet = new List<Matrix>();
@@ -197,7 +419,7 @@ namespace CoreSystems
                 animationLengths[moves.Key] = totalPlayLength;
         }
 
-        private void Expo(RelMove move, double[][] tmpDirVec, Dictionary<string, PartEmissive> emissiveLookup, Dictionary<string, EmissiveState> weaponEmissivesSet, string id, List<Matrix> moveSet, List<Matrix> rotationSet, List<Matrix> rotCenterSet, List<string> rotCenterNameSet, List<string> emissiveIdSet, List<int[]> moveIndexer, List<int> currentEmissivePart, bool hasEmissive, double distance, ref int type, ref Vector3D rotCenterChanged, ref Vector3D rotChanged)
+        private static void Expo(RelMove move, double[][] tmpDirVec, Dictionary<string, PartEmissive> emissiveLookup, Dictionary<string, EmissiveState> weaponEmissivesSet, string id, List<Matrix> moveSet, List<Matrix> rotationSet, List<Matrix> rotCenterSet, List<string> rotCenterNameSet, List<string> emissiveIdSet, List<int[]> moveIndexer, List<int> currentEmissivePart, bool hasEmissive, double distance, ref int type, ref Vector3D rotCenterChanged, ref Vector3D rotChanged)
         {
             var traveled = 0d;
             var rate = 0d;
@@ -273,8 +495,7 @@ namespace CoreSystems
             }
         }
 
-
-        private void Absolute(RelMove move, Dictionary<string, PartEmissive> emissiveLookup, Dictionary<string, EmissiveState> weaponEmissivesSet, List<Matrix> rotCenterSet, string id, List<Matrix> moveSet, List<Matrix> rotationSet, List<string> emissiveIdSet, List<int[]> moveIndexer, List<int> currentEmissivePart, bool hasEmissive)
+        private static void Absolute(RelMove move, Dictionary<string, PartEmissive> emissiveLookup, Dictionary<string, EmissiveState> weaponEmissivesSet, List<Matrix> rotCenterSet, string id, List<Matrix> moveSet, List<Matrix> rotationSet, List<string> emissiveIdSet, List<int[]> moveIndexer, List<int> currentEmissivePart, bool hasEmissive)
         {
             moveSet.Add(Matrix.Zero);
             rotationSet.Add(Matrix.Zero);
@@ -318,7 +539,7 @@ namespace CoreSystems
             }
         }
         
-        private void NonLinear(RelMove move, Dictionary<string, PartEmissive> emissiveLookup, Dictionary<string, EmissiveState> weaponEmissivesSet, string id, List<Matrix> moveSet, List<Matrix> rotationSet, List<Matrix> rotCenterSet, List<string> rotCenterNameSet, List<string> emissiveIdSet, List<int[]> moveIndexer, List<int> currentEmissivePart, bool hasEmissive, ref int type, ref Vector3D rotCenterChanged, ref Vector3D rotChanged)
+        private static void NonLinear(RelMove move, Dictionary<string, PartEmissive> emissiveLookup, Dictionary<string, EmissiveState> weaponEmissivesSet, string id, List<Matrix> moveSet, List<Matrix> rotationSet, List<Matrix> rotCenterSet, List<string> rotCenterNameSet, List<string> emissiveIdSet, List<int[]> moveIndexer, List<int> currentEmissivePart, bool hasEmissive, ref int type, ref Vector3D rotCenterChanged, ref Vector3D rotChanged)
         {
             moveSet.Add(Matrix.Zero);
             MatrixD rotation = MatrixD.Zero;
@@ -427,7 +648,7 @@ namespace CoreSystems
             }
         }
         
-        private void Linear(RelMove move, double[][] tmpDirVec, Dictionary<string, PartEmissive> emissiveLookup, Dictionary<string, EmissiveState> weaponEmissivesSet, string id, List<Matrix> moveSet, List<Matrix> rotationSet, List<Matrix> rotCenterSet, List<string> rotCenterNameSet, List<string> emissiveIdSet, List<int[]> moveIndexer, List<int> currentEmissivePart, bool hasEmissive, double distance, ref int type, ref Vector3D rotCenterChanged, ref Vector3D rotChanged)
+        private static void Linear(RelMove move, double[][] tmpDirVec, Dictionary<string, PartEmissive> emissiveLookup, Dictionary<string, EmissiveState> weaponEmissivesSet, string id, List<Matrix> moveSet, List<Matrix> rotationSet, List<Matrix> rotCenterSet, List<string> rotCenterNameSet, List<string> emissiveIdSet, List<int[]> moveIndexer, List<int> currentEmissivePart, bool hasEmissive, double distance, ref int type, ref Vector3D rotCenterChanged, ref Vector3D rotChanged)
         {
             var distancePerTick = distance / move.TicksToMove;
             var vectorCount = 0;
@@ -488,7 +709,7 @@ namespace CoreSystems
             }
         }
 
-        private void FinalizeAnimationSets(Dictionary<EventTriggers, HashSet<PartAnimation>> allAnimationSet, Dictionary<EventTriggers, PartAnimation[]> weaponAnimationSets)
+        private static void FinalizeAnimationSets(Dictionary<EventTriggers, HashSet<PartAnimation>> allAnimationSet, Dictionary<EventTriggers, PartAnimation[]> weaponAnimationSets)
         {
             foreach (var animationsKv in allAnimationSet)
             {
@@ -497,7 +718,7 @@ namespace CoreSystems
             }
         }
 
-        private void ComputeLinearPoints(RelMove move, out double[][] tmpDirVec, out double distance)
+        private static void ComputeLinearPoints(RelMove move, out double[][] tmpDirVec, out double distance)
         {
             distance = 0;
             tmpDirVec = new double[move.LinearPoints.Length][];
@@ -516,8 +737,7 @@ namespace CoreSystems
             }
         }
 
-
-        internal double GetRate(RelMove.MoveType move, double fullRotAmount, uint ticksToMove)
+        private static double GetRate(RelMove.MoveType move, double fullRotAmount, uint ticksToMove)
         {
             var rate = 0d;
             if (move == RelMove.MoveType.ExpoGrowth)
@@ -546,123 +766,7 @@ namespace CoreSystems
             return rate;
         }
 
-        internal Dictionary<EventTriggers, PartAnimation[]> CreateWeaponAnimationSet(WeaponSystem system, RecursiveSubparts parts)
-        {
-            if (!system.AnimationsInited)
-            {
-                var allAnimationSet = new Dictionary<EventTriggers, PartAnimation[]>();
-                foreach (var animationSet in system.WeaponAnimationSet)
-                {
-                    allAnimationSet[animationSet.Key] =  new PartAnimation[animationSet.Value.Length];
-
-                    for (int i = 0; i < animationSet.Value.Length; i++)
-                    {
-                        var animation = animationSet.Value[i];
-                        
-                        MyEntity part;
-                        if(!parts.NameToEntity.TryGetValue(animation.SubpartId, out part)) continue;
-
-                        var rotations = new Matrix[animation.RotationSet.Length];
-                        var rotCenters = new Matrix[animation.RotCenterSet.Length];
-                        animation.RotationSet.CopyTo(rotations, 0);
-                        animation.RotCenterSet.CopyTo(rotCenters, 0);
-
-                        var rotCenterNames = animation.RotCenterNameSet;
-
-                        if (!animation.SubpartId.Equals("None"))
-                        {
-                            var partMatrix = GetPartDummy("subpart_" + animation.SubpartId, part.Parent.Model)?.Matrix ?? Matrix.Identity;
-                            var partCenter = partMatrix.Translation;
-
-                            for (int j = 0; j < rotations.Length; j++)
-                            {
-                                if (rotations[j] != Matrix.Zero)
-                                {
-                                    rotations[j] = Matrix.CreateTranslation(-partCenter) * rotations[j] * Matrix.CreateTranslation(partCenter);
-
-                                    Matrix.AlignRotationToAxes(ref rotations[j], ref partMatrix);
-                                }
-                            }
-
-                            for (int j = 0; j < rotCenters.Length; j++)
-                            {
-                                if (rotCenters[j] != Matrix.Zero && rotCenterNames != null)
-                                {
-                                    var dummyMatrix = GetPartDummy(rotCenterNames[j], part.Model)?.Matrix ?? Matrix.Identity;
-                                    rotCenters[j] = Matrix.CreateTranslation(-(partCenter + dummyMatrix.Translation)) * rotCenters[j] * Matrix.CreateTranslation((partCenter + dummyMatrix.Translation));
-
-
-                                    Matrix.AlignRotationToAxes(ref rotCenters[j], ref dummyMatrix);
-                                }
-                            }
-                        }
-
-                        allAnimationSet[animationSet.Key][i] = new PartAnimation(animation.EventTrigger, animation.AnimationId, rotations, rotCenters,
-                            animation.TypeSet, animation.EmissiveIds, animation.CurrentEmissivePart, animation.MoveToSetIndexer, animation.SubpartId, part, parts.Entity,
-                            animation.Muzzle, animation.MotionDelay, system, animation.DoesLoop,
-                            animation.DoesReverse, animation.TriggerOnce, animation.ResetEmissives);
-                    }
-                }
-
-                system.WeaponAnimationSet.Clear();
-
-                foreach (var animationKv in allAnimationSet)
-                {
-                    system.WeaponAnimationSet[animationKv.Key] = new PartAnimation[animationKv.Value.Length];
-                    animationKv.Value.CopyTo(system.WeaponAnimationSet[animationKv.Key], 0);
-                }
-
-                system.AnimationsInited = true;
-                return allAnimationSet;
-            }
-
-            var returnAnimations = new Dictionary<EventTriggers, PartAnimation[]>();
-            foreach (var animationKv in system.WeaponAnimationSet)
-            {
-                returnAnimations[animationKv.Key] = new PartAnimation[animationKv.Value.Length];
-                for (int i = 0; i < animationKv.Value.Length; i++)
-                {
-                    var animation = animationKv.Value[i];
-                    MyEntity part;
-                    parts.NameToEntity.TryGetValue(animation.SubpartId, out part);
-                    
-                    if (part == null) continue;
-                    returnAnimations[animationKv.Key][i] = new PartAnimation(animation)
-                    {
-                        Part = part,
-                        MainEnt = parts.Entity,
-                    };
-                }
-            }
-            //Log.Line("Copying Animations");
-            return returnAnimations;
-        }
-
-        internal Dictionary<EventTriggers, ParticleEvent[]> CreateWeaponParticleEvents(WeaponSystem system, RecursiveSubparts parts)
-        {
-            var particles = new Dictionary<EventTriggers, ParticleEvent[]>();
-
-            foreach(var particleDef in system.ParticleEvents)
-            {
-                var particleEvents = particleDef.Value;
-                particles[particleDef.Key] = new ParticleEvent[particleEvents.Length];
-
-                for (int i = 0; i < particles[particleDef.Key].Length; i++)
-                {
-                    var systemParticle = particleEvents[i];
-
-                    Dummy particleDummy;
-                    string partName;
-                    if (CreateParticleDummy(parts.Entity, systemParticle.EmptyNames, out particleDummy, out partName)) {
-                        Vector3 pos = GetPartLocation(systemParticle.EmptyNames, particleDummy.Entity.Model);
-                        particles[particleDef.Key][i] = new ParticleEvent(systemParticle, particleDummy, partName, pos);
-                    }
-                }
-            }
-            return particles;
-        }
-
-        internal bool CreateParticleDummy(MyEntity cube, string emptyName, out Dummy particleDummy, out string partName)
+        private static bool CreateParticleDummy(MyEntity cube, string emptyName, out Dummy particleDummy, out string partName)
         {
             var head = -1;
             var tmp = new Dictionary<string, IMyModelDummy>();
@@ -711,7 +815,7 @@ namespace CoreSystems
             return false;
         }
 
-        internal Matrix CreateRotation(double x, double y, double z)
+        private static Matrix CreateRotation(double x, double y, double z)
         {
 
             var rotation = MatrixD.Zero;
@@ -734,14 +838,13 @@ namespace CoreSystems
             return rotation;
         }
 
-        internal void CreateRotationSets(RelMove move, double progress, ref int type, ref List<string> rotCenterNameSet, ref List<Matrix> rotCenterSet, ref List<Matrix> rotationSet, ref Vector3D centerChanged, ref Vector3D changed)
+        private static void CreateRotationSets(RelMove move, double progress, ref int type, ref List<string> rotCenterNameSet, ref List<Matrix> rotCenterSet, ref List<Matrix> rotationSet, ref Vector3D centerChanged, ref Vector3D changed)
         {
             type = 6;
 
-            if (!string.IsNullOrEmpty(move.CenterEmpty) &&
-                                    (move.RotAroundCenter.x > 0 || move.RotAroundCenter.y > 0 ||
-                                     move.RotAroundCenter.z > 0 || move.RotAroundCenter.x < 0 ||
-                                     move.RotAroundCenter.y < 0 || move.RotAroundCenter.z < 0))
+            if (!string.IsNullOrEmpty(move.CenterEmpty) && (move.RotAroundCenter.x > 0 || move.RotAroundCenter.y > 0 ||
+                                                            move.RotAroundCenter.z > 0 || move.RotAroundCenter.x < 0 ||
+                                                            move.RotAroundCenter.y < 0 || move.RotAroundCenter.z < 0))
             {
                 rotCenterNameSet.Add(move.CenterEmpty);                
                 
@@ -782,7 +885,7 @@ namespace CoreSystems
                 rotationSet.Add(Matrix.Zero);
         }
 
-        internal void CreateEmissiveStep(PartEmissive emissive, string id, float progress, ref Dictionary<string, EmissiveState> allEmissivesSet, ref List<int> currentEmissivePart)
+        private static void CreateEmissiveStep(PartEmissive emissive, string id, float progress, ref Dictionary<string, EmissiveState> allEmissivesSet, ref List<int> currentEmissivePart)
         {
             var setColor = (Color)emissive.Colors[0];
             if (emissive.Colors.Length > 1)
@@ -808,7 +911,7 @@ namespace CoreSystems
             currentEmissivePart.Add(currPart);
         }
 
-        internal static Color[] CreateHeatEmissive()
+        private static Color[] CreateHeatEmissive()
         {
             var colors = new[]
             {
@@ -846,32 +949,7 @@ namespace CoreSystems
             return setColors;
         }
 
-        internal readonly Dictionary<string, IMyModelDummy> DummyList = new Dictionary<string, IMyModelDummy>();
-        internal Vector3 GetPartLocation(string partName, IMyModel model)
-        {
-            DummyList.Clear();
-            model.GetDummies(DummyList);
-
-            IMyModelDummy dummy;
-            if (DummyList.TryGetValue(partName, out dummy))
-                return dummy.Matrix.Translation;
-
-            return Vector3.Zero;
-        }
-
-        internal IMyModelDummy GetPartDummy(string partName, IMyModel model)
-        {
-            DummyList.Clear();
-            model.GetDummies(DummyList);
-
-            IMyModelDummy dummy;
-            if (DummyList.TryGetValue(partName, out dummy))
-                return dummy;
-
-            return null;
-        }
-
-        internal void ProcessAnimations()
+        private void ProcessAnimations()
         {
             PartAnimation anim;
             while (ThreadedAnimations.TryDequeue(out anim))
@@ -883,7 +961,7 @@ namespace CoreSystems
 
                 if (animation?.MainEnt != null && !animation.MainEnt.MarkedForClose && animation.Part != null)
                 {
-                    if (animation.StartTick > Tick|| animation.PlayTicks[0] > Tick) continue;
+                    if (animation.StartTick > Tick || animation.PlayTicks[0] > Tick) continue;
 
                     if (animation.MovesPivotPos || animation.CanPlay)
                     {
@@ -895,7 +973,7 @@ namespace CoreSystems
                         EmissiveState currentEmissive;
 
                         animation.GetCurrentMove(out translation, out rotation, out rotAroundCenter, out animationType, out currentEmissive);
-                        
+
                         if (animation.Reverse)
                         {
                             if (animationType == AnimationType.Movement) localMatrix.Translation = localMatrix.Translation - translation;
@@ -940,7 +1018,7 @@ namespace CoreSystems
                             animation.Part.Render.RemoveRenderObjects();
                             animation.Part.PositionComp.SetLocalMatrix(ref matrix);
                         }
-                        
+
 
                         if (!DedicatedServer && currentEmissive.EmissiveParts != null && currentEmissive.EmissiveParts.Length > 0)
                         {
@@ -950,11 +1028,8 @@ namespace CoreSystems
                                     currentEmissive.CurrentIntensity);
                                 if (!currentEmissive.LeavePreviousOn)
                                 {
-                                    var prev = currentEmissive.CurrentPart - 1 >= 0 ? currentEmissive.CurrentPart - 1 : currentEmissive.EmissiveParts
-                                        .Length - 1;
-                                    animation.Part.SetEmissiveParts(currentEmissive.EmissiveParts[prev],
-                                        Color.Transparent,
-                                        0);
+                                    var prev = currentEmissive.CurrentPart - 1 >= 0 ? currentEmissive.CurrentPart - 1 : currentEmissive.EmissiveParts.Length - 1;
+                                    animation.Part.SetEmissiveParts(currentEmissive.EmissiveParts[prev], Color.Transparent, 0);
                                 }
                             }
                             else
@@ -968,7 +1043,7 @@ namespace CoreSystems
                     else
                     {
                         if (animation.Reverse)
-                        {                            
+                        {
                             animation.Previous();
                             if (animation.Previous(false) == animation.NumberOfMoves - 1)
                                 animation.Reverse = false;
@@ -1001,86 +1076,6 @@ namespace CoreSystems
                 else
                     AnimationsToProcess.RemoveAtFast(i);
 
-            }
-        }
-
-        internal void ProcessParticles()
-        {
-            try
-            {
-                for (int i = Av.ParticlesToProcess.Count - 1; i >= 0; i--)
-                {
-                    var particleEvent = Av.ParticlesToProcess[i];
-                    var playedFull = Tick - particleEvent.PlayTick > particleEvent.MaxPlayTime;
-                    var obb = particleEvent.MyDummy.Entity.PositionComp.WorldAABB;
-                    var playable = Vector3D.DistanceSquared(CameraPos, obb.Center) <= particleEvent.Distance;
-                    if (particleEvent.PlayTick <= Tick && !playedFull && !particleEvent.Stop && playable)
-                    {
-                        var dummyInfo = particleEvent.MyDummy.Info;
-                        var ent = particleEvent.MyDummy.Entity;
-                        var pos = dummyInfo.Position;
-                        var matrix = dummyInfo.DummyMatrix;
-                        matrix.Translation = dummyInfo.LocalPosition + particleEvent.Offset;
-                        var renderId = ent.Render.GetRenderObjectID();
-
-                        if (particleEvent.Effect == null)
-                        {
-                            if (ent == null || !MyParticlesManager.TryCreateParticleEffect(particleEvent.ParticleName,
-                                    ref matrix, ref pos, renderId, out particleEvent.Effect))
-                            {
-                                Log.Line($"Failed to Create Particle! Particle: {particleEvent.ParticleName}");
-                                particleEvent.Playing = false;
-                                Av.ParticlesToProcess.RemoveAtFast(i);
-                                continue;
-                            }
-
-                            particleEvent.Effect.WorldMatrix = matrix;
-                            particleEvent.Effect.UserScale = particleEvent.Scale;
-
-                        }
-                        else if (particleEvent.Effect.IsStopped)
-                        {
-                            particleEvent.Effect.StopEmitting();
-                            particleEvent.Effect.Play();
-                        }
-                    }
-                    else if (playedFull && particleEvent.DoesLoop && !particleEvent.Stop && playable)
-                    {
-                        particleEvent.PlayTick = Tick + particleEvent.LoopDelay;
-
-                        if (particleEvent.LoopDelay > 0 && particleEvent.Effect != null &&
-                            !particleEvent.Effect.IsStopped && particleEvent.ForceStop)
-                        {
-                            particleEvent.Effect.Stop();
-                            particleEvent.Effect.StopEmitting();
-                        }
-                    }
-                    else if (playedFull || particleEvent.Stop)
-                    {
-
-                        if (particleEvent.Effect != null)
-                        {
-                            particleEvent.Effect.Stop();
-                            MyParticlesManager.RemoveParticleEffect(particleEvent.Effect);
-                        }
-
-                        particleEvent.Effect = null;
-                        particleEvent.Playing = false;
-                        particleEvent.Stop = false;
-                        Av.ParticlesToProcess.RemoveAtFast(i);
-                    }
-                    else if (!playable && particleEvent.Effect != null && !particleEvent.Effect.IsStopped)
-                    {
-                        particleEvent.Effect.Stop();
-                        particleEvent.Effect.StopEmitting();
-                    }
-
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Line($"Exception in ProcessParticles: {ex}", null, true);
-                Av.ParticlesToProcess.Clear();
             }
         }
     }

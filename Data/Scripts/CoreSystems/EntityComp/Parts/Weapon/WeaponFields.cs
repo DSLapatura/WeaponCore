@@ -346,7 +346,7 @@ namespace CoreSystems.Platform
             MuzzlePart = new PartInfo(entity, entity == Comp.CoreEntity, entity?.Parent == Comp.CoreEntity, PartInfo.PartTypes.Muzzle);
             MiddleMuzzleIndex = Muzzles.Length > 1 ? Muzzles.Length / 2 - 1 : 0;
 
-            AnimationsSet = comp.Session.CreateWeaponAnimationSet(system, parts);
+            AnimationsSet = CreateWeaponAnimationSet(system, parts);
 
             try
             {
@@ -372,7 +372,7 @@ namespace CoreSystems.Platform
 
 
 
-            ParticleEvents = comp.Session.CreateWeaponParticleEvents(system, parts);
+            ParticleEvents = CreateWeaponParticleEvents(system, parts);
 
             var burstDelay = System.Values.HardPoint.Loading.DelayAfterBurst;
             ShowReload = Comp.Session.HandlesInput && (System.WConst.ReloadTime >= 60 || System.Values.HardPoint.Loading.ShotsInBurst > 0 && burstDelay >= 60);
