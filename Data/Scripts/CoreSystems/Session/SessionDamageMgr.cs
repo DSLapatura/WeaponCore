@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using CoreSystems.Projectiles;
 using CoreSystems.Support;
 using Sandbox.Definitions;
@@ -993,6 +994,7 @@ namespace CoreSystems
                 return;
             }
 
+            var aConst = info.Weapon.ActiveAmmoDef.AmmoDef.Const;
             var directDmgGlobal = Settings.Enforcement.DirectDamageModifer;
             var detDmgGlobal = Settings.Enforcement.AreaDamageModifer;
 
@@ -1037,9 +1039,11 @@ namespace CoreSystems
                     if (oRadius < minTestRadius) oRadius = minTestRadius;
                 }
 
-                destObj.PerformCutOutSphereFast(hitEnt.HitPos.Value, (float)(oRadius * info.AmmoDef.Const.VoxelHitModifier), false);
+                var cut = aConst.FakeVoxelHitTicks == 0 || aConst.FakeVoxelHitTicks == Tick;
+                if (cut)
+                    destObj.PerformCutOutSphereFast(hitEnt.HitPos.Value, (float)(oRadius * info.AmmoDef.Const.VoxelHitModifier), false);
 
-                if (detonateOnEnd && info.BaseDamagePool <= 0)
+                if (detonateOnEnd && info.BaseDamagePool <= 0 && cut)
                 {
                     var dRadius = info.AmmoDef.Const.EndOfLifeRadius;
                     var dDamage = info.AmmoDef.Const.EndOfLifeDamage * detDmgGlobal;

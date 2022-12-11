@@ -158,7 +158,7 @@ namespace CoreSystems
                 if (SuppressWc)
                     return;
 
-               ++SimulationCount;
+                ++SimulationCount;
 
                 if (!DedicatedServer) {
                     EntityControlUpdate();
