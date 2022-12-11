@@ -1559,6 +1559,7 @@ namespace CoreSystems.Support
                                 hitInfo.Position = hitPos;
                                 hitInfo.HitEntity = entity;
                                 hitInfo.Fraction = (float) (hitDist / targetDist);
+                                return;
                             }
                         }
                     }
