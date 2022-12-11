@@ -9,6 +9,7 @@ using CoreSystems.Settings;
 using CoreSystems.Support;
 using Jakaria.API;
 using ParallelTasks;
+using Sandbox.Engine.Physics;
 using Sandbox.Game;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
@@ -62,6 +63,7 @@ namespace CoreSystems
 
         internal readonly TargetCompare TargetCompare = new TargetCompare();
         internal readonly WaterModAPI WApi = new WaterModAPI();
+        internal readonly CustomHitInfo CustomHitInfo = new CustomHitInfo();
 
         internal static readonly HashSet<ulong> AuthorIds = new HashSet<ulong> { 76561197969691953 };
         internal readonly MyStringHash ShieldBypassDamageType = MyStringHash.GetOrCompute("bypass");
@@ -215,7 +217,7 @@ namespace CoreSystems
         internal readonly List<CoreComponent> CompsDelayedReInit = new List<CoreComponent>();
         internal readonly Dictionary<long, List<ClientProSyncDebugLine>> ProSyncLineDebug = new Dictionary<long, List<ClientProSyncDebugLine>>();
         internal readonly List<CompReAdd> CompReAdds = new List<CompReAdd>();
-
+        internal readonly List<MyLineSegmentOverlapResult<MyEntity>> OverlapResultTmp = new List<MyLineSegmentOverlapResult<MyEntity>>();
         internal readonly List<Projectile> Hits = new List<Projectile>(16);
         internal readonly List<Weapon> AcquireTargets = new List<Weapon>(128);
         internal readonly List<Weapon> TmpWeaponEventSortingList = new List<Weapon>();
@@ -223,7 +225,6 @@ namespace CoreSystems
         internal readonly List<Ai> AimingAi = new List<Ai>(128);
         internal readonly List<IHitInfo> HitInfoTmpList = new List<IHitInfo>();
         internal readonly Dictionary<long, DamageHandlerRegistrant> SystemWideDamageRegistrants = new Dictionary<long, DamageHandlerRegistrant>();
-
         internal readonly HashSet<MyDefinitionId> CoreSystemsFixedBlockDefs = new HashSet<MyDefinitionId>();
         internal readonly HashSet<MyDefinitionId> CoreSystemsTurretBlockDefs = new HashSet<MyDefinitionId>();
         internal readonly HashSet<MyDefinitionId> CoreSystemsSupportDefs = new HashSet<MyDefinitionId>();
@@ -291,7 +292,6 @@ namespace CoreSystems
 
         internal List<RadiatedBlock> SlimsSortedList = new List<RadiatedBlock>(1024);
         internal MyConcurrentPool<MyEntity> TriggerEntityPool;
-
         internal MyDynamicAABBTreeD ProjectileTree = new MyDynamicAABBTreeD(Vector3D.One * 10.0, 10.0);
 
         internal List<PartAnimation> AnimationsToProcess = new List<PartAnimation>(128);

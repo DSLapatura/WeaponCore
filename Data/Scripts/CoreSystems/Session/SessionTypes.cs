@@ -1081,6 +1081,12 @@ namespace CoreSystems
 
     }
 
+    public class CustomHitInfo
+    {
+        public float Fraction;
+        public MyEntity HitEntity;
+        public Vector3D Position;
+    }
 
     public class DamageHandlerRegistrant
     {

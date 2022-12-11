@@ -970,8 +970,10 @@ namespace CoreSystems.Support
                     var testPos = w.BarrelOrigin + (targetDirNorm * w.MuzzleDistToBarrelCenter);
 
                     IHitInfo iHitInfo = null;
-                    var filter = w.System.NoVoxelLosCheck ? CollisionLayers.NoVoxelCollisionLayer : 15;
-                    physics.CastRay(testPos, blockPos, hitTmpList, filter);
+                    var fakeCheck = w.System.NoVoxelLosCheck;
+                    var filter = fakeCheck ? CollisionLayers.NoVoxelCollisionLayer : 15;
+                    var endPos = fakeCheck ? testPos + (targetDir * 800) : blockPos;
+                    physics.CastRay(testPos, endPos, hitTmpList, filter);
                     var skip = false;
                     for (int j = 0; j < hitTmpList.Count; j++)
                     {
@@ -1012,13 +1014,26 @@ namespace CoreSystems.Support
                         }
                     }
 
-                    if (skip || iHitInfo == null)
+                    var customHitInfo = s.CustomHitInfo;
+                    if (iHitInfo != null)
+                    {
+                        customHitInfo.Position = iHitInfo.Position;
+                        customHitInfo.HitEntity = (MyEntity) iHitInfo.HitEntity;
+                        customHitInfo.Fraction = iHitInfo.Fraction;
+                    }
+                    else if (fakeCheck)
+                    {
+                        FakeBlockRayCast(w, block, endPos, blockPos, targetDir);
+                    }
+
+
+                    if (skip || customHitInfo.HitEntity == null)
                         continue;
 
                     Vector3D.Distance(ref weaponPos, ref blockPos, out rayDist);
-                    var shortDist = rayDist * (1 - iHitInfo.Fraction);
-                    var origDist = rayDist * iHitInfo.Fraction;
-                    target.Set(block, iHitInfo.Position, shortDist, origDist, block.GetTopMostParent().EntityId);
+                    var shortDist = rayDist * (1 - customHitInfo.Fraction);
+                    var origDist = rayDist * customHitInfo.Fraction;
+                    target.Set(block, customHitInfo.Position, shortDist, origDist, block.GetTopMostParent().EntityId);
                     foundBlock = true;
                     break;
                 }
@@ -1483,6 +1498,49 @@ namespace CoreSystems.Support
             }
 
             return true;
+        }
+
+        internal static void FakeBlockRayCast(Weapon w, MyCubeBlock targetBlock, Vector3D source, Vector3D target, Vector3D targetDir)
+        {
+            var ai = w.Comp.Ai;
+            var s = ai.Session;
+            var aConst = w.ActiveAmmoDef.AmmoDef.Const;
+            var checkLine = new LineD(source, target);
+            s.OverlapResultTmp.Clear();
+            MyGamePruningStructure.GetAllEntitiesInRay(ref checkLine, s.OverlapResultTmp, MyEntityQueryType.Both);
+            var hitInfo = s.CustomHitInfo;
+            for (int i = 0; i < s.OverlapResultTmp.Count; i++)
+            {
+                var pair = s.OverlapResultTmp[i];
+                var foundDist = pair.Distance;
+                var ent = pair.Element;
+                var grid = ent as MyCubeGrid;
+                if (grid == null || !targetBlock.CubeGrid.IsSameConstructAs(grid))
+                {
+                    hitInfo.Position = Vector3D.Zero;
+                    hitInfo.HitEntity = null;
+                    hitInfo.Fraction = 0;
+                    return;
+                }
+
+                var hit = grid.RayCastBlocks(source, target);
+                if (hit.HasValue)
+                {
+                    MyCube cube;
+                    if (grid.TryGetCube(hit.Value, out cube) && cube.CubeBlock == targetBlock.SlimBlock)
+                    {
+                        hitInfo.HitEntity = ent;
+                        hitInfo.Fraction = 1;
+                        hitInfo.Position = targetBlock.PositionComp.WorldAABB.Center;
+                        return;
+                    }
+                }
+            }
+
+            hitInfo.Position = Vector3D.Zero;
+            hitInfo.HitEntity = null;
+            hitInfo.Fraction = 0;
+            return;
         }
 
         internal static bool SwitchToDrone(Weapon w)
