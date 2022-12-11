@@ -68,7 +68,7 @@ namespace CoreSystems.Projectiles
                 var isGrid = ai.AiType == Ai.AiTypes.Grid;
 
                 var closestFutureDistSqr = double.MaxValue;
-
+                var voxelCheck = aConst.FakeVoxelHitTicks > 0 || ai.PlanetSurfaceInRange && ai.ClosestPlanetSqr <= info.MaxTrajectory * info.MaxTrajectory;
                 WaterData water = null;
                 if (Session.WaterApiLoaded && info.MyPlanet != null)
                     Session.WaterMap.TryGetValue(info.MyPlanet.EntityId, out water);
@@ -212,7 +212,7 @@ namespace CoreSystems.Projectiles
                     {
                         VoxelIntersectBranch voxelState = VoxelIntersectBranch.None;
 
-                        if ((ent == info.MyPlanet && !(p.LinePlanetCheck || aConst.DynamicGuidance)) || !p.LinePlanetCheck && isBeam)
+                        if ((ent == info.MyPlanet && !(voxelCheck || aConst.DynamicGuidance)) || !voxelCheck && isBeam)
                             continue;
 
                         Vector3D? voxelHit = null;
@@ -220,6 +220,7 @@ namespace CoreSystems.Projectiles
                         {
                             var hitSphere = info.VoxelCache.HitSphere;
                             var cacheDist = ray.Intersects(hitSphere);
+
                             if (cacheDist <= beamLen)
                             {
                                 var sphereRadius = hitSphere.Radius;
@@ -247,7 +248,7 @@ namespace CoreSystems.Projectiles
                             if (voxel == info.MyPlanet && info.VoxelCache.MissSphere.Contains(beamTo) == ContainmentType.Disjoint)
                             {
 
-                                if (p.LinePlanetCheck)
+                                if (voxelCheck)
                                 {
                                     if (water != null && info.FirstWaterHitTick == 0)
                                     {
@@ -518,14 +519,21 @@ namespace CoreSystems.Projectiles
             {
 
                 var p = DeferedVoxels[i].Projectile;
+                var w = p.Info.Weapon;
+                var s = w.Comp.Session;
+                var info = p.Info;
+                var aConst = info.AmmoDef.Const;
                 var branch = DeferedVoxels[i].Branch;
                 var voxel = DeferedVoxels[i].Voxel;
                 Vector3D? voxelHit = null;
 
                 if (branch == VoxelIntersectBranch.DeferFullCheck)
                 {
-
-                    if (p.Beam.Length > 85)
+                    if (aConst.FakeVoxelHitTicks > 0 && s.Tick - w.WeaponCache.FakeCheckTick < aConst.FakeVoxelHitTicks && w.WeaponCache.FakeHitDistance > 0)
+                    {
+                        voxelHit = p.Beam.From + p.Beam.Direction * w.WeaponCache.FakeHitDistance;
+                    }
+                    else if (p.Beam.Length > 85)
                     {
                         IHitInfo hit;
                         if (p.Info.Ai.Session.Physics.CastRay(p.Beam.From, p.Beam.To, out hit, CollisionLayers.VoxelCollisionLayer, false) && hit != null)
@@ -533,46 +541,52 @@ namespace CoreSystems.Projectiles
                     }
                     else
                     {
-
                         using (voxel.Pin())
                         {
-                            if (!voxel.GetIntersectionWithLine(ref p.Beam, out voxelHit, true, IntersectionFlags.DIRECT_TRIANGLES) && VoxelIntersect.PointInsideVoxel(voxel, p.Info.Ai.Session.TmpStorage, p.Beam.From))
+                            if (!voxel.GetIntersectionWithLine(ref p.Beam, out voxelHit, true, IntersectionFlags.DIRECT_TRIANGLES) && VoxelIntersect.PointInsideVoxel(voxel, s.TmpStorage, p.Beam.From))
                                 voxelHit = p.Beam.From;
                         }
                     }
 
-                    if (voxelHit.HasValue && p.Info.IsFragment && p.Info.Age == 0)
+                    if (voxelHit.HasValue && info.IsFragment && info.Age == 0)
                     {
-                        if (!VoxelIntersect.PointInsideVoxel(voxel, p.Info.Ai.Session.TmpStorage, voxelHit.Value + (p.Beam.Direction * 1.25f)))
+                        if (!VoxelIntersect.PointInsideVoxel(voxel, s.TmpStorage, voxelHit.Value + (p.Beam.Direction * 1.25f)))
                             voxelHit = null;
                     }
                 }
                 else if (branch == VoxelIntersectBranch.DeferedMissUpdate)
                 {
 
-                    using (voxel.Pin())
+                    if (aConst.FakeVoxelHitTicks > 0 && s.Tick - w.WeaponCache.FakeCheckTick < aConst.FakeVoxelHitTicks && w.WeaponCache.FakeHitDistance > 0)
                     {
-
-                        if (p.Info.AmmoDef.Const.IsBeamWeapon && p.Info.AmmoDef.Const.RealShotsPerMin < 10)
+                        voxelHit = p.Beam.From + p.Beam.Direction * w.WeaponCache.FakeHitDistance;
+                    }
+                    else
+                    {
+                        using (voxel.Pin())
                         {
-                            IHitInfo hit;
-                            if (p.Info.Ai.Session.Physics.CastRay(p.Beam.From, p.Beam.To, out hit, CollisionLayers.VoxelCollisionLayer, false) && hit != null)
-                                voxelHit = hit.Position;
+
+                            if (aConst.IsBeamWeapon && aConst.RealShotsPerMin < 10)
+                            {
+                                IHitInfo hit;
+                                if (s.Physics.CastRay(p.Beam.From, p.Beam.To, out hit, CollisionLayers.VoxelCollisionLayer, false) && hit != null)
+                                    voxelHit = hit.Position;
+                            }
+                            else if (!voxel.GetIntersectionWithLine(ref p.Beam, out voxelHit, true, IntersectionFlags.DIRECT_TRIANGLES) && VoxelIntersect.PointInsideVoxel(voxel, s.TmpStorage, p.Beam.From))
+                                voxelHit = p.Beam.From;
                         }
-                        else if (!voxel.GetIntersectionWithLine(ref p.Beam, out voxelHit, true, IntersectionFlags.DIRECT_TRIANGLES) && VoxelIntersect.PointInsideVoxel(voxel, p.Info.Ai.Session.TmpStorage, p.Beam.From))
-                            voxelHit = p.Beam.From;
                     }
                 }
 
                 if (!voxelHit.HasValue)
                 {
 
-                    if (p.Info.VoxelCache.MissSphere.Contains(p.Beam.To) == ContainmentType.Disjoint)
-                        p.Info.VoxelCache.MissSphere.Center = p.Beam.To;
+                    if (info.VoxelCache.MissSphere.Contains(p.Beam.To) == ContainmentType.Disjoint)
+                        info.VoxelCache.MissSphere.Center = p.Beam.To;
                     continue;
                 }
 
-                p.Info.VoxelCache.Update(voxel, ref voxelHit, Session.Tick);
+                info.VoxelCache.Update(voxel, ref voxelHit, Session.Tick);
 
                 if (voxelHit == null)
                     continue;
@@ -582,13 +596,13 @@ namespace CoreSystems.Projectiles
                     FinalHitCheck.Add(p);
                 }
                 var hitEntity = HitEntityPool.Get();
-                var lineCheck = p.Info.AmmoDef.Const.CollisionIsLine && !p.Info.EwarAreaPulse;
-                hitEntity.Info = p.Info;
+                var lineCheck = aConst.CollisionIsLine && !info.EwarAreaPulse;
+                hitEntity.Info = info;
                 hitEntity.Entity = voxel;
                 hitEntity.Intersection = p.Beam;
                 hitEntity.SphereCheck = !lineCheck;
                 hitEntity.PruneSphere = p.PruneSphere;
-                hitEntity.DamageOverTime = p.Info.AmmoDef.Const.EwarType == Dot;
+                hitEntity.DamageOverTime = aConst.EwarType == Dot;
 
                 var hitPos = voxelHit.Value;
                 hitEntity.HitPos = hitPos;
@@ -596,7 +610,11 @@ namespace CoreSystems.Projectiles
                 double dist;
                 Vector3D.Distance(ref p.Beam.From, ref hitPos, out dist);
                 hitEntity.HitDist = dist;
-
+                if (aConst.FakeVoxelHitTicks > 0 && s.Tick - w.WeaponCache.FakeCheckTick > aConst.FakeVoxelHitTicks || w.WeaponCache.FakeHitDistance == 0)
+                {
+                    w.WeaponCache.FakeCheckTick = s.Tick;
+                    w.WeaponCache.FakeHitDistance = dist;
+                }
                 hitEntity.EventType = Voxel;
                 p.Info.HitList.Add(hitEntity);
             }

@@ -8,9 +8,12 @@ using VRage.Collections;
 using VRage.Game;
 using VRage.Game.Components;
 using VRage.Game.Entity;
+using VRage.Game.ModAPI;
 using VRage.Utils;
 using VRageMath;
+using static CoreSystems.Support.VoxelIntersect;
 using static Sandbox.Definitions.MyDefinitionManager;
+using CollisionLayers = Sandbox.Engine.Physics.MyPhysics.CollisionLayers;
 
 namespace CoreSystems
 {
@@ -148,11 +151,11 @@ namespace CoreSystems
             catch (Exception ex) { Log.Line($"Exception in SessionBeforeSim: {ex}", null, true); }
         }
 
+
         public override void Simulate()
         {
             try
             {
-
                 if (SuppressWc)
                     return;
 

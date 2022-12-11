@@ -49,7 +49,6 @@ namespace CoreSystems.Projectiles
         internal double DesiredSpeed;
         internal double MaxSpeed;
         internal bool EnableAv;
-        internal bool LinePlanetCheck;
         internal bool Intersecting;
         internal bool FinalizeIntersection;
         internal int DeaccelRate;
@@ -118,7 +117,6 @@ namespace CoreSystems.Projectiles
             TargetsSeen = 0;
             PruningProxyId = -1;
 
-            LinePlanetCheck = false;
             Intersecting = false;
             Info.PrevDistanceTraveled = 0;
             Info.DistanceTraveled = 0;
@@ -252,7 +250,6 @@ namespace CoreSystems.Projectiles
 
             if (ai.PlanetSurfaceInRange && ai.ClosestPlanetSqr <= Info.MaxTrajectory * Info.MaxTrajectory)
             {
-                LinePlanetCheck = true;
                 PruneQuery = MyEntityQueryType.Both;
             }
 

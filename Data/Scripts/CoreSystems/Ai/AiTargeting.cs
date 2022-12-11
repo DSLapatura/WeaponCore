@@ -543,7 +543,8 @@ namespace CoreSystems.Support
                     if (needsCast)
                     {
                         IHitInfo hitInfo;
-                        physics.CastRay(weaponPos, lp.Position, out hitInfo, 15);
+                        var filter = w.System.NoVoxelLosCheck ? CollisionLayers.NoVoxelCollisionLayer : 15;
+                        physics.CastRay(weaponPos, lp.Position, out hitInfo, filter);
                         if (hitInfo?.HitEntity == null && (!w.System.Values.HardPoint.Other.MuzzleCheck || !w.MuzzleHitSelf()))
                         {
                             double hitDist;
@@ -803,7 +804,8 @@ namespace CoreSystems.Support
                 if (needsCast)
                 {
                     IHitInfo hitInfo;
-                    physics.CastRay(weaponPos, lp.Position, out hitInfo, 15);
+                    var filter = w.System.NoVoxelLosCheck ? CollisionLayers.NoVoxelCollisionLayer : 15;
+                    physics.CastRay(weaponPos, lp.Position, out hitInfo, filter);
                     if (hitInfo?.HitEntity == null)
                     {
                         target.Set(lp, lp.Position,  0, 0, long.MaxValue);
@@ -968,7 +970,8 @@ namespace CoreSystems.Support
                     var testPos = w.BarrelOrigin + (targetDirNorm * w.MuzzleDistToBarrelCenter);
 
                     IHitInfo iHitInfo = null;
-                    physics.CastRay(testPos, blockPos, hitTmpList, 15);
+                    var filter = w.System.NoVoxelLosCheck ? CollisionLayers.NoVoxelCollisionLayer : 15;
+                    physics.CastRay(testPos, blockPos, hitTmpList, filter);
                     var skip = false;
                     for (int j = 0; j < hitTmpList.Count; j++)
                     {
@@ -1106,8 +1109,8 @@ namespace CoreSystems.Support
                                 Vector3D.Normalize(ref targetDir, out targetDirNorm);
 
                                 var rayStart = w.BarrelOrigin + (targetDirNorm * w.MuzzleDistToBarrelCenter);
-
-                                physics.CastRay(rayStart, cubePos, hitTmpList, 15);
+                                var filter = w.System.NoVoxelLosCheck ? CollisionLayers.NoVoxelCollisionLayer : 15;
+                                physics.CastRay(rayStart, cubePos, hitTmpList, filter);
 
                                 var skip = false;
                                 for (int j = 0; j < hitTmpList.Count; j++)
@@ -1363,7 +1366,7 @@ namespace CoreSystems.Support
             IHitInfo iHitInfo = null;
             var arcCheckLen = 1;
             var hitTmpList = ai.Session.HitInfoTmpList;
-            ai.Session.Physics.CastRay(weaponPos, blockDir * arcCheckLen, hitTmpList, CollisionLayers.NoVoxelCollisionLayer);
+            ai.Session.Physics.CastRay(weaponPos, blockDir * arcCheckLen, hitTmpList, CollisionLayers.VoxelLod1CollisionLayer);
             var skip = false;
             for (int j = 0; j < hitTmpList.Count; j++)
             {

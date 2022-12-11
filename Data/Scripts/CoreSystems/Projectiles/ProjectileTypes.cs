@@ -354,6 +354,8 @@ namespace CoreSystems.Support
         internal int Hits;
         internal double HitDistance;
         internal int VirutalId = -1;
+        internal uint FakeCheckTick;
+        internal double FakeHitDistance;
     }
 
     internal struct NewVirtual

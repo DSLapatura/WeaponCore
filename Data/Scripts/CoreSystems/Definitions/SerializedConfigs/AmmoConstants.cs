@@ -150,6 +150,7 @@ namespace CoreSystems.Support
         public readonly int FragGroupSize;
         public readonly int FragGroupDelay;
         public readonly int DeformDelay;
+        public readonly uint FakeVoxelHitTicks;
 
         public readonly bool CheckFutureIntersection;
         public readonly bool OverrideTarget;
@@ -445,7 +446,6 @@ namespace CoreSystems.Support
             TargetLossDegree = ammo.AmmoDef.Trajectory.TargetLossDegree > 0 ? (float)Math.Cos(MathHelper.ToRadians(ammo.AmmoDef.Trajectory.TargetLossDegree)) : 0;
             CheckFutureIntersection = ammo.AmmoDef.Trajectory.Smarts.CheckFutureIntersection;
 
-
             Fragments(ammo, out HasFragmentOffset, out HasNegFragmentOffset, out FragmentOffset, out FragRadial, out FragDegrees, out FragReverse, out FragDropVelocity, out FragMaxChildren, out FragIgnoreArming, out FragOnArmed, out FragOnEnd, out HasAdvFragOffset, out FragOffset);
             TimedSpawn(ammo, out TimedFragments, out FragStartTime, out FragInterval, out MaxFrags, out FragGroupSize, out FragGroupDelay, out FragProximity, out HasFragProximity, out FragParentDies, out FragPointAtTarget, out HasFragGroup, out FragPointType, out DirectAimCone);
 
@@ -467,7 +467,7 @@ namespace CoreSystems.Support
 
             Fields(ammo.AmmoDef, out PulseInterval, out PulseChance, out Pulse, out PulseGrowTime);
             AreaEffects(ammo.AmmoDef, out ByBlockHitDepth, out EndOfLifeDepth, out EwarType, out ByBlockHitDamage, out ByBlockHitRadius, out EndOfLifeDamage, out EndOfLifeRadius, out EwarStrength, out LargestHitSize, out EwarRadius, out Ewar, out NonAntiSmartEwar, out EwarTriggerRange, out MinArmingTime, out AoeMaxAbsorb, out DetMaxAbsorb, out EndOfLifeAoe);
-            Beams(ammo.AmmoDef, out IsBeamWeapon, out VirtualBeams, out RotateRealBeam, out ConvergeBeams, out OneHitParticle, out OffsetEffect);
+            Beams(ammo.AmmoDef, out IsBeamWeapon, out VirtualBeams, out RotateRealBeam, out ConvergeBeams, out OneHitParticle, out OffsetEffect, out FakeVoxelHitTicks);
 
             var givenSpeed = AmmoModsFound && _modifierMap[SpeedStr].HasData() ? _modifierMap[SpeedStr].GetAsFloat : ammo.AmmoDef.Trajectory.DesiredSpeed;
             DesiredProjectileSpeed = !IsBeamWeapon ? givenSpeed : MaxTrajectory * MyEngineConstants.UPDATE_STEPS_PER_SECOND;
@@ -907,7 +907,7 @@ namespace CoreSystems.Support
             return primeModel ? new MyConcurrentPool<MyEntity>(64, PrimeEntityClear, 6400, PrimeEntityActivator) : null;
         }
 
-        private void Beams(AmmoDef ammoDef, out bool isBeamWeapon, out bool virtualBeams, out bool rotateRealBeam, out bool convergeBeams, out bool oneHitParticle, out bool offsetEffect)
+        private void Beams(AmmoDef ammoDef, out bool isBeamWeapon, out bool virtualBeams, out bool rotateRealBeam, out bool convergeBeams, out bool oneHitParticle, out bool offsetEffect, out uint fakeVoxelHits)
         {
             isBeamWeapon = ammoDef.Beams.Enable && ammoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.None;
             virtualBeams = ammoDef.Beams.VirtualBeams && IsBeamWeapon;
@@ -915,6 +915,7 @@ namespace CoreSystems.Support
             convergeBeams = !RotateRealBeam && ammoDef.Beams.ConvergeBeams && VirtualBeams;
             oneHitParticle = ammoDef.Beams.OneParticle && IsBeamWeapon && VirtualBeams;
             offsetEffect = ammoDef.AmmoGraphics.Lines.OffsetEffect.MaxOffset > 0.2 && ammoDef.AmmoGraphics.Lines.OffsetEffect.MinLength > 0.1;
+            fakeVoxelHits = (uint) ammoDef.Beams.FakeVoxelHitTicks;
         }
 
         private void CollisionShape(AmmoDef ammoDef, out bool collisionIsLine, out double collisionSize, out double tracerLength)

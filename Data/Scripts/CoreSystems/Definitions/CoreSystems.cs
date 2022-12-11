@@ -206,6 +206,7 @@ namespace CoreSystems.Support
         public readonly bool EvictUniqueTargets;
         public readonly bool GoHomeToReload;
         public readonly bool DropTargetUntilLoaded;
+        public readonly bool NoVoxelLosCheck;
         public readonly double MaxTargetSpeed;
         public readonly double AzStep;
         public readonly double ElStep;
@@ -284,6 +285,7 @@ namespace CoreSystems.Support
             DisableStatus = Values.HardPoint.Ui.DisableStatus;
             GoHomeToReload = Values.HardPoint.Loading.GoHomeToReload;
             DropTargetUntilLoaded = Values.HardPoint.Loading.DropTargetUntilLoaded;
+            NoVoxelLosCheck = Values.HardPoint.Other.NoVoxelLosCheck;
 
             MaxReloads = Values.HardPoint.Loading.MaxReloads;
             MaxActiveProjectiles = Values.HardPoint.Loading.MaxActiveProjectiles > 0 ? Values.HardPoint.Loading.MaxActiveProjectiles : int.MaxValue;
