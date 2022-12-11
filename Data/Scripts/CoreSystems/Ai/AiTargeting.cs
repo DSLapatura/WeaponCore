@@ -964,16 +964,15 @@ namespace CoreSystems.Support
 
                     s.RandomRayCasts++;
 
-                    var targetDir = blockPos - w.BarrelOrigin;
-                    Vector3D targetDirNorm;
-                    Vector3D.Normalize(ref targetDir, out targetDirNorm);
+                    var targetDirNorm = blockPos - w.BarrelOrigin;
+                    var targetDist = targetDirNorm.Normalize();
                     var testPos = w.BarrelOrigin + (targetDirNorm * w.MuzzleDistToBarrelCenter);
 
                     IHitInfo iHitInfo = null;
                     var fakeCheck = w.System.NoVoxelLosCheck;
                     var filter = fakeCheck ? CollisionLayers.NoVoxelCollisionLayer : 15;
-                    var endPos = fakeCheck ? testPos + (targetDir * 800) : blockPos;
-                    physics.CastRay(testPos, endPos, hitTmpList, filter);
+                    if (!fakeCheck)
+                        physics.CastRay(testPos, blockPos, hitTmpList, filter);
                     var skip = false;
                     for (int j = 0; j < hitTmpList.Count; j++)
                     {
@@ -1015,7 +1014,7 @@ namespace CoreSystems.Support
                     }
 
                     var customHitInfo = s.CustomHitInfo;
-                    if (iHitInfo != null)
+                    if (!fakeCheck && iHitInfo != null)
                     {
                         customHitInfo.Position = iHitInfo.Position;
                         customHitInfo.HitEntity = (MyEntity) iHitInfo.HitEntity;
@@ -1023,9 +1022,8 @@ namespace CoreSystems.Support
                     }
                     else if (fakeCheck)
                     {
-                        FakeBlockRayCast(w, block, endPos, blockPos, targetDir);
+                        FakeBlockRayCast(w, block, blockPos, blockPos, targetDist, out skip);
                     }
-
 
                     if (skip || customHitInfo.HitEntity == null)
                         continue;
@@ -1500,47 +1498,79 @@ namespace CoreSystems.Support
             return true;
         }
 
-        internal static void FakeBlockRayCast(Weapon w, MyCubeBlock targetBlock, Vector3D source, Vector3D target, Vector3D targetDir)
+        internal static void FakeBlockRayCast(Weapon w, MyCubeBlock block, Vector3D source, Vector3D target, double targetDist, out bool skip)
         {
             var ai = w.Comp.Ai;
             var s = ai.Session;
-            var aConst = w.ActiveAmmoDef.AmmoDef.Const;
             var checkLine = new LineD(source, target);
             s.OverlapResultTmp.Clear();
             MyGamePruningStructure.GetAllEntitiesInRay(ref checkLine, s.OverlapResultTmp, MyEntityQueryType.Both);
             var hitInfo = s.CustomHitInfo;
+            var targetGrid = block.CubeGrid;
+            skip = false;
             for (int i = 0; i < s.OverlapResultTmp.Count; i++)
             {
                 var pair = s.OverlapResultTmp[i];
-                var foundDist = pair.Distance;
-                var ent = pair.Element;
-                var grid = ent as MyCubeGrid;
-                if (grid == null || !targetBlock.CubeGrid.IsSameConstructAs(grid))
+                var entity = pair.Element;
+
+                var character = entity as IMyCharacter;
+
+                TargetInfo otherInfo;
+                var enemyCharacter = character != null && (!ai.Targets.TryGetValue(entity, out otherInfo) || !(otherInfo.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Enemies || otherInfo.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Neutral || otherInfo.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.NoOwnership));
+
+                if (entity == null || entity is MyVoxelBase || character != null && !enemyCharacter)
                 {
-                    hitInfo.Position = Vector3D.Zero;
-                    hitInfo.HitEntity = null;
-                    hitInfo.Fraction = 0;
-                    return;
+                    skip = true;
+                    break;
                 }
 
-                var hit = grid.RayCastBlocks(source, target);
-                if (hit.HasValue)
+                var topHitEntity = entity.GetTopMostParent();
+                var hitGrid = topHitEntity as MyCubeGrid;
+
+                if (hitGrid != null)
                 {
-                    MyCube cube;
-                    if (grid.TryGetCube(hit.Value, out cube) && cube.CubeBlock == targetBlock.SlimBlock)
+                    if (hitGrid.MarkedForClose || hitGrid.Physics == null || hitGrid.IsPreview) continue;
+                    var isTarget = hitGrid == targetGrid || hitGrid.IsSameConstructAs(targetGrid);
+
+                    var bigOwners = hitGrid.BigOwners;
+                    var noOwner = bigOwners.Count == 0;
+
+                    var validTarget = isTarget || noOwner || ai.Targets.TryGetValue(topHitEntity, out otherInfo) && (otherInfo.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Enemies || otherInfo.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Neutral || otherInfo.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.NoOwnership);
+
+                    if (!validTarget && hitGrid.RayCastBlocks(source, target) == null)
                     {
-                        hitInfo.HitEntity = ent;
-                        hitInfo.Fraction = 1;
-                        hitInfo.Position = targetBlock.PositionComp.WorldAABB.Center;
-                        return;
+                        validTarget = true;
                     }
+
+                    skip = !validTarget || !hitGrid.IsSameConstructAs(block.CubeGrid) && (!hitGrid.DestructibleBlocks || hitGrid.Immune || hitGrid.GridGeneralDamageModifier <= 0 || ai.AiType == AiTypes.Grid && hitGrid.IsSameConstructAs(ai.GridEntity));
+
+                    if (isTarget)
+                    {
+                        var hit = hitGrid.RayCastBlocks(source, target);
+                        if (hit.HasValue)
+                        {
+                            MyCube cube;
+                            if (hitGrid.TryGetCube(hit.Value, out cube) && cube.CubeBlock == block.SlimBlock)
+                            {
+                                var obb = new MyOrientedBoundingBoxD(((IMyModel)block.Model).BoundingBox, block.PositionComp.WorldMatrixRef);
+
+                                var hitDist = obb.Intersects(ref checkLine) ?? Vector3D.Distance(checkLine.From, obb.Center);
+                                var hitPos = checkLine.From + (checkLine.Direction * hitDist);
+                                hitInfo.Position = hitPos;
+                                hitInfo.HitEntity = entity;
+                                hitInfo.Fraction = (float) (hitDist / targetDist);
+                            }
+                        }
+                    }
+
+                    if (skip || isTarget)
+                        break;
                 }
             }
 
             hitInfo.Position = Vector3D.Zero;
             hitInfo.HitEntity = null;
             hitInfo.Fraction = 0;
-            return;
         }
 
         internal static bool SwitchToDrone(Weapon w)
