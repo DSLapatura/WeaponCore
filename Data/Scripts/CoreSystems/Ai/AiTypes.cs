@@ -526,8 +526,8 @@ namespace CoreSystems.Support
                 var fromPerp = from + (perpDir * TargetRadius);
                 var toPerp = to + (perpDir * MyAi.TopEntityVolume.Radius);
 
-                MyAi.Session.Physics.CastRayParallel(ref from, ref to, CollisionLayers.VoxelCollisionLayer, TargetLostCallBack);
-                MyAi.Session.Physics.CastRayParallel(ref fromPerp, ref toPerp, CollisionLayers.VoxelCollisionLayer, TargetLostCallBack);
+                MyAi.Session.Physics.CastRayParallel(ref from, ref to, CollisionLayers.VoxelLod1CollisionLayer, TargetLostCallBack);
+                MyAi.Session.Physics.CastRayParallel(ref fromPerp, ref toPerp, CollisionLayers.VoxelLod1CollisionLayer, TargetLostCallBack);
             }
 
             internal void TargetLostCallBack(IHitInfo hitInfo)

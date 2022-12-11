@@ -543,7 +543,7 @@ namespace CoreSystems.Support
                     if (needsCast)
                     {
                         IHitInfo hitInfo;
-                        var filter = w.System.NoVoxelLosCheck ? CollisionLayers.NoVoxelCollisionLayer : 15;
+                        var filter = w.System.NoVoxelLosCheck ? CollisionLayers.NoVoxelCollisionLayer : CollisionLayers.VoxelLod1CollisionLayer;
                         physics.CastRay(weaponPos, lp.Position, out hitInfo, filter);
                         if (hitInfo?.HitEntity == null && (!w.System.Values.HardPoint.Other.MuzzleCheck || !w.MuzzleHitSelf()))
                         {
@@ -804,7 +804,7 @@ namespace CoreSystems.Support
                 if (needsCast)
                 {
                     IHitInfo hitInfo;
-                    var filter = w.System.NoVoxelLosCheck ? CollisionLayers.NoVoxelCollisionLayer : 15;
+                    var filter = w.System.NoVoxelLosCheck ? CollisionLayers.NoVoxelCollisionLayer : CollisionLayers.VoxelLod1CollisionLayer;
                     physics.CastRay(weaponPos, lp.Position, out hitInfo, filter);
                     if (hitInfo?.HitEntity == null)
                     {

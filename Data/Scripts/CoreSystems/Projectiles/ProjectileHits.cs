@@ -404,7 +404,8 @@ namespace CoreSystems.Projectiles
                                         IHitInfo hitInfo = null;
                                         if (!goCritical)
                                         {
-                                            Session.Physics.CastRay(forwardPos, beamTo, out hitInfo, CollisionLayers.DefaultCollisionLayer);
+
+                                            Session.Physics.CastRay(forwardPos, beamTo, out hitInfo, 15);
                                             var hitGrid = hitInfo?.HitEntity?.GetTopMostParent() as MyCubeGrid;
                                             if (hitGrid == null || firingCube == null || !firingCube.CubeGrid.IsSameConstructAs(hitGrid))
                                             {
@@ -536,7 +537,7 @@ namespace CoreSystems.Projectiles
                     else if (p.Beam.Length > 85)
                     {
                         IHitInfo hit;
-                        if (p.Info.Ai.Session.Physics.CastRay(p.Beam.From, p.Beam.To, out hit, CollisionLayers.VoxelCollisionLayer, false) && hit != null)
+                        if (p.Info.Ai.Session.Physics.CastRay(p.Beam.From, p.Beam.To, out hit, CollisionLayers.VoxelLod1CollisionLayer, false) && hit != null)
                             voxelHit = hit.Position;
                     }
                     else
@@ -800,7 +801,7 @@ namespace CoreSystems.Projectiles
                                 var entSphere = hitEntity.Entity.PositionComp.WorldVolume;
                                 var from = hitEntity.Intersection.From + (hitEntity.Intersection.Direction * MyUtils.GetSmallestDistanceToSphereAlwaysPositive(ref hitEntity.Intersection.From, ref entSphere));
                                 var to = hitEntity.HitPos.Value + (hitEntity.Intersection.Direction * 3f);
-                                Session.Physics.CastRay(from, to, out hitInfo, 15);
+                                Session.Physics.CastRay(from, to, out hitInfo, CollisionLayers.NoVoxelCollisionLayer);
                             }
                             visualHitPos = hitInfo?.HitEntity != null ? hitInfo.Position : hitEntity.HitPos;
                         }

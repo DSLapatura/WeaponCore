@@ -151,7 +151,6 @@ namespace CoreSystems
             catch (Exception ex) { Log.Line($"Exception in SessionBeforeSim: {ex}", null, true); }
         }
 
-
         public override void Simulate()
         {
             try
@@ -159,7 +158,7 @@ namespace CoreSystems
                 if (SuppressWc)
                     return;
 
-                ++SimulationCount;
+               ++SimulationCount;
 
                 if (!DedicatedServer) {
                     EntityControlUpdate();

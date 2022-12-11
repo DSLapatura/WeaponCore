@@ -74,7 +74,8 @@ namespace CoreSystems.Platform
 
                 if (clear)
                 {
-                    weapon.System.Session.Physics.CastRay(predictedMuzzlePos, testLine.From, out weapon.LastHitInfo, CollisionLayers.DefaultCollisionLayer);
+                    var filter = weapon.System.NoVoxelLosCheck ? CollisionLayers.NoVoxelCollisionLayer : CollisionLayers.VoxelLod1CollisionLayer;
+                    weapon.System.Session.Physics.CastRay(predictedMuzzlePos, testLine.From, out weapon.LastHitInfo, filter);
 
                     if (ai.AiType == Ai.AiTypes.Grid && weapon.LastHitInfo != null && weapon.LastHitInfo.HitEntity == ai.GridEntity)
                         selfHit = true;
@@ -502,7 +503,8 @@ namespace CoreSystems.Platform
                     var source = GetSmartLosPosition(i, ref info, angle);
 
                     IHitInfo hitInfo;
-                    Comp.Ai.Session.Physics.CastRay(source, info.Position, out hitInfo, 15, false);
+                    var filter = System.NoVoxelLosCheck ? CollisionLayers.NoVoxelCollisionLayer : CollisionLayers.VoxelLod1CollisionLayer;
+                    Comp.Ai.Session.Physics.CastRay(source, info.Position, out hitInfo, (uint) filter, false);
                     var grid = hitInfo?.HitEntity?.GetTopMostParent() as MyCubeGrid;
                     if (grid != null && grid.IsInSameLogicalGroupAs(Comp.Ai.GridEntity) && grid.GetTargetedBlock(hitInfo.Position + (-info.Direction * 0.1f)) != Comp.Cube.SlimBlock)
                     {
@@ -566,7 +568,8 @@ namespace CoreSystems.Platform
             {
                 var source = GetSmartLosPosition(i, ref info, angle);
                 IHitInfo hitInfo;
-                Comp.Ai.Session.Physics.CastRay(source, info.Position, out hitInfo, 15, false);
+                var filter = System.NoVoxelLosCheck ? CollisionLayers.NoVoxelCollisionLayer : CollisionLayers.VoxelLod1CollisionLayer;
+                Comp.Ai.Session.Physics.CastRay(source, info.Position, out hitInfo, (uint) filter, false);
                 var grid = hitInfo?.HitEntity?.GetTopMostParent() as MyCubeGrid;
                 var hit = grid != null && grid.IsInSameLogicalGroupAs(Comp.Ai.GridEntity) && grid.GetTargetedBlock(hitInfo.Position + (-info.Direction * 0.1f)) != Comp.Cube.SlimBlock;
 
@@ -888,6 +891,7 @@ namespace CoreSystems.Platform
             var overrides = Comp.Data.Repo.Values.Set.Overrides;
             var eTarget = Target.TargetObject as MyEntity;
             var pTarget = Target.TargetObject as Projectile;
+            var filter = System.NoVoxelLosCheck ? CollisionLayers.NoVoxelCollisionLayer : CollisionLayers.VoxelLod1CollisionLayer;
 
             if (System.Session.DebugLos && Target.TargetState == Target.TargetStates.IsEntity && eTarget != null)
             {
@@ -895,7 +899,7 @@ namespace CoreSystems.Platform
                 var targetTestPos = eTarget.PositionComp.WorldAABB.Center;
                 var topEntity = eTarget.GetTopMostParent();
                 IHitInfo hitInfo;
-                if (System.Session.Physics.CastRay(trackPos, targetTestPos, out hitInfo) && hitInfo.HitEntity == topEntity)
+                if (System.Session.Physics.CastRay(trackPos, targetTestPos, out hitInfo, filter) && hitInfo.HitEntity == topEntity)
                 {
                     var hitPos = hitInfo.Position;
                     double closestDist;
@@ -937,7 +941,7 @@ namespace CoreSystems.Platform
             if (Target.TargetState == Target.TargetStates.IsFake)
             {
                 Casting = true;
-                Comp.Session.Physics.CastRayParallel(ref trackingCheckPosition, ref Target.TargetPos, CollisionLayers.DefaultCollisionLayer, ManualShootRayCallBack);
+                Comp.Session.Physics.CastRayParallel(ref trackingCheckPosition, ref Target.TargetPos, filter, ManualShootRayCallBack);
                 return true;
             }
 
@@ -1009,8 +1013,7 @@ namespace CoreSystems.Platform
                 }
             }
             Casting = true;
-
-            Comp.Session.Physics.CastRayParallel(ref trackingCheckPosition, ref targetPos, CollisionLayers.DefaultCollisionLayer, RayCallBack.NormalShootRayCallBack);
+            Comp.Session.Physics.CastRayParallel(ref trackingCheckPosition, ref targetPos, filter, RayCallBack.NormalShootRayCallBack);
             return true;
         }
 
