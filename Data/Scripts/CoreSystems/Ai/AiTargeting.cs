@@ -1502,7 +1502,7 @@ namespace CoreSystems.Support
         {
             var ai = w.Comp.Ai;
             var s = ai.Session;
-            var checkLine = new LineD(source, target);
+            var checkLine = new LineD(source, target, targetDist);
             s.OverlapResultTmp.Clear();
             MyGamePruningStructure.GetAllEntitiesInRay(ref checkLine, s.OverlapResultTmp, MyEntityQueryType.Both);
             var hitInfo = s.CustomHitInfo;
@@ -1518,7 +1518,7 @@ namespace CoreSystems.Support
                 TargetInfo otherInfo;
                 var enemyCharacter = character != null && (!ai.Targets.TryGetValue(entity, out otherInfo) || !(otherInfo.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Enemies || otherInfo.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Neutral || otherInfo.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.NoOwnership));
 
-                if (entity == null || entity is MyVoxelBase || character != null && !enemyCharacter)
+                if (entity == null || character != null && !enemyCharacter)
                 {
                     skip = true;
                     break;
