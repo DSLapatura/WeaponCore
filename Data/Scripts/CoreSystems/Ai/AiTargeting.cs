@@ -968,15 +968,16 @@ namespace CoreSystems.Support
                     var testPos = w.BarrelOrigin + (targetDirNorm * w.MuzzleDistToBarrelCenter);
                     var targetDist = Vector3D.Distance(testPos, blockPos);
 
-                    var fakeCheck = w.System.NoVoxelLosCheck;
+                    var fakeCheck = w.System.NoVoxelLosCheck || true;
                     var filter = fakeCheck ? CollisionLayers.NoVoxelCollisionLayer : CollisionLayers.DefaultCollisionLayer;
-                    if (!fakeCheck)
-                        physics.CastRay(testPos, blockPos, hitTmpList, filter);
-                    var skip = false;
+
+                    bool acquire = false;
                     double closest = double.MaxValue;
 
                     if (!fakeCheck)
                     {
+                        hitTmpList.Clear();
+                        physics.CastRay(testPos, blockPos, hitTmpList, filter);
                         for (int j = 0; j < hitTmpList.Count; j++)
                         {
                             var hitInfo = hitTmpList[j];
@@ -984,8 +985,8 @@ namespace CoreSystems.Support
                             var entity = hitInfo.HitEntity as MyEntity;
                             var hitGrid = entity as MyCubeGrid;
                             var character = entity as IMyCharacter;
-
-                            if (character == null && hitGrid == null || hitGrid != null && (hitGrid.MarkedForClose || hitGrid.Physics == null || hitGrid.IsPreview || ai.AiType == AiTypes.Grid && hitGrid.IsSameConstructAs(ai.GridEntity)))
+                            var dist = hitInfo.Fraction * targetDist;
+                            if (character == null && hitGrid == null || dist >= closest || hitGrid != null && (hitGrid.MarkedForClose || hitGrid.Physics == null || hitGrid.IsPreview || ai.AiType == AiTypes.Grid && hitGrid.IsSameConstructAs(ai.GridEntity)))
                                 continue;
 
                             TargetInfo otherInfo;
@@ -995,24 +996,20 @@ namespace CoreSystems.Support
 
                             if (character != null && !enemyCharacter)
                             {
-                                var dist = hitInfo.Fraction * targetDist;
-                                if (hitInfo.Fraction * targetDist < closest)
-                                {
-                                    closest = dist;
-                                    skip = true;
-                                }
-                                continue;
-                            }
-
-                            if (entity is MyVoxelBase )
-                            {
-                                var dist = hitInfo.Fraction * targetDist;
                                 if (dist < closest)
                                 {
                                     closest = dist;
-                                    skip = true;
+                                    acquire = false;
                                 }
-                                continue;
+                            }
+
+                            if (entity is MyVoxelBase)
+                            {
+                                if (dist < closest)
+                                {
+                                    closest = dist;
+                                    acquire = false;
+                                }
                             }
 
                             if (hitGrid != null)
@@ -1020,20 +1017,12 @@ namespace CoreSystems.Support
                                 var bigOwners = hitGrid.BigOwners;
                                 var noOwner = bigOwners.Count == 0;
                                 var validTarget = noOwner || knownTarget;
-                                var dist = hitInfo.Fraction * targetDist;
 
                                 if (dist < closest)
                                 {
                                     closest = dist;
-                                    skip = !validTarget;
+                                    acquire = validTarget;
                                 }
-                            }
-
-                            if (!skip && closest < double.MaxValue)
-                            {
-                                s.CustomHitInfo.Position = hitInfo.Position;
-                                s.CustomHitInfo.HitEntity = block;
-                                s.CustomHitInfo.Fraction = hitInfo.Fraction;
                             }
                         }
                     }
@@ -1044,7 +1033,6 @@ namespace CoreSystems.Support
                         s.OverlapResultTmp.Clear();
                         var queryType = ai.StaticGridInRange ? MyEntityQueryType.Both : MyEntityQueryType.Dynamic;
                         MyGamePruningStructure.GetTopmostEntitiesOverlappingRay(ref checkLine, s.OverlapResultTmp, queryType);
-
                         for (int j = 0; j < s.OverlapResultTmp.Count; j++)
                         {
                             var entity = s.OverlapResultTmp[j].Element;
@@ -1067,7 +1055,7 @@ namespace CoreSystems.Support
                                 if (hitDist < closest)
                                 {
                                     closest = hitDist.Value;
-                                    skip = true;
+                                    acquire = false;
                                 }
                             }
 
@@ -1104,23 +1092,22 @@ namespace CoreSystems.Support
                                     if (hitDist < closest)
                                     {
                                         closest = hitDist.Value;
-                                        skip = !validTarget;
+                                        acquire = validTarget;
                                     }
                                 }
-
                             }
+                        }
 
-                            if (!skip && closest < double.MaxValue)
-                            {
-                                var hitPos = checkLine.From + (checkLine.Direction * closest);
-                                s.CustomHitInfo.Position = hitPos;
-                                s.CustomHitInfo.HitEntity = block;
-                                s.CustomHitInfo.Fraction = (float) (closest / targetDist);
-                            }
+                        if (acquire)
+                        {
+                            var hitPos = checkLine.From + (checkLine.Direction * closest);
+                            s.CustomHitInfo.Position = hitPos;
+                            s.CustomHitInfo.HitEntity = block;
+                            s.CustomHitInfo.Fraction = (float)(closest / targetDist);
                         }
                     }
 
-                    if (skip)
+                    if (!acquire)
                         continue;
 
                     Vector3D.Distance(ref weaponPos, ref blockPos, out rayDist);
@@ -1138,6 +1125,7 @@ namespace CoreSystems.Support
             }
             return foundBlock;
         }
+
 
         internal static bool GetClosestHitableBlockOfType(Weapon w, ConcurrentCachingList<MyCubeBlock> cubes, Target target, TargetInfo info, Vector3D targetLinVel, Vector3D targetAccel, ref BoundingSphereD waterSphere, Projectile p, bool checkPower = true)
         {
