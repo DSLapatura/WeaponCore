@@ -977,8 +977,7 @@ namespace CoreSystems.Support
                     var testPos = w.BarrelOrigin + (targetDirNorm * w.MuzzleDistToBarrelCenter);
                     var targetDist = Vector3D.Distance(testPos, blockPos);
 
-                    var fakeCheck = w.System.NoVoxelLosCheck || true;
-                    var filter = fakeCheck ? CollisionLayers.NoVoxelCollisionLayer : CollisionLayers.DefaultCollisionLayer;
+                    var fakeCheck = w.System.NoVoxelLosCheck;
 
                     bool acquire = false;
                     double closest = double.MaxValue;
@@ -986,7 +985,7 @@ namespace CoreSystems.Support
                     if (!fakeCheck)
                     {
                         hitTmpList.Clear();
-                        physics.CastRay(testPos, blockPos, hitTmpList, filter);
+                        physics.CastRay(testPos, blockPos, hitTmpList, CollisionLayers.VoxelLod1CollisionLayer);
                         for (int j = 0; j < hitTmpList.Count; j++)
                         {
                             var hitInfo = hitTmpList[j];
@@ -1037,6 +1036,13 @@ namespace CoreSystems.Support
                     }
                     else
                     {
+                        IHitInfo iHitInfo;
+                        if (ai.AiType == AiTypes.Grid && physics.CastRay(testPos, testPos + (targetDirNorm * (ai.TopEntityVolume.Radius * 2)), out iHitInfo, CollisionLayers.NoVoxelCollisionLayer))
+                        {
+                            var rayGrid = iHitInfo.HitEntity?.GetTopMostParent() as MyCubeGrid;
+                            if (rayGrid != null && rayGrid.IsSameConstructAs(ai.GridEntity))
+                                continue;
+                        }
                         var checkLine = new LineD(testPos, testPos + (targetDirNorm * w.MaxTargetDistance), w.MaxTargetDistance);
 
                         s.OverlapResultTmp.Clear();
