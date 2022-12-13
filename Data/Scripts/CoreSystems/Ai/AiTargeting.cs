@@ -280,11 +280,11 @@ namespace CoreSystems.Support
                         var moving = info.VelLenSqr >= 1;
                         var queueTime = collisionRisk ? 5 : highDamage && moving ? 10 : !moving && highDamage ? 20 : 30;
 
-                        Weapon.AcquireMonitor hiddenInfo;
-                        if (!w.HiddenTargets.TryGetValue(grid, out hiddenInfo)) {
-                            w.HiddenTargets[grid] = new Weapon.AcquireMonitor { FirstFailure = session.Tick, SlotId = w.XorRnd.Range(0, queueTime - 1) };
+                        int slotId;
+                        if (!w.HiddenTargets.TryGetValue(grid, out slotId)) {
+                            w.HiddenTargets[grid] =  w.XorRnd.Range(0, queueTime - 1);
                         }
-                        else if ((w.FailedAcquires + hiddenInfo.SlotId) % queueTime != 0) {
+                        else if ((w.FailedAcquires + slotId) % queueTime != 0) {
                             w.AcquiredBlock = true;
                             continue;
                         }

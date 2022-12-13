@@ -124,12 +124,6 @@ namespace CoreSystems.Platform
             }
         }
 
-        internal struct AcquireMonitor
-        {
-            internal uint FirstFailure;
-            internal int SlotId;
-        }
-
         internal class Muzzle
         {
             internal Muzzle(Weapon weapon, int id, Session session)

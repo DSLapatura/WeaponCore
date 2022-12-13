@@ -22,7 +22,7 @@ namespace CoreSystems.Platform
         internal readonly Dictionary<int, string> MuzzleIdToName = new Dictionary<int, string>();
         internal readonly Dictionary<long, ClientProSync> WeaponProSyncs = new Dictionary<long, ClientProSync>();
         internal readonly Dictionary<string, PartAnimation> AnimationLookup = new Dictionary<string, PartAnimation>();
-        internal readonly Dictionary<MyEntity, AcquireMonitor> HiddenTargets = new Dictionary<MyEntity, AcquireMonitor>();
+        internal readonly Dictionary<MyEntity, int> HiddenTargets = new Dictionary<MyEntity, int>();
         internal readonly List<MyCubeBlock> Top5 = new List<MyCubeBlock>();
         internal readonly HashSet<Weapon> Connections = new HashSet<Weapon>();
         internal readonly WeaponFrameCache WeaponCache = new WeaponFrameCache();
