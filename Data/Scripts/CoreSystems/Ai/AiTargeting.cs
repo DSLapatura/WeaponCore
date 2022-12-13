@@ -273,23 +273,9 @@ namespace CoreSystems.Support
 
                     w.FoundTopMostTarget = true;
 
-                    if (w.FailedAcquires > 9)
-                    {
-                        var collisionRisk = info.VelLenSqr > 100 && info.Approaching;
-                        var highDamage = info.OffenseRating >= 1;
-                        var moving = info.VelLenSqr >= 1;
-                        var queueTime = collisionRisk ? 5 : highDamage && moving ? 10 : !moving && highDamage ? 20 : 30;
-
-                        int slotId;
-                        if (!w.HiddenTargets.TryGetValue(grid, out slotId)) {
-                            w.HiddenTargets[grid] =  w.XorRnd.Range(0, queueTime - 1);
-                        }
-                        else if ((w.FailedAcquires + slotId) % queueTime != 0) {
-                            w.AcquiredBlock = true;
-                            continue;
-                        }
-                    }
-
+                    if (w.FailedAcquires > 9 && !w.DelayedAcquire(info))
+                        continue;
+                        
                     if (!AcquireBlock(w, target, info, ref waterSphere, ref w.XorRnd, null, !focusTarget))
                         continue;
 

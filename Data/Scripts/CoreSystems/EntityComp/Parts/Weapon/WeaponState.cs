@@ -380,6 +380,30 @@ namespace CoreSystems.Platform
 
         }
 
+        internal bool DelayedAcquire(Ai.TargetInfo info)
+        {
+            var collisionRisk = info.VelLenSqr > 100 && info.Approaching;
+            var highDamage = info.OffenseRating >= 1;
+            var moving = info.VelLenSqr >= 1;
+
+            var updateRate = collisionRisk ? 5 : highDamage && moving ? 10 : !moving && highDamage ? 20 : 30;
+
+            var hiddenTargets = HiddenTargets.Count;
+            var queueTime = Math.Min(hiddenTargets, updateRate);
+
+            int slotId;
+            if (!HiddenTargets.TryGetValue(info.Target, out slotId))
+            {
+                HiddenTargets[info.Target] = XorRnd.Range(0, queueTime - 1);
+            }
+            else if ((FailedAcquires + slotId) % queueTime != 0)
+            {
+                AcquiredBlock = true;
+                return false;
+            }
+            return true;
+        }
+
         internal void RecordConnection(bool setTarget)
         {
             var entity = Target.TargetObject as MyEntity;
