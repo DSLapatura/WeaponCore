@@ -384,7 +384,7 @@ namespace CoreSystems.Platform
         {
             var collisionRisk = info.VelLenSqr > 100 && info.Approaching;
             var highDamage = info.OffenseRating >= 1;
-            var moving = info.VelLenSqr >= 1;
+            var moving = info.VelLenSqr >= 1 || Comp.Ai.TopEntityVel.LengthSquared() > 1;
 
             var updateRate = collisionRisk ? 5 : highDamage && moving ? 10 : !moving && highDamage ? 20 : 30;
 
