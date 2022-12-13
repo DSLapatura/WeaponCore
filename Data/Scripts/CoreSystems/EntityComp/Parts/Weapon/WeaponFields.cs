@@ -22,6 +22,7 @@ namespace CoreSystems.Platform
         internal readonly Dictionary<int, string> MuzzleIdToName = new Dictionary<int, string>();
         internal readonly Dictionary<long, ClientProSync> WeaponProSyncs = new Dictionary<long, ClientProSync>();
         internal readonly Dictionary<string, PartAnimation> AnimationLookup = new Dictionary<string, PartAnimation>();
+        internal readonly Dictionary<MyEntity, AcquireMonitor> HiddenTargets = new Dictionary<MyEntity, AcquireMonitor>();
         internal readonly List<MyCubeBlock> Top5 = new List<MyCubeBlock>();
         internal readonly HashSet<Weapon> Connections = new HashSet<Weapon>();
         internal readonly WeaponFrameCache WeaponCache = new WeaponFrameCache();
@@ -74,6 +75,7 @@ namespace CoreSystems.Platform
         internal uint OverHeatCountDown;
         internal uint DelayedTargetResetTick;
         internal float HeatPerc;
+        internal int FailedAcquires;
         internal int BarrelRate;
         internal int ShotsFired;
         internal int NextMuzzle;
@@ -182,6 +184,7 @@ namespace CoreSystems.Platform
         internal double MuzzleDistToBarrelCenter;
         internal double ScopeDistToCheckPos;
         internal double GravityLength;
+        internal bool AcquiredBlock;
         internal bool RangeEventActive;
         internal bool AlternateForward;
         internal bool BurstAvDelay;

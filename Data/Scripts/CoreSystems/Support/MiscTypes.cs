@@ -267,8 +267,12 @@ namespace CoreSystems.Support
             if (TargetChanged && Weapon != null)
             {
                 ChangeTick = Weapon.System.Session.Tick;
+
                 if (setTarget) {
+                    
+                    Weapon.FailedAcquires = 0;
                     Weapon.LookAtFailCount = 0;
+                    Weapon.HiddenTargets.Clear();
                     Weapon.BaseComp.Ai.WeaponsTracking++;
                     Weapon.BaseComp.PartTracking++;
                 }

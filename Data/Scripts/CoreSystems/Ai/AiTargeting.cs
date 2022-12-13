@@ -18,6 +18,8 @@ using static CoreSystems.Support.WeaponDefinition.AmmoDef;
 using static CoreSystems.Platform.Weapon.ApiShootRequest;
 using IMyWarhead = Sandbox.ModAPI.IMyWarhead;
 using CollisionLayers = Sandbox.Engine.Physics.MyPhysics.CollisionLayers;
+using static VRage.Game.MyObjectBuilder_Toolbar;
+
 namespace CoreSystems.Support
 {
     public partial class Ai
@@ -82,6 +84,11 @@ namespace CoreSystems.Support
                     w.Target.Reset(w.Comp.Session.Tick, Target.States.NoTargetsSeen, fakeInfo == null);
 
                 w.LastBlockCount = masterAi.BlockCount;
+
+                if (w.AcquiredBlock) {
+                    ++w.FailedAcquires;
+                    w.AcquiredBlock = false;
+                }
             }
             else 
                 w.WakeTargets();
@@ -266,9 +273,23 @@ namespace CoreSystems.Support
 
                     w.FoundTopMostTarget = true;
 
-                    if (!AcquireBlock(w, target, info,  ref waterSphere, ref w.XorRnd, null, !focusTarget))
+                    if (w.FailedAcquires > 9)
+                    {
+                        var queueTime = info.VelLenSqr < 1 ? 30 : info.OffenseRating < 1 ? 20 : 10;
+
+                        Weapon.AcquireMonitor hiddenInfo;
+                        if (!w.HiddenTargets.TryGetValue(grid, out hiddenInfo)) {
+                            w.HiddenTargets[grid] = new Weapon.AcquireMonitor { FirstFailure = session.Tick, SlotId = w.XorRnd.Range(0, 9) };
+                        }
+                        else if ((w.FailedAcquires + hiddenInfo.SlotId) % queueTime != 0) {
+                            w.AcquiredBlock = true;
+                            continue;
+                        }
+                    }
+
+                    if (!AcquireBlock(w, target, info, ref waterSphere, ref w.XorRnd, null, !focusTarget))
                         continue;
-                    
+
                     target.TransferTo(w.Target, comp.Session.Tick);
                     if (w.Target.TargetState == Target.TargetStates.IsEntity)
                         ai.Session.NewThreat(w);
@@ -834,7 +855,6 @@ namespace CoreSystems.Support
         private static bool AcquireBlock(Weapon w, Target target, TargetInfo info, ref BoundingSphereD waterSphere, ref XorShiftRandomStruct xRnd, Projectile p, bool checkPower = true)
         {
             var system = w.System;
-            var s = system.Session;
             if (system.TargetSubSystems)
             {
                 var overRides = w.Comp.Data.Repo.Values.Set.Overrides;
@@ -961,8 +981,8 @@ namespace CoreSystems.Support
                         continue;
 
                     blocksSighted++;
-
                     s.RandomRayCasts++;
+                    w.AcquiredBlock = true;
 
                     var targetDirNorm = Vector3D.Normalize(blockPos - w.BarrelOrigin);
                     var testPos = w.BarrelOrigin + (targetDirNorm * w.MuzzleDistToBarrelCenter);
@@ -1199,6 +1219,7 @@ namespace CoreSystems.Support
                             {
 
                                 ai.Session.ClosestRayCasts++;
+                                w.AcquiredBlock = true;
 
                                 var targetDir = cubePos - w.BarrelOrigin;
                                 Vector3D targetDirNorm;

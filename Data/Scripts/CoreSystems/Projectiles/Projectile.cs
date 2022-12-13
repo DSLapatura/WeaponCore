@@ -545,7 +545,7 @@ namespace CoreSystems.Projectiles
                 #endregion
 
                 var accelMpsMulti = speedLimitPerTick;
-                if (aConst.ApproachesCount > 0 && s.RequestedStage < aConst.ApproachesCount)
+                if (aConst.ApproachesCount > 0 && s.RequestedStage < aConst.ApproachesCount && s.RequestedStage >= -1)
                 {
                     ProcessStage(ref accelMpsMulti, ref speedCapMulti, TargetPosition, s.RequestedStage, targetLock);
                 }
