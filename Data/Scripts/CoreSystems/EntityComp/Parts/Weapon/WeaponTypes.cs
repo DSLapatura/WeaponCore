@@ -148,6 +148,12 @@ namespace CoreSystems.Platform
 
         }
 
+        internal struct HiddenInfo
+        {
+            internal int SlotId;
+            internal uint TickAdded;
+        }
+
         internal struct TargetOwner
         {
             internal Weapon Weapon;

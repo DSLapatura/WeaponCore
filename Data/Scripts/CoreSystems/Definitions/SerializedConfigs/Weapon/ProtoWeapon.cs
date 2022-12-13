@@ -9,6 +9,7 @@ using VRageMath;
 using static CoreSystems.Support.WeaponDefinition.TargetingDef;
 using static CoreSystems.Support.CoreComponent;
 using static CoreSystems.Platform.Weapon.WeaponComponent;
+using static CoreSystems.ProtoProStateSync;
 
 namespace CoreSystems
 {
@@ -118,6 +119,7 @@ namespace CoreSystems
         [ProtoMember(3)] public long CoreEntityId;
         [ProtoMember(4)] public Vector3D Position;
         [ProtoMember(5)] public Vector3 Velocity;
+        [ProtoMember(6)] public ProSyncState State;
     }
 
     [ProtoContract]

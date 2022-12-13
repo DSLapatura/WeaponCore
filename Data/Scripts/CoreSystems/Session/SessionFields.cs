@@ -64,7 +64,7 @@ namespace CoreSystems
         internal readonly TargetCompare TargetCompare = new TargetCompare();
         internal readonly WaterModAPI WApi = new WaterModAPI();
         internal readonly CustomHitInfo CustomHitInfo = new CustomHitInfo();
-
+        internal static float DeltaStepConst;
         internal static readonly HashSet<ulong> AuthorIds = new HashSet<ulong> { 76561197969691953 };
         internal readonly MyStringHash ShieldBypassDamageType = MyStringHash.GetOrCompute("bypass");
         internal readonly MyConcurrentPool<ConcurrentDictionary<WeaponDefinition.TargetingDef.BlockTypes, ConcurrentCachingList<MyCubeBlock>>> BlockTypePool = new MyConcurrentPool<ConcurrentDictionary<WeaponDefinition.TargetingDef.BlockTypes, ConcurrentCachingList<MyCubeBlock>>>(64);
@@ -410,7 +410,8 @@ namespace CoreSystems
         internal float CurrentFovWithZoom;
         internal float LastOptimalDps;
         internal float ServerSimulation;
-        internal float ClientSimulation;
+        internal float LocalSimulation;
+        internal float DeltaTimeRatio;
         internal bool GlobalDamageHandlerActive;
         internal bool TargetInfoKeyLock;
         internal bool MinimalHudOverride;

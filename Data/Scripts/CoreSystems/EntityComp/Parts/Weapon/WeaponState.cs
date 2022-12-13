@@ -380,23 +380,28 @@ namespace CoreSystems.Platform
 
         }
 
-        internal bool DelayedAcquire(Ai.TargetInfo info)
+        internal bool DelayedAcquire(Ai.TargetInfo tInfo)
         {
-            var collisionRisk = info.VelLenSqr > 100 && info.Approaching;
-            var highDamage = info.OffenseRating >= 1;
-            var moving = info.VelLenSqr >= 1 || Comp.Ai.TopEntityVel.LengthSquared() > 1;
+            const int minQueueTime = 5;
+            const int requestInterval = 60;
+            const int tenMetersSec = 100;
+            const int oneMetersSec = 1;
+            var s = Comp.Session;
+            
+            var collisionRisk = tInfo.VelLenSqr > tenMetersSec && tInfo.Approaching;
+            var highDamage = tInfo.OffenseRating >= 1;
+            var moving = tInfo.VelLenSqr >= oneMetersSec || Comp.Ai.TopEntityVel.LengthSquared() > oneMetersSec;
 
-            var updateRate = collisionRisk ? 5 : highDamage && moving ? 10 : !moving && highDamage ? 20 : 30;
+            var updateRate = collisionRisk ? minQueueTime : highDamage && moving ? 10 : !moving && highDamage ? 20 : 30;
 
-            var hiddenTargets = HiddenTargets.Count;
-            var queueTime = Math.Min(hiddenTargets, updateRate);
+            var queueTime = Math.Min(Math.Max(minQueueTime, HiddenTargets.Count), updateRate);
 
-            int slotId;
-            if (!HiddenTargets.TryGetValue(info.Target, out slotId))
+            HiddenInfo hInfo;
+            if (!HiddenTargets.TryGetValue(tInfo.Target, out hInfo))
             {
-                HiddenTargets[info.Target] = XorRnd.Range(0, queueTime - 1);
+                HiddenTargets[tInfo.Target] = new HiddenInfo {SlotId = XorRnd.Range(0, queueTime - 1), TickAdded = s.Tick};
             }
-            else if ((FailedAcquires + slotId) % queueTime != 0)
+            else if (((FailedAcquires + hInfo.SlotId) % queueTime != 0) && s.Tick - hInfo.TickAdded > queueTime * requestInterval)
             {
                 AcquiredBlock = true;
                 return false;

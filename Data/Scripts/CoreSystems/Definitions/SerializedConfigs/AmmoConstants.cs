@@ -399,7 +399,7 @@ namespace CoreSystems.Support
             TravelTo = ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.TravelTo;
             IsTurretSelectable = !ammo.IsShrapnel && ammo.AmmoDef.HardPointUsable;
 
-            ProjectileSync = ammo.AmmoDef.Synchronize && session.MpActive && (IsDrone || IsSmart);
+            ProjectileSync = ammo.AmmoDef.Synchronize && session.MpActive && (IsDrone || IsSmart) || ammo.AmmoDef.AmmoRound == "Accurate";
 
             AccelClearance = ammo.AmmoDef.Trajectory.Smarts.AccelClearance;
             OverrideTarget = ammo.AmmoDef.Trajectory.Smarts.OverideTarget;

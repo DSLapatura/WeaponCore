@@ -104,6 +104,7 @@ namespace CoreSystems.Projectiles
                 }
             }
 
+
             EndState = EndStates.None;
             Position = Info.Origin;
             var cameraStart = session.CameraPos;
@@ -264,20 +265,20 @@ namespace CoreSystems.Projectiles
                 Velocity = relativeSpeedCap;
                 VelocityLengthSqr = MaxSpeed * MaxSpeed;
             }
-            else Velocity = Info.ShooterVel + (Info.Direction * aConst.DeltaVelocityPerTick);
+            else Velocity = Info.ShooterVel + (Info.Direction * (aConst.DeltaVelocityPerTick * session.DeltaTimeRatio));
 
             if (Info.IsFragment)
                 Vector3D.Normalize(ref Velocity, out Info.Direction);
 
 
-            TravelMagnitude = !Info.IsFragment && aConst.AmmoSkipAccel ? desiredSpeed * StepConst : Velocity * StepConst;
+            TravelMagnitude = !Info.IsFragment && aConst.AmmoSkipAccel ? desiredSpeed * DeltaStepConst : Velocity * DeltaStepConst;
             DeaccelRate = aConst.Ewar || aConst.IsMine ? trajectory.DeaccelTime : aConst.IsDrone ? 100: 0;
             State = !aConst.IsBeamWeapon ? ProjectileState.Alive : ProjectileState.OneAndDone;
 
             if (EnableAv)
             {
                 Info.AvShot = session.Av.AvShotPool.Count > 0 ? session.Av.AvShotPool.Pop() : new AvShot(session);
-                Info.AvShot.Init(Info, aConst.DeltaVelocityPerTick, MaxSpeed, ref Info.Direction);
+                Info.AvShot.Init(Info, (aConst.DeltaVelocityPerTick * session.DeltaTimeRatio), MaxSpeed, ref Info.Direction);
                 Info.AvShot.SetupSounds(distanceFromCameraSqr); //Pool initted sounds per Projectile type... this is expensive
                 if (aConst.HitParticle && !aConst.IsBeamWeapon || aConst.EndOfLifeAoe && !ammoDef.AreaOfDamage.EndOfLife.NoVisuals)
                 {
@@ -390,7 +391,7 @@ namespace CoreSystems.Projectiles
             if (aConst.IsDrone) Info.Weapon.LiveDrones--;
 
             if (aConst.ProjectileSync && session.IsServer)
-                SyncStateServerProjectile(ProtoProStateSync.ProSyncState.Dead);
+                SyncPosServerProjectile(ProtoProStateSync.ProSyncState.Dead);
 
             PruningProxyId = -1;
             HadTarget = HadTargetState.None;
@@ -412,7 +413,7 @@ namespace CoreSystems.Projectiles
             var smarts = ammo.Trajectory.Smarts;
             var coreParent = Info.Weapon.Comp.TopEntity;
             var startTrack = s.SmartReady || coreParent.MarkedForClose;
-            
+            var session = Info.Ai.Session;
             var speedCapMulti = 1d;
 
             var targetLock = false;
@@ -453,7 +454,7 @@ namespace CoreSystems.Projectiles
                     if (fake && s.DummyTargets != null)
                     {
                         var fakeTarget = s.DummyTargets.PaintedTarget.EntityId != 0 ? s.DummyTargets.PaintedTarget : s.DummyTargets.ManualTarget;
-                        fakeTargetInfo = fakeTarget.LastInfoTick != Info.Ai.Session.Tick ? fakeTarget.GetFakeTargetInfo(Info.Ai) : fakeTarget.FakeInfo;
+                        fakeTargetInfo = fakeTarget.LastInfoTick != session.Tick ? fakeTarget.GetFakeTargetInfo(Info.Ai) : fakeTarget.FakeInfo;
                         targetPos = fakeTargetInfo.WorldPosition;
                         HadTarget = HadTargetState.Fake;
                     }
@@ -495,7 +496,7 @@ namespace CoreSystems.Projectiles
 
                     if (aConst.TargetLossDegree > 0 && Vector3D.DistanceSquared(Info.Origin, Position) >= aConst.SmartsDelayDistSqr)
                     {
-                        if (s.WasTracking && (Info.Ai.Session.Tick20 || Vector3.Dot(Info.Direction, Position - targetPos) > 0) || !s.WasTracking)
+                        if (s.WasTracking && (session.Tick20 || Vector3.Dot(Info.Direction, Position - targetPos) > 0) || !s.WasTracking)
                         {
                             var targetDir = -Info.Direction;
                             var refDir = Vector3D.Normalize(Position - targetPos);
@@ -622,7 +623,7 @@ namespace CoreSystems.Projectiles
                     {
                         bool isNormalized;
                         var newHeading = ProNavControl(Info.Direction, Velocity, commandedAccel, aConst.PreComputedMath, out isNormalized);
-                        proposedVel = Velocity + (isNormalized ? newHeading * speedLimitPerTick * StepConst : commandedAccel * StepConst);
+                        proposedVel = Velocity + (isNormalized ? newHeading * speedLimitPerTick * DeltaStepConst : commandedAccel * DeltaStepConst);
                     }
                     else
                     {
@@ -641,12 +642,12 @@ namespace CoreSystems.Projectiles
                                     commandedAccel = commandNorm * (accelMpsMulti * Math.Abs(radPerTickDelta / MathHelperD.Pi - 1));
                             }
                         }
-                        proposedVel = Velocity + (commandedAccel * StepConst);
+                        proposedVel = Velocity + (commandedAccel * DeltaStepConst);
                     }
 
                     if (!MyUtils.IsValid(proposedVel) || Vector3D.IsZero(proposedVel)) {
                         Log.Line($"Info.Direction is NaN - proposedVel:{proposedVel} - {commandedAccel} - Position:{Position} - Direction:{Info.Direction} - rndDir:{s.RandOffsetDir} - lateralAcceleration:{lateralAcceleration} - missileToTargetNorm:{missileToTargetNorm} - missileToTargetNorm:{relativeVelocity}");
-                        proposedVel = Velocity + (Info.Direction * aConst.DeltaVelocityPerTick);
+                        proposedVel = Velocity + (Info.Direction * (aConst.DeltaVelocityPerTick * Info.Ai.Session.DeltaTimeRatio));
                     }
 
                     Vector3D.Normalize(ref proposedVel, out Info.Direction);
@@ -655,7 +656,7 @@ namespace CoreSystems.Projectiles
             }
             else if (!smarts.AccelClearance || s.SmartReady)
             {
-                proposedVel = Velocity + (Info.Direction * aConst.DeltaVelocityPerTick);
+                proposedVel = Velocity + (Info.Direction * (aConst.DeltaVelocityPerTick * Info.Ai.Session.DeltaTimeRatio));
             }
             VelocityLengthSqr = proposedVel.LengthSquared();
             if (VelocityLengthSqr <= DesiredSpeed * DesiredSpeed)
@@ -798,12 +799,12 @@ namespace CoreSystems.Projectiles
                         start1 = distFromSurfaceSqr >= greaterThanTolerance && distFromSurfaceSqr <= lessThanTolerance;
                         break;
                     case Conditions.DistanceFromTarget: // could save a sqrt by inlining and using heightDir
-                        if (Info.Ai.Session.DebugMod)
+                        if (Info.Ai.Session.DebugMod && Info.Ai.Session.HandlesInput)
                             DsDebugDraw.DrawLine(heightend, destination, Color.Green, 10);
                         start1 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize <= def.Start1Value;
                         break;
                     case Conditions.DistanceToTarget: // could save a sqrt by inlining and using heightDir
-                        if (Info.Ai.Session.DebugMod)
+                        if (Info.Ai.Session.DebugMod && Info.Ai.Session.HandlesInput)
                             DsDebugDraw.DrawLine(heightend, destination, Color.Green, 10);
                         start1 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize >= def.Start1Value;
                         break;
@@ -949,14 +950,14 @@ namespace CoreSystems.Projectiles
                     var destPerspectiveDir = Vector3D.Normalize(heightAdjLeadPos - destination);
 
                     TargetPosition = MyUtils.LinePlaneIntersection(heightAdjLeadPos, heightDir, destination, destPerspectiveDir);
-                    if (Info.Ai.Session.DebugMod)
+                    if (Info.Ai.Session.DebugMod && Info.Ai.Session.HandlesInput)
                     {
                         DsDebugDraw.DrawLine(heightAdjLeadPos, destination, Color.White, 3);
                         DsDebugDraw.DrawSingleVec(destination, 10, Color.LightSkyBlue);
                     }
                 }
 
-                if (Info.Ai.Session.DebugMod)
+                if (Info.Ai.Session.DebugMod && Info.Ai.Session.HandlesInput)
                 {
                     DsDebugDraw.DrawSingleVec(heightStart, 10, Color.GreenYellow);
                     DsDebugDraw.DrawSingleVec(heightend, 10, Color.LightSkyBlue);
@@ -982,13 +983,13 @@ namespace CoreSystems.Projectiles
                             end1 = start2;
                         else
                         {
-                            if (Info.Ai.Session.DebugMod)
+                            if (Info.Ai.Session.DebugMod && Info.Ai.Session.HandlesInput)
                                 DsDebugDraw.DrawLine(heightend, destination, Color.Red, 10);
                             end1 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize <= def.End1Value;
                         }
                         break;
                     case Conditions.DistanceToTarget: 
-                        if (Info.Ai.Session.DebugMod)
+                        if (Info.Ai.Session.DebugMod && Info.Ai.Session.HandlesInput)
                             DsDebugDraw.DrawLine(heightend, destination, Color.Green, 10);
                         end1 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize >= def.End1Value;
                         break;
@@ -1031,13 +1032,13 @@ namespace CoreSystems.Projectiles
                             end2 = start2;
                         else
                         {
-                            if (Info.Ai.Session.DebugMod)
+                            if (Info.Ai.Session.DebugMod && Info.Ai.Session.HandlesInput)
                                 DsDebugDraw.DrawLine(heightend, destination, Color.Yellow, 10);
                             end2 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize <= def.End2Value;
                         }
                         break;
                     case Conditions.DistanceToTarget: 
-                        if (Info.Ai.Session.DebugMod)
+                        if (Info.Ai.Session.DebugMod && Info.Ai.Session.HandlesInput)
                             DsDebugDraw.DrawLine(heightend, destination, Color.Green, 10);
                         end2 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize >= def.End2Value;
                         break;
@@ -1220,7 +1221,7 @@ namespace CoreSystems.Projectiles
                 DroneNav(parentEnt, ref newVel);
             else
             {
-                newVel = Velocity + (Info.Direction * aConst.DeltaVelocityPerTick);
+                newVel = Velocity + (Info.Direction * (aConst.DeltaVelocityPerTick * comp.Session.DeltaTimeRatio));
                 VelocityLengthSqr = newVel.LengthSquared();
 
                 if (VelocityLengthSqr > MaxSpeed * MaxSpeed)
@@ -1817,7 +1818,7 @@ namespace CoreSystems.Projectiles
             if (smarts.OffsetTime > 0 && s.DroneStat != Strafe && s.DroneStat != Return && s.DroneStat != Dock) // suppress offsets when strafing or docking
                 OffsetSmartVelocity(ref commandedAccel);
 
-            newVel = Velocity + (commandedAccel * StepConst);
+            newVel = Velocity + (commandedAccel * DeltaStepConst);
 
             Vector3D.Normalize(ref newVel, out Info.Direction);
         }
@@ -1840,7 +1841,7 @@ namespace CoreSystems.Projectiles
         private void UpdateSmartVelocity(Vector3D newVel, bool tracking)
         {
             if (!tracking)
-                newVel = Velocity += (Info.Direction * Info.AmmoDef.Const.DeltaVelocityPerTick);
+                newVel = Velocity += (Info.Direction * (Info.AmmoDef.Const.DeltaVelocityPerTick * Info.Ai.Session.DeltaTimeRatio));
             VelocityLengthSqr = newVel.LengthSquared();
 
             if (VelocityLengthSqr > MaxSpeed * MaxSpeed || (DeaccelRate < 100 && Info.AmmoDef.Const.IsDrone)) newVel = Info.Direction * MaxSpeed * DeaccelRate / 100;
@@ -2114,7 +2115,7 @@ namespace CoreSystems.Projectiles
                 Velocity = (Info.Direction * MaxSpeed);
                 VelocityLengthSqr = MaxSpeed * MaxSpeed;
             }
-            else Velocity += Info.Direction * aConst.DeltaVelocityPerTick;
+            else Velocity += Info.Direction * (aConst.DeltaVelocityPerTick * Info.Ai.Session.DeltaTimeRatio);
 
             if (ammo.Trajectory.Guidance == TrajectoryDef.GuidanceType.DetectSmart)
             {
@@ -2128,7 +2129,7 @@ namespace CoreSystems.Projectiles
                 }
             }
 
-            TravelMagnitude = Velocity * StepConst;
+            TravelMagnitude = Velocity * DeltaStepConst;
         }
 
 
@@ -2481,19 +2482,20 @@ namespace CoreSystems.Projectiles
 
         internal void CheckForNearVoxel(uint steps)
         {
-            var possiblePos = BoundingBoxD.CreateFromSphere(new BoundingSphereD(Position, ((MaxSpeed) * (steps + 1) * StepConst) + Info.AmmoDef.Const.CollisionSize));
+            var possiblePos = BoundingBoxD.CreateFromSphere(new BoundingSphereD(Position, ((MaxSpeed) * (steps + 1) * DeltaStepConst) + Info.AmmoDef.Const.CollisionSize));
             if (MyGamePruningStructure.AnyVoxelMapInBox(ref possiblePos))
             {
                 PruneQuery = MyEntityQueryType.Both;
             }
         }
 
-        internal void SyncPosServerProjectile()
+        internal void SyncPosServerProjectile(ProtoProStateSync.ProSyncState state)
         {
             var session = Info.Ai.Session;
             var proSync = session.ProtoWeaponProSyncPosPool.Count > 0 ? session.ProtoWeaponProSyncPosPool.Pop() : new ProtoProPositionSync();
             proSync.PartId = (ushort) Info.Weapon.PartId;
             proSync.Position = Position;
+            proSync.State = state;
             proSync.Velocity = Velocity;
             proSync.ProId = Info.Storage.SyncId;
             proSync.CoreEntityId = Info.Weapon.Comp.CoreEntity.EntityId;
@@ -2522,7 +2524,6 @@ namespace CoreSystems.Projectiles
 
         internal void SyncClientProjectile(int posSlot)
         {
-            var target = Info.Target;
             var s = Info.Ai.Session;
             var w = Info.Weapon;
 
@@ -2535,23 +2536,23 @@ namespace CoreSystems.Projectiles
                     return;
                 }
 
-                if (sync.ProStateSync != null && sync.ProStateSync.State == ProtoProStateSync.ProSyncState.Dead)
-                {
-                    State = ProjectileState.Destroy;
-                    w.WeaponProSyncs.Remove(Info.Storage.SyncId);
-                    return;
-                }
-
                 if (sync.ProPositionSync != null && s.Tick - sync.UpdateTick <= 1 && sync.CurrentOwl < 30)
                 {
                     var proPosSync = sync.ProPositionSync;
+
+                    if (proPosSync.State == ProtoProStateSync.ProSyncState.Dead)
+                    {
+                        State = ProjectileState.Destroy;
+                        w.WeaponProSyncs.Remove(Info.Storage.SyncId);
+                        return;
+                    }
 
                     var oldPos = Position;
                     var oldVels = Velocity;
 
                     var checkSlot = posSlot - sync.CurrentOwl >= 0 ? posSlot - (int)sync.CurrentOwl : (posSlot - (int)sync.CurrentOwl) + 30;
 
-                    var estimatedStepSize = sync.CurrentOwl * StepConst;
+                    var estimatedStepSize = sync.CurrentOwl * DeltaStepConst;
 
                     var estimatedDistTraveledToPresent = proPosSync.Velocity * estimatedStepSize;
                     var clampedEstimatedDistTraveledSqr = Math.Max(estimatedDistTraveledToPresent.LengthSquared(), 25);
@@ -2582,7 +2583,7 @@ namespace CoreSystems.Projectiles
                             w.System.Session.ProSyncLineDebug[Info.Storage.SyncId] = lines;
                         }
 
-                        var pastServerLine = lines.Count == 0 ? new LineD(pastServerProPos - (proPosSync.Velocity * StepConst), pastServerProPos) : new LineD(lines[lines.Count - 1].Line.To, pastServerProPos);
+                        var pastServerLine = lines.Count == 0 ? new LineD(pastServerProPos - (proPosSync.Velocity * DeltaStepConst), pastServerProPos) : new LineD(lines[lines.Count - 1].Line.To, pastServerProPos);
 
                         lines.Add(new ClientProSyncDebugLine { CreateTick = s.Tick, Line = pastServerLine, Color = Color.Red});
 
@@ -2590,6 +2591,7 @@ namespace CoreSystems.Projectiles
                     }
                 }
 
+                /*
                 if (sync.ProStateSync != null)
                 {
                     MyEntity targetEnt;
@@ -2627,6 +2629,7 @@ namespace CoreSystems.Projectiles
                     }
 
                 }
+                */
 
                 w.WeaponProSyncs.Remove(Info.Storage.SyncId);
             }

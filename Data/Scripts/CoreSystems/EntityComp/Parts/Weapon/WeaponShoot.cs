@@ -45,7 +45,11 @@ namespace CoreSystems.Platform
                 if (PosChangedTick != Comp.Session.SimulationCount)
                     UpdatePivotPos();
 
-                ShootTick = tick + TicksPerShot;
+
+                var needsDelta = (TicksPerShot / s.DeltaTimeRatio + 0.5) < TicksPerShot;
+                var ticksPerShot = (uint)(needsDelta ? Math.Round(MathHelper.Clamp(TicksPerShot / s.DeltaTimeRatio, 1, uint.MaxValue)) : TicksPerShot);
+
+                ShootTick = tick + ticksPerShot;
                 LastShootTick = tick;
                 if (!IsShooting) StartShooting();
 
@@ -304,23 +308,23 @@ namespace CoreSystems.Platform
 
                 if (ActiveAmmoDef.AmmoDef.Const.HasShotReloadDelay && System.ShotsPerBurst > 0 && ++ShotsFired == System.ShotsPerBurst)
                 {
-                    var burstDelay = (uint)System.Values.HardPoint.Loading.DelayAfterBurst;
+                    var burstDelay = (uint)(System.Values.HardPoint.Loading.DelayAfterBurst * Comp.Session.DeltaTimeRatio);
                     ShotsFired = 0;
-                    ShootTick = burstDelay > TicksPerShot ? tick + burstDelay : tick + TicksPerShot;
+                    ShootTick = burstDelay > ticksPerShot ? tick + burstDelay : tick + ticksPerShot;
 
                     if (System.Values.HardPoint.Loading.GiveUpAfter)
                         GiveUpTarget();
                 }
 
                 if (System.AlwaysFireFull || ActiveAmmoDef.AmmoDef.Const.BurstMode)
-                    FinishMode();
+                    FinishMode(ticksPerShot);
 
                 #endregion
             }
             catch (Exception e) { Log.Line($"Error in shoot: {e}", null, true); }
         }
 
-        private void FinishMode()
+        private void FinishMode(uint ticksPerShot)
         {
             if (ActiveAmmoDef.AmmoDef.Const.BurstMode && ++ShotsFired > System.ShotsPerBurst) { // detect when the "first" burst cycle has ended and reset it to shot == 1 so that it can repeat multiple times within a reload window
                 ShotsFired = 1;
@@ -335,7 +339,7 @@ namespace CoreSystems.Platform
 
                 EventTriggerStateChanged(EventTriggers.BurstReload, true);
                 var burstDelay = (uint)System.WConst.DelayAfterBurst;
-                ShootTick = burstDelay > TicksPerShot ? System.Session.Tick + burstDelay : System.Session.Tick + TicksPerShot;
+                ShootTick = burstDelay > ticksPerShot ? System.Session.Tick + burstDelay : System.Session.Tick + ticksPerShot;
 
                 if (System.WConst.GiveUpAfter)
                      GiveUpTarget();

@@ -46,8 +46,14 @@ namespace CoreSystems
             Tick1800 = Tick % 1800 == 0;
             Tick3600 = Tick % 3600 == 0;
 
-            ServerSimulation += MyAPIGateway.Physics.ServerSimulationRatio;
-            ClientSimulation += MyAPIGateway.Physics.SimulationRatio;
+            var serverSim = MyAPIGateway.Physics.ServerSimulationRatio;
+            var localSim = MyAPIGateway.Physics.SimulationRatio;
+            var serverSimClamped = MathHelper.Clamp(serverSim, 0.001f, 1);
+            DeltaTimeRatio = IsServer ? 1 : serverSimClamped / MathHelper.Clamp(localSim, 0.01f, serverSimClamped);
+            DeltaStepConst = DeltaTimeRatio * StepConst;
+            ServerSimulation += serverSim;
+            LocalSimulation += localSim;
+
             SimStepsLastSecond += MyAPIGateway.Physics.StepsLastSecond;
 
 
@@ -245,7 +251,7 @@ namespace CoreSystems
             var charge = DsUtil.GetValue("charge");
             var acquire = DsUtil.GetValue("acquire");
 
-            var clientSim = ClientSimulation / 180;
+            var clientSim = LocalSimulation / 180;
             var serverSim = ServerSimulation / 180;
             var simSteps = SimStepsLastSecond / 180;
 
@@ -260,7 +266,7 @@ namespace CoreSystems
 
             SimStepsLastSecond = 0;
             ServerSimulation = 0;
-            ClientSimulation = 0;
+            LocalSimulation = 0;
             TargetRequests = 0;
             TargetChecks = 0;
             BlockChecks = 0;

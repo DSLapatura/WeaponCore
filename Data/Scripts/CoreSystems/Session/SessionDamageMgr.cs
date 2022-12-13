@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using CoreSystems.Projectiles;
 using CoreSystems.Support;
 using Sandbox.Definitions;
 using Sandbox.Game.Entities;
-using Sandbox.Game.Entities.Cube;
 using Sandbox.ModAPI;
 using VRage;
 using VRage.Collections;
@@ -18,7 +16,6 @@ using VRage.Utils;
 using VRageMath;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.AreaOfDamageDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.DamageScaleDef;
-using CollisionLayers = Sandbox.Engine.Physics.MyPhysics.CollisionLayers;
 
 namespace CoreSystems
 {
@@ -314,7 +311,6 @@ namespace CoreSystems
 
             //Global & modifiers
             var canDamage = t.DoDamage;
-
             _destroyedSlims.Clear();
 
             var directDmgGlobal = Settings.Enforcement.DirectDamageModifer * hitEnt.DamageMulti;
