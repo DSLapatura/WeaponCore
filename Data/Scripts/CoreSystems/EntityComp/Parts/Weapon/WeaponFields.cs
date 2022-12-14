@@ -65,7 +65,6 @@ namespace CoreSystems.Platform
 
         internal uint LastMagSeenTick;
         internal uint GravityTick;
-        internal uint ShootTick;
         internal uint LastShootTick;
         internal uint TicksPerShot;
         internal uint ElevationTick;
@@ -177,6 +176,7 @@ namespace CoreSystems.Platform
         internal double MaxTargetDistance75Sqr;
         internal double MaxTargetDistance50Sqr;
         internal double MaxTargetDistance25Sqr;
+        internal double ShootTime;
 
         internal double MinTargetDistance;
         internal double MinTargetDistanceSqr;

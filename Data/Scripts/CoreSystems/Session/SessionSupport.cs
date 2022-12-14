@@ -6,6 +6,7 @@ using CoreSystems.Support;
 using ParallelTasks;
 using Sandbox.Common.ObjectBuilders;
 using Sandbox.Definitions;
+using Sandbox.Engine.Platform.VideoMode;
 using Sandbox.Game;
 using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Character.Components;
@@ -51,6 +52,7 @@ namespace CoreSystems
             var serverSimClamped = MathHelper.Clamp(serverSim, 0.001f, 1);
             DeltaTimeRatio = IsServer ? 1 : serverSimClamped / MathHelper.Clamp(localSim, 0.01f, serverSimClamped);
             DeltaStepConst = DeltaTimeRatio * StepConst;
+            RelativeTime += DeltaStepConst;
             ServerSimulation += serverSim;
             LocalSimulation += localSim;
 

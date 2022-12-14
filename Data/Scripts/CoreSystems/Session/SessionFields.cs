@@ -35,7 +35,7 @@ namespace CoreSystems
 {
     public partial class Session
     {
-        internal const float StepConst = MyEngineConstants.PHYSICS_STEP_SIZE_IN_SECONDS;
+        internal const double StepConst = MyEngineConstants.PHYSICS_STEP_SIZE_IN_SECONDS;
         internal const ushort StringPacketId = 62517;
         internal const ushort ServerPacketId = 62518;
         internal const ushort ClientPacketId = 62519;
@@ -61,11 +61,15 @@ namespace CoreSystems
         internal volatile bool DecoyControls;
         internal volatile bool EarlyInitOver;
 
+        internal static double DeltaStepConst;
+        internal static double RelativeTime;
+        internal static double DeltaTimeRatio;
+        internal static readonly HashSet<ulong> AuthorIds = new HashSet<ulong> { 76561197969691953 };
+
         internal readonly TargetCompare TargetCompare = new TargetCompare();
         internal readonly WaterModAPI WApi = new WaterModAPI();
         internal readonly CustomHitInfo CustomHitInfo = new CustomHitInfo();
-        internal static float DeltaStepConst;
-        internal static readonly HashSet<ulong> AuthorIds = new HashSet<ulong> { 76561197969691953 };
+
         internal readonly MyStringHash ShieldBypassDamageType = MyStringHash.GetOrCompute("bypass");
         internal readonly MyConcurrentPool<ConcurrentDictionary<WeaponDefinition.TargetingDef.BlockTypes, ConcurrentCachingList<MyCubeBlock>>> BlockTypePool = new MyConcurrentPool<ConcurrentDictionary<WeaponDefinition.TargetingDef.BlockTypes, ConcurrentCachingList<MyCubeBlock>>>(64);
         internal readonly MyConcurrentPool<TargetInfo> TargetInfoPool = new MyConcurrentPool<TargetInfo>(256, info => info.Clean());
@@ -402,6 +406,7 @@ namespace CoreSystems
         internal double Load;
         internal double ScaleFov;
         internal double RayMissAmounts;
+
         internal float AspectRatio;
         internal float AspectRatioInv;
         internal float UiBkOpacity;
@@ -411,7 +416,6 @@ namespace CoreSystems
         internal float LastOptimalDps;
         internal float ServerSimulation;
         internal float LocalSimulation;
-        internal float DeltaTimeRatio;
         internal bool GlobalDamageHandlerActive;
         internal bool TargetInfoKeyLock;
         internal bool MinimalHudOverride;

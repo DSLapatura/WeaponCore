@@ -7,6 +7,7 @@ using VRage.Game.Components;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRage.Game.ModAPI.Interfaces;
+using VRage.Utils;
 using VRageMath;
 using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetDef;
 namespace CoreSystems.Platform
@@ -38,18 +39,16 @@ namespace CoreSystems.Platform
                     UnSetPreFire();
                 #endregion
 
+                var notReadyToShoot = Session.RelativeTime < ShootTime && !MyUtils.IsZero(Session.RelativeTime - ShootTime);
                 #region Weapon timing
-                if (System.HasBarrelRotation && !SpinBarrel() || ShootTick > tick)
+                if (System.HasBarrelRotation && !SpinBarrel() || notReadyToShoot)
                     return;
 
                 if (PosChangedTick != Comp.Session.SimulationCount)
                     UpdatePivotPos();
 
+                ShootTime = TicksPerShot * Session.StepConst + Session.RelativeTime;
 
-                var needsDelta = (TicksPerShot / s.DeltaTimeRatio + 0.5) < TicksPerShot;
-                var ticksPerShot = (uint)(needsDelta ? Math.Round(MathHelper.Clamp(TicksPerShot / s.DeltaTimeRatio, 1, uint.MaxValue)) : TicksPerShot);
-
-                ShootTick = tick + ticksPerShot;
                 LastShootTick = tick;
                 if (!IsShooting) StartShooting();
 
@@ -308,23 +307,22 @@ namespace CoreSystems.Platform
 
                 if (ActiveAmmoDef.AmmoDef.Const.HasShotReloadDelay && System.ShotsPerBurst > 0 && ++ShotsFired == System.ShotsPerBurst)
                 {
-                    var burstDelay = (uint)(System.Values.HardPoint.Loading.DelayAfterBurst * Comp.Session.DeltaTimeRatio);
+                    var burstDelay = (uint)System.Values.HardPoint.Loading.DelayAfterBurst;
                     ShotsFired = 0;
-                    ShootTick = burstDelay > ticksPerShot ? tick + burstDelay : tick + ticksPerShot;
-
+                    ShootTime = burstDelay > TicksPerShot ? burstDelay * Session.StepConst + Session.RelativeTime : TicksPerShot * Session.StepConst + Session.RelativeTime;
                     if (System.Values.HardPoint.Loading.GiveUpAfter)
                         GiveUpTarget();
                 }
 
                 if (System.AlwaysFireFull || ActiveAmmoDef.AmmoDef.Const.BurstMode)
-                    FinishMode(ticksPerShot);
+                    FinishMode();
 
                 #endregion
             }
             catch (Exception e) { Log.Line($"Error in shoot: {e}", null, true); }
         }
 
-        private void FinishMode(uint ticksPerShot)
+        private void FinishMode()
         {
             if (ActiveAmmoDef.AmmoDef.Const.BurstMode && ++ShotsFired > System.ShotsPerBurst) { // detect when the "first" burst cycle has ended and reset it to shot == 1 so that it can repeat multiple times within a reload window
                 ShotsFired = 1;
@@ -338,9 +336,8 @@ namespace CoreSystems.Platform
             if (burstReset) {
 
                 EventTriggerStateChanged(EventTriggers.BurstReload, true);
-                var burstDelay = (uint)System.WConst.DelayAfterBurst;
-                ShootTick = burstDelay > ticksPerShot ? System.Session.Tick + burstDelay : System.Session.Tick + ticksPerShot;
-
+                var burstDelay =  (uint)System.WConst.DelayAfterBurst;
+                ShootTime = burstDelay > TicksPerShot ? burstDelay * Session.StepConst + Session.RelativeTime : TicksPerShot * Session.StepConst + Session.RelativeTime;
                 if (System.WConst.GiveUpAfter)
                      GiveUpTarget();
             }

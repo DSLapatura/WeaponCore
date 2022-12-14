@@ -498,7 +498,7 @@ namespace CoreSystems
                     },
                     {"ShootDelay", () => {
                             var message = string.Empty;
-                            return !TryGetValidPlatform(out TmpPlatform) ? string.Empty : TmpPlatform.Weapons.Aggregate(message, (current, w) => current + $"{w.ShootTick <= w.BaseComp.Session.Tick}"); }
+                            return !TryGetValidPlatform(out TmpPlatform) ? string.Empty : TmpPlatform.Weapons.Aggregate(message, (current, w) => current + $"{w.ShootTime <= RelativeTime}"); }
                     },
                     {"Charging", () => {
                             var message = string.Empty;
