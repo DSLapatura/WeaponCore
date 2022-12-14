@@ -206,7 +206,7 @@ namespace CoreSystems.Projectiles
 
                         if (MyUtils.IsValid(p.Gravity) && !MyUtils.IsZero(ref p.Gravity)) {
 
-                            p.Velocity += p.Gravity * Session.DeltaStepConst;
+                            p.Velocity += p.Gravity * (float) Session.DeltaStepConst;
                             if (!aConst.IsSmart && !aConst.IsDrone && aConst.AmmoSkipAccel)
                                 Vector3D.Normalize(ref p.Velocity, out info.Direction);
                         }
@@ -500,7 +500,7 @@ namespace CoreSystems.Projectiles
                         var vs = vp.AvShot;
 
                         vp.TracerLength = info.TracerLength;
-                        vs.Init(vp, (aConst.DeltaVelocityPerTick * info.Ai.Session.DeltaTimeRatio), p.MaxSpeed, ref info.Direction);
+                        vs.Init(vp, (aConst.DeltaVelocityPerTick * Session.DeltaTimeRatio), p.MaxSpeed, ref info.Direction);
 
                         if (info.BaseDamagePool <= 0 || p.State == ProjectileState.Depleted)
                             vs.ProEnded = true;

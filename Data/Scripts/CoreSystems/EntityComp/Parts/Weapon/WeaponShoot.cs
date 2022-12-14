@@ -39,7 +39,7 @@ namespace CoreSystems.Platform
                     UnSetPreFire();
                 #endregion
 
-                var notReadyToShoot = Session.RelativeTime < ShootTime && !MyUtils.IsZero(Session.RelativeTime - ShootTime);
+                var notReadyToShoot = Session.RelativeTime < ShootTime && !MyUtils.IsZero(Session.RelativeTime - ShootTime, 1E-04F);
                 #region Weapon timing
                 if (System.HasBarrelRotation && !SpinBarrel() || notReadyToShoot)
                     return;

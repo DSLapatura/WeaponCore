@@ -265,7 +265,7 @@ namespace CoreSystems.Projectiles
                 Velocity = relativeSpeedCap;
                 VelocityLengthSqr = MaxSpeed * MaxSpeed;
             }
-            else Velocity = Info.ShooterVel + (Info.Direction * (aConst.DeltaVelocityPerTick * session.DeltaTimeRatio));
+            else Velocity = Info.ShooterVel + (Info.Direction * (aConst.DeltaVelocityPerTick * DeltaTimeRatio));
 
             if (Info.IsFragment)
                 Vector3D.Normalize(ref Velocity, out Info.Direction);
@@ -278,7 +278,7 @@ namespace CoreSystems.Projectiles
             if (EnableAv)
             {
                 Info.AvShot = session.Av.AvShotPool.Count > 0 ? session.Av.AvShotPool.Pop() : new AvShot(session);
-                Info.AvShot.Init(Info, (aConst.DeltaVelocityPerTick * session.DeltaTimeRatio), MaxSpeed, ref Info.Direction);
+                Info.AvShot.Init(Info, (aConst.DeltaVelocityPerTick * DeltaTimeRatio), MaxSpeed, ref Info.Direction);
                 Info.AvShot.SetupSounds(distanceFromCameraSqr); //Pool initted sounds per Projectile type... this is expensive
                 if (aConst.HitParticle && !aConst.IsBeamWeapon || aConst.EndOfLifeAoe && !ammoDef.AreaOfDamage.EndOfLife.NoVisuals)
                 {
@@ -647,7 +647,7 @@ namespace CoreSystems.Projectiles
 
                     if (!MyUtils.IsValid(proposedVel) || Vector3D.IsZero(proposedVel)) {
                         Log.Line($"Info.Direction is NaN - proposedVel:{proposedVel} - {commandedAccel} - Position:{Position} - Direction:{Info.Direction} - rndDir:{s.RandOffsetDir} - lateralAcceleration:{lateralAcceleration} - missileToTargetNorm:{missileToTargetNorm} - missileToTargetNorm:{relativeVelocity}");
-                        proposedVel = Velocity + (Info.Direction * (aConst.DeltaVelocityPerTick * Info.Ai.Session.DeltaTimeRatio));
+                        proposedVel = Velocity + (Info.Direction * (aConst.DeltaVelocityPerTick * DeltaTimeRatio));
                     }
 
                     Vector3D.Normalize(ref proposedVel, out Info.Direction);
@@ -656,7 +656,7 @@ namespace CoreSystems.Projectiles
             }
             else if (!smarts.AccelClearance || s.SmartReady)
             {
-                proposedVel = Velocity + (Info.Direction * (aConst.DeltaVelocityPerTick * Info.Ai.Session.DeltaTimeRatio));
+                proposedVel = Velocity + (Info.Direction * (aConst.DeltaVelocityPerTick * DeltaTimeRatio));
             }
             VelocityLengthSqr = proposedVel.LengthSquared();
             if (VelocityLengthSqr <= DesiredSpeed * DesiredSpeed)
@@ -1221,7 +1221,7 @@ namespace CoreSystems.Projectiles
                 DroneNav(parentEnt, ref newVel);
             else
             {
-                newVel = Velocity + (Info.Direction * (aConst.DeltaVelocityPerTick * comp.Session.DeltaTimeRatio));
+                newVel = Velocity + (Info.Direction * (aConst.DeltaVelocityPerTick * DeltaTimeRatio));
                 VelocityLengthSqr = newVel.LengthSquared();
 
                 if (VelocityLengthSqr > MaxSpeed * MaxSpeed)
@@ -1841,7 +1841,7 @@ namespace CoreSystems.Projectiles
         private void UpdateSmartVelocity(Vector3D newVel, bool tracking)
         {
             if (!tracking)
-                newVel = Velocity += (Info.Direction * (Info.AmmoDef.Const.DeltaVelocityPerTick * Info.Ai.Session.DeltaTimeRatio));
+                newVel = Velocity += (Info.Direction * (Info.AmmoDef.Const.DeltaVelocityPerTick * DeltaTimeRatio));
             VelocityLengthSqr = newVel.LengthSquared();
 
             if (VelocityLengthSqr > MaxSpeed * MaxSpeed || (DeaccelRate < 100 && Info.AmmoDef.Const.IsDrone)) newVel = Info.Direction * MaxSpeed * DeaccelRate / 100;
@@ -2115,7 +2115,7 @@ namespace CoreSystems.Projectiles
                 Velocity = (Info.Direction * MaxSpeed);
                 VelocityLengthSqr = MaxSpeed * MaxSpeed;
             }
-            else Velocity += Info.Direction * (aConst.DeltaVelocityPerTick * Info.Ai.Session.DeltaTimeRatio);
+            else Velocity += Info.Direction * (aConst.DeltaVelocityPerTick * DeltaTimeRatio);
 
             if (ammo.Trajectory.Guidance == TrajectoryDef.GuidanceType.DetectSmart)
             {
@@ -2554,7 +2554,7 @@ namespace CoreSystems.Projectiles
 
                     var estimatedStepSize = sync.CurrentOwl * DeltaStepConst;
 
-                    var estimatedDistTraveledToPresent = proPosSync.Velocity * estimatedStepSize;
+                    var estimatedDistTraveledToPresent = proPosSync.Velocity * (float) estimatedStepSize;
                     var clampedEstimatedDistTraveledSqr = Math.Max(estimatedDistTraveledToPresent.LengthSquared(), 25);
                     var pastServerProPos = proPosSync.Position;
                     var futurePosition = pastServerProPos + estimatedDistTraveledToPresent;
@@ -2583,7 +2583,7 @@ namespace CoreSystems.Projectiles
                             w.System.Session.ProSyncLineDebug[Info.Storage.SyncId] = lines;
                         }
 
-                        var pastServerLine = lines.Count == 0 ? new LineD(pastServerProPos - (proPosSync.Velocity * DeltaStepConst), pastServerProPos) : new LineD(lines[lines.Count - 1].Line.To, pastServerProPos);
+                        var pastServerLine = lines.Count == 0 ? new LineD(pastServerProPos - (proPosSync.Velocity * (float) DeltaStepConst), pastServerProPos) : new LineD(lines[lines.Count - 1].Line.To, pastServerProPos);
 
                         lines.Add(new ClientProSyncDebugLine { CreateTick = s.Tick, Line = pastServerLine, Color = Color.Red});
 

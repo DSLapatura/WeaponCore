@@ -1043,8 +1043,6 @@ namespace CoreSystems.Platform
 
         internal void InitTracking()
         {
-            RotationSpeed = System.AzStep;
-            ElevationSpeed = System.ElStep;
             var minAz = System.MinAzimuth;
             var maxAz = System.MaxAzimuth;
             var minEl = System.MinElevation;

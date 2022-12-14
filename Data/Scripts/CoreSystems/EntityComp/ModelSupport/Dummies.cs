@@ -142,7 +142,7 @@ namespace CoreSystems.Support
                 else
                 {
                     if (rifle)
-                        partWorldMatrix.Translation += (_part.BaseComp.TopEntity.Physics.LinearVelocity * Session.DeltaStepConst);
+                        partWorldMatrix.Translation += (_part.BaseComp.TopEntity.Physics.LinearVelocity * (float) Session.DeltaStepConst);
 
                     Vector3D.Transform(ref localPos, ref partWorldMatrix, out CachedPos);
                     bool clientRifleOffset = false;

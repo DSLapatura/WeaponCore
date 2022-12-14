@@ -476,8 +476,11 @@ namespace CoreSystems.Support
                     azToTraverse = desiredAzimuth;
 
                 // Clamp step within limits.
-                var azStep = MathHelperD.Clamp(azToTraverse, -system.AzStep, system.AzStep);
-                var elStep = MathHelperD.Clamp(desiredElevation - weapon.Elevation, -system.ElStep, system.ElStep);
+                var simAzStep = system.AzStep * Session.DeltaTimeRatio;
+                var simElStep = system.AzStep * Session.DeltaTimeRatio;
+
+                var azStep = MathHelperD.Clamp(azToTraverse, -simAzStep, simAzStep);
+                var elStep = MathHelperD.Clamp(desiredElevation - weapon.Elevation, -simElStep, simElStep);
 
                 // epsilon based on target type and distance
                 var epsilon = target.TargetState == Target.TargetStates.IsProjectile || system.Session.Tick120 ? 1E-06d : targetDistSqr <= 640000 ? 1E-03d : targetDistSqr <= 3240000 ? 1E-04d : 1E-05d;

@@ -161,8 +161,6 @@ namespace CoreSystems.Platform
         internal double Azimuth;
         internal double Elevation;
         internal double AimingTolerance;
-        internal double RotationSpeed;
-        internal double ElevationSpeed;
         internal double MaxAzToleranceRadians;
         internal double MinAzToleranceRadians;
         internal double MaxElToleranceRadians;
