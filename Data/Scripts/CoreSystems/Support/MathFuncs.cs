@@ -477,7 +477,7 @@ namespace CoreSystems.Support
 
                 // Clamp step within limits.
                 var simAzStep = system.AzStep * Session.DeltaTimeRatio;
-                var simElStep = system.AzStep * Session.DeltaTimeRatio;
+                var simElStep = system.ElStep * Session.DeltaTimeRatio;
 
                 var azStep = MathHelperD.Clamp(azToTraverse, -simAzStep, simAzStep);
                 var elStep = MathHelperD.Clamp(desiredElevation - weapon.Elevation, -simElStep, simElStep);
