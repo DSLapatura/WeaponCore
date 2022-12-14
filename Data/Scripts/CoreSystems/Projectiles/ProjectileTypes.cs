@@ -213,13 +213,14 @@ namespace CoreSystems.Support
         internal bool PickTarget;
         internal int ProSyncPosMissCount;
         internal int ChaseAge;
-        internal int ZombieLifeTime;
         internal int LastOffsetTime;
         internal int SmartSlot;
         internal int LastActivatedStage = -1;
         internal int RequestedStage = -1;
         internal long SyncId;
         internal double StartDistanceTraveled;
+        internal double ZombieLifeTime;
+        internal double PrevZombieLifeTime;
 
         internal void Clean(bool synced)
         {
@@ -227,6 +228,7 @@ namespace CoreSystems.Support
             ProSyncPosMissCount = 0;
             ChaseAge = 0;
             ZombieLifeTime = 0;
+            PrevZombieLifeTime = 0;
             LastOffsetTime = 0;
             DroneStat = DroneStatus.Launch;
             DroneMsn = DroneMission.Attack;

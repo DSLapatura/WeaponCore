@@ -433,8 +433,14 @@ namespace CoreSystems.Projectiles
                 var validEntity = Info.Target.TargetState == Target.TargetStates.IsEntity && !((MyEntity)Info.Target.TargetObject).MarkedForClose;
                 var validTarget = fake || Info.Target.TargetState == Target.TargetStates.IsProjectile || validEntity && !overMaxTargets;
                 var checkTime = HadTarget != HadTargetState.Projectile ? 30 : 10;
-                var isZombie = aConst.CanZombie && hadTarget && !fake && !validTarget && s.ZombieLifeTime > 0 && (s.ZombieLifeTime + s.SmartSlot) % checkTime == 0;
-                var timeSlot = (Info.Age + s.SmartSlot) % checkTime == 0;
+                var prevSlotAge = Info.PrevRelativeAge + s.SmartSlot;
+                var currentSlotAge = Info.RelativeAge + s.SmartSlot;
+
+                var prevZombieAge = s.PrevZombieLifeTime + s.SmartSlot;
+                var currentZombieAge = s.PrevZombieLifeTime + s.SmartSlot;
+
+                var isZombie = aConst.CanZombie && hadTarget && !fake && !validTarget && s.ZombieLifeTime > 0 && prevZombieAge < checkTime && currentZombieAge >= checkTime;
+                var timeSlot = prevSlotAge < checkTime && currentSlotAge >= checkTime;
                 var seekNewTarget = timeSlot && hadTarget && !validTarget && !overMaxTargets;
                 var seekFirstTarget = !hadTarget && !validTarget && s.PickTarget && (Info.RelativeAge > 120 && timeSlot || Info.PrevRelativeAge < checkTime && Info.RelativeAge >= checkTime && Info.IsFragment);
 
@@ -517,7 +523,8 @@ namespace CoreSystems.Projectiles
 
                     TargetPosition = straightAhead ? TargetPosition : Position + (Info.Direction * Info.MaxTrajectory);
 
-                    if (s.ZombieLifeTime++ > aConst.TargetLossTime && !smarts.KeepAliveAfterTargetLoss && (smarts.NoTargetExpire || hadTarget))
+                    s.ZombieLifeTime += DeltaTimeRatio;
+                    if (s.ZombieLifeTime > aConst.TargetLossTime && !smarts.KeepAliveAfterTargetLoss && (smarts.NoTargetExpire || hadTarget))
                     {
                         DistanceToTravelSqr = Info.DistanceTraveled * Info.DistanceTraveled;
                         EndState = EndStates.EarlyEnd;
@@ -1505,7 +1512,10 @@ namespace CoreSystems.Projectiles
         private bool DroneTracking(Target target, SmartStorage s, AmmoConstants aConst)
         {
             var validEntity = target.TargetState == Target.TargetStates.IsEntity && !((MyEntity)target.TargetObject).MarkedForClose;
-            var timeSlot = (Info.Age + s.SmartSlot) % 30 == 0;
+            var prevSlotAge = Info.PrevRelativeAge + s.SmartSlot;
+            var currentSlotAge = Info.RelativeAge + s.SmartSlot;
+
+            var timeSlot = prevSlotAge < 30 && currentSlotAge >= 30;
             var hadTarget = HadTarget != HadTargetState.None;
             var overMaxTargets = hadTarget && TargetsSeen > aConst.MaxTargets && aConst.MaxTargets != 0;
             var fake = target.TargetState == Target.TargetStates.IsFake;
@@ -1828,7 +1838,8 @@ namespace CoreSystems.Projectiles
             var hadTaret = HadTarget != HadTargetState.None;
             TargetPosition = Position + (Info.Direction * Info.MaxTrajectory);
 
-            if (Info.Storage.ZombieLifeTime++ > Info.AmmoDef.Const.TargetLossTime && !smarts.KeepAliveAfterTargetLoss && (smarts.NoTargetExpire || hadTaret))
+            Info.Storage.ZombieLifeTime += DeltaTimeRatio;
+            if (Info.Storage.ZombieLifeTime > Info.AmmoDef.Const.TargetLossTime && !smarts.KeepAliveAfterTargetLoss && (smarts.NoTargetExpire || hadTaret))
             {
                 DistanceToTravelSqr = Info.DistanceTraveled * Info.DistanceTraveled;
                 EndState = EndStates.EarlyEnd;
