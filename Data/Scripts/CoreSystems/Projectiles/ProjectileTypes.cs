@@ -48,6 +48,7 @@ namespace CoreSystems.Support
         internal double ProjectileDisplacement;
         internal double TracerLength;
         internal double MaxTrajectory;
+        internal double RelativeAge;
         internal long DamageDonePri;
         internal long DamageDoneAoe;
         internal long DamageDoneShld;
@@ -146,6 +147,7 @@ namespace CoreSystems.Support
             Frags = 0;
             MuzzleId = 0;
             Age = 0;
+            RelativeAge = 0;
             DamageDonePri = 0;
             DamageDoneAoe = 0;
             DamageDoneShld = 0;
@@ -208,7 +210,6 @@ namespace CoreSystems.Support
         internal bool Sleep;
         internal bool PickTarget;
         internal int ProSyncPosMissCount;
-        internal int LastProSyncStateAge = int.MinValue;
         internal int ChaseAge;
         internal int ZombieLifeTime;
         internal int LastOffsetTime;
@@ -221,7 +222,6 @@ namespace CoreSystems.Support
         internal void Clean(bool synced)
         {
             SyncId = long.MinValue;
-            LastProSyncStateAge = int.MinValue;
             ProSyncPosMissCount = 0;
             ChaseAge = 0;
             ZombieLifeTime = 0;

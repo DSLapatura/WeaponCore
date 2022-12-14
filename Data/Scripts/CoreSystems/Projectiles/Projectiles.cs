@@ -145,6 +145,7 @@ namespace CoreSystems.Projectiles
                 var targetState = target.TargetState;
                 var ai = p.Info.Ai;
                 ++info.Age;
+                info.RelativeAge += Session.DeltaTimeRatio;
                 ++ai.MyProjectiles;
                 ai.ProjectileTicker = Session.Tick;
 
@@ -212,9 +213,9 @@ namespace CoreSystems.Projectiles
                         }
                     }
 
-                    if (aConst.TimedFragments && info.SpawnDepth < aConst.FragMaxChildren && info.Age >= aConst.FragStartTime && info.Age - info.LastFragTime > aConst.FragInterval && info.Frags < aConst.MaxFrags)
+                    if (aConst.TimedFragments && info.SpawnDepth < aConst.FragMaxChildren && info.RelativeAge >= aConst.FragStartTime && info.RelativeAge - info.LastFragTime > aConst.FragInterval && info.Frags < aConst.MaxFrags)
                     {
-                        if (!aConst.HasFragGroup || info.Frags == 0 || info.Frags % aConst.FragGroupSize != 0 || info.Age - info.LastFragTime >= aConst.FragGroupDelay)
+                        if (!aConst.HasFragGroup || info.Frags == 0 || info.Frags % aConst.FragGroupSize != 0 || info.RelativeAge - info.LastFragTime >= aConst.FragGroupDelay)
                         {
                             if (!aConst.HasFragProximity)
                                 p.SpawnShrapnel();
@@ -315,7 +316,7 @@ namespace CoreSystems.Projectiles
 
                 if (p.State != ProjectileState.OneAndDone)
                 {
-                    if (info.Age > aConst.MaxLifeTime) {
+                    if (info.RelativeAge > aConst.MaxLifeTime) {
                         p.DistanceToTravelSqr = (info.DistanceTraveled * info.DistanceTraveled);
                         p.EndState =  EndStates.EarlyEnd;
                     }
@@ -384,12 +385,12 @@ namespace CoreSystems.Projectiles
                 var useEwarSphere = (triggerRange > 0 || info.EwarActive) && aConst.Pulse && aConst.EwarType != WeaponDefinition.AmmoDef.EwarDef.EwarType.AntiSmart;
                 p.Beam = useEwarSphere ? new LineD(p.Position + (-info.Direction * aConst.EwarTriggerRange), p.Position + (info.Direction * aConst.EwarTriggerRange)) : new LineD(p.LastPosition, p.Position);
                 var checkBeam = p.Info.AmmoDef.Const.CheckFutureIntersection ? new LineD(p.Beam.From, p.Beam.From + (p.Beam.Direction * (p.Beam.Length + p.MaxSpeed+aConst.CollisionSize)), p.Beam.Length + p.MaxSpeed+aConst.CollisionSize) : p.Beam;
-                if (p.DeaccelRate <= 0 && p.State != ProjectileState.OneAndDone && (info.DistanceTraveled * info.DistanceTraveled >= p.DistanceToTravelSqr || info.Age > aConst.MaxLifeTime)) {
+                if (p.DeaccelRate <= 0 && p.State != ProjectileState.OneAndDone && (info.DistanceTraveled * info.DistanceTraveled >= p.DistanceToTravelSqr || info.RelativeAge > aConst.MaxLifeTime)) {
 
                     p.PruneSphere.Center = p.Position;
                     p.PruneSphere.Radius = aConst.EndOfLifeRadius;
 
-                    if (aConst.TravelTo && storage.RequestedStage == -2 || aConst.EndOfLifeAoe && info.Age >= aConst.MinArmingTime && (!aConst.ArmOnlyOnHit || info.ObjectsHit > 0))
+                    if (aConst.TravelTo && storage.RequestedStage == -2 || aConst.EndOfLifeAoe && info.RelativeAge >= aConst.MinArmingTime && (!aConst.ArmOnlyOnHit || info.ObjectsHit > 0))
                     {
                         MyGamePruningStructure.GetAllTopMostEntitiesInSphere(ref p.PruneSphere, p.MyEntityList, p.PruneQuery);
 
@@ -473,7 +474,7 @@ namespace CoreSystems.Projectiles
                     lock (ValidateHits)
                         ValidateHits.Add(p);
                 }
-                else if (aConst.IsMine && storage.LastActivatedStage <= -2 && storage.RequestedStage != -3 && info.Age - storage.ChaseAge > 600)
+                else if (aConst.IsMine && storage.LastActivatedStage <= -2 && storage.RequestedStage != -3 && info.RelativeAge - storage.ChaseAge > 600)
                 {
                     storage.Sleep = true;
                 }

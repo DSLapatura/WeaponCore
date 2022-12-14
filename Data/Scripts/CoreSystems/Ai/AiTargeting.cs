@@ -613,7 +613,7 @@ namespace CoreSystems.Support
             var w = info.Weapon;
             var s = w.System;
             var target = info.Target;
-            info.Storage.ChaseAge = info.Age;
+            info.Storage.ChaseAge = (int) info.RelativeAge;
             var ai = info.Ai;
             var session = ai.Session;
 
@@ -728,7 +728,7 @@ namespace CoreSystems.Support
 
             var s = w.System;
             var target = info.Target;
-            info.Storage.ChaseAge = info.Age;
+            info.Storage.ChaseAge = (int) info.RelativeAge;
             var ai = info.Ai;
             var session = ai.Session;
             var physics = s.Session.Physics;

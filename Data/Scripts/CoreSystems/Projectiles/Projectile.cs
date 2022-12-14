@@ -114,7 +114,7 @@ namespace CoreSystems.Projectiles
             EnableAv = !aConst.VirtualBeams && !session.DedicatedServer && (distanceFromCameraSqr <= session.SyncDistSqr || ai.AiType == Ai.AiTypes.Phantom) && (probability >= 1 || probability >= MyUtils.GetRandomDouble(0.0f, 1f));
             Info.AvShot = null;
             Info.Age = -1;
-
+            Info.RelativeAge = -1;
             TargetsSeen = 0;
             PruningProxyId = -1;
 
@@ -325,7 +325,7 @@ namespace CoreSystems.Projectiles
             var aConst = Info.AmmoDef.Const;
             var session = Info.Ai.Session;
 
-            if ((aConst.FragOnEnd && aConst.FragIgnoreArming || Info.Age >= aConst.MinArmingTime && (aConst.FragOnEnd || aConst.FragOnArmed && Info.ObjectsHit > 0)) && Info.SpawnDepth < aConst.FragMaxChildren)
+            if ((aConst.FragOnEnd && aConst.FragIgnoreArming || Info.RelativeAge >= aConst.MinArmingTime && (aConst.FragOnEnd || aConst.FragOnArmed && Info.ObjectsHit > 0)) && Info.SpawnDepth < aConst.FragMaxChildren)
                 SpawnShrapnel(false);
 
             for (int i = 0; i < Watchers.Count; i++) Watchers[i].DeadProjectiles.Add(this);
@@ -430,7 +430,7 @@ namespace CoreSystems.Projectiles
                 var fake = Info.Target.TargetState == Target.TargetStates.IsFake;
                 var hadTarget = HadTarget != HadTargetState.None;
 
-                var gaveUpChase = !fake && Info.Age - s.ChaseAge > aConst.MaxChaseTime && hadTarget;
+                var gaveUpChase = !fake && Info.RelativeAge - s.ChaseAge > aConst.MaxChaseTime && hadTarget;
                 var overMaxTargets = hadTarget && TargetsSeen > aConst.MaxTargets && aConst.MaxTargets != 0;
                 var validEntity = Info.Target.TargetState == Target.TargetStates.IsEntity && !((MyEntity)Info.Target.TargetObject).MarkedForClose;
                 var validTarget = fake || Info.Target.TargetState == Target.TargetStates.IsProjectile || validEntity && !overMaxTargets;
@@ -438,7 +438,7 @@ namespace CoreSystems.Projectiles
                 var isZombie = aConst.CanZombie && hadTarget && !fake && !validTarget && s.ZombieLifeTime > 0 && (s.ZombieLifeTime + s.SmartSlot) % checkTime == 0;
                 var timeSlot = (Info.Age + s.SmartSlot) % checkTime == 0;
                 var seekNewTarget = timeSlot && hadTarget && !validTarget && !overMaxTargets;
-                var seekFirstTarget = !hadTarget && !validTarget && s.PickTarget && (Info.Age > 120 && timeSlot || Info.Age % checkTime == 0 && Info.IsFragment);
+                var seekFirstTarget = !hadTarget && !validTarget && s.PickTarget && (Info.RelativeAge > 120 && timeSlot || Info.Age % checkTime == 0 && Info.IsFragment);
 
                 #region TargetTracking
                 if ((s.PickTarget && timeSlot || seekNewTarget || gaveUpChase && validTarget || isZombie || seekFirstTarget) && NewTarget() || validTarget)
@@ -473,7 +473,7 @@ namespace CoreSystems.Projectiles
 
                     if (aConst.TargetOffSet)
                     {
-                        if (Info.Age - s.LastOffsetTime > 300)
+                        if (Info.RelativeAge - s.LastOffsetTime > 300)
                         {
                             double dist;
                             Vector3D.DistanceSquared(ref Position, ref targetPos, out dist);
@@ -525,7 +525,7 @@ namespace CoreSystems.Projectiles
                         EndState = EndStates.EarlyEnd;
                     }
 
-                    if (roam && Info.Age - s.LastOffsetTime > 300 && hadTarget)
+                    if (roam && Info.RelativeAge - s.LastOffsetTime > 300 && hadTarget)
                     {
 
                         double dist;
@@ -688,7 +688,7 @@ namespace CoreSystems.Projectiles
                 if (s.RequestedStage == -1)
                 {
                     if (Info.Ai.Session.DebugMod)
-                        Log.Line($"StageStart: {Info.AmmoDef.AmmoRound} - last: {s.LastActivatedStage} - age:{Info.Age}");
+                        Log.Line($"StageStart: {Info.AmmoDef.AmmoRound} - last: {s.LastActivatedStage} - age:{Info.RelativeAge}");
                     s.LastActivatedStage = -1;
                     s.RequestedStage = 0;
 
@@ -699,7 +699,7 @@ namespace CoreSystems.Projectiles
                 if (stageChange)
                 {
                     if (Info.Ai.Session.DebugMod)
-                        Log.Line($"state change: {s.RequestedStage} - age:{Info.Age}");
+                        Log.Line($"state change: {s.RequestedStage} - age:{Info.RelativeAge}");
                     s.StartDistanceTraveled = Info.DistanceTraveled;
                 }
 
@@ -809,10 +809,10 @@ namespace CoreSystems.Projectiles
                         start1 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize >= def.Start1Value;
                         break;
                     case Conditions.Lifetime:
-                        start1 = Info.Age >= def.Start1Value;
+                        start1 = Info.RelativeAge >= def.Start1Value;
                         break;
                     case Conditions.Deadtime:
-                        start1 = Info.Age <= def.Start1Value;
+                        start1 = Info.RelativeAge <= def.Start1Value;
                         break;
                     case Conditions.MinTravelRequired:
                         start1 = Info.DistanceTraveled - s.StartDistanceTraveled >= def.Start1Value;
@@ -852,10 +852,10 @@ namespace CoreSystems.Projectiles
                         start2 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize >= def.Start2Value;
                         break;
                     case Conditions.Lifetime:
-                        start2 = Info.Age >= def.Start2Value;
+                        start2 = Info.RelativeAge >= def.Start2Value;
                         break;
                     case Conditions.Deadtime:
-                        start2 = Info.Age <= def.Start2Value;
+                        start2 = Info.RelativeAge <= def.Start2Value;
                         break;
                     case Conditions.MinTravelRequired:
                         start2 = Info.DistanceTraveled - s.StartDistanceTraveled >= def.Start2Value;
@@ -877,7 +877,7 @@ namespace CoreSystems.Projectiles
                     if (s.LastActivatedStage != s.RequestedStage)
                     {
                         if (Info.Ai.Session.DebugMod)
-                            Log.Line($"stage: age:{Info.Age} - {s.RequestedStage} - CanExpireOnceStarted:{def.CanExpireOnceStarted}");
+                            Log.Line($"stage: age:{Info.RelativeAge} - {s.RequestedStage} - CanExpireOnceStarted:{def.CanExpireOnceStarted}");
                         s.LastActivatedStage = s.RequestedStage;
 
                         switch (def.StartEvent)
@@ -994,10 +994,10 @@ namespace CoreSystems.Projectiles
                         end1 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize >= def.End1Value;
                         break;
                     case Conditions.Lifetime:
-                        end1 = Info.Age >= def.End1Value;
+                        end1 = Info.RelativeAge >= def.End1Value;
                         break;
                     case Conditions.Deadtime:
-                        end1 = Info.Age <= def.End1Value;
+                        end1 = Info.RelativeAge <= def.End1Value;
                         break;
                     case Conditions.MinTravelRequired:
                         end1 = Info.DistanceTraveled - s.StartDistanceTraveled >= def.End1Value;
@@ -1043,10 +1043,10 @@ namespace CoreSystems.Projectiles
                         end2 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize >= def.End2Value;
                         break;
                     case Conditions.Lifetime:
-                        end2 = Info.Age >= def.End2Value;
+                        end2 = Info.RelativeAge >= def.End2Value;
                         break;
                     case Conditions.Deadtime:
-                        end2 = Info.Age <= def.End2Value;
+                        end2 = Info.RelativeAge <= def.End2Value;
                         break;
                     case Conditions.MinTravelRequired:
                         end2 = Info.DistanceTraveled - s.StartDistanceTraveled >= def.End2Value;
@@ -1095,7 +1095,7 @@ namespace CoreSystems.Projectiles
                         s.LastActivatedStage = s.RequestedStage;
                         ++s.RequestedStage;
                         if (Info.Ai.Session.DebugMod)
-                            Log.Line($"stageEnd: age:{Info.Age} - next: {s.RequestedStage} - last:{oldLast} - eCon1:{def.EndCondition1} - eCon2:{def.EndCondition2}");
+                            Log.Line($"stageEnd: age:{Info.RelativeAge} - next: {s.RequestedStage} - last:{oldLast} - eCon1:{def.EndCondition1} - eCon2:{def.EndCondition2}");
                         ProcessStage(ref accelMpsMulti, ref speedCapMulti, targetPos, s.LastActivatedStage, targetLock);
                     }
                     else if (failBackwards)
@@ -1104,12 +1104,12 @@ namespace CoreSystems.Projectiles
                         var prev = s.RequestedStage;
                         s.RequestedStage = def.OnFailureRevertTo;
                         if (Info.Ai.Session.DebugMod)
-                            Log.Line($"stageEnd:age:{Info.Age} - previous:{prev} to {s.RequestedStage} - eCon1:{def.EndCondition1} - eCon2:{def.EndCondition2}");
+                            Log.Line($"stageEnd:age:{Info.RelativeAge} - previous:{prev} to {s.RequestedStage} - eCon1:{def.EndCondition1} - eCon2:{def.EndCondition2}");
                     }
                     else if (!hasNextStep)
                     {
                         if (Info.Ai.Session.DebugMod)
-                            Log.Line($"Approach ended, no more steps - age:{Info.Age} - strages:[r:{s.RequestedStage} l:{s.LastActivatedStage}] - ec1:{def.EndCondition1} - ec1:{def.End1Value} - ec1:{def.EndCondition2} - ec1:{def.End2Value} - failure:{def.Failure}");
+                            Log.Line($"Approach ended, no more steps - age:{Info.RelativeAge} - strages:[r:{s.RequestedStage} l:{s.LastActivatedStage}] - ec1:{def.EndCondition1} - ec1:{def.End1Value} - ec1:{def.EndCondition2} - ec1:{def.End2Value} - failure:{def.Failure}");
                         s.LastActivatedStage = aConst.Approaches.Length;
                         s.RequestedStage = aConst.Approaches.Length;
                     }
@@ -1293,7 +1293,7 @@ namespace CoreSystems.Projectiles
             var fragProx = aConst.FragProximity;
             var hasObstacle = s.Obstacle.Entity != parentEnt && comp.Session.Tick - 1 == s.Obstacle.LastSeenTick;
             var hasStrafe = ammo.Fragment.TimedSpawns.PointType == PointTypes.Direct && ammo.Fragment.TimedSpawns.PointAtTarget == false;
-            var hasKamikaze = ammo.AreaOfDamage.ByBlockHit.Enable || (ammo.AreaOfDamage.EndOfLife.Enable && Info.Age >= ammo.AreaOfDamage.EndOfLife.MinArmingTime); //check for explosive payload on drone
+            var hasKamikaze = ammo.AreaOfDamage.ByBlockHit.Enable || (ammo.AreaOfDamage.EndOfLife.Enable && Info.RelativeAge >= ammo.AreaOfDamage.EndOfLife.MinArmingTime); //check for explosive payload on drone
             var maxLife = aConst.MaxLifeTime;
             var orbitSphereFar = orbitSphere; //Indicates start of approach
 
@@ -1336,7 +1336,7 @@ namespace CoreSystems.Projectiles
                                         {
                                             var fragInterval = aConst.FragInterval;
                                             var fragGroupDelay = aConst.FragGroupDelay;
-                                            var timeSinceLastFrag = Info.Age - Info.LastFragTime;
+                                            var timeSinceLastFrag = Info.RelativeAge - Info.LastFragTime;
 
                                             if (fragGroupDelay == 0 && timeSinceLastFrag >= fragInterval)
                                                 s.DroneStat = Strafe;//TODO incorporate group delays
@@ -1362,7 +1362,7 @@ namespace CoreSystems.Projectiles
                     if ((hasKamikaze) && s.DroneStat != Kamikaze && maxLife > 0)//Parenthesis for everyone!
                     {
                         var kamiFlightTime = orbitSphere.Radius / MaxSpeed * 60 * 1.05; //time needed for final dive into target
-                        if (maxLife - Info.Age <= kamiFlightTime || (Info.Frags >= aConst.MaxFrags))
+                        if (maxLife - Info.RelativeAge <= kamiFlightTime || (Info.Frags >= aConst.MaxFrags))
                         {
                             s.DroneStat = Kamikaze;
                         }
@@ -1373,7 +1373,7 @@ namespace CoreSystems.Projectiles
                         if (parentPos != Vector3D.Zero && s.DroneStat != Return)
                         {
                             var rtbFlightTime = Vector3D.Distance(Position, parentPos) / MaxSpeed * 60 * 1.1d;//added multiplier to ensure final docking time?
-                            if ((maxLife > 0 && maxLife - Info.Age <= rtbFlightTime) || (Info.Frags >= aConst.MaxFrags))
+                            if ((maxLife > 0 && maxLife - Info.RelativeAge <= rtbFlightTime) || (Info.Frags >= aConst.MaxFrags))
                             {
                                 var rayTestPath = new RayD(Position, Vector3D.Normalize(parentPos - Position));//Check for clear LOS home
                                 if (rayTestPath.Intersects(orbitSphereClose) == null)
@@ -1421,7 +1421,7 @@ namespace CoreSystems.Projectiles
                     if (parentPos != Vector3D.Zero && s.DroneStat != Return && !hasKamikaze)//TODO kamikaze return suppressed to prevent damaging parent, until docking mechanism developed
                     {
                         var rtbFlightTime = Vector3D.Distance(Position, parentPos) / MaxSpeed * 60 * 1.05d;//added multiplier to ensure final docking time
-                        if ((maxLife > 0 && maxLife - Info.Age <= rtbFlightTime) || (Info.Frags >= Info.AmmoDef.Fragment.TimedSpawns.MaxSpawns))
+                        if ((maxLife > 0 && maxLife - Info.RelativeAge <= rtbFlightTime) || (Info.Frags >= Info.AmmoDef.Fragment.TimedSpawns.MaxSpawns))
                         {
                             if (s.NavTargetEnt != parentEnt)
                             {
@@ -1512,8 +1512,8 @@ namespace CoreSystems.Projectiles
             var overMaxTargets = hadTarget && TargetsSeen > aConst.MaxTargets && aConst.MaxTargets != 0;
             var fake = target.TargetState == Target.TargetStates.IsFake;
             var validTarget = fake || target.TargetState == Target.TargetStates.IsProjectile || validEntity && !overMaxTargets;
-            var seekFirstTarget = !hadTarget && !validTarget && s.PickTarget && (Info.Age > 120 && timeSlot || Info.Age % 30 == 0 && Info.IsFragment);
-            var gaveUpChase = !fake && Info.Age - s.ChaseAge > aConst.MaxChaseTime && hadTarget;
+            var seekFirstTarget = !hadTarget && !validTarget && s.PickTarget && (Info.RelativeAge > 120 && timeSlot || Info.Age % 30 == 0 && Info.IsFragment);
+            var gaveUpChase = !fake && Info.RelativeAge - s.ChaseAge > aConst.MaxChaseTime && hadTarget;
             var isZombie = aConst.CanZombie && hadTarget && !fake && !validTarget && s.ZombieLifeTime > 0 && (s.ZombieLifeTime + s.SmartSlot) % 30 == 0;
             var seekNewTarget = timeSlot && hadTarget && !validEntity && !overMaxTargets;
             var needsTarget = (s.PickTarget && timeSlot || seekNewTarget || gaveUpChase && validTarget || isZombie || seekFirstTarget);
@@ -1790,6 +1790,7 @@ namespace CoreSystems.Projectiles
                         else//docked TODO despawn and restock ammo?
                         {
                             Info.Age = int.MaxValue;
+                            Info.RelativeAge = double.MaxValue;
                         }
                     }
                     break;
@@ -1889,7 +1890,7 @@ namespace CoreSystems.Projectiles
 
             if (aConst.TargetOffSet && Info.Storage.WasTracking)
             {
-                if (Info.Age - Info.Storage.LastOffsetTime > 300)
+                if (Info.RelativeAge - Info.Storage.LastOffsetTime > 300)
                 {
 
                     double dist;
@@ -1951,7 +1952,7 @@ namespace CoreSystems.Projectiles
             OffsetTarget = (randomDirection * offsetAmount);
             if (Info.Age != 0)
             {
-                Info.Storage.LastOffsetTime = Info.Age;
+                Info.Storage.LastOffsetTime = (int) Info.RelativeAge;
             }
         }
 
@@ -1960,7 +1961,7 @@ namespace CoreSystems.Projectiles
             var aConst = Info.AmmoDef.Const;
             var s = Info.Storage;
             var giveUp = HadTarget != HadTargetState.None && ++TargetsSeen > aConst.MaxTargets && aConst.MaxTargets != 0;
-            s.ChaseAge = Info.Age;
+            s.ChaseAge = (int) Info.RelativeAge;
             s.PickTarget = false;
             var eTarget = Info.Target.TargetObject as MyEntity;
             var pTarget = Info.Target.TargetObject as Projectile;
@@ -1999,17 +2000,12 @@ namespace CoreSystems.Projectiles
             if (newTarget && aConst.Health > 0 && !aConst.IsBeamWeapon && (Info.Target.TargetState == Target.TargetStates.IsFake || Info.Target.TargetObject != null && oldTarget != Info.Target.TargetObject))
                 Info.Ai.Session.Projectiles.AddProjectileTargets(this);
 
-            if (aConst.ProjectileSync && Info.Ai.Session.IsServer && (Info.Target.TargetState != Target.TargetStates.IsFake || Info.Target.TargetState != Target.TargetStates.IsProjectile))
-            {
-                s.LastProSyncStateAge = Info.Age;
-            }
-
             return newTarget;
         }
 
         internal void ForceNewTarget()
         {
-            Info.Storage.ChaseAge = Info.Age;
+            Info.Storage.ChaseAge = (int) Info.RelativeAge;
             Info.Storage.PickTarget = false;
         }
 
@@ -2476,7 +2472,7 @@ namespace CoreSystems.Projectiles
 
             if (timedSpawn && ++Info.Frags == aConst.MaxFrags && aConst.FragParentDies)
                 DistanceToTravelSqr = Info.DistanceTraveled * Info.DistanceTraveled;
-            Info.LastFragTime = Info.Age;
+            Info.LastFragTime = (int) Info.RelativeAge;
         }
 
 
@@ -2500,26 +2496,6 @@ namespace CoreSystems.Projectiles
             proSync.ProId = Info.Storage.SyncId;
             proSync.CoreEntityId = Info.Weapon.Comp.CoreEntity.EntityId;
             session.GlobalProPosSyncs[Info.Weapon.Comp.CoreEntity] = proSync;
-        }
-
-        internal void SyncStateServerProjectile(ProtoProStateSync.ProSyncState state)
-        {
-            Info.Storage.LastProSyncStateAge = int.MinValue;
-            var target = Info.Target;
-            var session = Info.Ai.Session;
-            var seed = Info.Random.GetSeedVaues();
-
-            var proSync = session.ProtoWeaponProSyncStatePool.Count > 0 ? session.ProtoWeaponProSyncStatePool.Pop() : new ProtoProStateSync();
-            proSync.PartId = (ushort) Info.Weapon.PartId;
-            proSync.State = state;
-            proSync.RandomX = seed.Item1;
-            proSync.RandomY = seed.Item2;
-            proSync.OffsetDir = Info.Storage.RandOffsetDir;
-            proSync.OffsetTarget = OffsetTarget;
-            proSync.ProId = Info.Storage.SyncId;
-            proSync.TargetId = target.TargetId;
-            proSync.CoreEntityId = Info.Weapon.Comp.CoreEntity.EntityId;
-            session.GlobalProStateSyncs[Info.Weapon.Comp.CoreEntity] = proSync;
         }
 
         internal void SyncClientProjectile(int posSlot)

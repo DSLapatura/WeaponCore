@@ -127,7 +127,7 @@ namespace CoreSystems
             var damageType = info.AmmoDef.DamageScales.Shields.Type;
             var heal = damageType == ShieldDef.ShieldType.Heal;
             var energy = info.AmmoDef.Const.EnergyShieldDmg;
-            var detonateOnEnd = info.AmmoDef.AreaOfDamage.EndOfLife.Enable && info.Age >= info.AmmoDef.AreaOfDamage.EndOfLife.MinArmingTime && !info.ShieldBypassed;
+            var detonateOnEnd = info.AmmoDef.AreaOfDamage.EndOfLife.Enable && info.RelativeAge >= info.AmmoDef.AreaOfDamage.EndOfLife.MinArmingTime && !info.ShieldBypassed;
             var areaDamage = info.AmmoDef.AreaOfDamage.ByBlockHit.Enable;
             var scaledBaseDamage = info.BaseDamagePool * damageScale;
             var scaledDamage = (scaledBaseDamage) * info.AmmoDef.Const.ShieldModifier * shieldDmgGlobal* info.ShieldResistMod* info.ShieldBypassMod;
@@ -361,7 +361,7 @@ namespace CoreSystems
             var aoeFalloff = Falloff.NoFalloff;
             var aoeShape = AoeShape.Diamond;
             var hasAoe = t.AmmoDef.AreaOfDamage.ByBlockHit.Enable; 
-            var hasDet = t.AmmoDef.AreaOfDamage.EndOfLife.Enable && t.Age >= t.AmmoDef.AreaOfDamage.EndOfLife.MinArmingTime;
+            var hasDet = t.AmmoDef.AreaOfDamage.EndOfLife.Enable && t.RelativeAge >= t.AmmoDef.AreaOfDamage.EndOfLife.MinArmingTime;
 
             var damageType = t.ShieldBypassed ? ShieldBypassDamageType : hasAoe || hasDet ? MyDamageType.Explosion : MyDamageType.Bullet;
             //Switches and setup for damage types/event loops
@@ -920,7 +920,7 @@ namespace CoreSystems
 
                 pTarget.Info.BaseHealthPool = 0;
                 pTarget.State = Projectile.ProjectileState.Destroy;
-                if (attacker.AmmoDef.Const.EndOfLifeDamage > 0 && attacker.AmmoDef.Const.EndOfLifeAoe && attacker.Age >= attacker.AmmoDef.Const.MinArmingTime)
+                if (attacker.AmmoDef.Const.EndOfLifeDamage > 0 && attacker.AmmoDef.Const.EndOfLifeAoe && attacker.RelativeAge >= attacker.AmmoDef.Const.MinArmingTime)
                     DetonateProjectile(hitEnt, attacker);
             }
             else
@@ -938,7 +938,7 @@ namespace CoreSystems
 
         private void DetonateProjectile(HitEntity hitEnt, ProInfo attacker)
         {
-            if (attacker.AmmoDef.Const.EndOfLifeDamage > 0 && attacker.AmmoDef.Const.EndOfLifeAoe && attacker.Age >= attacker.AmmoDef.Const.MinArmingTime)
+            if (attacker.AmmoDef.Const.EndOfLifeDamage > 0 && attacker.AmmoDef.Const.EndOfLifeAoe && attacker.RelativeAge >= attacker.AmmoDef.Const.MinArmingTime)
             {
                 var areaSphere = new BoundingSphereD(hitEnt.Projectile.Position, attacker.AmmoDef.Const.EndOfLifeRadius);
                 foreach (var sTarget in attacker.Ai.LiveProjectile)
@@ -996,7 +996,7 @@ namespace CoreSystems
 
             using (destObj.Pin())
             {
-                var detonateOnEnd = info.AmmoDef.AreaOfDamage.EndOfLife.Enable && info.Age >= info.AmmoDef.AreaOfDamage.EndOfLife.MinArmingTime;
+                var detonateOnEnd = info.AmmoDef.AreaOfDamage.EndOfLife.Enable && info.RelativeAge >= info.AmmoDef.AreaOfDamage.EndOfLife.MinArmingTime;
 
                 info.ObjectsHit++;
                 float damageScale = 1 * directDmgGlobal;
