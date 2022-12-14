@@ -51,7 +51,6 @@ namespace CoreSystems
             var localSim = MyAPIGateway.Physics.SimulationRatio;
             var serverSimClamped = MathHelperD.Clamp(serverSim, 0.001d, 1);
             DeltaTimeRatio = IsServer ? 1 : serverSimClamped / MathHelperD.Clamp(localSim, 0.001d, serverSimClamped);
-            DeltaTimeRatio = 3.2;
             DeltaStepConst = DeltaTimeRatio * StepConst;
             RelativeTime += DeltaStepConst;
             ServerSimulation += serverSim;

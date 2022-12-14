@@ -39,7 +39,6 @@ namespace CoreSystems.Support
         internal int ObjectsHit;
         internal int SpawnDepth;
         internal int Frags;
-        internal int LastFragTime;
         internal int CompSceneVersion;
         internal ulong UniqueMuzzleId;
         internal ulong Id;
@@ -48,13 +47,15 @@ namespace CoreSystems.Support
         internal double ProjectileDisplacement;
         internal double TracerLength;
         internal double MaxTrajectory;
+        internal double LastFragTime;
+        internal double ShotFade;
         internal double RelativeAge = -1;
         internal double PrevRelativeAge = -1;
         internal long DamageDonePri;
         internal long DamageDoneAoe;
         internal long DamageDoneShld;
         internal long DamageDoneProj;
-        internal double ShotFade;
+
         internal float BaseDamagePool;
         internal float BaseHealthPool;
         internal float BaseEwarPool;

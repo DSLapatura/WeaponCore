@@ -170,7 +170,10 @@ namespace CoreSystems.Projectiles
 
                 if (storage.Sleep)
                 {
-                    if (p.DeaccelRate > 300 && info.Age % 100 != 0)
+                    var prevCheck = info.PrevRelativeAge % 100;
+                    var currentCheck = info.RelativeAge % 100;
+                    var check = prevCheck < 0 || prevCheck > currentCheck;
+                    if (p.DeaccelRate > 300 && !check)
                     {
                         p.DeaccelRate--;
                         continue;

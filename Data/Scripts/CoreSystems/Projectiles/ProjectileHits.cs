@@ -152,7 +152,7 @@ namespace CoreSystems.Projectiles
                         {
                             if (shieldInfo.Value.Item2.Item1)
                             {
-                                var shrapnelSpawn = p.Info.IsFragment && p.Info.Age < 1;
+                                var shrapnelSpawn = p.Info.IsFragment && p.Info.PrevRelativeAge <= -1;
                                 if (Vector3D.Transform(!shrapnelSpawn ? info.Origin : coreEntity.PositionComp.WorldMatrixRef.Translation, shieldInfo.Value.Item3.Item1).LengthSquared() > 1)
                                 {
 
@@ -549,7 +549,7 @@ namespace CoreSystems.Projectiles
                         }
                     }
 
-                    if (voxelHit.HasValue && info.IsFragment && info.Age == 0)
+                    if (voxelHit.HasValue && info.IsFragment && info.PrevRelativeAge <= -1)
                     {
                         if (!VoxelIntersect.PointInsideVoxel(voxel, s.TmpStorage, voxelHit.Value + (p.Beam.Direction * 1.25f)))
                             voxelHit = null;

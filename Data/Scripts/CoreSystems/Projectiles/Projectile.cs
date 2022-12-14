@@ -433,16 +433,22 @@ namespace CoreSystems.Projectiles
                 var validEntity = Info.Target.TargetState == Target.TargetStates.IsEntity && !((MyEntity)Info.Target.TargetObject).MarkedForClose;
                 var validTarget = fake || Info.Target.TargetState == Target.TargetStates.IsProjectile || validEntity && !overMaxTargets;
                 var checkTime = HadTarget != HadTargetState.Projectile ? 30 : 10;
-                var prevSlotAge = Info.PrevRelativeAge + s.SmartSlot;
-                var currentSlotAge = Info.RelativeAge + s.SmartSlot;
 
-                var prevZombieAge = s.PrevZombieLifeTime + s.SmartSlot;
-                var currentZombieAge = s.PrevZombieLifeTime + s.SmartSlot;
+                var prevSlotAge = (Info.PrevRelativeAge + s.SmartSlot) % checkTime;
+                var currentSlotAge = (Info.RelativeAge + s.SmartSlot) % checkTime;
+                var timeSlot = prevSlotAge < 0 || prevSlotAge > currentSlotAge;
 
-                var isZombie = aConst.CanZombie && hadTarget && !fake && !validTarget && s.ZombieLifeTime > 0 && prevZombieAge < checkTime && currentZombieAge >= checkTime;
-                var timeSlot = prevSlotAge < checkTime && currentSlotAge >= checkTime;
+                var prevZombieAge = (s.PrevZombieLifeTime + s.SmartSlot) % checkTime;
+                var currentZombieAge = (s.PrevZombieLifeTime + s.SmartSlot) % checkTime;
+                var zombieSlot = prevZombieAge < 0 || prevZombieAge > currentZombieAge;
+
+                var prevCheck = Info.PrevRelativeAge  % checkTime;
+                var currentCheck = Info.RelativeAge % checkTime;
+                var check = prevCheck < 0 || prevCheck > currentCheck;
+
+                var isZombie = aConst.CanZombie && hadTarget && !fake && !validTarget && s.ZombieLifeTime > 0 && zombieSlot;
                 var seekNewTarget = timeSlot && hadTarget && !validTarget && !overMaxTargets;
-                var seekFirstTarget = !hadTarget && !validTarget && s.PickTarget && (Info.RelativeAge > 120 && timeSlot || Info.PrevRelativeAge < checkTime && Info.RelativeAge >= checkTime && Info.IsFragment);
+                var seekFirstTarget = !hadTarget && !validTarget && s.PickTarget && (Info.RelativeAge > 120 && timeSlot || check && Info.IsFragment);
 
                 #region TargetTracking
                 if ((s.PickTarget && timeSlot || seekNewTarget || gaveUpChase && validTarget || isZombie || seekFirstTarget) && NewTarget() || validTarget)
@@ -602,7 +608,11 @@ namespace CoreSystems.Projectiles
                 var offset = false;
                 if (smarts.OffsetTime > 0)
                 {
-                    if (Info.PrevRelativeAge < smarts.OffsetTime && Info.RelativeAge >= smarts.OffsetTime && !Vector3D.IsZero(Info.Direction) && MyUtils.IsValid(Info.Direction))
+                    var prevSmartCheck = Info.PrevRelativeAge % smarts.OffsetTime;
+                    var currentSmartCheck = Info.RelativeAge % smarts.OffsetTime;
+                    var smartCheck = prevSmartCheck < 0 || prevSmartCheck > currentSmartCheck;
+
+                    if (smartCheck && !Vector3D.IsZero(Info.Direction) && MyUtils.IsValid(Info.Direction))
                     {
                         var up = Vector3D.CalculatePerpendicularVector(Info.Direction);
                         var right = Vector3D.Cross(Info.Direction, up);
@@ -1512,17 +1522,26 @@ namespace CoreSystems.Projectiles
         private bool DroneTracking(Target target, SmartStorage s, AmmoConstants aConst)
         {
             var validEntity = target.TargetState == Target.TargetStates.IsEntity && !((MyEntity)target.TargetObject).MarkedForClose;
-            var prevSlotAge = Info.PrevRelativeAge + s.SmartSlot;
-            var currentSlotAge = Info.RelativeAge + s.SmartSlot;
 
-            var timeSlot = prevSlotAge < 30 && currentSlotAge >= 30;
+            var prevSlotAge = (Info.PrevRelativeAge + s.SmartSlot) % 30;
+            var currentSlotAge = (Info.RelativeAge + s.SmartSlot) % 30;
+            var timeSlot = prevSlotAge < 0 || prevSlotAge > currentSlotAge;
+
+            var prevCheck = Info.PrevRelativeAge % 30;
+            var currentCheck = Info.RelativeAge % 30;
+            var check = prevCheck < 0 || prevCheck > currentCheck;
+
+            var prevZombieAge = (s.PrevZombieLifeTime + s.SmartSlot) % 30;
+            var currentZombieAge = (s.PrevZombieLifeTime + s.SmartSlot) % 30;
+            var zombieSlot = prevZombieAge < 0 || prevZombieAge > currentZombieAge;
+
             var hadTarget = HadTarget != HadTargetState.None;
             var overMaxTargets = hadTarget && TargetsSeen > aConst.MaxTargets && aConst.MaxTargets != 0;
             var fake = target.TargetState == Target.TargetStates.IsFake;
             var validTarget = fake || target.TargetState == Target.TargetStates.IsProjectile || validEntity && !overMaxTargets;
-            var seekFirstTarget = !hadTarget && !validTarget && s.PickTarget && (Info.RelativeAge > 120 && timeSlot || Info.PrevRelativeAge < 30 && Info.RelativeAge >= 30 && Info.IsFragment);
+            var seekFirstTarget = !hadTarget && !validTarget && s.PickTarget && (Info.RelativeAge > 120 && timeSlot || check && Info.IsFragment);
             var gaveUpChase = !fake && Info.RelativeAge - s.ChaseAge > aConst.MaxChaseTime && hadTarget;
-            var isZombie = aConst.CanZombie && hadTarget && !fake && !validTarget && s.ZombieLifeTime > 0 && (s.ZombieLifeTime + s.SmartSlot) % 30 == 0;
+            var isZombie = aConst.CanZombie && hadTarget && !fake && !validTarget && s.ZombieLifeTime > 0 && zombieSlot;
             var seekNewTarget = timeSlot && hadTarget && !validEntity && !overMaxTargets;
             var needsTarget = (s.PickTarget && timeSlot || seekNewTarget || gaveUpChase && validTarget || isZombie || seekFirstTarget);
 
@@ -1669,7 +1688,11 @@ namespace CoreSystems.Projectiles
             var revCmdAccel = -commandedAccel / speedLimitPerTick;
             var revOffsetDir = MyUtils.IsZero(s.RandOffsetDir.X - revCmdAccel.X, 1E-03f) && MyUtils.IsZero(s.RandOffsetDir.Y - revCmdAccel.Y, 1E-03f) && MyUtils.IsZero(Info.Storage.RandOffsetDir.Z - revCmdAccel.Z, 1E-03f);
 
-            if (Info.PrevRelativeAge < offsetTime && Info.RelativeAge >= offsetTime || revOffsetDir)
+            var prevCheck = Info.PrevRelativeAge % offsetTime;
+            var currentCheck = Info.RelativeAge % offsetTime;
+            var check = prevCheck < 0 || prevCheck > currentCheck;
+
+            if (check || revOffsetDir)
             {
 
                 double angle = Info.Random.NextDouble() * MathHelper.TwoPi;
@@ -2304,7 +2327,11 @@ namespace CoreSystems.Projectiles
                 }
             }
 
-            if (!Info.AmmoDef.Const.Pulse || Info.AmmoDef.Const.Pulse && Info.PrevRelativeAge < Info.AmmoDef.Const.PulseInterval && Info.RelativeAge >= Info.AmmoDef.Const.PulseInterval)
+            var prevCheck = Info.PrevRelativeAge % Info.AmmoDef.Const.PulseInterval;
+            var currentCheck = Info.RelativeAge % Info.AmmoDef.Const.PulseInterval;
+            var check = prevCheck < 0 || prevCheck > currentCheck;
+
+            if (!Info.AmmoDef.Const.Pulse || Info.AmmoDef.Const.Pulse && check)
                 EwarEffects();
             else Info.EwarActive = false;
         }
