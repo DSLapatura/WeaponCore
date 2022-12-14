@@ -113,8 +113,6 @@ namespace CoreSystems.Projectiles
             var probability = ammoDef.AmmoGraphics.VisualProbability;
             EnableAv = !aConst.VirtualBeams && !session.DedicatedServer && (distanceFromCameraSqr <= session.SyncDistSqr || ai.AiType == Ai.AiTypes.Phantom) && (probability >= 1 || probability >= MyUtils.GetRandomDouble(0.0f, 1f));
             Info.AvShot = null;
-            Info.Age = -1;
-            Info.RelativeAge = -1;
             TargetsSeen = 0;
             PruningProxyId = -1;
 
@@ -438,7 +436,7 @@ namespace CoreSystems.Projectiles
                 var isZombie = aConst.CanZombie && hadTarget && !fake && !validTarget && s.ZombieLifeTime > 0 && (s.ZombieLifeTime + s.SmartSlot) % checkTime == 0;
                 var timeSlot = (Info.Age + s.SmartSlot) % checkTime == 0;
                 var seekNewTarget = timeSlot && hadTarget && !validTarget && !overMaxTargets;
-                var seekFirstTarget = !hadTarget && !validTarget && s.PickTarget && (Info.RelativeAge > 120 && timeSlot || Info.Age % checkTime == 0 && Info.IsFragment);
+                var seekFirstTarget = !hadTarget && !validTarget && s.PickTarget && (Info.RelativeAge > 120 && timeSlot || Info.PrevRelativeAge < checkTime && Info.RelativeAge >= checkTime && Info.IsFragment);
 
                 #region TargetTracking
                 if ((s.PickTarget && timeSlot || seekNewTarget || gaveUpChase && validTarget || isZombie || seekFirstTarget) && NewTarget() || validTarget)
@@ -597,7 +595,7 @@ namespace CoreSystems.Projectiles
                 var offset = false;
                 if (smarts.OffsetTime > 0)
                 {
-                    if (Info.Age % smarts.OffsetTime == 0 && !Vector3D.IsZero(Info.Direction) && MyUtils.IsValid(Info.Direction))
+                    if (Info.PrevRelativeAge < smarts.OffsetTime && Info.RelativeAge >= smarts.OffsetTime && !Vector3D.IsZero(Info.Direction) && MyUtils.IsValid(Info.Direction))
                     {
                         var up = Vector3D.CalculatePerpendicularVector(Info.Direction);
                         var right = Vector3D.Cross(Info.Direction, up);
@@ -1512,7 +1510,7 @@ namespace CoreSystems.Projectiles
             var overMaxTargets = hadTarget && TargetsSeen > aConst.MaxTargets && aConst.MaxTargets != 0;
             var fake = target.TargetState == Target.TargetStates.IsFake;
             var validTarget = fake || target.TargetState == Target.TargetStates.IsProjectile || validEntity && !overMaxTargets;
-            var seekFirstTarget = !hadTarget && !validTarget && s.PickTarget && (Info.RelativeAge > 120 && timeSlot || Info.Age % 30 == 0 && Info.IsFragment);
+            var seekFirstTarget = !hadTarget && !validTarget && s.PickTarget && (Info.RelativeAge > 120 && timeSlot || Info.PrevRelativeAge < 30 && Info.RelativeAge >= 30 && Info.IsFragment);
             var gaveUpChase = !fake && Info.RelativeAge - s.ChaseAge > aConst.MaxChaseTime && hadTarget;
             var isZombie = aConst.CanZombie && hadTarget && !fake && !validTarget && s.ZombieLifeTime > 0 && (s.ZombieLifeTime + s.SmartSlot) % 30 == 0;
             var seekNewTarget = timeSlot && hadTarget && !validEntity && !overMaxTargets;
@@ -1661,7 +1659,7 @@ namespace CoreSystems.Projectiles
             var revCmdAccel = -commandedAccel / speedLimitPerTick;
             var revOffsetDir = MyUtils.IsZero(s.RandOffsetDir.X - revCmdAccel.X, 1E-03f) && MyUtils.IsZero(s.RandOffsetDir.Y - revCmdAccel.Y, 1E-03f) && MyUtils.IsZero(Info.Storage.RandOffsetDir.Z - revCmdAccel.Z, 1E-03f);
 
-            if (Info.Age % offsetTime == 0 || revOffsetDir)
+            if (Info.PrevRelativeAge < offsetTime && Info.RelativeAge >= offsetTime || revOffsetDir)
             {
 
                 double angle = Info.Random.NextDouble() * MathHelper.TwoPi;
@@ -1950,7 +1948,7 @@ namespace CoreSystems.Projectiles
             Vector3D randomDirection;
             Vector3D.CreateFromAzimuthAndElevation(randAzimuth, randElevation, out randomDirection); // this is already normalized
             OffsetTarget = (randomDirection * offsetAmount);
-            if (Info.Age != 0)
+            if (Info.PrevRelativeAge > -1)
             {
                 Info.Storage.LastOffsetTime = (int) Info.RelativeAge;
             }
@@ -2295,7 +2293,7 @@ namespace CoreSystems.Projectiles
                 }
             }
 
-            if (!Info.AmmoDef.Const.Pulse || Info.AmmoDef.Const.Pulse && Info.Age % Info.AmmoDef.Const.PulseInterval == 0)
+            if (!Info.AmmoDef.Const.Pulse || Info.AmmoDef.Const.Pulse && Info.PrevRelativeAge < Info.AmmoDef.Const.PulseInterval && Info.RelativeAge >= Info.AmmoDef.Const.PulseInterval)
                 EwarEffects();
             else Info.EwarActive = false;
         }

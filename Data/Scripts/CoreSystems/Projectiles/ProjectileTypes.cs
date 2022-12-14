@@ -33,7 +33,7 @@ namespace CoreSystems.Support
         internal Vector3D TotalAcceleration;
         internal Hit Hit;
         internal XorShiftRandomStruct Random;
-        internal int Age;
+        internal int Age = -1;
         internal int TriggerGrowthSteps;
         internal int MuzzleId;
         internal int ObjectsHit;
@@ -48,7 +48,8 @@ namespace CoreSystems.Support
         internal double ProjectileDisplacement;
         internal double TracerLength;
         internal double MaxTrajectory;
-        internal double RelativeAge;
+        internal double RelativeAge = -1;
+        internal double PrevRelativeAge = -1;
         internal long DamageDonePri;
         internal long DamageDoneAoe;
         internal long DamageDoneShld;
@@ -146,8 +147,9 @@ namespace CoreSystems.Support
             SpawnDepth = 0;
             Frags = 0;
             MuzzleId = 0;
-            Age = 0;
-            RelativeAge = 0;
+            Age = -1;
+            RelativeAge = -1;
+            PrevRelativeAge = -1;
             DamageDonePri = 0;
             DamageDoneAoe = 0;
             DamageDoneShld = 0;

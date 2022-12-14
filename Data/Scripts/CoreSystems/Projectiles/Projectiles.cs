@@ -145,6 +145,7 @@ namespace CoreSystems.Projectiles
                 var targetState = target.TargetState;
                 var ai = p.Info.Ai;
                 ++info.Age;
+                info.PrevRelativeAge = info.RelativeAge;
                 info.RelativeAge += Session.DeltaTimeRatio;
                 ++ai.MyProjectiles;
                 ai.ProjectileTicker = Session.Tick;
