@@ -622,7 +622,7 @@ namespace CoreSystems.Support
             var attackNeutrals = overRides.Neutrals;
             var attackFriends = overRides.Friendly;
             var attackNoOwner = overRides.Unowned;
-            var forceFoci = overRides.FocusTargets;
+            var forceFoci = overRides.FocusTargets || aConst.FocusOnly;
             var minRadius = overRides.MinSize * 0.5f;
             var maxRadius = overRides.MaxSize * 0.5f;
             var minTargetRadius = minRadius > 0 ? minRadius : s.MinTargetRadius;
@@ -643,6 +643,8 @@ namespace CoreSystems.Support
             if (!aConst.OverrideTarget && ai.Construct.Data.Repo.FocusData.Target > 0 && MyEntities.TryGetEntityById(ai.Construct.Data.Repo.FocusData.Target, out fTarget) && ai.Targets.TryGetValue(fTarget, out alphaInfo))
                 offset++;
 
+            if (aConst.FocusOnly && offset <= 0)
+                return false;
 
             MyEntity topTarget = null;
             if (previousEntity && !aConst.OverrideTarget && target.TargetState == Target.TargetStates.IsEntity)
@@ -654,6 +656,7 @@ namespace CoreSystems.Support
 
             var numOfTargets = ai.SortedTargets.Count;
             var hasOffset = offset > 0;
+
             var adjTargetCount = forceFoci && hasOffset ? offset : numOfTargets + offset;
             var deck = GetDeck(ref session.TargetDeck, 0, numOfTargets, w.System.Values.Targeting.TopTargets, ref p.Info.Random);
 
@@ -662,11 +665,17 @@ namespace CoreSystems.Support
                 var focusTarget = hasOffset && i < offset;
                 var lastOffset = offset - 1;
 
+                if (aConst.FocusOnly && i > lastOffset)
+                    break;
+
                 TargetInfo tInfo;
                 if (i == 0 && alphaInfo != null) tInfo = alphaInfo;
                 else tInfo = ai.SortedTargets[deck[i - offset]];
 
-                if (!focusTarget && tInfo.OffenseRating <= 0 || focusTarget && !attackFriends && tInfo.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Friends || tInfo.Target == null || tInfo.Target.MarkedForClose || hasOffset && i > lastOffset && (tInfo.Target == alphaInfo?.Target)) { continue; }
+                if (!focusTarget && tInfo.OffenseRating <= 0 || focusTarget && !attackFriends && tInfo.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Friends || tInfo.Target == null || tInfo.Target.MarkedForClose || hasOffset && i > lastOffset && (tInfo.Target == alphaInfo?.Target))
+                {
+                    continue;
+                }
 
                 if (!attackNeutrals && tInfo.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Neutral || !attackNoOwner && tInfo.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.NoOwnership) continue;
 

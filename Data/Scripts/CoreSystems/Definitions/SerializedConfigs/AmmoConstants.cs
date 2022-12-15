@@ -152,6 +152,7 @@ namespace CoreSystems.Support
         public readonly int DeformDelay;
         public readonly uint FakeVoxelHitTicks;
 
+        public readonly bool FocusOnly;
         public readonly bool CheckFutureIntersection;
         public readonly bool OverrideTarget;
         public readonly bool HasEjectEffect;
@@ -327,7 +328,7 @@ namespace CoreSystems.Support
         public readonly double AccelInMetersPerSec;
         public readonly double MaxAcceleration;
         public readonly double MaxAccelerationSqr;
-
+        public readonly double OffsetMinRangeSqr;
         internal AmmoConstants(WeaponSystem.AmmoType ammo, WeaponDefinition wDef, Session session, WeaponSystem system, int ammoIndex)
         {
             AmmoIdxPos = ammoIndex;
@@ -428,14 +429,16 @@ namespace CoreSystems.Support
             RangeVariance = ammo.AmmoDef.Trajectory.RangeVariance.Start > 0 || ammo.AmmoDef.Trajectory.RangeVariance.End > 0;
 
             TargetOffSet = ammo.AmmoDef.Trajectory.Smarts.Inaccuracy > 0;
+            FocusOnly = ammo.AmmoDef.Trajectory.Smarts.FocusOnly;
             TargetLossTime = ammo.AmmoDef.Trajectory.TargetLossTime > 0 ? ammo.AmmoDef.Trajectory.TargetLossTime : int.MaxValue;
             CanZombie = TargetLossTime > 0 && TargetLossTime != int.MaxValue && !IsMine;
             MaxLifeTime = ammo.AmmoDef.Trajectory.MaxLifeTime > 0 ? ammo.AmmoDef.Trajectory.MaxLifeTime : int.MaxValue;
-            
+
             AccelInMetersPerSec = ammo.AmmoDef.Trajectory.AccelPerSec;
             DeltaVelocityPerTick = AccelInMetersPerSec * MyEngineConstants.PHYSICS_STEP_SIZE_IN_SECONDS;
             MaxAcceleration = ammo.AmmoDef.Trajectory.TotalAcceleration > 0 ? ammo.AmmoDef.Trajectory.TotalAcceleration : double.MaxValue;
             MaxAccelerationSqr = MaxAcceleration * MaxAcceleration;
+            OffsetMinRangeSqr = ammo.AmmoDef.Trajectory.Smarts.OffsetMinRange * ammo.AmmoDef.Trajectory.Smarts.OffsetMinRange;
             AdvancedSmartSteering = ammo.AmmoDef.Trajectory.Smarts.SteeringLimit > 0;
            
             MaxChaseTime = ammo.AmmoDef.Trajectory.Smarts.MaxChaseTime > 0 ? ammo.AmmoDef.Trajectory.Smarts.MaxChaseTime : int.MaxValue;

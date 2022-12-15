@@ -1267,6 +1267,8 @@ namespace CoreSystems.Api
                         [ProtoMember(14)] internal double NavAcceleration;
                         [ProtoMember(15)] internal bool AccelClearance;
                         [ProtoMember(16)] internal double SteeringLimit;
+                        [ProtoMember(17)] internal bool FocusOnly;
+                        [ProtoMember(18)] internal double OffsetMinRange;
                     }
 
                     [ProtoContract]

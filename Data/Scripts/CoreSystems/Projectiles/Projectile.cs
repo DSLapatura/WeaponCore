@@ -411,7 +411,8 @@ namespace CoreSystems.Projectiles
             var smarts = ammo.Trajectory.Smarts;
             var coreParent = Info.Weapon.Comp.TopEntity;
             var startTrack = s.SmartReady || coreParent.MarkedForClose;
-            var session = Info.Ai.Session;
+            var ai = Info.Ai;
+            var session = ai.Session;
             var speedCapMulti = 1d;
 
             var targetLock = false;
@@ -430,7 +431,29 @@ namespace CoreSystems.Projectiles
 
                 var gaveUpChase = !fake && Info.RelativeAge - s.ChaseAge > aConst.MaxChaseTime && hadTarget;
                 var overMaxTargets = hadTarget && TargetsSeen > aConst.MaxTargets && aConst.MaxTargets != 0;
-                var validEntity = Info.Target.TargetState == Target.TargetStates.IsEntity && !((MyEntity)Info.Target.TargetObject).MarkedForClose;
+               
+                bool validEntity = false;
+                if (Info.Target.TargetState == Target.TargetStates.IsEntity)
+                {
+                    var targetEnt = (MyEntity)Info.Target.TargetObject;
+                    validEntity = !targetEnt.MarkedForClose;
+                    if (validEntity && aConst.FocusOnly && Info.Target.TopEntityId != ai.Construct.Data.Repo.FocusData.Target)
+                    {
+                        validEntity = false;
+                        MyEntity fTarget;
+                        if (ai.Construct.Data.Repo.FocusData.Target > 0 && MyEntities.TryGetEntityById(ai.Construct.Data.Repo.FocusData.Target, out fTarget))
+                        {
+                            var targetBlock = targetEnt as MyCubeBlock;
+                            var targetGrid = targetBlock?.CubeGrid;
+                            var focusGrid = fTarget as MyCubeGrid;
+
+                            validEntity = targetEnt == fTarget || targetGrid == fTarget;
+                            if (targetGrid != null && focusGrid != null)
+                                validEntity = targetGrid.IsSameConstructAs(focusGrid);
+                        }
+                    }
+                }
+
                 var validTarget = fake || Info.Target.TargetState == Target.TargetStates.IsProjectile || validEntity && !overMaxTargets;
                 var checkTime = HadTarget != HadTargetState.Projectile ? 30 : 10;
 
@@ -623,7 +646,7 @@ namespace CoreSystems.Projectiles
 
                     double distSqr;
                     Vector3D.DistanceSquared(ref TargetPosition, ref Position, out distSqr);
-                    if (distSqr > VelocityLengthSqr)
+                    if (distSqr >= aConst.OffsetMinRangeSqr)
                     {
                         commandedAccel += accelMpsMulti * s.RandOffsetDir;
                         offset = true;
@@ -660,7 +683,7 @@ namespace CoreSystems.Projectiles
                         proposedVel = Velocity + (commandedAccel * DeltaStepConst);
                     }
 
-                    if (!MyUtils.IsValid(proposedVel) || Vector3D.IsZero(proposedVel)) {
+                    if (Vector3D.IsZero(proposedVel)) {
                         Log.Line($"Info.Direction is NaN - proposedVel:{proposedVel} - {commandedAccel} - Position:{Position} - Direction:{Info.Direction} - rndDir:{s.RandOffsetDir} - lateralAcceleration:{lateralAcceleration} - missileToTargetNorm:{missileToTargetNorm} - missileToTargetNorm:{relativeVelocity}");
                         proposedVel = Velocity + (Info.Direction * (aConst.DeltaVelocityPerTick * DeltaTimeRatio));
                     }
@@ -682,9 +705,10 @@ namespace CoreSystems.Projectiles
                 VelocityLengthSqr = proposedVel.LengthSquared();
                 proposedVel = Info.Direction * speedCap;
             }
+            else
+                Info.TotalAcceleration += (proposedVel - PrevVelocity);
 
             PrevVelocity = Velocity;
-            Info.TotalAcceleration += (proposedVel - PrevVelocity);
             if (Info.TotalAcceleration.LengthSquared() > aConst.MaxAccelerationSqr)
                 proposedVel = Velocity;
 

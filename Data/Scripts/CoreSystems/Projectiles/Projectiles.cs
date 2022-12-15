@@ -267,15 +267,16 @@ namespace CoreSystems.Projectiles
                             else {
 
                                 newVel = p.Velocity + accelThisTick;
-                                
-                                info.TotalAcceleration += (newVel - p.PrevVelocity);
-                                if (info.TotalAcceleration.LengthSquared() > aConst.MaxAccelerationSqr)
-                                    newVel = p.Velocity;
 
                                 p.VelocityLengthSqr = newVel.LengthSquared();
-                                if (p.VelocityLengthSqr > maxSpeedSqr) newVel = info.Direction * p.MaxSpeed;
-                            }
+                                if (p.VelocityLengthSqr > maxSpeedSqr) 
+                                    newVel = info.Direction * p.MaxSpeed;
+                                else 
+                                    info.TotalAcceleration += (newVel - p.PrevVelocity);
 
+                                if (info.TotalAcceleration.LengthSquared() > aConst.MaxAccelerationSqr)
+                                    newVel = p.Velocity;
+                            }
 
                             p.Velocity = newVel;
                         }
