@@ -8,12 +8,9 @@ using VRage.Collections;
 using VRage.Game;
 using VRage.Game.Components;
 using VRage.Game.Entity;
-using VRage.Game.ModAPI;
 using VRage.Utils;
 using VRageMath;
-using static CoreSystems.Support.VoxelIntersect;
 using static Sandbox.Definitions.MyDefinitionManager;
-using CollisionLayers = Sandbox.Engine.Physics.MyPhysics.CollisionLayers;
 
 namespace CoreSystems
 {
@@ -254,7 +251,8 @@ namespace CoreSystems
 
                 if (Placer != null) UpdatePlacer();
 
-                if (AnimationsToProcess.Count > 0 || ThreadedAnimations.Count > 0) ProcessAnimations();
+                if (AnimationsToProcess.Count > 0 || ThreadedAnimations.Count > 0) 
+                    ProcessAnimations();
 
                 if (GridTask.IsComplete)
                     CheckDirtyGridInfos();

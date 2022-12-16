@@ -433,25 +433,11 @@ namespace CoreSystems.Projectiles
                 var overMaxTargets = hadTarget && TargetsSeen > aConst.MaxTargets && aConst.MaxTargets != 0;
                
                 bool validEntity = false;
-                if (Info.Target.TargetState == Target.TargetStates.IsEntity)
-                {
+                if (Info.Target.TargetState == Target.TargetStates.IsEntity) {
                     var targetEnt = (MyEntity)Info.Target.TargetObject;
                     validEntity = !targetEnt.MarkedForClose;
                     if (validEntity && aConst.FocusOnly && Info.Target.TopEntityId != ai.Construct.Data.Repo.FocusData.Target)
-                    {
-                        validEntity = false;
-                        MyEntity fTarget;
-                        if (ai.Construct.Data.Repo.FocusData.Target > 0 && MyEntities.TryGetEntityById(ai.Construct.Data.Repo.FocusData.Target, out fTarget))
-                        {
-                            var targetBlock = targetEnt as MyCubeBlock;
-                            var targetGrid = targetBlock?.CubeGrid;
-                            var focusGrid = fTarget as MyCubeGrid;
-
-                            validEntity = targetEnt == fTarget || targetGrid == fTarget;
-                            if (targetGrid != null && focusGrid != null)
-                                validEntity = targetGrid.IsSameConstructAs(focusGrid);
-                        }
-                    }
+                        validEntity = ai.Construct.Data.Repo.FocusData.Target > 0 && IsFocusTarget(targetEnt);
                 }
 
                 var validTarget = fake || Info.Target.TargetState == Target.TargetStates.IsProjectile || validEntity && !overMaxTargets;
@@ -1205,6 +1191,26 @@ namespace CoreSystems.Projectiles
                 actualHeading = commandAccel;
 
             return actualHeading;
+        }
+
+        private bool IsFocusTarget(MyEntity targetEnt)
+        {
+            var ai = Info.Ai;
+            MyEntity fTarget;
+            if (MyEntities.TryGetEntityById(ai.Construct.Data.Repo.FocusData.Target, out fTarget))
+            {
+                var targetBlock = targetEnt as MyCubeBlock;
+                var targetGrid = targetBlock?.CubeGrid;
+                var focusGrid = fTarget as MyCubeGrid;
+
+                var validEntity = targetEnt == fTarget || targetGrid == fTarget;
+                if (!validEntity && targetGrid != null && focusGrid != null)
+                    validEntity = targetGrid.IsSameConstructAs(focusGrid);
+
+                return validEntity;
+            }
+
+            return false;
         }
 
         private void ApproachOrbits(Vector3D targetHeightOffset, double orbitHeight)
