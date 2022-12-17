@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Runtime.Remoting;
 using CoreSystems.Support;
 using Jakaria.API;
 using Sandbox.Game.Entities;
@@ -743,12 +744,30 @@ namespace CoreSystems.Platform
                 }
             }
 
-            internal void UpdateIsWorking()
+            internal void ActivateWhileOn(object o)
             {
+                if (!WhileOnActive)
+                {
+                    SetWhileOnTo(true);
+                }
+            }
+
+            internal void DeActivateWhileOn(object o)
+            {
+                if (WhileOnActive)
+                {
+                    SetWhileOnTo(false);
+                }
+            }
+
+            internal void SetWhileOnTo(bool enable)
+            {
+                WhileOnActive = enable;
+
                 for (int i = 0; i < Collection.Count; i++)
                 {
                     var w = Collection[i];
-                    w.EventTriggerStateChanged(WeaponDefinition.AnimationDef.PartAnimationSetDef.EventTriggers.WhileOn, IsWorking);
+                    w.EventTriggerStateChanged(WeaponDefinition.AnimationDef.PartAnimationSetDef.EventTriggers.WhileOn, WhileOnActive);
                 }
             }
 

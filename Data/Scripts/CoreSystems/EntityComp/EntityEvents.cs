@@ -14,6 +14,7 @@ using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using static CoreSystems.Platform.CorePlatform;
 using static CoreSystems.Session;
+using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace CoreSystems.Support
 {
@@ -163,7 +164,6 @@ namespace CoreSystems.Support
                 if (Registered && Ai.Construct.RootAi !=null)
                     Ai.Construct.RootAi.Construct.DirtyWeaponGroups = true;
 
-                var wasWorking = IsWorking;
 
                 if (Platform.State == PlatformState.Incomplete) {
                     Log.Line("Init on Incomplete");
@@ -173,7 +173,17 @@ namespace CoreSystems.Support
 
                     if (!wasFunctional && IsFunctional && IsWorkingChangedTick > 0)
                         Status = Start.ReInit;
+
                     IsWorking = myCubeBlock.IsWorking;
+                    if (Type == CompType.Weapon)
+                    {
+                        var wComp = (Weapon.WeaponComponent)this;
+                        if (IsWorking)
+                            Session.FutureEvents.Schedule(wComp.ActivateWhileOn, null, 30);
+                        else if (!IsWorking)
+                            Session.FutureEvents.Schedule(wComp.DeActivateWhileOn, null, 30);
+
+                    }
                     if (Cube.ResourceSink.CurrentInputByType(GId) < 0) Log.Line($"IsWorking:{IsWorking}(was:{wasFunctional}) - Func:{IsFunctional} - GridAvailPow:{Ai.GridAvailablePower} - SinkPow:{SinkPower} - SinkReq:{Cube.ResourceSink.RequiredInputByType(GId)} - SinkCur:{Cube.ResourceSink.CurrentInputByType(GId)}");
 
                     if (!IsWorking && Registered) {
@@ -185,7 +195,6 @@ namespace CoreSystems.Support
                     IsWorkingChangedTick = Session.Tick;
 
                 }
-
                 if (Platform.State == PlatformState.Ready) {
 
                     if (Type == CompType.Weapon)
@@ -194,8 +203,6 @@ namespace CoreSystems.Support
                         if (wasFunctional && !IsFunctional)
                             wComp.NotFunctional();
 
-                        if (wasWorking != IsWorking)
-                            wComp.UpdateIsWorking();
 
                         if (wasFunctional != IsFunctional && Ai.Construct.RootAi != null && wComp.Data.Repo.Values.Set.Overrides.WeaponGroupId > 0)
                             Ai.Construct.RootAi.Construct.DirtyWeaponGroups = true;

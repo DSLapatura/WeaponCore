@@ -3,6 +3,7 @@ using CoreSystems.Platform;
 using Sandbox.Game.Entities;
 using VRage.Game.Entity;
 using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetDef;
+using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace CoreSystems.Support
 {

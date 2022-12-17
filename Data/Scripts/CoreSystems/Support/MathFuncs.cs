@@ -262,6 +262,69 @@ namespace CoreSystems.Support
             return true;
         }
 
+        public static bool IntersectEllipsoidEllipsoid(Ellipsoid ellipsoid1, Quaternion rotation1, Ellipsoid ellipsoid2, Quaternion rotation2, out Vector3 collisionPoint)
+        {
+            collisionPoint = Vector3.Zero;
+
+            // Create transform matrices for the ellipsoids
+            Matrix transform1 = Matrix.CreateFromTransformScale(rotation1, ellipsoid1.Center, Vector3.One);
+            Matrix transform2 = Matrix.CreateFromTransformScale(rotation2, ellipsoid2.Center, Vector3.One);
+
+            // Transform the ellipsoid centers and radii into a common space
+            Matrix transform1Inv = Matrix.Invert(transform1);
+            Matrix transform2Inv = Matrix.Invert(transform2);
+            var center1 = Vector3.Transform(ellipsoid2.Center, transform1Inv);
+            var center2 = Vector3.Transform(ellipsoid1.Center, transform2Inv);
+            var radii1 = Vector3.TransformNormal(ellipsoid2.Radii, transform1Inv);
+            var radii2 = Vector3.TransformNormal(ellipsoid1.Radii, transform2Inv);
+
+            //Vector3 center1 = transform1.inverse.MultiplyPoint(ellipsoid2.Center);
+            //Vector3 center2 = transform2.inverse.MultiplyPoint(ellipsoid1.Center);
+            //Vector3 radii1 = transform1.inverse.MultiplyVector(ellipsoid2.Radii);
+            //Vector3 radii2 = transform2.inverse.MultiplyVector(ellipsoid1.Radii);
+
+            // Calculate the distance between the transformed ellipsoid centers
+            Vector3 centerDistance = center1 - center2;
+            float distance = centerDistance.Length();
+
+            // Calculate the sum of the transformed ellipsoid radii
+            Vector3 radiiSum = radii1 + radii2;
+
+            // Check if the distance between the transformed ellipsoid centers is less than or equal to the sum of the transformed ellipsoid radii in all dimensions
+            if (distance <= radiiSum.X && distance <= radiiSum.Y && distance <= radiiSum.Z)
+            {
+                // The ellipsoids intersect, so find the surface collision points
+                Vector3 surfacePoint1 = center1 + centerDistance.Normalize() * radii1;
+                Vector3 surfacePoint2 = center2 - centerDistance.Normalize() * radii2;
+
+                // Calculate the collision distance
+                float collisionDistance = (radiiSum - centerDistance).Length() / 2;
+
+                // Set the collision point to the midpoint between the surface collision points, minus the collision distance
+                collisionPoint = (surfacePoint1 + surfacePoint2) / 2 - centerDistance.Normalize() * collisionDistance;
+                // Transform the collision point back into world space
+                collisionPoint = Vector3.Transform(collisionPoint, transform1);
+                //collisionPoint = transform1.MultiplyPoint(collisionPoint);
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        public struct Ellipsoid
+        {
+            public Vector3 Center;
+            public Vector3 Radii;
+
+            public Ellipsoid(Vector3 center, Vector3 radii)
+            {
+                Center = center;
+                Radii = radii;
+            }
+        }
+
         internal static double? IntersectEllipsoid(MatrixD ellipsoidMatrixInv, MatrixD ellipsoidMatrix, RayD ray)
         {
             var normSphere = new BoundingSphereD(Vector3.Zero, 1f);

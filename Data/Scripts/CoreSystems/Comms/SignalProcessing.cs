@@ -9,9 +9,9 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Comms
     internal class RadioStation
     {
         internal readonly Radios Radios = new Radios();
-        private readonly Dictionary<MyStringHash, HashSet<RadioStation>> _detectedStationsOnChannel = new Dictionary<MyStringHash, HashSet<RadioStation>>();
-        private readonly Dictionary<MyStringHash, List<RadioStation>> _stationAdds = new Dictionary<MyStringHash, List<RadioStation>>();
-        private readonly Dictionary<MyStringHash, List<RadioStation>> _stationRemoves = new Dictionary<MyStringHash, List<RadioStation>>();
+        private readonly Dictionary<MyStringHash, HashSet<RadioStation>> _detectedStationsOnChannel = new Dictionary<MyStringHash, HashSet<RadioStation>>(MyStringHash.Comparer);
+        private readonly Dictionary<MyStringHash, List<RadioStation>> _stationAdds = new Dictionary<MyStringHash, List<RadioStation>>(MyStringHash.Comparer);
+        private readonly Dictionary<MyStringHash, List<RadioStation>> _stationRemoves = new Dictionary<MyStringHash, List<RadioStation>>(MyStringHash.Comparer);
 
         private readonly List<MyStringHash> _listening = new List<MyStringHash>();
         private readonly List<MyStringHash> _broadasting = new List<MyStringHash>();
@@ -127,7 +127,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Comms
     public class Radios
     {
         internal readonly Dictionary<int, Radio> RadioTypeMap = new Dictionary<int, Radio>();
-        internal readonly Dictionary<MyStringHash, List<Radio>> RadioMap = new Dictionary<MyStringHash, List<Radio>>();
+        internal readonly Dictionary<MyStringHash, List<Radio>> RadioMap = new Dictionary<MyStringHash, List<Radio>>(MyStringHash.Comparer);
 
         internal double FurthestTransmiter;
         internal double FurthestReceiver;

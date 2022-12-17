@@ -88,6 +88,7 @@ namespace CoreSystems.Support
         internal bool IsAsleep;
         internal bool IsFunctional;
         internal bool IsWorking;
+        internal bool WhileOnActive;
         internal bool IsDisabled;
         internal bool LastOnOffState;
         internal bool CanOverload;
