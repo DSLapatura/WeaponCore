@@ -17,6 +17,7 @@ using VRage.Utils;
 using VRageMath;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.AreaOfDamageDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.DamageScaleDef;
+using CollisionLayers = Sandbox.Engine.Physics.MyPhysics.CollisionLayers;
 
 namespace CoreSystems
 {
@@ -124,12 +125,10 @@ namespace CoreSystems
 
                 if (age > 600 && collection.Count == 0) {
                     Clean.Add(grid);
-                    d.Value.DestroyTick = 0;
-                    DefferedDestroyPool.Push(d.Value);
                     continue;
                 }
 
-                var ready = (Tick + dTick) % 30 == 0 && age >= 0;
+                var ready = (Tick + dTick) % 20 == 0 && age >= 0;
 
                 if ((ready || age == 0) && collection.Count > 0) {
                     for (int i = 0; i < collection.Count; i++)
@@ -139,7 +138,6 @@ namespace CoreSystems
                     }
                     collection.Clear();
                 }
-
             }
 
             for (int i = 0; i < Clean.Count; i++)
@@ -774,7 +772,7 @@ namespace CoreSystems
                                         DeferredDestroy[grid] = dInfo;
                                     }
 
-                                    if (Tick - dInfo.DestroyTick > 29)
+                                    if (dInfo.DestroyBlocks.Count == 0)
                                         dInfo.DestroyTick = Tick + 10;
 
                                     dInfo.DestroyBlocks.Add(new BlockDestroyInfo {Block = block, AttackerId = attackerId, DamageType = damageType, ScaledDamage = scaledDamage});
@@ -1045,78 +1043,83 @@ namespace CoreSystems
             var destObj = hitEnt.Entity as MyVoxelBase;
             if (destObj == null || entity == null || !hitEnt.HitPos.HasValue) return;
             var shieldHeal = info.AmmoDef.DamageScales.Shields.Type == ShieldDef.ShieldType.Heal;
-            if (type == HitEntity.Type.Water || !info.AmmoDef.Const.VoxelDamage || shieldHeal)
+            if (type == HitEntity.Type.Water || !info.AmmoDef.Const.VoxelDamage && false || shieldHeal)
             {
                 if (type != HitEntity.Type.Water || !info.AmmoDef.IgnoreWater)
                     info.BaseDamagePool = 0;
                 return;
             }
-
             var aConst = info.Weapon.ActiveAmmoDef.AmmoDef.Const;
             var directDmgGlobal = Settings.Enforcement.DirectDamageModifer;
-            var detDmgGlobal = Settings.Enforcement.AreaDamageModifer;
-
-            using (destObj.Pin())
+            IHitInfo hitInfo;
+            var fromPos = hitEnt.Intersection.Length >= 85 ? hitEnt.Intersection.To + -(hitEnt.Intersection.Direction * 10) : hitEnt.Intersection.From;
+            if (Physics.CastRay(fromPos, hitEnt.Intersection.To + (hitEnt.Intersection.Direction * 5), out hitInfo, CollisionLayers.VoxelCollisionLayer) && hitInfo.HitEntity is MyVoxelBase)
             {
-                var detonateOnEnd = info.AmmoDef.AreaOfDamage.EndOfLife.Enable && info.RelativeAge >= info.AmmoDef.AreaOfDamage.EndOfLife.MinArmingTime;
-
-                info.ObjectsHit++;
-                float damageScale = 1 * directDmgGlobal;
-                if (info.AmmoDef.Const.VirtualBeams) damageScale *= info.Weapon.WeaponCache.Hits;
-
-                var scaledDamage = info.BaseDamagePool * damageScale;
-
-                var distTraveled = info.AmmoDef.Const.IsBeamWeapon ? hitEnt.HitDist ?? info.DistanceTraveled : info.DistanceTraveled;
-                var fallOff = info.AmmoDef.Const.FallOffScaling && distTraveled > info.AmmoDef.Const.FallOffDistance;
-
-                if (fallOff)
+                using (destObj.Pin())
                 {
-                    var fallOffMultipler = (float)MathHelperD.Clamp(1.0 - ((distTraveled - info.AmmoDef.Const.FallOffDistance) / (info.AmmoDef.Const.MaxTrajectory - info.AmmoDef.Const.FallOffDistance)), info.AmmoDef.DamageScales.FallOff.MinMultipler, 1);
-                    scaledDamage *= fallOffMultipler;
-                }
+                    var detonateOnEnd = info.AmmoDef.AreaOfDamage.EndOfLife.Enable && info.RelativeAge >= info.AmmoDef.AreaOfDamage.EndOfLife.MinArmingTime;
 
-                var oRadius = info.AmmoDef.Const.ByBlockHitRadius;
-                var minTestRadius = distTraveled - info.PrevDistanceTraveled;
-                var tRadius = oRadius < minTestRadius && !info.AmmoDef.Const.IsBeamWeapon ? minTestRadius : oRadius;
-                var objHp = (int)MathHelper.Clamp(MathFuncs.VolumeCube(MathFuncs.LargestCubeInSphere(tRadius)), 5000, double.MaxValue);
+                    info.ObjectsHit++;
+                    float damageScale = 1 * directDmgGlobal;
+                    if (info.AmmoDef.Const.VirtualBeams) damageScale *= info.Weapon.WeaponCache.Hits;
 
+                    var scaledDamage = info.BaseDamagePool * damageScale;
 
-                if (tRadius > 5) objHp *= 5;
+                    var distTraveled = info.AmmoDef.Const.IsBeamWeapon ? hitEnt.HitDist ?? info.DistanceTraveled : info.DistanceTraveled;
+                    var fallOff = info.AmmoDef.Const.FallOffScaling && distTraveled > info.AmmoDef.Const.FallOffDistance;
 
-                if (scaledDamage < objHp)
-                {
-                    var reduceBy = objHp / scaledDamage;
-                    oRadius /= reduceBy;
-                    if (oRadius < 1) oRadius = 1;
+                    if (fallOff)
+                    {
+                        var fallOffMultipler = (float)MathHelperD.Clamp(1.0 - ((distTraveled - info.AmmoDef.Const.FallOffDistance) / (info.AmmoDef.Const.MaxTrajectory - info.AmmoDef.Const.FallOffDistance)), info.AmmoDef.DamageScales.FallOff.MinMultipler, 1);
+                        scaledDamage *= fallOffMultipler;
+                    }
 
-                    info.BaseDamagePool = 0;
-                }
-                else
-                {
-                    info.BaseDamagePool -= objHp;
-                    if (oRadius < minTestRadius) oRadius = minTestRadius;
-                }
+                    var oRadius = info.AmmoDef.Const.ByBlockHitRadius;
+                    var minTestRadius = distTraveled - info.PrevDistanceTraveled;
+                    var tRadius = oRadius < minTestRadius && !info.AmmoDef.Const.IsBeamWeapon ? minTestRadius : oRadius;
+                    var objHp = (int)MathHelper.Clamp(MathFuncs.VolumeCube(MathFuncs.LargestCubeInSphere(tRadius)), 5000, double.MaxValue);
 
-                var cut = aConst.FakeVoxelHitTicks == 0 || aConst.FakeVoxelHitTicks == Tick;
-                if (cut)
-                    destObj.PerformCutOutSphereFast(hitEnt.HitPos.Value, (float)(oRadius * info.AmmoDef.Const.VoxelHitModifier), false);
+                    if (tRadius > 5) objHp *= 5;
 
-                if (detonateOnEnd && info.BaseDamagePool <= 0 && cut)
-                {
-                    var dRadius = info.AmmoDef.Const.EndOfLifeRadius;
-                    var dDamage = info.AmmoDef.Const.EndOfLifeDamage * detDmgGlobal;
+                    if (scaledDamage < objHp)
+                    {
+                        var reduceBy = objHp / scaledDamage;
+                        oRadius /= reduceBy;
+                        if (oRadius < 1) oRadius = 1;
 
-                    if (dRadius < 1.5) dRadius = 1.5f;
+                        info.BaseDamagePool = 0;
+                    }
+                    else
+                    {
+                        info.BaseDamagePool -= objHp;
+                        if (oRadius < minTestRadius) oRadius = minTestRadius;
+                    }
 
-                    if (info.DoDamage)
-                        SUtils.CreateVoxelExplosion(this, dDamage, dRadius, hitEnt.HitPos.Value, hitEnt.Intersection.Direction, info.Weapon.Comp.CoreEntity, destObj, info.AmmoDef, true);
-                }
+                    var cut = aConst.FakeVoxelHitTicks == 0 || aConst.FakeVoxelHitTicks == Tick;
+                    if (cut)
+                    {
+                        var radius = (float)(oRadius * info.AmmoDef.Const.VoxelHitModifier);
+                        destObj.PerformCutOutSphereFast(hitInfo.Position, radius, true);
+                    }
 
-                if (GlobalDamageHandlerActive) {
-                    info.ProHits = info.ProHits != null && info.Weapon.System.Session.ProHitPool.Count > 0 ? info.Weapon.System.Session.ProHitPool.Pop() : new List<MyTuple<Vector3D, object, float>>();
-                    info.ProHits.Add(new MyTuple<Vector3D, object, float>(hitEnt.Intersection.To, destObj, 0));
+                    if (detonateOnEnd && info.BaseDamagePool <= 0 && cut)
+                    {
+                        var dRadius = info.AmmoDef.Const.EndOfLifeRadius;
+
+                        if (dRadius < 1.5) dRadius = 1.5f;
+
+                        if (info.DoDamage)
+                            destObj.PerformCutOutSphereFast(hitInfo.Position, dRadius, true);
+                    }
+
+                    if (GlobalDamageHandlerActive)
+                    {
+                        info.ProHits = info.ProHits != null && info.Weapon.System.Session.ProHitPool.Count > 0 ? info.Weapon.System.Session.ProHitPool.Pop() : new List<MyTuple<Vector3D, object, float>>();
+                        info.ProHits.Add(new MyTuple<Vector3D, object, float>(hitEnt.Intersection.To, destObj, 0));
+                    }
                 }
             }
+
         }
 
         public void RadiantAoe(ref HitEntity.RootBlocks rootInfo, MyCubeGrid grid, double radius, double depth, LineD direction, ref int maxDbc, out bool foundSomething, AoeShape shape, bool showHits,out int aoeHits) //added depth and angle

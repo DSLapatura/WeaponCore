@@ -74,7 +74,7 @@ namespace CoreSystems.Platform
 
                 if (clear)
                 {
-                    var filter = weapon.System.NoVoxelLosCheck ? CollisionLayers.NoVoxelCollisionLayer : CollisionLayers.VoxelLod1CollisionLayer;
+                    var filter = weapon.System.NoVoxelLosCheck ? CollisionLayers.NoVoxelCollisionLayer : ai.PlanetSurfaceInRange ? CollisionLayers.DefaultCollisionLayer : CollisionLayers.VoxelLod1CollisionLayer;
                     weapon.System.Session.Physics.CastRay(predictedMuzzlePos, testLine.From, out weapon.LastHitInfo, filter);
 
                     if (ai.AiType == Ai.AiTypes.Grid && weapon.LastHitInfo != null && weapon.LastHitInfo.HitEntity == ai.GridEntity)
@@ -503,7 +503,7 @@ namespace CoreSystems.Platform
                     var source = GetSmartLosPosition(i, ref info, angle);
 
                     IHitInfo hitInfo;
-                    var filter = System.NoVoxelLosCheck ? CollisionLayers.NoVoxelCollisionLayer : CollisionLayers.VoxelLod1CollisionLayer;
+                    var filter = System.NoVoxelLosCheck ? CollisionLayers.NoVoxelCollisionLayer : CollisionLayers.DefaultCollisionLayer;
                     Comp.Ai.Session.Physics.CastRay(source, info.Position, out hitInfo, (uint) filter, false);
                     var grid = hitInfo?.HitEntity?.GetTopMostParent() as MyCubeGrid;
                     if (grid != null && grid.IsInSameLogicalGroupAs(Comp.Ai.GridEntity) && grid.GetTargetedBlock(hitInfo.Position + (-info.Direction * 0.1f)) != Comp.Cube.SlimBlock)
@@ -568,7 +568,7 @@ namespace CoreSystems.Platform
             {
                 var source = GetSmartLosPosition(i, ref info, angle);
                 IHitInfo hitInfo;
-                var filter = System.NoVoxelLosCheck ? CollisionLayers.NoVoxelCollisionLayer : CollisionLayers.VoxelLod1CollisionLayer;
+                var filter = System.NoVoxelLosCheck ? CollisionLayers.NoVoxelCollisionLayer : CollisionLayers.DefaultCollisionLayer;
                 Comp.Ai.Session.Physics.CastRay(source, info.Position, out hitInfo, (uint) filter, false);
                 var grid = hitInfo?.HitEntity?.GetTopMostParent() as MyCubeGrid;
                 var hit = grid != null && grid.IsInSameLogicalGroupAs(Comp.Ai.GridEntity) && grid.GetTargetedBlock(hitInfo.Position + (-info.Direction * 0.1f)) != Comp.Cube.SlimBlock;
@@ -891,7 +891,7 @@ namespace CoreSystems.Platform
             var overrides = Comp.Data.Repo.Values.Set.Overrides;
             var eTarget = Target.TargetObject as MyEntity;
             var pTarget = Target.TargetObject as Projectile;
-            var filter = System.NoVoxelLosCheck ? CollisionLayers.NoVoxelCollisionLayer : CollisionLayers.VoxelLod1CollisionLayer;
+            var filter = System.NoVoxelLosCheck ? CollisionLayers.NoVoxelCollisionLayer : Comp.Ai.PlanetSurfaceInRange ? CollisionLayers.DefaultCollisionLayer : CollisionLayers.VoxelLod1CollisionLayer; ;
 
             if (System.Session.DebugLos && Target.TargetState == Target.TargetStates.IsEntity && eTarget != null)
             {

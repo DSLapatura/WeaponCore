@@ -553,7 +553,7 @@ namespace CoreSystems.Support
                     if (needsCast)
                     {
                         IHitInfo hitInfo;
-                        var filter = w.System.NoVoxelLosCheck ? CollisionLayers.NoVoxelCollisionLayer : CollisionLayers.VoxelLod1CollisionLayer;
+                        var filter = w.System.NoVoxelLosCheck ? CollisionLayers.NoVoxelCollisionLayer : ai.PlanetSurfaceInRange ? CollisionLayers.DefaultCollisionLayer : CollisionLayers.VoxelLod1CollisionLayer;
                         physics.CastRay(weaponPos, lp.Position, out hitInfo, filter);
                         if (hitInfo?.HitEntity == null && (!w.System.Values.HardPoint.Other.MuzzleCheck || !w.MuzzleHitSelf()))
                         {
@@ -823,7 +823,7 @@ namespace CoreSystems.Support
                 if (needsCast)
                 {
                     IHitInfo hitInfo;
-                    var filter = w.System.NoVoxelLosCheck ? CollisionLayers.NoVoxelCollisionLayer : CollisionLayers.VoxelLod1CollisionLayer;
+                    var filter = w.System.NoVoxelLosCheck ? CollisionLayers.NoVoxelCollisionLayer : ai.PlanetSurfaceInRange ? CollisionLayers.DefaultCollisionLayer : CollisionLayers.VoxelLod1CollisionLayer;
                     physics.CastRay(weaponPos, lp.Position, out hitInfo, filter);
                     if (hitInfo?.HitEntity == null)
                     {
@@ -994,7 +994,7 @@ namespace CoreSystems.Support
                     if (!fakeCheck)
                     {
                         hitTmpList.Clear();
-                        physics.CastRay(testPos, blockPos, hitTmpList, CollisionLayers.VoxelLod1CollisionLayer);
+                        physics.CastRay(testPos, blockPos, hitTmpList, CollisionLayers.DefaultCollisionLayer);
                         for (int j = 0; j < hitTmpList.Count; j++)
                         {
                             var hitInfo = hitTmpList[j];
@@ -1487,7 +1487,7 @@ namespace CoreSystems.Support
             IHitInfo iHitInfo = null;
             var arcCheckLen = 1;
             var hitTmpList = ai.Session.HitInfoTmpList;
-            ai.Session.Physics.CastRay(weaponPos, blockDir * arcCheckLen, hitTmpList, CollisionLayers.VoxelLod1CollisionLayer);
+            ai.Session.Physics.CastRay(weaponPos, blockDir * arcCheckLen, hitTmpList, CollisionLayers.DefaultCollisionLayer);
             var skip = false;
             for (int j = 0; j < hitTmpList.Count; j++)
             {
