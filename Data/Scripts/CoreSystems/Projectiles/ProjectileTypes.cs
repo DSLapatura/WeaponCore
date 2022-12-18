@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using CoreSystems.Platform;
 using CoreSystems.Projectiles;
 using Sandbox.Game.Entities;
@@ -444,10 +445,12 @@ namespace CoreSystems.Support
                 var randomFloat2 = (float)(frag.Random.NextDouble() * MathHelper.TwoPi);
                 var mutli = aConst.FragReverse ? -1 : 1;
 
-                var shrapnelDir = Vector3.TransformNormal(mutli  * -new Vector3(
-                    MyMath.FastSin(randomFloat1) * MyMath.FastCos(randomFloat2),
-                    MyMath.FastSin(randomFloat1) * MyMath.FastSin(randomFloat2),
-                    MyMath.FastCos(randomFloat1)), Matrix.CreateFromDir(pointDir));
+                var r1Sin = Math.Sin(randomFloat1);
+                var r2Sin = Math.Sin(randomFloat2);
+                var r1Cos = Math.Cos(randomFloat1);
+                var r2Cos = Math.Cos(randomFloat2);
+
+                var shrapnelDir = Vector3.TransformNormal(mutli  * -new Vector3(r1Sin * r2Cos, r1Sin * r2Sin, r1Cos), Matrix.CreateFromDir(pointDir));
 
                 frag.Direction = shrapnelDir;
                 Sharpnel.Add(frag);

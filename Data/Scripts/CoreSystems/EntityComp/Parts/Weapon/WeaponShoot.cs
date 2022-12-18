@@ -175,7 +175,8 @@ namespace CoreSystems.Platform
                             var randomFloat1 = (float)(rnd1 * deviatePlus - deviateMinus);
                             
                             var randomFloat2 = (float)(rnd2 * MathHelper.TwoPi);
-                            muzzle.DeviatedDir = Vector3.TransformNormal(-new Vector3D(MyMath.FastSin(randomFloat1) * MyMath.FastCos(randomFloat2), MyMath.FastSin(randomFloat1) * MyMath.FastSin(randomFloat2), MyMath.FastCos(randomFloat1)), dirMatrix);
+                            var r1Sin = Math.Sin(randomFloat1);
+                            muzzle.DeviatedDir = Vector3.TransformNormal(-new Vector3D(r1Sin * Math.Cos(randomFloat2), r1Sin * Math.Sin(randomFloat2), Math.Cos(randomFloat1)), dirMatrix);
                         }
                         else muzzle.DeviatedDir = muzzle.Direction;
                         #endregion
