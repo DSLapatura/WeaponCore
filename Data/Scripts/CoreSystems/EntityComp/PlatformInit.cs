@@ -248,7 +248,7 @@ namespace CoreSystems.Platform
                     part.NeedsWorldMatrix = true;
                     return;
                 }
-                if (!optimizeOnly || ForceNeedsWorld)
+                if (!optimizeOnly && !Parts.VanillaSubparts.ContainsKey(part) || ForceNeedsWorld)
                 {
                     part.NeedsWorldMatrix = true;
                 }

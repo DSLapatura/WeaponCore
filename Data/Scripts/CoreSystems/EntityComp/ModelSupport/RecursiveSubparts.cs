@@ -24,8 +24,10 @@ namespace CoreSystems.Support
         internal readonly Dictionary<MyEntity, string> VanillaSubparts = new Dictionary<MyEntity, string>();
         internal readonly Dictionary<MyEntity, string> NeedsWorld = new Dictionary<MyEntity, string>();
 
-        internal const string VanillaBase = "MissileTurretBase1";
-        internal const string VanillaBarrels = "MissileTurretBarrels";
+        internal const string MissileVanillaBase = "MissileTurretBase1";
+        internal const string MissileVanillaBarrels = "MissileTurretBarrels";
+        internal const string GatVanillaBase = "GatlingTurretBase1";
+        internal const string GatVanillaBarrels = "GatlingTurretBase2";
         internal const string NoneStr = "None";
 
 
@@ -78,7 +80,7 @@ namespace CoreSystems.Support
                                 NameToEntity[name] = res;
                                 EntityToName[res] = name;
                                 var sorter = Entity as MyConveyorSorter;
-                                if (sorter == null && (name.Equals(VanillaBase) || name.Equals(VanillaBarrels)))
+                                if (sorter == null && (name.Equals(MissileVanillaBase) || name.Equals(MissileVanillaBarrels) || name.Equals(GatVanillaBase) || name.Equals(GatVanillaBarrels)))
                                     VanillaSubparts[res] = name;
                             }
                         }
