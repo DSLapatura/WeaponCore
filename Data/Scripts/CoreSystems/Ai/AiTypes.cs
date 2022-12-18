@@ -512,37 +512,6 @@ namespace CoreSystems.Support
 
                 if (Drone && OffenseRating < 10)
                     OffenseRating = 10;
-
-                if (!myAi.PlanetSurfaceInRange && detectInfo.Armed && (targetAi != null || IsGrid && targetSphere.Radius > 25 || Target is IMyCharacter)) 
-                    TargetLosCheck();
-            }
-
-            private void TargetLosCheck()
-            {
-                var to = MyAi.TopEntityVolume.Center;
-                var from = TargetPos;
-
-                var perpDir = Vector3D.CalculatePerpendicularVector(to - from);
-                var fromPerp = from + (perpDir * TargetRadius);
-                var toPerp = to + (perpDir * MyAi.TopEntityVolume.Radius);
-
-                MyAi.Session.Physics.CastRayParallel(ref from, ref to, CollisionLayers.DefaultCollisionLayer, TargetLostCallBack);
-                MyAi.Session.Physics.CastRayParallel(ref fromPerp, ref toPerp, CollisionLayers.DefaultCollisionLayer, TargetLostCallBack);
-            }
-
-            internal void TargetLostCallBack(IHitInfo hitInfo)
-            {
-                if (hitInfo?.HitEntity?.Physics != null && MyAi != null)
-                {
-                    var hitEnt = (MyEntity)hitInfo.HitEntity;
-                    if (hitEnt != Target && hitEnt is MyVoxelBase)
-                    {
-                        if (++LosHits >= 2 && MyAi?.Construct.RootAi != null)
-                        {
-                            MyAi.Construct.RootAi.NoTargetLos[Target] = MyAi.Session.Tick;
-                        }
-                    }
-                }
             }
 
             internal void Clean()

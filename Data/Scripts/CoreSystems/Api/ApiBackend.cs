@@ -298,9 +298,6 @@ namespace CoreSystems.Api
         {
             var block = arg1 as Sandbox.ModAPI.Ingame.IMyTerminalBlock;
             var target = MyEntities.GetEntityById(arg2);
-            Ai ai;
-            if (block != null && target != null && _session.EntityToMasterAi.TryGetValue((MyCubeGrid)block.CubeGrid, out ai) && ai.NoTargetLos.ContainsKey(target))
-                return null;
 
             return GetPredictedTargetPosition((MyEntity) block, target, arg3);
         }
@@ -309,9 +306,6 @@ namespace CoreSystems.Api
         {
             var block = arg1 as Sandbox.ModAPI.Ingame.IMyTerminalBlock;
             var target = MyEntities.GetEntityById(arg2);
-            Ai ai;
-            if (block != null && target != null && _session.EntityToMasterAi.TryGetValue((MyCubeGrid)block.CubeGrid, out ai) && ai.NoTargetLos.ContainsKey(target))
-                return false;
 
             return CanShootTarget((MyEntity) block, target, arg3);
         }
@@ -320,9 +314,6 @@ namespace CoreSystems.Api
         {
             var block = arg1 as Sandbox.ModAPI.Ingame.IMyTerminalBlock;
             var target = MyEntities.GetEntityById(arg2);
-            Ai ai;
-            if (block != null && target != null && _session.EntityToMasterAi.TryGetValue((MyCubeGrid)block.CubeGrid, out ai) && ai.NoTargetLos.ContainsKey(target))
-                return false;
 
             return IsTargetAligned((MyEntity) block, target, arg3);
         }
@@ -331,9 +322,6 @@ namespace CoreSystems.Api
         {
             var block = arg1 as Sandbox.ModAPI.Ingame.IMyTerminalBlock;
             var target = MyEntities.GetEntityById(arg2);
-            Ai ai;
-            if (block != null && target != null && _session.EntityToMasterAi.TryGetValue((MyCubeGrid)block.CubeGrid, out ai) && ai.NoTargetLos.ContainsKey(target))
-                return new MyTuple<bool, Vector3D?>();
 
             return IsTargetAlignedExtended((MyEntity) block, target, arg3);
         }
@@ -383,9 +371,6 @@ namespace CoreSystems.Api
             var block = arg1 as Sandbox.ModAPI.Ingame.IMyTerminalBlock;
             var target = GetWeaponTarget((MyEntity) block, arg2);
 
-            Ai ai;
-            if (block != null && target.Item4 != null && _session.EntityToMasterAi.TryGetValue((MyCubeGrid)block.CubeGrid, out ai) && ai.NoTargetLos.ContainsKey(target.Item4))
-                return new MyDetectedEntityInfo();
 
             var result = GetDetailedEntityInfo(target, (MyEntity)arg1);
 
@@ -539,9 +524,6 @@ namespace CoreSystems.Api
 
             var block = arg1;
             var target = MyEntities.GetEntityById(arg2);
-            Ai ai;
-            if (block != null && target != null && _session.EntityToMasterAi.TryGetValue((MyCubeGrid)block.CubeGrid, out ai) && ai.NoTargetLos.ContainsKey(target))
-                return false;
 
             return IsTargetValid((MyEntity) block, target, arg3, arg4);
         }

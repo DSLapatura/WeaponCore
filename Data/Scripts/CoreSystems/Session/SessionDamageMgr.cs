@@ -414,6 +414,7 @@ namespace CoreSystems
             var earlyExit = false;
             var destroyed = 0;
             var showHits = t.Weapon.System.WConst.DebugMode && !t.Weapon.Comp.Session.MpActive;
+            DeferredBlockDestroy dInfo = null;
 
             //Main loop (finally)
             for (int i = 0; i < blockCount; i++)
@@ -766,8 +767,7 @@ namespace CoreSystems
                                 }
                                 else
                                 {
-                                    DeferredBlockDestroy dInfo;
-                                    if (!DeferredDestroy.TryGetValue(grid, out dInfo)) {
+                                    if (dInfo == null && !DeferredDestroy.TryGetValue(grid, out dInfo)) {
                                         dInfo = DefferedDestroyPool.Count > 0 ? DefferedDestroyPool.Pop() : new DeferredBlockDestroy();
                                         DeferredDestroy[grid] = dInfo;
                                     }

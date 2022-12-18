@@ -553,7 +553,7 @@ namespace CoreSystems.Support
                     if (needsCast)
                     {
                         IHitInfo hitInfo;
-                        var filter = w.System.NoVoxelLosCheck ? CollisionLayers.NoVoxelCollisionLayer : ai.PlanetSurfaceInRange ? CollisionLayers.DefaultCollisionLayer : CollisionLayers.VoxelLod1CollisionLayer;
+                        var filter = w.System.NoVoxelLosCheck ? CollisionLayers.NoVoxelCollisionLayer : ai.PlanetSurfaceInRange || ai.ClosestVoxelSqr <= 2250000 ? CollisionLayers.DefaultCollisionLayer : CollisionLayers.VoxelLod1CollisionLayer;
                         physics.CastRay(weaponPos, lp.Position, out hitInfo, filter);
                         if (hitInfo?.HitEntity == null && (!w.System.Values.HardPoint.Other.MuzzleCheck || !w.MuzzleHitSelf()))
                         {
@@ -823,7 +823,7 @@ namespace CoreSystems.Support
                 if (needsCast)
                 {
                     IHitInfo hitInfo;
-                    var filter = w.System.NoVoxelLosCheck ? CollisionLayers.NoVoxelCollisionLayer : ai.PlanetSurfaceInRange ? CollisionLayers.DefaultCollisionLayer : CollisionLayers.VoxelLod1CollisionLayer;
+                    var filter = w.System.NoVoxelLosCheck ? CollisionLayers.NoVoxelCollisionLayer : ai.PlanetSurfaceInRange || ai.ClosestVoxelSqr <= 2250000 ? CollisionLayers.DefaultCollisionLayer : CollisionLayers.VoxelLod1CollisionLayer;
                     physics.CastRay(weaponPos, lp.Position, out hitInfo, filter);
                     if (hitInfo?.HitEntity == null)
                     {
@@ -994,7 +994,8 @@ namespace CoreSystems.Support
                     if (!fakeCheck)
                     {
                         hitTmpList.Clear();
-                        physics.CastRay(testPos, blockPos, hitTmpList, CollisionLayers.DefaultCollisionLayer);
+                        var filter = ai.PlanetSurfaceInRange || ai.ClosestVoxelSqr <= 2250000 ? CollisionLayers.DefaultCollisionLayer : CollisionLayers.VoxelLod1CollisionLayer;
+                        physics.CastRay(testPos, blockPos, hitTmpList, filter);
                         for (int j = 0; j < hitTmpList.Count; j++)
                         {
                             var hitInfo = hitTmpList[j];

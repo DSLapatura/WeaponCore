@@ -448,7 +448,6 @@ namespace CoreSystems.Support
             TargetAisTmp.Clear();
             EntitiesInRange.Clear();
             Batteries.Clear();
-            NoTargetLos.Clear();
             Targets.Clear();
             WeaponAmmoCountStorage.Clear();
             PartCounting.Clear();

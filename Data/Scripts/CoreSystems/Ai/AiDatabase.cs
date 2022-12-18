@@ -165,13 +165,6 @@ namespace CoreSystems.Support
                     ObstructionsTmp.Add(new DetectInfo(Session, MyPlanetTmp, entInfo, 2, 2, false, false));
             }
 
-            foreach (var pair in NoTargetLos) {
-                if (Session.Tick - pair.Value > 120) {
-                    uint lastLosTick;
-                    NoTargetLos.TryRemove(pair.Key, out lastLosTick);
-                }
-            }
-
             ValidGrids.Clear();
             _possibleTargets.Clear();
         }
@@ -273,11 +266,17 @@ namespace CoreSystems.Support
         {
             StaticEntitiesInRange = StaticsInRangeTmp.Count > 0;
             ClosestStaticSqr = double.MaxValue;
+            ClosestVoxelSqr = double.MaxValue;
             StaticGridInRange = false;
             MyEntity closestEnt = null;
             var closestCenter = Vector3D.Zero;
             double closestDistSqr = double.MaxValue;
             CanShoot = true;
+
+            MyVoxelMap roid = null;
+            var closestRoidDistSqr = double.MaxValue;
+            var closestRoidCenter = Vector3D.Zero;
+
             for (int i = 0; i < StaticsInRangeTmp.Count; i++) {
 
                 var ent = StaticsInRangeTmp[i];
@@ -301,6 +300,14 @@ namespace CoreSystems.Support
                     closestCenter = staticCenter;
                 }
 
+                var map = ent as MyVoxelMap;
+                if (map != null && distSqr < closestRoidDistSqr)
+                {
+                    closestRoidDistSqr = distSqr;
+                    roid = map;
+                    closestRoidCenter = staticCenter;
+                }
+
                 if (CanShoot && safeZone != null && safeZone.Enabled) {
 
                     if (safeZone.PositionComp.WorldVolume.Contains(TopEntity.PositionComp.WorldVolume) != ContainmentType.Disjoint && ((Session.SafeZoneAction)safeZone.AllowedActions & Session.SafeZoneAction.Shooting) == 0)
@@ -308,11 +315,24 @@ namespace CoreSystems.Support
                 }
             }
 
+            if (roid != null)
+            {
+                var dist = Vector3D.Distance(ScanVolume.Center, closestRoidCenter);
+                dist -= roid.PositionComp.LocalVolume.Radius;
+                dist -= TopEntityVolume.Radius;
+                if (dist < 0) dist = 0;
+
+                var distSqr = dist * dist;
+                if (ClosestPlanetSqr < distSqr) distSqr = ClosestPlanetSqr;
+
+                ClosestVoxelSqr = distSqr;
+            }
+
             if (closestEnt != null) {
 
                 var dist = Vector3D.Distance(ScanVolume.Center, closestCenter);
                 dist -= closestEnt.PositionComp.LocalVolume.Radius;
-                dist -= ScanVolume.Radius;
+                dist -= TopEntityVolume.Radius;
                 if (dist < 0) dist = 0;
 
                 var distSqr = dist * dist;

@@ -50,7 +50,6 @@ namespace CoreSystems.Support
         internal readonly Dictionary<long, PlayerControllerEntity> PlayerControl = new Dictionary<long, PlayerControllerEntity>();
         internal readonly Dictionary<WeaponComponent, int> CompWeaponGroups = new Dictionary<WeaponComponent, int>();
         internal readonly ConcurrentDictionary<MyEntity, MyInventory> InventoryMonitor = new ConcurrentDictionary<MyEntity, MyInventory>();
-        internal readonly ConcurrentDictionary<MyEntity, uint> NoTargetLos = new ConcurrentDictionary<MyEntity, uint>();
         internal readonly HashSet<MyEntity> ValidGrids = new HashSet<MyEntity>();
         internal readonly HashSet<MyBatteryBlock> Batteries = new HashSet<MyBatteryBlock>();
         internal readonly HashSet<MyCubeGrid> SubGridCache = new HashSet<MyCubeGrid>();
@@ -176,6 +175,7 @@ namespace CoreSystems.Support
         internal double MaxTargetingRangeSqr;
         internal double DeadSphereRadius;
         internal double ClosestStaticSqr = double.MaxValue;
+        internal double ClosestVoxelSqr = double.MaxValue;
         internal double ClosestPlanetSqr = double.MaxValue;
         internal double ClosestFixedWeaponCompSqr = double.MaxValue;
         internal Vector3D RotorTargetPosition = Vector3D.MaxValue;

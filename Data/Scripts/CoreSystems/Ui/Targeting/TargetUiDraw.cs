@@ -868,7 +868,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             var targetId = ai.Construct.Data.Repo.FocusData.Target;
             MyTuple<float, TargetControl, MyRelationsBetweenPlayerAndBlock> targetInfo;
             MyEntity target;
-            if ((targetId <= 0 || !MyEntities.TryGetEntityById(targetId, out target) || !_masterTargets.TryGetValue(target, out targetInfo) || ai.NoTargetLos.ContainsKey(target))) 
+            if (targetId <= 0 || !MyEntities.TryGetEntityById(targetId, out target) || !_masterTargets.TryGetValue(target, out targetInfo)) 
                 return false;
 
             if (!s.Tick20) return true;

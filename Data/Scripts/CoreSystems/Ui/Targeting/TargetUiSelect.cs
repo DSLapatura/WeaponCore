@@ -366,7 +366,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                 else _currentIdx = _endIdx;
 
             var ent = _sortedMasterList[_currentIdx];
-            if (ent == null || ent.MarkedForClose || ai.NoTargetLos.ContainsKey(ent))
+            if (ent == null || ent.MarkedForClose)
             {
                 _endIdx = -1;
                 return;
