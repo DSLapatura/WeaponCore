@@ -120,6 +120,10 @@ namespace CoreSystems.Projectiles
                 if (Session.Api.ProjectileDamageEvents.Count > 0)
                     Session.ProcessDamageHandlerRequests();
             }
+            if (Session.DeferredDestroy.Count > 0)
+            {
+                Session.DefferedDestroy();
+            }
         }
 
         internal void AvUpdate()

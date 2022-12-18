@@ -106,7 +106,8 @@ namespace CoreSystems
         internal readonly Stack<Ai> AiPool = new Stack<Ai>(128);
         internal readonly Stack<MyEntity3DSoundEmitter> Emitters = new Stack<MyEntity3DSoundEmitter>(256);
         internal readonly Stack<VoxelCache> VoxelCachePool = new Stack<VoxelCache>(256);
-        
+        internal readonly Stack<DeferredBlockDestroy> DefferedDestroyPool = new Stack<DeferredBlockDestroy>(256);
+
         internal readonly Stack<ProtoProPositionSync> ProtoWeaponProSyncPosPool = new Stack<ProtoProPositionSync>(256);
         internal readonly Stack<ProjectileSyncPosPacket> ProtoWeaponProPosPacketPool = new Stack<ProjectileSyncPosPacket>(256);
 
@@ -204,6 +205,7 @@ namespace CoreSystems
         internal readonly Dictionary<MyDefinitionId, AmmoType> AmmoDefIds = new Dictionary<MyDefinitionId, AmmoType>(MyDefinitionId.Comparer);
         internal readonly Dictionary<MyDefinitionId, List<WeaponMagMap>> SubTypeIdToWeaponMagMap = new Dictionary<MyDefinitionId, List<WeaponMagMap>>(MyDefinitionId.Comparer);
         internal readonly Dictionary<MyDefinitionId, List<WeaponMagMap>> SubTypeIdToNpcSafeWeaponMagMap = new Dictionary<MyDefinitionId, List<WeaponMagMap>>(MyDefinitionId.Comparer);
+        internal readonly Dictionary<MyCubeGrid, DeferredBlockDestroy> DeferredDestroy = new Dictionary<MyCubeGrid, DeferredBlockDestroy>();
 
         internal readonly HashSet<MyCubeGrid> DeformProtection = new HashSet<MyCubeGrid>();
         internal readonly HashSet<IMyTerminalAction> CustomActions = new HashSet<IMyTerminalAction>();

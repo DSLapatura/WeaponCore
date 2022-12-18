@@ -16,6 +16,7 @@ using VRage.Collections;
 using VRage.Game;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
+using VRage.Utils;
 using VRageMath;
 using static CoreSystems.Platform.Part;
 using static CoreSystems.Support.WeaponSystem;
@@ -1079,6 +1080,20 @@ namespace CoreSystems
             ControlPlayerRequest.Clear();
         }
 
+    }
+
+    public class DeferredBlockDestroy
+    {
+        public readonly List<BlockDestroyInfo> DestroyBlocks = new List<BlockDestroyInfo>();
+        public uint DestroyTick;
+    }
+
+    public struct BlockDestroyInfo
+    {
+        public IMySlimBlock Block;
+        public float ScaledDamage;
+        public long AttackerId;
+        public MyStringHash DamageType;
     }
 
     public class CustomHitInfo

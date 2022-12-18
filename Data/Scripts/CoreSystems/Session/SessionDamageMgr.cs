@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using CoreSystems.Projectiles;
 using CoreSystems.Support;
 using Sandbox.Definitions;
@@ -108,6 +109,50 @@ namespace CoreSystems
             }
             Hits.Clear();
         }
+
+        internal readonly List<MyCubeGrid> Clean = new List<MyCubeGrid>();
+        internal void DefferedDestroy()
+        {
+            var sync = MpActive && (DedicatedServer || IsServer);
+            Clean.Clear();
+            foreach (var d in DeferredDestroy)
+            {
+                var grid = d.Key;
+                var collection = d.Value.DestroyBlocks;
+                var dTick = d.Value.DestroyTick;
+                var age = (long)Tick - dTick;
+
+                if (age > 600 && collection.Count == 0) {
+                    Clean.Add(grid);
+                    d.Value.DestroyTick = 0;
+                    DefferedDestroyPool.Push(d.Value);
+                    continue;
+                }
+
+                var ready = (Tick + dTick) % 30 == 0 && age >= 0;
+
+                if ((ready || age == 0) && collection.Count > 0) {
+                    for (int i = 0; i < collection.Count; i++)
+                    {
+                        var info = collection[i];
+                        info.Block.DoDamage(info.ScaledDamage, info.DamageType, sync, null, info.AttackerId);
+                    }
+                    collection.Clear();
+                }
+
+            }
+
+            for (int i = 0; i < Clean.Count; i++)
+            {
+                var grid = Clean[i];
+                var value = DeferredDestroy[grid];
+                value.DestroyTick = 0;
+                DefferedDestroyPool.Push(value);
+                DeferredDestroy.Remove(grid);
+            }
+            Clean.Clear();
+        }
+
         private void DamageShield(HitEntity hitEnt, ProInfo info) // silly levels of inlining due to mod profiler
         {
             var shield = hitEnt.Entity as IMyTerminalBlock;
@@ -317,6 +362,7 @@ namespace CoreSystems
             var areaDmgGlobal = Settings.Enforcement.AreaDamageModifer * hitEnt.DamageMulti;
             var sync = MpActive && (DedicatedServer || IsServer);
             float gridDamageModifier = grid.GridGeneralDamageModifier;
+            var gridBlockCount = grid.CubeBlocks.Count;
             IMySlimBlock rootBlock = null;
             var d = t.AmmoDef.DamageScales;
 
@@ -716,7 +762,23 @@ namespace CoreSystems
                                         _slimLastDeformTick[block] = Tick;
                                 }
 
-                                block.DoDamage(scaledDamage, damageType, sync, null, attackerId);
+                                if (!deadBlock || gridBlockCount < 2500)
+                                {
+                                    block.DoDamage(scaledDamage, damageType, sync, null, attackerId);
+                                }
+                                else
+                                {
+                                    DeferredBlockDestroy dInfo;
+                                    if (!DeferredDestroy.TryGetValue(grid, out dInfo)) {
+                                        dInfo = DefferedDestroyPool.Count > 0 ? DefferedDestroyPool.Pop() : new DeferredBlockDestroy();
+                                        DeferredDestroy[grid] = dInfo;
+                                    }
+
+                                    if (Tick - dInfo.DestroyTick > 29)
+                                        dInfo.DestroyTick = Tick + 10;
+
+                                    dInfo.DestroyBlocks.Add(new BlockDestroyInfo {Block = block, AttackerId = attackerId, DamageType = damageType, ScaledDamage = scaledDamage});
+                                }
                                 
                                 if (GlobalDamageHandlerActive) {
                                     t.ProHits = t.ProHits != null && ProHitPool.Count > 0 ? ProHitPool.Pop() : new List<MyTuple<Vector3D, object, float>>();

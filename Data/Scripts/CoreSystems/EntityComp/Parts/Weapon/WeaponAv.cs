@@ -134,7 +134,6 @@ namespace CoreSystems.Platform
 
         internal void EventTriggerStateChanged(EventTriggers state, bool active, HashSet<string> muzzles = null)
         {
-            Log.Line($"{state} - {active}");
             if (Comp.Data.Repo == null || Comp.CoreEntity == null || Comp.CoreEntity.MarkedForClose || Comp.Ai == null || Comp.Platform.State != CorePlatform.PlatformState.Ready && Comp.Platform.State != CorePlatform.PlatformState.Inited) return;
             try
             {
