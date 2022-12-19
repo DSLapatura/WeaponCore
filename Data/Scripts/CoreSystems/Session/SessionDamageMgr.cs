@@ -1053,7 +1053,7 @@ namespace CoreSystems
             var directDmgGlobal = Settings.Enforcement.DirectDamageModifer;
             IHitInfo hitInfo;
             var fromPos = hitEnt.Intersection.Length >= 85 ? hitEnt.Intersection.To + -(hitEnt.Intersection.Direction * 10) : hitEnt.Intersection.From;
-            if (Physics.CastRay(fromPos, hitEnt.Intersection.To + (hitEnt.Intersection.Direction * 5), out hitInfo, CollisionLayers.VoxelCollisionLayer) && hitInfo.HitEntity is MyVoxelBase)
+            if (Physics.CastRay(fromPos, hitEnt.Intersection.To + (hitEnt.Intersection.Direction * 5), out hitInfo, CollisionLayers.CollideWithStaticLayer) && hitInfo.HitEntity is MyVoxelBase)
             {
                 using (destObj.Pin())
                 {
@@ -1212,71 +1212,74 @@ namespace CoreSystems
                     {
                         var vector3I = new Vector3I(i, j, k);
 
-                            int hitdist;
-                            switch(shape)
-                            {
-                                case AoeShape.Diamond:
-                                    hitdist = Vector3I.DistanceManhattan(rootHitPos, vector3I);
-                                    break;
-                                case AoeShape.Round:
-                                    hitdist = (int)Math.Round(Math.Sqrt((rootHitPos.X - vector3I.X) * (rootHitPos.X - vector3I.X) + (rootHitPos.Y - vector3I.Y) * (rootHitPos.Y - vector3I.Y) + (rootHitPos.Z - vector3I.Z) * (rootHitPos.Z - vector3I.Z)));
-                                    break;
-                                default:
-                                    hitdist = int.MaxValue;
-                                    break;
-                            }
+                        int hitdist;
+                        switch(shape)
+                        {
+                            case AoeShape.Diamond:
+                                hitdist = Vector3I.DistanceManhattan(rootHitPos, vector3I);
+                                break;
+                            case AoeShape.Round:
+                                hitdist = (int)Math.Round(Math.Sqrt((rootHitPos.X - vector3I.X) * (rootHitPos.X - vector3I.X) + (rootHitPos.Y - vector3I.Y) * (rootHitPos.Y - vector3I.Y) + (rootHitPos.Z - vector3I.Z) * (rootHitPos.Z - vector3I.Z)));
+                                break;
+                            default:
+                                hitdist = int.MaxValue;
+                                break;
+                        }
 
-                            if (hitdist <= maxradius)
+                        if (hitdist <= maxradius)
+                        {
+                            MyCube cube;
+                            if (grid.TryGetCube(vector3I, out cube))
                             {
-                                MyCube cube;
-                                if (grid.TryGetCube(vector3I, out cube))
+
+                                var slim = (IMySlimBlock)cube.CubeBlock;
+                                if (slim.IsDestroyed)
+                                    continue;
+
+                                var distArray = damageBlockCache[hitdist];
+
+                                var slimmin = slim.Min;
+                                var slimmax = slim.Max;
+                                if (slimmax != slimmin)//Block larger than 1x1x1
                                 {
+                                    var hitblkbound = new BoundingBoxI(slimmin, slimmax);
+                                    var rootHitPosbound = new BoundingBoxI(rootHitPos, rootHitPos);//Direct hit on non1x1x1 block
+                                    if (hitblkbound.Contains(rootHitPosbound) == ContainmentType.Contains)
+                                    {
+                                        rootHitPosbound.IntersectWith(ref hitblkbound);
+                                    }
+                                    else //Find first point of non1x1x1 to inflate from
+                                    {
+                                        while (hitblkbound.Contains(rootHitPosbound) == ContainmentType.Disjoint)
+                                        {
+                                            rootHitPosbound.Inflate(1);
+                                        }
+                                    }
 
-                                    var slim = (IMySlimBlock)cube.CubeBlock;
-                                    if (slim.IsDestroyed)
+                                    rootHitPosbound.Inflate(1);
+
+                                    if (rootHitPosbound.Contains(vector3I) != ContainmentType.Contains) 
                                         continue;
 
-                                    var distArray = damageBlockCache[hitdist];
+                                    distArray.Add(slim);
+                                    foundSomething = true;
+                                    aoeHits++;
 
-                                    var slimmin = slim.Min;
-                                    var slimmax = slim.Max;
-                                    if (slimmax != slimmin)//Block larger than 1x1x1
-                                    {
-                                        var hitblkbound = new BoundingBoxI(slimmin, slimmax);
-                                        var rootHitPosbound = new BoundingBoxI(rootHitPos, rootHitPos);//Direct hit on non1x1x1 block
-                                        if (hitblkbound.Contains(rootHitPosbound) == ContainmentType.Contains)
-                                        {
-                                            rootHitPosbound.IntersectWith(ref hitblkbound);
-                                        }
-                                        else //Find first point of non1x1x1 to inflate from
-                                        {
-                                            while (hitblkbound.Contains(rootHitPosbound) == ContainmentType.Disjoint)
-                                            {
-                                                rootHitPosbound.Inflate(1);
-                                            }
-                                        }
-                                        rootHitPosbound.Inflate(1);
+                                    if (hitdist > maxDbc) 
+                                        maxDbc = hitdist;
 
+                                    if (showHits) 
+                                        slim.Dithering = 0.50f;
 
-                                    if (rootHitPosbound.Contains(vector3I) == ContainmentType.Contains)
-                                        {
-                                            distArray.Add(slim);
-                                            foundSomething = true;
-                                            aoeHits++;
-                                            if (hitdist > maxDbc) maxDbc = hitdist;
-                                            if (showHits) slim.Dithering = 0.50f;
-                                        }
-
-
-                                    }
-                                    else//Happy normal 1x1x1
-                                    {
-                                        distArray.Add(slim);
-                                        foundSomething = true;
-                                        aoeHits++;
-                                        if (hitdist > maxDbc) maxDbc = hitdist;
-                                        if(showHits)slim.Dithering = 0.50f;
-                                    }
+                                }
+                                else//Happy normal 1x1x1
+                                {
+                                    distArray.Add(slim);
+                                    foundSomething = true;
+                                    aoeHits++;
+                                    if (hitdist > maxDbc) maxDbc = hitdist;
+                                    if(showHits)slim.Dithering = 0.50f;
+                                }
                             }
                         }
                     }

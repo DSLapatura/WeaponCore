@@ -68,6 +68,15 @@ namespace CoreSystems
                 if (ai.AiType == Ai.AiTypes.Grid && !ai.HasPower || enforcement.ServerSleepSupport && IsServer && ai.AwakeComps == 0 && ai.WeaponsTracking == 0 && ai.SleepingComps > 0 && !ai.CheckProjectiles && ai.AiSleep && !ai.DbUpdated) 
                     continue;
 
+                var construct = ai.Construct;
+
+                var rootAi = construct.RootAi;
+                var rootConstruct = rootAi.Construct;
+                var focus = rootConstruct.Focus;
+
+                if (construct.LargestAi == null)
+                    rootConstruct.Ai.TopEntityMap.GroupMap.UpdateAis();
+
                 if (ai.AiType != Ai.AiTypes.Phantom && (ai.TopEntityMap.GroupMap.LastControllerTick == Tick || ai.TopEntityMap.LastControllerTick == Tick))
                     Ai.Constructs.UpdatePlayerStates(ai.TopEntityMap.GroupMap);
 
@@ -76,10 +85,6 @@ namespace CoreSystems
                     ai.BlockChangeArea.Max *= ai.GridEntity.GridSize;
                 }
 
-                var construct = ai.Construct;
-                var rootAi = construct.RootAi;
-                var rootConstruct = rootAi.Construct;
-                var focus = rootConstruct.Focus;
                
                 if (rootConstruct.DirtyWeaponGroups)
                 {

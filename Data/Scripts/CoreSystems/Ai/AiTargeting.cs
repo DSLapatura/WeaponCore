@@ -18,7 +18,6 @@ using static CoreSystems.Support.WeaponDefinition.AmmoDef;
 using static CoreSystems.Platform.Weapon.ApiShootRequest;
 using IMyWarhead = Sandbox.ModAPI.IMyWarhead;
 using CollisionLayers = Sandbox.Engine.Physics.MyPhysics.CollisionLayers;
-using static VRage.Game.MyObjectBuilder_Toolbar;
 
 namespace CoreSystems.Support
 {
@@ -514,7 +513,8 @@ namespace CoreSystems.Support
                 var smart = lpaConst.IsDrone || lpaConst.IsSmart;
                 var cube = lp.Info.Target.TargetObject as MyCubeBlock;
                 Weapon.TargetOwner tOwner;
-                if (smartOnly && !smart || lockedOnly && (!smart || cube != null && w.Comp.IsBlock && cube.CubeGrid.IsSameConstructAs(w.Comp.Ai.GridEntity)) || lp.MaxSpeed > system.MaxTargetSpeed || lp.MaxSpeed <= 0 || lp.State != Projectile.ProjectileState.Alive || Vector3D.DistanceSquared(lp.Position, weaponPos) > w.MaxTargetDistanceSqr || Vector3D.DistanceSquared(lp.Position, weaponPos) < w.MinTargetDistanceBufferSqr || w.System.UniqueTargetPerWeapon && w.Comp.ActiveTargets.TryGetValue(lp, out tOwner) && tOwner.Weapon != w) continue;
+                var distSqr = Vector3D.DistanceSquared(lp.Position, weaponPos);
+                if (smartOnly && !smart || lockedOnly && (!smart || cube != null && w.Comp.IsBlock && cube.CubeGrid.IsSameConstructAs(w.Comp.Ai.GridEntity)) || lp.MaxSpeed > system.MaxTargetSpeed || lp.MaxSpeed <= 0 || lp.State != Projectile.ProjectileState.Alive || distSqr > w.MaxTargetDistanceSqr || distSqr < w.MinTargetDistanceBufferSqr || w.System.UniqueTargetPerWeapon && w.Comp.ActiveTargets.TryGetValue(lp, out tOwner) && tOwner.Weapon != w) continue;
 
 
                 var lpAccel = lp.Velocity - lp.PrevVelocity;
@@ -553,7 +553,10 @@ namespace CoreSystems.Support
                     if (needsCast)
                     {
                         IHitInfo hitInfo;
-                        var filter = w.System.NoVoxelLosCheck ? CollisionLayers.NoVoxelCollisionLayer : ai.PlanetSurfaceInRange || ai.ClosestVoxelSqr <= 2250000 ? CollisionLayers.DefaultCollisionLayer : CollisionLayers.VoxelLod1CollisionLayer;
+                        var oneHalfKmSqr = 2250000;
+                        var lowFiVoxels = distSqr > oneHalfKmSqr && (ai.PlanetSurfaceInRange || ai.ClosestVoxelSqr <= oneHalfKmSqr);
+                        var filter = w.System.NoVoxelLosCheck ? CollisionLayers.NoVoxelCollisionLayer : lowFiVoxels ? CollisionLayers.DefaultCollisionLayer : CollisionLayers.VoxelLod1CollisionLayer;
+                       
                         physics.CastRay(weaponPos, lp.Position, out hitInfo, filter);
                         if (hitInfo?.HitEntity == null && (!w.System.Values.HardPoint.Other.MuzzleCheck || !w.MuzzleHitSelf()))
                         {
@@ -823,7 +826,10 @@ namespace CoreSystems.Support
                 if (needsCast)
                 {
                     IHitInfo hitInfo;
-                    var filter = w.System.NoVoxelLosCheck ? CollisionLayers.NoVoxelCollisionLayer : ai.PlanetSurfaceInRange || ai.ClosestVoxelSqr <= 2250000 ? CollisionLayers.DefaultCollisionLayer : CollisionLayers.VoxelLod1CollisionLayer;
+
+                    var oneHalfKmSqr = 2250000;
+                    var lowFiVoxels = Vector3D.DistanceSquared(lp.Position, weaponPos) > oneHalfKmSqr && (ai.PlanetSurfaceInRange || ai.ClosestVoxelSqr <= oneHalfKmSqr);
+                    var filter = w.System.NoVoxelLosCheck ? CollisionLayers.NoVoxelCollisionLayer : lowFiVoxels ? CollisionLayers.DefaultCollisionLayer : CollisionLayers.VoxelLod1CollisionLayer;
                     physics.CastRay(weaponPos, lp.Position, out hitInfo, filter);
                     if (hitInfo?.HitEntity == null)
                     {
@@ -994,7 +1000,10 @@ namespace CoreSystems.Support
                     if (!fakeCheck)
                     {
                         hitTmpList.Clear();
-                        var filter = ai.PlanetSurfaceInRange || ai.ClosestVoxelSqr <= 2250000 ? CollisionLayers.DefaultCollisionLayer : CollisionLayers.VoxelLod1CollisionLayer;
+                        var oneHalfKmSqr = 2250000;
+                        var lowFiVoxels = distSqr > oneHalfKmSqr && (ai.PlanetSurfaceInRange || ai.ClosestVoxelSqr <= oneHalfKmSqr);
+                        var filter = lowFiVoxels ? CollisionLayers.DefaultCollisionLayer : CollisionLayers.VoxelLod1CollisionLayer;
+                        
                         physics.CastRay(testPos, blockPos, hitTmpList, filter);
                         for (int j = 0; j < hitTmpList.Count; j++)
                         {
@@ -1002,9 +1011,11 @@ namespace CoreSystems.Support
 
                             var entity = hitInfo.HitEntity as MyEntity;
                             var hitGrid = entity as MyCubeGrid;
+                            var voxel = entity as MyVoxelBase;
                             var character = entity as IMyCharacter;
                             var dist = hitInfo.Fraction * targetDist;
-                            if (character == null && hitGrid == null || dist >= closest || hitGrid != null && (hitGrid.MarkedForClose || hitGrid.Physics == null || hitGrid.IsPreview || ai.AiType == AiTypes.Grid && hitGrid.IsSameConstructAs(ai.GridEntity)))
+
+                            if (character == null && hitGrid == null && voxel == null || dist >= closest || hitGrid != null && (hitGrid.MarkedForClose || hitGrid.Physics == null || hitGrid.IsPreview || ai.AiType == AiTypes.Grid && hitGrid.IsSameConstructAs(ai.GridEntity)))
                                 continue;
 
                             TargetInfo otherInfo;
@@ -1021,7 +1032,7 @@ namespace CoreSystems.Support
                                 }
                             }
 
-                            if (entity is MyVoxelBase)
+                            if (voxel != null)
                             {
                                 if (dist < closest)
                                 {
@@ -1029,8 +1040,7 @@ namespace CoreSystems.Support
                                     acquire = false;
                                 }
                             }
-
-                            if (hitGrid != null)
+                            else if (hitGrid != null)
                             {
                                 var bigOwners = hitGrid.BigOwners;
                                 var noOwner = bigOwners.Count == 0;

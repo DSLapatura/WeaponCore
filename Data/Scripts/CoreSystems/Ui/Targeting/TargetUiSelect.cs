@@ -5,7 +5,10 @@ using VRage;
 using VRage.Game;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
+using VRage.Noise.Patterns;
+using VRage.Utils;
 using VRageMath;
+using CollisionLayers = Sandbox.Engine.Physics.MyPhysics.CollisionLayers;
 
 namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
 {
@@ -71,7 +74,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                 return;
             }
 
-            if (s.UiInput.AltPressed && s.UiInput.ShiftReleased || DrawReticle && s.UiInput.ClientInputState.MouseButtonRight && s.PlayerDummyTargets[s.PlayerId].PaintedTarget.EntityId == 0 && !SelectTarget(true, true, true))
+            MyEntity focusEnt;
+            if (s.UiInput.AltPressed && s.UiInput.ShiftReleased  || s.Tick120 && ai.Construct.Focus.GetPriorityTarget(ai, out focusEnt) && VoxelInLos(ai, focusEnt) || DrawReticle && s.UiInput.ClientInputState.MouseButtonRight && s.PlayerDummyTargets[s.PlayerId].PaintedTarget.EntityId == 0 && !SelectTarget(true, true, true))
                 ai.Construct.Focus.RequestReleaseActive(ai, s.PlayerId);
 
             if (s.UiInput.MouseButtonRightNewPressed || s.UiInput.MouseButtonRightReleased && (DrawReticle || s.UiInput.FirstPersonView))
@@ -139,6 +143,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
 
             var advanced = s.Settings.ClientConfig.AdvancedMode || s.UiInput.IronLock;
             MyEntity closestEnt = null;
+            MyEntity rootEntity = null;
             _session.Physics.CastRay(AimPosition, end, _hitInfo);
 
             for (int i = 0; i < _hitInfo.Count; i++)
@@ -159,6 +164,12 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
 
                 if (rayOnlyHitSelf) rayOnlyHitSelf = false;
 
+                Ai masterAi;
+                if (s.EntityToMasterAi.TryGetValue(closestEnt, out masterAi) && masterAi.Construct.RootAi.Construct.LargestAi?.TopEntity != null)
+                    rootEntity = masterAi.Construct.RootAi.Construct.LargestAi.TopEntity;
+                else 
+                    rootEntity = closestEnt;
+
                 var hitGrid = closestEnt as MyCubeGrid;
                 var character = closestEnt as IMyCharacter;
 
@@ -166,7 +177,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
 
                 if (manualSelect)
                 {
-                    if (character == null && hitGrid == null || !_masterTargets.ContainsKey(closestEnt))
+                    if (character == null && hitGrid == null || !_masterTargets.ContainsKey(rootEntity))
                     {
                         continue;
                     }
@@ -179,12 +190,12 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                     {
                         if (closestEnt == _firstStageEnt) {
 
-                            if (mark && advanced && !checkOnly && ai.Construct.Focus.EntityIsFocused(ai, closestEnt)) 
+                            if (mark && advanced && !checkOnly && ai.Construct.Focus.EntityIsFocused(ai, rootEntity)) 
                                 paintTarget.Update(hit.Position, s.Tick, closestEnt);
 
                             if (!checkOnly)
                             {
-                                s.SetTarget(closestEnt, ai);
+                                s.SetTarget(rootEntity, ai);
                             }
                             possibleTarget = true;
                         }
@@ -215,7 +226,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
 
             Vector3D hitPos;
             bool foundOther = false;
-            if (!foundTarget && RayCheckTargets(AimPosition, AimDirection, out closestEnt, out hitPos, out foundOther, !manualSelect))
+            if (!foundTarget && RayCheckTargets(AimPosition, AimDirection, out closestEnt, out rootEntity, out hitPos, out foundOther, !manualSelect))
             {
                 foundTarget = true;
                 if (manualSelect)
@@ -225,7 +236,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                     else
                     {
                         if (!checkOnly && closestEnt == _firstStageEnt)
-                            s.SetTarget(closestEnt, ai);
+                            s.SetTarget(rootEntity, ai);
 
                         _firstStageEnt = null;
                     }
@@ -239,7 +250,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             if (!manualSelect)
             {
                 MyTuple<float, TargetControl, MyRelationsBetweenPlayerAndBlock> tInfo = new MyTuple<float, TargetControl, MyRelationsBetweenPlayerAndBlock>();
-                var activeColor = closestEnt != null && !_masterTargets.TryGetValue(closestEnt, out tInfo) || foundOther ? Color.DeepSkyBlue : Color.Red;
+                var activeColor = rootEntity != null && !_masterTargets.TryGetValue(rootEntity, out tInfo) || foundOther ? Color.DeepSkyBlue : Color.Red;
 
                 var voxel = closestEnt as MyVoxelBase;
                 var dumbHand = s.UiInput.PlayerWeapon && !ai.SmartHandheld;
@@ -288,6 +299,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                     if (LastSelectedEntity.MarkedForClose || focusEnt == LastSelectedEntity || focusGrid != null && lastEntityGrid != null && focusGrid.IsSameConstructAs(lastEntityGrid))
                         skip = true;
                 }
+
                 if (LastSelectedEntity != null && !skip && _session.CameraFrustrum.Contains(LastSelectedEntity.PositionComp.WorldVolume) != ContainmentType.Disjoint)
                 {
                     position = LastSelectedEntity.PositionComp.WorldAABB.Center;
@@ -365,14 +377,77 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                     _currentIdx -= 1;
                 else _currentIdx = _endIdx;
 
-            var ent = _sortedMasterList[_currentIdx];
-            if (ent == null || ent.MarkedForClose)
+            MyEntity ent;
+            if (!GetValidNextEntity(ai, out ent))
             {
                 _endIdx = -1;
                 return;
             }
 
             s.SetTarget(ent, ai);
+        }
+
+        private bool GetValidNextEntity(Ai ai, out MyEntity entity)
+        {
+            var loop = _sortedMasterList.Count;
+            var count = 0;
+            entity = null;
+            while (count++ < loop)
+            {
+                entity = _sortedMasterList[_currentIdx];
+                if (entity == null || entity.MarkedForClose )
+                {
+                    return false;
+                }
+
+                if (VoxelInLos(ai, entity))
+                {
+                    if (++_currentIdx >= loop)
+                        _currentIdx = 0;
+
+                    continue;
+                }
+
+                return true;
+
+            }
+
+            return false;
+        }
+
+        private readonly Vector3D[] _fromObbCorners = new Vector3D[8];
+        private readonly Vector3D[] _toObbCorners = new Vector3D[8];
+
+        internal bool VoxelInLos(Ai ai, MyEntity target)
+        {
+            var mySphere = ai.TopEntity.PositionComp.WorldVolume;
+            var targetSphere = target.PositionComp.WorldVolume;
+            var targetDir = Vector3D.Normalize(targetSphere.Center - mySphere.Center);
+            var testPos = mySphere.Center + (targetDir * mySphere.Radius);
+            var distSqr = Vector3D.DistanceSquared(testPos, targetSphere.Center) - (targetSphere.Radius * targetSphere.Radius);
+
+            if (distSqr > 1000000)
+            {
+                var topEnt = ai.Construct.LargestAi?.TopEntity ?? ai.TopEntity;
+                var fromEntObb = new MyOrientedBoundingBoxD(topEnt.PositionComp.LocalAABB, topEnt.PositionComp.WorldMatrixRef);
+                fromEntObb.GetCorners(_fromObbCorners, 0);
+                var toEntObb = new MyOrientedBoundingBoxD(target.PositionComp.LocalAABB, target.PositionComp.WorldMatrixRef);
+                toEntObb.GetCorners(_toObbCorners, 0);
+                
+                for (int i = 0; i < 9; i++)
+                {
+                    var from = i == 0 ? topEnt.PositionComp.WorldAABB.Center : _fromObbCorners[i - 1];
+                    var to = i == 0 ? target.PositionComp.WorldAABB.Center : _toObbCorners[i - 1];
+                    IHitInfo hitInfo;
+                    if (_session.Physics.CastRay(from, to, out hitInfo, CollisionLayers.CollideWithStaticLayer))
+                        continue;
+
+                    return false;
+                }
+                return true;
+            }
+
+            return false;
         }
 
         private bool UpdateCache(uint tick)
@@ -396,18 +471,28 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             var ais = ai.TopEntityMap.GroupMap.Ais;
             for (int i = 0; i < ais.Count; i++)
             {
-
                 var subTargets = ais[i].SortedTargets;
                 for (int j = 0; j < subTargets.Count; j++)
                 {
                     var tInfo = subTargets[j];
                     var character = tInfo.Target as IMyCharacter;
                     if (tInfo.Target.MarkedForClose || character?.ControllerInfo != null && (!ai.Session.UiInput.PlayerWeapon && ai.Session.Players.ContainsKey(character.ControllerInfo.ControllingIdentityId))) continue;
-                    TopMap topMap;
 
-                    var controlType = tInfo.Drone ? TargetControl.Drone : tInfo.IsGrid && _session.TopEntityToInfoMap.TryGetValue((MyCubeGrid)tInfo.Target, out topMap) && topMap.PlayerControllers.Count > 0 ? TargetControl.Player : tInfo.IsGrid && !_session.GridHasPower((MyCubeGrid)tInfo.Target) ? TargetControl.Trash : TargetControl.Other;
-                    _masterTargets[tInfo.Target] = new MyTuple<float, TargetControl, MyRelationsBetweenPlayerAndBlock>(tInfo.OffenseRating, controlType, tInfo.EntInfo.Relationship);
-                    _toPruneMasterDict[tInfo.Target] = tInfo;
+                    Ai topAi;
+                    MyEntity target;
+                    if (tInfo.IsGrid && _session.EntityToMasterAi.TryGetValue(tInfo.Target, out topAi))
+                    {
+                        if (topAi != tInfo.TargetAi) continue;
+                        target = topAi.Construct.LargestAi.TopEntity;
+                    }
+                    else
+                        target = tInfo.Target;
+
+                    TopMap topMap;
+                    var controlType = tInfo.Drone ? TargetControl.Drone : tInfo.IsGrid && _session.TopEntityToInfoMap.TryGetValue((MyCubeGrid)target, out topMap) && topMap.PlayerControllers.Count > 0 ? TargetControl.Player : tInfo.IsGrid && !_session.GridHasPower((MyCubeGrid)target) ? TargetControl.Trash : TargetControl.Other;
+                    
+                    _masterTargets[target] = new MyTuple<float, TargetControl, MyRelationsBetweenPlayerAndBlock>(tInfo.OffenseRating, controlType, tInfo.EntInfo.Relationship);
+                    _toPruneMasterDict[target] = tInfo;
                 }
             }
             _sortedMasterList.Clear();
@@ -423,7 +508,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             MasterUpdateTick = ai.Session.Tick;
         }
 
-        private bool RayCheckTargets(Vector3D origin, Vector3D dir, out MyEntity closestEnt, out Vector3D hitPos, out bool foundOther, bool checkOthers = false)
+        private MyEntity _lastEntityBehindVoxel;
+        private bool RayCheckTargets(Vector3D origin, Vector3D dir, out MyEntity closestEnt, out MyEntity rootEntity, out Vector3D hitPos, out bool foundOther, bool checkOthers = false)
         {
             var ai = _session.TrackingAi;
             var closestDist1 = double.MaxValue;
@@ -518,6 +604,25 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             else if (closestDist2 < double.MaxValue)
                 hitPos = origin + (dir * closestDist2);
             else hitPos = Vector3D.Zero;
+
+            Ai masterAi;
+            if (closestEnt != null && _session.EntityToMasterAi.TryGetValue(closestEnt, out masterAi) && masterAi.Construct.RootAi.Construct.LargestAi?.TopEntity != null)
+                rootEntity = masterAi.Construct.RootAi.Construct.LargestAi.TopEntity;
+            else 
+                rootEntity = closestEnt;
+
+            if (_session.Tick60)
+                _lastEntityBehindVoxel = null;
+
+            if (rootEntity != null)
+            {
+                if (_lastEntityBehindVoxel == rootEntity || VoxelInLos(ai, rootEntity))
+                {
+                    _lastEntityBehindVoxel = rootEntity;
+                    closestEnt = null;
+                    rootEntity = null;
+                }
+            }
 
             return closestEnt != null;
         }

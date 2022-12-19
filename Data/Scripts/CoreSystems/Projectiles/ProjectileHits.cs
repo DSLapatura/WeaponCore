@@ -537,7 +537,7 @@ namespace CoreSystems.Projectiles
                     else if (p.Beam.Length > 85)
                     {
                         IHitInfo hit;
-                        if (p.Info.Ai.Session.Physics.CastRay(p.Beam.From, p.Beam.To, out hit, CollisionLayers.VoxelLod1CollisionLayer, false) && hit != null)
+                        if (p.Info.Ai.Session.Physics.CastRay(p.Beam.From, p.Beam.To, out hit, CollisionLayers.StaticCollisionLayer, false) && hit != null)
                             voxelHit = hit.Position;
                     }
                     else
@@ -570,7 +570,7 @@ namespace CoreSystems.Projectiles
                             if (aConst.IsBeamWeapon && aConst.RealShotsPerMin < 10)
                             {
                                 IHitInfo hit;
-                                if (s.Physics.CastRay(p.Beam.From, p.Beam.To, out hit, CollisionLayers.VoxelCollisionLayer, false) && hit != null)
+                                if (s.Physics.CastRay(p.Beam.From, p.Beam.To, out hit, CollisionLayers.StaticCollisionLayer, false) && hit != null)
                                     voxelHit = hit.Position;
                             }
                             else if (!voxel.GetIntersectionWithLine(ref p.Beam, out voxelHit, true, IntersectionFlags.DIRECT_TRIANGLES) && VoxelIntersect.PointInsideVoxel(voxel, s.TmpStorage, p.Beam.From))

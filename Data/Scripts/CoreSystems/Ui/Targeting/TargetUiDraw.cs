@@ -4,7 +4,6 @@ using CoreSystems;
 using CoreSystems.Platform;
 using CoreSystems.Support;
 using Sandbox.Game.Entities;
-using Sandbox.ModAPI;
 using VRage;
 using VRage.Game;
 using VRage.Game.Entity;

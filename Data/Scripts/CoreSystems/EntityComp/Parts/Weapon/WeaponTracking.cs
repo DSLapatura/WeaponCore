@@ -14,6 +14,7 @@ using static CoreSystems.Support.WeaponDefinition.AmmoDef;
 using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetDef;
 using CollisionLayers = Sandbox.Engine.Physics.MyPhysics.CollisionLayers;
 using static CoreSystems.Support.MathFuncs;
+using static CoreSystems.Settings.CoreSettings.ServerSettings;
 
 namespace CoreSystems.Platform
 {
@@ -74,7 +75,9 @@ namespace CoreSystems.Platform
 
                 if (clear)
                 {
-                    var filter = weapon.System.NoVoxelLosCheck ? CollisionLayers.NoVoxelCollisionLayer : ai.PlanetSurfaceInRange || ai.ClosestVoxelSqr <= 2250000 ? CollisionLayers.DefaultCollisionLayer : CollisionLayers.VoxelLod1CollisionLayer;
+                    var oneHalfKmSqr = 2250000;
+                    var lowFiVoxels = Vector3D.DistanceSquared(targetCenter, predictedMuzzlePos) > oneHalfKmSqr && (ai.PlanetSurfaceInRange || ai.ClosestVoxelSqr <= oneHalfKmSqr);
+                    var filter = weapon.System.NoVoxelLosCheck ? CollisionLayers.NoVoxelCollisionLayer : lowFiVoxels ? CollisionLayers.DefaultCollisionLayer : CollisionLayers.VoxelLod1CollisionLayer;
                     weapon.System.Session.Physics.CastRay(predictedMuzzlePos, testLine.From, out weapon.LastHitInfo, filter);
 
                     if (ai.AiType == Ai.AiTypes.Grid && weapon.LastHitInfo != null && weapon.LastHitInfo.HitEntity == ai.GridEntity)
@@ -426,7 +429,7 @@ namespace CoreSystems.Platform
             var rayCheckTest = isTracking && (isAligned || locked) && baseData.State.Control != ProtoWeaponState.ControlMode.Camera && (w.ActiveAmmoDef.AmmoDef.Trajectory.Guidance != TrajectoryDef.GuidanceType.Smart && w.ActiveAmmoDef.AmmoDef.Trajectory.Guidance != TrajectoryDef.GuidanceType.DroneAdvanced) && !w.System.DisableLosCheck && (!w.Casting && session.Tick - w.Comp.LastRayCastTick > 29 || w.System.Values.HardPoint.Other.MuzzleCheck && session.Tick - w.LastMuzzleCheck > 29);
             
             var trackingTimeLimit = w.System.MaxTrackingTime && session.Tick - w.Target.ChangeTick > w.System.MaxTrackingTicks;
-            if (session.IsServer && (rayCheckTest && !w.RayCheckTest() || trackingTimeLimit))
+            if (session.IsServer && (rayCheckTest && !w.RayCheckTest(rangeToTargetSqr) || trackingTimeLimit))
             {
                 if (trackingTimeLimit)
                     w.FastTargetResetTick = session.Tick + 1;
@@ -881,7 +884,7 @@ namespace CoreSystems.Platform
             }
             return false;
         }
-        private bool RayCheckTest()
+        private bool RayCheckTest(double rangeToTargetSqr)
         {
             if (PosChangedTick != Comp.Session.SimulationCount)
                 UpdatePivotPos();
@@ -891,7 +894,10 @@ namespace CoreSystems.Platform
             var overrides = Comp.Data.Repo.Values.Set.Overrides;
             var eTarget = Target.TargetObject as MyEntity;
             var pTarget = Target.TargetObject as Projectile;
-            var filter = System.NoVoxelLosCheck ? CollisionLayers.NoVoxelCollisionLayer : Comp.Ai.PlanetSurfaceInRange || Comp.Ai.ClosestVoxelSqr <= 2250000 ? CollisionLayers.DefaultCollisionLayer : CollisionLayers.VoxelLod1CollisionLayer; 
+
+            var oneHalfKmSqr = 2250000;
+            var lowFiVoxels = rangeToTargetSqr > oneHalfKmSqr && (Comp.Ai.PlanetSurfaceInRange || Comp.Ai.ClosestVoxelSqr <= oneHalfKmSqr);
+            var filter = System.NoVoxelLosCheck ? CollisionLayers.NoVoxelCollisionLayer : lowFiVoxels ? CollisionLayers.DefaultCollisionLayer : CollisionLayers.VoxelLod1CollisionLayer;
 
             if (System.Session.DebugLos && Target.TargetState == Target.TargetStates.IsEntity && eTarget != null)
             {

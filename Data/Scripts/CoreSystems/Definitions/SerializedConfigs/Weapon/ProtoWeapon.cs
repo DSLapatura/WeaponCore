@@ -27,6 +27,18 @@ namespace CoreSystems
             Values.State.Trigger = Trigger.Off;
             Values.State.Control = ProtoWeaponState.ControlMode.Ui;
 
+            if (!comp.PrimaryWeapon.System.TrackCharacters)
+                Values.Set.Overrides.Biologicals = false;
+
+            if (!comp.PrimaryWeapon.System.TrackProjectile)
+                Values.Set.Overrides.Projectiles = false;
+
+            if (!comp.PrimaryWeapon.System.TrackMeteors)
+                Values.Set.Overrides.Meteors = false;
+
+            if (!comp.PrimaryWeapon.System.TrackGrids)
+                Values.Set.Overrides.Grids = false;
+
             if (comp.Ai.AiType == Ai.AiTypes.Player)
             {
                 Values.State.PlayerId = comp.Rifle.OwnerIdentityId;

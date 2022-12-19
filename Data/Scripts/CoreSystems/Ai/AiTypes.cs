@@ -291,7 +291,6 @@ namespace CoreSystems.Support
             }
             internal void ClearMark(uint tick, MarkClearResons reason)
             {
-                Log.Line($"ClearMark: {reason}");
                 TmpEntity = null;
                 EntityId = 0;
                 MissCount = 0;
