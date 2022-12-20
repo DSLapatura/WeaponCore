@@ -287,7 +287,6 @@ namespace CoreSystems.Support
             [ProtoMember(20)] internal bool FocusOnly;
             [ProtoMember(21)] internal bool EvictUniqueTargets;
 
-
             [ProtoContract]
             public struct CommunicationDef
             {
@@ -1285,6 +1284,7 @@ namespace CoreSystems.Support
                     [ProtoMember(16)] internal double SteeringLimit;
                     [ProtoMember(17)] internal bool FocusOnly;
                     [ProtoMember(18)] internal double OffsetMinRange;
+                    [ProtoMember(19)] internal bool FocusEviction;
                 }
 
                 [ProtoContract]

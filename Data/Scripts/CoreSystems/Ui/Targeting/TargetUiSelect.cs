@@ -426,8 +426,11 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             var testPos = mySphere.Center + (targetDir * mySphere.Radius);
             var distSqr = Vector3D.DistanceSquared(testPos, targetSphere.Center) - (targetSphere.Radius * targetSphere.Radius);
 
-            if (distSqr > 1000000)
+            if (distSqr > 250000)
             {
+                if ((ai.Construct.TrackedTargets.Count > 0 || _session.ActiveMarks.Count > 0) && TargetExcludedFromVoxelLos(ai, target))
+                    return false;
+
                 var topEnt = ai.Construct.LargestAi?.TopEntity ?? ai.TopEntity;
                 var fromEntObb = new MyOrientedBoundingBoxD(topEnt.PositionComp.LocalAABB, topEnt.PositionComp.WorldMatrixRef);
                 fromEntObb.GetCorners(_fromObbCorners, 0);
@@ -445,6 +448,36 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                     return false;
                 }
                 return true;
+            }
+
+            return false;
+        }
+
+        private bool TargetExcludedFromVoxelLos(Ai ai, MyEntity target)
+        {
+            var targetGrid = target as MyCubeGrid;
+            if (targetGrid != null)
+            {
+                foreach (var m in _session.ActiveMarks)
+                {
+                    var grid = m.Item3.TmpEntity as MyCubeGrid;
+                    if ((grid != null || m.Item3.EntityId > 0 && MyEntities.TryGetEntityById(m.Item3.EntityId, out grid) && grid != null) && targetGrid.IsSameConstructAs(grid))
+                        return true;
+                }
+            }
+
+            foreach (var pair in ai.Construct.TrackedTargets)
+            {
+                foreach (var map in pair.Value)
+                {
+                    var ent = map.Key as MyEntity;
+                    if (ent != null)
+                    {
+                        var topEnt = ent.GetTopMostParent();
+                        if (topEnt == target)
+                            return true;
+                    }
+                }
             }
 
             return false;

@@ -273,6 +273,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             if (!ComputeLead(target, targetSphere.Center, out maxLeadLength, out fullAveragePos))
                 return;
 
+            
             var lineStart = targetSphere.Center;
             var lineNormDir = Vector3D.Normalize(fullAveragePos - lineStart);
             var ray = new RayD(lineStart, lineNormDir);

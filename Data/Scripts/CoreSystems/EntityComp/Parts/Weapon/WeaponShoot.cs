@@ -416,7 +416,7 @@ namespace CoreSystems.Platform
             {
                 var delay = (uint)ejectDef.CompDef.Delay;
                 if (delay <= 0)
-                    MyFloatingObjects.Spawn(ActiveAmmoDef.AmmoDef.Const.EjectItem, eInfo.Position, eInfo.Direction, MyPivotUp, null, EjectionSpawnCallback);
+                    MyFloatingObjects.Spawn(ActiveAmmoDef.AmmoDef.Const.EjectItem, eInfo.Position, eInfo.Direction, MyPivotUp, Comp.TopEntity.Physics, EjectionSpawnCallback);
                 else 
                     System.Session.FutureEvents.Schedule(EjectionDelayed, null, delay);
             }
@@ -438,7 +438,7 @@ namespace CoreSystems.Platform
         private void EjectionDelayed(object o)
         {
             if (Comp.IsWorking && ActiveAmmoDef?.AmmoDef != null && ActiveAmmoDef.AmmoDef.Ejection.Type == WeaponDefinition.AmmoDef.EjectionDef.SpawnType.Item && !Ejector.NullEntity) 
-                MyFloatingObjects.Spawn(ActiveAmmoDef.AmmoDef.Const.EjectItem, Ejector.Info.Position, Ejector.Info.Direction, MyPivotUp, null, EjectionSpawnCallback);
+                MyFloatingObjects.Spawn(ActiveAmmoDef.AmmoDef.Const.EjectItem, Ejector.Info.Position, Ejector.Info.Direction, MyPivotUp, Comp.TopEntity?.Physics, EjectionSpawnCallback);
         }
 
         private void EjectionSpawnCallback(MyEntity entity)

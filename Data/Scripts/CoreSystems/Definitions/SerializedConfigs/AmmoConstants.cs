@@ -152,6 +152,7 @@ namespace CoreSystems.Support
         public readonly int DeformDelay;
         public readonly uint FakeVoxelHitTicks;
 
+        public readonly bool FocusEviction;
         public readonly bool FocusOnly;
         public readonly bool CheckFutureIntersection;
         public readonly bool OverrideTarget;
@@ -430,6 +431,7 @@ namespace CoreSystems.Support
 
             TargetOffSet = ammo.AmmoDef.Trajectory.Smarts.Inaccuracy > 0;
             FocusOnly = ammo.AmmoDef.Trajectory.Smarts.FocusOnly;
+            FocusEviction = ammo.AmmoDef.Trajectory.Smarts.FocusEviction;
             TargetLossTime = ammo.AmmoDef.Trajectory.TargetLossTime > 0 ? ammo.AmmoDef.Trajectory.TargetLossTime : int.MaxValue;
             CanZombie = TargetLossTime > 0 && TargetLossTime != int.MaxValue && !IsMine;
             MaxLifeTime = ammo.AmmoDef.Trajectory.MaxLifeTime > 0 ? ammo.AmmoDef.Trajectory.MaxLifeTime : int.MaxValue;

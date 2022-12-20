@@ -436,8 +436,10 @@ namespace CoreSystems.Projectiles
                 if (Info.Target.TargetState == Target.TargetStates.IsEntity) {
                     var targetEnt = (MyEntity)Info.Target.TargetObject;
                     validEntity = !targetEnt.MarkedForClose;
-                    if (validEntity && aConst.FocusOnly && Info.Target.TopEntityId != ai.Construct.Data.Repo.FocusData.Target)
-                        validEntity = ai.Construct.Data.Repo.FocusData.Target > 0 && IsFocusTarget(targetEnt);
+                    
+                    var targetChange = validEntity && aConst.FocusOnly && Info.Target.TopEntityId != ai.Construct.Data.Repo.FocusData.Target;
+                    if (targetChange && (aConst.FocusEviction || ai.Construct.Data.Repo.FocusData.Target != 0))
+                        validEntity = IsFocusTarget(targetEnt);
                 }
 
                 var validTarget = fake || Info.Target.TargetState == Target.TargetStates.IsProjectile || validEntity && !overMaxTargets;
