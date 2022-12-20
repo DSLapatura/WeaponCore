@@ -306,6 +306,7 @@ namespace CoreSystems.Support
         public readonly float EndOfLifeDepth;
         public readonly float ByBlockHitDepth;
         public readonly float DetonationSoundDistSqr;
+        public readonly double ScanRange;
         public readonly double DeltaVelocityPerTick;
         public readonly double LargestHitSize;
         public readonly double EwarRadius;
@@ -432,6 +433,8 @@ namespace CoreSystems.Support
             TargetOffSet = ammo.AmmoDef.Trajectory.Smarts.Inaccuracy > 0;
             FocusOnly = ammo.AmmoDef.Trajectory.Smarts.FocusOnly;
             FocusEviction = ammo.AmmoDef.Trajectory.Smarts.FocusEviction;
+            ScanRange = ammo.AmmoDef.Trajectory.Smarts.ScanRange;
+
             TargetLossTime = ammo.AmmoDef.Trajectory.TargetLossTime > 0 ? ammo.AmmoDef.Trajectory.TargetLossTime : int.MaxValue;
             CanZombie = TargetLossTime > 0 && TargetLossTime != int.MaxValue && !IsMine;
             MaxLifeTime = ammo.AmmoDef.Trajectory.MaxLifeTime > 0 ? ammo.AmmoDef.Trajectory.MaxLifeTime : int.MaxValue;

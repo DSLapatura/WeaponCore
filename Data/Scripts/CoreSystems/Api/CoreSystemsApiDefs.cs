@@ -1269,6 +1269,7 @@ namespace CoreSystems.Api
                         [ProtoMember(17)] internal bool FocusOnly;
                         [ProtoMember(18)] internal double OffsetMinRange;
                         [ProtoMember(19)] internal bool FocusEviction;
+                        [ProtoMember(20)] internal double ScanRange;
                     }
 
                     [ProtoContract]

@@ -2076,14 +2076,15 @@ namespace CoreSystems.Projectiles
         {
             var aConst = Info.AmmoDef.Const;
             var eTarget = Info.Target.TargetObject as MyEntity;
+            var pTarget = Info.Target.TargetObject as Projectile;
 
-            if (eTarget?.GetTopMostParent()?.Physics?.LinearVelocity == null)
+            if (eTarget?.GetTopMostParent()?.Physics?.LinearVelocity == null && pTarget == null)
             {
                 targetDirection = Vector3D.Zero;
                 return false;
             }
 
-            var targetPos = eTarget.PositionComp.WorldAABB.Center;
+            var targetPos = eTarget != null ? eTarget.PositionComp.WorldAABB.Center : pTarget.Position;
 
             if (aConst.FragPointType == PointTypes.Direct)
             {
@@ -2092,7 +2093,7 @@ namespace CoreSystems.Projectiles
             }
 
 
-            var targetVel = eTarget.GetTopMostParent().Physics.LinearVelocity;
+            var targetVel = eTarget != null ? eTarget.GetTopMostParent().Physics.LinearVelocity : (Vector3)pTarget.Velocity;
             var shooterVel = !Info.AmmoDef.Const.FragDropVelocity ? Velocity : Vector3D.Zero;
 
             var projectileMaxSpeed = ammoDef.Const.DesiredProjectileSpeed;
@@ -2500,7 +2501,9 @@ namespace CoreSystems.Projectiles
                     if (aConst.IsDrone)
                     {
                         var eTarget = Info.Target.TargetObject as MyEntity;
-                        var radius = eTarget != null ? eTarget.PositionComp.LocalVolume.Radius : 1;
+                        var pTarget = Info.Target.TargetObject as Projectile;
+
+                        var radius = eTarget != null ? eTarget.PositionComp.LocalVolume.Radius : pTarget != null ? pTarget.Info.AmmoDef.Const.CollisionSize : 1;
                         var targetSphere = new BoundingSphereD(TargetPosition, radius);
 
                         MathFuncs.Cone aimCone;

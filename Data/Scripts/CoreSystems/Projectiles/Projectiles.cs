@@ -234,6 +234,15 @@ namespace CoreSystems.Projectiles
                                 if (Vector3D.DistanceSquared(topEnt.PositionComp.WorldAABB.Center, p.Position) <= inflatedSize * inflatedSize)
                                     p.SpawnShrapnel();
                             }
+                            else if (target.TargetObject is Projectile)
+                            {
+                                var projectile = (Projectile)target.TargetObject;
+                                var inflatedSize = aConst.FragProximity + projectile.Info.AmmoDef.Const.CollisionSize;
+                                if (Vector3D.DistanceSquared(projectile.Position, p.Position) <= inflatedSize * inflatedSize)
+                                {
+                                    p.SpawnShrapnel();
+                                }
+                            }
                         }
 
                         if (aConst.AmmoSkipAccel && aConst.IsDrone)

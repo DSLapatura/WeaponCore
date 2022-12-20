@@ -205,14 +205,15 @@ namespace CoreSystems.Projectiles
                         }
 
                         var cubeTarget = target.TargetObject as MyCubeBlock;
+                        var pTarget = target.TargetObject as Projectile;
 
                         var condition1 = cubeTarget == null && targetAi.TopEntity.EntityId == target.TopEntityId;
                         var condition2 = targetAi.AiType == Ai.AiTypes.Grid && (targetAi.GridEntity.IsStatic || cubeTarget != null && targetAi.GridEntity.IsSameConstructAs(cubeTarget.CubeGrid));
                         Ai.TargetInfo tInfo;
                         var condition3 = !condition1 && !condition2 && cubeTarget != null && !notSmart && targetSphere.Contains(cubeTarget.CubeGrid.PositionComp.WorldVolume) != ContainmentType.Disjoint && !targetAi.Targets.TryGetValue(cubeTarget.CubeGrid, out tInfo);
                         var condition4 = target.TargetState == Target.TargetStates.IsFake;
-
-                        var validAi = !notSmart && (condition1 || condition2 || condition3 || condition4);
+                        var condition5 = pTarget != null && !notSmart && pTarget.State == Projectile.ProjectileState.Alive && pTarget.Info.AmmoDef.Const.ScanRange > 0 && targetSphere.Contains(new BoundingSphereD(pTarget.Position, pTarget.Info.AmmoDef.Const.ScanRange)) != ContainmentType.Disjoint;
+                        var validAi = !notSmart && (condition1 || condition2 || condition3 || condition4 || condition5);
 
                         if ((dumbAdd || validAi) && (reAdd == null || !targetAi.LiveProjectile.Contains(p)))
                         {

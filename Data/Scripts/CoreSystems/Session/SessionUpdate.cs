@@ -695,7 +695,7 @@ namespace CoreSystems
                         /// Determine if its time to shoot
                         ///
                         ///
-                        w.AiShooting = !wComp.UserControlled && !w.System.SuppressFire && (w.TargetLock || aConst.IsSmart || ai.ControlComp != null && ai.ControlComp.Platform.Control.IsAimed && Vector3D.DistanceSquared(wComp.CoreEntity.PositionComp.WorldAABB.Center, ai.RotorTargetPosition) <= wComp.MaxDetectDistanceSqr);
+                        w.AiShooting = !wComp.UserControlled && !w.System.SuppressFire && (w.TargetLock || w.Target.TargetState == TargetStates.IsProjectile && (aConst.IsSmart || aConst.IsDrone)|| ai.ControlComp != null && ai.ControlComp.Platform.Control.IsAimed && Vector3D.DistanceSquared(wComp.CoreEntity.PositionComp.WorldAABB.Center, ai.RotorTargetPosition) <= wComp.MaxDetectDistanceSqr);
 
                         var reloading = aConst.Reloadable && w.ClientMakeUpShots == 0 && (w.Loading || noAmmo || w.Reload.WaitForClient);
                         var overHeat = w.PartState.Overheated && (w.OverHeatCountDown == 0 || w.OverHeatCountDown != 0 && w.OverHeatCountDown-- == 0);
