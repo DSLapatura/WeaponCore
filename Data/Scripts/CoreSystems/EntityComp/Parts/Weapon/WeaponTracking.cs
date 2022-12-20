@@ -46,7 +46,7 @@ namespace CoreSystems.Platform
 
             if (weapon.RotorTurretTracking)
                 canTrack = validEstimate && RotorTurretLookAt(weapon.Comp.Ai.ControlComp.Platform.Control, ref targetDir, rangeToTarget);
-            else if (weapon == trackingWeapon)
+            else if (weapon == trackingWeapon && weapon.TurretController)
                 canTrack = validEstimate && WeaponLookAt(weapon, ref targetDir, rangeToTarget, false, true, caller, out isTracking);
             else
                 canTrack = validEstimate && IsDotProductWithinTolerance(ref weapon.MyPivotFwd, ref targetDir, weapon.AimingTolerance);
@@ -810,7 +810,7 @@ namespace CoreSystems.Platform
                 var targetDirection = targetAimPoint - shooterPos;
 
                 bool isTracking;
-                if (!weapon.RotorTurretTracking && !WeaponLookAt(weapon, ref targetDirection, deltaLength * deltaLength, false, true, DebugCaller.TrajectoryEstimation, out isTracking)) //Angle 2 obscured, switch to angle 1
+                if (!weapon.RotorTurretTracking && weapon.TurretController && !WeaponLookAt(weapon, ref targetDirection, deltaLength * deltaLength, false, true, DebugCaller.TrajectoryEstimation, out isTracking)) //Angle 2 obscured, switch to angle 1
                 {
                     verticalDistance = Math.Tan(angle1) * horizontalDistance;
                     gravityOffset = new Vector3D((verticalDistance + Math.Abs(elevationDifference)) * -weapon.GravityUnitDir);

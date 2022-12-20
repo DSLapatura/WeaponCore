@@ -290,7 +290,6 @@ namespace CoreSystems.Projectiles
                     Info.AvShot.ModelOnly = !aConst.DrawLine;
                 }
             }
-
             var monitor = comp.ProjectileMonitors[w.PartId];
             if (monitor.Count > 0)
             {

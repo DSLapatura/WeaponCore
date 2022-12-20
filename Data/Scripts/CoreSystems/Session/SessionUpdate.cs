@@ -677,7 +677,6 @@ namespace CoreSystems
                             var trackObstructions = w.System.ScanNonThreats && wComp.MasterAi.Obstructions.Count > 0;
                             var requiresHome = w.System.GoHomeToReload && !w.IsHome && noAmmo;
                             var weaponReady = !w.OutOfAmmo && !requiresHome && (!w.System.FocusOnly || rootConstruct.HadFocus) && (wComp.MasterAi.EnemiesNear && somethingNearBy || trackObstructions) && (!w.Target.HasTarget || rootConstruct.HadFocus && constructResetTick);
-
                             Dictionary<object, Weapon> masterTargets;
                             var seek = weaponReady && (acquireReady || w.ProjectilesNear) && (!w.System.TargetSlaving || rootConstruct.TrackedTargets.TryGetValue(w.System.StorageLocation, out masterTargets) && masterTargets.Count > 0);
                             var fakeRequest =  wComp.FakeMode && w.Target.TargetState != TargetStates.IsFake && wComp.UserControlled;
@@ -696,7 +695,7 @@ namespace CoreSystems
                         /// Determine if its time to shoot
                         ///
                         ///
-                        w.AiShooting = !wComp.UserControlled && !w.System.SuppressFire && (w.TargetLock || ai.ControlComp != null && ai.ControlComp.Platform.Control.IsAimed && Vector3D.DistanceSquared(wComp.CoreEntity.PositionComp.WorldAABB.Center, ai.RotorTargetPosition) <= wComp.MaxDetectDistanceSqr);
+                        w.AiShooting = !wComp.UserControlled && !w.System.SuppressFire && (w.TargetLock || aConst.IsSmart || ai.ControlComp != null && ai.ControlComp.Platform.Control.IsAimed && Vector3D.DistanceSquared(wComp.CoreEntity.PositionComp.WorldAABB.Center, ai.RotorTargetPosition) <= wComp.MaxDetectDistanceSqr);
 
                         var reloading = aConst.Reloadable && w.ClientMakeUpShots == 0 && (w.Loading || noAmmo || w.Reload.WaitForClient);
                         var overHeat = w.PartState.Overheated && (w.OverHeatCountDown == 0 || w.OverHeatCountDown != 0 && w.OverHeatCountDown-- == 0);
@@ -813,7 +812,9 @@ namespace CoreSystems
                 var rootConstruct = ai.Construct.RootAi.Construct;
                 var recentApiRequest = Tick - w.ShootRequest.RequestTick <= 1;
 
-                var requiresFocus = w.System.FocusOnly || w.ActiveAmmoDef.AmmoDef.Const.SkipAimChecks && !w.RotorTurretTracking || (rootConstruct.TargetResetTick == Tick || recentApiRequest) && !w.System.UniqueTargetPerWeapon;
+                var pCheckOnly = w.ProjectilesNear && rootConstruct.TargetResetTick != Tick;
+
+                var requiresFocus = w.System.FocusOnly || w.ActiveAmmoDef.AmmoDef.Const.SkipAimChecks && !pCheckOnly && !w.RotorTurretTracking || (rootConstruct.TargetResetTick == Tick || recentApiRequest) && !w.System.UniqueTargetPerWeapon;
                 if (requiresFocus && !rootConstruct.HadFocus) {
                     w.TargetAcquireTick = uint.MaxValue;
                     AcquireTargets.RemoveAtFast(i);
@@ -829,6 +830,7 @@ namespace CoreSystems
                 var checkTime = w.TargetAcquireTick == Tick || w.Target.TargetChanged || acquire || seekProjectile || w.FastTargetResetTick == Tick || recentApiRequest;
 
                 if (checkTime || requiresFocus && w.Target.HasTarget) {
+
 
                     var checkObstructions = w.System.ScanNonThreats && ai.Obstructions.Count > 0;
                     var readyToAcquire = seekProjectile || comp.Data.Repo.Values.State.TrackingReticle || checkObstructions || (comp.DetectOtherSignals && ai.DetectionInfo.OtherInRange || ai.DetectionInfo.PriorityInRange) && ai.DetectionInfo.ValidSignalExists(w);

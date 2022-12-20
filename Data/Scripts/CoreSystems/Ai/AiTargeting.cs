@@ -509,18 +509,23 @@ namespace CoreSystems.Support
             {
                 var card = index < -1 ? deck[x] : index;
                 var lp = collection[card];
-                var lpaConst = lp.Info.AmmoDef.Const;
-                var smart = lpaConst.IsDrone || lpaConst.IsSmart;
+
                 var cube = lp.Info.Target.TargetObject as MyCubeBlock;
                 Weapon.TargetOwner tOwner;
                 var distSqr = Vector3D.DistanceSquared(lp.Position, weaponPos);
-                if (smartOnly && !smart || lockedOnly && (!smart || cube != null && w.Comp.IsBlock && cube.CubeGrid.IsSameConstructAs(w.Comp.Ai.GridEntity)) || lp.MaxSpeed > system.MaxTargetSpeed || lp.MaxSpeed <= 0 || lp.State != Projectile.ProjectileState.Alive || distSqr > w.MaxTargetDistanceSqr || distSqr < w.MinTargetDistanceBufferSqr || w.System.UniqueTargetPerWeapon && w.Comp.ActiveTargets.TryGetValue(lp, out tOwner) && tOwner.Weapon != w) continue;
+                if (lp.State != Projectile.ProjectileState.Alive || lp.MaxSpeed > system.MaxTargetSpeed || lp.MaxSpeed <= 0 || distSqr > w.MaxTargetDistanceSqr || distSqr < w.MinTargetDistanceBufferSqr || w.System.UniqueTargetPerWeapon && w.Comp.ActiveTargets.TryGetValue(lp, out tOwner) && tOwner.Weapon != w) continue;
 
+                var lpaConst = lp.Info.AmmoDef.Const;
+                var smart = lpaConst.IsDrone || lpaConst.IsSmart;
+                if (smartOnly && !smart || lockedOnly && (!smart || cube != null && w.Comp.IsBlock && cube.CubeGrid.IsSameConstructAs(w.Comp.Ai.GridEntity)))
+                    continue;
 
                 var lpAccel = lp.Velocity - lp.PrevVelocity;
+
                 Vector3D predictedPos;
                 if (Weapon.CanShootTarget(w, ref lp.Position, lp.Velocity, lpAccel, out predictedPos, false, null, MathFuncs.DebugCaller.CanShootTarget5))
                 {
+
                     var needsCast = false;
                     for (int i = 0; i < ai.Obstructions.Count; i++)
                     {
@@ -581,6 +586,7 @@ namespace CoreSystems.Support
                         var origDist = hitDist;
                         target.Set(lp, lp.Position, shortDist, origDist, long.MaxValue);
                         target.TransferTo(w.Target, w.Comp.Session.Tick);
+
                         return true;
                     }
                 }
@@ -751,6 +757,7 @@ namespace CoreSystems.Support
             var lockedOnly = s.Values.Targeting.LockedSmartOnly;
             var smartOnly = s.Values.Targeting.IgnoreDumbProjectiles;
             var found = false;
+
             if (s.ClosestFirst)
             {
                 int length = collection.Count;
@@ -783,17 +790,21 @@ namespace CoreSystems.Support
                 session.TargetDeck[i] = session.TargetDeck[j];
                 session.TargetDeck[j] = 0 + i;
             }
+
             var deck = session.TargetDeck;
             for (int x = 0; x < numOfTargets; x++)
             {
                 var card = deck[x];
                 var lp = collection[card];
+                if (lp.State != Projectile.ProjectileState.Alive || lp.MaxSpeed > s.MaxTargetSpeed || lp.MaxSpeed <= 0) 
+                    continue;
+                
                 var lpaConst = lp.Info.AmmoDef.Const;
-                var smart = lpaConst.IsDrone || lpaConst.IsSmart;
-
-                if (smartOnly && !smart || lockedOnly && !smart || lp.MaxSpeed > s.MaxTargetSpeed || lp.MaxSpeed <= 0 || lp.State != Projectile.ProjectileState.Alive) continue;
+                if (smartOnly && !(lpaConst.IsDrone || lpaConst.IsSmart) || lockedOnly && !(lpaConst.IsDrone || lpaConst.IsSmart))
+                    continue;
 
                 var needsCast = false;
+
                 for (int i = 0; i < ai.Obstructions.Count; i++)
                 {
                     var ent = ai.Obstructions[i].Target;
@@ -822,7 +833,6 @@ namespace CoreSystems.Support
                         }
                     }
                 }
-
                 if (needsCast)
                 {
                     IHitInfo hitInfo;
@@ -831,6 +841,7 @@ namespace CoreSystems.Support
                     var lowFiVoxels = Vector3D.DistanceSquared(lp.Position, weaponPos) > oneHalfKmSqr && (ai.PlanetSurfaceInRange || ai.ClosestVoxelSqr <= oneHalfKmSqr);
                     var filter = w.System.NoVoxelLosCheck ? CollisionLayers.NoVoxelCollisionLayer : lowFiVoxels ? CollisionLayers.DefaultCollisionLayer : CollisionLayers.VoxelLod1CollisionLayer;
                     physics.CastRay(weaponPos, lp.Position, out hitInfo, filter);
+
                     if (hitInfo?.HitEntity == null)
                     {
                         target.Set(lp, lp.Position,  0, 0, long.MaxValue);

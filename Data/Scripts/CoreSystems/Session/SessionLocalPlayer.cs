@@ -127,7 +127,6 @@ namespace CoreSystems
                     var collection = comp.TypeSpecific != CoreComponent.CompTypeSpecific.Phantom ? comp.Platform.Weapons : comp.Platform.Phantoms;
                     foreach (var w in collection)
                     {
-
                         if ((!comp.HasTurret && !comp.OverrideLeads || comp.HasTurret && comp.OverrideLeads) && comp.Data.Repo != null && comp.Data.Repo.Values.Set.Overrides.LeadGroup > 0)
                         {
                             LeadGroups[MathHelper.Clamp(comp.Data.Repo.Values.Set.Overrides.LeadGroup - 1, 0, 3)].Add(w);

@@ -516,7 +516,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                     if (tInfo.IsGrid && _session.EntityToMasterAi.TryGetValue(tInfo.Target, out topAi))
                     {
                         if (topAi != tInfo.TargetAi) continue;
-                        target = topAi.Construct.LargestAi.TopEntity;
+                        target = topAi.Construct.LargestAi?.TopEntity ?? topAi.Construct.RootAi?.TopEntity ?? tInfo.Target;
                     }
                     else
                         target = tInfo.Target;
