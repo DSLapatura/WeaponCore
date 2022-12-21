@@ -322,7 +322,7 @@ namespace CoreSystems.Projectiles
                     info.DistanceTraveled += Math.Abs(distChanged);
 
                     if (aConst.DynamicGuidance) {
-                        if (p.PruningProxyId != -1) {
+                        if (p.PruningProxyId != -1 && Session.ActiveAntiSmarts > 0) {
                             var sphere = new BoundingSphereD(p.Position, aConst.LargestHitSize);
                             BoundingBoxD result;
                             BoundingBoxD.CreateFromSphere(ref sphere, out result);

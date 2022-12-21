@@ -370,6 +370,7 @@ namespace CoreSystems
         internal int TargetDrawAge;
         internal int WeaponIdCounter;
 
+        internal int ActiveAntiSmarts;
         internal int SimulationCount;
         internal int PlayerEventId;
         internal int TargetRequests;
