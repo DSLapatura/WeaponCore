@@ -573,47 +573,54 @@ namespace CoreSystems.Projectiles
                 }
 
                 #region Navigation
-                Vector3D targetAcceleration = Vector3D.Zero;
-                if (s.Navigation.LastVelocity.HasValue)
-                    targetAcceleration = (PrevTargetVel - s.Navigation.LastVelocity.Value) * 60;
-
-                s.Navigation.LastVelocity = PrevTargetVel;
-
-                Vector3D missileToTarget = TargetPosition - Position;
-                Vector3D missileToTargetNorm = Vector3D.Normalize(missileToTarget);
-                Vector3D relativeVelocity = PrevTargetVel - Velocity;
-                Vector3D lateralTargetAcceleration = (targetAcceleration - Vector3D.Dot(targetAcceleration, missileToTargetNorm) * missileToTargetNorm);
-
-                Vector3D omega = Vector3D.Cross(missileToTarget, relativeVelocity) / Math.Max(missileToTarget.LengthSquared(), 1); //to combat instability at close range
-                var lateralAcceleration = smarts.Aggressiveness * relativeVelocity.Length() * Vector3D.Cross(omega, missileToTargetNorm) + smarts.NavAcceleration * lateralTargetAcceleration;
 
                 Vector3D commandedAccel;
-                if (Vector3D.IsZero(lateralAcceleration))
+                if (!aConst.NoSteering)
                 {
-                    commandedAccel = missileToTargetNorm * accelMpsMulti;
-                }
-                else
-                {
-                    var diff = accelMpsMulti * accelMpsMulti - lateralAcceleration.LengthSquared();
-                    commandedAccel = diff < 0 ? Vector3D.Normalize(lateralAcceleration) * accelMpsMulti : lateralAcceleration + Math.Sqrt(diff) * missileToTargetNorm;
-                }
+                    Vector3D targetAcceleration = Vector3D.Zero;
+                    if (s.Navigation.LastVelocity.HasValue)
+                        targetAcceleration = (PrevTargetVel - s.Navigation.LastVelocity.Value) * 60;
 
-                if (Gravity.LengthSquared() > 1e-3)
-                {
-                    if (!Vector3D.IsZero(commandedAccel))
+                    s.Navigation.LastVelocity = PrevTargetVel;
+
+                    Vector3D missileToTarget = TargetPosition - Position;
+                    Vector3D missileToTargetNorm = Vector3D.Normalize(missileToTarget);
+                    Vector3D relativeVelocity = PrevTargetVel - Velocity;
+                    Vector3D lateralTargetAcceleration = (targetAcceleration - Vector3D.Dot(targetAcceleration, missileToTargetNorm) * missileToTargetNorm);
+
+                    Vector3D omega = Vector3D.Cross(missileToTarget, relativeVelocity) / Math.Max(missileToTarget.LengthSquared(), 1); //to combat instability at close range
+                    var lateralAcceleration = smarts.Aggressiveness * relativeVelocity.Length() * Vector3D.Cross(omega, missileToTargetNorm) + smarts.NavAcceleration * lateralTargetAcceleration;
+
+                    if (Vector3D.IsZero(lateralAcceleration))
                     {
-                        var directionNorm = Vector3D.IsUnit(ref commandedAccel) ? commandedAccel : Vector3D.Normalize(commandedAccel);
-                        Vector3D gravityCompensationVec;
+                        commandedAccel = missileToTargetNorm * accelMpsMulti;
+                    }
+                    else
+                    {
+                        var diff = accelMpsMulti * accelMpsMulti - lateralAcceleration.LengthSquared();
+                        commandedAccel = diff < 0 ? Vector3D.Normalize(lateralAcceleration) * accelMpsMulti : lateralAcceleration + Math.Sqrt(diff) * missileToTargetNorm;
+                    }
 
-                        if (Vector3D.IsZero(Gravity) || Vector3D.IsZero(commandedAccel))
-                            gravityCompensationVec = Vector3D.Zero;
-                        else
-                            gravityCompensationVec = (Gravity - Gravity.Dot(commandedAccel) / commandedAccel.LengthSquared() * commandedAccel);
+                    if (Gravity.LengthSquared() > 1e-3)
+                    {
+                        if (!Vector3D.IsZero(commandedAccel))
+                        {
+                            var directionNorm = Vector3D.IsUnit(ref commandedAccel) ? commandedAccel : Vector3D.Normalize(commandedAccel);
+                            Vector3D gravityCompensationVec;
 
-                        var diffSq = accelMpsMulti * accelMpsMulti - gravityCompensationVec.LengthSquared();
-                        commandedAccel = diffSq < 0 ? commandedAccel - Gravity : directionNorm * Math.Sqrt(diffSq) + gravityCompensationVec;
+                            if (Vector3D.IsZero(Gravity) || Vector3D.IsZero(commandedAccel))
+                                gravityCompensationVec = Vector3D.Zero;
+                            else
+                                gravityCompensationVec = (Gravity - Gravity.Dot(commandedAccel) / commandedAccel.LengthSquared() * commandedAccel);
+
+                            var diffSq = accelMpsMulti * accelMpsMulti - gravityCompensationVec.LengthSquared();
+                            commandedAccel = diffSq < 0 ? commandedAccel - Gravity : directionNorm * Math.Sqrt(diffSq) + gravityCompensationVec;
+                        }
                     }
                 }
+                else
+                    commandedAccel = Info.Direction * accelMpsMulti;
+
 
                 var offset = false;
                 if (smarts.OffsetTime > 0)
@@ -668,11 +675,6 @@ namespace CoreSystems.Projectiles
                             }
                         }
                         proposedVel = Velocity + (commandedAccel * DeltaStepConst);
-                    }
-
-                    if (Vector3D.IsZero(proposedVel)) {
-                        Log.Line($"Info.Direction is NaN - proposedVel:{proposedVel} - {commandedAccel} - Position:{Position} - Direction:{Info.Direction} - rndDir:{s.RandOffsetDir} - lateralAcceleration:{lateralAcceleration} - missileToTargetNorm:{missileToTargetNorm} - missileToTargetNorm:{relativeVelocity}");
-                        proposedVel = Velocity + (Info.Direction * (aConst.DeltaVelocityPerTick * DeltaTimeRatio));
                     }
 
                     Vector3D.Normalize(ref proposedVel, out Info.Direction);

@@ -263,6 +263,7 @@ namespace CoreSystems.Support
         public readonly bool DynamicGuidance;
         public readonly bool TravelTo;
         public readonly bool AdvancedSmartSteering;
+        public readonly bool NoSteering;
         public readonly float PowerPerTick;
         public readonly float DirectAimCone;
         public readonly float FragRadial;
@@ -434,6 +435,7 @@ namespace CoreSystems.Support
             FocusOnly = ammo.AmmoDef.Trajectory.Smarts.FocusOnly;
             FocusEviction = ammo.AmmoDef.Trajectory.Smarts.FocusEviction;
             ScanRange = ammo.AmmoDef.Trajectory.Smarts.ScanRange;
+            NoSteering = ammo.AmmoDef.Trajectory.Smarts.NoSteering;
 
             TargetLossTime = ammo.AmmoDef.Trajectory.TargetLossTime > 0 ? ammo.AmmoDef.Trajectory.TargetLossTime : int.MaxValue;
             CanZombie = TargetLossTime > 0 && TargetLossTime != int.MaxValue && !IsMine;
