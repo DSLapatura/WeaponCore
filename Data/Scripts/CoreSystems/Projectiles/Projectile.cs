@@ -994,7 +994,7 @@ namespace CoreSystems.Projectiles
                     TargetPosition = MyUtils.LinePlaneIntersection(heightAdjLeadPos, heightDir, destination, destPerspectiveDir);
                     
                     if (def.Orbit)
-                        TargetPosition = ApproachOrbits(ref def, destPerspectiveDir, TargetPosition, s.NavTargetBound.Radius, accelMpsMulti, speedCapMulti);
+                        TargetPosition = ApproachOrbits(ref def, destPerspectiveDir, TargetPosition, accelMpsMulti, speedCapMulti);
 
                     if (Info.Ai.Session.DebugMod && Info.Ai.Session.HandlesInput)
                     {
@@ -1234,7 +1234,7 @@ namespace CoreSystems.Projectiles
             return false;
         }
 
-        private Vector3D ApproachOrbits(ref TrajectoryDef.ApproachDef def, Vector3D upDir, Vector3D orbitCenter, double orbitRadius, double accelMpsMulti, double speedCapMulti)
+        private Vector3D ApproachOrbits(ref TrajectoryDef.ApproachDef def, Vector3D upDir, Vector3D orbitCenter, double accelMpsMulti, double speedCapMulti)
         {
             var tangentCoeff = accelMpsMulti / speedCapMulti;
 
