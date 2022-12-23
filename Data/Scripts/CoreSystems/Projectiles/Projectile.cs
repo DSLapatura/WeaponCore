@@ -809,6 +809,20 @@ namespace CoreSystems.Projectiles
                 var source = s.LookAtPos;
                 var destination = def.VantagePoint != VantagePointRelativeTo.Target ? (def.AdjustDestinationPosition ? s.SetTargetPos : Info.Target.TargetPos) : (def.AdjustDestinationPosition ? Position : Info.Origin);
 
+                if (def.OffsetRadius > 0)
+                {
+                    s.NavTargetBound.Radius = def.OffsetRadius;
+                    if (def.OffsetTime > 0)
+                    {
+                        var prevCheck = Info.PrevRelativeAge % def.OffsetTime;
+                        var currentCheck = Info.RelativeAge % def.OffsetTime;
+                        if (prevCheck < 0 || prevCheck > currentCheck)
+                            SetNavTargetOffset();
+
+                        destination += s.NavTargetBound.Center;
+                    }
+                }
+
                 var heightStart = source + heightOffset;
                 var heightend = destination + heightOffset;
                 var heightDir = heightend - heightStart;
@@ -978,6 +992,10 @@ namespace CoreSystems.Projectiles
                     var destPerspectiveDir = Vector3D.Normalize(heightAdjLeadPos - destination);
 
                     TargetPosition = MyUtils.LinePlaneIntersection(heightAdjLeadPos, heightDir, destination, destPerspectiveDir);
+                    
+                    if (def.Orbit)
+                        TargetPosition = ApproachOrbits(ref def, destPerspectiveDir, TargetPosition, s.NavTargetBound.Radius, accelMpsMulti, speedCapMulti);
+
                     if (Info.Ai.Session.DebugMod && Info.Ai.Session.HandlesInput)
                     {
                         DsDebugDraw.DrawLine(heightAdjLeadPos, destination, Color.White, 3);
@@ -1216,37 +1234,27 @@ namespace CoreSystems.Projectiles
             return false;
         }
 
-        private void ApproachOrbits(Vector3D targetHeightOffset, double orbitHeight)
+        private Vector3D ApproachOrbits(ref TrajectoryDef.ApproachDef def, Vector3D upDir, Vector3D orbitCenter, double orbitRadius, double accelMpsMulti, double speedCapMulti)
         {
-            //Crap in cfg
-            var orbitRadius = 100; //Desired orbit radius, from point above target
-            var orbitTolerance = 5; //Tolerance of orbit
+            var tangentCoeff = accelMpsMulti / speedCapMulti;
 
-            //Aconst?
-            var fixedMagicNumber = Math.Sqrt(orbitHeight * orbitHeight + orbitRadius + orbitRadius); // calc this once per approach and cache?
+            var orbitPlane = new PlaneD(orbitCenter, upDir);
 
-            //Runtime
-            var orbitCenter = TargetPosition + targetHeightOffset; 
+            var offsetProjectilePos = (Position + (upDir * def.DesiredElevation));
+            var normPerp = Vector3D.CalculatePerpendicularVector(Vector3D.Normalize(orbitCenter - offsetProjectilePos));
+            var navGoal = orbitCenter + normPerp * def.OrbitRadius * (1 + tangentCoeff); //Orbit radius multiplied as a ratio of accel/speed as we're leading with a 90* phasing.  this approximates the tangent           
+            var planeNavGoal = navGoal - upDir * orbitPlane.DistanceToPoint(navGoal); //constrained to plane
+            return Vector3D.Normalize(planeNavGoal - Position) * accelMpsMulti;
+        }
 
-            var targDist = Vector3D.Distance(Position, TargetPosition);
-            var orbDist = Vector3D.Distance(Position, orbitCenter);
-
-            var tooFar = orbDist > orbitRadius + orbitTolerance;
-            var tooClose = orbDist < orbDist - orbitTolerance;
-
-            if (!tooFar && !tooClose) //Distance to orbit ctr is good if true
-            {
-                if (targDist - orbitTolerance > fixedMagicNumber) ; //Too high, head lower
-                if (targDist + orbitTolerance < fixedMagicNumber) ; //Too low, climb
-            }
-
-            if (tooFar) ;//Head toward orbitCenter
-            if (tooClose) ;//Head away from orbitCenter
-
-            //but that means "fixedmagicnumber" is no longer static for that particular approach
-            //maybe we let them specify a min value, but otherwise it uses the sphere circumfuse at that sphere position/angle
-            //so orbitheight = desired height above target + targetVolume * 0.5
-            //orbitradius = desired radius + targetVolume * 0.5
+        private void SetNavTargetOffset()
+        {
+            Vector3D rndDir;
+            rndDir.X = (Info.Random.NextDouble() * 2) - 1;
+            rndDir.Y = (Info.Random.NextDouble() * 2) - 1;
+            rndDir.Z = (Info.Random.NextDouble() * 2) - 1;
+            rndDir.Normalize();
+            Info.Storage.NavTargetBound.Center = Vector3D.Zero + rndDir * Info.Storage.NavTargetBound.Radius;
         }
 
         #endregion

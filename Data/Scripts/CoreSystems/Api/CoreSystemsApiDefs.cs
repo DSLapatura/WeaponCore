@@ -1362,6 +1362,10 @@ namespace CoreSystems.Api
                         [ProtoMember(32)] internal StageEvents EndEvent;
                         [ProtoMember(33)] internal double TotalAccelMulti;
                         [ProtoMember(34)] internal double DeAccelMulti;
+                        [ProtoMember(35)] internal bool Orbit;
+                        [ProtoMember(36)] internal double OrbitRadius;
+                        [ProtoMember(37)] internal int OffsetTime;
+                        [ProtoMember(38)] internal double OffsetRadius;
                     }
 
                     [ProtoContract]

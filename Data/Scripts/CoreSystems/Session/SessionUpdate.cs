@@ -641,15 +641,15 @@ namespace CoreSystems
                                         {
                                             var trackingWeaponIsFake = wComp.PrimaryWeapon.Target.TargetState == TargetStates.IsFake;
                                             var thisWeaponIsFake = w.Target.TargetState == TargetStates.IsFake;
-                                            if (w.Target.TargetState == TargetStates.IsProjectile && (wComp.PrimaryWeapon.Target.TargetObject != w.Target.TargetObject || pTarget.State != Projectile.ProjectileState.Alive) || wComp.PrimaryWeapon.Target.TargetObject != w.Target.TargetObject || trackingWeaponIsFake != thisWeaponIsFake)
+                                            if (w.System.MaxTrackingTime && Tick - w.Target.ChangeTick > w.System.MaxTrackingTicks || w.Target.TargetState == TargetStates.IsProjectile && (wComp.PrimaryWeapon.Target.TargetObject != w.Target.TargetObject || pTarget.State != Projectile.ProjectileState.Alive) || wComp.PrimaryWeapon.Target.TargetObject != w.Target.TargetObject || trackingWeaponIsFake != thisWeaponIsFake)
                                                 w.Target.Reset(Tick, States.Expired);
                                             else
                                                 w.TargetLock = true;
                                         }
-                                        else if (!Weapon.TargetAligned(w, w.Target, out targetPos))
+                                        else if (w.System.MaxTrackingTime && Tick - w.Target.ChangeTick > w.System.MaxTrackingTicks || !Weapon.TargetAligned(w, w.Target, out targetPos))
                                             w.Target.Reset(Tick, States.Expired);
                                     }
-                                    else if (w.System.TrackTargets && !Weapon.TargetAligned(w, w.Target, out targetPos))
+                                    else if (w.System.TrackTargets && (w.System.MaxTrackingTime && Tick - w.Target.ChangeTick > w.System.MaxTrackingTicks || !Weapon.TargetAligned(w, w.Target, out targetPos)))
                                         w.Target.Reset(Tick, States.Expired);
                                 }
                             }
@@ -666,7 +666,7 @@ namespace CoreSystems
                         /// Queue for target acquire or set to tracking weapon.
                         /// 
                         
-                        if (weaponAcquires && w.TargetAcquireTick == uint.MaxValue && wValues.State.Control != ControlMode.Camera && (!wComp.UserControlled || wComp.FakeMode || wValues.State.Trigger == On))
+                        if (weaponAcquires && w.TargetAcquireTick == uint.MaxValue && (!w.System.DropTargetUntilLoaded || w.ProtoWeaponAmmo.CurrentAmmo > 0) && wValues.State.Control != ControlMode.Camera && (!wComp.UserControlled || wComp.FakeMode || wValues.State.Trigger == On))
                         {
                             var myTimeSlot =  Tick == w.FastTargetResetTick || w.Acquire.IsSleeping && AsleepCount == w.Acquire.SlotId || !w.Acquire.IsSleeping && AwakeCount == w.Acquire.SlotId;
 
@@ -685,7 +685,6 @@ namespace CoreSystems
                                 w.TargetAcquireTick = Tick;
                                 AcquireTargets.Add(w);
                             }
-
                         }
 
                         if (w.Target.TargetChanged) // Target changed

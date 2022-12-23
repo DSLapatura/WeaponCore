@@ -454,7 +454,7 @@ namespace CoreSystems
                     topMap.MyCubeBocks.ApplyAdditions();
                     var iGrid = (IMyCubeGrid)grid;
                     var controlled = iGrid.ControlSystem?.IsControlled ?? false;
-                    topMap.SuspectedDrone = !grid.IsStatic && (terminals < 20 && (warHead > 0 || working > 0 && (remote > 0 || program > 0)) || controlled && (powerProducers > 0 && thrusters > 0 && working > 0));
+                    topMap.SuspectedDrone = !grid.IsStatic && (terminals < 20 && (warHead > 0 || working > 0 && (remote > 0 || program > 0)) || controlled && powerProducers > 0 && thrusters > 0 && working > 0);
 
                     topMap.Trash = terminals == 0;
                     topMap.Powered = working > 0;

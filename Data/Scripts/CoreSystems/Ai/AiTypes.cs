@@ -507,7 +507,7 @@ namespace CoreSystems.Support
                 else sphereDistance -= myRadius;
                 DistSqr = sphereDistance * sphereDistance;
 
-                Drone = (VelLenSqr > 100 && Approaching && DistSqr < 1000000) && detectInfo.SuspectedDrone;
+                Drone = (VelLenSqr >= 900 && Approaching && DistSqr < 1000000) && detectInfo.SuspectedDrone;
 
                 if (Drone && OffenseRating < 10)
                     OffenseRating = 10;

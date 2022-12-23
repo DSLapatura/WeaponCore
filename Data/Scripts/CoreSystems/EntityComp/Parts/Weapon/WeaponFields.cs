@@ -1,14 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using CoreSystems.Support;
+using Sandbox.Definitions;
 using Sandbox.Game.Entities;
+using Sandbox.Game.Lights;
 using VRage.Game;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
+using VRage.ObjectBuilders;
 using VRage.Utils;
 using VRageMath;
+using VRageRender.Lights;
 using static CoreSystems.Session;
 using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetDef;
+using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace CoreSystems.Platform
 {
@@ -26,6 +31,7 @@ namespace CoreSystems.Platform
         internal readonly List<MyCubeBlock> Top5 = new List<MyCubeBlock>();
         internal readonly HashSet<Weapon> Connections = new HashSet<Weapon>();
         internal readonly WeaponFrameCache WeaponCache = new WeaponFrameCache();
+        internal readonly MyLight Light;
         internal readonly ApiShootRequest ShootRequest;
         internal readonly WeaponSystem System;
         internal readonly Target Target;
@@ -424,8 +430,88 @@ namespace CoreSystems.Platform
 
             if (System.HasAntiSmart)
                 System.Session.AntiSmartActive = true;
+
+            if (System.Session.HandlesInput && Comp.IsBlock)
+            {
+                //InitLight(Color.Red, 99, 1, out Light);
+            }
         }
 
+        private void InitLight(Vector4 color, float radius, float falloff, out MyLight light)
+        {
+            var cube = Comp.Cube;
+
+            light = new MyLight();
+            light.Start(color, cube.CubeGrid.GridScale * radius, cube.DisplayNameText);
+            light.ReflectorOn = true;
+            light.LightType = MyLightType.SPOTLIGHT;
+            light.ReflectorTexture = @"Textures\Lights\reflector_large.dds"; ;
+            light.Falloff = 0.3f;
+            light.GlossFactor = 0.0f;
+            light.ReflectorGlossFactor = 1f;
+            light.ReflectorFalloff = 0.5f;
+            light.GlareOn = light.LightOn;
+            light.GlareQuerySize = GlareQuerySizeDef;
+            light.GlareType = MyGlareTypeEnum.Directional;
+            light.GlareSize = _flare.Size;
+            light.SubGlares = _flare.SubGlares;
+
+            //light.ReflectorIntensity = 10f;
+            //light.ReflectorRange = 100; // how far the projected light goes
+            //light.ReflectorConeDegrees = 90; // projected light angle in degrees, max 179.
+            //light.CastShadows = true;
+           
+
+            cube.Render.NeedsDrawFromParent = true;
+            light.Position = Scope.Info.Position + (Scope.Info.Direction * 1);
+            light.UpdateLight();
+
+            //light.GlareSize = new Vector2(1, 1); // glare size in X and Y.
+            //light.GlareIntensity = 2;
+            //light.GlareMaxDistance = 50;
+            //light.SubGlares = GetFlareDefinition("InteriorLight").SubGlares; // subtype name from flares.sbc
+            //light.GlareType = MyGlareTypeEnum.Normal; // usable values: MyGlareTypeEnum.Normal, MyGlareTypeEnum.Distant, MyGlareTypeEnum.Directional
+            //light.GlareQuerySize = 0.5f; // glare "box" size, affects occlusion and fade occlussion
+            //light.GlareQueryShift = 1f; // no idea
+            //light.ParentID = cube.Render.GetRenderObjectID();
+            //this.UpdateIntensity();
+        }
+        
+        public static MyFlareDefinition GetFlareDefinition(string flareSubtypeId)
+        {
+            if (string.IsNullOrEmpty(flareSubtypeId))
+                throw new ArgumentException("flareSubtypeId must not be null or empty!");
+
+            var flareDefId = new MyDefinitionId(typeof(MyObjectBuilder_FlareDefinition), flareSubtypeId);
+            var flareDef = MyDefinitionManager.Static.GetDefinition(flareDefId) as MyFlareDefinition;
+
+            if (flareDef == null)
+                throw new Exception($"Couldn't find flare subtype {flareSubtypeId}");
+
+            return flareDef;
+        }
+
+        private readonly MyFlareDefinition _flare = new MyFlareDefinition() ;
+        private float GlareQuerySizeDef => Comp.Cube.CubeGrid.GridScale * (true ? 0.5f : 0.1f);
+
+        /*
+        private void UpdateIntensity()
+        {
+            float num1 = this.m_lightingLogic.CurrentLightPower * this.m_lightingLogic.Intensity;
+            foreach (MyLight light in this.m_lightingLogic.Lights)
+            {
+                light.ReflectorIntensity = num1 * 8f;
+                light.Intensity = num1 * 0.3f;
+                float num2 = num1 / this.m_lightingLogic.IntensityBounds.Max;
+                float num3 = this.m_flare.Intensity * num1;
+                if (num3 < (double)this.m_flare.Intensity)
+                    num3 = this.m_flare.Intensity;
+                light.GlareIntensity = num3;
+                light.GlareSize = this.m_flare.Size * (float)((double)num2 / 2.0 + 0.5);
+                this.m_lightingLogic.BulbColor = this.m_lightingLogic.ComputeBulbColor();
+            }
+        }
+        */
         private void FuckMyLife()
         {
             var azPartMatrix = AzimuthPart.Entity.PositionComp.LocalMatrixRef;
