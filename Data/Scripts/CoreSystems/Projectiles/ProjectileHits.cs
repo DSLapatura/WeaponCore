@@ -825,7 +825,7 @@ namespace CoreSystems.Projectiles
                         {
                             info.AvShot.LastHitShield = hitEntity.EventType == Shield;
                             info.AvShot.Hit = info.Hit;
-                            if (info.AimedShot && Session.TrackingAi != null && Session.TargetUi.HitIncrease < 0.1d && info.Weapon.Comp.Ai.ControlComp == null && (info.AmmoDef.Const.FixedFireAmmo || info.Weapon.Comp.Data.Repo.Values.Set.Overrides.Control != ProtoWeaponOverrides.ControlModes.Auto))
+                            if (info.AimedShot && Session.TrackingAi != null && Session.TargetUi.HitIncrease < 0.1d && info.Ai.ControlComp == null && (aConst.FixedFireAmmo || info.Weapon.Comp.Data.Repo.Values.Set.Overrides.Control != ProtoWeaponOverrides.ControlModes.Auto))
                                 Session.TargetUi.SetHit(info);
                         }
 
