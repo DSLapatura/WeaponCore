@@ -225,7 +225,7 @@ namespace CoreSystems.Projectiles
                     {
                         if (!aConst.HasFragGroup || info.Frags == 0 || info.Frags % aConst.FragGroupSize != 0 || info.RelativeAge - info.LastFragTime >= aConst.FragGroupDelay)
                         {
-                            var approachSkip = aConst.ApproachesCount > 0 && storage.RequestedStage < aConst.ApproachesCount && storage.RequestedStage >= -1 && aConst.Approaches[storage.RequestedStage].NoSpawns;
+                            var approachSkip = aConst.ApproachesCount > 0 && storage.RequestedStage < aConst.ApproachesCount && storage.RequestedStage >= 0 && aConst.Approaches[storage.RequestedStage].NoSpawns;
                             if (!approachSkip)
                             {
                                 if (!aConst.HasFragProximity)
