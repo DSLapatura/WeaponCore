@@ -1600,6 +1600,7 @@ namespace CoreSystems.Support
         public readonly bool StartParticle;
         public readonly bool EndAnd;
         public readonly bool StartAnd;
+        public readonly bool NoSpawns;
         public readonly double ModFutureStep;
 
         public ApproachConstants(WeaponSystem.AmmoType ammo, int index, WeaponDefinition wDef)
@@ -1611,7 +1612,7 @@ namespace CoreSystems.Support
             AlternateTravelParticle = !string.IsNullOrEmpty(def.AlternateParticle.Name);
             StartParticle = !string.IsNullOrEmpty(def.StartParticle.Name);
             AlternateModel = !string.IsNullOrEmpty(def.AlternateModel);
-
+            NoSpawns = def.NoTimedSpawns;
             if (AlternateModel)
             {
                 ModelPath = wDef.ModPath + def.AlternateModel;

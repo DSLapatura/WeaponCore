@@ -225,22 +225,26 @@ namespace CoreSystems.Projectiles
                     {
                         if (!aConst.HasFragGroup || info.Frags == 0 || info.Frags % aConst.FragGroupSize != 0 || info.RelativeAge - info.LastFragTime >= aConst.FragGroupDelay)
                         {
-                            if (!aConst.HasFragProximity)
-                                p.SpawnShrapnel();
-                            else if (targetState == Target.TargetStates.IsEntity)
+                            var approachSkip = aConst.ApproachesCount > 0 && storage.RequestedStage < aConst.ApproachesCount && storage.RequestedStage >= -1 && aConst.Approaches[storage.RequestedStage].NoSpawns;
+                            if (!approachSkip)
                             {
-                                var topEnt = ((MyEntity)target.TargetObject).GetTopMostParent();
-                                var inflatedSize = aConst.FragProximity + topEnt.PositionComp.LocalVolume.Radius;
-                                if (Vector3D.DistanceSquared(topEnt.PositionComp.WorldAABB.Center, p.Position) <= inflatedSize * inflatedSize)
+                                if (!aConst.HasFragProximity)
                                     p.SpawnShrapnel();
-                            }
-                            else if (target.TargetObject is Projectile)
-                            {
-                                var projectile = (Projectile)target.TargetObject;
-                                var inflatedSize = aConst.FragProximity + projectile.Info.AmmoDef.Const.CollisionSize;
-                                if (Vector3D.DistanceSquared(projectile.Position, p.Position) <= inflatedSize * inflatedSize)
+                                else if (targetState == Target.TargetStates.IsEntity)
                                 {
-                                    p.SpawnShrapnel();
+                                    var topEnt = ((MyEntity)target.TargetObject).GetTopMostParent();
+                                    var inflatedSize = aConst.FragProximity + topEnt.PositionComp.LocalVolume.Radius;
+                                    if (Vector3D.DistanceSquared(topEnt.PositionComp.WorldAABB.Center, p.Position) <= inflatedSize * inflatedSize)
+                                        p.SpawnShrapnel();
+                                }
+                                else if (target.TargetObject is Projectile)
+                                {
+                                    var projectile = (Projectile)target.TargetObject;
+                                    var inflatedSize = aConst.FragProximity + projectile.Info.AmmoDef.Const.CollisionSize;
+                                    if (Vector3D.DistanceSquared(projectile.Position, p.Position) <= inflatedSize * inflatedSize)
+                                    {
+                                        p.SpawnShrapnel();
+                                    }
                                 }
                             }
                         }
