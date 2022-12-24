@@ -147,7 +147,7 @@ namespace CoreSystems.Platform
         internal uint LastHeatUpdateTick;
         internal uint LastInventoryTick;
         internal uint StopBarrelAvTick;
-        internal int LiveDrones;
+        internal int LiveSmarts;
         internal int ProposedAmmoId = -1;
         internal int ShootCount;
         internal int FireCounter;

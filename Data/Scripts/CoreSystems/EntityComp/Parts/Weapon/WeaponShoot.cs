@@ -252,7 +252,7 @@ namespace CoreSystems.Platform
                                 else
                                 {
                                     s.Projectiles.NewProjectiles.Add(new NewProjectile { AmmoDef = ammoPattern, Muzzle = muzzle, PatternCycle = patternCycle, Direction = muzzle.DeviatedDir, Type = NewProjectile.Kind.Normal });
-                                    if (aConst.IsDrone) LiveDrones++;
+                                    if (aConst.IsDrone || aConst.IsSmart) LiveSmarts++;
                                 }
                             }
                         }

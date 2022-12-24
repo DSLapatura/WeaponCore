@@ -385,7 +385,7 @@ namespace CoreSystems.Projectiles
                 construct.TotalProjectileEffect += Info.DamageDoneProj;
             }
 
-            if (aConst.IsDrone) Info.Weapon.LiveDrones--;
+            if (aConst.IsDrone || aConst.IsSmart) Info.Weapon.LiveSmarts--;
 
             if (aConst.ProjectileSync && session.IsServer)
                 SyncPosServerProjectile(ProtoProStateSync.ProSyncState.Dead);
