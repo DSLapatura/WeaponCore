@@ -848,18 +848,14 @@ namespace CoreSystems.Projectiles
                 var source = s.LookAtPos;
                 var destination = def.VantagePoint != VantagePointRelativeTo.Target ? (def.AdjustDestinationPosition ? s.SetTargetPos : Info.Target.TargetPos) : (def.AdjustDestinationPosition ? Position : Info.Origin);
 
-                if (def.OffsetRadius > 0)
+                if (def.OffsetMinRadius > 0 && def.OffsetTime > 0)
                 {
-                    s.NavTargetBound.Radius = def.OffsetRadius;
-                    if (def.OffsetTime > 0)
-                    {
-                        var prevCheck = Info.PrevRelativeAge % def.OffsetTime;
-                        var currentCheck = Info.RelativeAge % def.OffsetTime;
-                        if (prevCheck < 0 || prevCheck > currentCheck)
-                            SetNavTargetOffset();
+                    var prevCheck = Info.PrevRelativeAge % def.OffsetTime;
+                    var currentCheck = Info.RelativeAge % def.OffsetTime;
+                    if (prevCheck < 0 || prevCheck > currentCheck)
+                        SetNavTargetOffset(def);
 
-                        destination += s.NavTargetBound.Center;
-                    }
+                    destination += s.NavTargetBound.Center;
                 }
 
                 var heightStart = source + heightOffset;
@@ -1284,14 +1280,16 @@ namespace CoreSystems.Projectiles
             return planeNavGoal;
         }
 
-        private void SetNavTargetOffset()
+        private void SetNavTargetOffset(TrajectoryDef.ApproachDef def)
         {
             Vector3D rndDir;
             rndDir.X = (Info.Random.NextDouble() * 2) - 1;
             rndDir.Y = (Info.Random.NextDouble() * 2) - 1;
             rndDir.Z = (Info.Random.NextDouble() * 2) - 1;
             rndDir.Normalize();
-            Info.Storage.NavTargetBound.Center = Vector3D.Zero + rndDir * Info.Storage.NavTargetBound.Radius;
+
+            var offsetRadius = def.OffsetMaxRadius <= def.OffsetMinRadius ? def.OffsetMinRadius : Info.Random.NextDouble() * (def.OffsetMaxRadius - def.OffsetMinRadius) + def.OffsetMinRadius;
+            Info.Storage.NavTargetBound = new BoundingSphereD(Vector3D.Zero + rndDir * Info.Storage.NavTargetBound.Radius, offsetRadius);
         }
 
         #endregion
