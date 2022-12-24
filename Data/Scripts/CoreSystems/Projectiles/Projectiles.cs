@@ -402,7 +402,7 @@ namespace CoreSystems.Projectiles
                 var triggerRange = aConst.EwarTriggerRange > 0 && !info.EwarAreaPulse ? aConst.EwarTriggerRange : 0;
                 var useEwarSphere = (triggerRange > 0 || info.EwarActive) && aConst.Pulse && aConst.EwarType != WeaponDefinition.AmmoDef.EwarDef.EwarType.AntiSmart;
                 p.Beam = useEwarSphere ? new LineD(p.Position + (-info.Direction * aConst.EwarTriggerRange), p.Position + (info.Direction * aConst.EwarTriggerRange)) : new LineD(p.LastPosition, p.Position);
-                var checkBeam = p.Info.AmmoDef.Const.CheckFutureIntersection ? new LineD(p.Beam.From, p.Beam.From + (p.Beam.Direction * (p.Beam.Length + p.MaxSpeed+aConst.CollisionSize)), p.Beam.Length + p.MaxSpeed+aConst.CollisionSize) : p.Beam;
+                var checkBeam = p.Info.AmmoDef.Const.CheckFutureIntersection ? new LineD(p.Beam.From, p.Beam.From + p.Beam.Direction * (p.Beam.Length + aConst.FutureIntersectionRange), p.Beam.Length + aConst.FutureIntersectionRange) : p.Beam;
                 if (p.DeaccelRate <= 0 && p.State != ProjectileState.OneAndDone && (info.DistanceTraveled * info.DistanceTraveled >= p.DistanceToTravelSqr || info.RelativeAge > aConst.MaxLifeTime)) {
 
                     p.PruneSphere.Center = p.Position;

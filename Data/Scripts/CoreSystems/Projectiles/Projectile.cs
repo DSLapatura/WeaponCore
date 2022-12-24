@@ -408,7 +408,9 @@ namespace CoreSystems.Projectiles
             var aConst = ammo.Const;
             var s = Info.Storage;
             var smarts = ammo.Trajectory.Smarts;
-            var coreParent = Info.Weapon.Comp.TopEntity;
+            var w = Info.Weapon;
+            var comp = w.Comp;
+            var coreParent = comp.TopEntity;
             var startTrack = s.SmartReady || coreParent.MarkedForClose;
             var ai = Info.Ai;
             var session = ai.Session;
@@ -575,6 +577,7 @@ namespace CoreSystems.Projectiles
                 #region Navigation
 
                 Vector3D commandedAccel;
+                Vector3D missileToTargetNorm = Vector3D.Zero;
                 if (!aConst.NoSteering)
                 {
                     Vector3D targetAcceleration = Vector3D.Zero;
@@ -584,7 +587,7 @@ namespace CoreSystems.Projectiles
                     s.Navigation.LastVelocity = PrevTargetVel;
 
                     Vector3D missileToTarget = TargetPosition - Position;
-                    Vector3D missileToTargetNorm = Vector3D.Normalize(missileToTarget);
+                    missileToTargetNorm = Vector3D.Normalize(missileToTarget);
                     Vector3D relativeVelocity = PrevTargetVel - Velocity;
                     Vector3D lateralTargetAcceleration = (targetAcceleration - Vector3D.Dot(targetAcceleration, missileToTargetNorm) * missileToTargetNorm);
 
@@ -655,7 +658,7 @@ namespace CoreSystems.Projectiles
                     {
                         bool isNormalized;
                         var newHeading = ProNavControl(Info.Direction, Velocity, commandedAccel, aConst.PreComputedMath, out isNormalized);
-                        proposedVel = Velocity + (isNormalized ? newHeading * speedLimitPerTick * DeltaStepConst : commandedAccel * DeltaStepConst);
+                        proposedVel = Velocity + (isNormalized ? newHeading * accelMpsMulti * DeltaStepConst : commandedAccel * DeltaStepConst);
                     }
                     else
                     {
@@ -676,6 +679,10 @@ namespace CoreSystems.Projectiles
                         }
                         proposedVel = Velocity + (commandedAccel * DeltaStepConst);
                     }
+
+                    Vector3D moddedAccel;
+                    if (session.Tick - 1 == s.Obstacle.LastSeenTick && AvoidObstacle(Position + proposedVel, missileToTargetNorm, accelMpsMulti, out moddedAccel))
+                        proposedVel = moddedAccel;
 
                     Vector3D.Normalize(ref proposedVel, out Info.Direction);
                 }
@@ -704,6 +711,39 @@ namespace CoreSystems.Projectiles
             Velocity = proposedVel;
         }
 
+        private bool AvoidObstacle(Vector3D proposedPos, Vector3D missileToTargetNorm, double accelMpsMulti, out Vector3D moddedAccel)
+        {
+            moddedAccel = Vector3D.Zero;
+            var aSphere = Info.Storage.Obstacle.AvoidSphere;
+
+            var intersect = aSphere.Contains(proposedPos) != ContainmentType.Disjoint;
+
+            if (!intersect)
+                return false;
+
+            if (SurfaceModifiedCommandAccel(aSphere, Position, TargetPosition, accelMpsMulti, missileToTargetNorm, out moddedAccel)) {
+                moddedAccel = Velocity + (moddedAccel * DeltaStepConst);
+                return true; 
+            }
+
+            return false;
+        }
+
+        private bool SurfaceModifiedCommandAccel(BoundingSphereD aSphere, Vector3D position, Vector3D desiredPosition, double accelMpsMulti, Vector3D missileToTargetNorm, out Vector3D moddedAccel)
+        {
+            var targetDir = !Vector3D.IsZero(missileToTargetNorm) ? missileToTargetNorm : Vector3D.Normalize(desiredPosition - position);
+            var d = position + targetDir * (accelMpsMulti * DeltaStepConst) - aSphere.Center;
+            var desiredDir = Vector3D.Normalize(d);
+            var futurePos = position + desiredDir;
+
+            moddedAccel = Vector3D.Zero;
+            if (Vector3D.DistanceSquared(futurePos, aSphere.Center) > Vector3D.DistanceSquared(LastPosition, aSphere.Center)) 
+                return false;
+
+            moddedAccel = Vector3D.Normalize(futurePos - aSphere.Center) * accelMpsMulti;
+            return true;
+        }
+
         private void ProcessStage(ref double accelMpsMulti, ref double speedCapMulti, Vector3D targetPos, int lastActiveStage, bool targetLock)
         {
             var s = Info.Storage;
@@ -719,7 +759,6 @@ namespace CoreSystems.Projectiles
                         Log.Line($"StageStart: {Info.AmmoDef.AmmoRound} - last: {s.LastActivatedStage} - age:{Info.RelativeAge}");
                     s.LastActivatedStage = -1;
                     s.RequestedStage = 0;
-
                 }
 
                 var stageChange = s.RequestedStage != lastActiveStage;
@@ -994,7 +1033,7 @@ namespace CoreSystems.Projectiles
                     TargetPosition = MyUtils.LinePlaneIntersection(heightAdjLeadPos, heightDir, destination, destPerspectiveDir);
                     
                     if (def.Orbit)
-                        TargetPosition = ApproachOrbits(ref def, destPerspectiveDir, TargetPosition, accelMpsMulti, speedCapMulti);
+                        TargetPosition = ApproachOrbits(ref def, s.OffsetDir, heightAdjLeadPos, accelMpsMulti, speedCapMulti);
 
                     if (Info.Ai.Session.DebugMod && Info.Ai.Session.HandlesInput)
                     {
@@ -1236,15 +1275,13 @@ namespace CoreSystems.Projectiles
 
         private Vector3D ApproachOrbits(ref TrajectoryDef.ApproachDef def, Vector3D upDir, Vector3D orbitCenter, double accelMpsMulti, double speedCapMulti)
         {
-            var tangentCoeff = accelMpsMulti / speedCapMulti;
-
+            var tangentCoeff = accelMpsMulti / (speedCapMulti * MaxSpeed);
             var orbitPlane = new PlaneD(orbitCenter, upDir);
 
-            var offsetProjectilePos = (Position + (upDir * def.DesiredElevation));
-            var normPerp = Vector3D.CalculatePerpendicularVector(Vector3D.Normalize(orbitCenter - offsetProjectilePos));
+            var normPerp = Vector3D.CalculatePerpendicularVector(Vector3D.Normalize(orbitCenter - Position));
             var navGoal = orbitCenter + normPerp * def.OrbitRadius * (1 + tangentCoeff); //Orbit radius multiplied as a ratio of accel/speed as we're leading with a 90* phasing.  this approximates the tangent           
             var planeNavGoal = navGoal - upDir * orbitPlane.DistanceToPoint(navGoal); //constrained to plane
-            return Vector3D.Normalize(planeNavGoal - Position) * accelMpsMulti;
+            return planeNavGoal;
         }
 
         private void SetNavTargetOffset()

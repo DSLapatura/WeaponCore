@@ -17,6 +17,8 @@ using static CoreSystems.Support.DeferedVoxels;
 using CollisionLayers = Sandbox.Engine.Physics.MyPhysics.CollisionLayers;
 using Jakaria.API;
 using static CoreSystems.Projectiles.Projectile;
+using CoreSystems.Platform;
+using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace CoreSystems.Projectiles
 {
@@ -33,6 +35,7 @@ namespace CoreSystems.Projectiles
 
                 var p = ValidateHits[x];
                 var info = p.Info;
+                var s = info.Storage;
                 var target = info.Target;
                 var ai = info.Ai;
                 var w = info.Weapon;
@@ -468,10 +471,17 @@ namespace CoreSystems.Projectiles
                     }
                 }
 
-                if (aConst.IsDrone)
+                if (aConst.CheckFutureIntersection && closestFutureEnt != null && closestFutureEnt.EntityId != w.Target.TopEntityId && closestFutureEnt != topEntity)
                 {
-                    info.Storage.Obstacle.Entity = closestFutureEnt;
-                    info.Storage.Obstacle.LastSeenTick = Session.Tick;
+                    var oGrid = closestFutureEnt as MyCubeGrid;
+                    var tGrid = target.TargetObject as MyCubeBlock;
+                    var invalid = oGrid != null && (w.Comp.IsBlock && oGrid.IsSameConstructAs(w.Comp.Cube.CubeGrid) || tGrid != null && oGrid.IsSameConstructAs(tGrid.CubeGrid));
+                    if (!invalid)
+                    {
+                        s.Obstacle.Entity = closestFutureEnt;
+                        s.Obstacle.LastSeenTick = Session.Tick;
+                        s.Obstacle.AvoidSphere = new BoundingSphereD(closestFutureEnt.PositionComp.WorldAABB.Center, closestFutureEnt.PositionComp.LocalVolume.Radius + aConst.FutureIntersectionRange);
+                    }
                 }
 
                 if (target.TargetState == Target.TargetStates.IsProjectile && aConst.NonAntiSmartEwar && !projetileInShield)

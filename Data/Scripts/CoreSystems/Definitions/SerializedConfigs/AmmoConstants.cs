@@ -332,6 +332,8 @@ namespace CoreSystems.Support
         public readonly double MaxAcceleration;
         public readonly double MaxAccelerationSqr;
         public readonly double OffsetMinRangeSqr;
+        public readonly double FutureIntersectionRange;
+
         internal AmmoConstants(WeaponSystem.AmmoType ammo, WeaponDefinition wDef, Session session, WeaponSystem system, int ammoIndex)
         {
             AmmoIdxPos = ammoIndex;
@@ -454,7 +456,6 @@ namespace CoreSystems.Support
 
             MaxTargets = ammo.AmmoDef.Trajectory.Smarts.MaxTargets;
             TargetLossDegree = ammo.AmmoDef.Trajectory.TargetLossDegree > 0 ? (float)Math.Cos(MathHelper.ToRadians(ammo.AmmoDef.Trajectory.TargetLossDegree)) : 0;
-            CheckFutureIntersection = ammo.AmmoDef.Trajectory.Smarts.CheckFutureIntersection;
 
             Fragments(ammo, out HasFragmentOffset, out HasNegFragmentOffset, out FragmentOffset, out FragRadial, out FragDegrees, out FragReverse, out FragDropVelocity, out FragMaxChildren, out FragIgnoreArming, out FragOnArmed, out FragOnEnd, out HasAdvFragOffset, out FragOffset);
             TimedSpawn(ammo, out TimedFragments, out FragStartTime, out FragInterval, out MaxFrags, out FragGroupSize, out FragGroupDelay, out FragProximity, out HasFragProximity, out FragParentDies, out FragPointAtTarget, out HasFragGroup, out FragPointType, out DirectAimCone);
@@ -483,14 +484,19 @@ namespace CoreSystems.Support
             DesiredProjectileSpeed = !IsBeamWeapon ? givenSpeed : MaxTrajectory * MyEngineConstants.UPDATE_STEPS_PER_SECOND;
             HeatModifier = ammo.AmmoDef.HeatModifier > 0 ? ammo.AmmoDef.HeatModifier : 1;
 
+
             ComputeShieldBypass(shieldBypassRaw, out ShieldDamageBypassMod);
             ComputeApproaches(ammo, wDef, out ApproachesCount, out Approaches);
             ComputeAmmoPattern(ammo, system, wDef, fragGuidedAmmo, fragAntiSmart, fragTargetOverride, out AntiSmartDetected, out TargetOverrideDetected, out AmmoPattern, out WeaponPatternCount, out FragPatternCount, out GuidedAmmoDetected, out WeaponPattern, out FragmentPattern);
 
             DamageScales(ammo.AmmoDef, out DamageScaling, out FallOffScaling, out ArmorScaling, out CustomDamageScales, out CustomBlockDefinitionBasesToScales, out SelfDamage, out VoxelDamage, out HealthHitModifier, out VoxelHitModifier, out DeformDelay);
             CollisionShape(ammo.AmmoDef, out CollisionIsLine, out CollisionSize, out TracerLength);
+            
             SmartsDelayDistSqr = (CollisionSize * ammo.AmmoDef.Trajectory.Smarts.TrackingDelay) * (CollisionSize * ammo.AmmoDef.Trajectory.Smarts.TrackingDelay);
             PrimeEntityPool = Models(ammo.AmmoDef, wDef, out PrimeModel, out TriggerModel, out ModelPath);
+
+            CheckFutureIntersection = ammo.AmmoDef.Trajectory.Smarts.CheckFutureIntersection;
+            FutureIntersectionRange = ammo.AmmoDef.Trajectory.Smarts.FutureIntersectionRange > 0 ? ammo.AmmoDef.Trajectory.Smarts.FutureIntersectionRange + CollisionSize : DesiredProjectileSpeed + CollisionSize;
 
             Energy(ammo, system, wDef, out EnergyAmmo, out MustCharge, out Reloadable, out EnergyCost, out EnergyMagSize, out ChargSize, out BurstMode, out HasShotReloadDelay, out PowerPerTick);
             Sound(ammo, system, session, out HitSound, out HitSoundPair, out AmmoTravelSound, out TravelSoundPair, out ShotSound, out ShotSoundPair, out DetonationSound, out DetSoundPair, out HitSoundDistSqr, out AmmoTravelSoundDistSqr, out AmmoSoundMaxDistSqr,

@@ -1271,6 +1271,7 @@ namespace CoreSystems.Api
                         [ProtoMember(19)] internal bool FocusEviction;
                         [ProtoMember(20)] internal double ScanRange;
                         [ProtoMember(21)] internal bool NoSteering;
+                        [ProtoMember(22)] internal double FutureIntersectionRange;
                     }
 
                     [ProtoContract]

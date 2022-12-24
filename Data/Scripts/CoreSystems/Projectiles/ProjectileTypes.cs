@@ -262,6 +262,7 @@ namespace CoreSystems.Support
         {
             internal MyEntity Entity;
             internal uint LastSeenTick = uint.MaxValue;
+            internal BoundingSphereD AvoidSphere;
         }
     }
 
