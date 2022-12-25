@@ -224,10 +224,10 @@ namespace CoreSystems
     public class ProtoWeaponReload
     {
         [ProtoMember(1)] public uint Revision;
-        //[ProtoMember(2)] public int StartId; //save
-        ///[ProtoMember(3)] public int EndId; //save
-        [ProtoMember(9)] public ushort StartId; //save
-        [ProtoMember(10)] public ushort EndId; //save
+        [ProtoMember(2)] public int StartId; //save
+        [ProtoMember(3)] public int EndId; //save
+        //[ProtoMember(9)] public ushort StartId; //save
+        //[ProtoMember(10)] public ushort EndId; //save
         [ProtoMember(4)] public int MagsLoaded = 1;
         [ProtoMember(5)] public bool WaitForClient; //don't save
         [ProtoMember(6)] public int AmmoTypeId; //save
