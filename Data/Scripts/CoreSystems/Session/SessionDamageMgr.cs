@@ -983,14 +983,15 @@ namespace CoreSystems
 
                 pTarget.Info.BaseHealthPool = 0;
                 
-                var requiresPdSync = PdClient && pTarget.Info.Storage.SyncId != long.MinValue && !pTarget.Info.AmmoDef.Const.ProjectileSync;
+                var requiresPdSync = PdClient && pTarget.Info.Storage.SyncId != ulong.MaxValue && !pTarget.Info.AmmoDef.Const.ProjectileSync;
                 pTarget.State = !requiresPdSync ? Projectile.ProjectileState.Destroy : Projectile.ProjectileState.ClientPhantom;
-
+                /*
                 if (requiresPdSync && PdServer && PointDefenseSyncMonitor.ContainsKey(pTarget.Info.Storage.SyncId))
                 {
                     ProtoPdSyncMonitor.Collection.Add(pTarget.Info.Storage.SyncId);
-                    pTarget.Info.Storage.SyncId = long.MinValue;
+                    pTarget.Info.Storage.SyncId = ulong.MaxValue;
                 }
+                */
 
                 if (attacker.AmmoDef.Const.EndOfLifeDamage > 0 && attacker.AmmoDef.Const.EndOfLifeAoe && attacker.RelativeAge >= attacker.AmmoDef.Const.MinArmingTime)
                     DetonateProjectile(hitEnt, attacker);
@@ -1030,20 +1031,20 @@ namespace CoreSystems
                         {
                             attacker.DamageDoneProj += (long)objHp;
                             sTarget.Info.BaseHealthPool = 0;
-                            var requiresPdSync = PdClient && sTarget.Info.Storage.SyncId != long.MinValue && !sTarget.Info.AmmoDef.Const.ProjectileSync;
+                            var requiresPdSync = PdClient && sTarget.Info.Storage.SyncId != ulong.MaxValue && !sTarget.Info.AmmoDef.Const.ProjectileSync;
                             sTarget.State = !requiresPdSync ? Projectile.ProjectileState.Detonated : Projectile.ProjectileState.ClientPhantom;
-
+                            /*
                             if (requiresPdSync && PdServer && PointDefenseSyncMonitor.ContainsKey(sTarget.Info.Storage.SyncId))
                             {
                                 ProtoPdSyncMonitor.Collection.Add(sTarget.Info.Storage.SyncId);
-                                sTarget.Info.Storage.SyncId = long.MinValue;
+                                sTarget.Info.Storage.SyncId = ulong.MaxValue;
                             }
+                            */
                         }
                         else
                         {
                             sTarget.Info.BaseHealthPool -= scaledDamage;
                             attacker.DamageDoneProj += (long)scaledDamage;
-
                         }
 
                         if (GlobalDamageHandlerActive) {

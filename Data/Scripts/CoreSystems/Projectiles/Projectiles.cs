@@ -203,8 +203,9 @@ namespace CoreSystems.Projectiles
                         continue;
                 }
 
-                if (target.TargetState == Target.TargetStates.IsProjectile && ((Projectile)target.TargetObject).State != ProjectileState.Alive) {
-                    ((Projectile)target.TargetObject).Seekers.Remove(p);
+                var pTarget = target.TargetObject as Projectile;
+                if (pTarget != null && pTarget.State != ProjectileState.Alive) {
+                    pTarget.Seekers.Remove(p);
                     target.Reset(Session.Tick, Target.States.ProjetileIntercept);
                 }
 

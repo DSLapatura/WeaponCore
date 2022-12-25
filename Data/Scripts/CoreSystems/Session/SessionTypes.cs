@@ -1090,9 +1090,16 @@ namespace CoreSystems
     }
 
     [ProtoContract]
+    public struct ProjectileSync
+    {
+        [ProtoMember(1)] public uint WeaponId;
+        [ProtoMember(2)] public ulong SyncId;
+    }
+
+    [ProtoContract]
     public class ProtoPdSyncMonitor
     {
-        [ProtoMember(1)] public readonly List<long> Collection = new List<long>(32);
+        [ProtoMember(1)] public readonly List<ProjectileSync> Collection = new List<ProjectileSync>(32);
     }
 
     public struct BlockDestroyInfo

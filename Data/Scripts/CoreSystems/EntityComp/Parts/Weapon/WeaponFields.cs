@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using CoreSystems.Projectiles;
 using CoreSystems.Support;
 using Sandbox.Definitions;
 using Sandbox.Game.Entities;
@@ -25,9 +26,10 @@ namespace CoreSystems.Platform
         private readonly HashSet<string> _muzzlesToFire = new HashSet<string>();
         private readonly HashSet<string> _muzzlesFiring = new HashSet<string>();
         internal readonly Dictionary<int, string> MuzzleIdToName = new Dictionary<int, string>();
-        internal readonly Dictionary<long, ClientProSync> WeaponProSyncs = new Dictionary<long, ClientProSync>();
+        internal readonly Dictionary<ulong, ClientProSync> WeaponProSyncs = new Dictionary<ulong, ClientProSync>();
         internal readonly Dictionary<string, PartAnimation> AnimationLookup = new Dictionary<string, PartAnimation>();
         internal readonly Dictionary<MyEntity, HiddenInfo> HiddenTargets = new Dictionary<MyEntity, HiddenInfo>();
+        internal readonly Dictionary<ulong, Projectile> PointDefenseSyncMonitor = new Dictionary<ulong, Projectile>();
         internal readonly List<MyCubeBlock> Top5 = new List<MyCubeBlock>();
         internal readonly HashSet<Weapon> Connections = new HashSet<Weapon>();
         internal readonly WeaponFrameCache WeaponCache = new WeaponFrameCache();
@@ -159,7 +161,7 @@ namespace CoreSystems.Platform
         internal int ClientEndId;
         internal int ClientMakeUpShots;
         internal int ClientLastShotId;
-        internal int ProjectileCounter;
+        internal ushort ProjectileCounter;
         internal int LookAtFailCount;
         internal float HeatPShot;
         internal float HsRate;

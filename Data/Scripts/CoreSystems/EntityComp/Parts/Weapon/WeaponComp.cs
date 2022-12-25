@@ -1002,11 +1002,10 @@ namespace CoreSystems.Platform
 
                         w.RayCallBackClean();
 
-                        w.Comp.Session.AcqManager.Asleep.Remove(w.Acquire);
-                        w.Comp.Session.AcqManager.MonitorState.Remove(w.Acquire);
+                        Session.AcqManager.Asleep.Remove(w.Acquire);
+                        Session.AcqManager.MonitorState.Remove(w.Acquire);
                         w.Acquire.Monitoring = false;
                         w.Acquire.IsSleeping = false;
-
                     }
                 }
             }

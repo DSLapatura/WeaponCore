@@ -108,7 +108,6 @@ namespace CoreSystems
         internal readonly Stack<MyEntity3DSoundEmitter> Emitters = new Stack<MyEntity3DSoundEmitter>(256);
         internal readonly Stack<VoxelCache> VoxelCachePool = new Stack<VoxelCache>(256);
         internal readonly Stack<DeferredBlockDestroy> DefferedDestroyPool = new Stack<DeferredBlockDestroy>(256);
-
         internal readonly Stack<ProtoProPositionSync> ProtoWeaponProSyncPosPool = new Stack<ProtoProPositionSync>(256);
         internal readonly Stack<ProjectileSyncPosPacket> ProtoWeaponProPosPacketPool = new Stack<ProjectileSyncPosPacket>(256);
 
@@ -155,7 +154,6 @@ namespace CoreSystems
         internal readonly ConcurrentDictionary<MyCubeGrid, TopMap> DirtyPowerGrids = new ConcurrentDictionary<MyCubeGrid, TopMap>();
         internal readonly ConcurrentDictionary<string, MyObjectBuilder_Checkpoint.ModItem> ModInfo = new ConcurrentDictionary<string, MyObjectBuilder_Checkpoint.ModItem>();
         
-        internal readonly Dictionary<long, Projectile> PointDefenseSyncMonitor = new Dictionary<long, Projectile>();
         internal readonly Dictionary<ulong, long> SteamToPlayer = new Dictionary<ulong, long>();
         internal readonly Dictionary<MyStringHash, DamageInfoLog> DmgLog = new Dictionary<MyStringHash, DamageInfoLog>(MyStringHash.Comparer);
         internal readonly Dictionary<IMyGridGroupData, GridGroupMap> GridGroupMap = new Dictionary<IMyGridGroupData, GridGroupMap>();
@@ -167,7 +165,7 @@ namespace CoreSystems
         internal readonly Dictionary<MyDefinitionId, CoreStructure> PartPlatforms = new Dictionary<MyDefinitionId, CoreStructure>(MyDefinitionId.Comparer);
         internal readonly Dictionary<string, MyDefinitionId> CoreSystemsDefs = new Dictionary<string, MyDefinitionId>();
         internal readonly Dictionary<string, MyDefinitionId> NpcSafeWeaponDefs = new Dictionary<string, MyDefinitionId>();
-
+        internal readonly Dictionary<uint, Weapon> WeaponLookUp = new Dictionary<uint, Weapon>();
         internal readonly Dictionary<string, MyStringHash> SubTypeIdHashMap = new Dictionary<string, MyStringHash>();
         internal readonly Dictionary<MyDefinitionId, MyStringHash> VanillaIds = new Dictionary<MyDefinitionId, MyStringHash>(MyDefinitionId.Comparer);
         internal readonly Dictionary<MyStringHash, MyDefinitionId> VanillaCoreIds = new Dictionary<MyStringHash, MyDefinitionId>(MyStringHash.Comparer);
@@ -223,7 +221,7 @@ namespace CoreSystems
         internal readonly List<Weapon> InvRemoveClean = new List<Weapon>();
         internal readonly List<CoreComponent> CompsDelayedInit = new List<CoreComponent>();
         internal readonly List<CoreComponent> CompsDelayedReInit = new List<CoreComponent>();
-        internal readonly Dictionary<long, List<ClientProSyncDebugLine>> ProSyncLineDebug = new Dictionary<long, List<ClientProSyncDebugLine>>();
+        internal readonly Dictionary<ulong, List<ClientProSyncDebugLine>> ProSyncLineDebug = new Dictionary<ulong, List<ClientProSyncDebugLine>>();
         internal readonly List<CompReAdd> CompReAdds = new List<CompReAdd>();
         internal readonly List<MyLineSegmentOverlapResult<MyEntity>> OverlapResultTmp = new List<MyLineSegmentOverlapResult<MyEntity>>();
         internal readonly List<Projectile> Hits = new List<Projectile>(16);
@@ -369,6 +367,7 @@ namespace CoreSystems
         internal uint TargetLastDrawTick;
         internal uint LastProSyncSendTick;
         internal uint LastPongTick;
+        internal uint WeaponSyncId;
 
         internal int TargetDrawAge;
         internal int WeaponIdCounter;
@@ -583,7 +582,7 @@ namespace CoreSystems
         }
 
         internal int UniquePartId => WeaponIdCounter++;
-
+        internal uint SyncWeaponId => WeaponSyncId++;
 
         internal ulong UniquePhantomId => PhantomIdCounter++;
 

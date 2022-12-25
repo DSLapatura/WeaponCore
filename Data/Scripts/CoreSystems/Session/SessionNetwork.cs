@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using CoreSystems.Platform;
 using CoreSystems.Projectiles;
 using CoreSystems.Support;
 using Sandbox.Game.Entities;
@@ -69,12 +70,16 @@ namespace CoreSystems
 
                 for (int i = 0; i < pdSyncMonitor.Collection.Count; i++)
                 {
-                    var id = pdSyncMonitor.Collection[i];
-                    Projectile p;
-                    if (PointDefenseSyncMonitor.TryGetValue(id, out p) && (p.State == Projectile.ProjectileState.Alive || p.State == Projectile.ProjectileState.ClientPhantom))
+                    var pdInfo = pdSyncMonitor.Collection[i];
+                    Projectile p = null;
+                    Weapon w = null;
+                    if (WeaponLookUp.TryGetValue(pdInfo.WeaponId, out w) && w.PointDefenseSyncMonitor.TryGetValue(pdInfo.SyncId, out p) && (p.State == Projectile.ProjectileState.Alive || p.State == Projectile.ProjectileState.ClientPhantom))
                     {
+                        Log.Line($"pdSyncDestroy:{p.Info.Id} - syncId:{pdInfo.SyncId} - i:{i}");
                         p.State = Projectile.ProjectileState.Destroy;
                     }
+                    else
+                        Log.Line($"pdSyncNotFound: syncId:{pdInfo.SyncId} - wId:{pdInfo.WeaponId} - i:{i} - wFound:{w != null} - pFound:{p != null} - pState:{p?.State}");
                 }
                 pdSyncMonitor.Collection.Clear();
 
@@ -445,7 +450,7 @@ namespace CoreSystems
         {
             if (!PdClient)
             {
-                var payLoad = MyAPIGateway.Utilities.SerializeToBinary(ProtoPdSyncMonitor.Collection);
+                var payLoad = MyAPIGateway.Utilities.SerializeToBinary(ProtoPdSyncMonitor);
                 var playerCount = Players.Values.Count;
 
                 PdSyncPackets += playerCount;
@@ -460,8 +465,11 @@ namespace CoreSystems
             else if (Tick60)
             {
                 for (int i = 0; i < ProtoPdSyncMonitor.Collection.Count; i++) {
+
+                    var pdInfo = ProtoPdSyncMonitor.Collection[i];
                     Projectile p;
-                    if (PointDefenseSyncMonitor.TryGetValue(ProtoPdSyncMonitor.Collection[i], out p))
+                    Weapon w;
+                    if (WeaponLookUp.TryGetValue(pdInfo.WeaponId, out w) && w.PointDefenseSyncMonitor.TryGetValue(pdInfo.SyncId, out p) && (p.State == Projectile.ProjectileState.Alive || p.State == Projectile.ProjectileState.ClientPhantom))
                         p.State = Projectile.ProjectileState.Destroy;
                 }
                 ProtoPdSyncMonitor.Collection.Clear();

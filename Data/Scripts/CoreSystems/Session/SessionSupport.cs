@@ -158,6 +158,33 @@ namespace CoreSystems
             LosDebugList.Add(debug);
         }
 
+        private void Test()
+        {
+            var endId = XorRnd.NextUInt16();
+            var pCounter = XorRnd.NextUInt16();
+
+            var spawnFrags = XorRnd.NextUInt16();
+            var origFrags = spawnFrags;
+            var spawnDepths = XorRnd.NextUInt16();
+            var origDepths = spawnDepths;
+
+            var testULong = ((ulong)endId << 48) | ((ulong)pCounter << 32) | ((ulong)spawnFrags << 16) | spawnDepths;
+            var origLong = testULong;
+            if (XorRnd.NextBoolean())
+                spawnFrags++;
+
+            if (XorRnd.NextBoolean())
+                spawnDepths++;
+
+            testULong = (testULong & 0xFFFFFFFF00000000) | ((ulong)spawnFrags << 16) | spawnDepths;
+
+            var value1 = (ushort)((testULong >> 48) & 0x000000000000FFFF);
+            var value2 = (ushort)((testULong >> 32) & 0x000000000000FFFF);
+            var value3 = (ushort)((testULong >> 16) & 0x000000000000FFFF);
+            var value4 = (ushort)(testULong & 0x000000000000FFFF);
+        }
+
+
         internal void VisualDebuging()
         {
             for (var i = LosDebugList.Count - 1; i >= 0; i--)

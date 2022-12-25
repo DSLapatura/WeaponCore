@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using CoreSystems.Platform;
 using CoreSystems.Support;
 using ProtoBuf;
+using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace CoreSystems
 {
@@ -80,6 +81,8 @@ namespace CoreSystems
         {
             if (w.Comp.Session.IsServer)
                 CurrentSeed = int.MaxValue - w.UniquePartId;
+            else 
+                w.Comp.Session.WeaponLookUp[w.PartState.Id] = w;
 
             TurretRandom = new XorShiftRandomStruct((ulong)CurrentSeed);
             AcquireRandom = new XorShiftRandomStruct((ulong)CurrentSeed);

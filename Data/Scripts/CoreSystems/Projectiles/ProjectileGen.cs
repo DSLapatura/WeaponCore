@@ -60,6 +60,9 @@ namespace CoreSystems.Projectiles
 
 
                 storage.DummyTargets = null;
+                info.Random = new XorShiftRandomStruct((ulong)(w.TargetData.WeaponRandom.CurrentSeed + (w.Reload.EndId + w.ProjectileCounter)));
+                ++w.ProjectileCounter;
+
                 if (aConst.IsDrone || aConst.IsSmart)
                 {
                     storage.SetTargetPos = wTarget.TargetPos;
@@ -68,17 +71,16 @@ namespace CoreSystems.Projectiles
                         Session.PlayerDummyTargets.TryGetValue(repo.Values.State.PlayerId, out storage.DummyTargets);
 
                     if (aConst.ProjectileSync)
-                        storage.SyncId = ((long)w.Reload.EndId << 48) | ((long)w.ProjectileCounter << 32) | ((long)info.Frags << 16) | (long)info.SpawnDepth;
+                        storage.SyncId = ((ulong)w.Reload.EndId << 48) | ((ulong)w.ProjectileCounter << 32) | ((ulong)w.PartState.Id << 16) | 0;
                 }
                 
-                if (Session.PdMonitor && storage.SyncId == long.MinValue && aConst.Health > 0 && !aConst.IsBeamWeapon && !aConst.Ewar) {
-                    storage.SyncId = ((long)w.Reload.EndId << 48) | ((long)w.ProjectileCounter << 32) | ((long)info.Frags << 16) | (long)info.SpawnDepth;
-                    Session.PointDefenseSyncMonitor[storage.SyncId] = p;
+                if (Session.PdMonitor && storage.SyncId == ulong.MaxValue && aConst.Health > 0 && !aConst.IsBeamWeapon && !aConst.Ewar) {
+                    storage.SyncId = ((ulong)w.Reload.EndId << 48) | ((ulong)w.ProjectileCounter << 32) | ((ulong)info.SyncedFrags << 16) | info.SpawnDepth;
+                    info.Weapon.PointDefenseSyncMonitor[storage.SyncId] = p;
                 }
 
                 info.BaseDamagePool = aConst.BaseDamage;
 
-                info.Random = new XorShiftRandomStruct((ulong)(w.TargetData.WeaponRandom.CurrentSeed + (w.Reload.EndId + w.ProjectileCounter++)));
 
                 info.AcquiredEntity = !aConst.OverrideTarget && wTarget.TargetState == Target.TargetStates.IsEntity;
                 info.ShooterVel = ai.TopEntityVel;

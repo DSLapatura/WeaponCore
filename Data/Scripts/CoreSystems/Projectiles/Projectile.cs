@@ -54,7 +54,6 @@ namespace CoreSystems.Projectiles
         internal int DeaccelRate;
         internal int TargetsSeen;
         internal int PruningProxyId = -1;
-
         internal enum EndStates
         {
             None,
@@ -317,15 +316,17 @@ namespace CoreSystems.Projectiles
 
             Intersecting = true;
 
-            if (Info.Storage.SyncId != long.MinValue && !Info.AmmoDef.Const.ProjectileSync)
+            if (Info.Storage.SyncId != ulong.MaxValue && !Info.AmmoDef.Const.ProjectileSync)
             {
                 var s = Info.Ai.Session;
-                if (s.PointDefenseSyncMonitor.Remove(Info.Storage.SyncId))
+                if (Info.Weapon.PointDefenseSyncMonitor.Remove(Info.Storage.SyncId))
                 {
                     if (s.PdServer)
-                        s.ProtoPdSyncMonitor.Collection.Add(Info.Storage.SyncId);
+                    {
+                        s.ProtoPdSyncMonitor.Collection.Add(new ProjectileSync { WeaponId = Info.Weapon.PartState.Id, SyncId = Info.Storage.SyncId });
+                    }
 
-                    Info.Storage.SyncId = long.MinValue;
+                    Info.Storage.SyncId = ulong.MaxValue;
                 }
             }
 
@@ -2152,7 +2153,6 @@ namespace CoreSystems.Projectiles
                 return true;
             }
 
-
             var targetVel = eTarget != null ? eTarget.GetTopMostParent().Physics.LinearVelocity : (Vector3)pTarget.Velocity;
             var shooterVel = !Info.AmmoDef.Const.FragDropVelocity ? Velocity : Vector3D.Zero;
 
@@ -2571,6 +2571,9 @@ namespace CoreSystems.Projectiles
                         aimCone.ConeTip = Position;
                         aimCone.ConeAngle = aConst.DirectAimCone;
                         if (!MathFuncs.TargetSphereInCone(ref targetSphere, ref aimCone)) break;
+
+                        if ((aConst.FragPointType != PointTypes.Direct) && !TrajectoryEstimation(fragAmmoDef, ref newOrigin, out pointDir))
+                            continue;
                     }
                 }
                 else if (!TrajectoryEstimation(fragAmmoDef, ref newOrigin, out pointDir))

@@ -26,7 +26,6 @@ namespace CoreSystems
             Values.State.ToggleCount = 0;
             Values.State.Trigger = Trigger.Off;
             Values.State.Control = ProtoWeaponState.ControlMode.Ui;
-
             if (!comp.PrimaryWeapon.System.TrackCharacters)
                 Values.Set.Overrides.Biologicals = false;
 
@@ -78,6 +77,8 @@ namespace CoreSystems
                 var ws = Values.State.Weapons[i];
                 ws.Heat = 0;
                 ws.Overheated = false;
+                ws.Id = comp.Session.SyncWeaponId;
+                comp.Session.WeaponLookUp[ws.Id] = comp.Collection[i];
             }
 
             ResetCompBaseRevisions();
@@ -126,7 +127,7 @@ namespace CoreSystems
     [ProtoContract]
     public class ProtoProPositionSync 
     {
-        [ProtoMember(1)] public long ProId;
+        [ProtoMember(1)] public ulong ProId;
         [ProtoMember(2)] public ushort PartId;
         [ProtoMember(3)] public long CoreEntityId;
         [ProtoMember(4)] public Vector3D Position;
@@ -145,7 +146,7 @@ namespace CoreSystems
             Stored,
         }
 
-        [ProtoMember(1)] public long ProId;
+        [ProtoMember(1)] public ulong ProId;
         [ProtoMember(2)] public ushort PartId;
         [ProtoMember(3)] public long CoreEntityId;
         [ProtoMember(4)] public ProSyncState State;
@@ -223,8 +224,10 @@ namespace CoreSystems
     public class ProtoWeaponReload
     {
         [ProtoMember(1)] public uint Revision;
-        [ProtoMember(2)] public int StartId; //save
-        [ProtoMember(3)] public int EndId; //save
+        //[ProtoMember(2)] public int StartId; //save
+        ///[ProtoMember(3)] public int EndId; //save
+        [ProtoMember(9)] public ushort StartId; //save
+        [ProtoMember(10)] public ushort EndId; //save
         [ProtoMember(4)] public int MagsLoaded = 1;
         [ProtoMember(5)] public bool WaitForClient; //don't save
         [ProtoMember(6)] public int AmmoTypeId; //save
@@ -475,12 +478,19 @@ namespace CoreSystems
     {
         [ProtoMember(1)] public float Heat; // don't save
         [ProtoMember(2)] public bool Overheated; //don't save
+        [ProtoMember(4)] public uint Id; //don't save
 
         public void Sync(Weapon w, ProtoWeaponPartState sync)
         {
             Heat = sync.Heat;
             var wasOver = Overheated;
             Overheated = sync.Overheated;
+            var oldId = Id;
+            Id = sync.Id;
+            
+            if (oldId != Id)
+                w.Comp.Session.WeaponLookUp[w.PartState.Id] = w;
+
             if (!wasOver && Overheated)
                 w.OverHeatCountDown = 15;
         }

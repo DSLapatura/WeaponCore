@@ -52,7 +52,8 @@ namespace CoreSystems
             {
                 if (SuppressWc)
                     return;
-
+                
+                //Test();
                 if (!DelayedHandWeaponsSpawn.IsEmpty)
                     InitDelayedHandWeapons();
 

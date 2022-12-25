@@ -11,6 +11,7 @@ using static CoreSystems.Support.HitEntity.Type;
 using static CoreSystems.Support.WeaponDefinition;
 using static CoreSystems.Support.Ai;
 using System.Runtime.CompilerServices;
+using VRage.Utils;
 
 namespace CoreSystems.Support
 {
@@ -39,7 +40,6 @@ namespace CoreSystems.Support
         internal int TriggerGrowthSteps;
         internal int MuzzleId;
         internal int ObjectsHit;
-        internal int SpawnDepth;
         internal int Frags;
         internal int CompSceneVersion;
         internal ulong UniqueMuzzleId;
@@ -73,7 +73,8 @@ namespace CoreSystems.Support
         internal uint FirstWaterHitTick;
         internal float ShieldResistMod = 1f;
         internal float ShieldBypassMod = 1f;
-
+        internal ushort SyncedFrags;
+        internal ushort SpawnDepth;
         internal MatrixD TriggerMatrix = MatrixD.Identity;
 
         internal void InitVirtual(Weapon weapon, AmmoDef ammodef,  Weapon.Muzzle muzzle, double maxTrajectory, double shotFade)
@@ -155,6 +156,7 @@ namespace CoreSystems.Support
             DamageDoneAoe = 0;
             DamageDoneShld = 0;
             DamageDoneProj = 0;
+            SyncedFrags = 0;
             ProjectileDisplacement = 0;
             MaxTrajectory = 0;
             ShotFade = 0;
@@ -218,7 +220,7 @@ namespace CoreSystems.Support
         internal int SmartSlot;
         internal int LastActivatedStage = -1;
         internal int RequestedStage = -1;
-        internal long SyncId = long.MinValue;
+        internal ulong SyncId = ulong.MaxValue;
         internal double StartDistanceTraveled;
         internal double ZombieLifeTime;
         internal double PrevZombieLifeTime;
@@ -232,13 +234,13 @@ namespace CoreSystems.Support
                     for (int i = 0; i < PastProInfos.Length; i++)
                         PastProInfos[i] = Vector3D.Zero;
                 }
-                else if (SyncId != long.MinValue)
+                else if (SyncId != ulong.MaxValue)
                 {
-                    p.Info.Ai.Session.PointDefenseSyncMonitor.Remove(SyncId);
+                    p.Info.Weapon.PointDefenseSyncMonitor.Remove(SyncId);
                 }
             }
             
-            SyncId = long.MinValue;
+            SyncId = ulong.MaxValue;
             ProSyncPosMissCount = 0;
             ChaseAge = 0;
             ZombieLifeTime = 0;
@@ -414,7 +416,7 @@ namespace CoreSystems.Support
             var target = info.Target;
             var aConst = info.AmmoDef.Const;
             var fragCount = p.Info.AmmoDef.Fragment.Fragments;
-            var syncId = !timedSpawn && fragCount == 1 && ammoDef.Const.ProjectileSync && aConst.ProjectileSync ? info.Storage.SyncId : long.MinValue;
+            var syncId = !timedSpawn && fragCount == 1 && ammoDef.Const.ProjectileSync && aConst.ProjectileSync ? info.Storage.SyncId : ulong.MaxValue;
             var guidance = aConst.IsDrone || aConst.IsSmart;
             if (info.Ai.Session.IsClient && fragCount > 0 && info.AimedShot && aConst.ClientPredictedAmmo && !info.IsFragment)
             {
@@ -431,10 +433,13 @@ namespace CoreSystems.Support
                 if (guidance)
                 {
                     frag.DummyTargets = info.Storage.DummyTargets;
-                    frag.SyncId = syncId;
                 }
+                frag.SyncId = syncId;
+                if (frag.SyncId != ulong.MaxValue)
+                    frag.SyncedFrags = ++info.SyncedFrags;
 
-                frag.Depth = info.SpawnDepth + 1;
+                frag.Depth = (ushort) (info.SpawnDepth + 1);
+
                 frag.TargetState = target.TargetState;
                 frag.TargetEntity = target.TargetObject;
 
@@ -498,6 +503,7 @@ namespace CoreSystems.Support
                 info.Random = frag.Random;
                 info.DoDamage = frag.DoDamage;
                 info.SpawnDepth = frag.Depth;
+                info.SyncedFrags = frag.SyncedFrags;
                 info.BaseDamagePool = aConst.BaseDamage;
                 p.TargetPosition = frag.PrevTargetPos;
                 info.Direction = frag.Direction;
@@ -517,16 +523,15 @@ namespace CoreSystems.Support
                         info.Storage.SyncId = frag.SyncId;
                 }
                 
-                if (session.PdMonitor && info.Storage.SyncId == long.MinValue && aConst.Health > 0 && !aConst.IsBeamWeapon && !aConst.Ewar)
+                if (session.PdMonitor && info.Storage.SyncId == ulong.MaxValue && aConst.Health > 0 && !aConst.IsBeamWeapon && !aConst.Ewar)
                 {
-                    info.Storage.SyncId = (frag.SyncId << 32) | ((long)info.Frags << 16) | (long)info.SpawnDepth;
-                    session.PointDefenseSyncMonitor[info.Storage.SyncId] = p;
+                    info.Storage.SyncId = (frag.SyncId & 0xFFFFFFFF00000000) | ((ulong)info.SyncedFrags << 16) | info.SpawnDepth;
+                    p.Info.Weapon.PointDefenseSyncMonitor[info.Storage.SyncId] = p;
                 }
 
 
                 session.Projectiles.ActiveProjetiles.Add(p);
                 p.Start();
-
                 if (aConst.Health > 0 && !aConst.IsBeamWeapon)
                     session.Projectiles.AddTargets.Add(p);
 
@@ -550,7 +555,8 @@ namespace CoreSystems.Support
         public Vector3D Velocity;
         public Vector3D PrevTargetPos;
         public int MuzzleId;
-        public int Depth;
+        public ushort Depth;
+
         public XorShiftRandomStruct Random;
         public bool DoDamage;
         public bool AcquiredEntity;
@@ -558,7 +564,8 @@ namespace CoreSystems.Support
         public Target.TargetStates TargetState;
         public float Radial;
         internal int SceneVersion;
-        internal long SyncId;
+        internal ulong SyncId;
+        internal ushort SyncedFrags;
     }
 
     public struct ApproachDebug
