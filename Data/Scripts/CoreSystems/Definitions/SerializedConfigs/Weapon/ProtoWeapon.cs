@@ -63,6 +63,7 @@ namespace CoreSystems
             {
                 var wr = Values.Reloads[i];
                 wr.StartId = 0;
+                wr.EndId = 0;
                 wr.WaitForClient = false;
                 for (int j = 0; j < comp.Collection.Count; j++)
                 {

@@ -75,7 +75,6 @@ namespace CoreSystems
                     Weapon w = null;
                     if (WeaponLookUp.TryGetValue(pdInfo.WeaponId, out w) && w.PointDefenseSyncMonitor.TryGetValue(pdInfo.SyncId, out p) && (p.State == Projectile.ProjectileState.Alive || p.State == Projectile.ProjectileState.ClientPhantom))
                     {
-                        Log.Line($"pdSyncDestroy:{p.Info.Id} - syncId:{pdInfo.SyncId} - i:{i}");
                         p.State = Projectile.ProjectileState.Destroy;
                     }
                     else

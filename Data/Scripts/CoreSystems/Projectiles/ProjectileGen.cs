@@ -71,11 +71,11 @@ namespace CoreSystems.Projectiles
                         Session.PlayerDummyTargets.TryGetValue(repo.Values.State.PlayerId, out storage.DummyTargets);
 
                     if (aConst.ProjectileSync)
-                        storage.SyncId = ((ulong)w.Reload.EndId << 48) | ((ulong)w.ProjectileCounter << 32) | ((ulong)w.PartState.Id << 16) | 0;
+                        storage.SyncId = ((ulong)(ushort)w.Reload.EndId << 48) | ((ulong)(ushort)w.ProjectileCounter << 32) | ((ulong)w.PartState.Id << 16) | 0;
                 }
                 
                 if (Session.PdMonitor && storage.SyncId == ulong.MaxValue && aConst.Health > 0 && !aConst.IsBeamWeapon && !aConst.Ewar) {
-                    storage.SyncId = ((ulong)w.Reload.EndId << 48) | ((ulong)w.ProjectileCounter << 32) | ((ulong)info.SyncedFrags << 16) | info.SpawnDepth;
+                    storage.SyncId = ((ulong)(ushort)w.Reload.EndId << 48) | ((ulong)(ushort)w.ProjectileCounter << 32) | ((ulong)info.SyncedFrags << 16) | info.SpawnDepth;
                     info.Weapon.PointDefenseSyncMonitor[storage.SyncId] = p;
                 }
 

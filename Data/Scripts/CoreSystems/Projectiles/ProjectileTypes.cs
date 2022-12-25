@@ -416,7 +416,6 @@ namespace CoreSystems.Support
             var target = info.Target;
             var aConst = info.AmmoDef.Const;
             var fragCount = p.Info.AmmoDef.Fragment.Fragments;
-            var syncId = !timedSpawn && fragCount == 1 && ammoDef.Const.ProjectileSync && aConst.ProjectileSync ? info.Storage.SyncId : ulong.MaxValue;
             var guidance = aConst.IsDrone || aConst.IsSmart;
             if (info.Ai.Session.IsClient && fragCount > 0 && info.AimedShot && aConst.ClientPredictedAmmo && !info.IsFragment)
             {
@@ -434,7 +433,7 @@ namespace CoreSystems.Support
                 {
                     frag.DummyTargets = info.Storage.DummyTargets;
                 }
-                frag.SyncId = syncId;
+                frag.SyncId = info.Storage.SyncId;
                 if (frag.SyncId != ulong.MaxValue)
                     frag.SyncedFrags = ++info.SyncedFrags;
 
@@ -525,7 +524,10 @@ namespace CoreSystems.Support
                 
                 if (session.PdMonitor && info.Storage.SyncId == ulong.MaxValue && aConst.Health > 0 && !aConst.IsBeamWeapon && !aConst.Ewar)
                 {
-                    info.Storage.SyncId = (frag.SyncId & 0xFFFFFFFF00000000) | ((ulong)info.SyncedFrags << 16) | info.SpawnDepth;
+                    var syncPart1 = (ushort)((frag.SyncId >> 48) & 0x000000000000FFFF);
+                    var syncPart2 = (ushort)((frag.SyncId >> 32) & 0x000000000000FFFF);
+
+                    info.Storage.SyncId = ((ulong)syncPart1 << 48) | ((ulong)syncPart2 << 32) | ((ulong)info.SyncedFrags << 16) | info.SpawnDepth;
                     p.Info.Weapon.PointDefenseSyncMonitor[info.Storage.SyncId] = p;
                 }
 

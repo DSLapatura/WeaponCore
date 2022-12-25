@@ -160,7 +160,8 @@ namespace CoreSystems
 
         private void Test()
         {
-            var endId = XorRnd.NextUInt16();
+            var endId = XorRnd.NextBoolean() ? XorRnd.NextUInt16() : (ushort)XorRnd.NextUInt64();
+
             var pCounter = XorRnd.NextUInt16();
 
             var spawnFrags = XorRnd.NextUInt16();
@@ -182,6 +183,8 @@ namespace CoreSystems
             var value2 = (ushort)((testULong >> 32) & 0x000000000000FFFF);
             var value3 = (ushort)((testULong >> 16) & 0x000000000000FFFF);
             var value4 = (ushort)(testULong & 0x000000000000FFFF);
+
+            Log.Line($"{value1} - {endId}");
         }
 
 
