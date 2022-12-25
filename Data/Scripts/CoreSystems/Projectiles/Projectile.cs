@@ -68,9 +68,9 @@ namespace CoreSystems.Projectiles
             Detonate,
             ClientPhantom,
             OneAndDone,
-            Dead,
             Depleted,
             Destroy,
+            Dead,
         }
 
         public enum HadTargetState
