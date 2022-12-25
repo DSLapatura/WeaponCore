@@ -763,7 +763,8 @@ namespace CoreSystems.Support
             groupDelay = ammo.AmmoDef.Fragment.TimedSpawns.GroupDelay;
             hasGroup = groupSize > 0 && groupDelay > 0;
             pointType = ammo.AmmoDef.Fragment.TimedSpawns.PointType;
-            directAimCone = MathHelper.ToRadians(Math.Max(ammo.AmmoDef.Fragment.TimedSpawns.DirectAimCone,1));
+            var cone = ammo.AmmoDef.Fragment.TimedSpawns.DirectAimCone > 0 ? ammo.AmmoDef.Fragment.TimedSpawns.DirectAimCone : 360;
+            directAimCone = MathHelper.ToRadians(Math.Max(cone, 1));
         }
 
         private void ComputeApproaches(WeaponSystem.AmmoType ammo, WeaponDefinition wDef, out int approachesCount, out ApproachConstants[] approaches)
