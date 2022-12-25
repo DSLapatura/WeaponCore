@@ -60,9 +60,11 @@ namespace CoreSystems
                         info.BaseDamagePool = 0.01f;
                     }
 
+                    var deplete = !pExpiring && (hitMax || outOfPew);
+
                     if (pExpiring || tInvalid || hitMax || outOfPew) {
 
-                        if (hitMax || outOfPew)
+                        if (deplete)
                             p.State = Projectile.ProjectileState.Depleted;
 
                         Projectiles.HitEntityPool.Return(hitEnt);
