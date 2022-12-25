@@ -122,7 +122,7 @@ namespace CoreSystems.Support
             if (PatternShuffle != null)
             {
                 for (int i = 0; i < PatternShuffle.Length; i++)
-                    PatternShuffle[i] = 0;
+                    PatternShuffle[i] = i;
 
                 AmmoDef.Const.PatternShuffleArray.Push(PatternShuffle);
                 PatternShuffle = null;

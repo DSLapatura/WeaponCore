@@ -2558,7 +2558,7 @@ namespace CoreSystems.Projectiles
                 if (!fireOnTarget)
                 {
                     pointDir = Info.Direction;
-                    if (aConst.IsDrone)
+                    if (aConst.IsDrone || aConst.IsSmart)
                     {
                         var eTarget = Info.Target.TargetObject as MyEntity;
                         var pTarget = Info.Target.TargetObject as Projectile;
