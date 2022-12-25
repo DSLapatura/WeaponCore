@@ -511,16 +511,17 @@ namespace CoreSystems.Support
 
                 if (aConst.IsDrone || aConst.IsSmart)
                 {
-                    if (aConst.ProjectileSync)
-                        info.Storage.SyncId = frag.SyncId;
-                    else if (session.PdMonitor && aConst.Health > 0 && !aConst.IsBeamWeapon && !aConst.Ewar)
-                    {
-                        info.Storage.SyncId = (frag.SyncId << 32) | ((long)info.Frags << 16) | (long)info.SpawnDepth;
-                        session.PointDefenseSyncMonitor[info.Storage.SyncId] = p;
-                    }
-
                     info.Storage.DummyTargets = frag.DummyTargets;
                 }
+
+                if (aConst.ProjectileSync)
+                    info.Storage.SyncId = frag.SyncId;
+                else if (session.PdMonitor && aConst.Health > 0 && !aConst.IsBeamWeapon && !aConst.Ewar)
+                {
+                    info.Storage.SyncId = (frag.SyncId << 32) | ((long)info.Frags << 16) | (long)info.SpawnDepth;
+                    session.PointDefenseSyncMonitor[info.Storage.SyncId] = p;
+                }
+
 
                 session.Projectiles.ActiveProjetiles.Add(p);
                 p.Start();

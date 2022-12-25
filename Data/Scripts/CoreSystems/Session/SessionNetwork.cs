@@ -449,16 +449,12 @@ namespace CoreSystems
                 }
                 ProtoPdSyncMonitor.Collection.Clear();
             }
-            else if (Tick10)
+            else if (Tick60)
             {
-                for (int i = 0; i < ProtoPdSyncMonitor.Collection.Count; i++)
-                {
-                    var id = ProtoPdSyncMonitor.Collection[i];
+                for (int i = 0; i < ProtoPdSyncMonitor.Collection.Count; i++) {
                     Projectile p;
-                    if (PointDefenseSyncMonitor.TryGetValue(id, out p))
-                    {
+                    if (PointDefenseSyncMonitor.TryGetValue(ProtoPdSyncMonitor.Collection[i], out p))
                         p.State = Projectile.ProjectileState.Destroy;
-                    }
                 }
                 ProtoPdSyncMonitor.Collection.Clear();
             }
