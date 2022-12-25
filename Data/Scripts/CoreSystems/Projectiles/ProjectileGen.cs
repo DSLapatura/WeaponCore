@@ -66,11 +66,12 @@ namespace CoreSystems.Projectiles
 
                     if (comp.FakeMode)
                         Session.PlayerDummyTargets.TryGetValue(repo.Values.State.PlayerId, out storage.DummyTargets);
-                }
 
-                if (aConst.ProjectileSync)
-                    storage.SyncId = ((long)w.Reload.EndId << 48) | ((long)w.ProjectileCounter << 32) | ((long)info.Frags << 16) | (long)info.SpawnDepth;
-                else if (Session.PdMonitor && aConst.Health > 0 && !aConst.IsBeamWeapon && !aConst.Ewar) {
+                    if (aConst.ProjectileSync)
+                        storage.SyncId = ((long)w.Reload.EndId << 48) | ((long)w.ProjectileCounter << 32) | ((long)info.Frags << 16) | (long)info.SpawnDepth;
+                }
+                
+                if (Session.PdMonitor && storage.SyncId == long.MinValue && aConst.Health > 0 && !aConst.IsBeamWeapon && !aConst.Ewar) {
                     storage.SyncId = ((long)w.Reload.EndId << 48) | ((long)w.ProjectileCounter << 32) | ((long)info.Frags << 16) | (long)info.SpawnDepth;
                     Session.PointDefenseSyncMonitor[storage.SyncId] = p;
                 }
