@@ -399,6 +399,8 @@ namespace CoreSystems
         internal int SimStepsLastSecond;
         internal int MenuDepth;
         internal int MainThreadId = 1;
+        internal int PdSyncPackets;
+        internal int PdSyncDataSize;
         internal ulong MultiplayerId;
         internal ulong MuzzleIdCounter;
         internal ulong PhantomIdCounter;

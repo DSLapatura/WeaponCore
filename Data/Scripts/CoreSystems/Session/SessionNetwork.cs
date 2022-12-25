@@ -64,6 +64,9 @@ namespace CoreSystems
                     return;
                 }
 
+                ++PdSyncPackets;
+                PdSyncDataSize += rawData.Length;
+
                 for (int i = 0; i < pdSyncMonitor.Collection.Count; i++)
                 {
                     var id = pdSyncMonitor.Collection[i];
@@ -443,6 +446,11 @@ namespace CoreSystems
             if (!PdClient)
             {
                 var payLoad = MyAPIGateway.Utilities.SerializeToBinary(ProtoPdSyncMonitor.Collection);
+                var playerCount = Players.Values.Count;
+
+                PdSyncPackets += playerCount;
+                PdSyncDataSize += playerCount * payLoad.Length;
+
                 foreach (var p in Players.Values)
                 {
                     MyModAPIHelper.MyMultiplayer.Static.SendMessageTo(ClientPdPacketId, payLoad, p.Player.SteamUserId, true);
