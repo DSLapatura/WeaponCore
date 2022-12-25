@@ -66,9 +66,8 @@ namespace CoreSystems.Projectiles
         {
             Alive,
             Detonate,
-            Detonated,
-            OneAndDone,
             ClientPhantom,
+            OneAndDone,
             Dead,
             Depleted,
             Destroy,

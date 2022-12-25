@@ -54,38 +54,6 @@ namespace CoreSystems
 
         #region NewClientSwitch
 
-        private void ClientReceivedPdPacket(byte[] rawData)
-        {
-            try
-            {
-                var pdSyncMonitor = MyAPIGateway.Utilities.SerializeFromBinary<ProtoPdSyncMonitor>(rawData);
-                if (pdSyncMonitor == null || pdSyncMonitor.Collection.Count == 0)
-                {
-                    Log.Line("ClientReceivedPdPacket null or empty packet");
-                    return;
-                }
-
-                ++PdSyncPackets;
-                PdSyncDataSize += rawData.Length;
-
-                for (int i = 0; i < pdSyncMonitor.Collection.Count; i++)
-                {
-                    var pdInfo = pdSyncMonitor.Collection[i];
-                    Projectile p = null;
-                    Weapon w = null;
-                    if (WeaponLookUp.TryGetValue(pdInfo.WeaponId, out w) && w.PointDefenseSyncMonitor.TryGetValue(pdInfo.SyncId, out p) && (p.State == Projectile.ProjectileState.Alive || p.State == Projectile.ProjectileState.ClientPhantom))
-                    {
-                        p.State = Projectile.ProjectileState.Destroy;
-                    }
-                    else
-                        Log.Line($"pdSyncNotFound: syncId:{pdInfo.SyncId} - wId:{pdInfo.WeaponId} - i:{i} - wFound:{w != null} - pFound:{p != null} - pState:{p?.State}");
-                }
-                pdSyncMonitor.Collection.Clear();
-
-            }
-            catch (Exception ex) { Log.Line($"Exception in ClientReceivedPdPacket: {ex}", null, true); }
-        }
-
         private void ClientReceivedPacket(byte[] rawData)
         {
             try
@@ -444,6 +412,38 @@ namespace CoreSystems
         #endregion
 
         #region ProcessRequests
+        private void ClientReceivedPdPacket(byte[] rawData)
+        {
+            try
+            {
+                var pdSyncMonitor = MyAPIGateway.Utilities.SerializeFromBinary<ProtoPdSyncMonitor>(rawData);
+                if (pdSyncMonitor == null || pdSyncMonitor.Collection.Count == 0)
+                {
+                    Log.Line("ClientReceivedPdPacket null or empty packet");
+                    return;
+                }
+
+                ++PdSyncPackets;
+                PdSyncDataSize += rawData.Length;
+
+                for (int i = 0; i < pdSyncMonitor.Collection.Count; i++)
+                {
+                    var pdInfo = pdSyncMonitor.Collection[i];
+                    Projectile p = null;
+                    Weapon w = null;
+                    if (WeaponLookUp.TryGetValue(pdInfo.WeaponId, out w) && w.PointDefenseSyncMonitor.TryGetValue(pdInfo.SyncId, out p) && (p.State == Projectile.ProjectileState.Alive || p.State == Projectile.ProjectileState.ClientPhantom))
+                    {
+                        p.State = Projectile.ProjectileState.Destroy;
+                    }
+                    else
+                        Log.Line($"pdSyncNotFound: syncId:{pdInfo.SyncId} - wId:{pdInfo.WeaponId} - i:{i} - wFound:{w != null} - pFound:{p != null} - pState:{p?.State}");
+                }
+                pdSyncMonitor.Collection.Clear();
+
+            }
+            catch (Exception ex) { Log.Line($"Exception in ClientReceivedPdPacket: {ex}", null, true); }
+        }
+
 
         internal void ProcessPdSyncsForClients()
         {
@@ -457,7 +457,8 @@ namespace CoreSystems
 
                 foreach (var p in Players.Values)
                 {
-                    MyModAPIHelper.MyMultiplayer.Static.SendMessageTo(ClientPdPacketId, payLoad, p.Player.SteamUserId, true);
+                    if (p.Player.SteamUserId != MultiplayerId)
+                        MyModAPIHelper.MyMultiplayer.Static.SendMessageTo(ClientPdPacketId, payLoad, p.Player.SteamUserId, true);
                 }
                 ProtoPdSyncMonitor.Collection.Clear();
             }

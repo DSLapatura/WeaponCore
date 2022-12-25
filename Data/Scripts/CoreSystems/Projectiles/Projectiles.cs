@@ -186,7 +186,6 @@ namespace CoreSystems.Projectiles
                 }
                 switch (p.State) {
                     case ProjectileState.Destroy:
-                    case ProjectileState.Detonated:
                         p.DestroyProjectile();
                         continue;
                     case ProjectileState.Dead:
@@ -380,7 +379,7 @@ namespace CoreSystems.Projectiles
                 var info = p.Info;
                 var storage = info.Storage;
 
-                if ((int)p.State > 4 || storage.Sleep)
+                if ((int)p.State > 3 || storage.Sleep)
                     return;
 
                 var ai = info.Ai;
@@ -586,7 +585,7 @@ namespace CoreSystems.Projectiles
                     continue;
                 }
 
-                if ((int)p.State > 4)
+                if ((int)p.State > 3)
                     continue;
 
                 if (aConst.DrawLine || !info.AvShot.HasModel && aConst.AmmoParticle)

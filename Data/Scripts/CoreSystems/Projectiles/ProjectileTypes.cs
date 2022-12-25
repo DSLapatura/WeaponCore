@@ -528,6 +528,7 @@ namespace CoreSystems.Support
                     var syncPart2 = (ushort)((frag.SyncId >> 32) & 0x000000000000FFFF);
 
                     info.Storage.SyncId = ((ulong)syncPart1 << 48) | ((ulong)syncPart2 << 32) | ((ulong)info.SyncedFrags << 16) | info.SpawnDepth;
+                    //info.Storage.SyncId = ((ulong)syncPart1 & 0x00000000FFFFFFFF) << 32 | ((ulong)syncPart2 << 32) | ((ulong)info.SyncedFrags << 16) | info.SpawnDepth;
                     p.Info.Weapon.PointDefenseSyncMonitor[info.Storage.SyncId] = p;
                 }
 

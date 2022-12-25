@@ -32,39 +32,37 @@ namespace CoreSystems
             _shieldNull = false;
             for (int x = 0; x < Hits.Count; x++)
             {
-
                 var p = Hits[x];
                 var info = p.Info;
                 var maxObjects = info.AmmoDef.Const.MaxObjectsHit;
-                var phantom = info.AmmoDef.BaseDamage <= 0;
+                var noDamageProjectile = info.AmmoDef.BaseDamage <= 0;
+                var lastIndex = info.HitList.Count - 1;
 
                 if (!info.DoDamage && IsServer)
                     info.BaseDamagePool = 0;
 
                 info.ProHits?.Clear();
 
-                var pInvalid = (int)p.State > 4;
-                var tInvalid = info.Target.TargetState == Target.TargetStates.IsProjectile && (int)((Projectile)info.Target.TargetObject).State > 1;
-                if (tInvalid) info.Target.Reset(Tick, Target.States.ProjectileClean);
-                
-                var skip = pInvalid || tInvalid;
+                var pExpiring = (int)p.State > 3;
+                var pTarget = info.Target.TargetObject as Projectile;
+                var tInvalid = pTarget != null && pTarget.State != Projectile.ProjectileState.Alive;
 
                 for (int i = 0; i < info.HitList.Count; i++)
                 {
                     var hitEnt = info.HitList[i];
 
                     var hitMax = info.ObjectsHit >= maxObjects;
+                    var phantomEffect = noDamageProjectile && hitEnt.EventType == HitEntity.Type.Effect;
+                    var outOfPew = info.BaseDamagePool <= 0 && !phantomEffect;
 
-                    var outOfPew = info.BaseDamagePool <= 0 && !(phantom && hitEnt.EventType == HitEntity.Type.Effect);
-
-                    if (outOfPew && p.State == Projectile.ProjectileState.Detonate && i != info.HitList.Count - 1) {
+                    if (outOfPew && p.State == Projectile.ProjectileState.Detonate && i != lastIndex) {
                         outOfPew = false;
                         info.BaseDamagePool = 0.01f;
                     }
 
-                    if (skip || hitMax || outOfPew)
-                    {
-                        if (hitMax || outOfPew || pInvalid)
+                    if (pExpiring || tInvalid || hitMax || outOfPew) {
+
+                        if (hitMax || outOfPew)
                             p.State = Projectile.ProjectileState.Depleted;
 
                         Projectiles.HitEntityPool.Return(hitEnt);
@@ -74,10 +72,10 @@ namespace CoreSystems
                     switch (hitEnt.EventType)
                     {
                         case HitEntity.Type.Shield:
-                            DamageShield(hitEnt, info);  //set to 2 for new det/radiant
+                            DamageShield(hitEnt, info);  
                             continue;
                         case HitEntity.Type.Grid:
-                            DamageGrid(hitEnt, info);  //set to 2 for new det/radiant
+                            DamageGrid(hitEnt, info);  
                             continue;
                         case HitEntity.Type.Destroyable:
                             DamageDestObj(hitEnt, info);
@@ -1032,7 +1030,7 @@ namespace CoreSystems
                             attacker.DamageDoneProj += (long)objHp;
                             sTarget.Info.BaseHealthPool = 0;
                             var requiresPdSync = PdClient && sTarget.Info.Storage.SyncId != ulong.MaxValue && !sTarget.Info.AmmoDef.Const.ProjectileSync;
-                            sTarget.State = !requiresPdSync ? Projectile.ProjectileState.Detonated : Projectile.ProjectileState.ClientPhantom;
+                            sTarget.State = !requiresPdSync ? Projectile.ProjectileState.Destroy : Projectile.ProjectileState.ClientPhantom;
                             /*
                             if (requiresPdSync && PdServer && PointDefenseSyncMonitor.ContainsKey(sTarget.Info.Storage.SyncId))
                             {

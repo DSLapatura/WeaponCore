@@ -376,8 +376,8 @@ namespace CoreSystems.Platform
                     }
                 }
                 else {
-                    ClientReloading = false;
                     
+                    ClientReloading = false;
                     ClientMakeUpShots = 0;
                     ClientEndId = Reload.EndId;
                     ServerQueuedAmmo = false;
