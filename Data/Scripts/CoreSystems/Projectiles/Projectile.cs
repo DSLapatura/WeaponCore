@@ -69,6 +69,7 @@ namespace CoreSystems.Projectiles
             Detonate,
             Detonated,
             OneAndDone,
+            ClientPhantom,
             Dead,
             Depleted,
             Destroy,
@@ -88,6 +89,7 @@ namespace CoreSystems.Projectiles
         {
             var ai = Info.Ai;
             var session = ai.Session;
+            var s = Info.Storage;
             var ammoDef = Info.AmmoDef;
             var aConst = ammoDef.Const;
             var w = Info.Weapon;
@@ -123,7 +125,8 @@ namespace CoreSystems.Projectiles
             var trajectory = ammoDef.Trajectory;
             var guidance = trajectory.Guidance;
 
-            if (aConst.DynamicGuidance && session.AntiSmartActive) DynTrees.RegisterProjectile(this);
+            if (aConst.DynamicGuidance && session.AntiSmartActive) 
+                DynTrees.RegisterProjectile(this);
 
             Info.MyPlanet = ai.MyPlanet;
             
@@ -140,7 +143,7 @@ namespace CoreSystems.Projectiles
 
             if (aConst.IsSmart || aConst.IsDrone)
             {
-                Info.Storage.SmartSlot = Info.Random.Range(0, 10);
+                s.SmartSlot = Info.Random.Range(0, 10);
             }
 
             switch (Info.Target.TargetState)
@@ -179,10 +182,10 @@ namespace CoreSystems.Projectiles
 
                     if (aConst.IsDrone)
                     {
-                        Info.Storage.DroneMsn = DroneMission.Attack;//TODO handle initial defensive assignment?
-                        Info.Storage.DroneStat = Launch;
-                        Info.Storage.NavTargetEnt = eTarget.GetTopMostParent();
-                        Info.Storage.NavTargetBound = eTarget.PositionComp.WorldVolume;
+                        s.DroneMsn = DroneMission.Attack;//TODO handle initial defensive assignment?
+                        s.DroneStat = Launch;
+                        s.NavTargetEnt = eTarget.GetTopMostParent();
+                        s.NavTargetBound = eTarget.PositionComp.WorldVolume;
                     }
 
                     TargetPosition = eTarget.PositionComp.WorldAABB.Center;
@@ -208,7 +211,7 @@ namespace CoreSystems.Projectiles
 
             if (lockedTarget && !aConst.IsBeamWeapon && guidance == TrajectoryDef.GuidanceType.TravelTo)
             {
-                Info.Storage.RequestedStage = -2;
+                s.RequestedStage = -2;
                 if (!MyUtils.IsZero(TargetPosition))
                 {
                     TargetPosition -= (Info.Direction * variance);
@@ -239,8 +242,8 @@ namespace CoreSystems.Projectiles
                 OffsetTarget = Vector3D.Zero;
             }
 
-            Info.Storage.PickTarget = (aConst.OverrideTarget || comp.ModOverride && !lockedTarget) && Info.Target.TargetState != Target.TargetStates.IsFake;
-            if (Info.Storage.PickTarget || lockedTarget && !Info.IsFragment) TargetsSeen++;
+            s.PickTarget = (aConst.OverrideTarget || comp.ModOverride && !lockedTarget) && Info.Target.TargetState != Target.TargetStates.IsFake;
+            if (s.PickTarget || lockedTarget && !Info.IsFragment) TargetsSeen++;
             Info.TracerLength = aConst.TracerLength <= Info.MaxTrajectory ? aConst.TracerLength : Info.MaxTrajectory;
 
             var staticIsInRange = ai.ClosestStaticSqr * 0.5 < Info.MaxTrajectory * Info.MaxTrajectory;
@@ -313,6 +316,18 @@ namespace CoreSystems.Projectiles
             }
 
             Intersecting = true;
+
+            if (Info.Storage.SyncId != long.MinValue && !Info.AmmoDef.Const.ProjectileSync)
+            {
+                var s = Info.Ai.Session;
+                if (s.PointDefenseSyncMonitor.Remove(Info.Storage.SyncId))
+                {
+                    if (s.PdServer)
+                        s.ProtoPdSyncMonitor.Collection.Add(Info.Storage.SyncId);
+
+                    Info.Storage.SyncId = long.MinValue;
+                }
+            }
 
             State = ProjectileState.Depleted;
         }
@@ -393,7 +408,7 @@ namespace CoreSystems.Projectiles
             PruningProxyId = -1;
             HadTarget = HadTargetState.None;
             
-            Info.Clean(aConst.IsSmart || aConst.IsDrone);
+            Info.Clean(this);
 
         }
         #endregion

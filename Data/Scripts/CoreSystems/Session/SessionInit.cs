@@ -32,6 +32,7 @@ namespace CoreSystems
                 MyAPIGateway.Multiplayer.RegisterMessageHandler(ServerPacketId, ProccessServerPacket);
             else
             {
+                MyAPIGateway.Multiplayer.RegisterMessageHandler(ClientPdPacketId, ClientReceivedPdPacket);
                 MyAPIGateway.Multiplayer.RegisterMessageHandler(ClientPacketId, ClientReceivedPacket);
                 MyAPIGateway.Multiplayer.RegisterMessageHandler(StringPacketId, StringReceived);
             }

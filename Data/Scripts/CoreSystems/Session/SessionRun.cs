@@ -220,6 +220,9 @@ namespace CoreSystems
                 if (!DedicatedServer) Av.End();
                 DsUtil.Complete("av", true);
 
+                if (PdServer && ProtoPdSyncMonitor.Collection.Count > 0)
+                    ProcessPdSyncsForClients();
+
                 if (MpActive)  {
                     
                     DsUtil.Start("network1");

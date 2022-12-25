@@ -19,6 +19,11 @@ namespace CoreSystems.Settings
             VersionControl.InitSettings();
             if (Session.IsClient)
                 ClientWaiting = true;
+            else {
+                Session.PdMonitor = Enforcement.PointDefenseSyncMonitor && (Session.MpActive || Session.LocalVersion);
+                Session.PdServer = Session.PdMonitor;
+                Session.PdClient = Session.PdMonitor && Session.LocalVersion;
+            }
         }
 
         [ProtoContract]
@@ -82,6 +87,8 @@ namespace CoreSystems.Settings
             [ProtoMember(16)] public bool DisableTargetCycle;
             [ProtoMember(17)] public bool DisableHudTargetInfo;
             [ProtoMember(18)] public bool DisableHudReload;
+            [ProtoMember(19)] public bool PointDefenseSyncMonitor;
+
         }
 
         [ProtoContract]

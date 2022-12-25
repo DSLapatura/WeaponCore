@@ -89,6 +89,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
             GenerateBlockDmgMap();
             GenerateWeaponValuesMap();
             GenerateAmmoValuesMap();
+            Core.Session.PdMonitor = Core.Enforcement.PointDefenseSyncMonitor && Core.Session.MpActive;
+            Core.Session.PdClient = Core.Session.PdMonitor;
         }
 
         private void GenerateConfig(CoreSettings.ServerSettings oldSettings = null)
@@ -151,6 +153,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
             var oldDisableLeads = oldSettings.DisableLeads;
             var oldDisableHudReload = oldSettings.DisableHudReload;
             var oldDisableHudTargetInfo = oldSettings.DisableHudTargetInfo;
+            var oldPointDefenseSyncMonitor = oldSettings.PointDefenseSyncMonitor;
 
             Core.Enforcement = new CoreSettings.ServerSettings { Version = Session.ServerCfgVersion };
 
@@ -174,6 +177,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
             Core.Enforcement.DisableLeads = oldDisableLeads;
             Core.Enforcement.DisableHudReload = oldDisableHudReload;
             Core.Enforcement.DisableHudTargetInfo = oldDisableHudTargetInfo;
+            Core.Enforcement.PointDefenseSyncMonitor = oldPointDefenseSyncMonitor;
         }
 
         private void CorruptionCheck(bool write = false)

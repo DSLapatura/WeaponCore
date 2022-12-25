@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using CoreSystems.Projectiles;
 using CoreSystems.Support;
 using Sandbox.Definitions;
@@ -15,6 +16,7 @@ using VRage.Game.ModAPI;
 using VRage.Game.ModAPI.Interfaces;
 using VRage.Utils;
 using VRageMath;
+using static CoreSystems.Support.CoreComponent;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.AreaOfDamageDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.DamageScaleDef;
 using CollisionLayers = Sandbox.Engine.Physics.MyPhysics.CollisionLayers;
@@ -41,7 +43,7 @@ namespace CoreSystems
 
                 info.ProHits?.Clear();
 
-                var pInvalid = (int)p.State > 3;
+                var pInvalid = (int)p.State > 4;
                 var tInvalid = info.Target.TargetState == Target.TargetStates.IsProjectile && (int)((Projectile)info.Target.TargetObject).State > 1;
                 if (tInvalid) info.Target.Reset(Tick, Target.States.ProjectileClean);
                 
@@ -956,6 +958,7 @@ namespace CoreSystems
             var integrityCheck = attacker.AmmoDef.DamageScales.MaxIntegrity > 0;
             if (integrityCheck && objHp > attacker.AmmoDef.DamageScales.MaxIntegrity) return;
 
+
             var damageScale = (float)attacker.AmmoDef.Const.HealthHitModifier;
             if (attacker.AmmoDef.Const.VirtualBeams) damageScale *= attacker.Weapon.WeaponCache.Hits;
             var scaledDamage = 1 * damageScale;
@@ -979,7 +982,16 @@ namespace CoreSystems
                 attacker.BaseDamagePool -= remaining;
 
                 pTarget.Info.BaseHealthPool = 0;
-                pTarget.State = Projectile.ProjectileState.Destroy;
+                
+                var requiresPdSync = PdClient && pTarget.Info.Storage.SyncId != long.MinValue && !pTarget.Info.AmmoDef.Const.ProjectileSync;
+                pTarget.State = !requiresPdSync ? Projectile.ProjectileState.Destroy : Projectile.ProjectileState.ClientPhantom;
+
+                if (requiresPdSync && PdServer && PointDefenseSyncMonitor.ContainsKey(pTarget.Info.Storage.SyncId))
+                {
+                    ProtoPdSyncMonitor.Collection.Add(pTarget.Info.Storage.SyncId);
+                    pTarget.Info.Storage.SyncId = long.MinValue;
+                }
+
                 if (attacker.AmmoDef.Const.EndOfLifeDamage > 0 && attacker.AmmoDef.Const.EndOfLifeAoe && attacker.RelativeAge >= attacker.AmmoDef.Const.MinArmingTime)
                     DetonateProjectile(hitEnt, attacker);
             }
@@ -1003,7 +1015,6 @@ namespace CoreSystems
                 var areaSphere = new BoundingSphereD(hitEnt.Projectile.Position, attacker.AmmoDef.Const.EndOfLifeRadius);
                 foreach (var sTarget in attacker.Ai.LiveProjectile)
                 {
-
                     if (areaSphere.Contains(sTarget.Position) != ContainmentType.Disjoint)
                     {
 
@@ -1019,7 +1030,14 @@ namespace CoreSystems
                         {
                             attacker.DamageDoneProj += (long)objHp;
                             sTarget.Info.BaseHealthPool = 0;
-                            sTarget.State = Projectile.ProjectileState.Detonated;
+                            var requiresPdSync = PdClient && sTarget.Info.Storage.SyncId != long.MinValue && !sTarget.Info.AmmoDef.Const.ProjectileSync;
+                            sTarget.State = !requiresPdSync ? Projectile.ProjectileState.Detonated : Projectile.ProjectileState.ClientPhantom;
+
+                            if (requiresPdSync && PdServer && PointDefenseSyncMonitor.ContainsKey(sTarget.Info.Storage.SyncId))
+                            {
+                                ProtoPdSyncMonitor.Collection.Add(sTarget.Info.Storage.SyncId);
+                                sTarget.Info.Storage.SyncId = long.MinValue;
+                            }
                         }
                         else
                         {

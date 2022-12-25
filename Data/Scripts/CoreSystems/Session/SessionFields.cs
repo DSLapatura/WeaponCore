@@ -36,6 +36,7 @@ namespace CoreSystems
     public partial class Session
     {
         internal const double StepConst = MyEngineConstants.PHYSICS_STEP_SIZE_IN_SECONDS;
+        internal const ushort ClientPdPacketId = 62516;
         internal const ushort StringPacketId = 62517;
         internal const ushort ServerPacketId = 62518;
         internal const ushort ClientPacketId = 62519;
@@ -45,7 +46,7 @@ namespace CoreSystems
         internal const int VersionControl = 33;
         internal const int AwakeBuckets = 60;
         internal const int AsleepBuckets = 180;
-        internal const int ServerCfgVersion = 6;
+        internal const int ServerCfgVersion = 7;
         internal const int ClientCfgVersion = 8;
         internal const string ServerCfgName = "CoreSystemsServer.cfg";
         internal const string ClientCfgName = "CoreSystemsClient.cfg";
@@ -115,7 +116,6 @@ namespace CoreSystems
         internal readonly Stack<ProjectileSyncStatePacket> ProtoWeaponProStatePacketPool = new Stack<ProjectileSyncStatePacket>(256);
         internal readonly Stack<List<MyTuple<Vector3D, object, float>>> ProHitPool = new Stack<List<MyTuple<Vector3D, object, float>>>(256);
 
-
         internal readonly Stack<WeaponSequence> SequencePool = new Stack<WeaponSequence>(32);
         internal readonly Stack<WeaponGroup> GroupPool = new Stack<WeaponGroup>(32);
 
@@ -154,7 +154,8 @@ namespace CoreSystems
         internal readonly ConcurrentDictionary<MyPlanet, long> PlanetTemp = new ConcurrentDictionary<MyPlanet, long>();
         internal readonly ConcurrentDictionary<MyCubeGrid, TopMap> DirtyPowerGrids = new ConcurrentDictionary<MyCubeGrid, TopMap>();
         internal readonly ConcurrentDictionary<string, MyObjectBuilder_Checkpoint.ModItem> ModInfo = new ConcurrentDictionary<string, MyObjectBuilder_Checkpoint.ModItem>();
-
+        
+        internal readonly Dictionary<long, Projectile> PointDefenseSyncMonitor = new Dictionary<long, Projectile>();
         internal readonly Dictionary<ulong, long> SteamToPlayer = new Dictionary<ulong, long>();
         internal readonly Dictionary<MyStringHash, DamageInfoLog> DmgLog = new Dictionary<MyStringHash, DamageInfoLog>(MyStringHash.Comparer);
         internal readonly Dictionary<IMyGridGroupData, GridGroupMap> GridGroupMap = new Dictionary<IMyGridGroupData, GridGroupMap>();
@@ -216,6 +217,7 @@ namespace CoreSystems
         internal readonly HashSet<SupportSys> DisplayAffectedArmor = new HashSet<SupportSys>();
         internal readonly HashSet<Type> ControlTypeActivated = new HashSet<Type>();
         internal readonly HashSet<IMyPlayer> PlayerControllerMonitor = new HashSet<IMyPlayer>();
+        internal readonly List<int> PointDefenseSyncs = new List<int>();
         internal readonly List<GridGroupMap> GridGroupUpdates = new List<GridGroupMap>();
         internal readonly List<Weapon> InvPullClean = new List<Weapon>();
         internal readonly List<Weapon> InvRemoveClean = new List<Weapon>();
@@ -258,7 +260,7 @@ namespace CoreSystems
         internal readonly Queue<double> ClientPerfHistory = new Queue<double>(20);
         internal readonly int[] AuthorSettings = new int[6];
         internal readonly List<Projectile> EwaredProjectiles = new List<Projectile>();
-
+        internal readonly List<IMySlimBlock>[] DamageBlockCache = new List<IMySlimBlock>[512];
         ///
         ///
         ///
@@ -286,10 +288,11 @@ namespace CoreSystems
         private readonly List<MyKeys> _pressedKeys = new List<MyKeys>();
         private readonly List<MyMouseButtonsEnum> _pressedButtons = new List<MyMouseButtonsEnum>();
         private readonly List<MyEntity> _tmpNearByBlocks = new List<MyEntity>();
-        internal readonly List<IMySlimBlock>[] DamageBlockCache = new List<IMySlimBlock>[512];
-        
+
+
         internal readonly Spectrum Spectrum;
 
+        internal readonly ProtoPdSyncMonitor ProtoPdSyncMonitor = new ProtoPdSyncMonitor();
         private readonly EwaredBlocksPacket _cachedEwarPacket = new EwaredBlocksPacket();
         private readonly SpinLockRef _dityGridLock = new SpinLockRef();
 
@@ -427,7 +430,11 @@ namespace CoreSystems
         internal bool PlayerStartMessage;
         internal bool GunnerBlackList;
         internal bool MpActive;
+        internal bool PdClient;
+        internal bool PdServer;
+        internal bool PdMonitor;
         internal bool IsServer;
+
         internal bool IsHost;
         internal bool MpServer;
         internal bool DedicatedServer;

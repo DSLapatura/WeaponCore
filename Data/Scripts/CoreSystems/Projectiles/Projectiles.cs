@@ -16,7 +16,7 @@ namespace CoreSystems.Projectiles
     {
         internal readonly Session Session;
         internal readonly MyConcurrentPool<List<NewVirtual>> VirtInfoPools = new MyConcurrentPool<List<NewVirtual>>(128, vInfo => vInfo.Clear());
-        internal readonly MyConcurrentPool<ProInfo> VirtInfoPool = new MyConcurrentPool<ProInfo>(128, vInfo => vInfo.Clean());
+        internal readonly MyConcurrentPool<ProInfo> VirtInfoPool = new MyConcurrentPool<ProInfo>(128, vInfo => vInfo.Clean(null));
         internal readonly MyConcurrentPool<HitEntity> HitEntityPool = new MyConcurrentPool<HitEntity>(512, hitEnt => hitEnt.Clean());
 
         internal readonly List<DeferedVoxels> DeferedVoxels = new List<DeferedVoxels>(128);
@@ -208,7 +208,6 @@ namespace CoreSystems.Projectiles
                     target.Reset(Session.Tick, Target.States.ProjetileIntercept);
                 }
 
-
                 if (p.EndState == EndStates.None) {
 
                     if (aConst.FeelsGravity) {
@@ -380,7 +379,7 @@ namespace CoreSystems.Projectiles
                 var info = p.Info;
                 var storage = info.Storage;
 
-                if ((int)p.State > 3 || storage.Sleep)
+                if ((int)p.State > 4 || storage.Sleep)
                     return;
 
                 var ai = info.Ai;
@@ -586,7 +585,7 @@ namespace CoreSystems.Projectiles
                     continue;
                 }
 
-                if ((int)p.State > 3)
+                if ((int)p.State > 4)
                     continue;
 
                 if (aConst.DrawLine || !info.AvShot.HasModel && aConst.AmmoParticle)

@@ -659,7 +659,7 @@ namespace CoreSystems.Support
                         if (!scanner.Connections.Contains(w) && scanner.Connections.Count >= scanner.System.MaxConnections)
                             continue;
 
-                        if ((type != ScanType.Projectiles && targetEntity != null || targetProjectile != null) && scanner.Target.HasTarget && (!scanner.TurretController || scanner.Target.IsAligned))
+                        if ((type != ScanType.Projectiles && targetEntity != null || targetProjectile != null) && scanner.Target.TargetObject != null && (!scanner.TurretController || scanner.Target.IsAligned))
                         {
                             switch (type)
                             {

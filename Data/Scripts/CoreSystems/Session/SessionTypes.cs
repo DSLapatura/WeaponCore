@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading;
 using CoreSystems.Platform;
 using CoreSystems.Support;
+using ProtoBuf;
 using Sandbox.Game;
 using Sandbox.Game.Entities;
 using Sandbox.Game.EntityComponents;
@@ -1086,6 +1087,12 @@ namespace CoreSystems
     {
         public readonly List<BlockDestroyInfo> DestroyBlocks = new List<BlockDestroyInfo>();
         public uint DestroyTick;
+    }
+
+    [ProtoContract]
+    public class ProtoPdSyncMonitor
+    {
+        [ProtoMember(1)] public readonly List<long> Collection = new List<long>(32);
     }
 
     public struct BlockDestroyInfo

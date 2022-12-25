@@ -10,6 +10,7 @@ using VRageMath;
 using static CoreSystems.Support.HitEntity.Type;
 using static CoreSystems.Support.WeaponDefinition;
 using static CoreSystems.Support.Ai;
+using System.Runtime.CompilerServices;
 
 namespace CoreSystems.Support
 {
@@ -90,8 +91,9 @@ namespace CoreSystems.Support
             ShotFade = shotFade;
         }
 
-        internal void Clean(bool usesStorage = false)
+        internal void Clean(Projectile p)
         {
+            var aConst = AmmoDef.Const;
             var monitor = Weapon.Comp.ProjectileMonitors[Weapon.PartId];
             if (monitor?.Count > 0) {
                 for (int i = 0; i < monitor.Count; i++)
@@ -107,11 +109,8 @@ namespace CoreSystems.Support
 
             Target.Reset(Weapon.System.Session.Tick, Target.States.ProjectileClean);
             HitList.Clear();
-
-
-            if (usesStorage)
-                Storage.Clean(AmmoDef.Const.ProjectileSync);
-
+            if (aConst.IsSmart || aConst.IsDrone)
+                Storage.Clean(p);
             if (IsFragment)
             {
                 if (VoxelCache != null && Weapon.System.Session != null)
@@ -219,13 +218,26 @@ namespace CoreSystems.Support
         internal int SmartSlot;
         internal int LastActivatedStage = -1;
         internal int RequestedStage = -1;
-        internal long SyncId;
+        internal long SyncId = long.MinValue;
         internal double StartDistanceTraveled;
         internal double ZombieLifeTime;
         internal double PrevZombieLifeTime;
 
-        internal void Clean(bool synced)
+        internal void Clean(Projectile p)
         {
+            if (p != null)
+            {
+                if (p.Info.AmmoDef.Const.ProjectileSync)
+                {
+                    for (int i = 0; i < PastProInfos.Length; i++)
+                        PastProInfos[i] = Vector3D.Zero;
+                }
+                else if (SyncId != long.MinValue)
+                {
+                    p.Info.Ai.Session.PointDefenseSyncMonitor.Remove(SyncId);
+                }
+            }
+            
             SyncId = long.MinValue;
             ProSyncPosMissCount = 0;
             ChaseAge = 0;
@@ -251,10 +263,7 @@ namespace CoreSystems.Support
             LastActivatedStage = -1;
             RequestedStage = -1;
             Sleep = false;
-            if (synced) {
-                for (int i = 0; i < PastProInfos.Length; i++)
-                    PastProInfos[i] = Vector3D.Zero;
-            }
+
             Navigation.ClearAcceleration();
         }
 
@@ -502,7 +511,14 @@ namespace CoreSystems.Support
 
                 if (aConst.IsDrone || aConst.IsSmart)
                 {
-                    info.Storage.SyncId = frag.SyncId;
+                    if (aConst.ProjectileSync)
+                        info.Storage.SyncId = frag.SyncId;
+                    else if (session.PdMonitor && aConst.Health > 0 && !aConst.IsBeamWeapon && !aConst.Ewar)
+                    {
+                        info.Storage.SyncId = (frag.SyncId << 32) | ((long)info.Frags << 16) | (long)info.SpawnDepth;
+                        session.PointDefenseSyncMonitor[info.Storage.SyncId] = p;
+                    }
+
                     info.Storage.DummyTargets = frag.DummyTargets;
                 }
 

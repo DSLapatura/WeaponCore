@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using CoreSystems.Projectiles;
 using CoreSystems.Support;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
@@ -51,6 +52,33 @@ namespace CoreSystems
         }
 
         #region NewClientSwitch
+
+        private void ClientReceivedPdPacket(byte[] rawData)
+        {
+            try
+            {
+                var pdSyncMonitor = MyAPIGateway.Utilities.SerializeFromBinary<ProtoPdSyncMonitor>(rawData);
+                if (pdSyncMonitor == null || pdSyncMonitor.Collection.Count == 0)
+                {
+                    Log.Line("ClientReceivedPdPacket null or empty packet");
+                    return;
+                }
+
+                for (int i = 0; i < pdSyncMonitor.Collection.Count; i++)
+                {
+                    var id = pdSyncMonitor.Collection[i];
+                    Projectile p;
+                    if (PointDefenseSyncMonitor.TryGetValue(id, out p) && (p.State == Projectile.ProjectileState.Alive || p.State == Projectile.ProjectileState.ClientPhantom))
+                    {
+                        p.State = Projectile.ProjectileState.Destroy;
+                    }
+                }
+                pdSyncMonitor.Collection.Clear();
+
+            }
+            catch (Exception ex) { Log.Line($"Exception in ClientReceivedPdPacket: {ex}", null, true); }
+        }
+
         private void ClientReceivedPacket(byte[] rawData)
         {
             try
@@ -409,6 +437,33 @@ namespace CoreSystems
         #endregion
 
         #region ProcessRequests
+
+        internal void ProcessPdSyncsForClients()
+        {
+            if (!PdClient)
+            {
+                var payLoad = MyAPIGateway.Utilities.SerializeToBinary(ProtoPdSyncMonitor.Collection);
+                foreach (var p in Players.Values)
+                {
+                    MyModAPIHelper.MyMultiplayer.Static.SendMessageTo(ClientPdPacketId, payLoad, p.Player.SteamUserId, true);
+                }
+                ProtoPdSyncMonitor.Collection.Clear();
+            }
+            else if (Tick10)
+            {
+                for (int i = 0; i < ProtoPdSyncMonitor.Collection.Count; i++)
+                {
+                    var id = ProtoPdSyncMonitor.Collection[i];
+                    Projectile p;
+                    if (PointDefenseSyncMonitor.TryGetValue(id, out p))
+                    {
+                        p.State = Projectile.ProjectileState.Destroy;
+                    }
+                }
+                ProtoPdSyncMonitor.Collection.Clear();
+            }
+        }
+
         internal void ProccessServerPacketsForClients()
         {
 
