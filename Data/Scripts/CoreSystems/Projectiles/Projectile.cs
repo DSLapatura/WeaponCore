@@ -65,9 +65,9 @@ namespace CoreSystems.Projectiles
         internal enum ProjectileState
         {
             Alive,
-            Detonate,
             ClientPhantom,
             OneAndDone,
+            Detonate,
             Depleted,
             Destroy,
             Dead,

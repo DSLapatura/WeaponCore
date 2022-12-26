@@ -99,7 +99,7 @@ namespace CoreSystems
                     Projectiles.HitEntityPool.Return(hitEnt);
                 }
 
-                if (info.BaseDamagePool <= 0 && (int)p.State <= 4)
+                if (info.BaseDamagePool <= 0 && (int)p.State < 3)
                     p.State = Projectile.ProjectileState.Depleted;
 
                 info.HitList.Clear();
