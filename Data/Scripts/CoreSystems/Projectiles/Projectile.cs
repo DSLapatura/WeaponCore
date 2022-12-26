@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using CoreSystems.Support;
 using Jakaria.API;
 using Sandbox.Game.Entities;
@@ -429,6 +430,11 @@ namespace CoreSystems.Projectiles
             var ai = Info.Ai;
             var session = ai.Session;
             var speedCapMulti = 1d;
+            if (aConst.TimedFragments && Info.SpawnDepth < aConst.FragMaxChildren && Info.RelativeAge >= aConst.FragStartTime && Info.RelativeAge - Info.LastFragTime > aConst.FragInterval && Info.Frags < aConst.MaxFrags)
+            {
+                if (!aConst.HasFragGroup || Info.Frags == 0 || Info.Frags % aConst.FragGroupSize != 0 || Info.RelativeAge - Info.LastFragTime >= aConst.FragGroupDelay)
+                    TimedSpawns(aConst);
+            }
 
             var targetLock = false;
             var speedLimitPerTick = aConst.AmmoSkipAccel ? DesiredSpeed : aConst.AccelInMetersPerSec;
@@ -723,6 +729,18 @@ namespace CoreSystems.Projectiles
                 proposedVel = Velocity;
 
             Velocity = proposedVel;
+
+            if (aConst.DynamicGuidance)
+            {
+                if (PruningProxyId != -1 && session.ActiveAntiSmarts > 0)
+                {
+                    var sphere = new BoundingSphereD(Position, aConst.LargestHitSize);
+                    BoundingBoxD result;
+                    BoundingBoxD.CreateFromSphere(ref sphere, out result);
+                    var displacement = 0.1 * Velocity;
+                    session.ProjectileTree.MoveProxy(PruningProxyId, ref result, displacement);
+                }
+            }
         }
 
         private bool AvoidObstacle(Vector3D proposedPos, Vector3D missileToTargetNorm, double accelMpsMulti, out Vector3D moddedAccel)
@@ -1318,6 +1336,12 @@ namespace CoreSystems.Projectiles
             var w = Info.Weapon;
             var comp = w.Comp;
             var parentEnt = comp.TopEntity;
+            
+            if (aConst.TimedFragments && Info.SpawnDepth < aConst.FragMaxChildren && Info.RelativeAge >= aConst.FragStartTime && Info.RelativeAge - Info.LastFragTime > aConst.FragInterval && Info.Frags < aConst.MaxFrags)
+            {
+                if (!aConst.HasFragGroup || Info.Frags == 0 || Info.Frags % aConst.FragGroupSize != 0 || Info.RelativeAge - Info.LastFragTime >= aConst.FragGroupDelay)
+                    TimedSpawns(aConst);
+            }
 
             if (s.DroneStat == Launch)
                 DroneLaunch(parentEnt, aConst, s);
@@ -1333,6 +1357,45 @@ namespace CoreSystems.Projectiles
                     newVel = (Info.Direction * 0.95 + Vector3D.CalculatePerpendicularVector(Info.Direction) * 0.05) * MaxSpeed;
 
                 Velocity = newVel;
+            }
+
+            if (aConst.DynamicGuidance)
+            {
+                if (PruningProxyId != -1 && comp.Session.ActiveAntiSmarts > 0)
+                {
+                    var sphere = new BoundingSphereD(Position, aConst.LargestHitSize);
+                    BoundingBoxD result;
+                    BoundingBoxD.CreateFromSphere(ref sphere, out result);
+                    var displacement = 0.1 * Velocity;
+                    comp.Session.ProjectileTree.MoveProxy(PruningProxyId, ref result, displacement);
+                }
+            }
+        }
+
+        private void TimedSpawns(AmmoConstants aConst)
+        {
+            var storage = Info.Storage;
+            var approachSkip = aConst.ApproachesCount > 0 && storage.RequestedStage < aConst.ApproachesCount && storage.RequestedStage >= 0 && aConst.Approaches[storage.RequestedStage].NoSpawns;
+            if (!approachSkip)
+            {
+                if (!aConst.HasFragProximity)
+                    SpawnShrapnel();
+                else if (Info.Target.TargetState == Target.TargetStates.IsEntity)
+                {
+                    var topEnt = ((MyEntity)Info.Target.TargetObject).GetTopMostParent();
+                    var inflatedSize = aConst.FragProximity + topEnt.PositionComp.LocalVolume.Radius;
+                    if (Vector3D.DistanceSquared(topEnt.PositionComp.WorldAABB.Center, Position) <= inflatedSize * inflatedSize)
+                        SpawnShrapnel();
+                }
+                else if (Info.Target.TargetObject is Projectile)
+                {
+                    var projectile = (Projectile)Info.Target.TargetObject;
+                    var inflatedSize = aConst.FragProximity + projectile.Info.AmmoDef.Const.CollisionSize;
+                    if (Vector3D.DistanceSquared(projectile.Position, Position) <= inflatedSize * inflatedSize)
+                    {
+                        SpawnShrapnel();
+                    }
+                }
             }
         }
 
