@@ -61,7 +61,6 @@ namespace CoreSystems.Projectiles
 
                 storage.DummyTargets = null;
                 info.Random = new XorShiftRandomStruct((ulong)(w.TargetData.WeaponRandom.CurrentSeed + (w.Reload.EndId + w.ProjectileCounter)));
-                ++w.ProjectileCounter;
 
                 if (aConst.IsDrone || aConst.IsSmart)
                 {
@@ -78,8 +77,8 @@ namespace CoreSystems.Projectiles
                         info.Weapon.ProjectileSyncMonitor[storage.SyncId] = p;
                 }
 
+                ++w.ProjectileCounter;
                 info.BaseDamagePool = aConst.BaseDamage;
-
 
                 info.AcquiredEntity = !aConst.OverrideTarget && wTarget.TargetState == Target.TargetStates.IsEntity;
                 info.ShooterVel = ai.TopEntityVel;

@@ -823,6 +823,7 @@ namespace CoreSystems.Support
                     [ProtoMember(4)] internal Randomize WidthVariance;
                     [ProtoMember(5)] internal TrailDef Trail;
                     [ProtoMember(6)] internal OffsetEffectDef OffsetEffect;
+                    [ProtoMember(7)] internal bool DropParentVelocity;
 
                     [ProtoContract]
                     public struct OffsetEffectDef

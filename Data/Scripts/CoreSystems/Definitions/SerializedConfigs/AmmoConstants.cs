@@ -152,7 +152,10 @@ namespace CoreSystems.Support
         public readonly int FragGroupDelay;
         public readonly int DeformDelay;
         public readonly uint FakeVoxelHitTicks;
-
+        public readonly bool TracerAlwaysDraw;
+        public readonly bool TrailAlwaysDraw;
+        public readonly bool AvDropVelocity;
+        public readonly bool TrailDropVelocity;
         public readonly bool FocusEviction;
         public readonly bool FocusOnly;
         public readonly bool CheckFutureIntersection;
@@ -529,7 +532,7 @@ namespace CoreSystems.Support
             Trail = ammo.AmmoDef.AmmoGraphics.Lines.Trail.Enable;
             HasShotFade = ammo.AmmoDef.AmmoGraphics.Lines.Tracer.VisualFadeStart > 0 && ammo.AmmoDef.AmmoGraphics.Lines.Tracer.VisualFadeEnd > 1;
             MaxTrajectoryGrows = ammo.AmmoDef.Trajectory.MaxTrajectoryTime > 1;
-            ComputeSteps(ammo, out ShotFadeStep, out TrajectoryStep, out AlwaysDraw);
+            ComputeSteps(ammo, out ShotFadeStep, out TrajectoryStep, out AlwaysDraw, out TracerAlwaysDraw, out TrailAlwaysDraw, out AvDropVelocity);
 
             TrailWidth = ammo.AmmoDef.AmmoGraphics.Lines.Trail.CustomWidth > 0 ? ammo.AmmoDef.AmmoGraphics.Lines.Trail.CustomWidth : ammo.AmmoDef.AmmoGraphics.Lines.Tracer.Width;
             DecayTime = ammo.AmmoDef.AmmoGraphics.Lines.Trail.DecayTime;
@@ -728,13 +731,17 @@ namespace CoreSystems.Support
 
 
 
-        private void ComputeSteps(WeaponSystem.AmmoType ammo, out float shotFadeStep, out float trajectoryStep, out bool alwaysDraw)
+        private void ComputeSteps(WeaponSystem.AmmoType ammo, out float shotFadeStep, out float trajectoryStep, out bool alwaysDraw, out bool tracerAlwaysDraw, out bool trailAlwaysDraw, out bool avDropVelocity)
         {
             var changeFadeSteps = ammo.AmmoDef.AmmoGraphics.Lines.Tracer.VisualFadeEnd - ammo.AmmoDef.AmmoGraphics.Lines.Tracer.VisualFadeStart;
             shotFadeStep = 1f / changeFadeSteps;
 
             trajectoryStep = MaxTrajectoryGrows ? MaxTrajectory / ammo.AmmoDef.Trajectory.MaxTrajectoryTime : MaxTrajectory;
-            alwaysDraw = (Trail || HasShotFade) && RealShotsPerSec < 0.1 || ammo.AmmoDef.AmmoGraphics.Lines.Tracer.AlwaysDraw || ammo.AmmoDef.AmmoGraphics.Lines.Trail.AlwaysDraw;
+            tracerAlwaysDraw = ammo.AmmoDef.AmmoGraphics.Lines.Tracer.AlwaysDraw;
+            trailAlwaysDraw = ammo.AmmoDef.AmmoGraphics.Lines.Trail.AlwaysDraw;
+            avDropVelocity = ammo.AmmoDef.AmmoGraphics.Lines.DropParentVelocity;
+
+            alwaysDraw = (Trail || HasShotFade) && RealShotsPerSec < 0.1 || tracerAlwaysDraw || trailAlwaysDraw;
         }
 
         private void Fragments(WeaponSystem.AmmoType ammo, out bool hasFragmentOffset, out bool hasNegFragmentOffset, out float fragmentOffset, out float fragRadial, out float fragDegrees, out bool fragReverse, out bool fragDropVelocity, out int fragMaxChildren, out bool fragIgnoreArming, out bool fragOnArmed, out bool fragOnEnd, out bool hasFragOffset, out Vector3D fragOffset)

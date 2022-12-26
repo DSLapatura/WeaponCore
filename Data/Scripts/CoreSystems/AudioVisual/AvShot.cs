@@ -169,7 +169,7 @@ namespace CoreSystems.Support
             MuzzleId = info.MuzzleId;
             UniqueMuzzleId = info.UniqueMuzzleId;
             MaxSpeed = maxSpeed;
-            var useShooterVel = !info.IsFragment && !AmmoDef.Const.IsSmart && !AmmoDef.Const.IsDrone;
+            var useShooterVel = !info.IsFragment && !AmmoDef.Const.AvDropVelocity;
             ShootVelStep = useShooterVel ? info.ShooterVel * MyEngineConstants.PHYSICS_STEP_SIZE_IN_SECONDS : Vector3D.Zero;
             Weapon = info.Weapon;
             MaxTrajectory = info.MaxTrajectory;
@@ -235,7 +235,7 @@ namespace CoreSystems.Support
                 if (aConst.PrimeModel && a.PrimeEntity == null) {
                     
                     ApproachConstants def = stage <= -1 ? null : a.AmmoDef.Const.Approaches[stage];
-                    a.PrimeEntity = def == null || !def.AlternateModel ? aConst.PrimeEntityPool.Get() : aConst.Approaches[stage].ModelPool.Get(); ;
+                    a.PrimeEntity = def == null || !def.AlternateModel ? aConst.PrimeEntityPool.Get() : aConst.Approaches[stage].ModelPool.Get(); 
                     a.ModelSphereCurrent.Radius = a.PrimeEntity.PositionComp.WorldVolume.Radius * 2;
                     createdPrimeEntity = true;
                 }
@@ -265,7 +265,6 @@ namespace CoreSystems.Support
                     var relativeDifference = (d.TracerFront - a.TracerFront) - a.ShootVelStep;
                     Vector3D.Normalize(ref relativeDifference, out a.VisualDir);
                 }
-
                 a.Direction = d.Direction;
 
                 a.TracerFront = d.TracerFront;
@@ -401,7 +400,7 @@ namespace CoreSystems.Support
                 }
 
                 var backAndGrowing = a.Back && a.Tracer == TracerState.Grow;
-                if (a.Trail != TrailState.Off && !backAndGrowing && lineOnScreen)
+                if (a.Trail != TrailState.Off && !backAndGrowing && (lineOnScreen || aConst.TracerAlwaysDraw))
                     a.RunTrail(null, false, saveHit);
 
                 if (aConst.AmmoParticle && a.Active)
@@ -442,7 +441,6 @@ namespace CoreSystems.Support
             Vector3D backPos;
             var stopVel = shrinking || hit;
             var velStep = !stopVel ? ShootVelStep : Vector3D.Zero;
-
             if (shrinking)
             {
                 frontPos = shrink.NewFront;
