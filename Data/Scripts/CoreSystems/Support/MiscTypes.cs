@@ -99,6 +99,7 @@ namespace CoreSystems.Support
             
             if (!w.ActiveAmmoDef.AmmoDef.Const.Reloadable && w.Target.TargetId != 0)
                 w.ProjectileCounter = 0;
+
             w.System.Session.SendTargetChange(w.Comp, w.PartId);
         }
 

@@ -377,7 +377,7 @@ namespace CoreSystems.Support
                 if (aConst.GuidedAmmoDetected)
                     HasGuidedAmmo = true;
 
-                if (aConst.ProjectileSync)
+                if (aConst.FullSync)
                     HasProjectileSync = true;
 
                 if (aConst.AntiSmartDetected)

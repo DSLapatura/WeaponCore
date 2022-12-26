@@ -477,60 +477,27 @@ namespace CoreSystems
 
             for (int i = 0; i < proPacket.Data.Count; i++)
             {
-                var sync = proPacket.Data[i];
-                var ent = MyEntities.GetEntityByIdOrDefault(sync.CoreEntityId);
-                var comp = ent?.Components.Get<CoreComponent>();
+                var syncPacket = proPacket.Data[i];
 
-                if (comp?.Ai == null || comp.Platform.State != CorePlatform.PlatformState.Ready) 
-                    continue;
-
-                var wComp = comp as Weapon.WeaponComponent;
-                if (wComp != null)
+                Weapon w;
+                if (WeaponLookUp.TryGetValue(syncPacket.WeaponSyncId, out w))
                 {
-                    var collection = comp.TypeSpecific != CoreComponent.CompTypeSpecific.Phantom ? comp.Platform.Weapons : comp.Platform.Phantoms;
-                    var w = collection[sync.PartId];
 
-                    ClientProSync oldSync;
-                    w.WeaponProSyncs.TryGetValue(sync.ProId, out oldSync);
-                    w.WeaponProSyncs[sync.ProId] = new ClientProSync {ProPositionSync = sync, ProStateSync = oldSync.ProStateSync, UpdateTick = Tick, CurrentOwl = proPacket.CurrentOwl, PreviousOwl = proPacket.PreviousOwl};
-                    
-                    data.Report.PacketValid = true;
+                    if (w.Comp?.Ai == null || w.Comp.Platform.State != CorePlatform.PlatformState.Ready)
+                        continue;
+
+                    for (int j = 0; j < syncPacket.Collection.Count; j++)
+                    {
+                        var sync = syncPacket.Collection[j];
+                        ClientProSync oldSync;
+                        w.WeaponProSyncs.TryGetValue(sync.ProId, out oldSync);
+                        w.WeaponProSyncs[sync.ProId] = new ClientProSync { ProPositionSync = sync, UpdateTick = Tick, CurrentOwl = proPacket.CurrentOwl, PreviousOwl = proPacket.PreviousOwl };
+                    }
                 }
-
             }
-            proPacket.CleanUp();
-            return true;
-        }
+            
+            data.Report.PacketValid = true;
 
-        private bool ClientProjectileStateSyncs(PacketObj data)
-        {
-            var packet = data.Packet;
-            var proPacket = (ProjectileSyncStatePacket)packet;
-            if (proPacket.Data == null) return Error(data, Msg("ProSyncData"));
-
-            for (int i = 0; i < proPacket.Data.Count; i++)
-            {
-                var sync = proPacket.Data[i];
-                var ent = MyEntities.GetEntityByIdOrDefault(sync.CoreEntityId);
-                var comp = ent?.Components.Get<CoreComponent>();
-
-                if (comp?.Ai == null || comp.Platform.State != CorePlatform.PlatformState.Ready)
-                    continue;
-
-                var wComp = comp as Weapon.WeaponComponent;
-                if (wComp != null)
-                {
-                    var collection = comp.TypeSpecific != CoreComponent.CompTypeSpecific.Phantom ? comp.Platform.Weapons : comp.Platform.Phantoms;
-                    var w = collection[sync.PartId];
-
-                    ClientProSync oldSync;
-                    w.WeaponProSyncs.TryGetValue(sync.ProId, out oldSync);
-                    w.WeaponProSyncs[sync.ProId] = new ClientProSync { ProPositionSync = oldSync.ProPositionSync, ProStateSync = sync, UpdateTick = Tick, CurrentOwl = oldSync.CurrentOwl, PreviousOwl = oldSync.PreviousOwl };
-
-                    data.Report.PacketValid = true;
-                }
-
-            }
             proPacket.CleanUp();
             return true;
         }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using CoreSystems.Platform;
 using CoreSystems.Support;
@@ -9,7 +10,6 @@ using VRageMath;
 using static CoreSystems.Support.WeaponDefinition.TargetingDef;
 using static CoreSystems.Support.CoreComponent;
 using static CoreSystems.Platform.Weapon.WeaponComponent;
-using static CoreSystems.ProtoProStateSync;
 
 namespace CoreSystems
 {
@@ -75,11 +75,13 @@ namespace CoreSystems
 
             for (int i = 0; i < Values.State.Weapons.Length; i++)
             {
+                var w = comp.Collection[i];
                 var ws = Values.State.Weapons[i];
                 ws.Heat = 0;
                 ws.Overheated = false;
                 ws.Id = comp.Session.SyncWeaponId;
-                comp.Session.WeaponLookUp[ws.Id] = comp.Collection[i];
+                w.ProSync.WeaponSyncId = ws.Id;
+                comp.Session.WeaponLookUp[ws.Id] = w;
             }
 
             ResetCompBaseRevisions();
@@ -125,19 +127,17 @@ namespace CoreSystems
         }
     }
 
+
     [ProtoContract]
-    public class ProtoProPositionSync 
+    public class ProtoProSync
     {
-        [ProtoMember(1)] public ulong ProId;
-        [ProtoMember(2)] public ushort PartId;
-        [ProtoMember(3)] public long CoreEntityId;
-        [ProtoMember(4)] public Vector3D Position;
-        [ProtoMember(5)] public Vector3 Velocity;
-        [ProtoMember(6)] public ProSyncState State;
+
+        [ProtoMember(1)] public uint WeaponSyncId;
+        [ProtoMember(2)] public readonly List<ProtoProPositionSync> Collection = new List<ProtoProPositionSync>();
     }
 
     [ProtoContract]
-    public class ProtoProStateSync
+    public class ProtoProPositionSync 
     {
         public enum ProSyncState
         {
@@ -148,14 +148,11 @@ namespace CoreSystems
         }
 
         [ProtoMember(1)] public ulong ProId;
-        [ProtoMember(2)] public ushort PartId;
-        [ProtoMember(3)] public long CoreEntityId;
-        [ProtoMember(4)] public ProSyncState State;
-        [ProtoMember(5)] public long TargetId;
-        [ProtoMember(6)] public ulong RandomX;
-        [ProtoMember(7)] public ulong RandomY;
-        [ProtoMember(8)] public Vector3D OffsetTarget;
-        [ProtoMember(9)] public Vector3 OffsetDir;
+        //[ProtoMember(2)] public ushort PartId;
+        //[ProtoMember(3)] public uint CoreEntityId;
+        [ProtoMember(4)] public Vector3D Position;
+        [ProtoMember(5)] public Vector3 Velocity;
+        [ProtoMember(6)] public ProSyncState State;
     }
 
     [ProtoContract]
@@ -225,10 +222,10 @@ namespace CoreSystems
     public class ProtoWeaponReload
     {
         [ProtoMember(1)] public uint Revision;
-        [ProtoMember(2)] public int StartId; //save
-        [ProtoMember(3)] public int EndId; //save
-        //[ProtoMember(9)] public ushort StartId; //save
-        //[ProtoMember(10)] public ushort EndId; //save
+        //[ProtoMember(2)] public int StartId; //save
+        //[ProtoMember(3)] public int EndId; //save
+        [ProtoMember(9)] public ushort StartId; //save
+        [ProtoMember(10)] public ushort EndId; //save
         [ProtoMember(4)] public int MagsLoaded = 1;
         [ProtoMember(5)] public bool WaitForClient; //don't save
         [ProtoMember(6)] public int AmmoTypeId; //save
@@ -488,9 +485,12 @@ namespace CoreSystems
             Overheated = sync.Overheated;
             var oldId = Id;
             Id = sync.Id;
-            
+
             if (oldId != Id)
-                w.Comp.Session.WeaponLookUp[w.PartState.Id] = w;
+            {
+                w.Comp.Session.WeaponLookUp[Id] = w;
+                w.ProSync.WeaponSyncId = Id;
+            }
 
             if (!wasOver && Overheated)
                 w.OverHeatCountDown = 15;

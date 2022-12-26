@@ -17,6 +17,7 @@ using static CoreSystems.Support.WeaponDefinition.AmmoDef.DamageScaleDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.FragmentDef.TimedSpawnDef;
 using static CoreSystems.Support.ValueProcessors;
 using static CoreSystems.Support.WeaponDefinition.HardPointDef;
+using System.Runtime.CompilerServices;
 
 namespace CoreSystems.Support
 {
@@ -243,7 +244,9 @@ namespace CoreSystems.Support
         public readonly bool HasFragProximity;
         public readonly bool FragParentDies;
         public readonly bool FragPointAtTarget;
-        public readonly bool ProjectileSync;
+        public readonly bool FullSync;
+        public readonly bool PdDeathSync;
+        public readonly bool OnHitDeathSync;
         public readonly bool HasFragGroup;
         public readonly bool HasFragment;
         public readonly bool FragmentPattern;
@@ -405,8 +408,6 @@ namespace CoreSystems.Support
             TravelTo = ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.TravelTo;
             IsTurretSelectable = !ammo.IsShrapnel && ammo.AmmoDef.HardPointUsable;
 
-            ProjectileSync = ammo.AmmoDef.Synchronize && session.MpActive && (IsDrone || IsSmart);
-
             AccelClearance = ammo.AmmoDef.Trajectory.Smarts.AccelClearance;
             OverrideTarget = ammo.AmmoDef.Trajectory.Smarts.OverideTarget;
             RequiresTarget = ammo.AmmoDef.Trajectory.Guidance != TrajectoryDef.GuidanceType.None && !OverrideTarget || system.TrackTargets;
@@ -550,6 +551,11 @@ namespace CoreSystems.Support
                 var flightTime = ammo.AmmoDef.Trajectory.MaxTrajectory / ammo.AmmoDef.Trajectory.DesiredSpeed;
                 Log.Line($"{ammo.AmmoDef.AmmoRound} has {(int)(0.5 * 9.8 * flightTime * flightTime)}m grav drop at 1g.  {system.PartName} needs Accurate/Advanced aim prediction to account for gravity.");
             }
+
+
+            FullSync = ammo.AmmoDef.Sync.Full && session.MpActive && (IsDrone || IsSmart);
+            PdDeathSync = !FullSync && ammo.AmmoDef.Sync.PointDefense && session.MpActive && Health > 0 && !IsBeamWeapon && !Ewar;
+            OnHitDeathSync = !FullSync && ammo.AmmoDef.Sync.OnHitDeath && session.MpActive && !IsBeamWeapon && !Ewar;
 
             PreComputedMath = new PreComputedMath(ammo, this);
         }

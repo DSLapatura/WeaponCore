@@ -104,11 +104,6 @@ namespace CoreSystems
                         ClientHandDebug(packetObj);
                         break;
                     }
-                    case PacketType.ProjectileStateSyncs:
-                    {
-                        ClientProjectileStateSyncs(packetObj);
-                        break;
-                    }
                     case PacketType.AimTargetUpdate: 
                     {
                             ClientFakeTargetUpdate(packetObj);
@@ -431,7 +426,7 @@ namespace CoreSystems
                     var pdInfo = pdSyncMonitor.Collection[i];
                     Projectile p = null;
                     Weapon w = null;
-                    if (WeaponLookUp.TryGetValue(pdInfo.WeaponId, out w) && w.PointDefenseSyncMonitor.TryGetValue(pdInfo.SyncId, out p) && (p.State == Projectile.ProjectileState.Alive || p.State == Projectile.ProjectileState.ClientPhantom))
+                    if (WeaponLookUp.TryGetValue(pdInfo.WeaponId, out w) && w.ProjectileSyncMonitor.TryGetValue(pdInfo.SyncId, out p) && (p.State == Projectile.ProjectileState.Alive || p.State == Projectile.ProjectileState.ClientPhantom))
                     {
                         p.State = Projectile.ProjectileState.Destroy;
                     }
@@ -447,9 +442,9 @@ namespace CoreSystems
 
         internal void ProcessPdSyncsForClients()
         {
-            if (!PdClient)
+            if (!AdvSyncClient)
             {
-                var payLoad = MyAPIGateway.Utilities.SerializeToBinary(ProtoPdSyncMonitor);
+                var payLoad = MyAPIGateway.Utilities.SerializeToBinary(ProtoDeathSyncMonitor);
                 var playerCount = Players.Values.Count;
 
                 PdSyncPackets += playerCount;
@@ -460,19 +455,19 @@ namespace CoreSystems
                     if (p.Player.SteamUserId != MultiplayerId)
                         MyModAPIHelper.MyMultiplayer.Static.SendMessageTo(ClientPdPacketId, payLoad, p.Player.SteamUserId, true);
                 }
-                ProtoPdSyncMonitor.Collection.Clear();
+                ProtoDeathSyncMonitor.Collection.Clear();
             }
             else if (Tick60)
             {
-                for (int i = 0; i < ProtoPdSyncMonitor.Collection.Count; i++) {
+                for (int i = 0; i < ProtoDeathSyncMonitor.Collection.Count; i++) {
 
-                    var pdInfo = ProtoPdSyncMonitor.Collection[i];
+                    var pdInfo = ProtoDeathSyncMonitor.Collection[i];
                     Projectile p;
                     Weapon w;
-                    if (WeaponLookUp.TryGetValue(pdInfo.WeaponId, out w) && w.PointDefenseSyncMonitor.TryGetValue(pdInfo.SyncId, out p) && (p.State == Projectile.ProjectileState.Alive || p.State == Projectile.ProjectileState.ClientPhantom))
+                    if (WeaponLookUp.TryGetValue(pdInfo.WeaponId, out w) && w.ProjectileSyncMonitor.TryGetValue(pdInfo.SyncId, out p) && (p.State == Projectile.ProjectileState.Alive || p.State == Projectile.ProjectileState.ClientPhantom))
                         p.State = Projectile.ProjectileState.Destroy;
                 }
-                ProtoPdSyncMonitor.Collection.Clear();
+                ProtoDeathSyncMonitor.Collection.Clear();
             }
         }
 
@@ -556,12 +551,6 @@ namespace CoreSystems
                     {
                         pInfo.Packet.CleanUp();
                         ProtoWeaponProPosPacketPool.Push((ProjectileSyncPosPacket)pInfo.Packet);
-                        break;
-                    }
-                    case PacketType.ProjectileStateSyncs:
-                    {
-                        pInfo.Packet.CleanUp();
-                        ProtoWeaponProStatePacketPool.Push((ProjectileSyncStatePacket)pInfo.Packet);
                         break;
                     }
                     case PacketType.AiData:

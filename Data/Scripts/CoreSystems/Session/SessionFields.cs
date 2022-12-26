@@ -111,8 +111,6 @@ namespace CoreSystems
         internal readonly Stack<ProtoProPositionSync> ProtoWeaponProSyncPosPool = new Stack<ProtoProPositionSync>(256);
         internal readonly Stack<ProjectileSyncPosPacket> ProtoWeaponProPosPacketPool = new Stack<ProjectileSyncPosPacket>(256);
 
-        internal readonly Stack<ProtoProStateSync> ProtoWeaponProSyncStatePool = new Stack<ProtoProStateSync>(256);
-        internal readonly Stack<ProjectileSyncStatePacket> ProtoWeaponProStatePacketPool = new Stack<ProjectileSyncStatePacket>(256);
         internal readonly Stack<List<MyTuple<Vector3D, object, float>>> ProHitPool = new Stack<List<MyTuple<Vector3D, object, float>>>(256);
 
         internal readonly Stack<WeaponSequence> SequencePool = new Stack<WeaponSequence>(32);
@@ -184,8 +182,7 @@ namespace CoreSystems
         internal readonly Dictionary<WeaponDefinition.AmmoDef, Dictionary<string, string>> AmmoValuesMap = new Dictionary<WeaponDefinition.AmmoDef, Dictionary<string, string>>();
         internal readonly Dictionary<WeaponDefinition, Dictionary<string, string>> WeaponValuesMap = new Dictionary<WeaponDefinition, Dictionary<string, string>>();
         internal readonly Dictionary<ulong, Projectile> MonitoredProjectiles = new Dictionary<ulong, Projectile>();
-        internal readonly Dictionary<MyEntity, ProtoProPositionSync> GlobalProPosSyncs = new Dictionary<MyEntity, ProtoProPositionSync>();
-        internal readonly Dictionary<MyEntity, ProtoProStateSync> GlobalProStateSyncs = new Dictionary<MyEntity, ProtoProStateSync>();
+        internal readonly Dictionary<uint, ProtoProSync> GlobalProPosSyncs = new Dictionary<uint, ProtoProSync>();
         internal readonly Dictionary<ulong, TickLatency> PlayerTickLatency = new Dictionary<ulong, TickLatency>();
         internal readonly Dictionary<long, DamageHandlerRegistrant> DamageHandlerRegistrants = new Dictionary<long, DamageHandlerRegistrant>();
         internal readonly Dictionary<long, Func<MyEntity, IMyCharacter, long, int, bool>> TargetFocusHandlers = new Dictionary<long, Func<MyEntity, IMyCharacter, long, int, bool>>();
@@ -290,7 +287,7 @@ namespace CoreSystems
 
         internal readonly Spectrum Spectrum;
 
-        internal readonly ProtoPdSyncMonitor ProtoPdSyncMonitor = new ProtoPdSyncMonitor();
+        internal readonly ProtoPdSyncMonitor ProtoDeathSyncMonitor = new ProtoPdSyncMonitor();
         private readonly EwaredBlocksPacket _cachedEwarPacket = new EwaredBlocksPacket();
         private readonly SpinLockRef _dityGridLock = new SpinLockRef();
 
@@ -431,9 +428,9 @@ namespace CoreSystems
         internal bool PlayerStartMessage;
         internal bool GunnerBlackList;
         internal bool MpActive;
-        internal bool PdClient;
-        internal bool PdServer;
-        internal bool PdMonitor;
+        internal bool AdvSyncClient;
+        internal bool AdvSyncServer;
+        internal bool AdvSync;
         internal bool IsServer;
 
         internal bool IsHost;

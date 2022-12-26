@@ -633,7 +633,15 @@ namespace CoreSystems.Api
                 [ProtoMember(27)] internal bool Synchronize;
                 [ProtoMember(28)] internal double HeatModifier;
                 [ProtoMember(29)] internal bool NpcSafe;
+                [ProtoMember(30)] internal SynchronizeDef Sync;
 
+                [ProtoContract]
+                public struct SynchronizeDef
+                {
+                    [ProtoMember(1)] internal bool Full;
+                    [ProtoMember(2)] internal bool PointDefense;
+                    [ProtoMember(3)] internal bool OnHitDeath;
+                }
 
                 [ProtoContract]
                 public struct DamageScaleDef

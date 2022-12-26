@@ -54,7 +54,7 @@ namespace CoreSystems
         EwaredBlocks,
         ClientReady,
         ProjectilePosSyncs,
-        ProjectileStateSyncs,
+        ProjectileStateSyncsNotUsed,
         ControlComp,
         ControlState,
         ForceReload,
@@ -67,7 +67,7 @@ namespace CoreSystems
 
     #region packets
     [ProtoContract]
-    [ProtoInclude(5, typeof(ProjectileSyncStatePacket))]
+    //[ProtoInclude(5, typeof(ProjectileSyncStatePacket))]
     [ProtoInclude(6, typeof(BoolUpdatePacket))]
     [ProtoInclude(7, typeof(FakeTargetPacket))]
     [ProtoInclude(8, typeof(FocusPacket))]
@@ -160,26 +160,13 @@ namespace CoreSystems
     [ProtoContract]
     public class ProjectileSyncPosPacket : Packet
     {
-        [ProtoMember(1)] internal List<ProtoProPositionSync> Data = new List<ProtoProPositionSync>();
+        [ProtoMember(1)] internal List<ProtoProSync> Data = new List<ProtoProSync>();
         [ProtoMember(2)] internal uint CurrentOwl;
         [ProtoMember(3)] internal uint PreviousOwl;
 
         public override void CleanUp()
         {
             base.CleanUp();
-        }
-    }
-
-
-    [ProtoContract]
-    public class ProjectileSyncStatePacket : Packet
-    {
-        [ProtoMember(1)] internal List<ProtoProStateSync> Data = new List<ProtoProStateSync>();
-
-        public override void CleanUp()
-        {
-            base.CleanUp();
-            Data.Clear();
         }
     }
 

@@ -131,7 +131,7 @@ namespace CoreSystems.Projectiles
                             if (intersects)
                             {
 
-                                p.State = ProjectileState.Depleted;
+                                p.State = ProjectileState.Destroy;
                                 p.EndState = EndStates.EarlyEnd;
 
                                 if (p.EnableAv)

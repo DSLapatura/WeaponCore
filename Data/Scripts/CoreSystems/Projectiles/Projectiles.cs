@@ -154,7 +154,7 @@ namespace CoreSystems.Projectiles
                 ++ai.MyProjectiles;
                 ai.ProjectileTicker = Session.Tick;
 
-                if (aConst.ProjectileSync)
+                if (Session.AdvSync && aConst.FullSync)
                 {
                     if (Session.IsClient)
                     {
@@ -165,11 +165,8 @@ namespace CoreSystems.Projectiles
                     }
                     else if (info.Age > 0 && info.Age % 29 == 0)
                     {
-                        p.SyncPosServerProjectile(p.State != ProjectileState.Alive ? ProtoProStateSync.ProSyncState.Dead : ProtoProStateSync.ProSyncState.Alive);
+                        p.SyncPosServerProjectile(p.State != ProjectileState.Alive ? ProtoProPositionSync.ProSyncState.Dead : ProtoProPositionSync.ProSyncState.Alive);
                     }
-
-                    //if (info.Age - storage.LastProSyncStateAge == 14)
-                    //    p.SyncStateServerProjectile(ProtoProStateSync.ProSyncState.Alive);
                 }
 
                 if (storage.Sleep)

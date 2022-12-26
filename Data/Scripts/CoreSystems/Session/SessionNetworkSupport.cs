@@ -133,7 +133,9 @@ namespace CoreSystems
                 var sync = pSync.Value;
                 if (latencyMonActive)
                     packet.Data.Add(sync);
-                ProtoWeaponProSyncPosPool.Push(sync);
+
+                foreach (var p in sync.Collection)
+                    ProtoWeaponProSyncPosPool.Push(p);
             }
 
             GlobalProPosSyncs.Clear();
@@ -152,36 +154,6 @@ namespace CoreSystems
                 SpecialPlayerId = long.MinValue,
                 Packet = packet,
                 Entity = null,
-            };
-        }
-
-        private void SendProjectileStateSyncs()
-        {
-            var packet = ProtoWeaponProStatePacketPool.Count > 0 ? ProtoWeaponProStatePacketPool.Pop() : new ProjectileSyncStatePacket ();
-            var latencyMonActive = Tick - LastPongTick < 120;
-            LastProSyncSendTick = Tick;
-
-            foreach (var pSync in GlobalProStateSyncs)
-            {
-                var sync = pSync.Value;
-                if (latencyMonActive)
-                    packet.Data.Add(sync);
-                ProtoWeaponProSyncStatePool.Push(sync);
-            }
-
-            GlobalProStateSyncs.Clear();
-
-            if (!latencyMonActive)
-            {
-                ProtoWeaponProStatePacketPool.Push(packet);
-                return;
-            }
-
-            packet.PType = PacketType.ProjectileStateSyncs;
-            PrunedPacketsToClient[packet] = new PacketInfo
-            {
-                Entity = null,
-                Packet = packet,
             };
         }
 

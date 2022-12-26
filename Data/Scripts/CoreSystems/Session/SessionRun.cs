@@ -221,7 +221,7 @@ namespace CoreSystems
                 if (!DedicatedServer) Av.End();
                 DsUtil.Complete("av", true);
 
-                if (PdServer && ProtoPdSyncMonitor.Collection.Count > 0)
+                if (AdvSyncServer && ProtoDeathSyncMonitor.Collection.Count > 0)
                     ProcessPdSyncsForClients();
 
                 if (MpActive)  {
@@ -230,9 +230,6 @@ namespace CoreSystems
 
                     if (GlobalProPosSyncs.Count > 0)
                         SendProjectilePosSyncs();
-
-                    //if (GlobalProStateSyncs.Count > 0)
-                    //    SendProjectileStateSyncs();
 
                     if (PacketsToClient.Count > 0 || PrunedPacketsToClient.Count > 0) 
                         ProccessServerPacketsForClients();

@@ -315,21 +315,22 @@ namespace CoreSystems.Projectiles
 
             Intersecting = true;
 
-            if (Info.Storage.SyncId != ulong.MaxValue && !Info.AmmoDef.Const.ProjectileSync)
-            {
-                var s = Info.Ai.Session;
-                if (Info.Weapon.PointDefenseSyncMonitor.Remove(Info.Storage.SyncId))
-                {
-                    if (s.PdServer)
-                    {
-                        s.ProtoPdSyncMonitor.Collection.Add(new ProjectileSync { WeaponId = Info.Weapon.PartState.Id, SyncId = Info.Storage.SyncId });
-                    }
-
-                    Info.Storage.SyncId = ulong.MaxValue;
-                }
-            }
+            if (Info.Storage.SyncId != ulong.MaxValue && (Info.AmmoDef.Const.PdDeathSync || Info.AmmoDef.Const.OnHitDeathSync))
+                AddToDeathSyncMonitor();
 
             State = ProjectileState.Depleted;
+        }
+
+        internal void AddToDeathSyncMonitor()
+        {
+            var s = Info.Ai.Session;
+            if (Info.Weapon.ProjectileSyncMonitor.Remove(Info.Storage.SyncId))
+            {
+                if (s.AdvSyncServer)
+                {
+                    s.ProtoDeathSyncMonitor.Collection.Add(new ProjectileSync {WeaponId = Info.Weapon.PartState.Id, SyncId = Info.Storage.SyncId});
+                }
+            }
         }
 
         internal void ProjectileClose()
@@ -400,10 +401,8 @@ namespace CoreSystems.Projectiles
                 construct.TotalProjectileEffect += Info.DamageDoneProj;
             }
 
-            if (aConst.IsDrone || aConst.IsSmart) Info.Weapon.LiveSmarts--;
-
-            if (aConst.ProjectileSync && session.IsServer)
-                SyncPosServerProjectile(ProtoProStateSync.ProSyncState.Dead);
+            if (aConst.IsDrone || aConst.IsSmart) 
+                Info.Weapon.LiveSmarts--;
 
             PruningProxyId = -1;
             HadTarget = HadTargetState.None;
@@ -2617,17 +2616,16 @@ namespace CoreSystems.Projectiles
             }
         }
 
-        internal void SyncPosServerProjectile(ProtoProStateSync.ProSyncState state)
+        internal void SyncPosServerProjectile(ProtoProPositionSync.ProSyncState state)
         {
             var session = Info.Ai.Session;
             var proSync = session.ProtoWeaponProSyncPosPool.Count > 0 ? session.ProtoWeaponProSyncPosPool.Pop() : new ProtoProPositionSync();
-            proSync.PartId = (ushort) Info.Weapon.PartId;
             proSync.Position = Position;
             proSync.State = state;
             proSync.Velocity = Velocity;
             proSync.ProId = Info.Storage.SyncId;
-            proSync.CoreEntityId = Info.Weapon.Comp.CoreEntity.EntityId;
-            session.GlobalProPosSyncs[Info.Weapon.Comp.CoreEntity] = proSync;
+            Info.Weapon.ProSync.Collection.Add(proSync);
+            session.GlobalProPosSyncs[Info.Weapon.PartState.Id] = Info.Weapon.ProSync;
         }
 
         internal void SyncClientProjectile(int posSlot)
@@ -2648,7 +2646,7 @@ namespace CoreSystems.Projectiles
                 {
                     var proPosSync = sync.ProPositionSync;
 
-                    if (proPosSync.State == ProtoProStateSync.ProSyncState.Dead)
+                    if (proPosSync.State == ProtoProPositionSync.ProSyncState.Dead)
                     {
                         State = ProjectileState.Destroy;
                         w.WeaponProSyncs.Remove(Info.Storage.SyncId);
@@ -2698,47 +2696,6 @@ namespace CoreSystems.Projectiles
                         //Log.Line($"ProSyn: Id:{Info.Id} - age:{Info.Age} - owl:{sync.CurrentOwl} - jumpDist:{Vector3D.Distance(oldPos, Position)}[{Vector3D.Distance(oldVels, Velocity)}] - posDiff:{Vector3D.Distance(Info.PastProInfos[checkSlot], proPosSync.Position)} - nVel:{oldVels.Length()} - oVel:{proPosSync.Velocity.Length()})");
                     }
                 }
-
-                /*
-                if (sync.ProStateSync != null)
-                {
-                    MyEntity targetEnt;
-                    if (sync.ProStateSync.TargetId > 0 && (target.TargetId != sync.ProStateSync.TargetId) && MyEntities.TryGetEntityById(sync.ProStateSync.TargetId, out targetEnt))
-                    {
-                        target.Set(targetEnt, targetEnt.PositionComp.WorldAABB.Center, 0, 0, targetEnt.GetTopMostParent()?.EntityId ?? 0);
-                       
-                        if (w.System.WConst.DebugMode)
-                            Log.Line($"ProSyn: Id:{Info.Id} - age:{Info.Age} - targetSetTo:{targetEnt.DebugName}");
-                    }
-                    else if (target.TargetId > 0 && sync.ProStateSync.TargetId <= 0)
-                    {
-                        target.Reset(s.Tick, Target.States.NoTargetsSeen);
-
-                        if (w.System.WConst.DebugMode)
-                            Log.Line($"ProSyn: Id:{Info.Id} - age:{Info.Age} - targetCleared");
-                    }
-
-                    var seed = Info.Random.GetSeedVaues();
-
-                    if (seed.Item1 != sync.ProStateSync.RandomX || seed.Item2 != sync.ProStateSync.RandomY)
-                    {
-                        var oldX = seed.Item1;
-                        var oldY = seed.Item2;
-
-                        Info.Random.SyncSeed(sync.ProStateSync.RandomX, sync.ProStateSync.RandomY);
-
-                        var oldDir = Info.Storage.RandOffsetDir;
-                        var oldTarget = OffsetTarget;
-                        Info.Storage.RandOffsetDir = sync.ProStateSync.OffsetDir;
-                        OffsetTarget = sync.ProStateSync.OffsetTarget;
-
-                        if (w.System.WConst.DebugMode)
-                            Log.Line($"seedReset: Id:{Info.Id} - age:{Info.Age} - owl:{sync.CurrentOwl} - stateAge:{Info.Age - Info.Storage.LastProSyncStateAge} - tId:{sync.ProStateSync.TargetId} - oDirDiff:{Vector3D.IsZero(oldDir - Info.Storage.RandOffsetDir, 1E-02d)} - targetDiff:{Vector3D.Distance(oldTarget, OffsetTarget)} - x:{oldX}[{sync.ProStateSync.RandomX}] - y{oldY}[{sync.ProStateSync.RandomY}]");
-                    }
-
-                }
-                */
-
                 w.WeaponProSyncs.Remove(Info.Storage.SyncId);
             }
         }

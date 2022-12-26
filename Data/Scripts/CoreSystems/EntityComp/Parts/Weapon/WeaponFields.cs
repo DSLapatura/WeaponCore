@@ -29,10 +29,11 @@ namespace CoreSystems.Platform
         internal readonly Dictionary<ulong, ClientProSync> WeaponProSyncs = new Dictionary<ulong, ClientProSync>();
         internal readonly Dictionary<string, PartAnimation> AnimationLookup = new Dictionary<string, PartAnimation>();
         internal readonly Dictionary<MyEntity, HiddenInfo> HiddenTargets = new Dictionary<MyEntity, HiddenInfo>();
-        internal readonly Dictionary<ulong, Projectile> PointDefenseSyncMonitor = new Dictionary<ulong, Projectile>();
+        internal readonly Dictionary<ulong, Projectile> ProjectileSyncMonitor = new Dictionary<ulong, Projectile>();
         internal readonly List<MyCubeBlock> Top5 = new List<MyCubeBlock>();
         internal readonly HashSet<Weapon> Connections = new HashSet<Weapon>();
         internal readonly WeaponFrameCache WeaponCache = new WeaponFrameCache();
+        internal readonly ProtoProSync ProSync = new ProtoProSync();
         internal readonly MyLight Light;
         internal readonly ApiShootRequest ShootRequest;
         internal readonly WeaponSystem System;
@@ -134,6 +135,7 @@ namespace CoreSystems.Platform
         internal EventTriggers PrevRangeEvent = EventTriggers.TargetRanged100;
         internal float ShotEnergyCost;
         internal float LastHeat;
+        internal ushort ProjectileCounter;
         internal uint LastFriendlyNameTick;
         internal uint TargetAcquireTick = uint.MaxValue;
         internal uint ReloadEndTick = uint.MaxValue;
@@ -157,11 +159,10 @@ namespace CoreSystems.Platform
         internal int BarrelSpinRate;
         internal int EnergyPriority;
         internal int LastBlockCount;
-        internal int ClientStartId;
-        internal int ClientEndId;
+        internal ushort ClientStartId;
+        internal ushort ClientEndId;
         internal int ClientMakeUpShots;
         internal int ClientLastShotId;
-        internal int ProjectileCounter;
         internal int LookAtFailCount;
         internal float HeatPShot;
         internal float HsRate;

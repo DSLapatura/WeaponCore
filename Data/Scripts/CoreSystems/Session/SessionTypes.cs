@@ -878,7 +878,6 @@ namespace CoreSystems
         internal struct ClientProSync
         {
             internal ProtoProPositionSync ProPositionSync;
-            internal ProtoProStateSync ProStateSync;
 
             internal uint UpdateTick;
             internal uint CurrentOwl;

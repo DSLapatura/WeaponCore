@@ -1567,7 +1567,7 @@ namespace CoreSystems
 
                 foreach (var system in core.PartSystems)
                 {
-                    var part = (system.Value as WeaponSystem);
+                    var part = (WeaponSystem)system.Value;
 
                     Dictionary<string, string> weaponModifer;
                     if (WeaponValuesMap.TryGetValue(part.Values, out weaponModifer) && weaponModifer != null)

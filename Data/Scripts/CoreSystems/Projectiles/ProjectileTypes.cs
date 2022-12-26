@@ -229,14 +229,14 @@ namespace CoreSystems.Support
         {
             if (p != null)
             {
-                if (p.Info.AmmoDef.Const.ProjectileSync)
+                if (p.Info.AmmoDef.Const.FullSync)
                 {
                     for (int i = 0; i < PastProInfos.Length; i++)
                         PastProInfos[i] = Vector3D.Zero;
                 }
                 else if (SyncId != ulong.MaxValue)
                 {
-                    p.Info.Weapon.PointDefenseSyncMonitor.Remove(SyncId);
+                    p.Info.Weapon.ProjectileSyncMonitor.Remove(SyncId);
                 }
             }
             
@@ -518,18 +518,18 @@ namespace CoreSystems.Support
                 {
                     info.Storage.DummyTargets = frag.DummyTargets;
 
-                    if (aConst.ProjectileSync)
+                    if (aConst.FullSync)
                         info.Storage.SyncId = frag.SyncId;
                 }
                 
-                if (session.PdMonitor && info.Storage.SyncId == ulong.MaxValue && aConst.Health > 0 && !aConst.IsBeamWeapon && !aConst.Ewar)
+                if (session.AdvSync && (aConst.PdDeathSync || aConst.OnHitDeathSync))
                 {
                     var syncPart1 = (ushort)((frag.SyncId >> 48) & 0x000000000000FFFF);
                     var syncPart2 = (ushort)((frag.SyncId >> 32) & 0x000000000000FFFF);
 
                     info.Storage.SyncId = ((ulong)syncPart1 << 48) | ((ulong)syncPart2 << 32) | ((ulong)info.SyncedFrags << 16) | info.SpawnDepth;
                     //info.Storage.SyncId = ((ulong)syncPart1 & 0x00000000FFFFFFFF) << 32 | ((ulong)syncPart2 << 32) | ((ulong)info.SyncedFrags << 16) | info.SpawnDepth;
-                    p.Info.Weapon.PointDefenseSyncMonitor[info.Storage.SyncId] = p;
+                    p.Info.Weapon.ProjectileSyncMonitor[info.Storage.SyncId] = p;
                 }
 
 
