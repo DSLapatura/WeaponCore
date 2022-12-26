@@ -400,7 +400,7 @@ namespace CoreSystems.Support
                 }
 
                 var backAndGrowing = a.Back && a.Tracer == TracerState.Grow;
-                if (a.Trail != TrailState.Off && !backAndGrowing && (lineOnScreen || aConst.TracerAlwaysDraw))
+                if (a.Trail != TrailState.Off && !backAndGrowing && (lineOnScreen || aConst.TrailAlwaysDraw))
                     a.RunTrail(null, false, saveHit);
 
                 if (aConst.AmmoParticle && a.Active)
