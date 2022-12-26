@@ -165,7 +165,6 @@ namespace CoreSystems
             TickLatency tickLatency;
             PlayerTickLatency.TryGetValue(targetSteamId, out tickLatency);
             proSync.CurrentOwl = tickLatency.CurrentLatency;
-            proSync.PreviousOwl = tickLatency.PreviousLatency;
             return proSync;
         }
 

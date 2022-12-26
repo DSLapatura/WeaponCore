@@ -881,7 +881,6 @@ namespace CoreSystems
 
             internal float UpdateTick;
             internal float CurrentOwl;
-            internal float PreviousOwl;
         }
 
         internal struct ClientProSyncDebugLine

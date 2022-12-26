@@ -175,7 +175,6 @@ namespace CoreSystems
     {
         [ProtoMember(1)] internal List<ProtoProSync> Data = new List<ProtoProSync>();
         [ProtoMember(2)] internal float CurrentOwl;
-        [ProtoMember(3)] internal float PreviousOwl;
 
         public override void CleanUp()
         {

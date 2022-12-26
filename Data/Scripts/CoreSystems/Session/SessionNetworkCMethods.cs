@@ -489,7 +489,7 @@ namespace CoreSystems
                         var sync = syncPacket.Collection[j];
                         ClientProSync oldSync;
                         w.WeaponProSyncs.TryGetValue(sync.ProId, out oldSync);
-                        w.WeaponProSyncs[sync.ProId] = new ClientProSync { ProPositionSync = sync, UpdateTick = (float) RelativeTime, CurrentOwl = proPacket.CurrentOwl, PreviousOwl = proPacket.PreviousOwl };
+                        w.WeaponProSyncs[sync.ProId] = new ClientProSync { ProPositionSync = sync, UpdateTick = (float) RelativeTime, CurrentOwl = proPacket.CurrentOwl };
                     }
                 }
                 else 
