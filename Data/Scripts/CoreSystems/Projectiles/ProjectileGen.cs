@@ -69,14 +69,13 @@ namespace CoreSystems.Projectiles
 
                     if (comp.FakeMode)
                         Session.PlayerDummyTargets.TryGetValue(repo.Values.State.PlayerId, out storage.DummyTargets);
-
-                    if (aConst.FullSync)
-                        storage.SyncId = ((ulong)w.Reload.EndId << 48) | ((ulong)w.ProjectileCounter << 32) | ((ulong)info.SyncedFrags << 16) | info.SpawnDepth;
                 }
-                
-                if (Session.AdvSync && (aConst.PdDeathSync || aConst.OnHitDeathSync)) {
+
+                if (Session.AdvSync) {
                     storage.SyncId = ((ulong)w.Reload.EndId << 48) | ((ulong)w.ProjectileCounter << 32) | ((ulong)info.SyncedFrags << 16) | info.SpawnDepth;
-                    info.Weapon.ProjectileSyncMonitor[storage.SyncId] = p;
+
+                    if (aConst.PdDeathSync || aConst.OnHitDeathSync)
+                        info.Weapon.ProjectileSyncMonitor[storage.SyncId] = p;
                 }
 
                 info.BaseDamagePool = aConst.BaseDamage;

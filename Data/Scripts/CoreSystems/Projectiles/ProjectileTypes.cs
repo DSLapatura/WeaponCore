@@ -513,23 +513,17 @@ namespace CoreSystems.Support
                 info.CompSceneVersion = frag.SceneVersion;
 
                 if (aConst.IsDrone || aConst.IsSmart)
-                {
                     info.Storage.DummyTargets = frag.DummyTargets;
 
-                    if (aConst.FullSync)
-                        info.Storage.SyncId = frag.SyncId;
-                }
-                
-                if (session.AdvSync && (aConst.PdDeathSync || aConst.OnHitDeathSync))
+                if (session.AdvSync)
                 {
                     var syncPart1 = (ushort)((frag.SyncId >> 48) & 0x000000000000FFFF);
                     var syncPart2 = (ushort)((frag.SyncId >> 32) & 0x000000000000FFFF);
-
                     info.Storage.SyncId = ((ulong)syncPart1 << 48) | ((ulong)syncPart2 << 32) | ((ulong)info.SyncedFrags << 16) | info.SpawnDepth;
-                    //info.Storage.SyncId = ((ulong)syncPart1 & 0x00000000FFFFFFFF) << 32 | ((ulong)syncPart2 << 32) | ((ulong)info.SyncedFrags << 16) | info.SpawnDepth;
-                    p.Info.Weapon.ProjectileSyncMonitor[info.Storage.SyncId] = p;
-                }
 
+                    if (aConst.PdDeathSync || aConst.OnHitDeathSync)
+                        p.Info.Weapon.ProjectileSyncMonitor[info.Storage.SyncId] = p;
+                }
 
                 session.Projectiles.ActiveProjetiles.Add(p);
                 p.Start();
