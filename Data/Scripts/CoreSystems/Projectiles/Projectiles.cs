@@ -187,7 +187,7 @@ namespace CoreSystems.Projectiles
                     case ProjectileState.OneAndDone:
                     case ProjectileState.Depleted:
                     case ProjectileState.Detonate:
-                        if (info.Age == 0 && p.State == ProjectileState.OneAndDone)
+                        if (info.Age == 0 && aConst.IsBeamWeapon)
                             break;
 
                         p.ProjectileClose();
@@ -198,7 +198,7 @@ namespace CoreSystems.Projectiles
 
                 if (p.EndState == EndStates.None) {
 
-                    if (p.State == ProjectileState.OneAndDone) {
+                    if (aConst.IsBeamWeapon) {
 
                         info.DistanceTraveled = info.MaxTrajectory;
                         p.LastPosition = p.Position;
@@ -350,7 +350,7 @@ namespace CoreSystems.Projectiles
                 var useEwarSphere = (triggerRange > 0 || info.EwarActive) && aConst.Pulse && aConst.EwarType != WeaponDefinition.AmmoDef.EwarDef.EwarType.AntiSmart;
                 p.Beam = useEwarSphere ? new LineD(p.Position + (-info.Direction * aConst.EwarTriggerRange), p.Position + (info.Direction * aConst.EwarTriggerRange)) : new LineD(p.LastPosition, p.Position);
                 var checkBeam = p.Info.AmmoDef.Const.CheckFutureIntersection ? new LineD(p.Beam.From, p.Beam.From + p.Beam.Direction * (p.Beam.Length + aConst.FutureIntersectionRange), p.Beam.Length + aConst.FutureIntersectionRange) : p.Beam;
-                if (p.DeaccelRate <= 0 && p.State != ProjectileState.OneAndDone && (info.DistanceTraveled * info.DistanceTraveled >= p.DistanceToTravelSqr || info.RelativeAge > aConst.MaxLifeTime)) {
+                if (p.DeaccelRate <= 0 && !aConst.IsBeamWeapon && (info.DistanceTraveled * info.DistanceTraveled >= p.DistanceToTravelSqr || info.RelativeAge > aConst.MaxLifeTime)) {
 
                     p.PruneSphere.Center = p.Position;
                     p.PruneSphere.Radius = aConst.EndOfLifeRadius;
@@ -534,7 +534,7 @@ namespace CoreSystems.Projectiles
 
                 if (aConst.DrawLine || !info.AvShot.HasModel && aConst.AmmoParticle)
                 {
-                    if (p.State == ProjectileState.OneAndDone)
+                    if (aConst.IsBeamWeapon)
                     {
                         info.AvShot.StepSize = info.MaxTrajectory;
                         info.AvShot.VisualLength = info.MaxTrajectory;
