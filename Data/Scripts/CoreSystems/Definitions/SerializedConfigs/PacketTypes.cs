@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using CoreSystems.Settings;
+using CoreSystems.Support;
 using ProtoBuf;
 using VRageMath;
 using static CoreSystems.Support.CoreComponent;
@@ -106,6 +107,7 @@ namespace CoreSystems
     [ProtoInclude(41, typeof(BlackListPacket))]
     [ProtoInclude(42, typeof(DronePacket))]
     [ProtoInclude(43, typeof(HandWeaponDebugPacket))]
+    [ProtoInclude(44, typeof(PingPacket))]
 
 
     public class Packet
@@ -142,6 +144,17 @@ namespace CoreSystems
     }
 
     [ProtoContract]
+    public class PingPacket : Packet
+    {
+        [ProtoMember(1)] internal float RelativeTime;
+
+        public override void CleanUp()
+        {
+            base.CleanUp();
+        }
+    }
+
+    [ProtoContract]
     public class HandWeaponDebugPacket : Packet
     {
         [ProtoMember(1)] internal uint LastHitTick = uint.MaxValue;
@@ -161,11 +174,17 @@ namespace CoreSystems
     public class ProjectileSyncPosPacket : Packet
     {
         [ProtoMember(1)] internal List<ProtoProSync> Data = new List<ProtoProSync>();
-        [ProtoMember(2)] internal uint CurrentOwl;
-        [ProtoMember(3)] internal uint PreviousOwl;
+        [ProtoMember(2)] internal float CurrentOwl;
+        [ProtoMember(3)] internal float PreviousOwl;
 
         public override void CleanUp()
         {
+            for (int i = 0; i < Data.Count; i++)
+            {
+                var d = Data[i];
+                d.Collection.Clear();
+            }
+            Data.Clear();
             base.CleanUp();
         }
     }

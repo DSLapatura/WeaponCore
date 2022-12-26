@@ -158,7 +158,7 @@ namespace CoreSystems.Projectiles
                 {
                     if (Session.IsClient)
                     {
-                        var posSlot = info.Age % 30;
+                        var posSlot = (int)Math.Round(info.RelativeAge) % 30;
                         storage.PastProInfos[posSlot] =  p.Position;
                         if (info.Weapon.WeaponProSyncs.Count > 0)
                             p.SyncClientProjectile(posSlot);

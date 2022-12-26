@@ -67,7 +67,7 @@ namespace CoreSystems
 
                 if (packet.PType == PacketType.PingPong)
                 {
-                    PingPong(packet.EntityId);
+                    PingPong(((PingPacket)packet).RelativeTime);
                     return;
                 }
                 var packetSize = rawData.Length;
@@ -274,7 +274,7 @@ namespace CoreSystems
 
             if (packet.PType == PacketType.PingPong)
             {
-                RecordClientLatency(packet);
+                RecordClientLatency((PingPacket)packet);
                 return;
             }
 

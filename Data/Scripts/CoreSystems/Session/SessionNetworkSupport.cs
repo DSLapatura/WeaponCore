@@ -142,7 +142,7 @@ namespace CoreSystems
 
             if (!latencyMonActive)
             {
-                Log.Line($"pingpong not ready");
+                Log.Line($"PingPong not active");
                 ProtoWeaponProPosPacketPool.Push(packet);
                 return;
             }
@@ -1427,10 +1427,10 @@ namespace CoreSystems
             else Log.Line("SendToggle not called on client");
         }
 
-        private readonly Packet _pingPongPacket = new Packet();
-        internal void PingPong(long serverGameTicks)
+        private readonly PingPacket _pingPongPacket = new PingPacket();
+        internal void PingPong(float relativeTime)
         {
-            _pingPongPacket.EntityId = serverGameTicks;
+            _pingPongPacket.RelativeTime = relativeTime;
 
             if (IsClient)
             {
@@ -1446,10 +1446,10 @@ namespace CoreSystems
             }
         }
 
-        internal void RecordClientLatency(Packet clientPong)
+        internal void RecordClientLatency(PingPacket clientPong)
         {
-            var rtt = (double)(Session.GameplayFrameCounter - clientPong.EntityId);
-            var owl = (uint)Math.Max(Math.Round(rtt + 1 / 2d), 2);
+            var rtt = RelativeTime - clientPong.RelativeTime;
+            var owl = (float)Math.Max(Math.Round(rtt + 1d / 2d), 2d);
 
             TickLatency oldLatency;
             PlayerTickLatency.TryGetValue(clientPong.SenderId, out oldLatency);

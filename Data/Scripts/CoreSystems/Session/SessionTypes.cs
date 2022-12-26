@@ -879,9 +879,9 @@ namespace CoreSystems
         {
             internal ProtoProPositionSync ProPositionSync;
 
-            internal uint UpdateTick;
-            internal uint CurrentOwl;
-            internal uint PreviousOwl;
+            internal float UpdateTick;
+            internal float CurrentOwl;
+            internal float PreviousOwl;
         }
 
         internal struct ClientProSyncDebugLine
@@ -893,8 +893,8 @@ namespace CoreSystems
 
         internal struct TickLatency
         {
-            internal uint CurrentLatency;
-            internal uint PreviousLatency;
+            internal float CurrentLatency;
+            internal float PreviousLatency;
         }
 
         internal struct ResistanceValues

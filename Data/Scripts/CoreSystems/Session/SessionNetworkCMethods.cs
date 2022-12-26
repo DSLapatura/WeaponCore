@@ -478,11 +478,9 @@ namespace CoreSystems
             for (int i = 0; i < proPacket.Data.Count; i++)
             {
                 var syncPacket = proPacket.Data[i];
-
                 Weapon w;
                 if (WeaponLookUp.TryGetValue(syncPacket.WeaponSyncId, out w))
                 {
-
                     if (w.Comp?.Ai == null || w.Comp.Platform.State != CorePlatform.PlatformState.Ready)
                         continue;
 
@@ -491,9 +489,11 @@ namespace CoreSystems
                         var sync = syncPacket.Collection[j];
                         ClientProSync oldSync;
                         w.WeaponProSyncs.TryGetValue(sync.ProId, out oldSync);
-                        w.WeaponProSyncs[sync.ProId] = new ClientProSync { ProPositionSync = sync, UpdateTick = Tick, CurrentOwl = proPacket.CurrentOwl, PreviousOwl = proPacket.PreviousOwl };
+                        w.WeaponProSyncs[sync.ProId] = new ClientProSync { ProPositionSync = sync, UpdateTick = (float) RelativeTime, CurrentOwl = proPacket.CurrentOwl, PreviousOwl = proPacket.PreviousOwl };
                     }
                 }
+                else 
+                    Log.Line($"ClientProjectilePosSyncs failed");
             }
             
             data.Report.PacketValid = true;

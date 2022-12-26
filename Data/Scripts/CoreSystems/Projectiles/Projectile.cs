@@ -2632,17 +2632,16 @@ namespace CoreSystems.Projectiles
         {
             var s = Info.Ai.Session;
             var w = Info.Weapon;
-
             ClientProSync sync;
             if (w.WeaponProSyncs.TryGetValue(Info.Storage.SyncId, out sync))
             {
-                if (s.Tick - sync.UpdateTick > 30)
+                if (RelativeTime - sync.UpdateTick > 30)
                 {
                     w.WeaponProSyncs.Remove(Info.Storage.SyncId);
                     return;
                 }
 
-                if (sync.ProPositionSync != null && s.Tick - sync.UpdateTick <= 1 && sync.CurrentOwl < 30)
+                if (RelativeTime - sync.UpdateTick <= 1 && sync.CurrentOwl < 30)
                 {
                     var proPosSync = sync.ProPositionSync;
 
@@ -2656,7 +2655,7 @@ namespace CoreSystems.Projectiles
                     var oldPos = Position;
                     var oldVels = Velocity;
 
-                    var checkSlot = posSlot - sync.CurrentOwl >= 0 ? posSlot - (int)sync.CurrentOwl : (posSlot - (int)sync.CurrentOwl) + 30;
+                    var checkSlot = (int)Math.Round(posSlot - sync.CurrentOwl >= 0 ? posSlot - sync.CurrentOwl : (posSlot - sync.CurrentOwl) + 30);
 
                     var estimatedStepSize = sync.CurrentOwl * DeltaStepConst;
 
@@ -2666,7 +2665,6 @@ namespace CoreSystems.Projectiles
                     var futurePosition = pastServerProPos + estimatedDistTraveledToPresent;
 
                     var pastClientProPos = Info.Storage.PastProInfos[checkSlot];
-
                     if (Vector3D.DistanceSquared(pastClientProPos, pastServerProPos) > clampedEstimatedDistTraveledSqr)
                     {
                         if (++Info.Storage.ProSyncPosMissCount > 1)
@@ -2693,7 +2691,7 @@ namespace CoreSystems.Projectiles
 
                         lines.Add(new ClientProSyncDebugLine { CreateTick = s.Tick, Line = pastServerLine, Color = Color.Red});
 
-                        //Log.Line($"ProSyn: Id:{Info.Id} - age:{Info.Age} - owl:{sync.CurrentOwl} - jumpDist:{Vector3D.Distance(oldPos, Position)}[{Vector3D.Distance(oldVels, Velocity)}] - posDiff:{Vector3D.Distance(Info.PastProInfos[checkSlot], proPosSync.Position)} - nVel:{oldVels.Length()} - oVel:{proPosSync.Velocity.Length()})");
+                        //Log.Line($"ProSyn: Id:{Info.Id} - age:{Info.Age} - owl:{sync.CurrentOwl} - jumpDist:{Vector3D.Distance(oldPos, Position)}[{Vector3D.Distance(oldVels, Velocity)}] - nVel:{oldVels.Length()} - oVel:{proPosSync.Velocity.Length()})");
                     }
                 }
                 w.WeaponProSyncs.Remove(Info.Storage.SyncId);

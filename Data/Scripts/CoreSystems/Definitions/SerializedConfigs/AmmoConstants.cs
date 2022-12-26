@@ -552,9 +552,8 @@ namespace CoreSystems.Support
                 Log.Line($"{ammo.AmmoDef.AmmoRound} has {(int)(0.5 * 9.8 * flightTime * flightTime)}m grav drop at 1g.  {system.PartName} needs Accurate/Advanced aim prediction to account for gravity.");
             }
 
-
-            FullSync = ammo.AmmoDef.Sync.Full && session.MpActive && (IsDrone || IsSmart);
-            PdDeathSync = !FullSync && ammo.AmmoDef.Sync.PointDefense && session.MpActive && Health > 0 && !IsBeamWeapon && !Ewar;
+            FullSync = (ammo.AmmoDef.Sync.Full || wDef.HardPoint.PartName.Contains("M-1")) && session.MpActive && (IsDrone || IsSmart);
+            PdDeathSync = !FullSync && (ammo.AmmoDef.Sync.PointDefense || wDef.HardPoint.PartName.Contains("M8")) && session.MpActive && Health > 0 && !IsBeamWeapon && !Ewar;
             OnHitDeathSync = !FullSync && ammo.AmmoDef.Sync.OnHitDeath && session.MpActive && !IsBeamWeapon && !Ewar;
 
             PreComputedMath = new PreComputedMath(ammo, this);
