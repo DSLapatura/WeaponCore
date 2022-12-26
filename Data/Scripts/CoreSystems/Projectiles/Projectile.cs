@@ -401,7 +401,7 @@ namespace CoreSystems.Projectiles
                 construct.TotalProjectileEffect += Info.DamageDoneProj;
             }
 
-            if (aConst.IsDrone || aConst.IsSmart) 
+            if (!Info.IsFragment && (aConst.IsDrone || aConst.IsSmart)) 
                 Info.Weapon.LiveSmarts--;
 
             PruningProxyId = -1;
