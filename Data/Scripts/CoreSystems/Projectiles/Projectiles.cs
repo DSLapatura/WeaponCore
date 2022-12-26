@@ -187,7 +187,7 @@ namespace CoreSystems.Projectiles
                     case ProjectileState.OneAndDone:
                     case ProjectileState.Depleted:
                     case ProjectileState.Detonate:
-                        if (info.Age == 0 && aConst.IsBeamWeapon)
+                        if (aConst.IsBeamWeapon && info.Age == 0)
                             break;
 
                         p.ProjectileClose();
