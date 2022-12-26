@@ -169,7 +169,8 @@ namespace CoreSystems.Support
             MuzzleId = info.MuzzleId;
             UniqueMuzzleId = info.UniqueMuzzleId;
             MaxSpeed = maxSpeed;
-            ShootVelStep = !info.IsFragment ? info.ShooterVel * MyEngineConstants.PHYSICS_STEP_SIZE_IN_SECONDS : Vector3D.Zero;
+            var useShooterVel = !info.IsFragment && !AmmoDef.Const.IsSmart && !AmmoDef.Const.IsDrone;
+            ShootVelStep = useShooterVel ? info.ShooterVel * MyEngineConstants.PHYSICS_STEP_SIZE_IN_SECONDS : Vector3D.Zero;
             Weapon = info.Weapon;
             MaxTrajectory = info.MaxTrajectory;
             ShotFade = info.ShotFade;
@@ -439,7 +440,7 @@ namespace CoreSystems.Support
             var extStart = Back && firstStep && VisualLength < ShortStepSize;
             Vector3D frontPos;
             Vector3D backPos;
-            var stopVel = shrinking || hit || AmmoDef.Const.IsSmart;
+            var stopVel = shrinking || hit;
             var velStep = !stopVel ? ShootVelStep : Vector3D.Zero;
 
             if (shrinking)

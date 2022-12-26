@@ -10,8 +10,6 @@ using VRageMath;
 using static CoreSystems.Support.HitEntity.Type;
 using static CoreSystems.Support.WeaponDefinition;
 using static CoreSystems.Support.Ai;
-using System.Runtime.CompilerServices;
-using VRage.Utils;
 
 namespace CoreSystems.Support
 {
