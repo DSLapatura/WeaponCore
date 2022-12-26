@@ -439,7 +439,7 @@ namespace CoreSystems.Support
             var extStart = Back && firstStep && VisualLength < ShortStepSize;
             Vector3D frontPos;
             Vector3D backPos;
-            var stopVel = shrinking || hit;
+            var stopVel = shrinking || hit || AmmoDef.Const.IsSmart;
             var velStep = !stopVel ? ShootVelStep : Vector3D.Zero;
 
             if (shrinking)

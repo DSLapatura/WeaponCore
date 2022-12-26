@@ -734,7 +734,7 @@ namespace CoreSystems.Support
             shotFadeStep = 1f / changeFadeSteps;
 
             trajectoryStep = MaxTrajectoryGrows ? MaxTrajectory / ammo.AmmoDef.Trajectory.MaxTrajectoryTime : MaxTrajectory;
-            alwaysDraw = (Trail || HasShotFade) && RealShotsPerSec < 0.1;
+            alwaysDraw = (Trail || HasShotFade) && RealShotsPerSec < 0.1 || ammo.AmmoDef.AmmoGraphics.Lines.Tracer.AlwaysDraw || ammo.AmmoDef.AmmoGraphics.Lines.Trail.AlwaysDraw;
         }
 
         private void Fragments(WeaponSystem.AmmoType ammo, out bool hasFragmentOffset, out bool hasNegFragmentOffset, out float fragmentOffset, out float fragRadial, out float fragDegrees, out bool fragReverse, out bool fragDropVelocity, out int fragMaxChildren, out bool fragIgnoreArming, out bool fragOnArmed, out bool fragOnEnd, out bool hasFragOffset, out Vector3D fragOffset)

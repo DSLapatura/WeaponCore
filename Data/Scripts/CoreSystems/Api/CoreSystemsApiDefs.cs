@@ -829,6 +829,7 @@ namespace CoreSystems.Api
                             [ProtoMember(7)] internal SegmentDef Segmentation;
                             [ProtoMember(8)] internal string[] Textures;
                             [ProtoMember(9)] internal Texture TextureMode;
+                            [ProtoMember(10)] internal bool AlwaysDraw;
 
                             [ProtoContract]
                             public struct SegmentDef
@@ -861,7 +862,7 @@ namespace CoreSystems.Api
                             [ProtoMember(8)] internal bool UseColorFade;
                             [ProtoMember(9)] internal string[] Textures;
                             [ProtoMember(10)] internal Texture TextureMode;
-
+                            [ProtoMember(11)] internal bool AlwaysDraw;
                         }
                     }
 
