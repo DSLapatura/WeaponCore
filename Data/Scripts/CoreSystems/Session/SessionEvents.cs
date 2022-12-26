@@ -79,6 +79,8 @@ namespace CoreSystems
                         {
                             if (turret != null)
                                 VanillaTurretTick = Tick;
+                            if (cube != null)
+                                MyAPIGateway.Utilities.InvokeOnGameThread(() => RemoveIncompatibleBlock(cube));
                             return;
                         }
 

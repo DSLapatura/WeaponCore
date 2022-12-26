@@ -806,6 +806,30 @@ namespace CoreSystems
             }
         }
 
+        private uint _lastIncompatibleMessageTick = uint.MaxValue;
+        internal void RemoveIncompatibleBlock(MyCubeBlock cube)
+        {
+            if (!cube.MarkedForClose)
+            {
+                var sendMessage = false;
+                if (_lastIncompatibleMessageTick == uint.MaxValue || Tick - _lastIncompatibleMessageTick > 600)
+                {
+                    _lastIncompatibleMessageTick = Tick;
+                    sendMessage = true;
+                }
+
+                if (sendMessage)
+                {
+                    if (DedicatedServer)
+                        Log.Line($"Removing incompatible vanilla weapon blocks");
+                    else 
+                        ShowLocalNotify("Sadly WeaponCore mods are not compatible with non-WeaponCore based weapons, you must use one or the other", 10000, "Red");
+                }
+
+                if (!cube.MarkedForClose && !cube.Closed)
+                    cube.CubeGrid.RemoveBlock(cube.SlimBlock);
+            }
+        }
 
         internal bool KeenFuckery()
         {
