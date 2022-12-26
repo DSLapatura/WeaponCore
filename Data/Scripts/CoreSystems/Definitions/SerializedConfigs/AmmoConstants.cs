@@ -728,9 +728,6 @@ namespace CoreSystems.Support
             }
         }
 
-
-
-
         private void ComputeSteps(WeaponSystem.AmmoType ammo, out float shotFadeStep, out float trajectoryStep, out bool alwaysDraw, out bool tracerAlwaysDraw, out bool trailAlwaysDraw, out bool avDropVelocity)
         {
             var changeFadeSteps = ammo.AmmoDef.AmmoGraphics.Lines.Tracer.VisualFadeEnd - ammo.AmmoDef.AmmoGraphics.Lines.Tracer.VisualFadeStart;
