@@ -155,7 +155,7 @@ namespace CoreSystems.Projectiles
 
                 if (Session.AdvSync && aConst.FullSync)
                 {
-                    if (Session.IsClient)
+                    if (Session.IsClient) 
                     {
                         var posSlot = (int)Math.Round(info.RelativeAge) % 30;
                         storage.PastProInfos[posSlot] =  p.Position;
@@ -163,9 +163,7 @@ namespace CoreSystems.Projectiles
                             p.SyncClientProjectile(posSlot);
                     }
                     else if (info.Age > 0 && info.Age % 29 == 0)
-                    {
                         p.SyncPosServerProjectile(p.State != ProjectileState.Alive ? ProtoProPositionSync.ProSyncState.Dead : ProtoProPositionSync.ProSyncState.Alive);
-                    }
                 }
 
                 if (storage.Sleep)
@@ -173,8 +171,7 @@ namespace CoreSystems.Projectiles
                     var prevCheck = info.PrevRelativeAge % 100;
                     var currentCheck = info.RelativeAge % 100;
                     var check = prevCheck < 0 || prevCheck > currentCheck;
-                    if (p.DeaccelRate > 300 && !check)
-                    {
+                    if (p.DeaccelRate > 300 && !check) {
                         p.DeaccelRate--;
                         continue;
                     }
@@ -201,32 +198,25 @@ namespace CoreSystems.Projectiles
 
                 if (p.EndState == EndStates.None) {
 
-                    if (p.State == ProjectileState.OneAndDone)
-                    {
+                    if (p.State == ProjectileState.OneAndDone) {
+
+                        info.DistanceTraveled = info.MaxTrajectory;
                         p.LastPosition = p.Position;
+                        
                         var beamEnd = p.Position + (info.Direction * info.MaxTrajectory);
                         p.TravelMagnitude = p.Position - beamEnd;
                         p.Position = beamEnd;
-
-                        info.PrevDistanceTraveled = info.DistanceTraveled;
-
-                        double distChanged;
-                        Vector3D.Dot(ref info.Direction, ref p.TravelMagnitude, out distChanged);
-                        info.DistanceTraveled += Math.Abs(distChanged);
-
                         p.EndState = EndStates.AtMaxRange;
                     }
-                    else
+                    else 
                     {
                         var pTarget = target.TargetObject as Projectile;
-                        if (pTarget != null && pTarget.State != ProjectileState.Alive)
-                        {
+                        if (pTarget != null && pTarget.State != ProjectileState.Alive) {
                             pTarget.Seekers.Remove(p);
                             target.Reset(Session.Tick, Target.States.ProjetileIntercept);
                         }
 
-                        if (aConst.FeelsGravity && MyUtils.IsValid(p.Gravity) && !MyUtils.IsZero(ref p.Gravity))
-                        {
+                        if (aConst.FeelsGravity && MyUtils.IsValid(p.Gravity) && !MyUtils.IsZero(ref p.Gravity)) {
                             p.Velocity += p.Gravity * (float)Session.DeltaStepConst;
                             if (!aConst.IsSmart && !aConst.IsDrone && aConst.AmmoSkipAccel)
                                 Vector3D.Normalize(ref p.Velocity, out info.Direction);
@@ -237,16 +227,14 @@ namespace CoreSystems.Projectiles
                             p.RunSmart();
                         else if (aConst.IsDrone)
                             p.RunDrone();
-                        else if (!aConst.AmmoSkipAccel && !info.EwarAreaPulse)
-                        {
+                        else if (!aConst.AmmoSkipAccel && !info.EwarAreaPulse) {
 
                             var accel = true;
                             Vector3D newVel;
                             var accelThisTick = info.Direction * (aConst.DeltaVelocityPerTick * Session.DeltaTimeRatio);
 
                             var maxSpeedSqr = p.MaxSpeed * p.MaxSpeed;
-                            if (p.DeaccelRate > 0)
-                            {
+                            if (p.DeaccelRate > 0) {
 
                                 var distToMax = info.MaxTrajectory - info.DistanceTraveled;
 
@@ -258,8 +246,7 @@ namespace CoreSystems.Projectiles
                                 p.VelocityLengthSqr = newVel.LengthSquared();
 
                                 if (accel && p.VelocityLengthSqr > maxSpeedSqr) newVel = info.Direction * p.MaxSpeed;
-                                else if (!accel && distToMax <= 0)
-                                {
+                                else if (!accel && distToMax <= 0) {
                                     newVel = Vector3D.Zero;
                                     p.VelocityLengthSqr = 0;
                                 }
@@ -294,22 +281,20 @@ namespace CoreSystems.Projectiles
                         Vector3D.Dot(ref info.Direction, ref p.TravelMagnitude, out distChanged);
                         info.DistanceTraveled += Math.Abs(distChanged);
 
-                        if (info.RelativeAge > aConst.MaxLifeTime)
-                        {
+                        if (info.RelativeAge > aConst.MaxLifeTime) {
                             p.DistanceToTravelSqr = (info.DistanceTraveled * info.DistanceTraveled);
                             p.EndState = EndStates.EarlyEnd;
                         }
 
-                        if (info.DistanceTraveled * info.DistanceTraveled >= p.DistanceToTravelSqr)
-                        {
+                        if (info.DistanceTraveled * info.DistanceTraveled >= p.DistanceToTravelSqr) {
+
                             if (!aConst.IsMine || storage.LastActivatedStage == -1)
                                 p.EndState = p.EndState == EndStates.EarlyEnd ? EndStates.AtMaxEarly : EndStates.AtMaxRange;
 
-                            if (p.DeaccelRate > 0)
-                            {
+                            if (p.DeaccelRate > 0) {
+
                                 p.DeaccelRate--;
-                                if (aConst.IsMine && storage.LastActivatedStage == -1 && info.Storage.RequestedStage != -2)
-                                {
+                                if (aConst.IsMine && storage.LastActivatedStage == -1 && info.Storage.RequestedStage != -2) {
                                     if (p.EnableAv) info.AvShot.Cloaked = info.AmmoDef.Trajectory.Mines.Cloak;
                                     storage.LastActivatedStage = -2;
                                 }
