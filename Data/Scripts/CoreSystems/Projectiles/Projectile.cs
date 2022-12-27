@@ -522,7 +522,6 @@ namespace CoreSystems.Projectiles
                             if (dist < aConst.SmartOffsetSqr + VelocityLengthSqr && Vector3.Dot(Info.Direction, Position - targetPos) > 0)
                                 OffSetTarget();
                         }
-
                         targetPos += OffsetTarget;
                     }
 
@@ -879,7 +878,6 @@ namespace CoreSystems.Projectiles
                 }
 
                 var heightOffset = s.OffsetDir * def.DesiredElevation;
-
                 var source = s.LookAtPos;
                 if (stageChange || def.AdjustDestinationPosition)
                 {
@@ -907,26 +905,27 @@ namespace CoreSystems.Projectiles
                             s.SetDestinationPos = Vector3D.Lerp(s.SetTargetPos, Position, 0.5);
                             break;
                         case VantagePointRelativeTo.Current:
-                            s.SetDestinationPos = Position + Info.Direction;
+                            s.SetDestinationPos = Position;
+                            break;
+                        case VantagePointRelativeTo.None:
+                            s.SetDestinationPos = Info.Target.TargetPos;
                             break;
                     }
                 }
-
+                var destination = s.SetDestinationPos;
                 if (def.OffsetMinRadius > 0 && def.OffsetTime > 0)
                 {
                     var prevCheck = Info.PrevRelativeAge % def.OffsetTime;
                     var currentCheck = Info.RelativeAge % def.OffsetTime;
                     if (prevCheck < 0 || prevCheck > currentCheck)
                         SetNavTargetOffset(def);
-
-                    s.SetDestinationPos += s.NavTargetBound.Center;
+                    destination += s.NavTargetBound.Center;
                 }
 
                 var heightStart = source + heightOffset;
-                var heightend = s.SetDestinationPos + heightOffset;
+                var heightend = destination + heightOffset;
                 var heightDir = heightend - heightStart;
                 var startToEndDist = heightDir.Normalize();
-
                 bool start1;
                 switch (def.StartCondition1)
                 {
@@ -941,13 +940,13 @@ namespace CoreSystems.Projectiles
                         break;
                     case Conditions.DistanceFromTarget: // could save a sqrt by inlining and using heightDir
                         if (Info.Ai.Session.DebugMod && Info.Ai.Session.HandlesInput)
-                            DsDebugDraw.DrawLine(heightend, s.SetDestinationPos, Color.Green, 10);
-                        start1 = MyUtils.GetPointLineDistance(ref heightend, ref s.SetDestinationPos, ref Position) - aConst.CollisionSize <= def.Start1Value;
+                            DsDebugDraw.DrawLine(heightend, destination, Color.Green, 10);
+                        start1 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize <= def.Start1Value;
                         break;
                     case Conditions.DistanceToTarget: // could save a sqrt by inlining and using heightDir
                         if (Info.Ai.Session.DebugMod && Info.Ai.Session.HandlesInput)
-                            DsDebugDraw.DrawLine(heightend, s.SetDestinationPos, Color.Green, 10);
-                        start1 = MyUtils.GetPointLineDistance(ref heightend, ref s.SetDestinationPos, ref Position) - aConst.CollisionSize >= def.Start1Value;
+                            DsDebugDraw.DrawLine(heightend, destination, Color.Green, 10);
+                        start1 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize >= def.Start1Value;
                         break;
                     case Conditions.Lifetime:
                         start1 = Info.RelativeAge >= def.Start1Value;
@@ -984,13 +983,13 @@ namespace CoreSystems.Projectiles
                         break;
                     case Conditions.DistanceFromTarget: // could save a sqrt by inlining and using heightDir
                         if (Info.Ai.Session.DebugMod)
-                            DsDebugDraw.DrawLine(heightend, s.SetDestinationPos, Color.Blue, 10);
-                        start2 = MyUtils.GetPointLineDistance(ref heightend, ref s.SetDestinationPos, ref Position) - aConst.CollisionSize <= def.Start2Value;
+                            DsDebugDraw.DrawLine(heightend, destination, Color.Blue, 10);
+                        start2 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize <= def.Start2Value;
                         break;
                     case Conditions.DistanceToTarget: 
                         if (Info.Ai.Session.DebugMod)
-                            DsDebugDraw.DrawLine(heightend, s.SetDestinationPos, Color.Green, 10);
-                        start2 = MyUtils.GetPointLineDistance(ref heightend, ref s.SetDestinationPos, ref Position) - aConst.CollisionSize >= def.Start2Value;
+                            DsDebugDraw.DrawLine(heightend, destination, Color.Green, 10);
+                        start2 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize >= def.Start2Value;
                         break;
                     case Conditions.Lifetime:
                         start2 = Info.RelativeAge >= def.Start2Value;
@@ -1039,7 +1038,6 @@ namespace CoreSystems.Projectiles
                     var desiredLead = (def.PushLeadByTravelDistance ? travelLead : 0) + def.LeadDistance;
                     var clampedLead = MathHelperD.Clamp(desiredLead, approach.ModFutureStep, double.MaxValue);
                     var leadPosition = heightStart + heightDir * clampedLead;
-
                     Vector3D heightAdjLeadPos;
                     switch (def.AdjustElevation)
                     {
@@ -1063,7 +1061,7 @@ namespace CoreSystems.Projectiles
                         }
                         case VantagePointRelativeTo.MidPoint:
                         {
-                            var projetedPos = Vector3D.Lerp(s.SetDestinationPos, leadPosition, 0.5);
+                            var projetedPos = Vector3D.Lerp(destination, leadPosition, 0.5);
                             var plane = new PlaneD(projetedPos, heightDir);
                             var distToPlane = plane.DistanceToPoint(leadPosition);
                             heightAdjLeadPos = leadPosition + (heightDir * distToPlane);
@@ -1078,7 +1076,7 @@ namespace CoreSystems.Projectiles
                         }
                         case VantagePointRelativeTo.Target:
                         {
-                            var plane = new PlaneD(s.SetDestinationPos, heightDir);
+                            var plane = new PlaneD(destination, heightDir);
                             var distToPlane = plane.DistanceToPoint(leadPosition);
                             heightAdjLeadPos = leadPosition + (heightDir * distToPlane);
                             break;
@@ -1090,22 +1088,31 @@ namespace CoreSystems.Projectiles
                             heightAdjLeadPos = leadPosition + (heightDir * distToPlane);
                             break;
                         }
+                        case VantagePointRelativeTo.None:
+                        {
+                            heightAdjLeadPos = s.SetTargetPos;
+                            break;
+                        }
                         default:
                             heightAdjLeadPos = leadPosition;
                             break;
                     }
 
-                    var destPerspectiveDir = Vector3D.Normalize(heightAdjLeadPos - s.SetDestinationPos);
-
-                    TargetPosition = MyUtils.LinePlaneIntersection(heightAdjLeadPos, heightDir, s.SetDestinationPos, destPerspectiveDir);
-                    
-                    if (def.Orbit)
+                    var destPerspectiveDir = Vector3D.Normalize(heightAdjLeadPos - destination);
+                    if (!def.Orbit)
+                    {
+                        if (def.AdjustElevation != VantagePointRelativeTo.None)
+                            TargetPosition = MyUtils.LinePlaneIntersection(heightAdjLeadPos, heightDir, destination, destPerspectiveDir);
+                        else
+                            TargetPosition = heightAdjLeadPos;
+                    }
+                    else
                         TargetPosition = ApproachOrbits(ref def, s.OffsetDir, heightAdjLeadPos, accelMpsMulti, speedCapMulti);
 
                     if (Info.Ai.Session.DebugMod && Info.Ai.Session.HandlesInput)
                     {
-                        DsDebugDraw.DrawLine(heightAdjLeadPos, s.SetDestinationPos, Color.White, 3);
-                        DsDebugDraw.DrawSingleVec(s.SetDestinationPos, 10, Color.LightSkyBlue);
+                        DsDebugDraw.DrawLine(heightAdjLeadPos, destination, Color.White, 3);
+                        DsDebugDraw.DrawSingleVec(destination, 10, Color.LightSkyBlue);
                     }
                 }
 
@@ -1136,14 +1143,14 @@ namespace CoreSystems.Projectiles
                         else
                         {
                             if (Info.Ai.Session.DebugMod && Info.Ai.Session.HandlesInput)
-                                DsDebugDraw.DrawLine(heightend, s.SetDestinationPos, Color.Red, 10);
-                            end1 = MyUtils.GetPointLineDistance(ref heightend, ref s.SetDestinationPos, ref Position) - aConst.CollisionSize <= def.End1Value;
+                                DsDebugDraw.DrawLine(heightend, destination, Color.Red, 10);
+                            end1 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize <= def.End1Value;
                         }
                         break;
                     case Conditions.DistanceToTarget: 
                         if (Info.Ai.Session.DebugMod && Info.Ai.Session.HandlesInput)
-                            DsDebugDraw.DrawLine(heightend, s.SetDestinationPos, Color.Green, 10);
-                        end1 = MyUtils.GetPointLineDistance(ref heightend, ref s.SetDestinationPos, ref Position) - aConst.CollisionSize >= def.End1Value;
+                            DsDebugDraw.DrawLine(heightend, destination, Color.Green, 10);
+                        end1 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize >= def.End1Value;
                         break;
                     case Conditions.Lifetime:
                         end1 = Info.RelativeAge >= def.End1Value;
@@ -1185,14 +1192,14 @@ namespace CoreSystems.Projectiles
                         else
                         {
                             if (Info.Ai.Session.DebugMod && Info.Ai.Session.HandlesInput)
-                                DsDebugDraw.DrawLine(heightend, s.SetDestinationPos, Color.Yellow, 10);
-                            end2 = MyUtils.GetPointLineDistance(ref heightend, ref s.SetDestinationPos, ref Position) - aConst.CollisionSize <= def.End2Value;
+                                DsDebugDraw.DrawLine(heightend, destination, Color.Yellow, 10);
+                            end2 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize <= def.End2Value;
                         }
                         break;
                     case Conditions.DistanceToTarget: 
                         if (Info.Ai.Session.DebugMod && Info.Ai.Session.HandlesInput)
-                            DsDebugDraw.DrawLine(heightend, s.SetDestinationPos, Color.Green, 10);
-                        end2 = MyUtils.GetPointLineDistance(ref heightend, ref s.SetDestinationPos, ref Position) - aConst.CollisionSize >= def.End2Value;
+                            DsDebugDraw.DrawLine(heightend, destination, Color.Green, 10);
+                        end2 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize >= def.End2Value;
                         break;
                     case Conditions.Lifetime:
                         end2 = Info.RelativeAge >= def.End2Value;
@@ -1231,12 +1238,12 @@ namespace CoreSystems.Projectiles
                 {
                     var hasNextStep = s.RequestedStage + 1 < aConst.ApproachesCount;
                     var isActive = s.LastActivatedStage >= 0;
-                    var activeNext = isActive && def.RestartCondition != ReInitCondition.ForceRestart && (def.RestartCondition == ReInitCondition.Wait || def.RestartCondition == ReInitCondition.MoveToPrevious || def.RestartCondition == ReInitCondition.MoveToNext);
-                    var inActiveNext = !isActive && def.RestartCondition == ReInitCondition.MoveToNext;
+                    var activeNext = isActive && !def.ForceRestart && (def.RestartCondition == ReInitCondition.Wait || def.RestartCondition == ReInitCondition.MoveToPrevious || def.RestartCondition == ReInitCondition.MoveToNext);
+                    var inActiveNext = !isActive && !def.ForceRestart && def.RestartCondition == ReInitCondition.MoveToNext;
                     var moveForward = hasNextStep && (activeNext || inActiveNext);
-                    var failBackwards = def.RestartCondition == ReInitCondition.MoveToPrevious && !isActive || def.RestartCondition == ReInitCondition.ForceRestart || def.ForceRestart;
+                    var reStart = def.RestartCondition == ReInitCondition.MoveToPrevious && !isActive || def.RestartCondition == ReInitCondition.ForceRestart;
 
-                    if (def.EndEvent == StageEvents.EndProjectile || def.EndEvent == StageEvents.EndProjectileOnRestart && (failBackwards || !moveForward && hasNextStep)) {
+                    if (def.EndEvent == StageEvents.EndProjectile || def.EndEvent == StageEvents.EndProjectileOnRestart && (reStart || !moveForward && hasNextStep)) {
                         EndState = EndStates.EarlyEnd;
                         DistanceToTravelSqr = Info.DistanceTraveled * Info.DistanceTraveled;
                     }
@@ -1250,11 +1257,11 @@ namespace CoreSystems.Projectiles
                             Log.Line($"stageEnd: age:{Info.RelativeAge} - next: {s.RequestedStage} - last:{oldLast} - eCon1:{def.EndCondition1} - eCon2:{def.EndCondition2}");
                         ProcessStage(ref accelMpsMulti, ref speedCapMulti, targetPos, s.LastActivatedStage, targetLock);
                     }
-                    else if (failBackwards)
+                    else if (reStart || def.ForceRestart)
                     {
                         s.LastActivatedStage = s.RequestedStage;
                         var prev = s.RequestedStage;
-                        s.RequestedStage = def.OnRestartRevertTo;
+                        s.RequestedStage = def.RestartCondition == ReInitCondition.MoveToPrevious ? prev : def.OnRestartRevertTo;
                         if (Info.Ai.Session.DebugMod)
                             Log.Line($"stageEnd:age:{Info.RelativeAge} - previous:{prev} to {s.RequestedStage} - eCon1:{def.EndCondition1} - eCon2:{def.EndCondition2}");
                     }
