@@ -829,7 +829,7 @@ namespace CoreSystems
                         else
                             ShowLocalNotify("Sadly WeaponCore mods are not compatible with non-WeaponCore based weapons, you must use one or the other", 10000, "Red");
                     }
-
+                    Log.Line($"{cube.BlockDefinition.Id.SubtypeName}");
                     if (!cube.MarkedForClose && !cube.Closed && !cube.CubeGrid.IsPreview && cube.CubeGrid.Physics != null && !cube.CubeGrid.MarkedForClose && IsServer)
                         cube.CubeGrid.RemoveBlock(cube.SlimBlock);
                 }

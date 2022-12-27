@@ -506,7 +506,7 @@ namespace CoreSystems
 
         internal readonly HashSet<string> VanillaWeaponCompatible = new HashSet<string>()
         {
-            "Large_SC_LaserDrillTurret",
+            "Large_SC_LaserDrillTurret", 
         };
 
         internal readonly Dictionary<string, int> VanillaLeadGroupMatch = new Dictionary<string, int>()

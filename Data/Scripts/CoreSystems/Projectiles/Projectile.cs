@@ -884,7 +884,7 @@ namespace CoreSystems.Projectiles
                     switch (def.AdjustDestination)
                     {
                         case VantagePointRelativeTo.Origin:
-                            s.SetDestinationPos = Info.Origin;
+                            s.SetDestinationPos = s.SetTargetPos; // change to origin in a few days
                             break;
                         case VantagePointRelativeTo.Shooter:
                             s.SetDestinationPos = Info.Weapon.MyPivotPos;
