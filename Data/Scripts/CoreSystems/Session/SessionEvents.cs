@@ -1,22 +1,17 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading;
 using CoreSystems.Platform;
 using CoreSystems.Support;
-using Sandbox.Definitions;
 using Sandbox.Game.Entities;
 using Sandbox.Game.EntityComponents;
-using Sandbox.Game.Weapons;
 using Sandbox.ModAPI;
 using Sandbox.ModAPI.Weapons;
 using SpaceEngineers.Game.ModAPI;
 using VRage.Collections;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
-using VRage.Groups;
 using VRageMath;
 using static CoreSystems.Support.Ai;
 using IMyControllableEntity = VRage.Game.ModAPI.Interfaces.IMyControllableEntity;
@@ -80,7 +75,7 @@ namespace CoreSystems
                             if (turret != null)
                                 VanillaTurretTick = Tick;
                             if (cube != null && (turret != null || controllableGun != null))
-                                MyAPIGateway.Utilities.InvokeOnGameThread(() => RemoveIncompatibleBlock(cube));
+                                FutureEvents.Schedule(RemoveIncompatibleBlock, cube, 10);
                             return;
                         }
 
