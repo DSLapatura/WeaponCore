@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using CoreSystems.Platform;
 using CoreSystems.Support;
@@ -74,7 +75,7 @@ namespace CoreSystems
                         {
                             if (turret != null)
                                 VanillaTurretTick = Tick;
-                            if (cube != null && (turret != null || controllableGun != null))
+                            if (cube != null && (turret != null || controllableGun != null) && (cube.BlockDefinition?.Id == null || !VanillaWeaponCompatible.Contains(cube.BlockDefinition.Id.SubtypeName)))
                                 FutureEvents.Schedule(RemoveIncompatibleBlock, cube, 10);
                             return;
                         }

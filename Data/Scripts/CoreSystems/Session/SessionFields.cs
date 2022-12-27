@@ -9,7 +9,6 @@ using CoreSystems.Settings;
 using CoreSystems.Support;
 using Jakaria.API;
 using ParallelTasks;
-using Sandbox.Engine.Physics;
 using Sandbox.Game;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
@@ -504,6 +503,11 @@ namespace CoreSystems
             "LargeProductivityModule", "LargeEffectivenessModule", "LargeEnergyModule",
         };
 
+
+        internal readonly HashSet<string> VanillaWeaponCompatible = new HashSet<string>()
+        {
+            "Large_SC_LaserDrillTurret",
+        };
 
         internal readonly Dictionary<string, int> VanillaLeadGroupMatch = new Dictionary<string, int>()
         {

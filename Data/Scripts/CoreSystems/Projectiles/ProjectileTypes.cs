@@ -410,7 +410,7 @@ namespace CoreSystems.Support
     internal class Fragments
     {
         internal List<Fragment> Sharpnel = new List<Fragment>();
-        internal void Init(Projectile p, Stack<Fragment> fragPool, AmmoDef ammoDef, bool timedSpawn, ref Vector3D newOrigin, ref Vector3D pointDir)
+        internal void Init(Projectile p, Stack<Fragment> fragPool, AmmoDef ammoDef, ref Vector3D newOrigin, ref Vector3D pointDir)
         {
             var info = p.Info;
             var target = info.Target;

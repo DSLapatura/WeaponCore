@@ -338,7 +338,6 @@ namespace CoreSystems.Projectiles
         {
             var aConst = Info.AmmoDef.Const;
             var session = Info.Ai.Session;
-
             if ((aConst.FragOnEnd && aConst.FragIgnoreArming || Info.RelativeAge >= aConst.MinArmingTime && (aConst.FragOnEnd || aConst.FragOnArmed && Info.ObjectsHit > 0)) && Info.SpawnDepth < aConst.FragMaxChildren)
                 SpawnShrapnel(false);
 
@@ -430,6 +429,7 @@ namespace CoreSystems.Projectiles
             var ai = Info.Ai;
             var session = ai.Session;
             var speedCapMulti = 1d;
+
             if (aConst.TimedFragments && Info.SpawnDepth < aConst.FragMaxChildren && Info.RelativeAge >= aConst.FragStartTime && Info.RelativeAge - Info.LastFragTime > aConst.FragInterval && Info.Frags < aConst.MaxFrags)
             {
                 if (!aConst.HasFragGroup || Info.Frags == 0 || Info.Frags % aConst.FragGroupSize != 0 || Info.RelativeAge - Info.LastFragTime >= aConst.FragGroupDelay)
@@ -2619,7 +2619,6 @@ namespace CoreSystems.Projectiles
             var aConst = ammoDef.Const;
             var patternIndex = aConst.FragPatternCount;
             var pattern = ammoDef.Pattern;
-
             if (aConst.FragmentPattern)
             {
                 if (pattern.Random)
@@ -2665,7 +2664,7 @@ namespace CoreSystems.Projectiles
                 if (!fireOnTarget)
                 {
                     pointDir = Info.Direction;
-                    if (aConst.IsDrone || aConst.IsSmart)
+                    if (aConst.UseAimCone)
                     {
                         var eTarget = Info.Target.TargetObject as MyEntity;
                         var pTarget = Info.Target.TargetObject as Projectile;
@@ -2678,13 +2677,29 @@ namespace CoreSystems.Projectiles
                         aimCone.ConeTip = Position;
                         aimCone.ConeAngle = aConst.DirectAimCone;
                         if (!MathFuncs.TargetSphereInCone(ref targetSphere, ref aimCone)) break;
-
-                        if ((aConst.FragPointType != PointTypes.Direct) && !TrajectoryEstimation(fragAmmoDef, ref newOrigin, out pointDir))
-                            continue;
                     }
                 }
-                else if (!TrajectoryEstimation(fragAmmoDef, ref newOrigin, out pointDir))
-                    continue;
+                else
+                {
+                    if (aConst.UseAimCone)
+                    {
+                        var eTarget = Info.Target.TargetObject as MyEntity;
+                        var pTarget = Info.Target.TargetObject as Projectile;
+
+                        var radius = eTarget != null ? eTarget.PositionComp.LocalVolume.Radius : pTarget != null ? pTarget.Info.AmmoDef.Const.CollisionSize : 1;
+                        var targetSphere = new BoundingSphereD(TargetPosition, radius);
+
+                        MathFuncs.Cone aimCone;
+                        aimCone.ConeDir = Info.Direction;
+                        aimCone.ConeTip = Position;
+                        aimCone.ConeAngle = aConst.DirectAimCone;
+                        if (!MathFuncs.TargetSphereInCone(ref targetSphere, ref aimCone)) break;
+                    }
+
+                    if (!TrajectoryEstimation(fragAmmoDef, ref newOrigin, out pointDir))
+                        continue;
+                }
+
 
                 spawn = true;
 
@@ -2701,7 +2716,7 @@ namespace CoreSystems.Projectiles
 
                 var projectiles = Info.Ai.Session.Projectiles;
                 var shrapnel = projectiles.ShrapnelPool.Count > 0 ? projectiles.ShrapnelPool.Pop() : new Fragments();
-                shrapnel.Init(this, projectiles.FragmentPool, fragAmmoDef, timedSpawn, ref newOrigin, ref pointDir);
+                shrapnel.Init(this, projectiles.FragmentPool, fragAmmoDef, ref newOrigin, ref pointDir);
                 projectiles.ShrapnelToSpawn.Add(shrapnel);
             }
 

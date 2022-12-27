@@ -152,10 +152,10 @@ namespace CoreSystems.Support
         public readonly int FragGroupDelay;
         public readonly int DeformDelay;
         public readonly uint FakeVoxelHitTicks;
+        public readonly bool UseAimCone;
         public readonly bool TracerAlwaysDraw;
         public readonly bool TrailAlwaysDraw;
         public readonly bool AvDropVelocity;
-        public readonly bool TrailDropVelocity;
         public readonly bool FocusEviction;
         public readonly bool FocusOnly;
         public readonly bool CheckFutureIntersection;
@@ -462,7 +462,7 @@ namespace CoreSystems.Support
             TargetLossDegree = ammo.AmmoDef.Trajectory.TargetLossDegree > 0 ? (float)Math.Cos(MathHelper.ToRadians(ammo.AmmoDef.Trajectory.TargetLossDegree)) : 0;
 
             Fragments(ammo, out HasFragmentOffset, out HasNegFragmentOffset, out FragmentOffset, out FragRadial, out FragDegrees, out FragReverse, out FragDropVelocity, out FragMaxChildren, out FragIgnoreArming, out FragOnArmed, out FragOnEnd, out HasAdvFragOffset, out FragOffset);
-            TimedSpawn(ammo, out TimedFragments, out FragStartTime, out FragInterval, out MaxFrags, out FragGroupSize, out FragGroupDelay, out FragProximity, out HasFragProximity, out FragParentDies, out FragPointAtTarget, out HasFragGroup, out FragPointType, out DirectAimCone);
+            TimedSpawn(ammo, out TimedFragments, out FragStartTime, out FragInterval, out MaxFrags, out FragGroupSize, out FragGroupDelay, out FragProximity, out HasFragProximity, out FragParentDies, out FragPointAtTarget, out HasFragGroup, out FragPointType, out DirectAimCone, out UseAimCone);
 
             FallOffDistance = AmmoModsFound && _modifierMap[FallOffDistanceStr].HasData() ? _modifierMap[FallOffDistanceStr].GetAsFloat : ammo.AmmoDef.DamageScales.FallOff.Distance;
 
@@ -758,7 +758,7 @@ namespace CoreSystems.Support
             fragOffset = ammo.AmmoDef.Fragment.AdvOffset;
         }
 
-        private void TimedSpawn(WeaponSystem.AmmoType ammo, out bool timedFragments, out int startTime, out int interval, out int maxSpawns, out int groupSize, out int groupDelay, out double proximity, out bool hasProximity, out bool parentDies, out bool pointAtTarget, out bool hasGroup, out PointTypes pointType, out float directAimCone)
+        private void TimedSpawn(WeaponSystem.AmmoType ammo, out bool timedFragments, out int startTime, out int interval, out int maxSpawns, out int groupSize, out int groupDelay, out double proximity, out bool hasProximity, out bool parentDies, out bool pointAtTarget, out bool hasGroup, out PointTypes pointType, out float directAimCone, out bool useAimCone)
         {
             timedFragments = ammo.AmmoDef.Fragment.TimedSpawns.Enable && HasFragment;
             startTime = ammo.AmmoDef.Fragment.TimedSpawns.StartTime;
@@ -772,8 +772,8 @@ namespace CoreSystems.Support
             groupDelay = ammo.AmmoDef.Fragment.TimedSpawns.GroupDelay;
             hasGroup = groupSize > 0 && groupDelay > 0;
             pointType = ammo.AmmoDef.Fragment.TimedSpawns.PointType;
-            var cone = ammo.AmmoDef.Fragment.TimedSpawns.DirectAimCone > 0 ? ammo.AmmoDef.Fragment.TimedSpawns.DirectAimCone : 360;
-            directAimCone = MathHelper.ToRadians(Math.Max(cone, 1));
+            useAimCone = ammo.AmmoDef.Fragment.TimedSpawns.DirectAimCone > 0;
+            directAimCone = MathHelper.ToRadians(Math.Max(ammo.AmmoDef.Fragment.TimedSpawns.DirectAimCone, 1));
         }
 
         private void ComputeApproaches(WeaponSystem.AmmoType ammo, WeaponDefinition wDef, out int approachesCount, out ApproachConstants[] approaches)

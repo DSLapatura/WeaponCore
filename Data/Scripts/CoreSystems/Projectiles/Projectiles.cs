@@ -302,6 +302,7 @@ namespace CoreSystems.Projectiles
                     }
                 }
 
+
                 if (aConst.Ewar)
                     p.RunEwar();
             }
