@@ -1325,6 +1325,7 @@ namespace CoreSystems.Api
                             Surface,
                             MidPoint,
                             Current,
+                            Nothing
                         }
 
                         public enum ConditionOperators

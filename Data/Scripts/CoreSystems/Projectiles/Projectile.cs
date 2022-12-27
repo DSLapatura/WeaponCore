@@ -907,7 +907,7 @@ namespace CoreSystems.Projectiles
                         case VantagePointRelativeTo.Current:
                             s.SetDestinationPos = Position;
                             break;
-                        case VantagePointRelativeTo.None:
+                        case VantagePointRelativeTo.Nothing:
                             s.SetDestinationPos = Info.Target.TargetPos;
                             break;
                     }
@@ -1088,7 +1088,7 @@ namespace CoreSystems.Projectiles
                             heightAdjLeadPos = leadPosition + (heightDir * distToPlane);
                             break;
                         }
-                        case VantagePointRelativeTo.None:
+                        case VantagePointRelativeTo.Nothing:
                         {
                             heightAdjLeadPos = s.SetTargetPos;
                             break;
@@ -1101,7 +1101,7 @@ namespace CoreSystems.Projectiles
                     var destPerspectiveDir = Vector3D.Normalize(heightAdjLeadPos - destination);
                     if (!def.Orbit)
                     {
-                        if (def.AdjustElevation != VantagePointRelativeTo.None)
+                        if (def.AdjustElevation != VantagePointRelativeTo.Nothing)
                             TargetPosition = MyUtils.LinePlaneIntersection(heightAdjLeadPos, heightDir, destination, destPerspectiveDir);
                         else
                             TargetPosition = heightAdjLeadPos;
