@@ -1303,12 +1303,12 @@ namespace CoreSystems.Support
                 [ProtoContract]
                 public struct ApproachDef
                 {
-                    public enum StartFailure
+                    public enum ReInitCondition
                     {
                         Wait,
                         MoveToPrevious,
                         MoveToNext,
-                        ForceReset,
+                        ForceRestart,
                     }
 
                     public enum Conditions
@@ -1334,13 +1334,14 @@ namespace CoreSystems.Support
 
                     public enum VantagePointRelativeTo
                     {
+                        Target,
                         Origin,
                         Shooter,
-                        Target,
                         Surface,
                         MidPoint,
                         Current,
                     }
+
                     public enum ConditionOperators
                     {
                         StartEnd_And,
@@ -1351,12 +1352,13 @@ namespace CoreSystems.Support
 
                     public enum StageEvents
                     {
-                        NoNothing,
+                        DoNothing,
                         EndProjectile,
-                        EndProjectileOnFailure,
+                        EndProjectileOnRestart,
                     }
 
-                    [ProtoMember(1)] internal StartFailure Failure;
+
+                    [ProtoMember(1)] internal ReInitCondition RestartCondition;
                     [ProtoMember(2)] internal Conditions StartCondition1;
                     [ProtoMember(3)] internal Conditions EndCondition1;
                     [ProtoMember(4)] internal UpRelativeTo UpDirection;
@@ -1373,7 +1375,7 @@ namespace CoreSystems.Support
                     [ProtoMember(15)] internal ParticleDef AlternateParticle;
                     [ProtoMember(16)] internal string AlternateSound;
                     [ProtoMember(17)] internal string AlternateModel;
-                    [ProtoMember(18)] internal int OnFailureRevertTo;
+                    [ProtoMember(18)] internal int OnRestartRevertTo;
                     [ProtoMember(19)] internal ParticleDef StartParticle;
                     [ProtoMember(20)] internal bool AdjustVantagePoint;
                     [ProtoMember(21)] internal bool AdjustUpDir;
@@ -1396,6 +1398,8 @@ namespace CoreSystems.Support
                     [ProtoMember(38)] internal double OffsetMinRadius;
                     [ProtoMember(39)] internal bool NoTimedSpawns;
                     [ProtoMember(40)] internal double OffsetMaxRadius;
+                    [ProtoMember(41)] internal bool ForceRestart;
+                    [ProtoMember(42)] internal VantagePointRelativeTo AdjustDestination;
                 }
 
                 [ProtoContract]

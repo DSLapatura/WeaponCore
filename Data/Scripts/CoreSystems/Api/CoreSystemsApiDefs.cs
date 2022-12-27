@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using ProtoBuf;
 using VRageMath;
+using static CoreSystems.Support.WeaponDefinition.AmmoDef.TrajectoryDef.ApproachDef;
 using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetDef;
 
 namespace CoreSystems.Api
@@ -1287,12 +1288,12 @@ namespace CoreSystems.Api
                     [ProtoContract]
                     public struct ApproachDef
                     {
-                        public enum StartFailure
+                        public enum ReInitCondition
                         {
                             Wait,
                             MoveToPrevious,
                             MoveToNext,
-                            ForceReset,
+                            ForceRestart,
                         }
 
                         public enum Conditions
@@ -1318,9 +1319,9 @@ namespace CoreSystems.Api
 
                         public enum VantagePointRelativeTo
                         {
+                            Target,
                             Origin,
                             Shooter,
-                            Target,
                             Surface,
                             MidPoint,
                             Current,
@@ -1336,12 +1337,13 @@ namespace CoreSystems.Api
 
                         public enum StageEvents
                         {
-                            NoNothing,
+                            DoNothing,
                             EndProjectile,
-                            EndProjectileOnFailure,
+                            EndProjectileOnRestart,
                         }
 
-                        [ProtoMember(1)] internal StartFailure Failure;
+
+                        [ProtoMember(1)] internal ReInitCondition RestartCondition;
                         [ProtoMember(2)] internal Conditions StartCondition1;
                         [ProtoMember(3)] internal Conditions EndCondition1;
                         [ProtoMember(4)] internal UpRelativeTo UpDirection;
@@ -1358,7 +1360,7 @@ namespace CoreSystems.Api
                         [ProtoMember(15)] internal ParticleDef AlternateParticle;
                         [ProtoMember(16)] internal string AlternateSound;
                         [ProtoMember(17)] internal string AlternateModel;
-                        [ProtoMember(18)] internal int OnFailureRevertTo;
+                        [ProtoMember(18)] internal int OnRestartRevertTo;
                         [ProtoMember(19)] internal ParticleDef StartParticle;
                         [ProtoMember(20)] internal bool AdjustVantagePoint;
                         [ProtoMember(21)] internal bool AdjustUpDir;
@@ -1378,9 +1380,11 @@ namespace CoreSystems.Api
                         [ProtoMember(35)] internal bool Orbit;
                         [ProtoMember(36)] internal double OrbitRadius;
                         [ProtoMember(37)] internal int OffsetTime;
-                        [ProtoMember(38)] internal double OffsetRadius;
+                        [ProtoMember(38)] internal double OffsetMinRadius;
                         [ProtoMember(39)] internal bool NoTimedSpawns;
                         [ProtoMember(40)] internal double OffsetMaxRadius;
+                        [ProtoMember(41)] internal bool ForceRestart;
+                        [ProtoMember(42)] internal VantagePointRelativeTo AdjustDestination;
                     }
 
                     [ProtoContract]

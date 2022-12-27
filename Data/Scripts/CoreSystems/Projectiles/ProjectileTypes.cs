@@ -202,6 +202,7 @@ namespace CoreSystems.Support
         internal DroneStatus DroneStat;
         internal DroneMission DroneMsn;
         internal Vector3D SetTargetPos;
+        internal Vector3D SetDestinationPos;
         internal Vector3D RandOffsetDir;
         internal Vector3D OffsetDir;
         internal Vector3D LookAtPos;
@@ -250,6 +251,7 @@ namespace CoreSystems.Support
             RandOffsetDir = Vector3D.Zero;
             OffsetDir = Vector3D.Zero;
             LookAtPos = Vector3D.Zero;
+            SetDestinationPos = Vector3D.Zero;
             NavTargetEnt = null;
             Obstacle.Entity = null;
             Obstacle.LastSeenTick = uint.MaxValue;
