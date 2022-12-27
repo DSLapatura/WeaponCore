@@ -815,25 +815,44 @@ namespace CoreSystems
             {
                 if (!cube.MarkedForClose)
                 {
-                    var sendMessage = false;
                     if (_lastIncompatibleMessageTick == uint.MaxValue || Tick - _lastIncompatibleMessageTick > 600)
                     {
                         _lastIncompatibleMessageTick = Tick;
-                        sendMessage = true;
+                        FutureEvents.Schedule(ReportIncompatibleBlocks, null, 10);
                     }
 
-                    if (sendMessage)
-                    {
-                        if (DedicatedServer)
-                            Log.Line($"Removing incompatible vanilla weapon blocks");
-                        else
-                            ShowLocalNotify("Sadly WeaponCore mods are not compatible with non-WeaponCore based weapons, you must use one or the other", 10000, "Red");
-                    }
-                    Log.Line($"{cube.BlockDefinition.Id.SubtypeName}");
                     if (!cube.MarkedForClose && !cube.Closed && !cube.CubeGrid.IsPreview && cube.CubeGrid.Physics != null && !cube.CubeGrid.MarkedForClose && IsServer)
-                        cube.CubeGrid.RemoveBlock(cube.SlimBlock);
+                    {
+                        if (cube.BlockDefinition?.Id.SubtypeName != null)
+                            _badBlocks.Add(cube.BlockDefinition.Id.SubtypeName);
+
+                        //cube.CubeGrid.RemoveBlock(cube.SlimBlock);
+                    }
                 }
             }
+        }
+
+        private readonly HashSet<string> _badBlocks = new HashSet<string>();
+        private void ReportIncompatibleBlocks(object o)
+        {
+            string listOfNames = string.Empty;
+            foreach (var s in _badBlocks)
+            {
+                listOfNames += $"{s}, ";
+            }
+
+            if (DedicatedServer)
+            {
+                Log.Line($"Removing incompatible vanilla weapon blocks");
+                Log.Line(listOfNames);
+
+            }
+            else
+            {
+                ShowLocalNotify("Sadly WeaponCore mods are not compatible with non-WeaponCore based weapons, you must use one or the other", 20000, "Red");
+                ShowLocalNotify(listOfNames, 20000, "Red");
+            }
+            _badBlocks.Clear();
         }
 
         internal bool KeenFuckery()

@@ -338,7 +338,9 @@ namespace CoreSystems.Projectiles
         {
             var aConst = Info.AmmoDef.Const;
             var session = Info.Ai.Session;
-            if ((aConst.FragOnEnd && aConst.FragIgnoreArming || Info.RelativeAge >= aConst.MinArmingTime && (aConst.FragOnEnd || aConst.FragOnArmed && Info.ObjectsHit > 0)) && Info.SpawnDepth < aConst.FragMaxChildren)
+            var normalfragSpawn = aConst.FragOnEnd && (aConst.FragIgnoreArming || Info.RelativeAge >= aConst.MinArmingTime);
+            var eolFragSpawn = aConst.FragOnEolArmed && Info.ObjectsHit > 0 && Info.RelativeAge >= aConst.MinArmingTime;
+            if ((normalfragSpawn || eolFragSpawn) && Info.SpawnDepth < aConst.FragMaxChildren)
                 SpawnShrapnel(false);
 
             for (int i = 0; i < Watchers.Count; i++) Watchers[i].DeadProjectiles.Add(this);
@@ -356,7 +358,7 @@ namespace CoreSystems.Projectiles
 
             State = ProjectileState.Dead;
 
-            var detExp = aConst.EndOfLifeAv && (!aConst.ArmOnlyOnHit || Info.ObjectsHit > 0);
+            var detExp = aConst.EndOfLifeAv && (!aConst.ArmOnlyOnEolHit || Info.ObjectsHit > 0);
 
             if (EnableAv)
             {
@@ -1098,16 +1100,20 @@ namespace CoreSystems.Projectiles
                             break;
                     }
 
-                    var destPerspectiveDir = Vector3D.Normalize(heightAdjLeadPos - destination);
-                    if (!def.Orbit)
+                    if (MyUtils.IsValid(heightAdjLeadPos - destination))
                     {
-                        if (def.AdjustElevation != VantagePointRelativeTo.Nothing)
-                            TargetPosition = MyUtils.LinePlaneIntersection(heightAdjLeadPos, heightDir, destination, destPerspectiveDir);
+                        var destPerspectiveDir = Vector3D.Normalize(heightAdjLeadPos - destination);
+                        if (!def.Orbit)
+                        {
+                            if (def.AdjustElevation != VantagePointRelativeTo.Nothing && !Vector3D.IsZero(heightDir - destPerspectiveDir))
+                                TargetPosition = MyUtils.LinePlaneIntersection(heightAdjLeadPos, heightDir, destination, destPerspectiveDir);
+                            else
+                                TargetPosition = heightAdjLeadPos;
+                        }
                         else
-                            TargetPosition = heightAdjLeadPos;
+                            TargetPosition = ApproachOrbits(ref def, s.OffsetDir, heightAdjLeadPos, accelMpsMulti, speedCapMulti);
                     }
-                    else
-                        TargetPosition = ApproachOrbits(ref def, s.OffsetDir, heightAdjLeadPos, accelMpsMulti, speedCapMulti);
+
 
                     if (Info.Ai.Session.DebugMod && Info.Ai.Session.HandlesInput)
                     {
