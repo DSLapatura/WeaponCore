@@ -1339,6 +1339,7 @@ namespace CoreSystems.Support
                         Target,
                         Surface,
                         MidPoint,
+                        Current,
                     }
                     public enum ConditionOperators
                     {

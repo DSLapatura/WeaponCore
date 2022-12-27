@@ -1323,7 +1323,9 @@ namespace CoreSystems.Api
                             Target,
                             Surface,
                             MidPoint,
+                            Current,
                         }
+
                         public enum ConditionOperators
                         {
                             StartEnd_And,

@@ -872,13 +872,30 @@ namespace CoreSystems.Projectiles
                         case VantagePointRelativeTo.MidPoint:
                             s.LookAtPos = Vector3D.Lerp(s.SetTargetPos, Position, 0.5);
                             break;
+                        case VantagePointRelativeTo.Current:
+                            s.LookAtPos = Position;
+                            break;
                     }
                 }
 
                 var heightOffset = s.OffsetDir * def.DesiredElevation;
 
                 var source = s.LookAtPos;
-                var destination = def.VantagePoint != VantagePointRelativeTo.Target ? (def.AdjustDestinationPosition ? s.SetTargetPos : Info.Target.TargetPos) : (def.AdjustDestinationPosition ? Position : Info.Origin);
+                Vector3D destination;
+                if (def.VantagePoint != VantagePointRelativeTo.Target)
+                {
+                    if (def.AdjustDestinationPosition)
+                        destination = s.SetTargetPos;
+                    else
+                        destination = Info.Target.TargetPos;
+                }
+                else
+                {
+                    if (def.AdjustDestinationPosition)
+                        destination = Position + Info.Direction;
+                    else
+                        destination = Info.Origin;
+                }
 
                 if (def.OffsetMinRadius > 0 && def.OffsetTime > 0)
                 {
@@ -1047,6 +1064,13 @@ namespace CoreSystems.Projectiles
                         case VantagePointRelativeTo.Target:
                         {
                             var plane = new PlaneD(destination, heightDir);
+                            var distToPlane = plane.DistanceToPoint(leadPosition);
+                            heightAdjLeadPos = leadPosition + (heightDir * distToPlane);
+                            break;
+                        }
+                        case VantagePointRelativeTo.Current:
+                        {
+                            var plane = new PlaneD(Position, heightDir);
                             var distToPlane = plane.DistanceToPoint(leadPosition);
                             heightAdjLeadPos = leadPosition + (heightDir * distToPlane);
                             break;
