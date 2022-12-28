@@ -2241,12 +2241,9 @@ namespace CoreSystems.Projectiles
                     newTarget = false;
                 }
 
-                if (Info.Ai.Session.AdvSync && aConst.FullSync)
-                {
+                if (Info.Ai.Session.AdvSyncServer && aConst.FullSync) {
                     if (Info.Target.TargetObject is MyEntity && eTarget != Info.Target.TargetObject)
-                    {
                         SyncTargetServerProjectile();
-                    }
                 }
             }
             else
