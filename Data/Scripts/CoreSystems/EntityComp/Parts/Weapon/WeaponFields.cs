@@ -33,7 +33,9 @@ namespace CoreSystems.Platform
         internal readonly List<MyCubeBlock> Top5 = new List<MyCubeBlock>();
         internal readonly HashSet<Weapon> Connections = new HashSet<Weapon>();
         internal readonly WeaponFrameCache WeaponCache = new WeaponFrameCache();
-        internal readonly ProtoProSync ProSync = new ProtoProSync();
+        internal readonly ProtoProPositionSync ProPositionSync = new ProtoProPositionSync();
+        internal readonly ProtoProTargetSync ProTargetSync = new ProtoProTargetSync();
+
         internal readonly MyLight Light;
         internal readonly ApiShootRequest ShootRequest;
         internal readonly WeaponSystem System;

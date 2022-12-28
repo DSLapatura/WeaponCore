@@ -162,7 +162,7 @@ namespace CoreSystems.Projectiles
                             p.SyncClientProjectile(posSlot);
                     }
                     else if (info.Age > 0 && info.Age % 29 == 0)
-                        p.SyncPosServerProjectile(p.State != ProjectileState.Alive ? ProtoProPositionSync.ProSyncState.Dead : ProtoProPositionSync.ProSyncState.Alive);
+                        p.SyncPosServerProjectile(p.State != ProjectileState.Alive ? ProtoProPosition.ProSyncState.Dead : ProtoProPosition.ProSyncState.Alive);
                 }
 
                 if (storage.Sleep)

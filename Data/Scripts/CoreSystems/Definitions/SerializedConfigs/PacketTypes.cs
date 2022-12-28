@@ -55,7 +55,7 @@ namespace CoreSystems
         EwaredBlocks,
         ClientReady,
         ProjectilePosSyncs,
-        ProjectileStateSyncsNotUsed,
+        ProjectileTargetSyncs,
         ControlComp,
         ControlState,
         ForceReload,
@@ -100,7 +100,7 @@ namespace CoreSystems
     [ProtoInclude(34, typeof(EwaredBlocksPacket))]
     [ProtoInclude(35, typeof(ClientReadyPacket))]
     [ProtoInclude(36, typeof(PaintedTargetPacket))]
-    [ProtoInclude(37, typeof(ProjectileSyncPosPacket))]
+    [ProtoInclude(37, typeof(ProjectileSyncPositionPacket))]
     [ProtoInclude(38, typeof(ULongUpdatePacket))]
     [ProtoInclude(39, typeof(ControlCompPacket))]
     [ProtoInclude(40, typeof(ControlStatePacket))]
@@ -108,6 +108,7 @@ namespace CoreSystems
     [ProtoInclude(42, typeof(DronePacket))]
     [ProtoInclude(43, typeof(HandWeaponDebugPacket))]
     [ProtoInclude(44, typeof(PingPacket))]
+    [ProtoInclude(45, typeof(ProjectileSyncTargetPacket))]
 
 
     public class Packet
@@ -171,9 +172,9 @@ namespace CoreSystems
     }
 
     [ProtoContract]
-    public class ProjectileSyncPosPacket : Packet
+    public class ProjectileSyncPositionPacket : Packet
     {
-        [ProtoMember(1)] internal List<ProtoProSync> Data = new List<ProtoProSync>();
+        [ProtoMember(1)] internal List<ProtoProPositionSync> Data = new List<ProtoProPositionSync>();
         [ProtoMember(2)] internal float CurrentOwl;
 
         public override void CleanUp()
@@ -188,6 +189,22 @@ namespace CoreSystems
         }
     }
 
+    [ProtoContract]
+    public class ProjectileSyncTargetPacket : Packet
+    {
+        [ProtoMember(1)] internal List<ProtoProTargetSync> Data = new List<ProtoProTargetSync>();
+
+        public override void CleanUp()
+        {
+            for (int i = 0; i < Data.Count; i++)
+            {
+                var d = Data[i];
+                d.Collection.Clear();
+            }
+            Data.Clear();
+            base.CleanUp();
+        }
+    }
 
     [ProtoContract]
     public class OverRidesPacket : Packet

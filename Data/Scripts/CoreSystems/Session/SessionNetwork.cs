@@ -99,6 +99,11 @@ namespace CoreSystems
                         ClientProjectilePosSyncs(packetObj);
                         break;
                     }
+                    case PacketType.ProjectileTargetSyncs:
+                    {
+                        ClientProjectileTargetSyncs(packetObj);
+                        break;
+                    }
                     case PacketType.HandWeaponDebug:
                     {
                         ClientHandDebug(packetObj);
@@ -407,23 +412,23 @@ namespace CoreSystems
         #endregion
 
         #region ProcessRequests
-        private void ClientReceivedPdPacket(byte[] rawData)
+        private void ClientReceivedDeathPacket(byte[] rawData)
         {
             try
             {
-                var pdSyncMonitor = MyAPIGateway.Utilities.SerializeFromBinary<ProtoPdSyncMonitor>(rawData);
-                if (pdSyncMonitor == null || pdSyncMonitor.Collection.Count == 0)
+                var deathSyncMonitor = MyAPIGateway.Utilities.SerializeFromBinary<ProtoDeathSyncMonitor>(rawData);
+                if (deathSyncMonitor == null || deathSyncMonitor.Collection.Count == 0)
                 {
                     Log.Line("ClientReceivedPdPacket null or empty packet");
                     return;
                 }
 
-                ++PdSyncPackets;
-                PdSyncDataSize += rawData.Length;
+                ++DeathSyncPackets;
+                DeathSyncDataSize += rawData.Length;
 
-                for (int i = 0; i < pdSyncMonitor.Collection.Count; i++)
+                for (int i = 0; i < deathSyncMonitor.Collection.Count; i++)
                 {
-                    var pdInfo = pdSyncMonitor.Collection[i];
+                    var pdInfo = deathSyncMonitor.Collection[i];
                     Projectile p = null;
                     Weapon w = null;
                     if (WeaponLookUp.TryGetValue(pdInfo.WeaponId, out w) && w.ProjectileSyncMonitor.TryGetValue(pdInfo.SyncId, out p) && (p.State == Projectile.ProjectileState.Alive || p.State == Projectile.ProjectileState.ClientPhantom))
@@ -433,22 +438,22 @@ namespace CoreSystems
                     else
                         Log.Line($"pdSyncNotFound: syncId:{pdInfo.SyncId} - wId:{pdInfo.WeaponId} - i:{i} - wFound:{w != null} - pFound:{p != null} - pState:{p?.State}");
                 }
-                pdSyncMonitor.Collection.Clear();
+                deathSyncMonitor.Collection.Clear();
 
             }
-            catch (Exception ex) { Log.Line($"Exception in ClientReceivedPdPacket: {ex}", null, true); }
+            catch (Exception ex) { Log.Line($"Exception in ClientReceivedDeathPacket: {ex}", null, true); }
         }
 
 
-        internal void ProcessPdSyncsForClients()
+        internal void ProcessDeathSyncsForClients()
         {
             if (!AdvSyncClient)
             {
                 var payLoad = MyAPIGateway.Utilities.SerializeToBinary(ProtoDeathSyncMonitor);
                 var playerCount = Players.Values.Count;
 
-                PdSyncPackets += playerCount;
-                PdSyncDataSize += playerCount * payLoad.Length;
+                DeathSyncPackets += playerCount;
+                DeathSyncDataSize += playerCount * payLoad.Length;
 
                 foreach (var p in Players.Values)
                 {
@@ -550,7 +555,13 @@ namespace CoreSystems
                     case PacketType.ProjectilePosSyncs:
                     {
                         pInfo.Packet.CleanUp();
-                        ProtoWeaponProPosPacketPool.Push((ProjectileSyncPosPacket)pInfo.Packet);
+                        ProtoWeaponProPosPacketPool.Push((ProjectileSyncPositionPacket)pInfo.Packet);
+                        break;
+                    }
+                    case PacketType.ProjectileTargetSyncs:
+                    {
+                        pInfo.Packet.CleanUp();
+                        ProtoWeaponProTargetPacketPool.Push((ProjectileSyncTargetPacket)pInfo.Packet);
                         break;
                     }
                     case PacketType.AiData:

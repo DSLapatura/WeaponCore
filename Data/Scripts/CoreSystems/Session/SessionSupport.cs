@@ -392,13 +392,13 @@ namespace CoreSystems
                 if (packetCount > 0) Log.LineShortDate($"(NINFO) - <{typeStr}> packets:[{packetCount}] dataTransfer:[{dataTransfer}] validPackets:[{validPackets}] invalidPackets:[{invalidPackets}] serverReceive:[{serverReceivers}({IsServer})] clientReceive:[{clientReceivers}] unknownReceive:[{noneReceivers}]", "net");
             }
 
-            if (PdSyncDataSize > 0)
+            if (DeathSyncDataSize > 0)
             {
-                var serverPackets = IsServer ? PdSyncPackets : 0;
-                var clientPackets = !IsServer ? PdSyncPackets : 0;
-                Log.LineShortDate($"(NINFO) - <PointDefenseSync> packets:[{PdSyncPackets}] dataTransfer:[{PdSyncDataSize}] validPackets:[{PdSyncPackets}] invalidPackets:[0] serverReceive:[{serverPackets}({IsServer})] clientReceive:[{clientPackets}] unknownReceive:[0]", "net");
-                PdSyncDataSize = 0;
-                PdSyncPackets = 0;
+                var serverPackets = IsServer ? DeathSyncPackets : 0;
+                var clientPackets = !IsServer ? DeathSyncPackets : 0;
+                Log.LineShortDate($"(NINFO) - <PointDefenseSync> packets:[{DeathSyncPackets}] dataTransfer:[{DeathSyncDataSize}] validPackets:[{DeathSyncPackets}] invalidPackets:[0] serverReceive:[{serverPackets}({IsServer})] clientReceive:[{clientPackets}] unknownReceive:[0]", "net");
+                DeathSyncDataSize = 0;
+                DeathSyncPackets = 0;
             }
 
             foreach (var list in Reporter.ReportData.Values)

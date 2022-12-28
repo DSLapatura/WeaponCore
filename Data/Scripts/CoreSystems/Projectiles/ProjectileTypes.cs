@@ -233,6 +233,8 @@ namespace CoreSystems.Support
                 {
                     for (int i = 0; i < PastProInfos.Length; i++)
                         PastProInfos[i] = Vector3D.Zero;
+
+                    p.Info.Weapon.ProjectileSyncMonitor.Remove(SyncId);
                 }
                 else if (SyncId != ulong.MaxValue)
                 {
@@ -525,7 +527,7 @@ namespace CoreSystems.Support
                     var syncPart2 = (ushort)((frag.SyncId >> 32) & 0x000000000000FFFF);
                     info.Storage.SyncId = ((ulong)syncPart1 << 48) | ((ulong)syncPart2 << 32) | ((ulong)info.SyncedFrags << 16) | info.SpawnDepth;
 
-                    if (aConst.PdDeathSync || aConst.OnHitDeathSync)
+                    if (aConst.PdDeathSync || aConst.OnHitDeathSync || aConst.FullSync)
                         p.Info.Weapon.ProjectileSyncMonitor[info.Storage.SyncId] = p;
                 }
 

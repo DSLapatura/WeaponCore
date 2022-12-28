@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using CoreSystems.Support;
 using Jakaria.API;
 using Sandbox.Game.Entities;
@@ -18,7 +17,6 @@ using static CoreSystems.Support.WeaponDefinition.AmmoDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.EwarDef.EwarType;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.FragmentDef.TimedSpawnDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.TrajectoryDef.ApproachDef;
-using static VRage.Render11.Shader.CacheGenerator;
 
 namespace CoreSystems.Projectiles
 {
@@ -452,7 +450,6 @@ namespace CoreSystems.Projectiles
                 s.SmartReady = true;
                 var fake = Info.Target.TargetState == Target.TargetStates.IsFake;
                 var hadTarget = HadTarget != HadTargetState.None;
-
                 var gaveUpChase = !fake && Info.RelativeAge - s.ChaseAge > aConst.MaxChaseTime && hadTarget;
                 var overMaxTargets = hadTarget && TargetsSeen > aConst.MaxTargets && aConst.MaxTargets != 0;
                
@@ -486,7 +483,7 @@ namespace CoreSystems.Projectiles
                 var seekFirstTarget = !hadTarget && !validTarget && s.PickTarget && (Info.RelativeAge > 120 && timeSlot || check && Info.IsFragment);
 
                 #region TargetTracking
-                if ((s.PickTarget && timeSlot || seekNewTarget || gaveUpChase && validTarget || isZombie || seekFirstTarget) && NewTarget() || validTarget)
+                if ((s.PickTarget && timeSlot|| seekNewTarget || gaveUpChase && validTarget || isZombie || seekFirstTarget) && NewTarget() || validTarget)
                 {
                     if (s.ZombieLifeTime > 0)
                     {
@@ -2243,6 +2240,14 @@ namespace CoreSystems.Projectiles
                     }
                     newTarget = false;
                 }
+
+                if (Info.Ai.Session.AdvSync && aConst.FullSync)
+                {
+                    if (Info.Target.TargetObject is MyEntity && eTarget != Info.Target.TargetObject)
+                    {
+                        SyncTargetServerProjectile();
+                    }
+                }
             }
             else
             {
@@ -2771,16 +2776,27 @@ namespace CoreSystems.Projectiles
             }
         }
 
-        internal void SyncPosServerProjectile(ProtoProPositionSync.ProSyncState state)
+        internal void SyncPosServerProjectile(ProtoProPosition.ProSyncState state)
         {
             var session = Info.Ai.Session;
-            var proSync = session.ProtoWeaponProSyncPosPool.Count > 0 ? session.ProtoWeaponProSyncPosPool.Pop() : new ProtoProPositionSync();
+            var proSync = session.ProtoWeaponProSyncPosPool.Count > 0 ? session.ProtoWeaponProSyncPosPool.Pop() : new ProtoProPosition();
             proSync.Position = Position;
             proSync.State = state;
             proSync.Velocity = Velocity;
             proSync.ProId = Info.Storage.SyncId;
-            Info.Weapon.ProSync.Collection.Add(proSync);
-            session.GlobalProPosSyncs[Info.Weapon.PartState.Id] = Info.Weapon.ProSync;
+            Info.Weapon.ProPositionSync.Collection.Add(proSync);
+            session.GlobalProPosSyncs[Info.Weapon.PartState.Id] = Info.Weapon.ProPositionSync;
+        }
+
+        internal void SyncTargetServerProjectile()
+        {
+            var session = Info.Ai.Session;
+            var proSync = session.ProtoWeaponProSyncTargetPool.Count > 0 ? session.ProtoWeaponProSyncTargetPool.Pop() : new ProtoProTarget();
+            proSync.ProId = Info.Storage.SyncId;
+            var targetId = ((MyEntity) Info.Target.TargetObject).EntityId;
+            proSync.EntityId = targetId;
+            Info.Weapon.ProTargetSync.Collection.Add(proSync);
+            session.GlobalProTargetSyncs[Info.Weapon.PartState.Id] = Info.Weapon.ProTargetSync;
         }
 
         internal void SyncClientProjectile(int posSlot)
@@ -2798,9 +2814,9 @@ namespace CoreSystems.Projectiles
 
                 if (RelativeTime - sync.UpdateTick <= 1 && sync.CurrentOwl < 30)
                 {
-                    var proPosSync = sync.ProPositionSync;
+                    var proPosSync = sync.ProPosition;
 
-                    if (proPosSync.State == ProtoProPositionSync.ProSyncState.Dead)
+                    if (proPosSync.State == ProtoProPosition.ProSyncState.Dead)
                     {
                         State = ProjectileState.Destroy;
                         w.WeaponProSyncs.Remove(Info.Storage.SyncId);

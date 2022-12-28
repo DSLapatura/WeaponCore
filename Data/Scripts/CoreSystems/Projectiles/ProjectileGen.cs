@@ -73,7 +73,7 @@ namespace CoreSystems.Projectiles
                 if (Session.AdvSync) {
                     storage.SyncId = ((ulong)w.Reload.EndId << 48) | ((ulong)w.ProjectileCounter << 32) | ((ulong)info.SyncedFrags << 16) | info.SpawnDepth;
 
-                    if (aConst.PdDeathSync || aConst.OnHitDeathSync)
+                    if (aConst.PdDeathSync || aConst.OnHitDeathSync || aConst.FullSync)
                         info.Weapon.ProjectileSyncMonitor[storage.SyncId] = p;
                 }
 

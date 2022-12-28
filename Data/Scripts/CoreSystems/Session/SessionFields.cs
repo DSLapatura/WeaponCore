@@ -107,8 +107,11 @@ namespace CoreSystems
         internal readonly Stack<MyEntity3DSoundEmitter> Emitters = new Stack<MyEntity3DSoundEmitter>(256);
         internal readonly Stack<VoxelCache> VoxelCachePool = new Stack<VoxelCache>(256);
         internal readonly Stack<DeferredBlockDestroy> DefferedDestroyPool = new Stack<DeferredBlockDestroy>(256);
-        internal readonly Stack<ProtoProPositionSync> ProtoWeaponProSyncPosPool = new Stack<ProtoProPositionSync>(256);
-        internal readonly Stack<ProjectileSyncPosPacket> ProtoWeaponProPosPacketPool = new Stack<ProjectileSyncPosPacket>(256);
+        internal readonly Stack<ProtoProPosition> ProtoWeaponProSyncPosPool = new Stack<ProtoProPosition>(256);
+        internal readonly Stack<ProtoProTarget> ProtoWeaponProSyncTargetPool = new Stack<ProtoProTarget>(32);
+
+        internal readonly Stack<ProjectileSyncPositionPacket> ProtoWeaponProPosPacketPool = new Stack<ProjectileSyncPositionPacket>(256);
+        internal readonly Stack<ProjectileSyncTargetPacket> ProtoWeaponProTargetPacketPool = new Stack<ProjectileSyncTargetPacket>(32);
 
         internal readonly Stack<List<MyTuple<Vector3D, object, float>>> ProHitPool = new Stack<List<MyTuple<Vector3D, object, float>>>(256);
 
@@ -181,7 +184,9 @@ namespace CoreSystems
         internal readonly Dictionary<WeaponDefinition.AmmoDef, Dictionary<string, string>> AmmoValuesMap = new Dictionary<WeaponDefinition.AmmoDef, Dictionary<string, string>>();
         internal readonly Dictionary<WeaponDefinition, Dictionary<string, string>> WeaponValuesMap = new Dictionary<WeaponDefinition, Dictionary<string, string>>();
         internal readonly Dictionary<ulong, Projectile> MonitoredProjectiles = new Dictionary<ulong, Projectile>();
-        internal readonly Dictionary<uint, ProtoProSync> GlobalProPosSyncs = new Dictionary<uint, ProtoProSync>();
+        internal readonly Dictionary<uint, ProtoProPositionSync> GlobalProPosSyncs = new Dictionary<uint, ProtoProPositionSync>();
+        internal readonly Dictionary<uint, ProtoProTargetSync> GlobalProTargetSyncs = new Dictionary<uint, ProtoProTargetSync>();
+
         internal readonly Dictionary<ulong, TickLatency> PlayerTickLatency = new Dictionary<ulong, TickLatency>();
         internal readonly Dictionary<long, DamageHandlerRegistrant> DamageHandlerRegistrants = new Dictionary<long, DamageHandlerRegistrant>();
         internal readonly Dictionary<long, Func<MyEntity, IMyCharacter, long, int, bool>> TargetFocusHandlers = new Dictionary<long, Func<MyEntity, IMyCharacter, long, int, bool>>();
@@ -286,7 +291,7 @@ namespace CoreSystems
 
         internal readonly Spectrum Spectrum;
 
-        internal readonly ProtoPdSyncMonitor ProtoDeathSyncMonitor = new ProtoPdSyncMonitor();
+        internal readonly ProtoDeathSyncMonitor ProtoDeathSyncMonitor = new ProtoDeathSyncMonitor();
         private readonly EwaredBlocksPacket _cachedEwarPacket = new EwaredBlocksPacket();
         private readonly SpinLockRef _dityGridLock = new SpinLockRef();
 
@@ -394,8 +399,8 @@ namespace CoreSystems
         internal int SimStepsLastSecond;
         internal int MenuDepth;
         internal int MainThreadId = 1;
-        internal int PdSyncPackets;
-        internal int PdSyncDataSize;
+        internal int DeathSyncPackets;
+        internal int DeathSyncDataSize;
         internal ulong MultiplayerId;
         internal ulong MuzzleIdCounter;
         internal ulong PhantomIdCounter;

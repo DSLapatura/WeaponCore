@@ -49,7 +49,8 @@ namespace CoreSystems.Platform
                         var w = collection[i];
 
                         w.PartState = Repo.Values.State.Weapons[i];
-                        w.ProSync.WeaponSyncId = w.PartState.Id;
+                        w.ProPositionSync.WeaponSyncId = w.PartState.Id;
+                        w.ProTargetSync.WeaponSyncId = w.PartState.Id;
 
                         w.Reload = Repo.Values.Reloads[i];
 
@@ -120,7 +121,9 @@ namespace CoreSystems.Platform
                         if (w != null)
                         {
                             w.PartState = state;
-                            w.ProSync.WeaponSyncId = w.PartState.Id;
+                            w.ProPositionSync.WeaponSyncId = w.PartState.Id;
+                            w.ProTargetSync.WeaponSyncId = w.PartState.Id;
+
                             w.Reload = reload;
                             w.ProtoWeaponAmmo = ammo;
 

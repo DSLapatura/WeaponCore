@@ -80,7 +80,8 @@ namespace CoreSystems
                 ws.Heat = 0;
                 ws.Overheated = false;
                 ws.Id = comp.Session.SyncWeaponId;
-                w.ProSync.WeaponSyncId = ws.Id;
+                w.ProPositionSync.WeaponSyncId = ws.Id;
+                w.ProTargetSync.WeaponSyncId = ws.Id;
                 comp.Session.WeaponLookUp[ws.Id] = w;
             }
 
@@ -129,15 +130,23 @@ namespace CoreSystems
 
 
     [ProtoContract]
-    public class ProtoProSync
+    public class ProtoProPositionSync
     {
 
         [ProtoMember(1)] public uint WeaponSyncId;
-        [ProtoMember(2)] public readonly List<ProtoProPositionSync> Collection = new List<ProtoProPositionSync>();
+        [ProtoMember(2)] public readonly List<ProtoProPosition> Collection = new List<ProtoProPosition>();
     }
 
     [ProtoContract]
-    public class ProtoProPositionSync 
+    public class ProtoProTargetSync
+    {
+
+        [ProtoMember(1)] public uint WeaponSyncId;
+        [ProtoMember(2)] public readonly List<ProtoProTarget> Collection = new List<ProtoProTarget>();
+    }
+
+    [ProtoContract]
+    public class ProtoProPosition 
     {
         public enum ProSyncState
         {
@@ -153,6 +162,13 @@ namespace CoreSystems
         [ProtoMember(4)] public Vector3D Position;
         [ProtoMember(5)] public Vector3 Velocity;
         [ProtoMember(6)] public ProSyncState State;
+    }
+
+    [ProtoContract]
+    public class ProtoProTarget
+    {
+        [ProtoMember(1)] public ulong ProId;
+        [ProtoMember(2)] public long EntityId;
     }
 
     [ProtoContract]
@@ -489,7 +505,8 @@ namespace CoreSystems
             if (oldId != Id)
             {
                 w.Comp.Session.WeaponLookUp[Id] = w;
-                w.ProSync.WeaponSyncId = Id;
+                w.ProPositionSync.WeaponSyncId = Id;
+                w.ProTargetSync.WeaponSyncId = Id;
             }
 
             if (!wasOver && Overheated)

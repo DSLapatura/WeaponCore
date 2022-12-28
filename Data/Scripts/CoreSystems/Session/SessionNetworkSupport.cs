@@ -123,7 +123,7 @@ namespace CoreSystems
 
         private void SendProjectilePosSyncs()
         {
-            var packet = ProtoWeaponProPosPacketPool.Count > 0 ? ProtoWeaponProPosPacketPool.Pop() : new ProjectileSyncPosPacket ();
+            var packet = ProtoWeaponProPosPacketPool.Count > 0 ? ProtoWeaponProPosPacketPool.Pop() : new ProjectileSyncPositionPacket ();
             
             var latencyMonActive = Tick - LastPongTick < 120;
             LastProSyncSendTick = Tick;
@@ -157,9 +157,45 @@ namespace CoreSystems
             };
         }
 
+        private void SendProjectileTargetSyncs()
+        {
+            var packet = ProtoWeaponProTargetPacketPool.Count > 0 ? ProtoWeaponProTargetPacketPool.Pop() : new ProjectileSyncTargetPacket();
+
+            var latencyMonActive = Tick - LastPongTick < 120;
+            LastProSyncSendTick = Tick;
+
+            foreach (var pSync in GlobalProTargetSyncs)
+            {
+                var sync = pSync.Value;
+                if (latencyMonActive)
+                    packet.Data.Add(sync);
+
+                foreach (var p in sync.Collection)
+                    ProtoWeaponProSyncTargetPool.Push(p);
+            }
+
+            GlobalProPosSyncs.Clear();
+
+            if (!latencyMonActive)
+            {
+                Log.Line($"PingPong not active");
+                ProtoWeaponProTargetPacketPool.Push(packet);
+                return;
+            }
+
+            packet.PType = PacketType.ProjectileTargetSyncs;
+            PrunedPacketsToClient[packet] = new PacketInfo
+            {
+                Function = RewriteAddClientLatency,
+                SpecialPlayerId = long.MinValue,
+                Packet = packet,
+                Entity = null,
+            };
+        }
+
         private object RewriteAddClientLatency(object o1, object o2)
         {
-            var proSync = (ProjectileSyncPosPacket)o1;
+            var proSync = (ProjectileSyncPositionPacket)o1;
             var targetSteamId = (ulong)o2;
 
             TickLatency tickLatency;

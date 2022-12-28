@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using CoreSystems.Platform;
+using CoreSystems.Projectiles;
 using CoreSystems.Support;
 using Sandbox.Game.Entities;
 using VRage.Game.Entity;
@@ -472,7 +473,7 @@ namespace CoreSystems
         private bool ClientProjectilePosSyncs(PacketObj data)
         {
             var packet = data.Packet;
-            var proPacket = (ProjectileSyncPosPacket)packet;
+            var proPacket = (ProjectileSyncPositionPacket)packet;
             if (proPacket.Data == null) return Error(data, Msg("ProSyncData"));
 
             for (int i = 0; i < proPacket.Data.Count; i++)
@@ -489,13 +490,51 @@ namespace CoreSystems
                         var sync = syncPacket.Collection[j];
                         ClientProSync oldSync;
                         w.WeaponProSyncs.TryGetValue(sync.ProId, out oldSync);
-                        w.WeaponProSyncs[sync.ProId] = new ClientProSync { ProPositionSync = sync, UpdateTick = (float) RelativeTime, CurrentOwl = proPacket.CurrentOwl };
+                        w.WeaponProSyncs[sync.ProId] = new ClientProSync { ProPosition = sync, UpdateTick = (float) RelativeTime, CurrentOwl = proPacket.CurrentOwl };
                     }
                 }
                 else 
                     Log.Line($"ClientProjectilePosSyncs failed");
             }
             
+            data.Report.PacketValid = true;
+
+            proPacket.CleanUp();
+            return true;
+        }
+
+        private bool ClientProjectileTargetSyncs(PacketObj data)
+        {
+            var packet = data.Packet;
+            var proPacket = (ProjectileSyncTargetPacket)packet;
+            if (proPacket.Data == null) return Error(data, Msg("ProSyncData"));
+
+            for (int i = 0; i < proPacket.Data.Count; i++)
+            {
+                var syncPacket = proPacket.Data[i];
+                Weapon w;
+                if (WeaponLookUp.TryGetValue(syncPacket.WeaponSyncId, out w))
+                {
+                    if (w.Comp?.Ai == null || w.Comp.Platform.State != CorePlatform.PlatformState.Ready)
+                        continue;
+
+                    for (int j = 0; j < syncPacket.Collection.Count; j++)
+                    {
+                        var sync = syncPacket.Collection[j];
+                        Projectile p;
+                        MyEntity target;
+                        if (w.ProjectileSyncMonitor.TryGetValue(sync.ProId, out p) && p.State == Projectile.ProjectileState.Alive && MyEntities.TryGetEntityById(sync.EntityId, out target) && target != p.Info.Target.TargetObject)
+                        {
+                            var topEntId = target.GetTopMostParent().EntityId;
+                            var targetPos = target.PositionComp.WorldAABB.Center;
+                            p.Info.Target.Set(target, targetPos, 0, 0, topEntId);
+                        }
+                    }
+                }
+                else
+                    Log.Line($"ClientProjectileTargetSyncs failed");
+            }
+
             data.Report.PacketValid = true;
 
             proPacket.CleanUp();

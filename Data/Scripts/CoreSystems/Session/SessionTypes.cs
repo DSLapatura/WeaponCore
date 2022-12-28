@@ -877,7 +877,7 @@ namespace CoreSystems
 
         internal struct ClientProSync
         {
-            internal ProtoProPositionSync ProPositionSync;
+            internal ProtoProPosition ProPosition;
 
             internal float UpdateTick;
             internal float CurrentOwl;
@@ -1095,7 +1095,7 @@ namespace CoreSystems
     }
 
     [ProtoContract]
-    public class ProtoPdSyncMonitor
+    public class ProtoDeathSyncMonitor
     {
         [ProtoMember(1)] public readonly List<ProjectileSync> Collection = new List<ProjectileSync>(32);
     }
