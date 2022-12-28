@@ -826,7 +826,7 @@ namespace CoreSystems
                         if (cube.BlockDefinition?.Id.SubtypeName != null)
                             _badBlocks.Add(cube.BlockDefinition.Id.SubtypeName);
 
-                        //cube.CubeGrid.RemoveBlock(cube.SlimBlock);
+                        cube.CubeGrid.RemoveBlock(cube.SlimBlock);
                     }
                 }
             }

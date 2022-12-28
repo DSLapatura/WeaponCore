@@ -1330,9 +1330,10 @@ namespace CoreSystems.Support
                         RelativeToGravity,
                         TargetDirection,
                         TargetVelocity,
+                        RelativeToStoredDestination,
                     }
 
-                    public enum VantagePointRelativeTo
+                    public enum RelativeTo
                     {
                         Origin,
                         Shooter,
@@ -1341,6 +1342,7 @@ namespace CoreSystems.Support
                         MidPoint,
                         Current,
                         Nothing,
+                        StoredDestination,
                     }
 
                     public enum ConditionOperators
@@ -1356,14 +1358,15 @@ namespace CoreSystems.Support
                         DoNothing,
                         EndProjectile,
                         EndProjectileOnRestart,
+                        StoreDestination,
                     }
 
 
                     [ProtoMember(1)] internal ReInitCondition RestartCondition;
                     [ProtoMember(2)] internal Conditions StartCondition1;
                     [ProtoMember(3)] internal Conditions EndCondition1;
-                    [ProtoMember(4)] internal UpRelativeTo UpDirection;
-                    [ProtoMember(5)] internal VantagePointRelativeTo VantagePoint;
+                    [ProtoMember(4)] internal UpRelativeTo Up;
+                    [ProtoMember(5)] internal RelativeTo Source;
                     [ProtoMember(6)] internal double AngleOffset;
                     [ProtoMember(7)] internal double Start1Value;
                     [ProtoMember(8)] internal double End1Value;
@@ -1371,22 +1374,22 @@ namespace CoreSystems.Support
                     [ProtoMember(10)] internal double DesiredElevation;
                     [ProtoMember(11)] internal double AccelMulti;
                     [ProtoMember(12)] internal double SpeedCapMulti;
-                    [ProtoMember(13)] internal bool AdjustDestinationPosition;
+                    [ProtoMember(13)] internal bool AdjustDestination;
                     [ProtoMember(14)] internal bool CanExpireOnceStarted;
                     [ProtoMember(15)] internal ParticleDef AlternateParticle;
                     [ProtoMember(16)] internal string AlternateSound;
                     [ProtoMember(17)] internal string AlternateModel;
                     [ProtoMember(18)] internal int OnRestartRevertTo;
                     [ProtoMember(19)] internal ParticleDef StartParticle;
-                    [ProtoMember(20)] internal bool AdjustVantagePoint;
-                    [ProtoMember(21)] internal bool AdjustUpDir;
+                    [ProtoMember(20)] internal bool AdjustSource;
+                    [ProtoMember(21)] internal bool AdjustUp;
                     [ProtoMember(22)] internal bool PushLeadByTravelDistance;
                     [ProtoMember(23)] internal double TrackingDistance;
                     [ProtoMember(24)] internal Conditions StartCondition2;
                     [ProtoMember(25)] internal double Start2Value;
                     [ProtoMember(26)] internal Conditions EndCondition2;
                     [ProtoMember(27)] internal double End2Value;
-                    [ProtoMember(28)] internal VantagePointRelativeTo AdjustElevation;
+                    [ProtoMember(28)] internal RelativeTo Elevation;
                     [ProtoMember(29)] internal double ElevationTolerance;
                     [ProtoMember(30)] internal ConditionOperators Operators;
                     [ProtoMember(31)] internal StageEvents StartEvent;
@@ -1400,7 +1403,7 @@ namespace CoreSystems.Support
                     [ProtoMember(39)] internal bool NoTimedSpawns;
                     [ProtoMember(40)] internal double OffsetMaxRadius;
                     [ProtoMember(41)] internal bool ForceRestart;
-                    [ProtoMember(42)] internal VantagePointRelativeTo AdjustDestination;
+                    [ProtoMember(42)] internal RelativeTo Destination;
                 }
 
                 [ProtoContract]

@@ -18,6 +18,7 @@ using static CoreSystems.Support.WeaponDefinition.AmmoDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.EwarDef.EwarType;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.FragmentDef.TimedSpawnDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.TrajectoryDef.ApproachDef;
+using static VRage.Render11.Shader.CacheGenerator;
 
 namespace CoreSystems.Projectiles
 {
@@ -782,9 +783,9 @@ namespace CoreSystems.Projectiles
             var s = Info.Storage;
 
             if (targetLock)
-                s.SetTargetPos = targetPos;
+                s.TargetPos = targetPos;
 
-            if (!Vector3D.IsZero(s.SetTargetPos))
+            if (!Vector3D.IsZero(s.TargetPos))
             {
                 if (s.RequestedStage == -1)
                 {
@@ -817,9 +818,9 @@ namespace CoreSystems.Projectiles
 
                 var planetExists = Info.MyPlanet != null;
 
-                if (def.AdjustUpDir || stageChange)
+                if (def.AdjustUp || stageChange)
                 {
-                    switch (def.UpDirection)
+                    switch (def.Up)
                     {
                         case UpRelativeTo.RelativeToBlock:
                             s.OffsetDir = Info.OriginUp;
@@ -828,10 +829,14 @@ namespace CoreSystems.Projectiles
                             s.OffsetDir = !planetExists ? Info.OriginUp : Vector3D.Normalize(Position - Info.MyPlanet.PositionComp.WorldAABB.Center);
                             break;
                         case UpRelativeTo.TargetDirection:
-                            s.OffsetDir = Vector3D.Normalize(s.SetTargetPos - Position);
+                            s.OffsetDir = Vector3D.Normalize(s.TargetPos - Position);
                             break;
                         case UpRelativeTo.TargetVelocity:
                             s.OffsetDir = !Vector3D.IsZero(PrevTargetVel) ? Vector3D.Normalize(PrevTargetVel) : Info.OriginUp;
+                            break;
+                        case UpRelativeTo.RelativeToStoredDestination:
+                            var dest = s.StoredDestination != Vector3D.Zero ? s.StoredDestination : s.TargetPos;
+                            s.OffsetDir = Vector3D.Normalize(dest - Position);
                             break;
                         default:
                             s.OffsetDir = Info.OriginUp;
@@ -848,20 +853,20 @@ namespace CoreSystems.Projectiles
                 }
 
                 Vector3D surfacePos = Vector3D.Zero;
-                if (stageChange || def.AdjustVantagePoint)
+                if (stageChange || def.AdjustSource)
                 {
-                    switch (def.VantagePoint)
+                    switch (def.Source)
                     {
-                        case VantagePointRelativeTo.Origin:
+                        case RelativeTo.Origin:
                             s.LookAtPos = Info.Origin;
                             break;
-                        case VantagePointRelativeTo.Shooter:
+                        case RelativeTo.Shooter:
                             s.LookAtPos = Info.Weapon.MyPivotPos;
                            break;
-                        case VantagePointRelativeTo.Target:
-                            s.LookAtPos = s.SetTargetPos;
+                        case RelativeTo.Target:
+                            s.LookAtPos = s.TargetPos;
                             break;
-                        case VantagePointRelativeTo.Surface:
+                        case RelativeTo.Surface:
                             if (planetExists)
                             {
                                 PlanetSurfaceHeightAdjustment(Position, Info.Direction, approach, out surfacePos);
@@ -870,51 +875,59 @@ namespace CoreSystems.Projectiles
                             else
                                 s.LookAtPos = Info.Origin;
                             break;
-                        case VantagePointRelativeTo.MidPoint:
-                            s.LookAtPos = Vector3D.Lerp(s.SetTargetPos, Position, 0.5);
+                        case RelativeTo.MidPoint:
+                            s.LookAtPos = Vector3D.Lerp(s.TargetPos, Position, 0.5);
                             break;
-                        case VantagePointRelativeTo.Current:
+                        case RelativeTo.Current:
                             s.LookAtPos = Position;
+                            break;
+                        case RelativeTo.StoredDestination:
+                            var dest = s.StoredDestination != Vector3D.Zero ? s.StoredDestination : s.TargetPos;
+                            s.LookAtPos = dest;
                             break;
                     }
                 }
 
                 var heightOffset = s.OffsetDir * def.DesiredElevation;
                 var source = s.LookAtPos;
-                if (stageChange || def.AdjustDestinationPosition)
+                if (stageChange || def.AdjustDestination)
                 {
-                    switch (def.AdjustDestination)
+                    switch (def.Destination)
                     {
-                        case VantagePointRelativeTo.Origin:
-                            s.SetDestinationPos = s.SetTargetPos; // change to origin in a few days
+                        case RelativeTo.Origin:
+                            s.DestinationPos = s.TargetPos; // change to origin in a few days
                             break;
-                        case VantagePointRelativeTo.Shooter:
-                            s.SetDestinationPos = Info.Weapon.MyPivotPos;
+                        case RelativeTo.Shooter:
+                            s.DestinationPos = Info.Weapon.MyPivotPos;
                             break;
-                        case VantagePointRelativeTo.Target:
-                            s.SetDestinationPos = s.SetTargetPos;
+                        case RelativeTo.Target:
+                            s.DestinationPos = s.TargetPos;
                             break;
-                        case VantagePointRelativeTo.Surface:
+                        case RelativeTo.Surface:
                             if (planetExists)
                             {
                                 PlanetSurfaceHeightAdjustment(Position, Info.Direction, approach, out surfacePos);
-                                s.SetDestinationPos = surfacePos;
+                                s.DestinationPos = surfacePos;
                             }
                             else
-                                s.SetDestinationPos = Info.Origin;
+                                s.DestinationPos = Info.Origin;
                             break;
-                        case VantagePointRelativeTo.MidPoint:
-                            s.SetDestinationPos = Vector3D.Lerp(s.SetTargetPos, Position, 0.5);
+                        case RelativeTo.MidPoint:
+                            s.DestinationPos = Vector3D.Lerp(s.TargetPos, Position, 0.5);
                             break;
-                        case VantagePointRelativeTo.Current:
-                            s.SetDestinationPos = Position;
+                        case RelativeTo.Current:
+                            s.DestinationPos = Position;
                             break;
-                        case VantagePointRelativeTo.Nothing:
-                            s.SetDestinationPos = Info.Target.TargetPos;
+                        case RelativeTo.StoredDestination:
+                            var dest = s.StoredDestination != Vector3D.Zero ? s.StoredDestination : s.TargetPos;
+                            s.DestinationPos = dest;
+                            break;
+                        case RelativeTo.Nothing:
+                            s.DestinationPos = Info.Target.TargetPos;
                             break;
                     }
                 }
-                var destination = s.SetDestinationPos;
+                var destination = s.DestinationPos;
                 if (def.OffsetMinRadius > 0 && def.OffsetTime > 0)
                 {
                     var prevCheck = Info.PrevRelativeAge % def.OffsetTime;
@@ -1016,6 +1029,97 @@ namespace CoreSystems.Projectiles
 
                 if (approach.StartAnd && start1 && start2 || !approach.StartAnd && (start1 || start2) || s.LastActivatedStage >= 0 && !def.CanExpireOnceStarted)
                 {
+
+
+                    accelMpsMulti = aConst.AccelInMetersPerSec * def.AccelMulti;
+                    speedCapMulti = def.SpeedCapMulti;
+
+                    var travelLead = Info.DistanceTraveled - s.StartDistanceTraveled >= def.TrackingDistance ? Info.DistanceTraveled : 0;
+                    var desiredLead = (def.PushLeadByTravelDistance ? travelLead : 0) + def.LeadDistance;
+                    var clampedLead = MathHelperD.Clamp(desiredLead, approach.ModFutureStep, double.MaxValue);
+                    var leadPosition = heightStart + heightDir * clampedLead;
+                    Vector3D heightAdjLeadPos;
+                    switch (def.Elevation)
+                    {
+                        case RelativeTo.Surface:
+                        {
+                            if (Info.MyPlanet != null && planetExists && def.Elevation == RelativeTo.Surface)
+                            {
+                                Vector3D followSurfacePos;
+                                heightAdjLeadPos = PlanetSurfaceHeightAdjustment(leadPosition, s.OffsetDir, approach, out followSurfacePos);
+                            }
+                            else
+                                heightAdjLeadPos = leadPosition;
+                            break;
+                        }
+                        case RelativeTo.Origin:
+                        {
+                            var plane = new PlaneD(Info.Origin, heightDir);
+                            var distToPlane = plane.DistanceToPoint(leadPosition);
+                            heightAdjLeadPos = leadPosition + (heightDir * distToPlane);
+                            break;
+                        }
+                        case RelativeTo.MidPoint:
+                        {
+                            var projetedPos = Vector3D.Lerp(destination, leadPosition, 0.5);
+                            var plane = new PlaneD(projetedPos, heightDir);
+                            var distToPlane = plane.DistanceToPoint(leadPosition);
+                            heightAdjLeadPos = leadPosition + (heightDir * distToPlane);
+                            break;
+                        }
+                        case RelativeTo.Shooter:
+                        {
+                            var plane = new PlaneD(Info.Weapon.MyPivotPos, heightDir);
+                            var distToPlane = plane.DistanceToPoint(leadPosition);
+                            heightAdjLeadPos = leadPosition + (heightDir * distToPlane);
+                            break;
+                        }
+                        case RelativeTo.Target:
+                        {
+                            var plane = new PlaneD(destination, heightDir);
+                            var distToPlane = plane.DistanceToPoint(leadPosition);
+                            heightAdjLeadPos = leadPosition + (heightDir * distToPlane);
+                            break;
+                        }
+                        case RelativeTo.Current:
+                        {
+                            var plane = new PlaneD(Position, heightDir);
+                            var distToPlane = plane.DistanceToPoint(leadPosition);
+                            heightAdjLeadPos = leadPosition + (heightDir * distToPlane);
+                            break;
+                        }
+                        case RelativeTo.StoredDestination:
+                        {
+                            var dest = s.StoredDestination != Vector3D.Zero ? s.StoredDestination : s.TargetPos;
+                            var plane = new PlaneD(dest, heightDir);
+                            var distToPlane = plane.DistanceToPoint(leadPosition);
+                            heightAdjLeadPos = leadPosition + (heightDir * distToPlane);
+                            break;
+                        }
+                        case RelativeTo.Nothing:
+                        {
+                            heightAdjLeadPos = s.TargetPos;
+                            break;
+                        }
+                        default:
+                            heightAdjLeadPos = leadPosition;
+                            break;
+                    }
+
+                    if (MyUtils.IsValid(heightAdjLeadPos - destination))
+                    {
+                        var destPerspectiveDir = Vector3D.Normalize(heightAdjLeadPos - destination);
+                        if (!def.Orbit)
+                        {
+                            if (def.Elevation != RelativeTo.Nothing && !Vector3D.IsZero(heightDir - destPerspectiveDir))
+                                TargetPosition = MyUtils.LinePlaneIntersection(heightAdjLeadPos, heightDir, destination, destPerspectiveDir);
+                            else
+                                TargetPosition = heightAdjLeadPos;
+                        }
+                        else
+                            TargetPosition = ApproachOrbits(ref def, s.OffsetDir, heightAdjLeadPos, accelMpsMulti, speedCapMulti);
+                    }
+
                     if (s.LastActivatedStage != s.RequestedStage)
                     {
                         if (Info.Ai.Session.DebugMod)
@@ -1030,90 +1134,11 @@ namespace CoreSystems.Projectiles
                                 break;
                             case StageEvents.DoNothing:
                                 break;
+                            case StageEvents.StoreDestination:
+                                s.StoredDestination = TargetPosition;
+                                break;
                         }
                     }
-
-                    accelMpsMulti = aConst.AccelInMetersPerSec * def.AccelMulti;
-                    speedCapMulti = def.SpeedCapMulti;
-
-                    var travelLead = Info.DistanceTraveled - s.StartDistanceTraveled >= def.TrackingDistance ? Info.DistanceTraveled : 0;
-                    var desiredLead = (def.PushLeadByTravelDistance ? travelLead : 0) + def.LeadDistance;
-                    var clampedLead = MathHelperD.Clamp(desiredLead, approach.ModFutureStep, double.MaxValue);
-                    var leadPosition = heightStart + heightDir * clampedLead;
-                    Vector3D heightAdjLeadPos;
-                    switch (def.AdjustElevation)
-                    {
-                        case VantagePointRelativeTo.Surface:
-                        {
-                            if (Info.MyPlanet != null && planetExists && def.AdjustElevation == VantagePointRelativeTo.Surface)
-                            {
-                                Vector3D followSurfacePos;
-                                heightAdjLeadPos = PlanetSurfaceHeightAdjustment(leadPosition, s.OffsetDir, approach, out followSurfacePos);
-                            }
-                            else
-                                heightAdjLeadPos = leadPosition;
-                            break;
-                        }
-                        case VantagePointRelativeTo.Origin:
-                        {
-                            var plane = new PlaneD(Info.Origin, heightDir);
-                            var distToPlane = plane.DistanceToPoint(leadPosition);
-                            heightAdjLeadPos = leadPosition + (heightDir * distToPlane);
-                            break;
-                        }
-                        case VantagePointRelativeTo.MidPoint:
-                        {
-                            var projetedPos = Vector3D.Lerp(destination, leadPosition, 0.5);
-                            var plane = new PlaneD(projetedPos, heightDir);
-                            var distToPlane = plane.DistanceToPoint(leadPosition);
-                            heightAdjLeadPos = leadPosition + (heightDir * distToPlane);
-                            break;
-                        }
-                        case VantagePointRelativeTo.Shooter:
-                        {
-                            var plane = new PlaneD(Info.Weapon.MyPivotPos, heightDir);
-                            var distToPlane = plane.DistanceToPoint(leadPosition);
-                            heightAdjLeadPos = leadPosition + (heightDir * distToPlane);
-                            break;
-                        }
-                        case VantagePointRelativeTo.Target:
-                        {
-                            var plane = new PlaneD(destination, heightDir);
-                            var distToPlane = plane.DistanceToPoint(leadPosition);
-                            heightAdjLeadPos = leadPosition + (heightDir * distToPlane);
-                            break;
-                        }
-                        case VantagePointRelativeTo.Current:
-                        {
-                            var plane = new PlaneD(Position, heightDir);
-                            var distToPlane = plane.DistanceToPoint(leadPosition);
-                            heightAdjLeadPos = leadPosition + (heightDir * distToPlane);
-                            break;
-                        }
-                        case VantagePointRelativeTo.Nothing:
-                        {
-                            heightAdjLeadPos = s.SetTargetPos;
-                            break;
-                        }
-                        default:
-                            heightAdjLeadPos = leadPosition;
-                            break;
-                    }
-
-                    if (MyUtils.IsValid(heightAdjLeadPos - destination))
-                    {
-                        var destPerspectiveDir = Vector3D.Normalize(heightAdjLeadPos - destination);
-                        if (!def.Orbit)
-                        {
-                            if (def.AdjustElevation != VantagePointRelativeTo.Nothing && !Vector3D.IsZero(heightDir - destPerspectiveDir))
-                                TargetPosition = MyUtils.LinePlaneIntersection(heightAdjLeadPos, heightDir, destination, destPerspectiveDir);
-                            else
-                                TargetPosition = heightAdjLeadPos;
-                        }
-                        else
-                            TargetPosition = ApproachOrbits(ref def, s.OffsetDir, heightAdjLeadPos, accelMpsMulti, speedCapMulti);
-                    }
-
 
                     if (Info.Ai.Session.DebugMod && Info.Ai.Session.HandlesInput)
                     {
@@ -1805,7 +1830,7 @@ namespace CoreSystems.Projectiles
                         else
                         {
                             s.NavTargetBound = new BoundingSphereD(fakeTarget.FakeInfo.WorldPosition, fragProx * 0.5f);
-                            s.SetTargetPos = fakeTarget.FakeInfo.WorldPosition;
+                            s.TargetPos = fakeTarget.FakeInfo.WorldPosition;
                             hasTarget = true;
                         }
                     }
