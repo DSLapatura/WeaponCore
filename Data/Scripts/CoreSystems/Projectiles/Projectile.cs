@@ -562,22 +562,12 @@ namespace CoreSystems.Projectiles
 
                     if (aConst.TargetLossDegree > 0 && Vector3D.DistanceSquared(Info.Origin, Position) >= aConst.SmartsDelayDistSqr)
                     {
-                        var prevLossCheck = Info.PrevRelativeAge % 20;
-                        var currentLossCheck = Info.RelativeAge % 20;
-                        var lossCheck = prevLossCheck < 0 || prevLossCheck > currentLossCheck;
-
-                        if (s.WasTracking && (lossCheck || Vector3.Dot(Direction, Position - targetPos) > 0) || !s.WasTracking)
+                        if (s.WasTracking && Vector3.Dot(Direction, Vector3D.Normalize(targetPos - Position)) < aConst.TargetLossDegree)
                         {
-                            var targetDir = -Direction;
-                            var refDir = Vector3D.Normalize(Position - targetPos);
-                            if (!MathFuncs.IsDotProductWithinTolerance(ref targetDir, ref refDir, aConst.TargetLossDegree))
-                            {
-                                if (s.WasTracking)
-                                    s.PickTarget = true;
-                            }
-                            else if (!s.WasTracking)
-                                s.WasTracking = true;
+                            s.PickTarget = true;
                         }
+                        else if (!s.WasTracking)
+                            s.WasTracking = true;
                     }
 
                     PrevTargetVel = tVel;
