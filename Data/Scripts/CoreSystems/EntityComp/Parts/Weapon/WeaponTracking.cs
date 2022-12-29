@@ -15,6 +15,7 @@ using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetD
 using CollisionLayers = Sandbox.Engine.Physics.MyPhysics.CollisionLayers;
 using static CoreSystems.Support.MathFuncs;
 using static CoreSystems.Settings.CoreSettings.ServerSettings;
+using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace CoreSystems.Platform
 {
@@ -371,8 +372,9 @@ namespace CoreSystems.Platform
             else if (r25 && (w.PrevRangeEvent != EventTriggers.TargetRanged25 || !w.RangeEventActive))
                 w.EventTriggerStateChanged(EventTriggers.TargetRanged25, true);
 
+
             var targetDir = targetPos - w.MyPivotPos;
-            var readyToTrack = validEstimate && !w.Comp.ResettingSubparts && (baseData.State.TrackingReticle || rangeToTargetSqr <= w.MaxTargetDistanceSqr && rangeToTargetSqr >= w.MinTargetDistanceSqr);
+            var readyToTrack = validEstimate && !w.Comp.ResettingSubparts && (w.Comp.ManualMode || w.Comp.PainterMode && rangeToTargetSqr <= w.ActiveAmmoDef.AmmoDef.Const.MaxTrajectorySqr && rangeToTargetSqr >= w.MinTargetDistanceSqr || rangeToTargetSqr <= w.MaxTargetDistanceSqr && rangeToTargetSqr >= w.MinTargetDistanceSqr);
             var locked = true;
             var isTracking = false;
 

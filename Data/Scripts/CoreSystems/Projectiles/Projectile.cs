@@ -594,10 +594,11 @@ namespace CoreSystems.Projectiles
 
                 var accelMpsMulti = speedLimitPerTick;
                 var aCount = aConst.ApproachesCount;
+                bool disableAvoidance = false;
                 if (aCount > 0 && s.RequestedStage < aCount && s.RequestedStage >= -1)
                 {
                     var callDepth = aCount;
-                    ProcessStage(ref accelMpsMulti, ref speedCapMulti, TargetPosition, s.RequestedStage, targetLock, callDepth);
+                    ProcessStage(ref accelMpsMulti, ref speedCapMulti, ref disableAvoidance, TargetPosition, s.RequestedStage, targetLock, callDepth);
                 }
 
                 #region Navigation
@@ -707,7 +708,7 @@ namespace CoreSystems.Projectiles
                     }
 
                     Vector3D moddedAccel;
-                    if (session.Tick - 1 == s.Obstacle.LastSeenTick && AvoidObstacle(Position + proposedVel, missileToTargetNorm, accelMpsMulti, out moddedAccel))
+                    if (!disableAvoidance && session.Tick - 1 == s.Obstacle.LastSeenTick && AvoidObstacle(Position + proposedVel, missileToTargetNorm, accelMpsMulti, out moddedAccel))
                         proposedVel = moddedAccel;
 
                     Vector3D.Normalize(ref proposedVel, out Info.Direction);
@@ -782,7 +783,7 @@ namespace CoreSystems.Projectiles
             return true;
         }
 
-        private void ProcessStage(ref double accelMpsMulti, ref double speedCapMulti, Vector3D targetPos, int lastActiveStage, bool targetLock, int callDepth)
+        private void ProcessStage(ref double accelMpsMulti, ref double speedCapMulti, ref bool disableAvoidance, Vector3D targetPos, int lastActiveStage, bool targetLock, int callDepth)
         {
             if (callDepth-- < 0) {
                 if (Info.Ai.Session.HandlesInput && Info.Ai.Session.DebugMod)
@@ -825,6 +826,7 @@ namespace CoreSystems.Projectiles
                 if (def.StartCondition1 == def.StartCondition2 || def.EndCondition1 == def.EndCondition2)
                     return; // bad modder, failed to read coreparts comment, fail silently so they drive themselves nuts
 
+                disableAvoidance = def.DisableAvoidance;
                 var planetExists = Info.MyPlanet != null;
 
                 if (def.AdjustUp || stageChange)

@@ -136,7 +136,7 @@ namespace CoreSystems.Support
 
                 if (tData.EntityId == 0)
                 {
-                    if (w.Target.TargetState == TargetStates.IsFake)
+                    if (w.Target.TargetState == TargetStates.IsFake || w.Target.TargetState == TargetStates.WasFake)
                         w.Target.Reset(w.System.Session.Tick, States.ServerReset);
                     else
                         w.DelayedTargetResetTick = w.System.Session.Tick + 30;
