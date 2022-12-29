@@ -654,7 +654,7 @@ namespace CoreSystems
                                 }
                             }
                         }
-                        else if (eTarget != null && eTarget.MarkedForClose || w.DelayedTargetResetTick == Tick && w.TargetData.EntityId == 0 && w.Target.HasTarget)
+                        else if (eTarget != null && eTarget.MarkedForClose || w.Target.HasTarget && w.Target.TargetObject == null || w.DelayedTargetResetTick == Tick && w.TargetData.EntityId == 0 && w.Target.TargetObject != null)
                         {
                             w.Target.Reset(w.System.Session.Tick, States.ServerReset);
                         }

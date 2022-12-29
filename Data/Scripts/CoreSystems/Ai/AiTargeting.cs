@@ -195,7 +195,6 @@ namespace CoreSystems.Support
                 }
                 else
                 {
-                    Log.Line($"1: x:{x} - collectionSize:{collection.Count} - deck:{deck[x - offset]} - chunk:{chunk} - numOfTargets:{numOfTargets} - adjTargets:{adjTargetCount} - topTargets:{w.System.TopTargets}");
                     info = collection[deck[x - offset]];
                 }
 
@@ -975,7 +974,6 @@ namespace CoreSystems.Support
             var system = w.System;
             var ai = w.Comp.MasterAi;
             var s = ai.Session;
-
             Vector3D weaponPos;
             if (p != null)
                 weaponPos = p.Position;
@@ -1006,7 +1004,6 @@ namespace CoreSystems.Support
                 }
 
             }
-
             if (totalBlocks < lastBlocks) lastBlocks = totalBlocks;
 
             int checkSize;
@@ -1098,7 +1095,7 @@ namespace CoreSystems.Support
                             var character = entity as IMyCharacter;
                             var dist = hitInfo.Fraction * targetDist;
 
-                            if (character == null && hitGrid == null && voxel == null || dist >= closest || hitGrid != null && (hitGrid.MarkedForClose || hitGrid.Physics == null || hitGrid.IsPreview || ai.AiType == AiTypes.Grid && hitGrid.IsSameConstructAs(ai.GridEntity)))
+                            if (character == null && hitGrid == null && voxel == null || dist >= closest || hitGrid != null && (hitGrid.MarkedForClose || hitGrid.Physics == null || hitGrid.IsPreview))
                                 continue;
 
                             TargetInfo otherInfo;
@@ -1259,8 +1256,6 @@ namespace CoreSystems.Support
             MyCubeBlock newEntity2 = null;
             MyCubeBlock newEntity3 = null;
 
-            var aimOrigin = p?.Position ?? w.MyPivotPos;
-
             Vector3D weaponPos;
             if (p != null)
                 weaponPos = p.Position;
@@ -1270,6 +1265,7 @@ namespace CoreSystems.Support
                 var targetNormDir = Vector3D.Normalize(info.Target.PositionComp.WorldAABB.Center - barrelPos);
                 weaponPos = barrelPos + (targetNormDir * w.MuzzleDistToBarrelCenter);
             }
+
             var ai = w.Comp.MasterAi;
             var s = ai.Session;
             var bestCubePos = Vector3D.Zero;
@@ -1319,11 +1315,72 @@ namespace CoreSystems.Support
                                 ai.Session.ClosestRayCasts++;
                                 w.AcquiredBlock = true;
 
-                                var targetDir = cubePos - w.BarrelOrigin;
-                                Vector3D targetDirNorm;
-                                Vector3D.Normalize(ref targetDir, out targetDirNorm);
+                                var targetDirNorm = Vector3D.Normalize(cubePos - w.BarrelOrigin);
+                                var testPos = w.BarrelOrigin + (targetDirNorm * w.MuzzleDistToBarrelCenter);
+                                var targetDist = Vector3D.Distance(testPos, cubePos);
 
+                                hitTmpList.Clear();
+
+                                bool acquire = false;
+                                double closest = double.MaxValue;
+                                var oneHalfKmSqr = 2250000;
                                 var rayStart = w.BarrelOrigin + (targetDirNorm * w.MuzzleDistToBarrelCenter);
+                                var lowFiVoxels = Vector3D.DistanceSquared(rayStart, cubePos) > oneHalfKmSqr && (ai.PlanetSurfaceInRange || ai.ClosestVoxelSqr <= oneHalfKmSqr);
+                                var filter = lowFiVoxels ? CollisionLayers.DefaultCollisionLayer : CollisionLayers.VoxelLod1CollisionLayer;
+
+                                physics.CastRay(rayStart, cubePos, hitTmpList, filter);
+                                for (int j = 0; j < hitTmpList.Count; j++)
+                                {
+                                    var hitInfo = hitTmpList[j];
+
+                                    var entity = hitInfo.HitEntity as MyEntity;
+                                    var hitGrid = entity as MyCubeGrid;
+                                    var voxel = entity as MyVoxelBase;
+                                    var character = entity as IMyCharacter;
+                                    var dist = hitInfo.Fraction * targetDist;
+
+                                    if (character == null && hitGrid == null && voxel == null || dist >= closest || hitGrid != null && (hitGrid.MarkedForClose || hitGrid.Physics == null || hitGrid.IsPreview))
+                                        continue;
+
+                                    TargetInfo otherInfo;
+                                    var knownTarget = ai.Targets.TryGetValue(entity, out otherInfo) && (otherInfo.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Enemies || otherInfo.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.Neutral || otherInfo.EntInfo.Relationship == MyRelationsBetweenPlayerAndBlock.NoOwnership);
+
+                                    var enemyCharacter = character != null && knownTarget;
+
+                                    if (character != null && !enemyCharacter)
+                                    {
+                                        if (dist < closest)
+                                        {
+                                            closest = dist;
+                                            acquire = false;
+                                        }
+                                    }
+
+                                    if (voxel != null)
+                                    {
+                                        if (dist < closest)
+                                        {
+                                            closest = dist;
+                                            acquire = false;
+                                        }
+                                    }
+                                    else if (hitGrid != null)
+                                    {
+                                        var bigOwners = hitGrid.BigOwners;
+                                        var noOwner = bigOwners.Count == 0;
+                                        var validTarget = noOwner || knownTarget;
+
+                                        if (dist < closest)
+                                        {
+                                            closest = dist;
+                                            acquire = validTarget;
+                                        }
+                                    }
+                                }
+
+                                if (acquire)
+                                    bestTest = true;
+                                /*
                                 var filter = w.System.NoVoxelLosCheck ? CollisionLayers.NoVoxelCollisionLayer : 15;
                                 physics.CastRay(rayStart, cubePos, hitTmpList, filter);
 
@@ -1371,8 +1428,8 @@ namespace CoreSystems.Support
                                             break;
                                     }
                                 }
-
-                                if (skip || hit == null)
+                                */
+                                if (!acquire)
                                     continue;
                             }
                         }
