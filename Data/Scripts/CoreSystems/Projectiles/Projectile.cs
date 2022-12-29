@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using CoreSystems.Platform;
 using CoreSystems.Support;
 using Jakaria.API;
 using Sandbox.Game.Entities;
@@ -144,6 +145,8 @@ namespace CoreSystems.Projectiles
             {
                 s.SmartSlot = Info.Random.Range(0, 10);
             }
+            var tTarget = Info.Target.TargetObject as Projectile;
+            var eTarget = Info.Target.TargetObject as MyEntity;
 
             switch (Info.Target.TargetState)
             {
@@ -151,8 +154,7 @@ namespace CoreSystems.Projectiles
                     HadTarget = HadTargetState.Projectile;
                     break;
                 case Target.TargetStates.IsProjectile:
-                    var tProjectile = Info.Target.TargetObject as Projectile;
-                    if (tProjectile == null)
+                    if (tTarget == null)
                     {
                         HadTarget = HadTargetState.None;
                         Info.Target.TargetState = Target.TargetStates.None;
@@ -161,15 +163,14 @@ namespace CoreSystems.Projectiles
                         break;
                     }
                     HadTarget = HadTargetState.Projectile;
-                    TargetPosition = tProjectile.Position;
-                    tProjectile.Seekers.Add(this);
+                    TargetPosition = tTarget.Position;
+                    tTarget.Seekers.Add(this);
                     break;
                 case Target.TargetStates.IsFake:
                     TargetPosition = Info.IsFragment ? TargetPosition : Vector3D.Zero;
                     HadTarget = HadTargetState.Fake;
                     break;
                 case Target.TargetStates.IsEntity:
-                    var eTarget = Info.Target.TargetObject as MyEntity;
                     if (eTarget == null)
                     {
                         HadTarget = HadTargetState.None;
@@ -213,6 +214,11 @@ namespace CoreSystems.Projectiles
                 s.RequestedStage = -2;
                 if (!MyUtils.IsZero(TargetPosition))
                 {
+                    Vector3D targetDir;
+                    Vector3D targetPos;
+                    if (TrajectoryEstimation(Info.AmmoDef, ref Position, out targetDir, out targetPos))
+                        TargetPosition = targetPos;
+
                     TargetPosition -= (Info.Direction * variance);
                 }
                 Vector3D.DistanceSquared(ref Info.Origin, ref TargetPosition, out DistanceToTravelSqr);
@@ -451,9 +457,10 @@ namespace CoreSystems.Projectiles
                 s.SmartReady = true;
                 var fake = Info.Target.TargetState == Target.TargetStates.IsFake;
                 var hadTarget = HadTarget != HadTargetState.None;
-                var gaveUpChase = !fake && Info.RelativeAge - s.ChaseAge > aConst.MaxChaseTime && hadTarget;
+                var clientSync = aConst.FullSync && Info.Ai.Session.AdvSyncClient;
+
+                var gaveUpChase = !fake && Info.RelativeAge - s.ChaseAge > aConst.MaxChaseTime && hadTarget && !clientSync;
                 var overMaxTargets = hadTarget && TargetsSeen > aConst.MaxTargets && aConst.MaxTargets != 0;
-               
                 bool validEntity = false;
                 if (Info.Target.TargetState == Target.TargetStates.IsEntity) {
                     var targetEnt = (MyEntity)Info.Target.TargetObject;
@@ -464,7 +471,8 @@ namespace CoreSystems.Projectiles
                         validEntity = IsFocusTarget(targetEnt);
                 }
 
-                var validTarget = fake || Info.Target.TargetState == Target.TargetStates.IsProjectile || validEntity;
+                var invalidate = !overMaxTargets || clientSync;
+                var validTarget = fake || Info.Target.TargetState == Target.TargetStates.IsProjectile || validEntity && invalidate;
                 var checkTime = HadTarget != HadTargetState.Projectile ? 30 : 10;
 
                 var prevSlotAge = (Info.PrevRelativeAge + s.SmartSlot) % checkTime;
@@ -480,11 +488,11 @@ namespace CoreSystems.Projectiles
                 var check = prevCheck < 0 || prevCheck > currentCheck;
 
                 var isZombie = aConst.CanZombie && hadTarget && !fake && !validTarget && s.ZombieLifeTime > 0 && zombieSlot;
-                var seekNewTarget = timeSlot && hadTarget && !validTarget;
+                var seekNewTarget = timeSlot && hadTarget && !validTarget && !overMaxTargets;
                 var seekFirstTarget = !hadTarget && !validTarget && s.PickTarget && (Info.RelativeAge > 120 && timeSlot || check && Info.IsFragment);
 
                 #region TargetTracking
-                if ((s.PickTarget && timeSlot|| seekNewTarget || gaveUpChase && validTarget || isZombie || seekFirstTarget) && !overMaxTargets && NewTarget() || validTarget)
+                if ((s.PickTarget && timeSlot && !clientSync || seekNewTarget || gaveUpChase && validTarget || isZombie || seekFirstTarget) && NewTarget() || validTarget)
                 {
                     if (s.ZombieLifeTime > 0)
                     {
@@ -579,7 +587,6 @@ namespace CoreSystems.Projectiles
                         Vector3D.DistanceSquared(ref Position, ref TargetPosition, out dist);
                         if (dist < aConst.SmartOffsetSqr + VelocityLengthSqr && Vector3.Dot(Info.Direction, Position - TargetPosition) > 0)
                         {
-
                             OffSetTarget(true);
                             TargetPosition += OffsetTarget;
                         }
@@ -2291,7 +2298,7 @@ namespace CoreSystems.Projectiles
             Info.Storage.PickTarget = false;
         }
 
-        internal bool TrajectoryEstimation(WeaponDefinition.AmmoDef ammoDef, ref Vector3D shooterPos, out Vector3D targetDirection)
+        internal bool TrajectoryEstimation(WeaponDefinition.AmmoDef ammoDef, ref Vector3D shooterPos, out Vector3D targetDirection, out Vector3D estimatedPosition)
         {
             var aConst = Info.AmmoDef.Const;
             var eTarget = Info.Target.TargetObject as MyEntity;
@@ -2300,6 +2307,7 @@ namespace CoreSystems.Projectiles
             if (eTarget?.GetTopMostParent()?.Physics?.LinearVelocity == null && pTarget == null)
             {
                 targetDirection = Vector3D.Zero;
+                estimatedPosition = Vector3D.Zero;
                 return false;
             }
 
@@ -2308,6 +2316,7 @@ namespace CoreSystems.Projectiles
             if (aConst.FragPointType == PointTypes.Direct)
             {
                 targetDirection = Vector3D.Normalize(targetPos - Position);
+                estimatedPosition = targetPos;
                 return true;
             }
 
@@ -2333,6 +2342,7 @@ namespace CoreSystems.Projectiles
             if (ttiDiff < 0)
             {
                 targetDirection = Info.Direction;
+                estimatedPosition = targetPos;
                 return aConst.FragPointType == PointTypes.Direct;
             }
 
@@ -2348,15 +2358,19 @@ namespace CoreSystems.Projectiles
 
                 if (aConst.FragPointType == PointTypes.Lead)
                 {
-                    targetDirection = Vector3D.Normalize((targetPos + timeToIntercept * (targetVel - shooterVel)) - shooterPos);
+
+                    estimatedPosition = targetPos + timeToIntercept * (targetVel - shooterVel);
+                    targetDirection = Vector3D.Normalize(estimatedPosition - shooterPos);
                     return true;
                 }
 
+                estimatedPosition = targetPos;
                 targetDirection = Info.Direction;
                 return false;
             }
 
-            targetDirection = Vector3D.Normalize(targetPos + timeToIntercept * (targetVel - shooterVel * 1) - shooterPos);
+            estimatedPosition = targetPos + timeToIntercept * (targetVel - shooterVel);
+            targetDirection = Vector3D.Normalize(estimatedPosition - shooterPos);
             return true;
         }
 
@@ -2747,7 +2761,8 @@ namespace CoreSystems.Projectiles
                         if (!MathFuncs.TargetSphereInCone(ref targetSphere, ref aimCone)) break;
                     }
 
-                    if (!TrajectoryEstimation(fragAmmoDef, ref newOrigin, out pointDir))
+                    Vector3D estimatedTargetPos;
+                    if (!TrajectoryEstimation(fragAmmoDef, ref newOrigin, out pointDir, out estimatedTargetPos))
                         continue;
                 }
 
