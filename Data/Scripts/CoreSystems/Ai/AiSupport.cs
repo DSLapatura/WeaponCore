@@ -192,7 +192,7 @@ namespace CoreSystems.Support
             }
         }
 
-        private static int[] GetDeck(ref int[] deck, int firstCard, int cardsToSort, int cardsToShuffle, ref XorShiftRandomStruct rng, int total = 0)
+        private static int[] GetDeck(ref int[] deck, int firstCard, int cardsToSort, int cardsToShuffle, ref XorShiftRandomStruct rng)
         {
             if (deck.Length < cardsToSort)
                 deck = new int[cardsToSort * 2];
@@ -204,8 +204,6 @@ namespace CoreSystems.Support
 
             var end = (startChunk > 0 ? startChunk * cardsToShuffle : cardsToShuffle);
             var start = (startChunk > 0 ? end - cardsToShuffle : 0) ;
-            if (total > 0)
-                Log.Line($"cards:{cardsToSort} - firstCard:{firstCard} - lastCard:{cardsToSort + firstCard} - rndStart:{start + firstCard} - rndEnd:{end + firstCard} - toShuffle:{cardsToShuffle} - total:{total}");
             for (int i = 0; i < cardsToSort; i++)
             {
                 int j;

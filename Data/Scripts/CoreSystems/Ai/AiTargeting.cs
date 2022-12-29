@@ -174,7 +174,7 @@ namespace CoreSystems.Support
             if (chunk + checkSize >= numOfTargets)
                 checkSize = numOfTargets - chunk;
 
-            var deck = GetDeck(ref session.TargetDeck, chunk, checkSize, w.System.TopTargets, ref w.TargetData.WeaponRandom.AcquireRandom, numOfTargets);
+            var deck = GetDeck(ref session.TargetDeck, chunk, checkSize, w.System.TopTargets, ref w.TargetData.WeaponRandom.AcquireRandom);
 
             var adjTargetCount = forceFoci && (offset > 0 || focusOnly) ? offset : (checkSize + offset);
             for (int x = 0; x < adjTargetCount; x++)
