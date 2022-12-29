@@ -64,17 +64,16 @@ namespace CoreSystems.Projectiles
 
                 if (aConst.IsDrone || aConst.IsSmart)
                 {
-                    storage.TargetPos = wTarget.TargetPos;
 
                     if (comp.FakeMode)
                         Session.PlayerDummyTargets.TryGetValue(repo.Values.State.PlayerId, out storage.DummyTargets);
                 }
 
                 if (Session.AdvSync) {
-                    storage.SyncId = ((ulong)w.Reload.EndId << 48) | ((ulong)w.ProjectileCounter << 32) | ((ulong)info.SyncedFrags << 16) | info.SpawnDepth;
+                    info.SyncId = ((ulong)w.Reload.EndId << 48) | ((ulong)w.ProjectileCounter << 32) | ((ulong)info.SyncedFrags << 16) | info.SpawnDepth;
 
                     if (aConst.PdDeathSync || aConst.OnHitDeathSync || aConst.FullSync)
-                        info.Weapon.ProjectileSyncMonitor[storage.SyncId] = p;
+                        info.Weapon.ProjectileSyncMonitor[info.SyncId] = p;
                 }
 
                 ++w.ProjectileCounter;
@@ -89,7 +88,7 @@ namespace CoreSystems.Projectiles
                 info.UniqueMuzzleId = muzzle.UniqueId;
                 w.WeaponCache.VirutalId = t != Kind.Virtual ? -1 : w.WeaponCache.VirutalId;
                 info.Origin = t != Kind.Client ? t != Kind.Virtual ? muzzle.Position : w.MyPivotPos : gen.Origin;
-                info.Direction = t != Kind.Client ? t != Kind.Virtual ? gen.Direction : w.MyPivotFwd : gen.Direction;
+                p.Direction = t != Kind.Client ? t != Kind.Virtual ? gen.Direction : w.MyPivotFwd : gen.Direction;
 
                 if (t == Kind.Client && !aConst.IsBeamWeapon) 
                     p.Velocity = gen.Velocity;
@@ -130,11 +129,14 @@ namespace CoreSystems.Projectiles
                     {
                         var v = virts[j];
                         p.VrPros.Add(v.Info);
+                        if (!v.Rotate)
+                            p.Direction = v.Muzzle.DeviatedDir;
+
                         if (!a.Const.RotateRealBeam) w.WeaponCache.VirutalId = 0;
                         else if (v.Rotate)
                         {
                             info.Origin = v.Muzzle.Position;
-                            info.Direction = v.Muzzle.Direction;
+                            p.Direction = v.Muzzle.Direction;
                             w.WeaponCache.VirutalId = v.VirtualId;
                         }
                     }
@@ -191,9 +193,9 @@ namespace CoreSystems.Projectiles
                         var notSmart = ammoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.None || overrides.Override && p.HadTarget == Projectile.HadTargetState.None;
                         if (notSmart)
                         {
-                            if (Vector3.Dot(info.Direction, info.Origin - targetAi.TopEntity.PositionComp.WorldMatrixRef.Translation) < 0)
+                            if (Vector3.Dot(p.Direction, info.Origin - targetAi.TopEntity.PositionComp.WorldMatrixRef.Translation) < 0)
                             {
-                                var testRay = new RayD(info.Origin, info.Direction);
+                                var testRay = new RayD(info.Origin, p.Direction);
                                 var quickCheck = Vector3D.IsZero(targetAi.TopEntityVel, 0.025) && targetSphere.Intersects(testRay) != null;
 
                                 if (!quickCheck)

@@ -1317,7 +1317,8 @@ namespace CoreSystems.Api
                             RelativeToGravity,
                             TargetDirection,
                             TargetVelocity,
-                            RelativeToStoredTarget,
+                            StoredStartDestination,
+                            StoredEndDestination,
                         }
 
                         public enum RelativeTo
@@ -1329,7 +1330,9 @@ namespace CoreSystems.Api
                             MidPoint,
                             Current,
                             Nothing,
-                            StoredDestination,
+                            StoredStartDestination,
+                            StoredEndDestination,
+
                         }
 
                         public enum ConditionOperators
@@ -1391,7 +1394,9 @@ namespace CoreSystems.Api
                         [ProtoMember(40)] internal double OffsetMaxRadius;
                         [ProtoMember(41)] internal bool ForceRestart;
                         [ProtoMember(42)] internal RelativeTo Destination;
-                        [ProtoMember(43)] internal bool ToggleAvoidance;
+                        [ProtoMember(43)] internal bool DisableAvoidance;
+                        [ProtoMember(44)] internal int StoredStartId;
+                        [ProtoMember(45)] internal int StoredEndId;
                     }
 
                     [ProtoContract]

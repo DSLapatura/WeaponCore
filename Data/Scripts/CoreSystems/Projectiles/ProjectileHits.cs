@@ -494,7 +494,7 @@ namespace CoreSystems.Projectiles
                     bool rayCheck = false;
                     if (useLine)
                     {
-                        var dist = sphere.Intersects(new RayD(p.LastPosition, info.Direction));
+                        var dist = sphere.Intersects(new RayD(p.LastPosition, p.Direction));
                         if (dist <= hitTolerance || isBeam && dist <= beamLen)
                             rayCheck = true;
                     }
@@ -682,7 +682,7 @@ namespace CoreSystems.Projectiles
             var hitDist = hit ? firstHitEntity?.HitDist ?? info.MaxTrajectory : info.MaxTrajectory;
             var distToTarget = aConst.IsBeamWeapon ? hitDist : info.MaxTrajectory - info.DistanceTraveled;
 
-            var intersectOrigin = isBeam ? new Vector3D(p.Beam.From + (info.Direction * distToTarget)) : p.LastPosition;
+            var intersectOrigin = isBeam ? new Vector3D(p.Beam.From + (p.Direction * distToTarget)) : p.LastPosition;
 
             info.Ai.Session.SendFixedGunHitEvent(hit, info.Weapon.Comp.CoreEntity, info.Hit.Entity, intersectOrigin, vel, info.OriginUp, info.MuzzleId, info.Weapon.System.WeaponIdHash, aConst.AmmoIdxPos, (float)(isBeam ? info.MaxTrajectory : distToTarget));
             info.AimedShot = false; //to prevent hits on another grid from triggering again
@@ -701,7 +701,7 @@ namespace CoreSystems.Projectiles
             Vector3D.Distance(ref beam.From, ref target.Position, out dist);
             hitEntity.HitDist = dist;
 
-            hitEntity.Intersection = new LineD(attacker.LastPosition, attacker.LastPosition + (attacker.Info.Direction * dist));
+            hitEntity.Intersection = new LineD(attacker.LastPosition, attacker.LastPosition + (attacker.Direction * dist));
             hitEntity.HitPos = hitEntity.Intersection.To;
 
             lock (attacker.Info.HitList)
@@ -753,7 +753,7 @@ namespace CoreSystems.Projectiles
                     p.DistanceToTravelSqr = info.DistanceTraveled * info.DistanceTraveled;
                     p.PrevVelocity = p.Velocity;
                     p.Velocity = Vector3D.Zero;
-                    info.Hit.SurfaceHit = p.Position + info.Direction * info.AmmoDef.Const.EwarTriggerRange;
+                    info.Hit.SurfaceHit = p.Position + p.Direction * info.AmmoDef.Const.EwarTriggerRange;
                     info.Hit.LastHit = info.Hit.SurfaceHit;
                     info.HitList.Clear();
                     return false;

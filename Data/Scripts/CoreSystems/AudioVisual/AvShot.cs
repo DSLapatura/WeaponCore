@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using CoreSystems.Platform;
+using CoreSystems.Projectiles;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
 using VRage.Collections;
@@ -889,13 +890,13 @@ namespace CoreSystems.Support
             Offsets.Clear();
         }
 
-        internal void ShortStepAvUpdate(ProInfo info, bool useCollisionSize, bool hit, bool earlyEnd, Vector3D position)
+        internal void ShortStepAvUpdate(Projectile p, bool useCollisionSize, bool hit, bool earlyEnd, Vector3D position)
         {
 
-            var stepSize = (info.DistanceTraveled - info.PrevDistanceTraveled);
-            var avSize = useCollisionSize ? AmmoDef.Const.CollisionSize : info.TracerLength;
+            var stepSize = (p.Info.DistanceTraveled - p.Info.PrevDistanceTraveled);
+            var avSize = useCollisionSize ? AmmoDef.Const.CollisionSize : p.Info.TracerLength;
 
-            var endPos = hit ? Hit.LastHit : !earlyEnd ? position + -info.Direction * (info.DistanceTraveled - info.MaxTrajectory) : position;
+            var endPos = hit ? Hit.LastHit : !earlyEnd ? position + -p.Direction * (p.Info.DistanceTraveled - p.Info.MaxTrajectory) : position;
 
             double remainingTracer;
             double stepSizeToHit;
@@ -917,7 +918,7 @@ namespace CoreSystems.Support
                 }
                 else if (avSize >= overShot)
                 {
-                    remainingTracer = MathHelperD.Clamp(avSize - overShot, 0, Math.Min(avSize, info.PrevDistanceTraveled + stepSizeToHit));
+                    remainingTracer = MathHelperD.Clamp(avSize - overShot, 0, Math.Min(avSize, p.Info.PrevDistanceTraveled + stepSizeToHit));
                 }
                 else remainingTracer = 0;
             }
@@ -928,7 +929,7 @@ namespace CoreSystems.Support
             VisualLength = remainingTracer;
             ShortStepSize = stepSizeToHit;
 
-            Session.Projectiles.DeferedAvDraw.Add(new DeferedAv { AvShot = this, Info = info, TracerFront = endPos, Hit = hit,  Direction = info.Direction });
+            Session.Projectiles.DeferedAvDraw.Add(new DeferedAv { AvShot = this, Info = p.Info, TracerFront = endPos, Hit = hit,  Direction = p.Direction });
         }
 
         internal void HitEffects(bool force = false)

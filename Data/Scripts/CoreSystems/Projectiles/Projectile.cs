@@ -14,7 +14,6 @@ using VRage.Utils;
 using VRageMath;
 using static CoreSystems.ProtoWeaponCompTasks;
 using static CoreSystems.Session;
-using static CoreSystems.Support.DroneStatus;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.EwarDef.EwarType;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.FragmentDef.TimedSpawnDef;
@@ -35,6 +34,8 @@ namespace CoreSystems.Projectiles
         internal HadTargetState HadTarget;
         internal EndStates EndState;
         internal Vector3D Position;
+        internal Vector3D Direction;
+
         internal Vector3D LastPosition;
         internal Vector3D Velocity;
         internal Vector3D PrevVelocity;
@@ -95,6 +96,16 @@ namespace CoreSystems.Projectiles
             var w = Info.Weapon;
             var comp = w.Comp;
 
+            if (aConst.ApproachesCount > 0)
+            {
+                s.ApproachInfo = aConst.ApproachInfoPool.Count > 0 ? aConst.ApproachInfoPool.Pop() : new ApproachInfo(aConst);
+                s.ApproachInfo.TargetPos = TargetPosition;
+            }
+            else if (aConst.IsDrone)
+            {
+                s.DroneInfo = session.DroneInfoPool.Count > 0 ? session.DroneInfoPool.Pop() : new DroneInfo();
+            }
+
             if (aConst.FragmentPattern) {
                 if (aConst.PatternShuffleArray.Count > 0)
                     Info.PatternShuffle = aConst.PatternShuffleArray.Pop();
@@ -106,6 +117,11 @@ namespace CoreSystems.Projectiles
                 }
             }
 
+            if (aConst.CheckFutureIntersection)
+                s.Obstacle = session.ClosestObstaclesPool.Count > 0 ? session.ClosestObstaclesPool.Pop() : new ClosestObstacles();
+
+            if (aConst.FullSync)
+                s.FullSyncInfo = session.FullSyncInfoPool.Count > 0 ? session.FullSyncInfoPool.Pop() : new FullSyncInfo();
 
             EndState = EndStates.None;
             Position = Info.Origin;
@@ -182,10 +198,10 @@ namespace CoreSystems.Projectiles
 
                     if (aConst.IsDrone)
                     {
-                        s.DroneMsn = DroneMission.Attack;//TODO handle initial defensive assignment?
-                        s.DroneStat = Launch;
-                        s.NavTargetEnt = eTarget.GetTopMostParent();
-                        s.NavTargetBound = eTarget.PositionComp.WorldVolume;
+                        s.DroneInfo.DroneMsn = DroneInfo.DroneMission.Attack;//TODO handle initial defensive assignment?
+                        s.DroneInfo.DroneStat = DroneInfo.DroneStatus.Launch;
+                        s.DroneInfo.NavTargetEnt = eTarget.GetTopMostParent();
+                        s.DroneInfo.NavTargetBound = eTarget.PositionComp.WorldVolume;
                     }
 
                     TargetPosition = eTarget.PositionComp.WorldAABB.Center;
@@ -207,7 +223,7 @@ namespace CoreSystems.Projectiles
 
             var lockedTarget = !Vector3D.IsZero(TargetPosition);
             if (!lockedTarget)
-                TargetPosition = Position + (Info.Direction * Info.MaxTrajectory);
+                TargetPosition = Position + (Direction * Info.MaxTrajectory);
 
             if (lockedTarget && !aConst.IsBeamWeapon && guidance == TrajectoryDef.GuidanceType.TravelTo)
             {
@@ -219,7 +235,7 @@ namespace CoreSystems.Projectiles
                     if (TrajectoryEstimation(Info.AmmoDef, ref Position, out targetDir, out targetPos))
                         TargetPosition = targetPos;
 
-                    TargetPosition -= (Info.Direction * variance);
+                    TargetPosition -= (Direction * variance);
                 }
                 Vector3D.DistanceSquared(ref Info.Origin, ref TargetPosition, out DistanceToTravelSqr);
             }
@@ -263,7 +279,7 @@ namespace CoreSystems.Projectiles
             if (aConst.DynamicGuidance && PruneQuery == MyEntityQueryType.Dynamic && staticIsInRange) 
                 CheckForNearVoxel(60);
 
-            var desiredSpeed = (Info.Direction * DesiredSpeed);
+            var desiredSpeed = (Direction * DesiredSpeed);
             var relativeSpeedCap = Info.ShooterVel + desiredSpeed;
             MaxSpeed = relativeSpeedCap.Length();
             if (aConst.AmmoSkipAccel)
@@ -271,10 +287,10 @@ namespace CoreSystems.Projectiles
                 Velocity = relativeSpeedCap;
                 VelocityLengthSqr = MaxSpeed * MaxSpeed;
             }
-            else Velocity = Info.ShooterVel + (Info.Direction * (aConst.DeltaVelocityPerTick * DeltaTimeRatio));
+            else Velocity = Info.ShooterVel + (Direction * (aConst.DeltaVelocityPerTick * DeltaTimeRatio));
 
             if (Info.IsFragment)
-                Vector3D.Normalize(ref Velocity, out Info.Direction);
+                Vector3D.Normalize(ref Velocity, out Direction);
 
 
             TravelMagnitude = !Info.IsFragment && aConst.AmmoSkipAccel ? desiredSpeed * DeltaStepConst : Velocity * DeltaStepConst;
@@ -284,7 +300,7 @@ namespace CoreSystems.Projectiles
             if (EnableAv)
             {
                 Info.AvShot = session.Av.AvShotPool.Count > 0 ? session.Av.AvShotPool.Pop() : new AvShot(session);
-                Info.AvShot.Init(Info, (aConst.DeltaVelocityPerTick * DeltaTimeRatio), MaxSpeed, ref Info.Direction);
+                Info.AvShot.Init(Info, (aConst.DeltaVelocityPerTick * DeltaTimeRatio), MaxSpeed, ref Direction);
                 Info.AvShot.SetupSounds(distanceFromCameraSqr); //Pool initted sounds per Projectile type... this is expensive
                 if (aConst.HitParticle && !aConst.IsBeamWeapon || aConst.EndOfLifeAoe && !ammoDef.AreaOfDamage.EndOfLife.NoVisuals)
                 {
@@ -322,7 +338,7 @@ namespace CoreSystems.Projectiles
 
             Intersecting = true;
 
-            if (Info.Storage.SyncId != ulong.MaxValue && (Info.AmmoDef.Const.PdDeathSync || Info.AmmoDef.Const.OnHitDeathSync))
+            if (Info.SyncId != ulong.MaxValue && (Info.AmmoDef.Const.PdDeathSync || Info.AmmoDef.Const.OnHitDeathSync))
                 AddToDeathSyncMonitor();
 
             State = ProjectileState.Depleted;
@@ -331,11 +347,11 @@ namespace CoreSystems.Projectiles
         internal void AddToDeathSyncMonitor()
         {
             var s = Info.Ai.Session;
-            if (Info.Weapon.ProjectileSyncMonitor.Remove(Info.Storage.SyncId))
+            if (Info.Weapon.ProjectileSyncMonitor.Remove(Info.SyncId))
             {
                 if (s.AdvSyncServer)
                 {
-                    s.ProtoDeathSyncMonitor.Collection.Add(new ProjectileSync {WeaponId = Info.Weapon.PartState.Id, SyncId = Info.Storage.SyncId});
+                    s.ProtoDeathSyncMonitor.Collection.Add(new ProjectileSync {WeaponId = Info.Weapon.PartState.Id, SyncId = Info.SyncId});
                 }
             }
         }
@@ -528,7 +544,7 @@ namespace CoreSystems.Projectiles
                         {
                             double dist;
                             Vector3D.DistanceSquared(ref Position, ref targetPos, out dist);
-                            if (dist < aConst.SmartOffsetSqr + VelocityLengthSqr && Vector3.Dot(Info.Direction, Position - targetPos) > 0)
+                            if (dist < aConst.SmartOffsetSqr + VelocityLengthSqr && Vector3.Dot(Direction, Position - targetPos) > 0)
                                 OffSetTarget();
                         }
                         targetPos += OffsetTarget;
@@ -550,9 +566,9 @@ namespace CoreSystems.Projectiles
                         var currentLossCheck = Info.RelativeAge % 20;
                         var lossCheck = prevLossCheck < 0 || prevLossCheck > currentLossCheck;
 
-                        if (s.WasTracking && (lossCheck || Vector3.Dot(Info.Direction, Position - targetPos) > 0) || !s.WasTracking)
+                        if (s.WasTracking && (lossCheck || Vector3.Dot(Direction, Position - targetPos) > 0) || !s.WasTracking)
                         {
-                            var targetDir = -Info.Direction;
+                            var targetDir = -Direction;
                             var refDir = Vector3D.Normalize(Position - targetPos);
                             if (!MathFuncs.IsDotProductWithinTolerance(ref targetDir, ref refDir, aConst.TargetLossDegree))
                             {
@@ -569,9 +585,8 @@ namespace CoreSystems.Projectiles
                 else
                 {
                     var roam = smarts.Roam;
-                    var straightAhead = roam || TargetPosition == Vector3D.Zero;
-
-                    TargetPosition = straightAhead ? TargetPosition : Position + (Info.Direction * Info.MaxTrajectory);
+                    var straightAhead = roam && TargetPosition != Vector3D.Zero;
+                    TargetPosition = straightAhead ? TargetPosition : Position + (Direction * Info.MaxTrajectory);
 
                     s.ZombieLifeTime += DeltaTimeRatio;
                     if (s.ZombieLifeTime > aConst.TargetLossTime && !smarts.KeepAliveAfterTargetLoss && (smarts.NoTargetExpire || hadTarget))
@@ -585,7 +600,7 @@ namespace CoreSystems.Projectiles
 
                         double dist;
                         Vector3D.DistanceSquared(ref Position, ref TargetPosition, out dist);
-                        if (dist < aConst.SmartOffsetSqr + VelocityLengthSqr && Vector3.Dot(Info.Direction, Position - TargetPosition) > 0)
+                        if (dist < aConst.SmartOffsetSqr + VelocityLengthSqr && Vector3.Dot(Direction, Position - TargetPosition) > 0)
                         {
                             OffSetTarget(true);
                             TargetPosition += OffsetTarget;
@@ -615,10 +630,10 @@ namespace CoreSystems.Projectiles
                 if (!aConst.NoSteering)
                 {
                     Vector3D targetAcceleration = Vector3D.Zero;
-                    if (s.Navigation.LastVelocity.HasValue)
-                        targetAcceleration = (PrevTargetVel - s.Navigation.LastVelocity.Value) * 60;
+                    if (s.LastVelocity.HasValue)
+                        targetAcceleration = (PrevTargetVel - s.LastVelocity.Value) * 60;
 
-                    s.Navigation.LastVelocity = PrevTargetVel;
+                    s.LastVelocity = PrevTargetVel;
 
                     Vector3D missileToTarget = TargetPosition - Position;
                     missileToTargetNorm = Vector3D.Normalize(missileToTarget);
@@ -656,8 +671,7 @@ namespace CoreSystems.Projectiles
                     }
                 }
                 else
-                    commandedAccel = Info.Direction * accelMpsMulti;
-
+                    commandedAccel = Direction * accelMpsMulti;
 
                 var offset = false;
                 if (smarts.OffsetTime > 0)
@@ -666,10 +680,10 @@ namespace CoreSystems.Projectiles
                     var currentSmartCheck = Info.RelativeAge % smarts.OffsetTime;
                     var smartCheck = prevSmartCheck < 0 || prevSmartCheck > currentSmartCheck;
 
-                    if (smartCheck && !Vector3D.IsZero(Info.Direction) && MyUtils.IsValid(Info.Direction))
+                    if (smartCheck && !Vector3D.IsZero(Direction) && MyUtils.IsValid(Direction))
                     {
-                        var up = Vector3D.CalculatePerpendicularVector(Info.Direction);
-                        var right = Vector3D.Cross(Info.Direction, up);
+                        var up = Vector3D.CalculatePerpendicularVector(Direction);
+                        var right = Vector3D.Cross(Direction, up);
                         var angle = Info.Random.NextDouble() * MathHelper.TwoPi;
                         s.RandOffsetDir = Math.Sin(angle) * up + Math.Cos(angle) * right;
                         s.RandOffsetDir *= smarts.OffsetRatio;
@@ -691,7 +705,7 @@ namespace CoreSystems.Projectiles
                     if (aConst.AdvancedSmartSteering)
                     {
                         bool isNormalized;
-                        var newHeading = ProNavControl(Info.Direction, Velocity, commandedAccel, aConst.PreComputedMath, out isNormalized);
+                        var newHeading = ProNavControl(Direction, Velocity, commandedAccel, aConst.PreComputedMath, out isNormalized);
                         proposedVel = Velocity + (isNormalized ? newHeading * accelMpsMulti * DeltaStepConst : commandedAccel * DeltaStepConst);
                     }
                     else
@@ -700,7 +714,7 @@ namespace CoreSystems.Projectiles
                         {
                             var commandNorm = Vector3D.Normalize(commandedAccel);
 
-                            var dot = Vector3D.Dot(Info.Direction, commandNorm);
+                            var dot = Vector3D.Dot(Direction, commandNorm);
                             if (offset || dot < 0.98)
                             {
                                 var radPerTickDelta = Math.Acos(dot);
@@ -715,17 +729,18 @@ namespace CoreSystems.Projectiles
                     }
 
                     Vector3D moddedAccel;
-                    if (!disableAvoidance && session.Tick - 1 == s.Obstacle.LastSeenTick && AvoidObstacle(Position + proposedVel, missileToTargetNorm, accelMpsMulti, out moddedAccel))
+                    if (aConst.CheckFutureIntersection && !disableAvoidance && session.Tick - 1 == s.Obstacle.LastSeenTick && AvoidObstacle(Position + proposedVel, missileToTargetNorm, accelMpsMulti, out moddedAccel))
                         proposedVel = moddedAccel;
 
-                    Vector3D.Normalize(ref proposedVel, out Info.Direction);
+                    Vector3D.Normalize(ref proposedVel, out Direction);
                 }
                 #endregion
             }
             else if (!smarts.AccelClearance || s.SmartReady)
             {
-                proposedVel = Velocity + (Info.Direction * (aConst.DeltaVelocityPerTick * DeltaTimeRatio));
+                proposedVel = Velocity + (Direction * (aConst.DeltaVelocityPerTick * DeltaTimeRatio));
             }
+
             VelocityLengthSqr = proposedVel.LengthSquared();
             if (VelocityLengthSqr <= DesiredSpeed * DesiredSpeed)
                 MaxSpeed = DesiredSpeed;
@@ -733,7 +748,7 @@ namespace CoreSystems.Projectiles
             var speedCap = speedCapMulti * MaxSpeed;
             if (VelocityLengthSqr > speedCap * speedCap) {
                 VelocityLengthSqr = proposedVel.LengthSquared();
-                proposedVel = Info.Direction * speedCap;
+                proposedVel = Direction * speedCap;
             }
             else
                 Info.TotalAcceleration += (proposedVel - PrevVelocity);
@@ -800,9 +815,9 @@ namespace CoreSystems.Projectiles
 
             var s = Info.Storage;
             if (targetLock)
-                s.TargetPos = targetPos;
+                s.ApproachInfo.TargetPos = targetPos;
 
-            if (!Vector3D.IsZero(s.TargetPos))
+            if (!Vector3D.IsZero(s.ApproachInfo.TargetPos))
             {
                 if (s.RequestedStage == -1)
                 {
@@ -818,7 +833,7 @@ namespace CoreSystems.Projectiles
                 {
                     if (Info.Ai.Session.DebugMod)
                         Log.Line($"state change: {s.RequestedStage} - age:{Info.RelativeAge}");
-                    s.StartDistanceTraveled = Info.DistanceTraveled;
+                    s.ApproachInfo.StartDistanceTraveled = Info.DistanceTraveled;
                 }
 
                 var aConst = Info.AmmoDef.Const;
@@ -841,23 +856,29 @@ namespace CoreSystems.Projectiles
                     switch (def.Up)
                     {
                         case UpRelativeTo.RelativeToBlock:
-                            s.OffsetDir = Info.OriginUp;
+                            s.ApproachInfo.OffsetDir = Info.OriginUp;
                             break;
                         case UpRelativeTo.RelativeToGravity:
-                            s.OffsetDir = !planetExists ? Info.OriginUp : Vector3D.Normalize(Position - Info.MyPlanet.PositionComp.WorldAABB.Center);
+                            s.ApproachInfo.OffsetDir = !planetExists ? Info.OriginUp : Vector3D.Normalize(Position - Info.MyPlanet.PositionComp.WorldAABB.Center);
                             break;
                         case UpRelativeTo.TargetDirection:
-                            s.OffsetDir = Vector3D.Normalize(s.TargetPos - Position);
+                            s.ApproachInfo.OffsetDir = Vector3D.Normalize(s.ApproachInfo.TargetPos - Position);
                             break;
                         case UpRelativeTo.TargetVelocity:
-                            s.OffsetDir = !Vector3D.IsZero(PrevTargetVel) ? Vector3D.Normalize(PrevTargetVel) : Info.OriginUp;
+                            s.ApproachInfo.OffsetDir = !Vector3D.IsZero(PrevTargetVel) ? Vector3D.Normalize(PrevTargetVel) : Info.OriginUp;
                             break;
-                        case UpRelativeTo.RelativeToStoredDestination:
-                            var dest = s.StoredDestination != Vector3D.Zero ? s.StoredDestination : s.TargetPos;
-                            s.OffsetDir = Vector3D.Normalize(dest - Position);
+                        case UpRelativeTo.StoredStartDestination:
+                            var storedStartDest = s.ApproachInfo.StoredDestination[s.RequestedStage];
+                            var destStart = storedStartDest != Vector3D.Zero ? storedStartDest : s.ApproachInfo.TargetPos;
+                            s.ApproachInfo.OffsetDir = Vector3D.Normalize(destStart - Position);
+                            break;
+                        case UpRelativeTo.StoredEndDestination:
+                            var storedEndDest = s.ApproachInfo.StoredDestination[s.RequestedStage * 2];
+                            var destEnd = storedEndDest != Vector3D.Zero ? storedEndDest : s.ApproachInfo.TargetPos;
+                            s.ApproachInfo.OffsetDir = Vector3D.Normalize(destEnd - Position);
                             break;
                         default:
-                            s.OffsetDir = Info.OriginUp;
+                            s.ApproachInfo.OffsetDir = Info.OriginUp;
                             break;
                     }
                 }
@@ -865,9 +886,9 @@ namespace CoreSystems.Projectiles
                 if (!MyUtils.IsZero(def.AngleOffset))
                 {
                     var angle = def.AngleOffset * MathHelper.Pi;
-                    var forward = Vector3D.CalculatePerpendicularVector(s.OffsetDir);
-                    var right = Vector3D.Cross(s.OffsetDir, forward);
-                    s.OffsetDir = Math.Sin(angle) * forward + Math.Cos(angle) * right;
+                    var forward = Vector3D.CalculatePerpendicularVector(s.ApproachInfo.OffsetDir);
+                    var right = Vector3D.Cross(s.ApproachInfo.OffsetDir, forward);
+                    s.ApproachInfo.OffsetDir = Math.Sin(angle) * forward + Math.Cos(angle) * right;
                 }
 
                 Vector3D surfacePos = Vector3D.Zero;
@@ -876,83 +897,95 @@ namespace CoreSystems.Projectiles
                     switch (def.Source)
                     {
                         case RelativeTo.Origin:
-                            s.LookAtPos = Info.Origin;
+                            s.ApproachInfo.LookAtPos = Info.Origin;
                             break;
                         case RelativeTo.Shooter:
-                            s.LookAtPos = Info.Weapon.MyPivotPos;
+                            s.ApproachInfo.LookAtPos = Info.Weapon.MyPivotPos;
                            break;
                         case RelativeTo.Target:
-                            s.LookAtPos = s.TargetPos;
+                            s.ApproachInfo.LookAtPos = s.ApproachInfo.TargetPos;
                             break;
                         case RelativeTo.Surface:
                             if (planetExists)
                             {
-                                PlanetSurfaceHeightAdjustment(Position, Info.Direction, approach, out surfacePos);
-                                s.LookAtPos = surfacePos;
+                                PlanetSurfaceHeightAdjustment(Position, Direction, approach, out surfacePos);
+                                s.ApproachInfo.LookAtPos = surfacePos;
                             }
                             else
-                                s.LookAtPos = Info.Origin;
+                                s.ApproachInfo.LookAtPos = Info.Origin;
                             break;
                         case RelativeTo.MidPoint:
-                            s.LookAtPos = Vector3D.Lerp(s.TargetPos, Position, 0.5);
+                            s.ApproachInfo.LookAtPos = Vector3D.Lerp(s.ApproachInfo.TargetPos, Position, 0.5);
                             break;
                         case RelativeTo.Current:
-                            s.LookAtPos = Position;
+                            s.ApproachInfo.LookAtPos = Position;
                             break;
-                        case RelativeTo.StoredDestination:
-                            var dest = s.StoredDestination != Vector3D.Zero ? s.StoredDestination : s.TargetPos;
-                            s.LookAtPos = dest;
+                        case RelativeTo.StoredStartDestination:
+                            var storedStartDest = s.ApproachInfo.StoredDestination[s.RequestedStage];
+                            var destStart = storedStartDest != Vector3D.Zero ? storedStartDest : s.ApproachInfo.TargetPos;
+                            s.ApproachInfo.LookAtPos = destStart;
+                            break;
+                        case RelativeTo.StoredEndDestination:
+                            var storedEndDest = s.ApproachInfo.StoredDestination[s.RequestedStage * 2];
+                            var destEnd = storedEndDest != Vector3D.Zero ? storedEndDest : s.ApproachInfo.TargetPos;
+                            s.ApproachInfo.LookAtPos = destEnd;
                             break;
                     }
                 }
 
-                var heightOffset = s.OffsetDir * def.DesiredElevation;
-                var source = s.LookAtPos;
+                var heightOffset = s.ApproachInfo.OffsetDir * def.DesiredElevation;
+                var source = s.ApproachInfo.LookAtPos;
                 if (stageChange || def.AdjustDestination)
                 {
                     switch (def.Destination)
                     {
                         case RelativeTo.Origin:
-                            s.DestinationPos = s.TargetPos; // change to origin in a few days
+                            s.ApproachInfo.DestinationPos = s.ApproachInfo.TargetPos; // change to origin in a few days
                             break;
                         case RelativeTo.Shooter:
-                            s.DestinationPos = Info.Weapon.MyPivotPos;
+                            s.ApproachInfo.DestinationPos = Info.Weapon.MyPivotPos;
                             break;
                         case RelativeTo.Target:
-                            s.DestinationPos = s.TargetPos;
+                            s.ApproachInfo.DestinationPos = s.ApproachInfo.TargetPos;
                             break;
                         case RelativeTo.Surface:
                             if (planetExists)
                             {
-                                PlanetSurfaceHeightAdjustment(Position, Info.Direction, approach, out surfacePos);
-                                s.DestinationPos = surfacePos;
+                                PlanetSurfaceHeightAdjustment(Position, Direction, approach, out surfacePos);
+                                s.ApproachInfo.DestinationPos = surfacePos;
                             }
                             else
-                                s.DestinationPos = Info.Origin;
+                                s.ApproachInfo.DestinationPos = Info.Origin;
                             break;
                         case RelativeTo.MidPoint:
-                            s.DestinationPos = Vector3D.Lerp(s.TargetPos, Position, 0.5);
+                            s.ApproachInfo.DestinationPos = Vector3D.Lerp(s.ApproachInfo.TargetPos, Position, 0.5);
                             break;
                         case RelativeTo.Current:
-                            s.DestinationPos = Position;
+                            s.ApproachInfo.DestinationPos = Position;
                             break;
-                        case RelativeTo.StoredDestination:
-                            var dest = s.StoredDestination != Vector3D.Zero ? s.StoredDestination : s.TargetPos;
-                            s.DestinationPos = dest;
+                        case RelativeTo.StoredStartDestination:
+                            var storedStartDest = s.ApproachInfo.StoredDestination[s.RequestedStage];
+                            var destStart = storedStartDest != Vector3D.Zero ? storedStartDest : s.ApproachInfo.TargetPos;
+                            s.ApproachInfo.DestinationPos = destStart;
+                            break;
+                        case RelativeTo.StoredEndDestination:
+                            var storedEndDest = s.ApproachInfo.StoredDestination[s.RequestedStage * 2];
+                            var destEnd = storedEndDest != Vector3D.Zero ? storedEndDest : s.ApproachInfo.TargetPos;
+                            s.ApproachInfo.DestinationPos = destEnd;
                             break;
                         case RelativeTo.Nothing:
-                            s.DestinationPos = Info.Target.TargetPos;
+                            s.ApproachInfo.DestinationPos = Info.Target.TargetPos;
                             break;
                     }
                 }
-                var destination = s.DestinationPos;
+                var destination = s.ApproachInfo.DestinationPos;
                 if (def.OffsetMinRadius > 0 && def.OffsetTime > 0)
                 {
                     var prevCheck = Info.PrevRelativeAge % def.OffsetTime;
                     var currentCheck = Info.RelativeAge % def.OffsetTime;
                     if (prevCheck < 0 || prevCheck > currentCheck)
                         SetNavTargetOffset(def);
-                    destination += s.NavTargetBound.Center;
+                    destination += s.ApproachInfo.NavTargetBound.Center;
                 }
 
                 var heightStart = source + heightOffset;
@@ -963,7 +996,7 @@ namespace CoreSystems.Projectiles
                 switch (def.StartCondition1)
                 {
                     case Conditions.DesiredElevation:
-                        var plane = new PlaneD(s.LookAtPos, s.OffsetDir);
+                        var plane = new PlaneD(s.ApproachInfo.LookAtPos, s.ApproachInfo.OffsetDir);
                         var distToPlane = plane.DistanceToPoint(Position);
                         var tolernace = def.ElevationTolerance + aConst.CollisionSize;
                         var distFromSurfaceSqr = !Vector3D.IsZero(surfacePos) ? Vector3D.DistanceSquared(Position, surfacePos) : distToPlane * distToPlane;
@@ -988,10 +1021,10 @@ namespace CoreSystems.Projectiles
                         start1 = Info.RelativeAge <= def.Start1Value;
                         break;
                     case Conditions.MinTravelRequired:
-                        start1 = Info.DistanceTraveled - s.StartDistanceTraveled >= def.Start1Value;
+                        start1 = Info.DistanceTraveled - s.ApproachInfo.StartDistanceTraveled >= def.Start1Value;
                         break;
                     case Conditions.MaxTravelRequired:
-                        start1 = Info.DistanceTraveled - s.StartDistanceTraveled <= def.Start1Value;
+                        start1 = Info.DistanceTraveled - s.ApproachInfo.StartDistanceTraveled <= def.Start1Value;
                         break;
                     case Conditions.Spawn:
                     case Conditions.Ignore:
@@ -1006,7 +1039,7 @@ namespace CoreSystems.Projectiles
                 switch (def.StartCondition2)
                 {
                     case Conditions.DesiredElevation:
-                        var plane = new PlaneD(s.LookAtPos, s.OffsetDir);
+                        var plane = new PlaneD(s.ApproachInfo.LookAtPos, s.ApproachInfo.OffsetDir);
                         var distToPlane = plane.DistanceToPoint(Position);
                         var tolernace = def.ElevationTolerance + aConst.CollisionSize;
                         var distFromSurfaceSqr = !Vector3D.IsZero(surfacePos) ? Vector3D.DistanceSquared(Position, surfacePos) : distToPlane * distToPlane;
@@ -1031,10 +1064,10 @@ namespace CoreSystems.Projectiles
                         start2 = Info.RelativeAge <= def.Start2Value;
                         break;
                     case Conditions.MinTravelRequired:
-                        start2 = Info.DistanceTraveled - s.StartDistanceTraveled >= def.Start2Value;
+                        start2 = Info.DistanceTraveled - s.ApproachInfo.StartDistanceTraveled >= def.Start2Value;
                         break;
                     case Conditions.MaxTravelRequired:
-                        start2 = Info.DistanceTraveled - s.StartDistanceTraveled <= def.Start2Value;
+                        start2 = Info.DistanceTraveled - s.ApproachInfo.StartDistanceTraveled <= def.Start2Value;
                         break;
                     case Conditions.Spawn:
                     case Conditions.Ignore:
@@ -1052,7 +1085,7 @@ namespace CoreSystems.Projectiles
                     accelMpsMulti = aConst.AccelInMetersPerSec * def.AccelMulti;
                     speedCapMulti = def.SpeedCapMulti;
 
-                    var travelLead = Info.DistanceTraveled - s.StartDistanceTraveled >= def.TrackingDistance ? Info.DistanceTraveled : 0;
+                    var travelLead = Info.DistanceTraveled - s.ApproachInfo.StartDistanceTraveled >= def.TrackingDistance ? Info.DistanceTraveled : 0;
                     var desiredLead = (def.PushLeadByTravelDistance ? travelLead : 0) + def.LeadDistance;
                     var clampedLead = MathHelperD.Clamp(desiredLead, approach.ModFutureStep, double.MaxValue);
                     var leadPosition = heightStart + heightDir * clampedLead;
@@ -1064,7 +1097,7 @@ namespace CoreSystems.Projectiles
                             if (Info.MyPlanet != null && planetExists && def.Elevation == RelativeTo.Surface)
                             {
                                 Vector3D followSurfacePos;
-                                heightAdjLeadPos = PlanetSurfaceHeightAdjustment(leadPosition, s.OffsetDir, approach, out followSurfacePos);
+                                heightAdjLeadPos = PlanetSurfaceHeightAdjustment(leadPosition, s.ApproachInfo.OffsetDir, approach, out followSurfacePos);
                             }
                             else
                                 heightAdjLeadPos = leadPosition;
@@ -1106,9 +1139,19 @@ namespace CoreSystems.Projectiles
                             heightAdjLeadPos = leadPosition + (heightDir * distToPlane);
                             break;
                         }
-                        case RelativeTo.StoredDestination:
+                        case RelativeTo.StoredStartDestination:
                         {
-                            var dest = s.StoredDestination != Vector3D.Zero ? s.StoredDestination : s.TargetPos;
+                            var storedDest = s.ApproachInfo.StoredDestination[s.RequestedStage];
+                            var dest = storedDest != Vector3D.Zero ? storedDest : s.ApproachInfo.TargetPos;
+                            var plane = new PlaneD(dest, heightDir);
+                            var distToPlane = plane.DistanceToPoint(leadPosition);
+                            heightAdjLeadPos = leadPosition + (heightDir * distToPlane);
+                            break;
+                        }
+                        case RelativeTo.StoredEndDestination:
+                        {
+                            var storedDest = s.ApproachInfo.StoredDestination[s.RequestedStage * 2];
+                            var dest = storedDest != Vector3D.Zero ? storedDest : s.ApproachInfo.TargetPos;
                             var plane = new PlaneD(dest, heightDir);
                             var distToPlane = plane.DistanceToPoint(leadPosition);
                             heightAdjLeadPos = leadPosition + (heightDir * distToPlane);
@@ -1116,7 +1159,7 @@ namespace CoreSystems.Projectiles
                         }
                         case RelativeTo.Nothing:
                         {
-                            heightAdjLeadPos = s.TargetPos;
+                            heightAdjLeadPos = s.ApproachInfo.TargetPos;
                             break;
                         }
                         default:
@@ -1135,7 +1178,7 @@ namespace CoreSystems.Projectiles
                                 TargetPosition = heightAdjLeadPos;
                         }
                         else
-                            TargetPosition = ApproachOrbits(ref def, s.OffsetDir, heightAdjLeadPos, accelMpsMulti, speedCapMulti);
+                            TargetPosition = ApproachOrbits(ref def, s.ApproachInfo.OffsetDir, heightAdjLeadPos, accelMpsMulti, speedCapMulti);
                     }
 
                     if (s.LastActivatedStage != s.RequestedStage)
@@ -1153,7 +1196,7 @@ namespace CoreSystems.Projectiles
                             case StageEvents.DoNothing:
                                 break;
                             case StageEvents.StoreDestination:
-                                s.StoredDestination = TargetPosition;
+                                s.ApproachInfo.StoredDestination[s.RequestedStage] = TargetPosition;
                                 break;
                         }
                     }
@@ -1176,7 +1219,7 @@ namespace CoreSystems.Projectiles
                 switch (def.EndCondition1)
                 {
                     case Conditions.DesiredElevation:
-                        var plane = new PlaneD(s.LookAtPos, s.OffsetDir);
+                        var plane = new PlaneD(s.ApproachInfo.LookAtPos, s.ApproachInfo.OffsetDir);
                         var distToPlane = plane.DistanceToPoint(Position);
                         var tolernace = def.ElevationTolerance + aConst.CollisionSize;
                         var distFromSurfaceSqr = !Vector3D.IsZero(surfacePos) ? Vector3D.DistanceSquared(Position, surfacePos) : distToPlane * distToPlane;
@@ -1208,10 +1251,10 @@ namespace CoreSystems.Projectiles
                         end1 = Info.RelativeAge <= def.End1Value;
                         break;
                     case Conditions.MinTravelRequired:
-                        end1 = Info.DistanceTraveled - s.StartDistanceTraveled >= def.End1Value;
+                        end1 = Info.DistanceTraveled - s.ApproachInfo.StartDistanceTraveled >= def.End1Value;
                         break;
                     case Conditions.MaxTravelRequired:
-                        end1 = Info.DistanceTraveled - s.StartDistanceTraveled <= def.End1Value;
+                        end1 = Info.DistanceTraveled - s.ApproachInfo.StartDistanceTraveled <= def.End1Value;
                         break;
                     case Conditions.Ignore:
                         end1 = true;
@@ -1225,7 +1268,7 @@ namespace CoreSystems.Projectiles
                 switch (def.EndCondition2)
                 {
                     case Conditions.DesiredElevation:
-                        var plane = new PlaneD(s.LookAtPos, s.OffsetDir);
+                        var plane = new PlaneD(s.ApproachInfo.LookAtPos, s.ApproachInfo.OffsetDir);
                         var distToPlane = plane.DistanceToPoint(Position);
                         var tolernace = def.ElevationTolerance + aConst.CollisionSize;
                         var distFromSurfaceSqr = !Vector3D.IsZero(surfacePos) ? Vector3D.DistanceSquared(Position, surfacePos) : distToPlane * distToPlane;
@@ -1257,10 +1300,10 @@ namespace CoreSystems.Projectiles
                         end2 = Info.RelativeAge <= def.End2Value;
                         break;
                     case Conditions.MinTravelRequired:
-                        end2 = Info.DistanceTraveled - s.StartDistanceTraveled >= def.End2Value;
+                        end2 = Info.DistanceTraveled - s.ApproachInfo.StartDistanceTraveled >= def.End2Value;
                         break;
                     case Conditions.MaxTravelRequired:
-                        end2 = Info.DistanceTraveled - s.StartDistanceTraveled <= def.End2Value;
+                        end2 = Info.DistanceTraveled - s.ApproachInfo.StartDistanceTraveled <= def.End2Value;
                         break;
                     case Conditions.Ignore:
                         end2 = true;
@@ -1298,7 +1341,7 @@ namespace CoreSystems.Projectiles
                     }
                     else if (def.EndEvent == StageEvents.StoreDestination)
                     {
-                        s.StoredDestination = TargetPosition;
+                        s.ApproachInfo.StoredDestination[s.RequestedStage * 2] = TargetPosition;
                     }
 
                     if (moveForward)
@@ -1420,7 +1463,7 @@ namespace CoreSystems.Projectiles
             rndDir.Normalize();
 
             var offsetRadius = def.OffsetMaxRadius <= def.OffsetMinRadius ? def.OffsetMinRadius : Info.Random.NextDouble() * (def.OffsetMaxRadius - def.OffsetMinRadius) + def.OffsetMinRadius;
-            Info.Storage.NavTargetBound = new BoundingSphereD(Vector3D.Zero + rndDir * Info.Storage.NavTargetBound.Radius, offsetRadius);
+            Info.Storage.ApproachInfo.NavTargetBound = new BoundingSphereD(Vector3D.Zero + rndDir * Info.Storage.ApproachInfo.NavTargetBound.Radius, offsetRadius);
         }
 
         #endregion
@@ -1442,18 +1485,18 @@ namespace CoreSystems.Projectiles
                     TimedSpawns(aConst);
             }
 
-            if (s.DroneStat == Launch)
+            if (s.DroneInfo.DroneStat == DroneInfo.DroneStatus.Launch)
                 DroneLaunch(parentEnt, aConst, s);
 
-            if (s.DroneStat != Launch)//Start of main nav after clear of launcher
+            if (s.DroneInfo.DroneStat != DroneInfo.DroneStatus.Launch)//Start of main nav after clear of launcher
                 DroneNav(parentEnt, ref newVel);
             else
             {
-                newVel = Velocity + (Info.Direction * (aConst.DeltaVelocityPerTick * DeltaTimeRatio));
+                newVel = Velocity + (Direction * (aConst.DeltaVelocityPerTick * DeltaTimeRatio));
                 VelocityLengthSqr = newVel.LengthSquared();
 
                 if (VelocityLengthSqr > MaxSpeed * MaxSpeed)
-                    newVel = (Info.Direction * 0.95 + Vector3D.CalculatePerpendicularVector(Info.Direction) * 0.05) * MaxSpeed;
+                    newVel = (Direction * 0.95 + Vector3D.CalculatePerpendicularVector(Direction) * 0.05) * MaxSpeed;
 
                 Velocity = newVel;
             }
@@ -1500,16 +1543,16 @@ namespace CoreSystems.Projectiles
 
         private void DroneLaunch(MyEntity parentEnt, AmmoConstants aConst, SmartStorage s)
         {
-            if (s.DroneStat == Launch && Info.DistanceTraveled * Info.DistanceTraveled >= aConst.SmartsDelayDistSqr && Info.Ai.AiType == Ai.AiTypes.Grid)//Check for LOS & delaytrack after launch
+            if (s.DroneInfo.DroneStat == DroneInfo.DroneStatus.Launch && Info.DistanceTraveled * Info.DistanceTraveled >= aConst.SmartsDelayDistSqr && Info.Ai.AiType == Ai.AiTypes.Grid)//Check for LOS & delaytrack after launch
             {
                 var lineCheck = new LineD(Position, TargetPosition);
                 var startTrack = !new MyOrientedBoundingBoxD(parentEnt.PositionComp.LocalAABB, parentEnt.PositionComp.WorldMatrixRef).Intersects(ref lineCheck).HasValue;
 
                 if (startTrack)
-                    s.DroneStat = Transit;
+                    s.DroneInfo.DroneStat = DroneInfo.DroneStatus.Transit;
             }
             else if (Info.Ai.AiType != Ai.AiTypes.Grid)
-                s.DroneStat = Transit;
+                s.DroneInfo.DroneStat = DroneInfo.DroneStatus.Transit;
         }
 
         private void DroneNav(MyEntity parentEnt, ref Vector3D newVel)
@@ -1523,7 +1566,7 @@ namespace CoreSystems.Projectiles
 
             var tasks = comp.Data.Repo.Values.State.Tasks;
             var updateTask = tasks.UpdatedTick == Info.Ai.Session.Tick - 1;
-            var tracking = aConst.DeltaVelocityPerTick <= 0 || (s.DroneStat == Dock || Vector3D.DistanceSquared(Info.Origin, Position) >= aConst.SmartsDelayDistSqr);
+            var tracking = aConst.DeltaVelocityPerTick <= 0 || (s.DroneInfo.DroneStat == DroneInfo.DroneStatus.Dock || Vector3D.DistanceSquared(Info.Origin, Position) >= aConst.SmartsDelayDistSqr);
             var parentPos = Vector3D.Zero;
 
             if (!updateTask)//Top level check for a current target or update to tasks
@@ -1534,7 +1577,7 @@ namespace CoreSystems.Projectiles
             //Hard break, everything below sorts out the best navigation action to conduct based on the drone position and target/status/mission info from above
 
             //General use vars
-            var targetSphere = s.NavTargetBound;
+            var targetSphere = s.DroneInfo.NavTargetBound;
             var orbitSphere = targetSphere; //desired orbit dist
             var orbitSphereClose = targetSphere; //"Too close" or collision imminent
 
@@ -1543,10 +1586,10 @@ namespace CoreSystems.Projectiles
             if (w.System.WConst.DebugMode && !w.System.Session.DedicatedServer)
                 DroneDebug(ref orbitSphere);
 
-            if (tracking && s.DroneMsn != DroneMission.Rtb && !DroneTracking(target, s, aConst))
+            if (tracking && s.DroneInfo.DroneMsn != DroneInfo.DroneMission.Rtb && !DroneTracking(target, s, aConst))
                 return;
 
-            if (s.DroneMsn == DroneMission.Rtb || tracking)
+            if (s.DroneInfo.DroneMsn == DroneInfo.DroneMission.Rtb || tracking)
                 ComputeSmartVelocity(ref orbitSphere, ref orbitSphereClose, ref targetSphere, ref parentPos, out newVel);
 
             UpdateSmartVelocity(newVel, tracking);
@@ -1564,40 +1607,40 @@ namespace CoreSystems.Projectiles
             var maxLife = aConst.MaxLifeTime;
             var orbitSphereFar = orbitSphere; //Indicates start of approach
 
-            switch (s.DroneMsn)
+            switch (s.DroneInfo.DroneMsn)
             {
-                case DroneMission.Attack:
+                case DroneInfo.DroneMission.Attack:
 
                     orbitSphere.Radius += fragProx;
                     orbitSphereFar.Radius += fragProx + speedLimitPerTick + MaxSpeed; //first whack at dynamic setting   
                     orbitSphereClose.Radius += MaxSpeed * 0.3f + ammo.Shape.Diameter; //Magic number, needs logical work?
-                    if (hasObstacle && orbitSphereClose.Contains(s.Obstacle.Entity.PositionComp.GetPosition()) != ContainmentType.Contains && s.DroneStat != Kamikaze)
+                    if (hasObstacle && orbitSphereClose.Contains(s.Obstacle.Entity.PositionComp.GetPosition()) != ContainmentType.Contains && s.DroneInfo.DroneStat != DroneInfo.DroneStatus.Kamikaze)
                     {
                         orbitSphereClose = s.Obstacle.Entity.PositionComp.WorldVolume;
                         orbitSphereClose.Radius = s.Obstacle.Entity.PositionComp.WorldVolume.Radius + MaxSpeed * 0.3f;
-                        s.DroneStat = Escape;
+                        s.DroneInfo.DroneStat = DroneInfo.DroneStatus.Escape;
                         break;
                     }
 
-                    if (s.DroneStat != Transit && orbitSphereFar.Contains(Position) == ContainmentType.Disjoint)
+                    if (s.DroneInfo.DroneStat != DroneInfo.DroneStatus.Transit && orbitSphereFar.Contains(Position) == ContainmentType.Disjoint)
                     {
-                        s.DroneStat = Transit;
+                        s.DroneInfo.DroneStat = DroneInfo.DroneStatus.Transit;
                         break;
                     }
-                    if (s.DroneStat != Kamikaze && s.DroneStat != Return && s.DroneStat != Escape)
+                    if (s.DroneInfo.DroneStat != DroneInfo.DroneStatus.Kamikaze && s.DroneInfo.DroneStat != DroneInfo.DroneStatus.Return && s.DroneInfo.DroneStat != DroneInfo.DroneStatus.Escape)
                     {
                         if (orbitSphere.Contains(Position) != ContainmentType.Disjoint)
                         {
                             if (orbitSphereClose.Contains(Position) != ContainmentType.Disjoint)
                             {
-                                s.DroneStat = Escape;
+                                s.DroneInfo.DroneStat = DroneInfo.DroneStatus.Escape;
                             }
-                            else if (s.DroneStat != Escape)
+                            else if (s.DroneInfo.DroneStat != DroneInfo.DroneStatus.Escape)
                             {
                                 switch (hasStrafe)
                                 {
                                     case false:
-                                        s.DroneStat = Orbit;
+                                        s.DroneInfo.DroneStat = DroneInfo.DroneStatus.Orbit;
                                         break;
                                     case true:
                                         {
@@ -1606,38 +1649,38 @@ namespace CoreSystems.Projectiles
                                             var timeSinceLastFrag = Info.RelativeAge - Info.LastFragTime;
 
                                             if (fragGroupDelay == 0 && timeSinceLastFrag >= fragInterval)
-                                                s.DroneStat = Strafe;//TODO incorporate group delays
+                                                s.DroneInfo.DroneStat = DroneInfo.DroneStatus.Strafe;//TODO incorporate group delays
                                             else if (fragGroupDelay > 0 && (timeSinceLastFrag >= fragGroupDelay || timeSinceLastFrag <= fragInterval))
-                                                s.DroneStat = Strafe;
-                                            else s.DroneStat = Orbit;
+                                                s.DroneInfo.DroneStat = DroneInfo.DroneStatus.Strafe;
+                                            else s.DroneInfo.DroneStat = DroneInfo.DroneStatus.Orbit;
                                             break;
                                         }
                                 }
                             }
                         }
-                        else if (s.DroneStat == Transit && orbitSphereFar.Contains(Position) != ContainmentType.Disjoint)
+                        else if (s.DroneInfo.DroneStat == DroneInfo.DroneStatus.Transit && orbitSphereFar.Contains(Position) != ContainmentType.Disjoint)
                         {
-                            s.DroneStat = Approach;
+                            s.DroneInfo.DroneStat = DroneInfo.DroneStatus.Approach;
                         }
                     }
-                    else if (s.DroneStat == Escape)
+                    else if (s.DroneInfo.DroneStat == DroneInfo.DroneStatus.Escape)
                     {
                         if (orbitSphere.Contains(Position) == ContainmentType.Disjoint)
-                            s.DroneStat = Orbit;
+                            s.DroneInfo.DroneStat = DroneInfo.DroneStatus.Orbit;
                     }
 
-                    if ((hasKamikaze) && s.DroneStat != Kamikaze && maxLife > 0)//Parenthesis for everyone!
+                    if ((hasKamikaze) && s.DroneInfo.DroneStat != DroneInfo.DroneStatus.Kamikaze && maxLife > 0)//Parenthesis for everyone!
                     {
                         var kamiFlightTime = orbitSphere.Radius / MaxSpeed * 60 * 1.05; //time needed for final dive into target
                         if (maxLife - Info.RelativeAge <= kamiFlightTime || (Info.Frags >= aConst.MaxFrags))
                         {
-                            s.DroneStat = Kamikaze;
+                            s.DroneInfo.DroneStat = DroneInfo.DroneStatus.Kamikaze;
                         }
                     }
-                    else if (!hasKamikaze && s.NavTargetEnt != parentEnt)
+                    else if (!hasKamikaze && s.DroneInfo.NavTargetEnt != parentEnt)
                     {
                         parentPos = comp.CoreEntity.PositionComp.WorldAABB.Center;
-                        if (parentPos != Vector3D.Zero && s.DroneStat != Return)
+                        if (parentPos != Vector3D.Zero && s.DroneInfo.DroneStat != DroneInfo.DroneStatus.Return)
                         {
                             var rtbFlightTime = Vector3D.Distance(Position, parentPos) / MaxSpeed * 60 * 1.1d;//added multiplier to ensure final docking time?
                             if ((maxLife > 0 && maxLife - Info.RelativeAge <= rtbFlightTime) || (Info.Frags >= aConst.MaxFrags))
@@ -1645,14 +1688,14 @@ namespace CoreSystems.Projectiles
                                 var rayTestPath = new RayD(Position, Vector3D.Normalize(parentPos - Position));//Check for clear LOS home
                                 if (rayTestPath.Intersects(orbitSphereClose) == null)
                                 {
-                                    s.DroneMsn = DroneMission.Rtb;
-                                    s.DroneStat = Transit;
+                                    s.DroneInfo.DroneMsn = DroneInfo.DroneMission.Rtb;
+                                    s.DroneInfo.DroneStat = DroneInfo.DroneStatus.Transit;
                                 }
                             }
                         }
                     }
                     break;
-                case DroneMission.Defend:
+                case DroneInfo.DroneMission.Defend:
                     orbitSphere.Radius += fragProx / 2;
                     orbitSphereFar.Radius += speedLimitPerTick + MaxSpeed;
                     orbitSphereClose.Radius += MaxSpeed * 0.3f + ammo.Shape.Diameter;
@@ -1660,79 +1703,79 @@ namespace CoreSystems.Projectiles
                     {
                         orbitSphereClose = s.Obstacle.Entity.PositionComp.WorldVolume;
                         orbitSphereClose.Radius = s.Obstacle.Entity.PositionComp.WorldVolume.Radius + MaxSpeed * 0.3f;
-                        s.DroneStat = Escape;
+                        s.DroneInfo.DroneStat = DroneInfo.DroneStatus.Escape;
                         break;
                     }
 
-                    if (s.DroneStat == Escape) s.DroneStat = Transit;
+                    if (s.DroneInfo.DroneStat == DroneInfo.DroneStatus.Escape) s.DroneInfo.DroneStat = DroneInfo.DroneStatus.Transit;
 
-                    if (s.DroneStat != Transit && orbitSphereFar.Contains(Position) == ContainmentType.Disjoint)
+                    if (s.DroneInfo.DroneStat != DroneInfo.DroneStatus.Transit && orbitSphereFar.Contains(Position) == ContainmentType.Disjoint)
                     {
-                        s.DroneStat = Transit;
+                        s.DroneInfo.DroneStat = DroneInfo.DroneStatus.Transit;
                         break;
                     }
 
-                    if (s.DroneStat != Transit)
+                    if (s.DroneInfo.DroneStat != DroneInfo.DroneStatus.Transit)
                     {
                         if (orbitSphere.Contains(Position) != ContainmentType.Disjoint)
                         {
-                            s.DroneStat = orbitSphereClose.Contains(Position) != ContainmentType.Disjoint ? Escape : Orbit;
+                            s.DroneInfo.DroneStat = orbitSphereClose.Contains(Position) != ContainmentType.Disjoint ? DroneInfo.DroneStatus.Escape : DroneInfo.DroneStatus.Orbit;
                         }
                     }
-                    else if (orbitSphereFar.Contains(Position) != ContainmentType.Disjoint && (s.DroneStat == Transit || s.DroneStat == Orbit))
+                    else if (orbitSphereFar.Contains(Position) != ContainmentType.Disjoint && (s.DroneInfo.DroneStat == DroneInfo.DroneStatus.Transit || s.DroneInfo.DroneStat == DroneInfo.DroneStatus.Orbit))
                     {
-                        s.DroneStat = Approach;
+                        s.DroneInfo.DroneStat = DroneInfo.DroneStatus.Approach;
                     }
 
                     parentPos = comp.CoreEntity.PositionComp.WorldAABB.Center;
-                    if (parentPos != Vector3D.Zero && s.DroneStat != Return && !hasKamikaze)//TODO kamikaze return suppressed to prevent damaging parent, until docking mechanism developed
+                    if (parentPos != Vector3D.Zero && s.DroneInfo.DroneStat != DroneInfo.DroneStatus.Return && !hasKamikaze)//TODO kamikaze return suppressed to prevent damaging parent, until docking mechanism developed
                     {
                         var rtbFlightTime = Vector3D.Distance(Position, parentPos) / MaxSpeed * 60 * 1.05d;//added multiplier to ensure final docking time
                         if ((maxLife > 0 && maxLife - Info.RelativeAge <= rtbFlightTime) || (Info.Frags >= Info.AmmoDef.Fragment.TimedSpawns.MaxSpawns))
                         {
-                            if (s.NavTargetEnt != parentEnt)
+                            if (s.DroneInfo.NavTargetEnt != parentEnt)
                             {
                                 var rayTestPath = new RayD(Position, Vector3D.Normalize(parentPos - Position));//Check for clear LOS home
                                 if (rayTestPath.Intersects(orbitSphereClose) == null)
                                 {
-                                    s.DroneMsn = DroneMission.Rtb;
-                                    s.DroneStat = Transit;
+                                    s.DroneInfo.DroneMsn = DroneInfo.DroneMission.Rtb;
+                                    s.DroneInfo.DroneStat = DroneInfo.DroneStatus.Transit;
                                 }
                             }
                             else//already orbiting parent, head in to dock
                             {
-                                s.DroneMsn = DroneMission.Rtb;
-                                s.DroneStat = Transit;
+                                s.DroneInfo.DroneMsn = DroneInfo.DroneMission.Rtb;
+                                s.DroneInfo.DroneStat = DroneInfo.DroneStatus.Transit;
                             }
                         }
                     }
 
                     break;
-                case DroneMission.Rtb:
+                case DroneInfo.DroneMission.Rtb:
 
                     orbitSphere.Radius += MaxSpeed;
                     orbitSphereFar.Radius += MaxSpeed * 2;
                     orbitSphereClose.Radius = targetSphere.Radius;
 
-                    if (hasObstacle && s.DroneStat != Dock)
+                    if (hasObstacle && s.DroneInfo.DroneStat != DroneInfo.DroneStatus.Dock)
                     {
                         orbitSphereClose = s.Obstacle.Entity.PositionComp.WorldVolume;
                         orbitSphereClose.Radius = s.Obstacle.Entity.PositionComp.WorldVolume.Radius + MaxSpeed * 0.3f;
-                        s.DroneStat = Escape;
+                        s.DroneInfo.DroneStat = DroneInfo.DroneStatus.Escape;
                         break;
                     }
 
-                    if (s.DroneStat == Escape) s.DroneStat = Transit;
+                    if (s.DroneInfo.DroneStat == DroneInfo.DroneStatus.Escape) s.DroneInfo.DroneStat = DroneInfo.DroneStatus.Transit;
 
-                    if (s.DroneStat != Return && s.DroneStat != Dock)
+                    if (s.DroneInfo.DroneStat != DroneInfo.DroneStatus.Return && s.DroneInfo.DroneStat != DroneInfo.DroneStatus.Dock)
                     {
                         if (orbitSphere.Contains(Position) != ContainmentType.Disjoint)
                         {
-                            s.DroneStat = orbitSphereClose.Contains(Position) != ContainmentType.Disjoint ? Escape : Return;
+                            s.DroneInfo.DroneStat = orbitSphereClose.Contains(Position) != ContainmentType.Disjoint ? DroneInfo.DroneStatus.Escape : DroneInfo.DroneStatus.Return;
                         }
-                        else if (orbitSphereFar.Contains(Position) != ContainmentType.Disjoint && (s.DroneStat == Transit || s.DroneStat == Orbit))
+                        else if (orbitSphereFar.Contains(Position) != ContainmentType.Disjoint && (s.DroneInfo.DroneStat == DroneInfo.DroneStatus.Transit || s.DroneInfo.DroneStat == DroneInfo.DroneStatus.Orbit))
                         {
-                            s.DroneStat = Approach;
+                            s.DroneInfo.DroneStat = DroneInfo.DroneStatus.Approach;
                         }
                     }
                     break;
@@ -1746,25 +1789,25 @@ namespace CoreSystems.Projectiles
             if (orbitSphere.Center != Vector3D.Zero)
             {
                 var debugLine = new LineD(Position, orbitSphere.Center);
-                if (s.DroneStat == Transit) DsDebugDraw.DrawLine(debugLine, Color.Blue, 0.5f);
-                if (s.DroneStat == Approach) DsDebugDraw.DrawLine(debugLine, Color.Cyan, 0.5f);
-                if (s.DroneStat == Kamikaze) DsDebugDraw.DrawLine(debugLine, Color.White, 0.5f);
-                if (s.DroneStat == Return) DsDebugDraw.DrawLine(debugLine, Color.Yellow, 0.5f);
-                if (s.DroneStat == Dock) DsDebugDraw.DrawLine(debugLine, Color.Purple, 0.5f);
-                if (s.DroneStat == Strafe) DsDebugDraw.DrawLine(debugLine, Color.Pink, 0.5f);
-                if (s.DroneStat == Escape) DsDebugDraw.DrawLine(debugLine, Color.Red, 0.5f);
-                if (s.DroneStat == Orbit) DsDebugDraw.DrawLine(debugLine, Color.Green, 0.5f);
+                if (s.DroneInfo.DroneStat == DroneInfo.DroneStatus.Transit) DsDebugDraw.DrawLine(debugLine, Color.Blue, 0.5f);
+                if (s.DroneInfo.DroneStat == DroneInfo.DroneStatus.Approach) DsDebugDraw.DrawLine(debugLine, Color.Cyan, 0.5f);
+                if (s.DroneInfo.DroneStat == DroneInfo.DroneStatus.Kamikaze) DsDebugDraw.DrawLine(debugLine, Color.White, 0.5f);
+                if (s.DroneInfo.DroneStat == DroneInfo.DroneStatus.Return) DsDebugDraw.DrawLine(debugLine, Color.Yellow, 0.5f);
+                if (s.DroneInfo.DroneStat == DroneInfo.DroneStatus.Dock) DsDebugDraw.DrawLine(debugLine, Color.Purple, 0.5f);
+                if (s.DroneInfo.DroneStat == DroneInfo.DroneStatus.Strafe) DsDebugDraw.DrawLine(debugLine, Color.Pink, 0.5f);
+                if (s.DroneInfo.DroneStat == DroneInfo.DroneStatus.Escape) DsDebugDraw.DrawLine(debugLine, Color.Red, 0.5f);
+                if (s.DroneInfo.DroneStat == DroneInfo.DroneStatus.Orbit) DsDebugDraw.DrawLine(debugLine, Color.Green, 0.5f);
             }
 
-            switch (s.DroneMsn)
+            switch (s.DroneInfo.DroneMsn)
             {
-                case DroneMission.Attack:
+                case DroneInfo.DroneMission.Attack:
                     DsDebugDraw.DrawSphere(new BoundingSphereD(Position, 10), Color.Red);
                     break;
-                case DroneMission.Defend:
+                case DroneInfo.DroneMission.Defend:
                     DsDebugDraw.DrawSphere(new BoundingSphereD(Position, 10), Color.Blue);
                     break;
-                case DroneMission.Rtb:
+                case DroneInfo.DroneMission.Rtb:
                     DsDebugDraw.DrawSphere(new BoundingSphereD(Position, 10), Color.Green);
                     break;
             }
@@ -1826,8 +1869,8 @@ namespace CoreSystems.Projectiles
                         var myEntity = target.TargetObject as MyEntity;
                         if (myEntity != null)
                         {
-                            s.NavTargetEnt = myEntity.GetTopMostParent();
-                            s.NavTargetBound = s.NavTargetEnt.PositionComp.WorldVolume;
+                            s.DroneInfo.NavTargetEnt = myEntity.GetTopMostParent();
+                            s.DroneInfo.NavTargetBound = s.DroneInfo.NavTargetEnt.PositionComp.WorldVolume;
                             hasTarget = true;
                         }
                     }
@@ -1843,16 +1886,15 @@ namespace CoreSystems.Projectiles
                         var fakeTarget = s.DummyTargets.PaintedTarget.EntityId != 0 ? s.DummyTargets.PaintedTarget : s.DummyTargets.ManualTarget;
                         if (fakeTarget == s.DummyTargets.PaintedTarget)
                         {
-                            MyEntities.TryGetEntityById(fakeTarget.EntityId, out s.NavTargetEnt);
-                            if (s.NavTargetEnt.PositionComp.WorldVolume.Radius <= 0)
+                            MyEntities.TryGetEntityById(fakeTarget.EntityId, out s.DroneInfo.NavTargetEnt);
+                            if (s.DroneInfo.NavTargetEnt.PositionComp.WorldVolume.Radius <= 0)
                             {
                                 NewTarget();
                             }
                         }
                         else
                         {
-                            s.NavTargetBound = new BoundingSphereD(fakeTarget.FakeInfo.WorldPosition, fragProx * 0.5f);
-                            s.TargetPos = fakeTarget.FakeInfo.WorldPosition;
+                            s.DroneInfo.NavTargetBound = new BoundingSphereD(fakeTarget.FakeInfo.WorldPosition, fragProx * 0.5f);
                             hasTarget = true;
                         }
                     }
@@ -1861,26 +1903,26 @@ namespace CoreSystems.Projectiles
                     break;
             }
 
-            if (s.NavTargetEnt != null && hasTarget)
-                s.NavTargetBound = s.NavTargetEnt.PositionComp.WorldVolume;//Refresh position info
+            if (s.DroneInfo.NavTargetEnt != null && hasTarget)
+                s.DroneInfo.NavTargetBound = s.DroneInfo.NavTargetEnt.PositionComp.WorldVolume;//Refresh position info
                                                                            //Logic to handle loss of target and reassigment to come home
-            if (!hasTarget && s.DroneMsn == DroneMission.Attack)
+            if (!hasTarget && s.DroneInfo.DroneMsn == DroneInfo.DroneMission.Attack)
             {
-                s.DroneMsn = DroneMission.Defend;//Try to return to parent in defensive state
-                s.NavTargetBound = parentEnt.PositionComp.WorldVolume;
-                s.NavTargetEnt = parentEnt;
+                s.DroneInfo.DroneMsn = DroneInfo.DroneMission.Defend;//Try to return to parent in defensive state
+                s.DroneInfo.NavTargetBound = parentEnt.PositionComp.WorldVolume;
+                s.DroneInfo.NavTargetEnt = parentEnt;
             }
-            else if (s.DroneMsn == DroneMission.Rtb || s.DroneMsn == DroneMission.Defend)
+            else if (s.DroneInfo.DroneMsn == DroneInfo.DroneMission.Rtb || s.DroneInfo.DroneMsn == DroneInfo.DroneMission.Defend)
             {
-                if (s.DroneMsn == DroneMission.Rtb || tasks.FriendId == 0)
+                if (s.DroneInfo.DroneMsn == DroneInfo.DroneMission.Rtb || tasks.FriendId == 0)
                 {
-                    s.NavTargetBound = parentEnt.PositionComp.WorldVolume;
-                    s.NavTargetEnt = parentEnt;
+                    s.DroneInfo.NavTargetBound = parentEnt.PositionComp.WorldVolume;
+                    s.DroneInfo.NavTargetEnt = parentEnt;
                 }
-                else if (tasks.Friend != null && s.DroneMsn != DroneMission.Rtb && tasks.Friend != null)//If all else fails, try to protect a friendly
+                else if (tasks.Friend != null && s.DroneInfo.DroneMsn != DroneInfo.DroneMission.Rtb && tasks.Friend != null)//If all else fails, try to protect a friendly
                 {
-                    s.NavTargetBound = tasks.Friend.PositionComp.WorldVolume;
-                    s.NavTargetEnt = tasks.Friend;
+                    s.DroneInfo.NavTargetBound = tasks.Friend.PositionComp.WorldVolume;
+                    s.DroneInfo.NavTargetEnt = tasks.Friend;
                 }
             }
         }
@@ -1894,36 +1936,36 @@ namespace CoreSystems.Projectiles
             switch (tasks.Task)
             {
                 case Tasks.Attack:
-                    s.DroneMsn = DroneMission.Attack;
-                    s.NavTargetEnt = tasks.Enemy;
-                    s.NavTargetBound = s.NavTargetEnt.PositionComp.WorldVolume;
+                    s.DroneInfo.DroneMsn = DroneInfo.DroneMission.Attack;
+                    s.DroneInfo.NavTargetEnt = tasks.Enemy;
+                    s.DroneInfo.NavTargetBound = s.DroneInfo.NavTargetEnt.PositionComp.WorldVolume;
                     var tTargetDist = Vector3D.Distance(Position, tasks.Enemy.PositionComp.WorldVolume.Center);
                     target.Set(tasks.Enemy, tasks.Enemy.PositionComp.WorldVolume.Center, tTargetDist, tTargetDist, tasks.EnemyId);
                     break;
                 case Tasks.Defend:
-                    s.DroneMsn = DroneMission.Defend;
-                    s.NavTargetEnt = tasks.Friend;
-                    s.NavTargetBound = s.NavTargetEnt.PositionComp.WorldVolume;
+                    s.DroneInfo.DroneMsn = DroneInfo.DroneMission.Defend;
+                    s.DroneInfo.NavTargetEnt = tasks.Friend;
+                    s.DroneInfo.NavTargetBound = s.DroneInfo.NavTargetEnt.PositionComp.WorldVolume;
                     break;
                 case Tasks.Screen:
-                    s.DroneMsn = DroneMission.Defend;
-                    s.NavTargetEnt = parentEnt;
-                    s.NavTargetBound = s.NavTargetEnt.PositionComp.WorldVolume;
+                    s.DroneInfo.DroneMsn = DroneInfo.DroneMission.Defend;
+                    s.DroneInfo.NavTargetEnt = parentEnt;
+                    s.DroneInfo.NavTargetBound = s.DroneInfo.NavTargetEnt.PositionComp.WorldVolume;
                     break;
                 case Tasks.Recall:
-                    s.DroneMsn = DroneMission.Rtb;
-                    s.NavTargetEnt = parentEnt;
-                    s.NavTargetBound = s.NavTargetEnt.PositionComp.WorldVolume;
+                    s.DroneInfo.DroneMsn = DroneInfo.DroneMission.Rtb;
+                    s.DroneInfo.NavTargetEnt = parentEnt;
+                    s.DroneInfo.NavTargetBound = s.DroneInfo.NavTargetEnt.PositionComp.WorldVolume;
                     break;
                 case Tasks.RoamAtPoint:
-                    s.DroneMsn = DroneMission.Defend;
-                    s.NavTargetEnt = null;
-                    s.NavTargetBound = new BoundingSphereD(tasks.Position, fragProx * 0.5f);
+                    s.DroneInfo.DroneMsn = DroneInfo.DroneMission.Defend;
+                    s.DroneInfo.NavTargetEnt = null;
+                    s.DroneInfo.NavTargetBound = new BoundingSphereD(tasks.Position, fragProx * 0.5f);
                     break;
                 case Tasks.None:
                     break;
             }
-            s.DroneStat = Transit;
+            s.DroneInfo.DroneStat = DroneInfo.DroneStatus.Transit;
         }
 
 
@@ -1948,8 +1990,8 @@ namespace CoreSystems.Projectiles
             {
 
                 double angle = Info.Random.NextDouble() * MathHelper.TwoPi;
-                var up = Vector3D.CalculatePerpendicularVector(Info.Direction);
-                var right = Vector3D.Cross(Info.Direction, up);
+                var up = Vector3D.CalculatePerpendicularVector(Direction);
+                var right = Vector3D.Cross(Direction, up);
                 s.RandOffsetDir = Math.Sin(angle) * up + Math.Cos(angle) * right;
                 s.RandOffsetDir *= smarts.OffsetRatio;
             }
@@ -1971,13 +2013,13 @@ namespace CoreSystems.Projectiles
             var droneSize = Math.Max(ammo.Shape.Diameter, 5);//Minimum drone "size" clamped to 5m for nav purposes, prevents chasing tiny points in space
             var speedLimitPerTick = aConst.AmmoSkipAccel ? DesiredSpeed : aConst.AccelInMetersPerSec;
 
-            switch (s.DroneStat)
+            switch (s.DroneInfo.DroneStat)
             {
-                case Transit:
+                case DroneInfo.DroneStatus.Transit:
                     droneNavTarget = Vector3D.Normalize(targetSphere.Center - Position);
                     break;
-                case Approach:
-                    if (s.DroneMsn == DroneMission.Rtb)//Check for LOS to docking target
+                case DroneInfo.DroneStatus.Approach:
+                    if (s.DroneInfo.DroneMsn == DroneInfo.DroneMission.Rtb)//Check for LOS to docking target
                     {
                         var returnTargetTest = new Vector3D(parentCubePos + parentCubeOrientation.Forward * orbitSphere.Radius);
                         var droneNavTargetAim = returnTargetTest;
@@ -1985,7 +2027,7 @@ namespace CoreSystems.Projectiles
 
                         if (testPathRayCheck.Intersects(orbitSphereClose) == null)
                         {
-                            s.DroneStat = Return;
+                            s.DroneInfo.DroneStat = DroneInfo.DroneStatus.Return;
                             break;
                         }
                     }
@@ -1999,18 +2041,18 @@ namespace CoreSystems.Projectiles
                     var angleQuat = Vector3D.CalculatePerpendicularVector(lineToCenter.Direction); //TODO placeholder for a possible rand-rotated quat.  Should be 90*, rand*, 0* 
                     var tangentPoint = new Vector3D(offsetPoint + offsetDist * angleQuat);
                     droneNavTarget = Vector3D.Normalize(tangentPoint - Position);
-                    if (double.IsNaN(droneNavTarget.X) || Vector3D.IsZero(droneNavTarget)) droneNavTarget = Info.Direction; //Error catch
+                    if (double.IsNaN(droneNavTarget.X) || Vector3D.IsZero(droneNavTarget)) droneNavTarget = Direction; //Error catch
                     break;
 
-                case Orbit://Orbit & shoot behavior
+                case DroneInfo.DroneStatus.Orbit://Orbit & shoot behavior
                     var insideOrbitSphere = new BoundingSphereD(orbitSphere.Center, orbitSphere.Radius * 0.90);
                     if (insideOrbitSphere.Contains(Position) != ContainmentType.Disjoint)
                     {
-                        droneNavTarget = Position + (Info.Direction + new Vector3D(0, 0.5, 0));//Strafe or too far inside sphere recovery
+                        droneNavTarget = Position + (Direction + new Vector3D(0, 0.5, 0));//Strafe or too far inside sphere recovery
                     }
                     else
                     {
-                        var noseOffset = new Vector3D(Position + (Info.Direction * (speedLimitPerTick)));
+                        var noseOffset = new Vector3D(Position + (Direction * (speedLimitPerTick)));
                         double length;
                         Vector3D.Distance(ref orbitSphere.Center, ref noseOffset, out length);
                         var dir = (noseOffset - orbitSphere.Center) / length;
@@ -2020,10 +2062,10 @@ namespace CoreSystems.Projectiles
                     }
                     break;
 
-                case Strafe:
+                case DroneInfo.DroneStatus.Strafe:
                     droneNavTarget = Vector3D.Normalize(TargetPosition - Position);
                     break;
-                case Escape:
+                case DroneInfo.DroneStatus.Escape:
                     var metersInSideOrbit = MyUtils.GetSmallestDistanceToSphere(ref Position, ref orbitSphereClose);
                     if (metersInSideOrbit < 0)
                     {
@@ -2034,20 +2076,20 @@ namespace CoreSystems.Projectiles
                     }
                     else
                     {
-                        droneNavTarget = Info.Direction;
+                        droneNavTarget = Direction;
                     }
                     break;
 
-                case Kamikaze:
+                case DroneInfo.DroneStatus.Kamikaze:
                     droneNavTarget = Vector3D.Normalize(TargetPosition - Position);
                     break;
-                case Return:
+                case DroneInfo.DroneStatus.Return:
                     var returnTarget = new Vector3D(parentCubePos + parentCubeOrientation.Forward * orbitSphere.Radius);
                     droneNavTarget = Vector3D.Normalize(returnTarget - Position);
                     DeaccelRate = 30;
-                    if (Vector3D.Distance(Position, returnTarget) <= droneSize) s.DroneStat = Dock;
+                    if (Vector3D.Distance(Position, returnTarget) <= droneSize) s.DroneInfo.DroneStat = DroneInfo.DroneStatus.Dock;
                     break;
-                case Dock: //This is ugly and I hate it...
+                case DroneInfo.DroneStatus.Dock: //This is ugly and I hate it...
                     var sphereTarget = new Vector3D(parentCubePos + parentCubeOrientation.Forward * (orbitSphereClose.Radius + MaxSpeed / 2));
 
                     if (Vector3D.Distance(sphereTarget, Position) >= droneSize)
@@ -2099,19 +2141,19 @@ namespace CoreSystems.Projectiles
                 }
                 commandedAccel = Math.Sqrt(Math.Max(0, aConst.AccelInMetersPerSec * aConst.AccelInMetersPerSec - normalMissileAcceleration.LengthSquared())) * missileToTarget + normalMissileAcceleration;
             }
-            if (smarts.OffsetTime > 0 && s.DroneStat != Strafe && s.DroneStat != Return && s.DroneStat != Dock) // suppress offsets when strafing or docking
+            if (smarts.OffsetTime > 0 && s.DroneInfo.DroneStat != DroneInfo.DroneStatus.Strafe && s.DroneInfo.DroneStat != DroneInfo.DroneStatus.Return && s.DroneInfo.DroneStat != DroneInfo.DroneStatus.Dock) // suppress offsets when strafing or docking
                 OffsetSmartVelocity(ref commandedAccel);
 
             newVel = Velocity + (commandedAccel * DeltaStepConst);
 
-            Vector3D.Normalize(ref newVel, out Info.Direction);
+            Vector3D.Normalize(ref newVel, out Direction);
         }
 
         private bool SmartRoam()
         {
             var smarts = Info.AmmoDef.Trajectory.Smarts;
             var hadTaret = HadTarget != HadTargetState.None;
-            TargetPosition = Position + (Info.Direction * Info.MaxTrajectory);
+            TargetPosition = Position + (Direction * Info.MaxTrajectory);
 
             Info.Storage.ZombieLifeTime += DeltaTimeRatio;
             if (Info.Storage.ZombieLifeTime > Info.AmmoDef.Const.TargetLossTime && !smarts.KeepAliveAfterTargetLoss && (smarts.NoTargetExpire || hadTaret))
@@ -2126,10 +2168,10 @@ namespace CoreSystems.Projectiles
         private void UpdateSmartVelocity(Vector3D newVel, bool tracking)
         {
             if (!tracking)
-                newVel = Velocity += (Info.Direction * (Info.AmmoDef.Const.DeltaVelocityPerTick * DeltaTimeRatio));
+                newVel = Velocity += (Direction * (Info.AmmoDef.Const.DeltaVelocityPerTick * DeltaTimeRatio));
             VelocityLengthSqr = newVel.LengthSquared();
 
-            if (VelocityLengthSqr > MaxSpeed * MaxSpeed || (DeaccelRate < 100 && Info.AmmoDef.Const.IsDrone)) newVel = Info.Direction * MaxSpeed * DeaccelRate / 100;
+            if (VelocityLengthSqr > MaxSpeed * MaxSpeed || (DeaccelRate < 100 && Info.AmmoDef.Const.IsDrone)) newVel = Direction * MaxSpeed * DeaccelRate / 100;
 
             Velocity = newVel;
         }
@@ -2179,7 +2221,7 @@ namespace CoreSystems.Projectiles
 
                     double dist;
                     Vector3D.DistanceSquared(ref Position, ref targetPos, out dist);
-                    if (dist < aConst.SmartOffsetSqr + VelocityLengthSqr && Vector3.Dot(Info.Direction, Position - targetPos) > 0)
+                    if (dist < aConst.SmartOffsetSqr + VelocityLengthSqr && Vector3.Dot(Direction, Position - targetPos) > 0)
                         OffSetTarget();
                 }
                 targetPos += OffsetTarget;
@@ -2210,9 +2252,9 @@ namespace CoreSystems.Projectiles
         private void SmartTargetLoss(Vector3D targetPos)
         {
 
-            if (Info.Storage.WasTracking && (Info.Ai.Session.Tick20 || Vector3.Dot(Info.Direction, Position - targetPos) > 0) || !Info.Storage.WasTracking)
+            if (Info.Storage.WasTracking && (Info.Ai.Session.Tick20 || Vector3.Dot(Direction, Position - targetPos) > 0) || !Info.Storage.WasTracking)
             {
-                var targetDir = -Info.Direction;
+                var targetDir = -Direction;
                 var refDir = Vector3D.Normalize(Position - targetPos);
                 if (!MathFuncs.IsDotProductWithinTolerance(ref targetDir, ref refDir, Info.AmmoDef.Const.TargetLossDegree))
                 {
@@ -2341,7 +2383,7 @@ namespace CoreSystems.Projectiles
 
             if (ttiDiff < 0)
             {
-                targetDirection = Info.Direction;
+                targetDirection = Direction;
                 estimatedPosition = targetPos;
                 return aConst.FragPointType == PointTypes.Direct;
             }
@@ -2365,7 +2407,7 @@ namespace CoreSystems.Projectiles
                 }
 
                 estimatedPosition = targetPos;
-                targetDirection = Info.Direction;
+                targetDirection = Direction;
                 return false;
             }
 
@@ -2399,15 +2441,15 @@ namespace CoreSystems.Projectiles
             Info.DistanceTraveled = 0;
             Info.PrevDistanceTraveled = 0;
 
-            Info.Direction = Vector3D.Normalize(predictedPos - Position);
+            Direction = Vector3D.Normalize(predictedPos - Position);
             VelocityLengthSqr = 0;
 
             if (aConst.AmmoSkipAccel)
             {
-                Velocity = (Info.Direction * MaxSpeed);
+                Velocity = (Direction * MaxSpeed);
                 VelocityLengthSqr = MaxSpeed * MaxSpeed;
             }
-            else Velocity += Info.Direction * (aConst.DeltaVelocityPerTick * DeltaTimeRatio);
+            else Velocity += Direction * (aConst.DeltaVelocityPerTick * DeltaTimeRatio);
 
             if (ammo.Trajectory.Guidance == TrajectoryDef.GuidanceType.DetectSmart)
             {
@@ -2540,7 +2582,7 @@ namespace CoreSystems.Projectiles
                 OffsetTarget = Vector3D.Zero;
             }
 
-            Info.Direction = Vector3D.Zero;
+            Direction = Vector3D.Zero;
 
             Velocity = Vector3D.Zero;
             TravelMagnitude = Vector3D.Zero;
@@ -2717,7 +2759,7 @@ namespace CoreSystems.Projectiles
             else
             {
                 var pos = !Vector3D.IsZero(Info.Hit.LastHit) ? Info.Hit.LastHit : Position;
-                var offSet = (Info.Direction * aConst.FragmentOffset);
+                var offSet = (Direction * aConst.FragmentOffset);
                 newOrigin = aConst.HasNegFragmentOffset ? pos - offSet : pos + offSet;
             }
 
@@ -2728,7 +2770,7 @@ namespace CoreSystems.Projectiles
                 Vector3D pointDir;
                 if (!fireOnTarget)
                 {
-                    pointDir = Info.Direction;
+                    pointDir = Direction;
                     if (aConst.UseAimCone)
                     {
                         var eTarget = Info.Target.TargetObject as MyEntity;
@@ -2738,7 +2780,7 @@ namespace CoreSystems.Projectiles
                         var targetSphere = new BoundingSphereD(TargetPosition, radius);
 
                         MathFuncs.Cone aimCone;
-                        aimCone.ConeDir = Info.Direction;
+                        aimCone.ConeDir = Direction;
                         aimCone.ConeTip = Position;
                         aimCone.ConeAngle = aConst.DirectAimCone;
                         if (!MathFuncs.TargetSphereInCone(ref targetSphere, ref aimCone)) break;
@@ -2755,7 +2797,7 @@ namespace CoreSystems.Projectiles
                         var targetSphere = new BoundingSphereD(TargetPosition, radius);
 
                         MathFuncs.Cone aimCone;
-                        aimCone.ConeDir = Info.Direction;
+                        aimCone.ConeDir = Direction;
                         aimCone.ConeTip = Position;
                         aimCone.ConeAngle = aConst.DirectAimCone;
                         if (!MathFuncs.TargetSphereInCone(ref targetSphere, ref aimCone)) break;
@@ -2772,7 +2814,7 @@ namespace CoreSystems.Projectiles
                 if (fragAmmoDef.Const.HasAdvFragOffset)
                 {
                     MatrixD matrix;
-                    MatrixD.CreateWorld(ref Position, ref Info.Direction, ref Info.OriginUp, out matrix);
+                    MatrixD.CreateWorld(ref Position, ref Direction, ref Info.OriginUp, out matrix);
 
                     Vector3D advOffSet;
                     var offSet = fragAmmoDef.Const.FragOffset;
@@ -2813,7 +2855,7 @@ namespace CoreSystems.Projectiles
             proSync.Position = Position;
             proSync.State = state;
             proSync.Velocity = Velocity;
-            proSync.ProId = Info.Storage.SyncId;
+            proSync.ProId = Info.SyncId;
             Info.Weapon.ProPositionSync.Collection.Add(proSync);
             session.GlobalProPosSyncs[Info.Weapon.PartState.Id] = Info.Weapon.ProPositionSync;
         }
@@ -2822,7 +2864,7 @@ namespace CoreSystems.Projectiles
         {
             var session = Info.Ai.Session;
             var proSync = session.ProtoWeaponProSyncTargetPool.Count > 0 ? session.ProtoWeaponProSyncTargetPool.Pop() : new ProtoProTarget();
-            proSync.ProId = Info.Storage.SyncId;
+            proSync.ProId = Info.SyncId;
             var targetId = ((MyEntity) Info.Target.TargetObject).EntityId;
             proSync.EntityId = targetId;
             Info.Weapon.ProTargetSync.Collection.Add(proSync);
@@ -2834,11 +2876,11 @@ namespace CoreSystems.Projectiles
             var s = Info.Ai.Session;
             var w = Info.Weapon;
             ClientProSync sync;
-            if (w.WeaponProSyncs.TryGetValue(Info.Storage.SyncId, out sync))
+            if (w.WeaponProSyncs.TryGetValue(Info.SyncId, out sync))
             {
                 if (RelativeTime - sync.UpdateTick > 30)
                 {
-                    w.WeaponProSyncs.Remove(Info.Storage.SyncId);
+                    w.WeaponProSyncs.Remove(Info.SyncId);
                     return;
                 }
 
@@ -2849,7 +2891,7 @@ namespace CoreSystems.Projectiles
                     if (proPosSync.State == ProtoProPosition.ProSyncState.Dead)
                     {
                         State = ProjectileState.Destroy;
-                        w.WeaponProSyncs.Remove(Info.Storage.SyncId);
+                        w.WeaponProSyncs.Remove(Info.SyncId);
                         return;
                     }
 
@@ -2865,27 +2907,27 @@ namespace CoreSystems.Projectiles
                     var pastServerProPos = proPosSync.Position;
                     var futurePosition = pastServerProPos + estimatedDistTraveledToPresent;
 
-                    var pastClientProPos = Info.Storage.PastProInfos[checkSlot];
+                    var pastClientProPos = Info.Storage.FullSyncInfo.PastProInfos[checkSlot];
                     if (Vector3D.DistanceSquared(pastClientProPos, pastServerProPos) > clampedEstimatedDistTraveledSqr)
                     {
-                        if (++Info.Storage.ProSyncPosMissCount > 1)
+                        if (++Info.Storage.FullSyncInfo.ProSyncPosMissCount > 1)
                         {
-                            Info.Storage.ProSyncPosMissCount = 0;
+                            Info.Storage.FullSyncInfo.ProSyncPosMissCount = 0;
                             Position = futurePosition;
                             Velocity = proPosSync.Velocity;
-                            Vector3D.Normalize(ref Velocity, out Info.Direction);
+                            Vector3D.Normalize(ref Velocity, out Direction);
                         }
                     }
                     else
-                        Info.Storage.ProSyncPosMissCount = 0;
+                        Info.Storage.FullSyncInfo.ProSyncPosMissCount = 0;
 
                     if (w.System.WConst.DebugMode)
                     {
                         List<ClientProSyncDebugLine> lines;
-                        if (!w.System.Session.ProSyncLineDebug.TryGetValue(Info.Storage.SyncId, out lines))
+                        if (!w.System.Session.ProSyncLineDebug.TryGetValue(Info.SyncId, out lines))
                         {
                             lines = new List<ClientProSyncDebugLine>();
-                            w.System.Session.ProSyncLineDebug[Info.Storage.SyncId] = lines;
+                            w.System.Session.ProSyncLineDebug[Info.SyncId] = lines;
                         }
 
                         var pastServerLine = lines.Count == 0 ? new LineD(pastServerProPos - (proPosSync.Velocity * (float) DeltaStepConst), pastServerProPos) : new LineD(lines[lines.Count - 1].Line.To, pastServerProPos);
@@ -2895,7 +2937,7 @@ namespace CoreSystems.Projectiles
                         //Log.Line($"ProSyn: Id:{Info.Id} - age:{Info.Age} - owl:{sync.CurrentOwl} - jumpDist:{Vector3D.Distance(oldPos, Position)}[{Vector3D.Distance(oldVels, Velocity)}] - nVel:{oldVels.Length()} - oVel:{proPosSync.Velocity.Length()})");
                     }
                 }
-                w.WeaponProSyncs.Remove(Info.Storage.SyncId);
+                w.WeaponProSyncs.Remove(Info.SyncId);
             }
         }
         #endregion

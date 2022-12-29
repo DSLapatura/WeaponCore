@@ -30,7 +30,6 @@ namespace CoreSystems.Support
         internal Vector3D ShooterVel;
         internal Vector3D Origin;
         internal Vector3D OriginUp;
-        internal Vector3D Direction;
         internal Vector3D TotalAcceleration;
         internal Hit Hit;
         internal XorShiftRandomStruct Random;
@@ -42,6 +41,8 @@ namespace CoreSystems.Support
         internal int CompSceneVersion;
         internal ulong UniqueMuzzleId;
         internal ulong Id;
+        internal ulong SyncId = ulong.MaxValue;
+
         internal double DistanceTraveled;
         internal double PrevDistanceTraveled;
         internal double ProjectileDisplacement;
@@ -84,7 +85,6 @@ namespace CoreSystems.Support
             Target.TargetObject = weapon.Target.TargetObject;
             MuzzleId = muzzle.MuzzleId;
             UniqueMuzzleId = muzzle.UniqueId;
-            Direction = muzzle.DeviatedDir;
             Origin = muzzle.Position;
             MaxTrajectory = maxTrajectory;
             ShotFade = shotFade;
@@ -93,6 +93,7 @@ namespace CoreSystems.Support
         internal void Clean(Projectile p)
         {
             var aConst = AmmoDef.Const;
+
             var monitor = Weapon.Comp.ProjectileMonitors[Weapon.PartId];
             if (monitor?.Count > 0) {
                 for (int i = 0; i < monitor.Count; i++)
@@ -108,8 +109,14 @@ namespace CoreSystems.Support
 
             Target.Reset(Weapon.System.Session.Tick, Target.States.ProjectileClean);
             HitList.Clear();
+            
             if (aConst.IsSmart || aConst.IsDrone)
                 Storage.Clean(p);
+
+
+            SyncId = ulong.MaxValue;
+
+
             if (IsFragment)
             {
                 if (VoxelCache != null && Weapon.System.Session != null)
@@ -164,7 +171,6 @@ namespace CoreSystems.Support
             ShieldResistMod = 1f;
             ShieldBypassMod = 1f;
             Hit = new Hit();
-            Direction = Vector3D.Zero;
             Origin = Vector3D.Zero;
             ShooterVel = Vector3D.Zero;
             TriggerMatrix = MatrixD.Identity;
@@ -173,113 +179,177 @@ namespace CoreSystems.Support
         }
     }
 
-    internal enum DroneStatus
-    {
-        Launch,
-        Transit, //Movement from/to target area
-        Approach, //Final transition between transit and orbit
-        Orbit, //Orbit & shoot
-        Strafe, //Nose at target movement, for PointType = direct and PointAtTarget = false
-        Escape, //Move away from imminent collision
-        Kamikaze,
-        Return, //Return to "base"
-        Dock,
-    }
-
-    internal enum DroneMission
-    {
-        Attack,
-        Defend,
-        Rtb,
-    }
-
     internal class SmartStorage
     {
-        internal readonly Vector3D[] PastProInfos = new Vector3D[30];
-        internal readonly ProNavGuidanceInlined Navigation = new ProNavGuidanceInlined(60);
-        internal readonly ClosestObstacles Obstacle = new ClosestObstacles();
-
-        internal DroneStatus DroneStat;
-        internal DroneMission DroneMsn;
-        internal Vector3D TargetPos;
-        internal Vector3D StoredDestination;
-        internal Vector3D DestinationPos;
-        internal Vector3D RandOffsetDir;
-        internal Vector3D OffsetDir;
-        internal Vector3D LookAtPos;
+        internal ClosestObstacles Obstacle;
+        internal FullSyncInfo FullSyncInfo;
         internal FakeTargets DummyTargets;
-        internal MyEntity NavTargetEnt;
-        internal BoundingSphereD NavTargetBound;
+        internal ApproachInfo ApproachInfo;
+        internal DroneInfo DroneInfo;
+        internal Vector3D RandOffsetDir;
+        internal Vector3D? LastVelocity;
         internal bool SmartReady;
         internal bool WasTracking;
         internal bool Sleep;
         internal bool PickTarget;
-        internal int ProSyncPosMissCount;
         internal int ChaseAge;
         internal int LastOffsetTime;
         internal int SmartSlot;
         internal int LastActivatedStage = -1;
         internal int RequestedStage = -1;
-        internal ulong SyncId = ulong.MaxValue;
-        internal double StartDistanceTraveled;
         internal double ZombieLifeTime;
         internal double PrevZombieLifeTime;
 
         internal void Clean(Projectile p)
         {
-            if (p != null)
-            {
-                if (p.Info.AmmoDef.Const.FullSync)
-                {
-                    for (int i = 0; i < PastProInfos.Length; i++)
-                        PastProInfos[i] = Vector3D.Zero;
+            LastActivatedStage = -1;
+            RequestedStage = -1;
 
-                    p.Info.Weapon.ProjectileSyncMonitor.Remove(SyncId);
-                }
-                else if (SyncId != ulong.MaxValue)
-                {
-                    p.Info.Weapon.ProjectileSyncMonitor.Remove(SyncId);
-                }
-            }
-            
-            SyncId = ulong.MaxValue;
-            ProSyncPosMissCount = 0;
             ChaseAge = 0;
             ZombieLifeTime = 0;
             PrevZombieLifeTime = 0;
             LastOffsetTime = 0;
-            DroneStat = DroneStatus.Launch;
-            DroneMsn = DroneMission.Attack;
-            TargetPos = Vector3D.Zero;
+            SmartSlot = 0;
+
             RandOffsetDir = Vector3D.Zero;
-            OffsetDir = Vector3D.Zero;
-            LookAtPos = Vector3D.Zero;
-            DestinationPos = Vector3D.Zero;
-            StoredDestination = Vector3D.Zero;
-            NavTargetEnt = null;
-            Obstacle.Entity = null;
-            Obstacle.LastSeenTick = uint.MaxValue;
+
             DummyTargets = null;
-            NavTargetBound = new BoundingSphereD(Vector3D.Zero,0);
+            ApproachInfo = null;
+            LastVelocity = null;
             SmartReady = false;
             WasTracking = false;
             PickTarget = false;
-            SmartSlot = 0;
-            StartDistanceTraveled = 0;
-            LastActivatedStage = -1;
-            RequestedStage = -1;
+
             Sleep = false;
 
-            Navigation.ClearAcceleration();
-        }
+            if (p != null && !p.Info.AmmoDef.Const.FullSync && p.Info.SyncId != ulong.MaxValue)
+                p.Info.Weapon.ProjectileSyncMonitor.Remove(p.Info.SyncId);
 
-        internal class ClosestObstacles
-        {
-            internal MyEntity Entity;
-            internal uint LastSeenTick = uint.MaxValue;
-            internal BoundingSphereD AvoidSphere;
+
+            if (ApproachInfo != null && p != null)
+            {
+                ApproachInfo.Clean(p);
+                ApproachInfo = null;
+            }
+            else if (DroneInfo != null && p != null)
+            {
+                DroneInfo.Clean(p);
+                DroneInfo = null;
+            }
+
+            if (FullSyncInfo != null && p != null)
+            {
+                FullSyncInfo.Clean(p);
+                FullSyncInfo = null;
+            }
+
+            if (Obstacle != null)
+            {
+                Obstacle.Entity = null;
+                Obstacle.LastSeenTick = uint.MaxValue;
+            }
         }
     }
+
+    internal class ClosestObstacles
+    {
+        internal MyEntity Entity;
+        internal uint LastSeenTick = uint.MaxValue;
+        internal BoundingSphereD AvoidSphere;
+    }
+
+    internal class FullSyncInfo
+    {
+        internal readonly Vector3D[] PastProInfos = new Vector3D[30];
+        internal int ProSyncPosMissCount;
+
+        internal void Clean(Projectile p)
+        {
+            for (int i = 0; i < PastProInfos.Length; i++)
+                PastProInfos[i] = Vector3D.Zero;
+
+            p.Info.Weapon.ProjectileSyncMonitor.Remove(p.Info.SyncId);
+
+            ProSyncPosMissCount = 0;
+
+            p.Info.Ai.Session.FullSyncInfoPool.Push(this);
+        }
+    }
+
+    public class ApproachInfo
+    {
+        internal ApproachInfo(AmmoConstants aConst)
+        {
+            StoredDestination = new Vector3D[aConst.ApproachesCount * 2];
+        }
+
+        internal readonly Vector3D[] StoredDestination;
+        internal BoundingSphereD NavTargetBound;
+        internal Vector3D TargetPos;
+        internal Vector3D DestinationPos;
+        internal Vector3D LookAtPos;
+        internal Vector3D OffsetDir;
+
+        internal double StartDistanceTraveled;
+
+        internal void Clean(Projectile p)
+        {
+            for (int i = 0; i < StoredDestination.Length; i++)
+                StoredDestination[i] = Vector3D.Zero;
+
+            TargetPos = Vector3D.Zero;
+            DestinationPos = Vector3D.Zero;
+            LookAtPos = Vector3D.Zero;
+            OffsetDir = Vector3D.Zero;
+            StartDistanceTraveled = 0;
+            NavTargetBound = new BoundingSphereD(Vector3D.Zero, 0);
+
+            p.Info.AmmoDef.Const.ApproachInfoPool.Push(this);
+        }
+    }
+
+    internal class DroneInfo
+    {
+
+        internal enum DroneStatus
+        {
+            Launch,
+            Transit, //Movement from/to target area
+            Approach, //Final transition between transit and orbit
+            Orbit, //Orbit & shoot
+            Strafe, //Nose at target movement, for PointType = direct and PointAtTarget = false
+            Escape, //Move away from imminent collision
+            Kamikaze,
+            Return, //Return to "base"
+            Dock,
+        }
+
+        internal enum DroneMission
+        {
+            Attack,
+            Defend,
+            Rtb,
+        }
+
+        internal MyEntity NavTargetEnt;
+        internal BoundingSphereD NavTargetBound;
+        internal Vector3D DestinationPos;
+
+        internal DroneStatus DroneStat;
+        internal DroneMission DroneMsn;
+
+        internal void Clean(Projectile p)
+        {
+            DestinationPos = Vector3D.Zero;
+            NavTargetBound = new BoundingSphereD(Vector3D.Zero, 0);
+            NavTargetEnt = null;
+            DroneStat = DroneStatus.Launch;
+            DroneMsn = DroneMission.Attack;
+
+            p.Info.Ai.Session.DroneInfoPool.Push(this);
+        }
+    }
+
 
     internal struct DeferedVoxels
     {
@@ -434,10 +504,9 @@ namespace CoreSystems.Support
                 frag.Ai = info.Ai;
                 frag.AmmoDef = ammoDef;
                 if (guidance)
-                {
                     frag.DummyTargets = info.Storage.DummyTargets;
-                }
-                frag.SyncId = info.Storage.SyncId;
+
+                frag.SyncId = info.SyncId;
                 if (frag.SyncId != ulong.MaxValue)
                     frag.SyncedFrags = ++info.SyncedFrags;
 
@@ -509,7 +578,7 @@ namespace CoreSystems.Support
                 info.SyncedFrags = frag.SyncedFrags;
                 info.BaseDamagePool = aConst.BaseDamage;
                 p.TargetPosition = frag.PrevTargetPos;
-                info.Direction = frag.Direction;
+                p.Direction = frag.Direction;
                 info.ShooterVel = frag.Velocity;
                 p.Gravity = aConst.FeelsGravity && info.Ai.InPlanetGravity ? frag.Weapon.GravityPoint * aConst.GravityMultiplier : Vector3D.Zero;
                 info.AcquiredEntity = frag.AcquiredEntity;
@@ -525,10 +594,10 @@ namespace CoreSystems.Support
                 {
                     var syncPart1 = (ushort)((frag.SyncId >> 48) & 0x000000000000FFFF);
                     var syncPart2 = (ushort)((frag.SyncId >> 32) & 0x000000000000FFFF);
-                    info.Storage.SyncId = ((ulong)syncPart1 << 48) | ((ulong)syncPart2 << 32) | ((ulong)info.SyncedFrags << 16) | info.SpawnDepth;
+                    info.SyncId = ((ulong)syncPart1 << 48) | ((ulong)syncPart2 << 32) | ((ulong)info.SyncedFrags << 16) | info.SpawnDepth;
 
                     if (aConst.PdDeathSync || aConst.OnHitDeathSync || aConst.FullSync)
-                        p.Info.Weapon.ProjectileSyncMonitor[info.Storage.SyncId] = p;
+                        p.Info.Weapon.ProjectileSyncMonitor[info.SyncId] = p;
                 }
 
                 session.Projectiles.ActiveProjetiles.Add(p);

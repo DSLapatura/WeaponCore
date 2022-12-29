@@ -28,6 +28,7 @@ using VRageMath;
 using WeaponCore.Data.Scripts.CoreSystems.Comms;
 using WeaponCore.Data.Scripts.CoreSystems.Ui;
 using static CoreSystems.Support.Ai;
+using static CoreSystems.Support.SmartStorage;
 using static CoreSystems.Support.WeaponSystem;
 
 namespace CoreSystems
@@ -114,9 +115,11 @@ namespace CoreSystems
         internal readonly Stack<ProjectileSyncTargetPacket> ProtoWeaponProTargetPacketPool = new Stack<ProjectileSyncTargetPacket>(32);
 
         internal readonly Stack<List<MyTuple<Vector3D, object, float>>> ProHitPool = new Stack<List<MyTuple<Vector3D, object, float>>>(256);
-
         internal readonly Stack<WeaponSequence> SequencePool = new Stack<WeaponSequence>(32);
         internal readonly Stack<WeaponGroup> GroupPool = new Stack<WeaponGroup>(32);
+        internal readonly Stack<DroneInfo> DroneInfoPool = new Stack<DroneInfo>(128);
+        internal readonly Stack<ClosestObstacles> ClosestObstaclesPool = new Stack<ClosestObstacles>(128);
+        internal readonly Stack<FullSyncInfo> FullSyncInfoPool = new Stack<FullSyncInfo>(128);
 
         internal readonly HashSet<MyCubeGrid> DirtyGridInfos = new HashSet<MyCubeGrid>();
 

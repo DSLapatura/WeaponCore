@@ -88,6 +88,7 @@ namespace CoreSystems.Support
 
         };
 
+        public readonly Stack<ApproachInfo> ApproachInfoPool;
         public readonly MyConcurrentPool<MyEntity> PrimeEntityPool;
         public readonly Dictionary<MyDefinitionBase, float> CustomBlockDefinitionBasesToScales;
         public readonly Dictionary<MyStringHash, MyStringHash> TextureHitMap = new Dictionary<MyStringHash, MyStringHash>();
@@ -496,7 +497,7 @@ namespace CoreSystems.Support
 
 
             ComputeShieldBypass(shieldBypassRaw, out ShieldDamageBypassMod);
-            ComputeApproaches(ammo, wDef, out ApproachesCount, out Approaches);
+            ComputeApproaches(ammo, wDef, out ApproachesCount, out Approaches, out ApproachInfoPool);
             ComputeAmmoPattern(ammo, system, wDef, fragGuidedAmmo, fragAntiSmart, fragTargetOverride, out AntiSmartDetected, out TargetOverrideDetected, out AmmoPattern, out WeaponPatternCount, out FragPatternCount, out GuidedAmmoDetected, out WeaponPattern, out FragmentPattern);
 
             DamageScales(ammo.AmmoDef, out DamageScaling, out FallOffScaling, out ArmorScaling, out CustomDamageScales, out CustomBlockDefinitionBasesToScales, out SelfDamage, out VoxelDamage, out HealthHitModifier, out VoxelHitModifier, out DeformDelay);
@@ -782,7 +783,7 @@ namespace CoreSystems.Support
             directAimCone = MathHelper.ToRadians(Math.Max(ammo.AmmoDef.Fragment.TimedSpawns.DirectAimCone, 1));
         }
 
-        private void ComputeApproaches(WeaponSystem.AmmoType ammo, WeaponDefinition wDef, out int approachesCount, out ApproachConstants[] approaches)
+        private void ComputeApproaches(WeaponSystem.AmmoType ammo, WeaponDefinition wDef, out int approachesCount, out ApproachConstants[] approaches, out Stack<ApproachInfo> approachInfoPool)
         {
             if (ammo.AmmoDef.Trajectory.Approaches != null && ammo.AmmoDef.Trajectory.Approaches.Length > 0)
             {
@@ -791,11 +792,14 @@ namespace CoreSystems.Support
 
                 for (int i = 0; i < approaches.Length; i++)
                     approaches[i] = new ApproachConstants(ammo, i, wDef);
+
+                approachInfoPool = new Stack<ApproachInfo>(approachesCount);
             }
             else
             {
                 approachesCount = 0;
                 approaches = null;
+                approachInfoPool = null;
             }
         }
 
