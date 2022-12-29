@@ -57,6 +57,7 @@ namespace CoreSystems.Support
         private const string HealthHitModStr = "HealthHitModifier";
         private const string ByBlockHitMaxAbsorbStr = "ByBlockHitMaxAbsorb";
         private const string EndOfLifeMaxAbsorbStr = "EndOfLifeMaxAbsorb";
+        private const string BackKickForceStr = "BackKickForce ";
 
         private readonly Dictionary<string, BaseProcessor> _modifierMap = new Dictionary<string, BaseProcessor>()
         {
@@ -83,6 +84,8 @@ namespace CoreSystems.Support
             {HealthHitModStr, new DoubleProcessor() },
             {ByBlockHitMaxAbsorbStr, new FloatProcessor() },
             {EndOfLifeMaxAbsorbStr, new FloatProcessor() },
+            {BackKickForceStr, new FloatProcessor() },
+
         };
 
         public readonly MyConcurrentPool<MyEntity> PrimeEntityPool;
@@ -313,6 +316,7 @@ namespace CoreSystems.Support
         public readonly float EndOfLifeDepth;
         public readonly float ByBlockHitDepth;
         public readonly float DetonationSoundDistSqr;
+        public readonly float BackKickForce;
         public readonly double ScanRange;
         public readonly double DeltaVelocityPerTick;
         public readonly double LargestHitSize;
@@ -471,7 +475,8 @@ namespace CoreSystems.Support
             AmmoSkipAccel = ammo.AmmoDef.Trajectory.AccelPerSec <= 0;
             FeelsGravity = GravityMultiplier > 0;
             SmartOffsetSqr = ammo.AmmoDef.Trajectory.Smarts.Inaccuracy * ammo.AmmoDef.Trajectory.Smarts.Inaccuracy;
-            HasBackKickForce = !MathHelper.IsZero(ammo.AmmoDef.BackKickForce);
+            BackKickForce = _modifierMap[BackKickForceStr].HasData() ? _modifierMap[BackKickForceStr].GetAsFloat : ammo.AmmoDef.BackKickForce;
+            HasBackKickForce = !MathHelper.IsZero(BackKickForce);
             MaxLateralThrust = MathHelperD.Clamp(ammo.AmmoDef.Trajectory.Smarts.MaxLateralThrust >= 1 ? double.MaxValue : ammo.AmmoDef.Trajectory.Smarts.MaxLateralThrust, 0.0001, double.MaxValue);
 
             CustomDetParticle = !string.IsNullOrEmpty(ammo.AmmoDef.AreaOfDamage.EndOfLife.CustomParticle);

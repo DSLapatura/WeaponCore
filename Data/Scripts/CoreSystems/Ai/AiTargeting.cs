@@ -91,6 +91,8 @@ namespace CoreSystems.Support
             }
             else 
                 w.WakeTargets();
+
+            ++w.AcquireAttempts;
         }
 
         private static bool AcquireTopMostEntity(Weapon w, ProtoWeaponOverrides overRides, bool attemptReset = false, MyEntity targetEntity = null)
@@ -158,9 +160,23 @@ namespace CoreSystems.Support
 
             var collection = !w.System.TargetSlaving ? ai.SortedTargets : ai.ThreatCollection;
             var numOfTargets = collection.Count;
-            var adjTargetCount = forceFoci && (offset > 0 || focusOnly) ? offset : numOfTargets + offset;
 
-            var deck = GetDeck(ref session.TargetDeck, 0, numOfTargets, w.System.Values.Targeting.TopTargets, ref w.TargetData.WeaponRandom.AcquireRandom);
+            int checkSize;
+            if (w.System.CycleTargets <= 0)
+                checkSize = numOfTargets;
+            else if (w.System.CycleTargets > numOfTargets)
+                checkSize = w.System.CycleTargets - numOfTargets;
+            else
+                checkSize = w.System.CycleTargets;
+
+            var chunk = numOfTargets > 0 ? checkSize * w.AcquireAttempts % numOfTargets : 0;
+
+            if (chunk + checkSize >= numOfTargets)
+                checkSize = numOfTargets - chunk;
+
+            var deck = GetDeck(ref session.TargetDeck, chunk, checkSize, w.System.TopTargets, ref w.TargetData.WeaponRandom.AcquireRandom, numOfTargets);
+
+            var adjTargetCount = forceFoci && (offset > 0 || focusOnly) ? offset : (checkSize + offset);
             for (int x = 0; x < adjTargetCount; x++)
             {
                 var focusTarget = offset > 0 && x < offset;
@@ -179,6 +195,7 @@ namespace CoreSystems.Support
                 }
                 else
                 {
+                    Log.Line($"1: x:{x} - collectionSize:{collection.Count} - deck:{deck[x - offset]} - chunk:{chunk} - numOfTargets:{numOfTargets} - adjTargets:{adjTargetCount} - topTargets:{w.System.TopTargets}");
                     info = collection[deck[x - offset]];
                 }
 
@@ -363,9 +380,22 @@ namespace CoreSystems.Support
 
             var collection = !w.System.TargetSlaving ? ai.Obstructions : ai.NonThreatCollection;
             var numOfTargets = collection.Count;
+            
+            int checkSize;
+            if (w.System.CycleTargets <= 0)
+                checkSize = numOfTargets;
+            else if (w.System.CycleTargets > numOfTargets)
+                checkSize = w.System.CycleTargets - numOfTargets;
+            else
+                checkSize = w.System.CycleTargets;
 
-            var deck = GetDeck(ref session.TargetDeck, 0, numOfTargets, w.System.Values.Targeting.TopTargets, ref w.TargetData.WeaponRandom.AcquireRandom);
-            for (int x = 0; x < numOfTargets; x++)
+            var chunk = numOfTargets > 0 ? checkSize * w.AcquireAttempts % numOfTargets : 0;
+
+            if (chunk + checkSize >= numOfTargets)
+                checkSize = numOfTargets - chunk;
+
+            var deck = GetDeck(ref session.TargetDeck, chunk, checkSize, w.System.TopTargets, ref w.TargetData.WeaponRandom.AcquireRandom);
+            for (int x = 0; x < checkSize; x++)
             {
                 if (aConst.SkipAimChecks)
                     break;
@@ -499,13 +529,28 @@ namespace CoreSystems.Support
             var numOfTargets = index < -1 ? collection.Count : index < 0 ? 0 : 1;
 
             int[] deck = null;
+            var checkSize = numOfTargets;
+
             if (index < -1)
             {
-                var numToRandomize = system.ClosestFirst ? w.System.Values.Targeting.TopTargets : numOfTargets;
-                deck = GetDeck(ref s.TargetDeck, 0, numOfTargets, numToRandomize, ref w.TargetData.WeaponRandom.AcquireRandom);
+                var numToRandomize = system.ClosestFirst ? w.System.TopTargets : numOfTargets;
+
+                if (w.System.CycleTargets <= 0)
+                    checkSize = numOfTargets;
+                else if (w.System.CycleTargets > numOfTargets)
+                    checkSize = w.System.CycleTargets - numOfTargets;
+                else
+                    checkSize = w.System.CycleTargets;
+
+                var chunk = numOfTargets > 0 ? checkSize * w.AcquireAttempts % numOfTargets : 0;
+
+                if (chunk + checkSize >= numOfTargets)
+                    checkSize = numOfTargets - chunk;
+
+                deck = GetDeck(ref s.TargetDeck, chunk, checkSize, numToRandomize, ref w.TargetData.WeaponRandom.AcquireRandom);
             }
 
-            for (int x = 0; x < numOfTargets; x++)
+            for (int x = 0; x < checkSize; x++)
             {
                 var card = index < -1 ? deck[x] : index;
                 var lp = collection[card];
@@ -666,8 +711,22 @@ namespace CoreSystems.Support
             var numOfTargets = ai.SortedTargets.Count;
             var hasOffset = offset > 0;
 
-            var adjTargetCount = forceFoci && hasOffset ? offset : numOfTargets + offset;
-            var deck = GetDeck(ref session.TargetDeck, 0, numOfTargets, w.System.Values.Targeting.TopTargets, ref p.Info.Random);
+            int checkSize;
+            if (w.System.CycleTargets <= 0)
+                checkSize = numOfTargets;
+            else if (w.System.CycleTargets > numOfTargets)
+                checkSize = w.System.CycleTargets - numOfTargets;
+            else
+                checkSize = w.System.CycleTargets;
+
+            var chunk = numOfTargets > 0 ? checkSize * w.AcquireAttempts % numOfTargets : 0;
+
+            if (chunk + checkSize >= numOfTargets)
+                checkSize = numOfTargets - chunk;
+
+            var adjTargetCount = forceFoci && hasOffset ? offset : checkSize + offset;
+
+            var deck = GetDeck(ref session.TargetDeck, chunk, checkSize, w.System.TopTargets, ref p.Info.Random);
 
             for (int i = 0; i < adjTargetCount; i++)
             {
@@ -950,7 +1009,20 @@ namespace CoreSystems.Support
 
             if (totalBlocks < lastBlocks) lastBlocks = totalBlocks;
 
-            var deck = GetDeck(ref s.BlockDeck, 0, totalBlocks, topBlocks, ref xRnd);
+            int checkSize;
+            if (w.System.CycleBlocks <= 0)
+                checkSize = totalBlocks;
+            else if (w.System.CycleTargets > totalBlocks)
+                checkSize = w.System.CycleTargets - totalBlocks;
+            else
+                checkSize = w.System.CycleTargets;
+
+            var chunk = totalBlocks > 0 ? checkSize * w.AcquireAttempts % totalBlocks : 0;
+
+            if (chunk + checkSize >= totalBlocks)
+                checkSize = totalBlocks - chunk;
+
+            var deck = GetDeck(ref s.BlockDeck, chunk, checkSize, topBlocks, ref xRnd);
 
             var physics = s.Physics;
             var iGrid = topEnt as IMyCubeGrid;
@@ -964,7 +1036,7 @@ namespace CoreSystems.Support
 
             var checkLimit = ai.PlanetSurfaceInRange ? 128 : 512;
 
-            for (int i = 0; i < totalBlocks; i++)
+            for (int i = 0; i < checkSize; i++)
             {
                 if (weaponCheck && (blocksChecked > lastBlocks || isPriroity && (blocksSighted > 100 || blocksChecked > 50 && s.RandomRayCasts > checkLimit || blocksChecked > 25 && s.RandomRayCasts > checkLimit * 2)))
                     break;
@@ -1744,9 +1816,23 @@ namespace CoreSystems.Support
             if (session.WaterApiLoaded && !ammoDef.IgnoreWater && ai.InPlanetGravity && ai.MyPlanet != null && session.WaterMap.TryGetValue(ai.MyPlanet.EntityId, out water))
                 waterSphere = new BoundingSphereD(ai.MyPlanet.PositionComp.WorldAABB.Center, water.MinRadius);
             var numOfTargets = ai.SortedTargets.Count;
-            var deck = GetDeck(ref session.TargetDeck, 0, numOfTargets, ai.DetectionInfo.DroneCount, ref w.TargetData.WeaponRandom.AcquireRandom);
 
-            for (int i = 0; i < numOfTargets; i++)
+            int checkSize;
+            if (w.System.CycleTargets <= 0)
+                checkSize = numOfTargets;
+            else if (w.System.CycleTargets > numOfTargets)
+                checkSize = w.System.CycleTargets - numOfTargets;
+            else
+                checkSize = w.System.CycleTargets;
+
+            var chunk = numOfTargets > 0 ? checkSize * w.AcquireAttempts % numOfTargets : 0;
+
+            if (chunk + checkSize >= numOfTargets)
+                checkSize = numOfTargets - chunk;
+
+            var deck = GetDeck(ref session.TargetDeck, chunk, checkSize, ai.DetectionInfo.DroneCount, ref w.TargetData.WeaponRandom.AcquireRandom);
+
+            for (int i = 0; i < checkSize; i++)
             {
                 var info = ai.SortedTargets[deck[i]];
 

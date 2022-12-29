@@ -137,7 +137,7 @@ namespace CoreSystems.Platform
                     #endregion
 
                     if (aConst.HasBackKickForce && !Comp.Ai.IsStatic && !Comp.Ai.ShieldFortified && s.IsServer)
-                        Comp.TopEntity.Physics?.AddForce(MyPhysicsForceType.APPLY_WORLD_IMPULSE_AND_WORLD_ANGULAR_IMPULSE, -muzzle.Direction * ActiveAmmoDef.AmmoDef.BackKickForce, muzzle.Position, Vector3D.Zero);
+                        Comp.TopEntity.Physics?.AddForce(MyPhysicsForceType.APPLY_WORLD_IMPULSE_AND_WORLD_ANGULAR_IMPULSE, -muzzle.Direction * ActiveAmmoDef.AmmoDef.Const.BackKickForce, muzzle.Position, Vector3D.Zero);
 
                     if (PlayTurretAv) {
                         if (System.BarrelEffect1 && muzzle.LastAv1Tick == 0 && !muzzle.Av1Looping) {

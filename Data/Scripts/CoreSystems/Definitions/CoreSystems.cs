@@ -135,6 +135,10 @@ namespace CoreSystems.Support
         public readonly string ShortName;
         public readonly string[] Muzzles;
         public readonly uint MaxTrackingTicks;
+        public readonly int TopTargets;
+        public readonly int CycleTargets;
+        public readonly int TopBlocks;
+        public readonly int CycleBlocks;
         public readonly int MaxActiveProjectiles;
         public readonly int StorageLimit;
         public readonly int MaxReloads;
@@ -287,6 +291,10 @@ namespace CoreSystems.Support
             DropTargetUntilLoaded = Values.HardPoint.Loading.DropTargetUntilLoaded;
             NoVoxelLosCheck = Values.HardPoint.Other.NoVoxelLosCheck;
 
+            TopTargets = Values.Targeting.TopTargets;
+            CycleTargets = Values.Targeting.CycleTargets;
+            TopBlocks = Values.Targeting.TopBlocks;
+            CycleBlocks = Values.Targeting.CycleBlocks;
             MaxReloads = Values.HardPoint.Loading.MaxReloads;
             MaxActiveProjectiles = Values.HardPoint.Loading.MaxActiveProjectiles > 0 ? Values.HardPoint.Loading.MaxActiveProjectiles : int.MaxValue;
             TargetGridCenter = Values.HardPoint.Ai.TargetGridCenter;

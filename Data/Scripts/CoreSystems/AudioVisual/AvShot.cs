@@ -230,11 +230,12 @@ namespace CoreSystems.Support
                 ++a.LifeTime;
                 a.LastTick = s.Tick;
                 a.AccelClearance = !aConst.AccelClearance || storage.SmartReady;
-                
+
                 var createdPrimeEntity = false;
                 if (aConst.PrimeModel && a.PrimeEntity == null) {
                     
-                    ApproachConstants def = stage <= -1 ? null : a.AmmoDef.Const.Approaches[stage];
+                    var stageInactive = stage <= -1 || stage >= aConst.ApproachesCount;
+                    ApproachConstants def = stageInactive ? null : a.AmmoDef.Const.Approaches[stage];
                     a.PrimeEntity = def == null || !def.AlternateModel ? aConst.PrimeEntityPool.Get() : aConst.Approaches[stage].ModelPool.Get(); 
                     a.ModelSphereCurrent.Radius = a.PrimeEntity.PositionComp.WorldVolume.Radius * 2;
                     createdPrimeEntity = true;

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using CoreSystems.Support;
 using Jakaria.API;
 using Sandbox.Game.Entities;
@@ -463,7 +464,7 @@ namespace CoreSystems.Projectiles
                         validEntity = IsFocusTarget(targetEnt);
                 }
 
-                var validTarget = fake || Info.Target.TargetState == Target.TargetStates.IsProjectile || validEntity && !overMaxTargets;
+                var validTarget = fake || Info.Target.TargetState == Target.TargetStates.IsProjectile || validEntity;
                 var checkTime = HadTarget != HadTargetState.Projectile ? 30 : 10;
 
                 var prevSlotAge = (Info.PrevRelativeAge + s.SmartSlot) % checkTime;
@@ -479,11 +480,11 @@ namespace CoreSystems.Projectiles
                 var check = prevCheck < 0 || prevCheck > currentCheck;
 
                 var isZombie = aConst.CanZombie && hadTarget && !fake && !validTarget && s.ZombieLifeTime > 0 && zombieSlot;
-                var seekNewTarget = timeSlot && hadTarget && !validTarget && !overMaxTargets;
+                var seekNewTarget = timeSlot && hadTarget && !validTarget;
                 var seekFirstTarget = !hadTarget && !validTarget && s.PickTarget && (Info.RelativeAge > 120 && timeSlot || check && Info.IsFragment);
 
                 #region TargetTracking
-                if ((s.PickTarget && timeSlot|| seekNewTarget || gaveUpChase && validTarget || isZombie || seekFirstTarget) && NewTarget() || validTarget)
+                if ((s.PickTarget && timeSlot|| seekNewTarget || gaveUpChase && validTarget || isZombie || seekFirstTarget) && !overMaxTargets && NewTarget() || validTarget)
                 {
                     if (s.ZombieLifeTime > 0)
                     {
@@ -537,7 +538,11 @@ namespace CoreSystems.Projectiles
 
                     if (aConst.TargetLossDegree > 0 && Vector3D.DistanceSquared(Info.Origin, Position) >= aConst.SmartsDelayDistSqr)
                     {
-                        if (s.WasTracking && (session.Tick20 || Vector3.Dot(Info.Direction, Position - targetPos) > 0) || !s.WasTracking)
+                        var prevLossCheck = Info.PrevRelativeAge % 20;
+                        var currentLossCheck = Info.RelativeAge % 20;
+                        var lossCheck = prevLossCheck < 0 || prevLossCheck > currentLossCheck;
+
+                        if (s.WasTracking && (lossCheck || Vector3.Dot(Info.Direction, Position - targetPos) > 0) || !s.WasTracking)
                         {
                             var targetDir = -Info.Direction;
                             var refDir = Vector3D.Normalize(Position - targetPos);
@@ -588,9 +593,11 @@ namespace CoreSystems.Projectiles
                 #endregion
 
                 var accelMpsMulti = speedLimitPerTick;
-                if (aConst.ApproachesCount > 0 && s.RequestedStage < aConst.ApproachesCount && s.RequestedStage >= -1)
+                var aCount = aConst.ApproachesCount;
+                if (aCount > 0 && s.RequestedStage < aCount && s.RequestedStage >= -1)
                 {
-                    ProcessStage(ref accelMpsMulti, ref speedCapMulti, TargetPosition, s.RequestedStage, targetLock);
+                    var callDepth = aCount;
+                    ProcessStage(ref accelMpsMulti, ref speedCapMulti, TargetPosition, s.RequestedStage, targetLock, callDepth);
                 }
 
                 #region Navigation
@@ -775,10 +782,15 @@ namespace CoreSystems.Projectiles
             return true;
         }
 
-        private void ProcessStage(ref double accelMpsMulti, ref double speedCapMulti, Vector3D targetPos, int lastActiveStage, bool targetLock)
+        private void ProcessStage(ref double accelMpsMulti, ref double speedCapMulti, Vector3D targetPos, int lastActiveStage, bool targetLock, int callDepth)
         {
-            var s = Info.Storage;
+            if (callDepth-- < 0) {
+                if (Info.Ai.Session.HandlesInput && Info.Ai.Session.DebugMod)
+                    Info.Ai.Session.ShowLocalNotify("Approach is attempting to infinite loop, fix your approach moveNext/restart conditions", 2000);
+                return;
+            }
 
+            var s = Info.Storage;
             if (targetLock)
                 s.TargetPos = targetPos;
 
@@ -1275,6 +1287,10 @@ namespace CoreSystems.Projectiles
                         EndState = EndStates.EarlyEnd;
                         DistanceToTravelSqr = Info.DistanceTraveled * Info.DistanceTraveled;
                     }
+                    else if (def.EndEvent == StageEvents.StoreDestination)
+                    {
+                        s.StoredDestination = TargetPosition;
+                    }
 
                     if (moveForward)
                     {
@@ -1283,7 +1299,7 @@ namespace CoreSystems.Projectiles
                         ++s.RequestedStage;
                         if (Info.Ai.Session.DebugMod)
                             Log.Line($"stageEnd: age:{Info.RelativeAge} - next: {s.RequestedStage} - last:{oldLast} - eCon1:{def.EndCondition1} - eCon2:{def.EndCondition2}");
-                        ProcessStage(ref accelMpsMulti, ref speedCapMulti, targetPos, s.LastActivatedStage, targetLock);
+                        ProcessStage(ref accelMpsMulti, ref speedCapMulti, targetPos, s.LastActivatedStage, targetLock, callDepth);
                     }
                     else if (reStart || def.ForceRestart)
                     {

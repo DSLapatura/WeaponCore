@@ -284,6 +284,8 @@ namespace CoreSystems.Api
                 [ProtoMember(19)] internal CommunicationDef Communications;
                 [ProtoMember(20)] internal bool FocusOnly;
                 [ProtoMember(21)] internal bool EvictUniqueTargets;
+                [ProtoMember(22)] internal int CycleTargets;
+                [ProtoMember(23)] internal int CycleBlocks;
 
                 [ProtoContract]
                 public struct CommunicationDef

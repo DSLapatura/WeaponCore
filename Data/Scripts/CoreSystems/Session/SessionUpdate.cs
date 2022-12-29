@@ -654,8 +654,10 @@ namespace CoreSystems
                                 }
                             }
                         }
-                        else if(eTarget != null && eTarget.MarkedForClose || w.DelayedTargetResetTick == Tick && w.TargetData.EntityId == 0 && w.Target.HasTarget)
+                        else if (eTarget != null && eTarget.MarkedForClose || w.DelayedTargetResetTick == Tick && w.TargetData.EntityId == 0 && w.Target.HasTarget)
+                        {
                             w.Target.Reset(w.System.Session.Tick, States.ServerReset);
+                        }
 
                         w.ProjectilesNear = ai.EnemyProjectiles && (w.System.TrackProjectile || ai.ControlComp != null) && !w.System.FocusOnly && projectiles && w.Target.TargetState != TargetStates.IsProjectile && (w.Target.TargetChanged || QCount == w.ShortLoadId);
 
