@@ -1301,7 +1301,7 @@ namespace CoreSystems.Projectiles
                         ++s.RequestedStage;
                         if (Info.Ai.Session.DebugMod)
                             Log.Line($"stageEnd: age:{Info.RelativeAge} - next: {s.RequestedStage} - last:{oldLast} - eCon1:{def.EndCondition1} - eCon2:{def.EndCondition2}");
-                        ProcessStage(ref accelMpsMulti, ref speedCapMulti, targetPos, s.LastActivatedStage, targetLock, callDepth);
+                        ProcessStage(ref accelMpsMulti, ref speedCapMulti, ref disableAvoidance, targetPos, s.LastActivatedStage, targetLock, callDepth);
                     }
                     else if (reStart || def.ForceRestart)
                     {
