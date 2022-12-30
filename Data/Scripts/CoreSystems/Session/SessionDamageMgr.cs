@@ -962,7 +962,7 @@ namespace CoreSystems
             if (pTarget == null || pTarget.State != Projectile.ProjectileState.Alive) return;
             attacker.ObjectsHit++;
 
-            if (pTarget.Info.AmmoDef.Const.ArmWhenShot)
+            if (pTarget.Info.AmmoDef.Const.ArmedWhenHit)
                 pTarget.Info.ObjectsHit++;
 
             var objHp = pTarget.Info.BaseHealthPool;
@@ -1034,7 +1034,7 @@ namespace CoreSystems
                         var integrityCheck = attacker.AmmoDef.DamageScales.MaxIntegrity > 0;
                         if (integrityCheck && objHp > attacker.AmmoDef.DamageScales.MaxIntegrity) continue;
 
-                        if (sTarget.Info.AmmoDef.Const.ArmWhenShot)
+                        if (sTarget.Info.AmmoDef.Const.ArmedWhenHit)
                             sTarget.Info.ObjectsHit++;
 
                         var damageScale = (float)attacker.AmmoDef.Const.HealthHitModifier;

@@ -849,10 +849,10 @@ namespace CoreSystems
             }
             else
             {
-                ShowLocalNotify("Sadly WeaponCore mods are not compatible with non-WeaponCore based weapons, you must use one or the other", 20000, "Red");
+                ShowLocalNotify("Sadly WeaponCore mods are not compatible with non-WeaponCore based weapons, you must use one or the other", 30000, "White");
+                ShowLocalNotify(listOfNames, 30000, "White");
                 if (Tick < 120)
-                    ShowLocalNotify("Incompatible blocks have now been removed from the world, if this is not acceptable quit without saving and uninstall all WC mods", 20000, "Red");
-                ShowLocalNotify(listOfNames, 20000, "Red");
+                    ShowLocalNotify("Incompatible blocks have now been REMOVE FROM THE WORLD, if this is not acceptable quit WITHOUT SAVING and uninstall all WC mods", 30000, "Red");
             }
             _badBlocks.Clear();
         }

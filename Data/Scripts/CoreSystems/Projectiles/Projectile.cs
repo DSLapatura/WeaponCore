@@ -2715,7 +2715,7 @@ namespace CoreSystems.Projectiles
         {
             var ammoDef = Info.AmmoDef;
             var aConst = ammoDef.Const;
-            var skipPatttern = !timedSpawn && aConst.TimedFragments && (aConst.ArmWhenShot && Info.ObjectsHit > 0 || aConst.FragOnEnd);
+            var skipPatttern = !timedSpawn && aConst.TimedFragments && (aConst.ArmedWhenHit && Info.ObjectsHit > 0 || aConst.FragOnEnd);
             var patternIndex = !skipPatttern ? aConst.FragPatternCount : 1;
 
             var pattern = ammoDef.Pattern;

@@ -927,7 +927,7 @@ namespace CoreSystems.Support
                 [ProtoMember(11)] internal TimedSpawnDef TimedSpawns;
                 [ProtoMember(12)] internal bool FireSound; // not used can remove
                 [ProtoMember(13)] internal Vector3D AdvOffset;
-                [ProtoMember(14)] internal bool ArmWhenShot;
+                [ProtoMember(14)] internal bool ArmWhenHit;
 
                 [ProtoContract]
                 public struct TimedSpawnDef
