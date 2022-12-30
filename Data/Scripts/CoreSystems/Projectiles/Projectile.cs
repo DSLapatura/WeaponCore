@@ -362,6 +362,7 @@ namespace CoreSystems.Projectiles
             var session = Info.Ai.Session;
             var normalfragSpawn = aConst.FragOnEnd && (aConst.FragIgnoreArming || Info.RelativeAge >= aConst.MinArmingTime);
             var eolFragSpawn = aConst.FragOnEolArmed && Info.ObjectsHit > 0 && Info.RelativeAge >= aConst.MinArmingTime;
+            
             if ((normalfragSpawn || eolFragSpawn) && Info.SpawnDepth < aConst.FragMaxChildren)
                 SpawnShrapnel(false);
 
@@ -2714,9 +2715,10 @@ namespace CoreSystems.Projectiles
         {
             var ammoDef = Info.AmmoDef;
             var aConst = ammoDef.Const;
-            var patternIndex = aConst.FragPatternCount;
+            var skipPatttern = !timedSpawn && aConst.TimedFragments && (aConst.ArmWhenShot && Info.ObjectsHit > 0 || aConst.FragOnEnd);
+            var patternIndex = !skipPatttern ? aConst.FragPatternCount : 1;
+
             var pattern = ammoDef.Pattern;
-            var skipPatttern = !timedSpawn && aConst.ArmWhenShot && Info.ObjectsHit > 0;
             if (aConst.FragmentPattern && !skipPatttern)
             {
                 if (pattern.Random)

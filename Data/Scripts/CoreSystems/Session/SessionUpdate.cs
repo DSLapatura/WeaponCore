@@ -649,7 +649,12 @@ namespace CoreSystems
                                         else if (w.System.MaxTrackingTime && Tick - w.Target.ChangeTick > w.System.MaxTrackingTicks || !Weapon.TargetAligned(w, w.Target, out targetPos))
                                             w.Target.Reset(Tick, States.Expired);
                                     }
-                                    else if (w.System.TrackTargets && (w.System.MaxTrackingTime && Tick - w.Target.ChangeTick > w.System.MaxTrackingTicks || !Weapon.TargetAligned(w, w.Target, out targetPos)))
+                                    else if (w.System.TrackTargets)
+                                    {
+                                        if (w.System.MaxTrackingTime && Tick - w.Target.ChangeTick > w.System.MaxTrackingTicks || !Weapon.TargetAligned(w, w.Target, out targetPos))
+                                            w.Target.Reset(Tick, States.Expired);
+                                    }
+                                    else if (w.System.MaxTrackingTime && Tick - w.Target.ChangeTick > w.System.MaxTrackingTicks)
                                         w.Target.Reset(Tick, States.Expired);
                                 }
                             }
