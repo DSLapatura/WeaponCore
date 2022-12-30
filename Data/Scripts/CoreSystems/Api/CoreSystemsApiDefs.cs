@@ -913,6 +913,7 @@ namespace CoreSystems.Api
                     [ProtoMember(11)] internal TimedSpawnDef TimedSpawns;
                     [ProtoMember(12)] internal bool FireSound;
                     [ProtoMember(13)] internal Vector3D AdvOffset;
+                    [ProtoMember(14)] internal bool ArmWhenShot;
 
                     [ProtoContract]
                     public struct TimedSpawnDef

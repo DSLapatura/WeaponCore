@@ -54,7 +54,7 @@ namespace CoreSystems.Platform
 
             bool selfHit = false;
             weapon.LastHitInfo = null;
-            if (checkSelfHit && target != null)
+            if (checkSelfHit && target != null && !weapon.ActiveAmmoDef.AmmoDef.Const.SkipRayChecks)
             {
                 var testLine = new LineD(targetCenter, weapon.BarrelOrigin);
                 var predictedMuzzlePos = testLine.To + (-testLine.Direction * weapon.MuzzleDistToBarrelCenter);

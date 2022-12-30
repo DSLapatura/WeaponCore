@@ -959,8 +959,12 @@ namespace CoreSystems
         private void DamageProjectile(HitEntity hitEnt, ProInfo attacker)
         {
             var pTarget = hitEnt.Projectile;
-            if (pTarget == null) return;
+            if (pTarget == null || pTarget.State != Projectile.ProjectileState.Alive) return;
             attacker.ObjectsHit++;
+
+            if (pTarget.Info.AmmoDef.Const.ArmWhenShot)
+                pTarget.Info.ObjectsHit++;
+
             var objHp = pTarget.Info.BaseHealthPool;
             var integrityCheck = attacker.AmmoDef.DamageScales.MaxIntegrity > 0;
             if (integrityCheck && objHp > attacker.AmmoDef.DamageScales.MaxIntegrity) return;
@@ -1023,12 +1027,15 @@ namespace CoreSystems
                 var areaSphere = new BoundingSphereD(hitEnt.Projectile.Position, attacker.AmmoDef.Const.EndOfLifeRadius);
                 foreach (var sTarget in attacker.Ai.LiveProjectile)
                 {
-                    if (areaSphere.Contains(sTarget.Position) != ContainmentType.Disjoint)
+                    if (areaSphere.Contains(sTarget.Position) != ContainmentType.Disjoint && sTarget.State == Projectile.ProjectileState.Alive)
                     {
 
                         var objHp = sTarget.Info.BaseHealthPool;
                         var integrityCheck = attacker.AmmoDef.DamageScales.MaxIntegrity > 0;
                         if (integrityCheck && objHp > attacker.AmmoDef.DamageScales.MaxIntegrity) continue;
+
+                        if (sTarget.Info.AmmoDef.Const.ArmWhenShot)
+                            sTarget.Info.ObjectsHit++;
 
                         var damageScale = (float)attacker.AmmoDef.Const.HealthHitModifier;
                         if (attacker.AmmoDef.Const.VirtualBeams) damageScale *= attacker.Weapon.WeaponCache.Hits;

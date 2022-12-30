@@ -156,6 +156,7 @@ namespace CoreSystems.Support
         public readonly int FragGroupDelay;
         public readonly int DeformDelay;
         public readonly uint FakeVoxelHitTicks;
+        public readonly bool ArmWhenShot;
         public readonly bool UseAimCone;
         public readonly bool TracerAlwaysDraw;
         public readonly bool TrailAlwaysDraw;
@@ -259,6 +260,7 @@ namespace CoreSystems.Support
         public readonly bool FragmentPattern;
         public readonly bool WeaponPattern;
         public readonly bool SkipAimChecks;
+        public readonly bool SkipRayChecks;
         public readonly bool RequiresTarget;
         public readonly bool HasAdvFragOffset;
         public readonly bool DetonationSound;
@@ -467,7 +469,7 @@ namespace CoreSystems.Support
             MaxTargets = ammo.AmmoDef.Trajectory.Smarts.MaxTargets;
             TargetLossDegree = ammo.AmmoDef.Trajectory.TargetLossDegree > 0 ? (float)Math.Cos(MathHelper.ToRadians(ammo.AmmoDef.Trajectory.TargetLossDegree)) : 0;
 
-            Fragments(ammo, out HasFragmentOffset, out HasNegFragmentOffset, out FragmentOffset, out FragRadial, out FragDegrees, out FragReverse, out FragDropVelocity, out FragMaxChildren, out FragIgnoreArming, out FragOnEolArmed, out FragOnEnd, out HasAdvFragOffset, out FragOffset);
+            Fragments(ammo, out HasFragmentOffset, out HasNegFragmentOffset, out FragmentOffset, out FragRadial, out FragDegrees, out FragReverse, out FragDropVelocity, out FragMaxChildren, out FragIgnoreArming, out FragOnEolArmed, out ArmWhenShot, out FragOnEnd, out HasAdvFragOffset, out FragOffset);
             TimedSpawn(ammo, out TimedFragments, out FragStartTime, out FragInterval, out MaxFrags, out FragGroupSize, out FragGroupDelay, out FragProximity, out HasFragProximity, out FragParentDies, out FragPointAtTarget, out HasFragGroup, out FragPointType, out DirectAimCone, out UseAimCone);
 
             FallOffDistance = AmmoModsFound && _modifierMap[FallOffDistanceStr].HasData() ? _modifierMap[FallOffDistanceStr].GetAsFloat : ammo.AmmoDef.DamageScales.FallOff.Distance;
@@ -536,6 +538,8 @@ namespace CoreSystems.Support
                 Log.Line($"{ammo.AmmoDef.AmmoRound} does not qualify for fixed weapon client reload verification");
 
             SkipAimChecks = (ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.Smart || ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.DroneAdvanced) && system.TurretMovement == WeaponSystem.TurretType.Fixed && !system.TargetSlaving;
+            SkipRayChecks = (ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.Smart || ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.DroneAdvanced) && system.TurretMovement == WeaponSystem.TurretType.Fixed && system.TargetSlaving;
+            
             Trail = ammo.AmmoDef.AmmoGraphics.Lines.Trail.Enable;
             HasShotFade = ammo.AmmoDef.AmmoGraphics.Lines.Tracer.VisualFadeStart > 0 && ammo.AmmoDef.AmmoGraphics.Lines.Tracer.VisualFadeEnd > 1;
             MaxTrajectoryGrows = ammo.AmmoDef.Trajectory.MaxTrajectoryTime > 1;
@@ -748,7 +752,7 @@ namespace CoreSystems.Support
             alwaysDraw = (Trail || HasShotFade) && RealShotsPerSec < 0.1 || tracerAlwaysDraw || trailAlwaysDraw;
         }
 
-        private void Fragments(WeaponSystem.AmmoType ammo, out bool hasFragmentOffset, out bool hasNegFragmentOffset, out float fragmentOffset, out float fragRadial, out float fragDegrees, out bool fragReverse, out bool fragDropVelocity, out int fragMaxChildren, out bool fragIgnoreArming, out bool fragOnEolArmed, out bool fragOnEnd, out bool hasFragOffset, out Vector3D fragOffset)
+        private void Fragments(WeaponSystem.AmmoType ammo, out bool hasFragmentOffset, out bool hasNegFragmentOffset, out float fragmentOffset, out float fragRadial, out float fragDegrees, out bool fragReverse, out bool fragDropVelocity, out int fragMaxChildren, out bool fragIgnoreArming, out bool fragOnEolArmed, out bool armWhenShot, out bool fragOnEnd, out bool hasFragOffset, out Vector3D fragOffset)
         {
             hasFragmentOffset = !MyUtils.IsZero(ammo.AmmoDef.Fragment.Offset);
             hasNegFragmentOffset = ammo.AmmoDef.Fragment.Offset < 0;
@@ -759,8 +763,10 @@ namespace CoreSystems.Support
             fragDropVelocity = ammo.AmmoDef.Fragment.DropVelocity;
             fragMaxChildren = ammo.AmmoDef.Fragment.MaxChildren > 0 ? ammo.AmmoDef.Fragment.MaxChildren : int.MaxValue;
             fragIgnoreArming = ammo.AmmoDef.Fragment.IgnoreArming;
+            armWhenShot = ammo.AmmoDef.Fragment.ArmWhenShot;
+
             fragOnEolArmed = ammo.AmmoDef.AreaOfDamage.EndOfLife.Enable && ArmOnlyOnEolHit && !FragIgnoreArming && HasFragment;
-            fragOnEnd = !FragOnEolArmed && !ammo.AmmoDef.Fragment.TimedSpawns.Enable && HasFragment;
+            fragOnEnd = !FragOnEolArmed && (!ammo.AmmoDef.Fragment.TimedSpawns.Enable || armWhenShot) && HasFragment;
             hasFragOffset = !Vector3D.IsZero(ammo.AmmoDef.Fragment.AdvOffset);
             fragOffset = ammo.AmmoDef.Fragment.AdvOffset;
         }

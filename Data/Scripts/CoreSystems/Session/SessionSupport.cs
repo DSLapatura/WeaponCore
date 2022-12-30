@@ -850,6 +850,8 @@ namespace CoreSystems
             else
             {
                 ShowLocalNotify("Sadly WeaponCore mods are not compatible with non-WeaponCore based weapons, you must use one or the other", 20000, "Red");
+                if (Tick < 120)
+                    ShowLocalNotify("Incompatible blocks have now been removed from the world, if this is not acceptable quit without saving and uninstall all WC mods", 20000, "Red");
                 ShowLocalNotify(listOfNames, 20000, "Red");
             }
             _badBlocks.Clear();

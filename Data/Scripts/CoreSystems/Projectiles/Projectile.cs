@@ -2716,7 +2716,8 @@ namespace CoreSystems.Projectiles
             var aConst = ammoDef.Const;
             var patternIndex = aConst.FragPatternCount;
             var pattern = ammoDef.Pattern;
-            if (aConst.FragmentPattern)
+            var skipPatttern = !timedSpawn && aConst.ArmWhenShot && Info.ObjectsHit > 0;
+            if (aConst.FragmentPattern && !skipPatttern)
             {
                 if (pattern.Random)
                 {
@@ -2756,7 +2757,7 @@ namespace CoreSystems.Projectiles
             var spawn = false;
             for (int i = 0; i < patternIndex; i++)
             {
-                var fragAmmoDef = aConst.FragmentPattern ? aConst.AmmoPattern[Info.PatternShuffle[i] > 0 ? Info.PatternShuffle[i] - 1 : aConst.FragPatternCount - 1] : Info.Weapon.System.AmmoTypes[aConst.FragmentId].AmmoDef;
+                var fragAmmoDef = aConst.FragmentPattern && !skipPatttern ? aConst.AmmoPattern[Info.PatternShuffle[i] > 0 ? Info.PatternShuffle[i] - 1 : aConst.FragPatternCount - 1] : Info.Weapon.System.AmmoTypes[aConst.FragmentId].AmmoDef;
                 Vector3D pointDir;
                 if (!fireOnTarget)
                 {
