@@ -687,6 +687,7 @@ namespace CoreSystems
                             Dictionary<object, Weapon> masterTargets;
                             var seek = weaponReady && (acquireReady || w.ProjectilesNear) && (!w.System.TargetSlaving || rootConstruct.TrackedTargets.TryGetValue(w.System.StorageLocation, out masterTargets) && masterTargets.Count > 0);
                             var fakeRequest =  wComp.FakeMode && w.Target.TargetState != TargetStates.IsFake && wComp.UserControlled;
+
                             if (seek || fakeRequest)
                             {
                                 w.TargetAcquireTick = Tick;
@@ -820,7 +821,7 @@ namespace CoreSystems
 
                 var pCheckOnly = w.ProjectilesNear && rootConstruct.TargetResetTick != Tick;
 
-                var requiresFocus = w.System.FocusOnly || w.ActiveAmmoDef.AmmoDef.Const.SkipAimChecks && !pCheckOnly && !w.RotorTurretTracking || (rootConstruct.TargetResetTick == Tick || recentApiRequest) && !w.System.UniqueTargetPerWeapon;
+                var requiresFocus = w.System.FocusOnly || w.ActiveAmmoDef.AmmoDef.Const.SkipAimChecks && !pCheckOnly && !w.RotorTurretTracking && !comp.ManualMode || (rootConstruct.TargetResetTick == Tick || recentApiRequest) && !w.System.UniqueTargetPerWeapon;
                 if (requiresFocus && !rootConstruct.HadFocus) {
                     w.TargetAcquireTick = uint.MaxValue;
                     AcquireTargets.RemoveAtFast(i);

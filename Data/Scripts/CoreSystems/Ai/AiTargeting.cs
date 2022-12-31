@@ -26,7 +26,6 @@ namespace CoreSystems.Support
         internal static void AcquireTarget(Weapon w, bool forceFocus, MyEntity targetEntity = null)
         {
             var foundTarget = false;
-
             if (w.PosChangedTick != w.Comp.Session.SimulationCount) 
                 w.UpdatePivotPos();
 
