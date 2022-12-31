@@ -88,7 +88,7 @@ namespace CoreSystems.Settings
             [ProtoMember(17)] public bool DisableHudTargetInfo;
             [ProtoMember(18)] public bool DisableHudReload;
             [ProtoMember(19)] public bool AdvancedProjectileSync;
-
+            [ProtoMember(20)] public bool UnsupportedMode;
         }
 
         [ProtoContract]

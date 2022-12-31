@@ -826,7 +826,8 @@ namespace CoreSystems
                         if (cube.BlockDefinition?.Id.SubtypeName != null)
                             _badBlocks.Add(cube.BlockDefinition.Id.SubtypeName);
 
-                        cube.CubeGrid.RemoveBlock(cube.SlimBlock);
+                        if (!Settings.Enforcement.UnsupportedMode)
+                            cube.CubeGrid.RemoveBlock(cube.SlimBlock);
                     }
                 }
             }
@@ -843,16 +844,29 @@ namespace CoreSystems
 
             if (DedicatedServer)
             {
-                Log.Line($"Removing incompatible vanilla weapon blocks");
+                if (!Settings.Enforcement.UnsupportedMode)
+                    Log.Line($"Removing incompatible weapon blocks");
+                else
+                    Log.Line($"Running in unsupported mode, certain features and blocks will not work as intended and may crash or become non-functional");
+
                 Log.Line(listOfNames);
 
             }
             else
             {
-                ShowLocalNotify("Sadly WeaponCore mods are not compatible with third party weapon mods, you must use one or the other", 30000, "White");
-                ShowLocalNotify(listOfNames, 30000, "White");
-                if (Tick < 120)
-                    ShowLocalNotify("Incompatible weapons have now been REMOVED FROM THE WORLD, if this is not acceptable quit WITHOUT SAVING and uninstall all WC mods", 30000, "Red");
+                if (!Settings.Enforcement.UnsupportedMode)
+                {
+                    ShowLocalNotify("Sadly WeaponCore mods are not compatible with third party weapon mods, you must use one or the other", 30000, "White");
+                    ShowLocalNotify(listOfNames, 30000, "White");
+                    if (Tick < 120)
+                        ShowLocalNotify("The incompatible weapons listed above have been [REMOVED FROM THE WORLD], if this is not acceptable quit [WITHOUT SAVING] and either [Enable UnsupportedMode] in the config file or uninstall all WC mods", 30000, "Red");
+                }
+                else
+                {
+                    ShowLocalNotify("WeaponCore is running in [UnsupportedMode], certain features and blocks will not work as intended and may crash or become non-functional", 30000, "White");
+                    ShowLocalNotify(listOfNames, 30000, "White");
+                }
+
             }
             _badBlocks.Clear();
         }

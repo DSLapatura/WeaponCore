@@ -154,6 +154,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
             var oldDisableHudReload = oldSettings.DisableHudReload;
             var oldDisableHudTargetInfo = oldSettings.DisableHudTargetInfo;
             var oldPointDefenseSyncMonitor = oldSettings.AdvancedProjectileSync;
+            var oldUnsupportedMode = oldSettings.UnsupportedMode;
 
             Core.Enforcement = new CoreSettings.ServerSettings { Version = Session.ServerCfgVersion };
 
@@ -178,6 +179,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
             Core.Enforcement.DisableHudReload = oldDisableHudReload;
             Core.Enforcement.DisableHudTargetInfo = oldDisableHudTargetInfo;
             Core.Enforcement.AdvancedProjectileSync = oldPointDefenseSyncMonitor;
+            Core.Enforcement.UnsupportedMode = oldUnsupportedMode;
         }
 
         private void CorruptionCheck(bool write = false)

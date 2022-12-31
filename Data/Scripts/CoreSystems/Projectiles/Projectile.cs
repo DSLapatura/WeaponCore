@@ -931,7 +931,7 @@ namespace CoreSystems.Projectiles
                     switch (def.Destination)
                     {
                         case RelativeTo.Origin:
-                            s.ApproachInfo.DestinationPos = s.ApproachInfo.TargetPos; // change to origin in a few days
+                            s.ApproachInfo.DestinationPos = Info.Origin; 
                             break;
                         case RelativeTo.Shooter:
                             s.ApproachInfo.DestinationPos = Info.Weapon.MyPivotPos;
