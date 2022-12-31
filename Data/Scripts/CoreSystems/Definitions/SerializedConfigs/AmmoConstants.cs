@@ -21,7 +21,7 @@ using System.Runtime.CompilerServices;
 
 namespace CoreSystems.Support
 {
-    public class AmmoConstants
+    public sealed class AmmoConstants
     {
         public enum Texture
         {
@@ -627,9 +627,13 @@ namespace CoreSystems.Support
             scanRange = ammo.AmmoDef.Trajectory.Smarts.ScanRange;
             offsetMinRangeSqr = ammo.AmmoDef.Trajectory.Smarts.OffsetMinRange * ammo.AmmoDef.Trajectory.Smarts.OffsetMinRange;
             aggressiveness = ammo.AmmoDef.Trajectory.Smarts.Aggressiveness;
+            
             var disableNavAcceleration = ammo.AmmoDef.Trajectory.Smarts.NavAcceleration < 0;
             var useNavAccelerationValue = ammo.AmmoDef.Trajectory.Smarts.NavAcceleration > 0;
-            navAcceleration = disableNavAcceleration ? 0 : useNavAccelerationValue ? ammo.AmmoDef.Trajectory.Smarts.NavAcceleration : 2;
+            
+            var defaultAccelerationValue = !disableNavAcceleration && !useNavAccelerationValue && aggressiveness > 0 ? aggressiveness / 2 : 0;
+            navAcceleration = disableNavAcceleration ? 0 : useNavAccelerationValue ? ammo.AmmoDef.Trajectory.Smarts.NavAcceleration : defaultAccelerationValue;
+            
             minTurnSpeedSqr = ammo.AmmoDef.Trajectory.Smarts.MinTurnSpeed * ammo.AmmoDef.Trajectory.Smarts.MinTurnSpeed;
 
             offsetRatio = ammo.AmmoDef.Trajectory.Smarts.OffsetRatio;

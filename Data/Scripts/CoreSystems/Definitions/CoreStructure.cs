@@ -150,7 +150,7 @@ namespace CoreSystems.Support
 
 
                     Session.AmmoValuesMap[ammo] = null;
-                    var ammoType = new WeaponSystem.AmmoType { AmmoDef = ammo, AmmoDefinitionId = ammoDefId, EjectionDefinitionId = ejectionDefId, AmmoNameQueued = "*" + ammo.AmmoRound, IsShrapnel = shrapnelNames.Contains(ammo.AmmoRound) };
+                    var ammoType = new WeaponSystem.AmmoType(ammo,  ammoDefId, ejectionDefId, "*" + ammo.AmmoRound, shrapnelNames.Contains(ammo.AmmoRound));
                     Session.AmmoDefIds[ammoDefId] = ammoType;
 
                     Session.AmmoMaps[tDef.Key][ammoType.AmmoDef.AmmoRound] = ammoType;

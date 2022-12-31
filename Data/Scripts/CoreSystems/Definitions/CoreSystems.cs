@@ -100,13 +100,22 @@ namespace CoreSystems.Support
 
     public class WeaponSystem : CoreSystem
     {
-        public class AmmoType
+        public sealed class AmmoType
         {
-            public MyDefinitionId AmmoDefinitionId;
-            public MyDefinitionId EjectionDefinitionId;
-            public AmmoDef AmmoDef;
-            public string AmmoNameQueued;
-            public bool IsShrapnel;
+            public AmmoType(AmmoDef ammoDef, MyDefinitionId ammoDefinitionId, MyDefinitionId ejectionDefinitionId, string ammoNameQueued, bool isShrapnel)
+            {
+                AmmoDefinitionId = ammoDefinitionId;
+                EjectionDefinitionId = ejectionDefinitionId;
+                AmmoDef = ammoDef;
+                AmmoNameQueued = ammoNameQueued;
+                IsShrapnel = isShrapnel;
+            }
+
+            public readonly MyDefinitionId AmmoDefinitionId;
+            public readonly MyDefinitionId EjectionDefinitionId;
+            public readonly AmmoDef AmmoDef;
+            public readonly string AmmoNameQueued;
+            public readonly bool IsShrapnel;
         }
 
         internal WeaponConstants WConst;
