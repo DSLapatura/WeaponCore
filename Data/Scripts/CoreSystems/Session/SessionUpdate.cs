@@ -202,7 +202,7 @@ namespace CoreSystems
                     for (int j = 0; j < pComp.Platform.Phantoms.Count; j++)
                     {
                         var p = pComp.Platform.Phantoms[j];
-                        if (p.ActiveAmmoDef.AmmoDef.Const.Reloadable && !p.System.DesignatorWeapon && !p.Loading) { 
+                        if (p.ActiveAmmoDef.AmmoDef.Const.Reloadable && !p.Loading) { 
 
                             if (IsServer && (p.ProtoWeaponAmmo.CurrentAmmo == 0 || p.CheckInventorySystem))
                                 p.ComputeServerStorage();
@@ -219,7 +219,7 @@ namespace CoreSystems
 
                         var reloading = p.ActiveAmmoDef.AmmoDef.Const.Reloadable && p.ClientMakeUpShots == 0 && (p.Loading || p.ProtoWeaponAmmo.CurrentAmmo == 0);
                         var overHeat = p.PartState.Overheated && p.OverHeatCountDown == 0;
-                        var canShoot = !overHeat && !reloading && !p.System.DesignatorWeapon;
+                        var canShoot = !overHeat && !reloading;
 
                         var autoShot =  pComp.Data.Repo.Values.State.Trigger == On || p.AiShooting && pComp.Data.Repo.Values.State.Trigger == Off;
                         var anyShot = !pComp.ShootManager.FreezeClientShoot && (p.ShootCount > 0 || onConfrimed) && noShootDelay || autoShot && sMode == Weapon.ShootManager.ShootModes.AiShoot;

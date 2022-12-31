@@ -229,24 +229,20 @@ namespace CoreSystems.Platform
                 if (weapon.RateOfFire < 1)
                     weapon.RateOfFire = 1;
 
-                weapon.SetWeaponDps();
-
+                    
                 if (!weapon.System.DesignatorWeapon)
                 {
-                    
-                    if (!weapon.System.DesignatorWeapon)
-                    {
-                        var ammo = weapon.ActiveAmmoDef.AmmoDef;
-                        weapon.Comp.PeakDps += ammo.Const.PeakDps;
-                        weapon.Comp.EffectiveDps += ammo.Const.EffectiveDps;
-                        weapon.Comp.PerfectDps += ammo.Const.PerfectDps;
-                        weapon.Comp.RealShotsPerSec += ammo.Const.RealShotsPerSec;
-                        weapon.Comp.ShotsPerSec += ammo.Const.ShotsPerSec;
-                        weapon.Comp.BaseDps += ammo.Const.BaseDps;
-                        weapon.Comp.AreaDps += ammo.Const.AreaDps;
-                        weapon.Comp.DetDps += ammo.Const.DetDps;
-                    }
-                    
+                    weapon.SetWeaponDps();
+
+                    var ammo = weapon.ActiveAmmoDef.AmmoDef;
+                    weapon.Comp.PeakDps += ammo.Const.PeakDps;
+                    weapon.Comp.EffectiveDps += ammo.Const.EffectiveDps;
+                    weapon.Comp.PerfectDps += ammo.Const.PerfectDps;
+                    weapon.Comp.RealShotsPerSec += ammo.Const.RealShotsPerSec;
+                    weapon.Comp.ShotsPerSec += ammo.Const.ShotsPerSec;
+                    weapon.Comp.BaseDps += ammo.Const.BaseDps;
+                    weapon.Comp.AreaDps += ammo.Const.AreaDps;
+                    weapon.Comp.DetDps += ammo.Const.DetDps;
                 }
 
                 maxTrajectory = 0;

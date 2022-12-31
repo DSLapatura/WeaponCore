@@ -122,7 +122,7 @@ namespace CoreSystems.Platform
         public void StartShooting()
         {
             if (FiringEmitter != null && !BurstAvDelay) StartFiringSound();
-            if (!IsShooting && !System.DesignatorWeapon)
+            if (!IsShooting)
             {
                 EventTriggerStateChanged(EventTriggers.StopFiring, false);
                 if (!ActiveAmmoDef.AmmoDef.Const.Reloadable && !Comp.ModOverride && !ExitCharger)
@@ -133,7 +133,7 @@ namespace CoreSystems.Platform
 
         public void StopShooting(bool burst = false)
         {
-            if ((IsShooting || PreFired) && !System.DesignatorWeapon)
+            if (IsShooting || PreFired)
             {
                 EventTriggerStateChanged(EventTriggers.Firing, false);
                 EventTriggerStateChanged(EventTriggers.StopFiring, true, _muzzlesFiring);

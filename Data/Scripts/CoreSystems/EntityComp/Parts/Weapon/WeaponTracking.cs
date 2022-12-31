@@ -416,9 +416,10 @@ namespace CoreSystems.Platform
                 for (int i = 0; i < w.Comp.Platform.Weapons.Count; i++)
                 {
                     var weapon = w.Comp.Platform.Weapons[i];
-                    if (isAligned && !weapon.System.DesignatorWeapon)
+                    var designator = weapon.System.DesignatorWeapon;
+                    if (isAligned && !designator)
                         weapon.Target.Reset(session.Tick, Target.States.Designator);
-                    else if (!isAligned && weapon.System.DesignatorWeapon)
+                    else if (!isAligned && designator)
                         weapon.Target.Reset(session.Tick, Target.States.Designator);
                 }
             }

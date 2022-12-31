@@ -81,7 +81,7 @@ namespace CoreSystems.Platform
                 DelayedCycleId = newAmmoId;
                 AmmoName = System.AmmoTypes[newAmmoId].AmmoNameQueued;
 
-                if (System.Session.IsClient)
+                if (System.Session.IsClient && !System.DesignatorWeapon)
                     ChangeAmmo(newAmmoId);
             }
         }
@@ -111,7 +111,7 @@ namespace CoreSystems.Platform
 
         internal bool HasAmmo()
         {
-            if (Comp.Session.IsCreative || !ActiveAmmoDef.AmmoDef.Const.Reloadable || System.DesignatorWeapon || Comp.InfiniteResource) {
+            if (Comp.Session.IsCreative || !ActiveAmmoDef.AmmoDef.Const.Reloadable || Comp.InfiniteResource) {
                 NoMagsToLoad = false;
                 return true;
             }
@@ -150,7 +150,7 @@ namespace CoreSystems.Platform
 
             if (!syncUp) {
                 var energyDrainable = ActiveAmmoDef.AmmoDef.Const.EnergyAmmo && Comp.Ai.HasPower;
-                if (Reload.CurrentMags <= 0 && !energyDrainable && ActiveAmmoDef.AmmoDef.Const.Reloadable && !System.DesignatorWeapon && !Loading) {
+                if (Reload.CurrentMags <= 0 && !energyDrainable && ActiveAmmoDef.AmmoDef.Const.Reloadable && !Loading) {
                     
                     if (!Comp.Session.IsCreative) {
 
@@ -190,7 +190,7 @@ namespace CoreSystems.Platform
             var s = Comp.Session;
             var isPhantom = Comp.TypeSpecific == CompTypeSpecific.Phantom;
 
-            if (System.DesignatorWeapon || !Comp.IsWorking || !ActiveAmmoDef.AmmoDef.Const.Reloadable || !Comp.HasInventory && !isPhantom) return false;
+            if (!Comp.IsWorking || !ActiveAmmoDef.AmmoDef.Const.Reloadable || !Comp.HasInventory && !isPhantom) return false;
 
             if (!ActiveAmmoDef.AmmoDef.Const.EnergyAmmo && !isPhantom)
             {
