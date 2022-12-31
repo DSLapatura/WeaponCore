@@ -435,8 +435,8 @@ namespace CoreSystems
                     {
                         p.State = Projectile.ProjectileState.Destroy;
                     }
-                    else
-                        Log.Line($"pdSyncNotFound: syncId:{pdInfo.SyncId} - wId:{pdInfo.WeaponId} - i:{i} - wFound:{w != null} - pFound:{p != null} - pState:{p?.State}");
+                    //else
+                    //    Log.Line($"pdSyncNotFound: syncId:{pdInfo.SyncId} - wId:{pdInfo.WeaponId} - i:{i} - wFound:{w != null} - pFound:{p != null} - pState:{p?.State}");
                 }
                 deathSyncMonitor.Collection.Clear();
 

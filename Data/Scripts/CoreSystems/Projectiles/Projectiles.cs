@@ -426,6 +426,7 @@ namespace CoreSystems.Projectiles
                 }
 
                 if (!aConst.CollisionIsLine) {
+
                     if (aConst.DynamicGuidance && p.PruneQuery == MyEntityQueryType.Dynamic && Session.Tick60)
                         p.CheckForNearVoxel(60);
                     MyGamePruningStructure.GetAllTopMostEntitiesInSphere(ref p.PruneSphere, p.MyEntityList, p.PruneQuery);
@@ -436,6 +437,7 @@ namespace CoreSystems.Projectiles
 
                 if (target.TargetState == Target.TargetStates.IsProjectile || aConst.CollisionIsLine && p.MySegmentList.Count > 0 || !aConst.CollisionIsLine && p.MyEntityList.Count > 0)
                 {
+
                     lock (ValidateHits)
                         ValidateHits.Add(p);
                 }

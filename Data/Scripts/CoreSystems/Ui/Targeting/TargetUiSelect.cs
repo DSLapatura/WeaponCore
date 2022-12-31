@@ -601,7 +601,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                         if (dist1 < closestDist1)
                         {
 
-                            if (ai.TopEntityMap.GroupMap.Construct.ContainsKey(otherEnt) || otherEnt.PositionComp.WorldVolume.Intersects(friendCheckVolume))
+                            if (ai.TopEntityMap?.GroupMap == null || ai.TopEntityMap.GroupMap.Construct.ContainsKey(otherEnt) || otherEnt.PositionComp.WorldVolume.Intersects(friendCheckVolume))
                                 continue;
 
                             closestDist1 = dist1.Value;
@@ -639,7 +639,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             else hitPos = Vector3D.Zero;
 
             Ai masterAi;
-            if (closestEnt != null && _session.EntityToMasterAi.TryGetValue(closestEnt, out masterAi) && masterAi.Construct.RootAi.Construct.LargestAi?.TopEntity != null)
+            if (closestEnt != null && _session.EntityToMasterAi.TryGetValue(closestEnt, out masterAi) && masterAi.Construct.RootAi?.Construct.LargestAi?.TopEntity != null)
                 rootEntity = masterAi.Construct.RootAi.Construct.LargestAi.TopEntity;
             else 
                 rootEntity = closestEnt;

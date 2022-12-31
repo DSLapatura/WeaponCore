@@ -196,8 +196,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             var size = (float)((0.0025f * scale) * s.ScaleFov);
             var invScaler = MathHelper.Clamp(1 / s.ScaleFov, 0, 20);
             var fontScale = scale * s.ScaleFov;
-            var invScaleLimit = 4.2;
-
+            var invScaleLimit = 10;
             if (invScaler >= invScaleLimit)
             {
                 fontScale *= (invScaler / invScaleLimit);
