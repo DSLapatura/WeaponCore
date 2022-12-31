@@ -506,7 +506,6 @@ namespace CoreSystems.Projectiles
                 var isZombie = aConst.CanZombie && hadTarget && !fake && !validTarget && s.ZombieLifeTime > 0 && zombieSlot;
                 var seekNewTarget = timeSlot && hadTarget && !validTarget && !overMaxTargets;
                 var seekFirstTarget = !hadTarget && !validTarget && s.PickTarget && (Info.RelativeAge > 120 && timeSlot || check && Info.IsFragment);
-                var smarts = ammo.Trajectory.Smarts;
 
                 #region TargetTracking
                 if ((s.PickTarget && timeSlot && !clientSync || seekNewTarget || gaveUpChase && validTarget || isZombie || seekFirstTarget) && NewTarget() || validTarget)
@@ -575,19 +574,17 @@ namespace CoreSystems.Projectiles
                 }
                 else
                 {
-
-                    var roam = smarts.Roam;
-                    var straightAhead = roam && TargetPosition != Vector3D.Zero;
+                    var straightAhead = aConst.Roam && TargetPosition != Vector3D.Zero;
                     TargetPosition = straightAhead ? TargetPosition : Position + (Direction * Info.MaxTrajectory);
 
                     s.ZombieLifeTime += DeltaTimeRatio;
-                    if (s.ZombieLifeTime > aConst.TargetLossTime && !smarts.KeepAliveAfterTargetLoss && (smarts.NoTargetExpire || hadTarget))
+                    if (s.ZombieLifeTime > aConst.TargetLossTime && !aConst.KeepAliveAfterTargetLoss && (hadTarget || aConst.NoTargetExpire))
                     {
                         DistanceToTravelSqr = Info.DistanceTraveled * Info.DistanceTraveled;
                         EndState = EndStates.EarlyEnd;
                     }
 
-                    if (roam && Info.RelativeAge - s.LastOffsetTime > 300 && hadTarget)
+                    if (aConst.Roam && Info.RelativeAge - s.LastOffsetTime > 300 && hadTarget)
                     {
 
                         double dist;
@@ -667,10 +664,10 @@ namespace CoreSystems.Projectiles
                     commandedAccel = Direction * accelMpsMulti;
 
                 var offset = false;
-                if (smarts.OffsetTime > 0)
+                if (aConst.OffsetTime > 0)
                 {
-                    var prevSmartCheck = Info.PrevRelativeAge % smarts.OffsetTime;
-                    var currentSmartCheck = Info.RelativeAge % smarts.OffsetTime;
+                    var prevSmartCheck = Info.PrevRelativeAge % aConst.OffsetTime;
+                    var currentSmartCheck = Info.RelativeAge % aConst.OffsetTime;
                     var smartCheck = prevSmartCheck < 0 || prevSmartCheck > currentSmartCheck;
 
                     if (smartCheck && !Vector3D.IsZero(Direction) && MyUtils.IsValid(Direction))
@@ -679,7 +676,7 @@ namespace CoreSystems.Projectiles
                         var right = Vector3D.Cross(Direction, up);
                         var angle = Info.Random.NextDouble() * MathHelper.TwoPi;
                         s.RandOffsetDir = Math.Sin(angle) * up + Math.Cos(angle) * right;
-                        s.RandOffsetDir *= smarts.OffsetRatio;
+                        s.RandOffsetDir *= aConst.OffsetRatio;
                     }
 
                     double distSqr;
