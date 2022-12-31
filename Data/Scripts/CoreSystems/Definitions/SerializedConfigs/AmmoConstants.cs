@@ -321,6 +321,9 @@ namespace CoreSystems.Support
         public readonly float ByBlockHitDepth;
         public readonly float DetonationSoundDistSqr;
         public readonly float BackKickForce;
+        public readonly double MinTurnSpeedSqr;
+        public readonly double Aggressiveness;
+        public readonly double NavAcceleration;
         public readonly double ScanRange;
         public readonly double DeltaVelocityPerTick;
         public readonly double LargestHitSize;
@@ -415,12 +418,13 @@ namespace CoreSystems.Support
             IsField = ammo.AmmoDef.Ewar.Mode == EwarMode.Field || ammo.AmmoDef.Trajectory.DeaccelTime > 0;
             IsHybrid = ammo.AmmoDef.HybridRound;
             IsDrone = ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.DroneAdvanced;
-            IsSmart = ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.Smart || ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.DetectSmart;
             TravelTo = ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.TravelTo;
             IsTurretSelectable = !ammo.IsShrapnel && ammo.AmmoDef.HardPointUsable;
 
-            AccelClearance = ammo.AmmoDef.Trajectory.Smarts.AccelClearance;
-            OverrideTarget = ammo.AmmoDef.Trajectory.Smarts.OverideTarget;
+            ComputeSmarts(ammo, out IsSmart, out AccelClearance, out OverrideTarget, out TargetOffSet,
+                out FocusOnly, out FocusEviction, out NoSteering, out AdvancedSmartSteering, out ScanRange, out OffsetMinRangeSqr,
+                out Aggressiveness, out NavAcceleration, out MinTurnSpeedSqr, out MaxChaseTime, out MaxTargets);
+
             RequiresTarget = ammo.AmmoDef.Trajectory.Guidance != TrajectoryDef.GuidanceType.None && !OverrideTarget || system.TrackTargets;
 
 
@@ -445,11 +449,6 @@ namespace CoreSystems.Support
             SpeedVariance = ammo.AmmoDef.Trajectory.SpeedVariance.Start > 0 || ammo.AmmoDef.Trajectory.SpeedVariance.End > 0;
             RangeVariance = ammo.AmmoDef.Trajectory.RangeVariance.Start > 0 || ammo.AmmoDef.Trajectory.RangeVariance.End > 0;
 
-            TargetOffSet = ammo.AmmoDef.Trajectory.Smarts.Inaccuracy > 0;
-            FocusOnly = ammo.AmmoDef.Trajectory.Smarts.FocusOnly;
-            FocusEviction = ammo.AmmoDef.Trajectory.Smarts.FocusEviction;
-            ScanRange = ammo.AmmoDef.Trajectory.Smarts.ScanRange;
-            NoSteering = ammo.AmmoDef.Trajectory.Smarts.NoSteering;
 
             TargetLossTime = ammo.AmmoDef.Trajectory.TargetLossTime > 0 ? ammo.AmmoDef.Trajectory.TargetLossTime : int.MaxValue;
             CanZombie = TargetLossTime > 0 && TargetLossTime != int.MaxValue && !IsMine;
@@ -459,14 +458,10 @@ namespace CoreSystems.Support
             DeltaVelocityPerTick = AccelInMetersPerSec * MyEngineConstants.PHYSICS_STEP_SIZE_IN_SECONDS;
             MaxAcceleration = ammo.AmmoDef.Trajectory.TotalAcceleration > 0 ? ammo.AmmoDef.Trajectory.TotalAcceleration : double.MaxValue;
             MaxAccelerationSqr = MaxAcceleration * MaxAcceleration;
-            OffsetMinRangeSqr = ammo.AmmoDef.Trajectory.Smarts.OffsetMinRange * ammo.AmmoDef.Trajectory.Smarts.OffsetMinRange;
-            AdvancedSmartSteering = ammo.AmmoDef.Trajectory.Smarts.SteeringLimit > 0;
-           
-            MaxChaseTime = ammo.AmmoDef.Trajectory.Smarts.MaxChaseTime > 0 ? ammo.AmmoDef.Trajectory.Smarts.MaxChaseTime : int.MaxValue;
+
             MaxObjectsHit = ammo.AmmoDef.ObjectsHit.MaxObjectsHit > 0 ? ammo.AmmoDef.ObjectsHit.MaxObjectsHit : int.MaxValue;
             ArmOnlyOnEolHit = ammo.AmmoDef.AreaOfDamage.EndOfLife.ArmOnlyOnHit;
 
-            MaxTargets = ammo.AmmoDef.Trajectory.Smarts.MaxTargets;
             TargetLossDegree = ammo.AmmoDef.Trajectory.TargetLossDegree > 0 ? (float)Math.Cos(MathHelper.ToRadians(ammo.AmmoDef.Trajectory.TargetLossDegree)) : 0;
 
             Fragments(ammo, out HasFragmentOffset, out HasNegFragmentOffset, out FragmentOffset, out FragRadial, out FragDegrees, out FragReverse, out FragDropVelocity, out FragMaxChildren, out FragIgnoreArming, out FragOnEolArmed, out ArmedWhenHit, out FragOnEnd, out HasAdvFragOffset, out FragOffset);
@@ -604,6 +599,37 @@ namespace CoreSystems.Support
                 }
             }
         }
+
+
+        private void ComputeSmarts(WeaponSystem.AmmoType ammo, out bool isSmart, out bool accelClearance, out bool overrideTarget, out bool targetOffSet,
+            out bool focusOnly, out bool focusEviction, out bool noSteering, out bool advancedSmartSteering, out double scanRange, out double offsetMinRangeSqr,
+            out double aggressiveness, out double navAcceleration, out double minTurnSpeedSqr, out int maxChaseTime, out int maxTargets)
+        {
+            isSmart = ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.Smart || ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.DetectSmart;
+
+
+            accelClearance = ammo.AmmoDef.Trajectory.Smarts.AccelClearance;
+            overrideTarget = ammo.AmmoDef.Trajectory.Smarts.OverideTarget;
+
+            targetOffSet = ammo.AmmoDef.Trajectory.Smarts.Inaccuracy > 0;
+            focusOnly = ammo.AmmoDef.Trajectory.Smarts.FocusOnly;
+            focusEviction = ammo.AmmoDef.Trajectory.Smarts.FocusEviction;
+            noSteering = ammo.AmmoDef.Trajectory.Smarts.NoSteering;
+            advancedSmartSteering = ammo.AmmoDef.Trajectory.Smarts.SteeringLimit > 0;
+
+            scanRange = ammo.AmmoDef.Trajectory.Smarts.ScanRange;
+            offsetMinRangeSqr = ammo.AmmoDef.Trajectory.Smarts.OffsetMinRange * ammo.AmmoDef.Trajectory.Smarts.OffsetMinRange;
+            aggressiveness = ammo.AmmoDef.Trajectory.Smarts.Aggressiveness;
+            var disableNavAcceleration = ammo.AmmoDef.Trajectory.Smarts.NavAcceleration < 0;
+            var useNavAccelerationValue = ammo.AmmoDef.Trajectory.Smarts.NavAcceleration > 0;
+            navAcceleration = disableNavAcceleration ? 0 : useNavAccelerationValue ? ammo.AmmoDef.Trajectory.Smarts.NavAcceleration : 2;
+            minTurnSpeedSqr = ammo.AmmoDef.Trajectory.Smarts.MinTurnSpeed * ammo.AmmoDef.Trajectory.Smarts.MinTurnSpeed;
+            maxChaseTime = ammo.AmmoDef.Trajectory.Smarts.MaxChaseTime > 0 ? ammo.AmmoDef.Trajectory.Smarts.MaxChaseTime : int.MaxValue;
+
+            maxTargets = ammo.AmmoDef.Trajectory.Smarts.MaxTargets;
+
+        }
+
 
         internal void ComputeColors(WeaponSystem.AmmoType ammo, out bool lineColorVariance, out bool segmentColorVariance, out Vector4 linearTracerColor, out Vector4 linearTracerColorStart, out Vector4 linearTracerColorEnd, out Vector4 linearSegmentColor, out Vector4 linearSegmentColorStart, out Vector4 linearSegmentColorEnd, out Vector4 linearTrailColor)
         {

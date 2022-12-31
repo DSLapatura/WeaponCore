@@ -446,7 +446,6 @@ namespace CoreSystems.Projectiles
             var ammo = Info.AmmoDef;
             var aConst = ammo.Const;
             var s = Info.Storage;
-            var smarts = ammo.Trajectory.Smarts;
             var w = Info.Weapon;
             var comp = w.Comp;
             var coreParent = comp.TopEntity;
@@ -507,6 +506,7 @@ namespace CoreSystems.Projectiles
                 var isZombie = aConst.CanZombie && hadTarget && !fake && !validTarget && s.ZombieLifeTime > 0 && zombieSlot;
                 var seekNewTarget = timeSlot && hadTarget && !validTarget && !overMaxTargets;
                 var seekFirstTarget = !hadTarget && !validTarget && s.PickTarget && (Info.RelativeAge > 120 && timeSlot || check && Info.IsFragment);
+                var smarts = ammo.Trajectory.Smarts;
 
                 #region TargetTracking
                 if ((s.PickTarget && timeSlot && !clientSync || seekNewTarget || gaveUpChase && validTarget || isZombie || seekFirstTarget) && NewTarget() || validTarget)
@@ -575,6 +575,7 @@ namespace CoreSystems.Projectiles
                 }
                 else
                 {
+
                     var roam = smarts.Roam;
                     var straightAhead = roam && TargetPosition != Vector3D.Zero;
                     TargetPosition = straightAhead ? TargetPosition : Position + (Direction * Info.MaxTrajectory);
@@ -618,7 +619,8 @@ namespace CoreSystems.Projectiles
 
                 Vector3D commandedAccel;
                 Vector3D missileToTargetNorm = Vector3D.Zero;
-                if (!aConst.NoSteering)
+                var fastEnoughToTurn = VelocityLengthSqr >= aConst.MinTurnSpeedSqr;
+                if (!aConst.NoSteering && fastEnoughToTurn)
                 {
                     Vector3D targetAcceleration = Vector3D.Zero;
                     if (s.LastVelocity.HasValue)
@@ -632,7 +634,7 @@ namespace CoreSystems.Projectiles
                     Vector3D lateralTargetAcceleration = (targetAcceleration - Vector3D.Dot(targetAcceleration, missileToTargetNorm) * missileToTargetNorm);
 
                     Vector3D omega = Vector3D.Cross(missileToTarget, relativeVelocity) / Math.Max(missileToTarget.LengthSquared(), 1); //to combat instability at close range
-                    var lateralAcceleration = smarts.Aggressiveness * relativeVelocity.Length() * Vector3D.Cross(omega, missileToTargetNorm) + smarts.NavAcceleration * lateralTargetAcceleration;
+                    var lateralAcceleration = aConst.Aggressiveness * relativeVelocity.Length() * Vector3D.Cross(omega, missileToTargetNorm) + aConst.NavAcceleration * lateralTargetAcceleration;
 
                     if (Vector3D.IsZero(lateralAcceleration))
                     {
@@ -695,13 +697,18 @@ namespace CoreSystems.Projectiles
 
                     if (aConst.AdvancedSmartSteering)
                     {
-                        bool isNormalized;
-                        var newHeading = ProNavControl(Direction, Velocity, commandedAccel, aConst.PreComputedMath, out isNormalized);
-                        proposedVel = Velocity + (isNormalized ? newHeading * accelMpsMulti * DeltaStepConst : commandedAccel * DeltaStepConst);
+                        if (fastEnoughToTurn)
+                        {
+                            bool isNormalized;
+                            var newHeading = ProNavControl(Direction, Velocity, commandedAccel, aConst.PreComputedMath, out isNormalized);
+                            proposedVel = Velocity + (isNormalized ? newHeading * accelMpsMulti * DeltaStepConst : commandedAccel * DeltaStepConst);
+                        }
+                        else
+                            proposedVel = Velocity + (commandedAccel * DeltaStepConst);
                     }
                     else
                     {
-                        if (maxRotationsPerTickInRads < 1)
+                        if (maxRotationsPerTickInRads < 1 && fastEnoughToTurn)
                         {
                             var commandNorm = Vector3D.Normalize(commandedAccel);
 
@@ -727,7 +734,7 @@ namespace CoreSystems.Projectiles
                 }
                 #endregion
             }
-            else if (!smarts.AccelClearance || s.SmartReady)
+            else if (!aConst.AccelClearance || s.SmartReady)
             {
                 proposedVel = Velocity + (Direction * (aConst.DeltaVelocityPerTick * DeltaTimeRatio));
             }
