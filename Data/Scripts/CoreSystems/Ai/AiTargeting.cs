@@ -795,7 +795,7 @@ namespace CoreSystems.Support
                 if (tInfo.IsGrid)
                 {
 
-                    if (!s.TrackGrids || !overRides.Grids || !focusTarget && tInfo.FatCount < 2 || Obstruction(ref tInfo, ref targetPos, p) || (!overRides.LargeGrid && tInfo.LargeGrid) || (!overRides.SmallGrid && !tInfo.LargeGrid)) continue;
+                    if (!s.TrackGrids || !overRides.Grids || !focusTarget && tInfo.FatCount < 2 || !aConst.CheckFutureIntersection && Obstruction(ref tInfo, ref targetPos, p) || (!overRides.LargeGrid && tInfo.LargeGrid) || (!overRides.SmallGrid && !tInfo.LargeGrid)) continue;
 
                     if (!AcquireBlock(w, target, tInfo, ref waterSphere, ref info.Random, p, !focusTarget)) continue;
                     acquired = true;

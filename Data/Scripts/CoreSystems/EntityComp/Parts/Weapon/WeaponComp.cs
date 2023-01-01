@@ -111,7 +111,10 @@ namespace CoreSystems.Platform
 
                     if (TypeSpecific == CompTypeSpecific.Rifle)
                     {
+                        var oldOwner = Ai.AiOwner;
                         Ai.AiOwner = GunBase.OwnerIdentityId;
+                        if (oldOwner != Ai.AiOwner)
+                            Ai.UpdateFactionColors();
                         Ai.SmartHandheld = w.System.HasGuidedAmmo;
                         Ai.OnlyWeaponComp = w.Comp;
                         Ai.IsBot = IsBot;

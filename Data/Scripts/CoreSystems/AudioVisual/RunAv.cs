@@ -10,7 +10,7 @@ using VRage.Utils;
 using VRageMath;
 using VRageRender;
 using static VRageRender.MyBillboard;
-
+using static CoreSystems.Support.WeaponDefinition.AmmoDef.GraphicDef.LineDef;
 namespace CoreSystems.Support
 {
     class RunAv
@@ -481,7 +481,8 @@ namespace CoreSystems.Support
                         {
                             var reduction = (av.TrailShrinkSize * trail.Step);
                             var width = widthScaler ? (aConst.TrailWidth - reduction) * av.TrailScaler : aConst.TrailWidth * av.TrailScaler;
-                            var color = aConst.LinearTrailColor;
+                            var color = aConst.TrailFactionColor == FactionColor.DontUse ? aConst.LinearTrailColor : aConst.TrailFactionColor == FactionColor.Foreground ? av.Weapon.Comp.Ai.FgFactionColor : av.Weapon.Comp.Ai.BgFactionColor;
+
                             if (!widthScaler)
                             {
                                 color *= MathHelper.Clamp(1f - reduction, 0.01f, 1f);

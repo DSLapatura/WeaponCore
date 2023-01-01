@@ -105,6 +105,8 @@ namespace CoreSystems.Support
         internal MyPlanet MyPlanetTmp;
         internal MyPlanet MyPlanet;
 
+        internal Vector4 FgFactionColor;
+        internal Vector4 BgFactionColor;
         internal Vector3 TopEntityVel;
         internal Vector3D PlanetClosestPoint;
         internal Vector3D ClosestPlanetCenter;

@@ -208,7 +208,11 @@ namespace CoreSystems.Support
                                 Ai.FatBlockAdded(cubeBlock);
                         }
                         var bigOwners = Ai.GridEntity.BigOwners;
+                        var oldOwner = Ai.AiOwner;
                         Ai.AiOwner = bigOwners.Count > 0 ? bigOwners[0] : 0;
+
+                        if (oldOwner != Ai.AiOwner)
+                            Ai.UpdateFactionColors();
                     }
                 }
 

@@ -107,7 +107,11 @@ namespace CoreSystems.Platform
 
                 if (Comp.IsBlock) {
                     var bigOwners = Comp.Ai.GridEntity.BigOwners;
+                    var oldOwner = Comp.Ai.AiOwner;
                     Comp.Ai.AiOwner = bigOwners.Count > 0 ? bigOwners[0] : 0;
+
+                    if (oldOwner != Comp.Ai.AiOwner)
+                        Comp.Ai.UpdateFactionColors();
                 }
 
                 if (Comp.Ai.MarkedForClose)

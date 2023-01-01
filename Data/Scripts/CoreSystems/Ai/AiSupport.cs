@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using CoreSystems.Platform;
 using CoreSystems.Projectiles;
 using Sandbox.Game.EntityComponents;
+using Sandbox.ModAPI;
 using VRage;
+using VRage.Game;
 using VRageMath;
 using static CoreSystems.WeaponRandomGenerator;
 using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
@@ -426,6 +428,29 @@ namespace CoreSystems.Support
             SortedTargets.Clear();
         }
 
+        internal void UpdateFactionColors()
+        {
+            if (AiOwner != 0)
+            {
+                var aiFaction = MyAPIGateway.Session.Factions.TryGetPlayerFaction(AiOwner);
+                if (aiFaction != null)
+                {
+                    BgFactionColor = MyColorPickerConstants.HSVOffsetToHSV(aiFaction.CustomColor).HSVtoColor().ToVector4().ToLinearRGB();
+                    FgFactionColor = MyColorPickerConstants.HSVOffsetToHSV(aiFaction.IconColor).HSVtoColor().ToVector4().ToLinearRGB();
+                }
+                else
+                {
+                    BgFactionColor = Vector4.Zero;
+                    FgFactionColor = Vector4.Zero;
+                }
+            }
+            else
+            {
+                BgFactionColor = Vector4.Zero;
+                FgFactionColor = Vector4.Zero;
+            }
+        }
+
         internal void CleanUp()
         {
             AiCloseTick = Session.Tick;
@@ -491,6 +516,9 @@ namespace CoreSystems.Support
             MyProjectiles = 0;
             ClosestFixedWeaponCompSqr = double.MaxValue;
             RotorTargetPosition = Vector3D.MaxValue;
+            FgFactionColor = Vector4.Zero;
+            BgFactionColor = Vector4.Zero;
+
             RotorManualControlId = -1;
             RotorCommandTick = 0;
             PointDefense = false;

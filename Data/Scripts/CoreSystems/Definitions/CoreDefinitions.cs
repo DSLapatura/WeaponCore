@@ -819,6 +819,13 @@ namespace CoreSystems.Support
                         Wave,
                     }
 
+                    public enum FactionColor
+                    {
+                        DontUse,
+                        Foreground,
+                        Background,
+                    }
+
                     [ProtoMember(1)] internal TracerBaseDef Tracer;
                     [ProtoMember(2)] internal string TracerMaterial;
                     [ProtoMember(3)] internal Randomize ColorVariance;
@@ -848,6 +855,7 @@ namespace CoreSystems.Support
                         [ProtoMember(8)] internal string[] Textures;
                         [ProtoMember(9)] internal Texture TextureMode;
                         [ProtoMember(10)] internal bool AlwaysDraw;
+                        [ProtoMember(11)] internal FactionColor FactionColor;
 
                         [ProtoContract]
                         public struct SegmentDef
@@ -864,6 +872,7 @@ namespace CoreSystems.Support
                             [ProtoMember(10)] internal Randomize WidthVariance;
                             [ProtoMember(11)] internal string[] Textures;
                             [ProtoMember(12)] internal bool Enable;
+                            [ProtoMember(13)] internal FactionColor FactionColor;
                         }
                     }
 
@@ -881,6 +890,7 @@ namespace CoreSystems.Support
                         [ProtoMember(9)] internal string[] Textures;
                         [ProtoMember(10)] internal Texture TextureMode;
                         [ProtoMember(11)] internal bool AlwaysDraw;
+                        [ProtoMember(12)] internal FactionColor FactionColor;
                     }
                 }
 

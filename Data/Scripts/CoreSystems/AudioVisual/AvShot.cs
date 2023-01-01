@@ -12,7 +12,7 @@ using VRage.Utils;
 using VRageMath;
 using VRageRender;
 using static VRageRender.MyBillboard;
-
+using static CoreSystems.Support.WeaponDefinition.AmmoDef.GraphicDef.LineDef;
 namespace CoreSystems.Support
 {
     public class AvShot
@@ -173,6 +173,7 @@ namespace CoreSystems.Support
             var useShooterVel = !info.IsFragment && !AmmoDef.Const.AvDropVelocity;
             ShootVelStep = useShooterVel ? info.ShooterVel * MyEngineConstants.PHYSICS_STEP_SIZE_IN_SECONDS : Vector3D.Zero;
             Weapon = info.Weapon;
+
             MaxTrajectory = info.MaxTrajectory;
             ShotFade = info.ShotFade;
             ShrinkInited = false;
@@ -638,9 +639,8 @@ namespace CoreSystems.Support
                     Session.AvShotCache[UniqueMuzzleId] = new AvInfoCache {SegMeasureStep = SegMeasureStep, SegmentGaped = SegmentGaped, SegmentLenTranserved = SegmentLenTranserved, TextureIdx = TextureIdx, TextureLastUpdate = TextureLastUpdate, TextureReverse = TextureReverse};
             }
 
-            var color = aConst.LinearTracerColor;
-            var segmentColor = aConst.LinearSegmentColor;
-
+            var color = aConst.TracerFactionColor == FactionColor.DontUse ? aConst.LinearTracerColor : aConst.TracerFactionColor == FactionColor.Foreground ? Weapon.Comp.Ai.FgFactionColor : Weapon.Comp.Ai.BgFactionColor;
+            var segmentColor = aConst.SegFactionColor == FactionColor.DontUse ? aConst.LinearSegmentColor : aConst.SegFactionColor == FactionColor.Foreground ? Weapon.Comp.Ai.FgFactionColor : Weapon.Comp.Ai.BgFactionColor;
             if (aConst.LineColorVariance)
             {
                 var tracerStart = aConst.LinearTracerColorStart;

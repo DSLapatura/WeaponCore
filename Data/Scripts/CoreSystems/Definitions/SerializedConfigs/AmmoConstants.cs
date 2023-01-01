@@ -18,6 +18,7 @@ using static CoreSystems.Support.WeaponDefinition.AmmoDef.FragmentDef.TimedSpawn
 using static CoreSystems.Support.ValueProcessors;
 using static CoreSystems.Support.WeaponDefinition.HardPointDef;
 using System.Runtime.CompilerServices;
+using static CoreSystems.Support.WeaponDefinition.AmmoDef.GraphicDef.LineDef;
 
 namespace CoreSystems.Support
 {
@@ -117,6 +118,9 @@ namespace CoreSystems.Support
         public readonly Texture TracerMode;
         public readonly Texture TrailMode;
         public readonly PointTypes FragPointType;
+        public readonly FactionColor TracerFactionColor;
+        public readonly FactionColor SegFactionColor;
+        public readonly FactionColor TrailFactionColor;
         public readonly Vector4 LinearTracerColor;
         public readonly Vector4 LinearTracerColorStart;
         public readonly Vector4 LinearTracerColorEnd;
@@ -444,7 +448,7 @@ namespace CoreSystems.Support
 
             DrawLine = ammo.AmmoDef.AmmoGraphics.Lines.Tracer.Enable;
             
-            ComputeColors(ammo, out LineColorVariance, out SegmentColorVariance, out LinearTracerColor, out LinearTracerColorStart, out LinearTracerColorEnd, out LinearSegmentColor, out LinearSegmentColorStart, out LinearSegmentColorEnd, out LinearTrailColor);
+            ComputeColors(ammo, out LineColorVariance, out SegmentColorVariance, out LinearTracerColor, out LinearTracerColorStart, out LinearTracerColorEnd, out LinearSegmentColor, out LinearSegmentColorStart, out LinearSegmentColorEnd, out LinearTrailColor, out TracerFactionColor, out SegFactionColor, out TrailFactionColor);
             Random = new XorShiftRandom((ulong)ammo.GetHashCode());
 
             LineWidthVariance = ammo.AmmoDef.AmmoGraphics.Lines.WidthVariance.Start > 0 || ammo.AmmoDef.AmmoGraphics.Lines.WidthVariance.End > 0;
@@ -645,12 +649,13 @@ namespace CoreSystems.Support
         }
 
 
-        internal void ComputeColors(WeaponSystem.AmmoType ammo, out bool lineColorVariance, out bool segmentColorVariance, out Vector4 linearTracerColor, out Vector4 linearTracerColorStart, out Vector4 linearTracerColorEnd, out Vector4 linearSegmentColor, out Vector4 linearSegmentColorStart, out Vector4 linearSegmentColorEnd, out Vector4 linearTrailColor)
+        internal void ComputeColors(WeaponSystem.AmmoType ammo, out bool lineColorVariance, out bool segmentColorVariance, out Vector4 linearTracerColor, out Vector4 linearTracerColorStart, out Vector4 linearTracerColorEnd, out Vector4 linearSegmentColor, out Vector4 linearSegmentColorStart, out Vector4 linearSegmentColorEnd, out Vector4 linearTrailColor, out FactionColor tracerFactionColor, out FactionColor segFactionColor, out FactionColor trailFactionColor)
         {
             lineColorVariance = ammo.AmmoDef.AmmoGraphics.Lines.ColorVariance.Start > 0 && ammo.AmmoDef.AmmoGraphics.Lines.ColorVariance.End > 0;
 
             var lines = ammo.AmmoDef.AmmoGraphics.Lines;
             var tracerColor = lines.Tracer.Color;
+            tracerFactionColor = lines.Tracer.FactionColor;
             linearTracerColor = tracerColor.ToLinearRGB();
             if (lineColorVariance)
             {
@@ -678,6 +683,7 @@ namespace CoreSystems.Support
 
             var seg = ammo.AmmoDef.AmmoGraphics.Lines.Tracer.Segmentation;
             var segColor = seg.Color;
+            segFactionColor = lines.Tracer.FactionColor;
             linearSegmentColor = segColor.ToLinearRGB();
 
             if (segmentColorVariance)
@@ -702,6 +708,7 @@ namespace CoreSystems.Support
             }
 
             var trailColor = lines.Trail.Color;
+            trailFactionColor = lines.Tracer.FactionColor;
             linearTrailColor = trailColor.ToLinearRGB();
 
         }
