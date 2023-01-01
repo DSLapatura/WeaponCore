@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using ProtoBuf;
 using VRageMath;
+using static CoreSystems.Support.WeaponDefinition.AmmoDef.GraphicDef.LineDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.TrajectoryDef.ApproachDef;
 using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetDef;
 
@@ -804,6 +805,12 @@ namespace CoreSystems.Api
                             Chaos,
                             Wave,
                         }
+                        public enum FactionColor
+                        {
+                            DontUse,
+                            Foreground,
+                            Background,
+                        }
 
                         [ProtoMember(1)] internal TracerBaseDef Tracer;
                         [ProtoMember(2)] internal string TracerMaterial;
@@ -834,6 +841,7 @@ namespace CoreSystems.Api
                             [ProtoMember(8)] internal string[] Textures;
                             [ProtoMember(9)] internal Texture TextureMode;
                             [ProtoMember(10)] internal bool AlwaysDraw;
+                            [ProtoMember(11)] internal FactionColor FactionColor;
 
                             [ProtoContract]
                             public struct SegmentDef
@@ -850,6 +858,7 @@ namespace CoreSystems.Api
                                 [ProtoMember(10)] internal Randomize WidthVariance;
                                 [ProtoMember(11)] internal string[] Textures;
                                 [ProtoMember(12)] internal bool Enable;
+                                [ProtoMember(13)] internal FactionColor FactionColor;
                             }
                         }
 
@@ -867,6 +876,7 @@ namespace CoreSystems.Api
                             [ProtoMember(9)] internal string[] Textures;
                             [ProtoMember(10)] internal Texture TextureMode;
                             [ProtoMember(11)] internal bool AlwaysDraw;
+                            [ProtoMember(12)] internal FactionColor FactionColor;
                         }
                     }
 
