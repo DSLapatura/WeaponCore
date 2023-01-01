@@ -14,10 +14,9 @@ namespace CoreSystems.Projectiles
     public partial class Projectiles
     {
         internal readonly Session Session;
-        internal readonly MyConcurrentPool<List<NewVirtual>> VirtInfoPools = new MyConcurrentPool<List<NewVirtual>>(128, vInfo => vInfo.Clear());
-        internal readonly MyConcurrentPool<ProInfo> VirtInfoPool = new MyConcurrentPool<ProInfo>(128, vInfo => vInfo.Clean(null));
-        internal readonly MyConcurrentPool<HitEntity> HitEntityPool = new MyConcurrentPool<HitEntity>(512, hitEnt => hitEnt.Clean());
-
+        internal readonly Stack<List<NewVirtual>> VirtInfoPools = new Stack<List<NewVirtual>>(128);
+        internal readonly Stack<ProInfo> VirtInfoPool = new Stack<ProInfo>(128);
+        internal readonly Stack<HitEntity>[] HitEntityArrayPool = new Stack<HitEntity>[32];
         internal readonly List<DeferedVoxels> DeferedVoxels = new List<DeferedVoxels>(128);
         internal readonly List<Projectile> FinalHitCheck = new List<Projectile>(512);
         internal readonly List<Projectile> ValidateHits = new List<Projectile>(1024);
@@ -34,13 +33,16 @@ namespace CoreSystems.Projectiles
         internal Projectiles(Session session)
         {
             Session = session;
+            for (int i = 0; i < HitEntityArrayPool.Length; i++)
+                HitEntityArrayPool[i] = new Stack<HitEntity>(64);
         }
 
         internal void Clean()
         {
-            VirtInfoPools.Clean();
-            VirtInfoPool.Clean();
-            HitEntityPool.Clean();
+            VirtInfoPools.Clear();
+            VirtInfoPool.Clear();
+            foreach (var a in HitEntityArrayPool)
+                a?.Clear();
             DeferedVoxels.Clear();
             FinalHitCheck.Clear();
             ValidateHits.Clear();

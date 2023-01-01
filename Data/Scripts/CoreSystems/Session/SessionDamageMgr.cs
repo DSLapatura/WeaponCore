@@ -70,7 +70,9 @@ namespace CoreSystems
                                 p.AddToDeathSyncMonitor();
                         }
 
-                        Projectiles.HitEntityPool.Return(hitEnt);
+                        Projectiles.HitEntityArrayPool[hitEnt.PoolId].Push(hitEnt);
+                        hitEnt.Clean();
+
                         continue;
                     }
 
@@ -101,7 +103,8 @@ namespace CoreSystems
                             DamageVoxel(hitEnt, info, hitEnt.EventType);
                             continue;
                     }
-                    Projectiles.HitEntityPool.Return(hitEnt);
+                    Projectiles.HitEntityArrayPool[hitEnt.PoolId].Push(hitEnt);
+                    hitEnt.Clean();
                 }
 
                 if (info.BaseDamagePool <= 0 && (int) p.State < 3) {

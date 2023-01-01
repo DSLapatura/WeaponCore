@@ -228,7 +228,7 @@ namespace CoreSystems.Platform
 
                                     if (i == 0)
                                     {
-                                        vProList = s.Projectiles.VirtInfoPools.Get();
+                                        vProList = s.Projectiles.VirtInfoPools.Count > 0 ? s.Projectiles.VirtInfoPools.Pop() : new List<NewVirtual>();
                                         s.Projectiles.NewProjectiles.Add(new NewProjectile { NewVirts = vProList, AmmoDef = ammoPattern, Muzzle = muzzle, PatternCycle = patternCycle, Direction = muzzle.DeviatedDir, Type = NewProjectile.Kind.Virtual });
                                     }
 
@@ -244,7 +244,7 @@ namespace CoreSystems.Platform
                                     else shotFade = 0;
 
                                     var maxTrajectory = ammoPattern.Const.MaxTrajectoryGrows && FireCounter < ammoPattern.Trajectory.MaxTrajectoryTime ? ammoPattern.Const.TrajectoryStep * FireCounter : ammoPattern.Const.MaxTrajectory;
-                                    var info = s.Projectiles.VirtInfoPool.Get();
+                                    var info = s.Projectiles.VirtInfoPool.Count > 0 ? s.Projectiles.VirtInfoPool.Pop() : new ProInfo();
                                     info.AvShot = s.Av.AvShotPool.Count > 0 ? s.Av.AvShotPool.Pop() : new AvShot(s);
                                     info.InitVirtual(this, ammoPattern,  muzzle, maxTrajectory, shotFade);
                                     vProList.Add(new NewVirtual { Info = info, Rotate = !ammoPattern.Const.RotateRealBeam && i == _nextVirtual, Muzzle = muzzle, VirtualId = _nextVirtual });

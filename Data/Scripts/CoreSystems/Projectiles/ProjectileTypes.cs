@@ -222,22 +222,22 @@ namespace CoreSystems.Support
 
             Sleep = false;
 
-            if (p != null && !p.Info.AmmoDef.Const.FullSync && p.Info.SyncId != ulong.MaxValue)
+            if (!p.Info.AmmoDef.Const.FullSync && p.Info.SyncId != ulong.MaxValue)
                 p.Info.Weapon.ProjectileSyncMonitor.Remove(p.Info.SyncId);
 
 
-            if (ApproachInfo != null && p != null)
+            if (ApproachInfo != null )
             {
                 ApproachInfo.Clean(p);
                 ApproachInfo = null;
             }
-            else if (DroneInfo != null && p != null)
+            else if (DroneInfo != null)
             {
                 DroneInfo.Clean(p);
                 DroneInfo = null;
             }
 
-            if (FullSyncInfo != null && p != null)
+            if (FullSyncInfo != null)
             {
                 FullSyncInfo.Clean(p);
                 FullSyncInfo = null;
@@ -399,7 +399,7 @@ namespace CoreSystems.Support
         public double? HitDist;
         public Type EventType;
         public int DamageMulti = 1;
-
+        public int PoolId;
         public void Clean()
         {
             Vector3ICache.Clear();
@@ -422,6 +422,7 @@ namespace CoreSystems.Support
             PulseTrigger = false;
             SelfHit = false;
             DamageMulti = 1;
+            PoolId = -1;
         }
 
         public struct RootBlocks

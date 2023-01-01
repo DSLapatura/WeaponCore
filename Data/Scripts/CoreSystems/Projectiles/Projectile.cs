@@ -400,7 +400,8 @@ namespace CoreSystems.Projectiles
                         vp.AvShot.Close();
                     else vp.AvShot.EndState = new AvClose { EndPos = Position, Dirty = true, DetonateEffect = detExp };
 
-                    session.Projectiles.VirtInfoPool.Return(vp);
+                    vp.Clean(this);
+                    session.Projectiles.VirtInfoPool.Push(vp);
                 }
                 VrPros.Clear();
             }

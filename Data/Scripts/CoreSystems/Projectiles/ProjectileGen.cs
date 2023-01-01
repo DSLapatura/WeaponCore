@@ -141,7 +141,7 @@ namespace CoreSystems.Projectiles
                         }
                     }
                     virts.Clear();
-                    VirtInfoPools.Return(virts);
+                    VirtInfoPools.Push(virts);
                 }
                 Session.Projectiles.ActiveProjetiles.Add(p);
                 p.Start();

@@ -865,6 +865,8 @@ namespace CoreSystems
                 {
                     ShowLocalNotify("WeaponCore is running in [UnsupportedMode], certain features and blocks will not work as intended and may crash or become non-functional", 30000, "White");
                     ShowLocalNotify(listOfNames, 30000, "White");
+                    Log.Line($"Running in unsupported mode, certain features and blocks will not work as intended and may crash or become non-functional");
+                    Log.Line(listOfNames);
                 }
 
             }

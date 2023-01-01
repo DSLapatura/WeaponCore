@@ -142,6 +142,8 @@ namespace CoreSystems.Projectiles
                     }
 
                     HitEntity hitEntity = null;
+                    var poolId = Environment.CurrentManagedThreadId;
+                    var pool = HitEntityArrayPool[poolId];
                     var checkShield = Session.ShieldApiLoaded && Session.ShieldHash == ent.DefinitionId?.SubtypeId && ent.Render.Visible;
                     MyTuple<IMyTerminalBlock, MyTuple<bool, bool, float, float, float, int>, MyTuple<MatrixD, MatrixD>>? shieldInfo = null;
 
@@ -166,7 +168,10 @@ namespace CoreSystems.Projectiles
                                     if (shieldIntersect && !info.ShieldBypassed)
                                     {
 
-                                        hitEntity = HitEntityPool.Get();
+
+                                        hitEntity = pool.Count > 0 ? pool.Pop() : new HitEntity();
+                                        hitEntity.PoolId = poolId;
+
                                         hitEntity.EventType = Shield;
                                         var hitPos = beamFrom + (direction * dist.Value);
                                         hitEntity.HitPos = beamFrom + (direction * dist.Value);
@@ -335,7 +340,8 @@ namespace CoreSystems.Projectiles
                                 continue;
                             }
 
-                            hitEntity = HitEntityPool.Get();
+                            hitEntity = pool.Count > 0 ? pool.Pop() : new HitEntity();
+                            hitEntity.PoolId = poolId;
 
                             var hitPos = voxelHit.Value;
                             hitEntity.HitPos = hitPos;
@@ -357,8 +363,8 @@ namespace CoreSystems.Projectiles
 
                         if (grid != null)
                         {
-
-                            hitEntity = HitEntityPool.Get();
+                            hitEntity = pool.Count > 0 ? pool.Pop() : new HitEntity();
+                            hitEntity.PoolId = poolId;
                             if (entIsSelf && !selfDamage && !info.Storage.SmartReady)
                             {
                                 if (!isBeam && beamLen <= grid.GridSize * 2 && !goCritical)
@@ -366,7 +372,8 @@ namespace CoreSystems.Projectiles
                                     MyCube cube;
                                     if (!(grid.TryGetCube(grid.WorldToGridInteger(p.Position), out cube) && isGrid && cube.CubeBlock != firingCube.SlimBlock || grid.TryGetCube(grid.WorldToGridInteger(p.LastPosition), out cube) && isGrid && cube.CubeBlock != firingCube.SlimBlock))
                                     {
-                                        HitEntityPool.Return(hitEntity);
+                                        hitEntity.Clean();
+                                        pool.Push(hitEntity);
                                         continue;
                                     }
                                 }
@@ -399,7 +406,8 @@ namespace CoreSystems.Projectiles
 
                                         if (!hitself)
                                         {
-                                            HitEntityPool.Return(hitEntity);
+                                            hitEntity.Clean();
+                                            pool.Push(hitEntity);
                                             continue;
                                         }
                                         IHitInfo hitInfo = null;
@@ -410,7 +418,8 @@ namespace CoreSystems.Projectiles
                                             var hitGrid = hitInfo?.HitEntity?.GetTopMostParent() as MyCubeGrid;
                                             if (hitGrid == null || firingCube == null || !firingCube.CubeGrid.IsSameConstructAs(hitGrid))
                                             {
-                                                HitEntityPool.Return(hitEntity);
+                                                hitEntity.Clean();
+                                                pool.Push(hitEntity);
                                                 continue;
                                             }
                                         }
@@ -440,8 +449,8 @@ namespace CoreSystems.Projectiles
                     }
                     else if (destroyable != null)
                     {
-
-                        hitEntity = HitEntityPool.Get();
+                        hitEntity = pool.Count > 0 ? pool.Pop() : new HitEntity();
+                        hitEntity.PoolId = poolId;
                         hitEntity.EventType = Destroyable;
                     }
 
@@ -464,7 +473,8 @@ namespace CoreSystems.Projectiles
                         else
                         {
                             Log.Line($"hitEntity was null: {hitEntity.EventType}");
-                            HitEntityPool.Return(hitEntity);
+                            hitEntity.Clean();
+                            pool.Push(hitEntity);
                         }
                     }
                 }
@@ -604,7 +614,10 @@ namespace CoreSystems.Projectiles
                     p.FinalizeIntersection = true;
                     FinalHitCheck.Add(p);
                 }
-                var hitEntity = HitEntityPool.Get();
+
+                var pool = HitEntityArrayPool[1];
+                var hitEntity = pool.Count > 0 ? pool.Pop(): new HitEntity();
+                hitEntity.PoolId = 1;
                 var lineCheck = aConst.CollisionIsLine && !info.EwarAreaPulse;
                 hitEntity.Info = info;
                 hitEntity.Entity = voxel;
@@ -690,7 +703,12 @@ namespace CoreSystems.Projectiles
 
         internal void ProjectileHit(Projectile attacker, Projectile target, bool lineCheck, ref LineD beam)
         {
-            var hitEntity = HitEntityPool.Get();
+            var poolId = Environment.CurrentManagedThreadId;
+            var pool = HitEntityArrayPool[poolId];
+
+            var hitEntity = pool.Count > 0 ? pool.Pop() : new HitEntity();
+            hitEntity.PoolId = poolId;
+
             hitEntity.Info = attacker.Info;
             hitEntity.EventType = HitEntity.Type.Projectile;
             hitEntity.Hit = true;
@@ -741,7 +759,8 @@ namespace CoreSystems.Projectiles
                     {
                         if (ent.PulseTrigger) pulseTrigger = true;
                         info.HitList.RemoveAtFast(i);
-                        HitEntityPool.Return(ent);
+                        HitEntityArrayPool[ent.PoolId].Push(ent);
+                        ent.Clean();
                     }
                     else break;
                 }

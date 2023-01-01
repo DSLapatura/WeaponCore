@@ -7,8 +7,6 @@ using Sandbox.ModAPI;
 using VRage;
 using VRage.Game;
 using VRageMath;
-using static CoreSystems.WeaponRandomGenerator;
-using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace CoreSystems.Support
 {
