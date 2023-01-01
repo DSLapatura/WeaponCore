@@ -683,7 +683,7 @@ namespace CoreSystems.Support
 
             var seg = ammo.AmmoDef.AmmoGraphics.Lines.Tracer.Segmentation;
             var segColor = seg.Color;
-            segFactionColor = lines.Tracer.FactionColor;
+            segFactionColor = lines.Tracer.Segmentation.FactionColor;
             linearSegmentColor = segColor.ToLinearRGB();
 
             if (segmentColorVariance)
@@ -708,7 +708,7 @@ namespace CoreSystems.Support
             }
 
             var trailColor = lines.Trail.Color;
-            trailFactionColor = lines.Tracer.FactionColor;
+            trailFactionColor = lines.Trail.FactionColor;
             linearTrailColor = trailColor.ToLinearRGB();
 
         }

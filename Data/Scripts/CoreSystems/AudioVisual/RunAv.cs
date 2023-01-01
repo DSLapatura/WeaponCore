@@ -481,9 +481,8 @@ namespace CoreSystems.Support
                         {
                             var reduction = (av.TrailShrinkSize * trail.Step);
                             var width = widthScaler ? (aConst.TrailWidth - reduction) * av.TrailScaler : aConst.TrailWidth * av.TrailScaler;
-                            var skipFactionColor = aConst.TrailFactionColor == FactionColor.DontUse || av.Weapon.Comp.Ai.FgFactionColor == Vector4.Zero && av.Weapon.Comp.Ai.BgFactionColor == Vector4.Zero;
-                            var color = skipFactionColor ? aConst.LinearTrailColor : aConst.TrailFactionColor == FactionColor.Foreground ? av.Weapon.Comp.Ai.FgFactionColor : av.Weapon.Comp.Ai.BgFactionColor;
-
+                            var skipFactionColor = aConst.TrailFactionColor == FactionColor.DontUse || av.FgFactionColor == Vector4.Zero && av.BgFactionColor == Vector4.Zero;
+                            var color = skipFactionColor ? aConst.LinearTrailColor : aConst.TrailFactionColor == FactionColor.Foreground ? av.FgFactionColor : av.BgFactionColor;
                             if (!widthScaler)
                             {
                                 color *= MathHelper.Clamp(1f - reduction, 0.01f, 1f);

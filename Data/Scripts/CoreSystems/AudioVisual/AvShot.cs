@@ -13,6 +13,7 @@ using VRageMath;
 using VRageRender;
 using static VRageRender.MyBillboard;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.GraphicDef.LineDef;
+
 namespace CoreSystems.Support
 {
     public class AvShot
@@ -104,7 +105,8 @@ namespace CoreSystems.Support
         internal Vector3D TracerBack;
         internal Vector4 Color;
         internal Vector4 SegmentColor;
-
+        internal Vector4 FgFactionColor;
+        internal Vector4 BgFactionColor;
         internal Hit Hit;
         internal AvClose EndState;
         internal MatrixD PrimeMatrix = MatrixD.Identity;
@@ -173,6 +175,11 @@ namespace CoreSystems.Support
             var useShooterVel = !info.IsFragment && !AmmoDef.Const.AvDropVelocity;
             ShootVelStep = useShooterVel ? info.ShooterVel * MyEngineConstants.PHYSICS_STEP_SIZE_IN_SECONDS : Vector3D.Zero;
             Weapon = info.Weapon;
+
+            if (Weapon.Comp.Ai != null) {
+                FgFactionColor = Weapon.Comp.Ai.FgFactionColor;
+                BgFactionColor = Weapon.Comp.Ai.BgFactionColor;
+            }
 
             MaxTrajectory = info.MaxTrajectory;
             ShotFade = info.ShotFade;
@@ -639,11 +646,11 @@ namespace CoreSystems.Support
                     Session.AvShotCache[UniqueMuzzleId] = new AvInfoCache {SegMeasureStep = SegMeasureStep, SegmentGaped = SegmentGaped, SegmentLenTranserved = SegmentLenTranserved, TextureIdx = TextureIdx, TextureLastUpdate = TextureLastUpdate, TextureReverse = TextureReverse};
             }
 
-            var skipTracerFactionColor = aConst.TracerFactionColor == FactionColor.DontUse || Weapon.Comp.Ai.FgFactionColor == Vector4.Zero && Weapon.Comp.Ai.BgFactionColor == Vector4.Zero;
+            var skipTracerFactionColor = aConst.TracerFactionColor == FactionColor.DontUse || FgFactionColor == Vector4.Zero && BgFactionColor == Vector4.Zero;
             var skipSegFactionColor = aConst.SegFactionColor == FactionColor.DontUse || Weapon.Comp.Ai.FgFactionColor == Vector4.Zero && Weapon.Comp.Ai.BgFactionColor == Vector4.Zero;
 
-            var color = skipTracerFactionColor ? aConst.LinearTracerColor : aConst.TracerFactionColor == FactionColor.Foreground ? Weapon.Comp.Ai.FgFactionColor : Weapon.Comp.Ai.BgFactionColor;
-            var segmentColor = skipSegFactionColor ? aConst.LinearSegmentColor : aConst.SegFactionColor == FactionColor.Foreground ? Weapon.Comp.Ai.FgFactionColor : Weapon.Comp.Ai.BgFactionColor;
+            var color = skipTracerFactionColor ? aConst.LinearTracerColor : aConst.TracerFactionColor == FactionColor.Foreground ? FgFactionColor : BgFactionColor;
+            var segmentColor = skipSegFactionColor ? aConst.LinearSegmentColor : aConst.SegFactionColor == FactionColor.Foreground ? FgFactionColor : BgFactionColor;
             if (aConst.LineColorVariance)
             {
                 var tracerStart = aConst.LinearTracerColorStart;
@@ -1396,6 +1403,9 @@ namespace CoreSystems.Support
             TracerFront = Vector3D.Zero;
             Color = Vector4.Zero;
             SegmentColor = Vector4.Zero;
+            FgFactionColor = Vector4.Zero;
+            BgFactionColor = Vector4.Zero;
+
             OnScreen = Screen.None;
             Tracer = TracerState.Off;
             Trail = TrailState.Off;
