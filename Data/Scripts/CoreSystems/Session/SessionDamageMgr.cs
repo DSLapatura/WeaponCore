@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
 using CoreSystems.Projectiles;
 using CoreSystems.Support;
 using Sandbox.Definitions;
@@ -16,7 +14,6 @@ using VRage.Game.ModAPI;
 using VRage.Game.ModAPI.Interfaces;
 using VRage.Utils;
 using VRageMath;
-using static CoreSystems.Support.CoreComponent;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.AreaOfDamageDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.DamageScaleDef;
 using CollisionLayers = Sandbox.Engine.Physics.MyPhysics.CollisionLayers;
@@ -70,7 +67,6 @@ namespace CoreSystems
                                 p.AddToDeathSyncMonitor();
                         }
 
-                        Projectiles.HitEntityArrayPool[hitEnt.PoolId].Push(hitEnt);
                         hitEnt.Clean();
 
                         continue;
@@ -103,7 +99,6 @@ namespace CoreSystems
                             DamageVoxel(hitEnt, info, hitEnt.EventType);
                             continue;
                     }
-                    Projectiles.HitEntityArrayPool[hitEnt.PoolId].Push(hitEnt);
                     hitEnt.Clean();
                 }
 

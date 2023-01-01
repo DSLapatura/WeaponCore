@@ -1654,7 +1654,17 @@ namespace CoreSystems
                     }
                 }
             }
+
+            Log.Line($"WC Version: {ModVersion}");
+            if (IsClient && Settings.Enforcement.Version != ModVersion)
+                WarnClientAboutOldVersion();
         }
 
+        private void WarnClientAboutOldVersion()
+        {
+            var message = "Your WeaponCore version is [older than the servers]!  This is likely due to a [corrupted download], please follow directions on [WC Steam Page] to correct";
+            ShowLocalNotify(message, 30000);
+            Log.Line(message);
+        }
     }
 }

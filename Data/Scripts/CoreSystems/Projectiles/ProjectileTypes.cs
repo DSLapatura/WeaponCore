@@ -399,7 +399,7 @@ namespace CoreSystems.Support
         public double? HitDist;
         public Type EventType;
         public int DamageMulti = 1;
-        public int PoolId;
+        public Stack<HitEntity> Pool;
         public void Clean()
         {
             Vector3ICache.Clear();
@@ -422,7 +422,8 @@ namespace CoreSystems.Support
             PulseTrigger = false;
             SelfHit = false;
             DamageMulti = 1;
-            PoolId = -1;
+            Pool.Push(this);
+            Pool = null;
         }
 
         public struct RootBlocks
