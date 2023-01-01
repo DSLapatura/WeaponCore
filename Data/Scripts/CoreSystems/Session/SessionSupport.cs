@@ -1656,7 +1656,7 @@ namespace CoreSystems
             }
 
             Log.Line($"WC Version: {ModVersion}");
-            if (IsClient && Settings.Enforcement.Version != ModVersion)
+            if (IsClient && Settings.Enforcement.Version > ModVersion)
                 WarnClientAboutOldVersion();
         }
 
