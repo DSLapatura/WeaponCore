@@ -436,11 +436,11 @@ namespace CoreSystems.Support
                 if (aiFaction != null)
                 {
                     BgFactionColor = MyColorPickerConstants.HSVOffsetToHSV(aiFaction.CustomColor).HSVtoColor().ToVector4().ToLinearRGB();
-                    BgFactionColor *= 10;
-                    BgFactionColor.W *= 0.1f;
+                    BgFactionColor *= 100;
+                    BgFactionColor.W *= 0.01f;
                     FgFactionColor = MyColorPickerConstants.HSVOffsetToHSV(aiFaction.IconColor).HSVtoColor().ToVector4().ToLinearRGB();
-                    FgFactionColor *= 10;
-                    FgFactionColor.W *= 0.1f;
+                    FgFactionColor *= 100;
+                    FgFactionColor.W *= 0.01f;
                 }
                 else
                 {
