@@ -143,10 +143,7 @@ namespace CoreSystems.Projectiles
 
                     HitEntity hitEntity = null;
                     var poolId = Environment.CurrentManagedThreadId;
-                    if (poolId < 0 || poolId > 255 || Session.SuppressWc)
-                    {
-                        if (Session.SuppressWc)
-                            break;
+                    if (poolId < 0 || poolId > 1024) {
                         Log.Line($"bad poolId: {poolId}");
                         Session.SuppressWc = true;
                         break;
