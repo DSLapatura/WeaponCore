@@ -476,8 +476,7 @@ namespace CoreSystems.Support
                         if (!refreshed)
                             trail.Line = new LineD(trail.Line.From + av.ShootVelStep, trail.Line.To + av.ShootVelStep, trail.Line.Length);
 
-
-                        if (av.OnScreen != AvShot.Screen.None && !overDrawLimit)
+                        if (av.OnScreen != AvShot.Screen.None && av.OnScreen != AvShot.Screen.ProxyDraw && !overDrawLimit)
                         {
                             var reduction = (av.TrailShrinkSize * trail.Step);
                             var width = widthScaler ? (aConst.TrailWidth - reduction) * av.TrailScaler : aConst.TrailWidth * av.TrailScaler;
@@ -488,7 +487,7 @@ namespace CoreSystems.Support
                                 color *= MathHelper.Clamp(1f - reduction, 0.01f, 1f);
                             }
 
-                            if (av.OnScreen != AvShot.Screen.ProxyDraw && trail.Line.Length >= 0.1)
+                            if (trail.Line.Length >= 0.1)
                             {
                                 var qCache = QuadCachePool.Count > 0 ? QuadCachePool.Pop() : new QuadCache();
 
@@ -503,7 +502,6 @@ namespace CoreSystems.Support
                                 PreAddOneFrame.Add(qCache);
                                 ++av.ActiveBillBoards;
                             }
-
                         }
 
                         if (++trail.Step >= steps)
@@ -516,7 +514,8 @@ namespace CoreSystems.Support
                         }
                     }
 
-                    if (remove) av.TrailSteps.Dequeue();
+                    if (remove) 
+                        av.TrailSteps.Dequeue();
                 }
 
                 if (trailCount == 0 && shrinkCnt == 0 && av.MarkForClose)

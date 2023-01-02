@@ -85,18 +85,10 @@ namespace CoreSystems.Projectiles
                 CheckHits();
             Session.StallReporter.End();
 
-            if (ValidateHits.Count > 0) {
-
-                Session.StallReporter.Start($"InitialHitCheck: {ValidateHits.Count} - beamCount:{_beamCount}", 11);
-                InitialHitCheck();
-                Session.StallReporter.End();
+            if (DeferedVoxels.Count > 0) {
 
                 Session.StallReporter.Start($"DeferedVoxelCheck: {ValidateHits.Count} - beamCount:{_beamCount} ", 11);
                 DeferedVoxelCheck();
-                Session.StallReporter.End();
-
-                Session.StallReporter.Start($"FinalizeHits: {ValidateHits.Count} - beamCount:{_beamCount}", 11);
-                FinalizeHits();
                 Session.StallReporter.End();
             }
         }
@@ -439,9 +431,7 @@ namespace CoreSystems.Projectiles
 
                 if (target.TargetState == Target.TargetStates.IsProjectile || aConst.CollisionIsLine && p.MySegmentList.Count > 0 || !aConst.CollisionIsLine && p.MyEntityList.Count > 0)
                 {
-
-                    lock (ValidateHits)
-                        ValidateHits.Add(p);
+                    InitialHitCheck(p);
                 }
                 else if (aConst.IsMine && storage.LastActivatedStage <= -2 && storage.RequestedStage != -3 && info.RelativeAge - storage.ChaseAge > 600)
                 {
