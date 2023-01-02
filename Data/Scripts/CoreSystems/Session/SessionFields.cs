@@ -28,7 +28,6 @@ using VRageMath;
 using WeaponCore.Data.Scripts.CoreSystems.Comms;
 using WeaponCore.Data.Scripts.CoreSystems.Ui;
 using static CoreSystems.Support.Ai;
-using static CoreSystems.Support.SmartStorage;
 using static CoreSystems.Support.WeaponSystem;
 
 namespace CoreSystems
@@ -46,7 +45,7 @@ namespace CoreSystems
         internal const int VersionControl = 33;
         internal const int AwakeBuckets = 60;
         internal const int AsleepBuckets = 180;
-        internal const int ModVersion = 10;
+        internal const int ModVersion = 11;
         internal const int ClientCfgVersion = 8;
         internal const string ServerCfgName = "CoreSystemsServer.cfg";
         internal const string ClientCfgName = "CoreSystemsClient.cfg";

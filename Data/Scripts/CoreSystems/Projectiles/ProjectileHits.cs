@@ -142,7 +142,18 @@ namespace CoreSystems.Projectiles
                     }
 
                     HitEntity hitEntity = null;
-                    var pool = HitEntityArrayPool[Environment.CurrentManagedThreadId];
+                    var poolId = Environment.CurrentManagedThreadId;
+                    if (poolId < 0 || poolId > 255 || Session.SuppressWc)
+                    {
+                        if (Session.SuppressWc)
+                            break;
+                        Log.Line($"bad poolId: {poolId}");
+                        Session.SuppressWc = true;
+                        break;
+                    }
+
+
+                    var pool = HitEntityArrayPool[poolId];
                     var checkShield = Session.ShieldApiLoaded && Session.ShieldHash == ent.DefinitionId?.SubtypeId && ent.Render.Visible;
                     MyTuple<IMyTerminalBlock, MyTuple<bool, bool, float, float, float, int>, MyTuple<MatrixD, MatrixD>>? shieldInfo = null;
 

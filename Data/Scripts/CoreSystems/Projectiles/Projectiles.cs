@@ -16,7 +16,7 @@ namespace CoreSystems.Projectiles
         internal readonly Session Session;
         internal readonly Stack<List<NewVirtual>> VirtInfoPools = new Stack<List<NewVirtual>>(128);
         internal readonly Stack<ProInfo> VirtInfoPool = new Stack<ProInfo>(128);
-        internal readonly Stack<HitEntity>[] HitEntityArrayPool = new Stack<HitEntity>[32];
+        internal readonly Stack<HitEntity>[] HitEntityArrayPool = new Stack<HitEntity>[256];
         internal readonly List<DeferedVoxels> DeferedVoxels = new List<DeferedVoxels>(128);
         internal readonly List<Projectile> FinalHitCheck = new List<Projectile>(512);
         internal readonly List<Projectile> ValidateHits = new List<Projectile>(1024);
@@ -34,7 +34,7 @@ namespace CoreSystems.Projectiles
         {
             Session = session;
             for (int i = 0; i < HitEntityArrayPool.Length; i++)
-                HitEntityArrayPool[i] = new Stack<HitEntity>(64);
+                HitEntityArrayPool[i] = new Stack<HitEntity>();
         }
 
         internal void Clean()

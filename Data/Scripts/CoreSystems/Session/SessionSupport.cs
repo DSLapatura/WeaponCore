@@ -6,7 +6,6 @@ using CoreSystems.Support;
 using ParallelTasks;
 using Sandbox.Common.ObjectBuilders;
 using Sandbox.Definitions;
-using Sandbox.Engine.Platform.VideoMode;
 using Sandbox.Game;
 using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Character.Components;
@@ -24,7 +23,6 @@ using VRageMath;
 using static CoreSystems.Support.Ai;
 using static CoreSystems.Support.CoreComponent;
 using static CoreSystems.Support.CoreComponent.Trigger;
-using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace CoreSystems
 {
