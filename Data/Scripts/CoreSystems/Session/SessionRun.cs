@@ -126,7 +126,7 @@ namespace CoreSystems
                 if (HandlesInput)
                 {
                     Av.AvShotCleanUp();
-                    if (Tick90 && Settings.ClientConfig.ClientOptimizations)
+                    if (Tick90)
                         ClientMonitor();
                 }
 

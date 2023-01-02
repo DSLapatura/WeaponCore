@@ -188,10 +188,16 @@ namespace CoreSystems.Support
             StageIdx = info.Storage.RequestedStage;
             HasModel = AmmoDef.Const.PrimeModel || AmmoDef.Const.TriggerModel;
             var defaultDecayTime = AmmoDef.Const.DecayTime;
+
             if (defaultDecayTime > 1 && Session.ClientAvLevel > 0)
             {
-                if (AmmoDef.Const.RareTrail)
-                    DecayTime = defaultDecayTime;
+                if (AmmoDef.Const.RareTrail) {
+                    if (Session.ClientAvLevel > 7 && AmmoDef.Const.LongTrail) {
+                        var div = Session.ClientAvLevel - 7;
+                        DecayTime = MathHelper.Clamp(defaultDecayTime / div, defaultDecayTime / 3, int.MaxValue);
+                    }
+                    else DecayTime = defaultDecayTime;
+                }
                 else if (AmmoDef.Const.ShortTrail)
                     DecayTime = MathHelper.Clamp(defaultDecayTime - Session.ClientAvLevel, 1, int.MaxValue);
                 else if (AmmoDef.Const.TinyTrail && Session.ClientAvLevel > 5)

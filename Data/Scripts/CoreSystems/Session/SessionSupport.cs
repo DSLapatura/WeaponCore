@@ -319,18 +319,24 @@ namespace CoreSystems
                 ClientPerfHistory.Dequeue();
 
             var highestBillCount = Av.NearBillBoardLimit;
-            Av.NearBillBoardLimit /= 2;
+            var forceEnable = highestBillCount > 25000 || _avCpuTime > 8;
 
+            Av.NearBillBoardLimit /= 2;
             ClientPerfHistory.Enqueue(_avCpuTime);
-            ClientAvLevel = GetClientPerfTarget(highestBillCount);
-            var oldDivisor = ClientAvDivisor;
-            ClientAvDivisor = ClientAvLevel + 1;
-            var change = ClientAvDivisor != oldDivisor;
-            if (change)
-                Log.LineShortDate($"ClientAvScaler changed From:[{oldDivisor}] To:[{ClientAvDivisor}] Billbaords:[{highestBillCount}]", "perf");
+            if (forceEnable || Settings.ClientConfig.ClientOptimizations || ClientAvDivisor > 1)
+            {
+                ClientAvLevel = GetClientPerfTarget(forceEnable);
+
+                var oldDivisor = ClientAvDivisor;
+                ClientAvDivisor = ClientAvLevel + 1;
+                
+                var change = ClientAvDivisor != oldDivisor;
+                if (change)
+                    Log.LineShortDate($"ClientAvScaler changed From:[{oldDivisor}] To:[{ClientAvDivisor}] Billbaords:[{highestBillCount}]", "perf");
+            }
         }
 
-        private int GetClientPerfTarget(int highestBillCount)
+        private int GetClientPerfTarget(bool forceIncrease)
         {
             var c = 0;
             var last = ClientPerfHistory.Count - 1;
@@ -346,7 +352,7 @@ namespace CoreSystems
                 else
                     rawV -= 2;
 
-                var rV = MathHelper.Clamp((int)rawV, 0 , int.MaxValue);
+                var rV = MathHelper.Clamp((int)rawV, Settings.ClientConfig.AvLimit, int.MaxValue);
                 
                 if (rV > maxValue)
                     maxValue = rV;
@@ -358,8 +364,11 @@ namespace CoreSystems
                     lastValue = rV;
             }
 
-            var newValue = lastValue > ClientAvLevel || highestBillCount > 25000 ? ClientAvLevel + 1 : maxValue < ClientAvLevel ? ClientAvLevel - 1 : ClientAvLevel;
-            return MathHelper.Clamp(newValue, 0, 10);
+            if (forceIncrease)
+                lastValue = ClientAvLevel + 1;
+
+            var newValue = lastValue > ClientAvLevel ? ClientAvLevel + 1 : maxValue < ClientAvLevel ? ClientAvLevel - 1 : ClientAvLevel;
+            return MathHelper.Clamp(newValue, 0, 20);
         }
 
         internal void NetReport()
@@ -743,16 +752,17 @@ namespace CoreSystems
                     {
                         switch (tokens[1])
                         {
-                            case "drawlimit":
+                            case "avlimit":
                                 {
-                                    int maxDrawCount;
-                                    if (tokenLength > 2 && int.TryParse(tokens[2], out maxDrawCount))
+                                    int avLimit;
+                                    if (tokenLength > 2 && int.TryParse(tokens[2], out avLimit))
                                     {
-                                        Settings.ClientConfig.MaxProjectiles = maxDrawCount;
-                                        var enabled = maxDrawCount != 0;
+                                        avLimit = MathHelper.Clamp(avLimit, 0, 20);
+                                        Settings.ClientConfig.AvLimit = avLimit;
+                                        var enabled = avLimit > 0;
                                         Settings.ClientConfig.ClientOptimizations = enabled;
                                         somethingUpdated = true;
-                                        MyAPIGateway.Utilities.ShowNotification($"The maximum onscreen projectiles is now set to {maxDrawCount} and is Enabled:{enabled}", 10000);
+                                        MyAPIGateway.Utilities.ShowNotification($"The audio visual quality limit is now set to {avLimit}", 10000);
                                         Settings.VersionControl.UpdateClientCfgFile();
                                     }
 
@@ -797,7 +807,7 @@ namespace CoreSystems
                 if (!somethingUpdated)
                 {
                     if (message.Length <= 3)
-                        MyAPIGateway.Utilities.ShowNotification("HELPFUL TIPS: https://github.com/sstixrud/WeaponCore/wiki/Player-Tips\nValid WeaponCore Commands:\n'/wc advanced -- Toggle advanced UI features'\n'/wc remap -- Remap keys'\n'/wc drawlimit 1000' -- Limits total number of projectiles on screen (default unlimited)\n'/wc changehud' to enable moving/resizing of WC Hud\n'/wc setdefaults' -- Resets shield client configs to default values\n'/wc stickypainter' -- Disable Painter LoS checks\n", 10000);
+                        MyAPIGateway.Utilities.ShowNotification("HELPFUL TIPS: https://github.com/sstixrud/WeaponCore/wiki/Player-Tips\nValid WeaponCore Commands:\n'/wc advanced -- Toggle advanced UI features'\n'/wc remap -- Remap keys'\n'/wc avlimit 5' -- Hard limits visual effects (valid range: 0 - 20, 0 is unlimited)\n'/wc changehud' to enable moving/resizing of WC Hud\n'/wc setdefaults' -- Resets shield client configs to default values\n'/wc stickypainter' -- Disable Painter LoS checks\n", 10000);
                     else if (message.StartsWith("/wc remap"))
                         MyAPIGateway.Utilities.ShowNotification("'/wc remap keyboard' -- Remaps control key (default R)\n'/wc remap mouse' -- Remaps menu mouse key (default middle button)\n'/wc remap action' -- Remaps action key (default numpad0)\n'/wc remap info' -- Remaps info key (default decimal key, aka numpad period key)\n'/wc remap next' -- Remaps the Cycle Next Target key (default Page Down)\n'/wc remap prev' -- Remaps the Cycle Previous Target key (default Page Up)\n", 10000, "White");
                 }
