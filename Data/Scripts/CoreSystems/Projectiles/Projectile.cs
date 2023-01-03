@@ -1598,10 +1598,12 @@ namespace CoreSystems.Projectiles
             var speedLimitPerTick = aConst.AmmoSkipAccel ? DesiredSpeed : aConst.AccelInMetersPerSec;
             var fragProx = aConst.FragProximity;
             var hasObstacle = s.Obstacle.Entity != parentEnt && comp.Session.Tick - 1 == s.Obstacle.LastSeenTick;
-            var hasStrafe = ammo.Fragment.TimedSpawns.PointType == PointTypes.Direct && ammo.Fragment.TimedSpawns.PointAtTarget == false;
+            var hasStrafe = ammo.Fragment.TimedSpawns.PointAtTarget == false;
             var hasKamikaze = ammo.AreaOfDamage.ByBlockHit.Enable || (ammo.AreaOfDamage.EndOfLife.Enable && Info.RelativeAge >= ammo.AreaOfDamage.EndOfLife.MinArmingTime); //check for explosive payload on drone
             var maxLife = aConst.MaxLifeTime;
             var orbitSphereFar = orbitSphere; //Indicates start of approach
+            var targetIsProjectile = Info.Target.TargetObject as Projectile != null;
+
 
             switch (s.DroneInfo.DroneMsn)
             {
@@ -1723,10 +1725,30 @@ namespace CoreSystems.Projectiles
                         s.DroneInfo.DroneStat = DroneInfo.DroneStatus.Approach;
                     }
 
+                    if (hasStrafe && targetIsProjectile)
+                    {
+                        var fragInterval = aConst.FragInterval;
+                        var fragGroupDelay = aConst.FragGroupDelay;
+                        var timeSinceLastFrag = Info.RelativeAge - Info.LastFragTime;
+
+                        if (fragGroupDelay == 0 && timeSinceLastFrag >= fragInterval)
+                        {
+                            s.DroneInfo.DroneMsn = DroneInfo.DroneMission.Attack;
+                            s.DroneInfo.DroneStat = DroneInfo.DroneStatus.Strafe;//TODO incorporate group delays
+                        }
+                        else if (fragGroupDelay > 0 && (timeSinceLastFrag >= fragGroupDelay || timeSinceLastFrag <= fragInterval))
+                        {
+                            s.DroneInfo.DroneMsn = DroneInfo.DroneMission.Attack;
+                            s.DroneInfo.DroneStat = DroneInfo.DroneStatus.Strafe;
+                        }
+                        else s.DroneInfo.DroneStat = DroneInfo.DroneStatus.Orbit;
+                            break;
+                    }
+
                     parentPos = comp.CoreEntity.PositionComp.WorldAABB.Center;
                     if (parentPos != Vector3D.Zero && s.DroneInfo.DroneStat != DroneInfo.DroneStatus.Return && !hasKamikaze)//TODO kamikaze return suppressed to prevent damaging parent, until docking mechanism developed
                     {
-                        var rtbFlightTime = Vector3D.Distance(Position, parentPos) / MaxSpeed * 60 * 1.05d;//added multiplier to ensure final docking time
+                        var rtbFlightTime = Vector3D.Distance(Position, parentPos) / MaxSpeed * 60 + 1800;//flat 30 second modifier to ensure final docking time
                         if ((maxLife > 0 && maxLife - Info.RelativeAge <= rtbFlightTime) || (Info.Frags >= Info.AmmoDef.Fragment.TimedSpawns.MaxSpawns))
                         {
                             if (s.DroneInfo.NavTargetEnt != parentEnt)
@@ -1833,7 +1855,7 @@ namespace CoreSystems.Projectiles
             var seekFirstTarget = !hadTarget && !validTarget && s.PickTarget && (Info.RelativeAge > 120 && timeSlot || check && Info.IsFragment);
             var gaveUpChase = !fake && Info.RelativeAge - s.ChaseAge > aConst.MaxChaseTime && hadTarget;
             var isZombie = aConst.CanZombie && hadTarget && !fake && !validTarget && s.ZombieLifeTime > 0 && zombieSlot;
-            var seekNewTarget = timeSlot && hadTarget && !validEntity && !overMaxTargets;
+            var seekNewTarget = timeSlot && hadTarget && !validEntity && !overMaxTargets && !validTarget;
             var needsTarget = (s.PickTarget && timeSlot || seekNewTarget || gaveUpChase && validTarget || isZombie || seekFirstTarget);
 
             if (needsTarget && NewTarget() || validTarget)
@@ -1872,9 +1894,14 @@ namespace CoreSystems.Projectiles
                     }
                     break;
                 case HadTargetState.Projectile: //TODO evaluate whether TargetBound should remain unchanged (ie, keep orbiting assigned target but shoot at projectile)
-                    if (target.TargetState == Target.TargetStates.IsProjectile)
+                    var projectile = target.TargetObject as Projectile;
+                    if (projectile != null)
+                    {
+                        s.DroneInfo.NavTargetBound = new BoundingSphereD(projectile.Position, projectile.Info.AmmoDef.Shape.Diameter);
+                        hasTarget = true;
+                    }
+                    else if (target.TargetState == Target.TargetStates.IsProjectile)
                         NewTarget();
-
                     break;
                 case HadTargetState.Fake:
                     if (s.DummyTargets != null)
@@ -1899,9 +1926,10 @@ namespace CoreSystems.Projectiles
                     break;
             }
 
-            if (s.DroneInfo.NavTargetEnt != null && hasTarget)
-                s.DroneInfo.NavTargetBound = s.DroneInfo.NavTargetEnt.PositionComp.WorldVolume;//Refresh position info
-                                                                           //Logic to handle loss of target and reassigment to come home
+            //if (s.DroneInfo.NavTargetEnt != null && hasTarget)
+            //    s.DroneInfo.NavTargetBound = s.DroneInfo.NavTargetEnt.PositionComp.WorldVolume;//Refresh position info
+            
+            //Logic to handle loss of target and reassigment to come home
             if (!hasTarget && s.DroneInfo.DroneMsn == DroneInfo.DroneMission.Attack)
             {
                 s.DroneInfo.DroneMsn = DroneInfo.DroneMission.Defend;//Try to return to parent in defensive state
@@ -2041,7 +2069,7 @@ namespace CoreSystems.Projectiles
                     break;
 
                 case DroneInfo.DroneStatus.Orbit://Orbit & shoot behavior
-                    var insideOrbitSphere = new BoundingSphereD(orbitSphere.Center, orbitSphere.Radius * 0.90);
+                    var insideOrbitSphere = new BoundingSphereD(orbitSphere.Center, orbitSphere.Radius * 0.50);
                     if (insideOrbitSphere.Contains(Position) != ContainmentType.Disjoint)
                     {
                         droneNavTarget = Position + (Direction + new Vector3D(0, 0.5, 0));//Strafe or too far inside sphere recovery
@@ -2110,8 +2138,7 @@ namespace CoreSystems.Projectiles
                         }
                         else//docked TODO despawn and restock ammo?
                         {
-                            Info.Age = int.MaxValue;
-                            Info.RelativeAge = double.MaxValue;
+                            State = ProjectileState.Depleted;
                         }
                     }
                     break;
