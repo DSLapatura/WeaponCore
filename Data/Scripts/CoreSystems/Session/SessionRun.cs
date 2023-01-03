@@ -255,7 +255,7 @@ namespace CoreSystems
 
                 if (Placer != null) UpdatePlacer();
 
-                if (AnimationsToProcess.Count > 0 || ThreadedAnimations.Count > 0) 
+                if (AnimationsToProcess.Count > 0) 
                     ProcessAnimations();
 
                 if (GridTask.IsComplete)

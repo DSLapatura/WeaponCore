@@ -256,7 +256,6 @@ namespace CoreSystems
         internal readonly List<LosDebug> LosDebugList = new List<LosDebug>(128);
         internal readonly List<MyTuple<IMyPlayer, Vector4, FakeTarget>> ActiveMarks = new List<MyTuple<IMyPlayer, Vector4, FakeTarget>>();
         
-        internal readonly Queue<PartAnimation> ThreadedAnimations = new Queue<PartAnimation>();
         internal readonly List<Weapon>[] LeadGroups = new List<Weapon>[4];
         internal readonly Queue<double> ClientPerfHistory = new Queue<double>(20);
         internal readonly int[] AuthorSettings = new int[6];

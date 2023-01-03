@@ -240,7 +240,7 @@ namespace CoreSystems.Platform
 
                                         animation.StartTick = session.Tick + animation.MotionDelay;
 
-                                        session.ThreadedAnimations.Enqueue(animation);
+                                        session.AnimationsToProcess.Add(animation);
 
                                         animation.Running = true;
                                         animation.CanPlay = canPlay;
@@ -368,7 +368,7 @@ namespace CoreSystems.Platform
                                     animation.PlayTicks.Add(session.Tick + animation.MotionDelay + startDelay);
 
                                 animation.Running = true;
-                                session.ThreadedAnimations.Enqueue(animation);
+                                session.AnimationsToProcess.Add(animation);
                             }
                         }
                         break;
@@ -395,7 +395,7 @@ namespace CoreSystems.Platform
 
                                 animation.StartTick = session.Tick + animation.MotionDelay;
 
-                                session.ThreadedAnimations.Enqueue(animation);
+                                session.AnimationsToProcess.Add(animation);
 
                                 animation.Running = true;
                                 animation.CanPlay = canPlay;

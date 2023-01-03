@@ -951,10 +951,6 @@ namespace CoreSystems
 
         private void ProcessAnimations()
         {
-            PartAnimation anim;
-            while (ThreadedAnimations.TryDequeue(out anim))
-                AnimationsToProcess.Add(anim);
-
             for (int i = AnimationsToProcess.Count - 1; i >= 0; i--)
             {
                 var animation = AnimationsToProcess[i];
@@ -976,7 +972,7 @@ namespace CoreSystems
 
                         if (animation.Reverse)
                         {
-                            if (animationType == AnimationType.Movement) localMatrix.Translation = localMatrix.Translation - translation;
+                            if (animationType == AnimationType.Movement) localMatrix.Translation -= translation;
 
                             animation.Previous();
                             if (animation.Previous(false) == animation.NumberOfMoves - 1)
@@ -984,13 +980,12 @@ namespace CoreSystems
                         }
                         else
                         {
-                            if (animationType == AnimationType.Movement) localMatrix.Translation = localMatrix.Translation + translation;
+                            if (animationType == AnimationType.Movement) localMatrix.Translation += translation;
 
                             animation.Next();
                             if (animation.DoesReverse && animation.Next(false) == 0)
                                 animation.Reverse = true;
                         }
-
 
                         if (rotation != Matrix.Zero)
                             localMatrix *= animation.Reverse ? Matrix.Invert(rotation) : rotation;
@@ -1000,7 +995,7 @@ namespace CoreSystems
 
                         if (animationType == AnimationType.Movement)
                         {
-                            animation.Part.PositionComp.SetLocalMatrix(ref localMatrix);
+                            animation.Part.PositionComp.SetLocalMatrix(ref localMatrix, null, false);
                         }
                         else if (!DedicatedServer && (animationType == AnimationType.ShowInstant || animationType == AnimationType.ShowFade))
                         {
@@ -1009,14 +1004,14 @@ namespace CoreSystems
 
                             animation.Part.Render.AddRenderObjects();
 
-                            animation.Part.PositionComp.SetLocalMatrix(ref matrix);
+                            animation.Part.PositionComp.SetLocalMatrix(ref matrix, null, false);
                         }
                         else if (!DedicatedServer && (animationType == AnimationType.HideInstant || animationType == AnimationType.HideFade))
                         {
                             animation.Part.Render.FadeOut = animationType == AnimationType.HideFade;
                             var matrix = animation.Part.PositionComp.LocalMatrixRef;
                             animation.Part.Render.RemoveRenderObjects();
-                            animation.Part.PositionComp.SetLocalMatrix(ref matrix);
+                            animation.Part.PositionComp.SetLocalMatrix(ref matrix, null, false);
                         }
 
 
