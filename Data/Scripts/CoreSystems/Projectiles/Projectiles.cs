@@ -14,17 +14,15 @@ namespace CoreSystems.Projectiles
     public partial class Projectiles
     {
         internal readonly Session Session;
-        internal readonly Stack<List<NewVirtual>> VirtInfoPools = new Stack<List<NewVirtual>>(128);
+        internal readonly Stack<List<NewVirtual>> VirtInfoPools = new Stack<List<NewVirtual>>(32);
         internal readonly Stack<ProInfo> VirtInfoPool = new Stack<ProInfo>(128);
         internal readonly Stack<HitEntity>[] HitEntityArrayPool = new Stack<HitEntity>[1025];
         internal readonly List<DeferedVoxels> DeferedVoxels = new List<DeferedVoxels>(128);
-        internal readonly List<Projectile> FinalHitCheck = new List<Projectile>(512);
-        internal readonly List<Projectile> ValidateHits = new List<Projectile>(1024);
         internal readonly List<Projectile> AddTargets = new List<Projectile>();
         internal readonly List<Fragments> ShrapnelToSpawn = new List<Fragments>(128);
         internal readonly List<Projectile> ActiveProjetiles = new List<Projectile>(2048);
         internal readonly List<DeferedAv> DeferedAvDraw = new List<DeferedAv>(1024);
-        internal readonly List<NewProjectile> NewProjectiles = new List<NewProjectile>(512);
+        internal readonly List<NewProjectile> NewProjectiles = new List<NewProjectile>(128);
         internal readonly Stack<Projectile> ProjectilePool = new Stack<Projectile>(2048);
         internal readonly Stack<Fragments> ShrapnelPool = new Stack<Fragments>(128);
         internal readonly Stack<Fragment> FragmentPool = new Stack<Fragment>(128);
@@ -44,8 +42,6 @@ namespace CoreSystems.Projectiles
             foreach (var a in HitEntityArrayPool)
                 a?.Clear();
             DeferedVoxels.Clear();
-            FinalHitCheck.Clear();
-            ValidateHits.Clear();
             AddTargets.Clear();
             ShrapnelToSpawn.Clear();
             ActiveProjetiles.Clear();
@@ -87,7 +83,7 @@ namespace CoreSystems.Projectiles
 
             if (DeferedVoxels.Count > 0) {
 
-                Session.StallReporter.Start($"DeferedVoxelCheck: {ValidateHits.Count} - beamCount:{_beamCount} ", 11);
+                Session.StallReporter.Start($"DeferedVoxelCheck: {DeferedVoxels.Count} - beamCount:{_beamCount} ", 11);
                 DeferedVoxelCheck();
                 Session.StallReporter.End();
             }

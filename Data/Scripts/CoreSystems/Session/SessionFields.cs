@@ -97,7 +97,7 @@ namespace CoreSystems
         internal readonly MyConcurrentPool<WeaponReloadPacket> PacketReloadPool = new MyConcurrentPool<WeaponReloadPacket>(64, packet => packet.CleanUp());
         internal readonly MyConcurrentPool<WeaponAmmoPacket> PacketAmmoPool = new MyConcurrentPool<WeaponAmmoPacket>(64, packet => packet.CleanUp());
         internal readonly MyConcurrentPool<TargetPacket> PacketTargetPool = new MyConcurrentPool<TargetPacket>(64, packet => packet.CleanUp());
-        internal readonly MyConcurrentPool<BetterInventoryItem> BetterInventoryItems = new MyConcurrentPool<BetterInventoryItem>(256);
+        internal readonly MyConcurrentPool<BetterInventoryItem> BetterInventoryItems = new MyConcurrentPool<BetterInventoryItem>(128);
         internal readonly MyConcurrentPool<MyConcurrentList<MyPhysicalInventoryItem>> PhysicalItemListPool = new MyConcurrentPool<MyConcurrentList<MyPhysicalInventoryItem>>(256, list => list.Clear());
         internal readonly MyConcurrentPool<MyConcurrentList<BetterInventoryItem>> BetterItemsListPool = new MyConcurrentPool<MyConcurrentList<BetterInventoryItem>>(256, list => list.Clear());
         internal readonly Stack<GridGroupMap> GridGroupMapPool = new Stack<GridGroupMap>(64);
@@ -106,19 +106,19 @@ namespace CoreSystems
         internal readonly Stack<Ai> AiPool = new Stack<Ai>(128);
         internal readonly Stack<MyEntity3DSoundEmitter> Emitters = new Stack<MyEntity3DSoundEmitter>(256);
         internal readonly Stack<VoxelCache> VoxelCachePool = new Stack<VoxelCache>(256);
-        internal readonly Stack<DeferredBlockDestroy> DefferedDestroyPool = new Stack<DeferredBlockDestroy>(256);
-        internal readonly Stack<ProtoProPosition> ProtoWeaponProSyncPosPool = new Stack<ProtoProPosition>(256);
+        internal readonly Stack<DeferredBlockDestroy> DefferedDestroyPool = new Stack<DeferredBlockDestroy>(128);
+        internal readonly Stack<ProtoProPosition> ProtoWeaponProSyncPosPool = new Stack<ProtoProPosition>(128);
         internal readonly Stack<ProtoProTarget> ProtoWeaponProSyncTargetPool = new Stack<ProtoProTarget>(32);
 
-        internal readonly Stack<ProjectileSyncPositionPacket> ProtoWeaponProPosPacketPool = new Stack<ProjectileSyncPositionPacket>(256);
+        internal readonly Stack<ProjectileSyncPositionPacket> ProtoWeaponProPosPacketPool = new Stack<ProjectileSyncPositionPacket>(128);
         internal readonly Stack<ProjectileSyncTargetPacket> ProtoWeaponProTargetPacketPool = new Stack<ProjectileSyncTargetPacket>(32);
 
-        internal readonly Stack<List<MyTuple<Vector3D, object, float>>> ProHitPool = new Stack<List<MyTuple<Vector3D, object, float>>>(256);
+        internal readonly Stack<List<MyTuple<Vector3D, object, float>>> ProHitPool = new Stack<List<MyTuple<Vector3D, object, float>>>(128);
         internal readonly Stack<WeaponSequence> SequencePool = new Stack<WeaponSequence>(32);
         internal readonly Stack<WeaponGroup> GroupPool = new Stack<WeaponGroup>(32);
         internal readonly Stack<DroneInfo> DroneInfoPool = new Stack<DroneInfo>(128);
-        internal readonly Stack<ClosestObstacles> ClosestObstaclesPool = new Stack<ClosestObstacles>(128);
-        internal readonly Stack<FullSyncInfo> FullSyncInfoPool = new Stack<FullSyncInfo>(128);
+        internal readonly Stack<ClosestObstacles> ClosestObstaclesPool = new Stack<ClosestObstacles>(64);
+        internal readonly Stack<FullSyncInfo> FullSyncInfoPool = new Stack<FullSyncInfo>(32);
 
         internal readonly HashSet<MyCubeGrid> DirtyGridInfos = new HashSet<MyCubeGrid>();
 

@@ -983,7 +983,6 @@ namespace CoreSystems.Projectiles
                 if (!p.FinalizeIntersection)
                 {
                     p.FinalizeIntersection = true;
-                    FinalHitCheck.Add(p);
                 }
 
                 var pool = HitEntityArrayPool[Environment.CurrentManagedThreadId];
