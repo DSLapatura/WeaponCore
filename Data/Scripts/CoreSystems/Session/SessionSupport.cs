@@ -265,7 +265,12 @@ namespace CoreSystems
 
         }
 
+        private double _drawCpuTime;
+        private double _paCpuTime;
         private double _avCpuTime;
+
+        private double _avTotal;
+        private double _prevAvTotal;
         internal void ProfilePerformance()
         {
             var netTime1 = DsUtil.GetValue("network1");
@@ -293,7 +298,11 @@ namespace CoreSystems
             if (IsClient && desyncLevel >= 0.1)
                 Log.LineShortDate($"[Client Lagged] desync: {desyncLevel * 100}%", "perf");
             
-            _avCpuTime =  drawTime.Median;
+            _drawCpuTime =  drawTime.Median;
+            _avCpuTime = av.Median;
+            _paCpuTime = paTime.Median;
+            _prevAvTotal = _avTotal;
+            _avTotal = _avCpuTime + _drawCpuTime + _paCpuTime;
 
             SimStepsLastSecond = 0;
             ServerSimulation = 0;
@@ -313,16 +322,19 @@ namespace CoreSystems
             DsUtil.Clean();
         }
 
+
         internal void ClientMonitor()
         {
             if (ClientPerfHistory.Count > 19)
                 ClientPerfHistory.Dequeue();
 
             var highestBillCount = Av.NearBillBoardLimit;
-            var forceEnable = highestBillCount > 25000 || _avCpuTime > 8;
+            var cpuHog = _avTotal > 8 && _prevAvTotal > 8;
+
+            var forceEnable = highestBillCount > 25000 || cpuHog;
 
             Av.NearBillBoardLimit /= 2;
-            ClientPerfHistory.Enqueue(_avCpuTime);
+            ClientPerfHistory.Enqueue(_drawCpuTime);
             if (forceEnable || Settings.ClientConfig.ClientOptimizations || ClientAvDivisor > 1)
             {
                 ClientAvLevel = GetClientPerfTarget(forceEnable);
