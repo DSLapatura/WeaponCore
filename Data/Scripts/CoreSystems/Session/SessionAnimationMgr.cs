@@ -995,7 +995,7 @@ namespace CoreSystems
 
                         if (animationType == AnimationType.Movement)
                         {
-                            animation.Part.PositionComp.SetLocalMatrix(ref localMatrix, null, false);
+                            animation.Part.PositionComp.SetLocalMatrix(ref localMatrix);
                         }
                         else if (!DedicatedServer && (animationType == AnimationType.ShowInstant || animationType == AnimationType.ShowFade))
                         {
@@ -1004,14 +1004,14 @@ namespace CoreSystems
 
                             animation.Part.Render.AddRenderObjects();
 
-                            animation.Part.PositionComp.SetLocalMatrix(ref matrix, null, false);
+                            animation.Part.PositionComp.SetLocalMatrix(ref matrix);
                         }
                         else if (!DedicatedServer && (animationType == AnimationType.HideInstant || animationType == AnimationType.HideFade))
                         {
                             animation.Part.Render.FadeOut = animationType == AnimationType.HideFade;
                             var matrix = animation.Part.PositionComp.LocalMatrixRef;
                             animation.Part.Render.RemoveRenderObjects();
-                            animation.Part.PositionComp.SetLocalMatrix(ref matrix, null, false);
+                            animation.Part.PositionComp.SetLocalMatrix(ref matrix);
                         }
 
 
