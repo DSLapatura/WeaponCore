@@ -1027,10 +1027,12 @@ namespace CoreSystems.Projectiles
                         break;
                     case Conditions.NextTimedSpawn:
 
-                        if (aConst.TimedFragments && Info.SpawnDepth < aConst.FragMaxChildren && Info.RelativeAge >= aConst.FragStartTime && Info.Frags < aConst.MaxFrags)
+                        if (aConst.TimedFragments && Info.SpawnDepth < aConst.FragMaxChildren && Info.Frags < aConst.MaxFrags)
                         {
-                            var longestSpawnDelay = Math.Max(aConst.HasFragGroup || Info.Frags % aConst.FragGroupSize == 0 ? aConst.FragGroupDelay : 0, Info.Frags != 0 ? aConst.FragInterval : 0);
-                            
+                            var groupDelay = aConst.HasFragGroup && Info.Frags % aConst.FragGroupSize == 0;
+                            var notFragZero = Info.Frags != 0;
+                            var longestSpawnDelay = Math.Max(groupDelay ? aConst.FragGroupDelay : 0, notFragZero ? aConst.FragInterval : 0);
+
                             var pTimeSinceSpawn = Info.PrevRelativeAge - Info.LastFragTime;
                             var cTimeSinceSpawn = Info.RelativeAge - Info.LastFragTime;
                             var pNextSpawn = longestSpawnDelay - pTimeSinceSpawn;
@@ -1094,9 +1096,11 @@ namespace CoreSystems.Projectiles
                         break;
                     case Conditions.NextTimedSpawn:
 
-                        if (aConst.TimedFragments && Info.SpawnDepth < aConst.FragMaxChildren && Info.RelativeAge >= aConst.FragStartTime && Info.Frags < aConst.MaxFrags)
+                        if (aConst.TimedFragments && Info.SpawnDepth < aConst.FragMaxChildren && Info.Frags < aConst.MaxFrags)
                         {
-                            var longestSpawnDelay = Math.Max(aConst.HasFragGroup || Info.Frags % aConst.FragGroupSize == 0 ? aConst.FragGroupDelay : 0, Info.Frags != 0 ? aConst.FragInterval : 0);
+                            var groupDelay = aConst.HasFragGroup && Info.Frags % aConst.FragGroupSize == 0;
+                            var notFragZero = Info.Frags != 0;
+                            var longestSpawnDelay = Math.Max(groupDelay ? aConst.FragGroupDelay : 0, notFragZero ? aConst.FragInterval : 0);
 
                             var pTimeSinceSpawn = Info.PrevRelativeAge - Info.LastFragTime;
                             var cTimeSinceSpawn = Info.RelativeAge - Info.LastFragTime;
@@ -1304,9 +1308,11 @@ namespace CoreSystems.Projectiles
                         break;
                     case Conditions.NextTimedSpawn:
 
-                        if (aConst.TimedFragments && Info.SpawnDepth < aConst.FragMaxChildren && Info.RelativeAge >= aConst.FragStartTime && Info.Frags < aConst.MaxFrags)
+                        if (aConst.TimedFragments && Info.SpawnDepth < aConst.FragMaxChildren && Info.Frags < aConst.MaxFrags)
                         {
-                            var longestSpawnDelay = Math.Max(aConst.HasFragGroup || Info.Frags % aConst.FragGroupSize == 0 ? aConst.FragGroupDelay : 0, Info.Frags != 0 ? aConst.FragInterval : 0);
+                            var groupDelay = aConst.HasFragGroup && Info.Frags % aConst.FragGroupSize == 0;
+                            var notFragZero = Info.Frags != 0;
+                            var longestSpawnDelay = Math.Max(groupDelay ? aConst.FragGroupDelay : 0, notFragZero ? aConst.FragInterval : 0);
 
                             var pTimeSinceSpawn = Info.PrevRelativeAge - Info.LastFragTime;
                             var cTimeSinceSpawn = Info.RelativeAge - Info.LastFragTime;
@@ -1377,9 +1383,11 @@ namespace CoreSystems.Projectiles
                         break;
                     case Conditions.NextTimedSpawn:
 
-                        if (aConst.TimedFragments && Info.SpawnDepth < aConst.FragMaxChildren && Info.RelativeAge >= aConst.FragStartTime && Info.Frags < aConst.MaxFrags)
+                        if (aConst.TimedFragments && Info.SpawnDepth < aConst.FragMaxChildren && Info.Frags < aConst.MaxFrags)
                         {
-                            var longestSpawnDelay = Math.Max(aConst.HasFragGroup || Info.Frags % aConst.FragGroupSize == 0 ? aConst.FragGroupDelay : 0, Info.Frags != 0 ? aConst.FragInterval : 0);
+                            var groupDelay = aConst.HasFragGroup && Info.Frags % aConst.FragGroupSize == 0;
+                            var notFragZero = Info.Frags != 0;
+                            var longestSpawnDelay = Math.Max(groupDelay ? aConst.FragGroupDelay : 0, notFragZero ? aConst.FragInterval : 0);
 
                             var pTimeSinceSpawn = Info.PrevRelativeAge - Info.LastFragTime;
                             var cTimeSinceSpawn = Info.RelativeAge - Info.LastFragTime;
