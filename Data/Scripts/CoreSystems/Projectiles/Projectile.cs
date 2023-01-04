@@ -1025,7 +1025,7 @@ namespace CoreSystems.Projectiles
                     case Conditions.Ignore:
                         start1 = true;
                         break;
-                    case Conditions.NextTimeSpawn:
+                    case Conditions.NextTimedSpawn:
 
                         if (aConst.TimedFragments && Info.SpawnDepth < aConst.FragMaxChildren && Info.RelativeAge >= aConst.FragStartTime && Info.Frags < aConst.MaxFrags)
                         {
@@ -1092,7 +1092,7 @@ namespace CoreSystems.Projectiles
                     case Conditions.Ignore:
                         start2 = true;
                         break;
-                    case Conditions.NextTimeSpawn:
+                    case Conditions.NextTimedSpawn:
 
                         if (aConst.TimedFragments && Info.SpawnDepth < aConst.FragMaxChildren && Info.RelativeAge >= aConst.FragStartTime && Info.Frags < aConst.MaxFrags)
                         {
@@ -1302,7 +1302,7 @@ namespace CoreSystems.Projectiles
                     case Conditions.Ignore:
                         end1 = true;
                         break;
-                    case Conditions.NextTimeSpawn:
+                    case Conditions.NextTimedSpawn:
 
                         if (aConst.TimedFragments && Info.SpawnDepth < aConst.FragMaxChildren && Info.RelativeAge >= aConst.FragStartTime && Info.Frags < aConst.MaxFrags)
                         {
@@ -1375,7 +1375,7 @@ namespace CoreSystems.Projectiles
                     case Conditions.Ignore:
                         end2 = true;
                         break;
-                    case Conditions.NextTimeSpawn:
+                    case Conditions.NextTimedSpawn:
 
                         if (aConst.TimedFragments && Info.SpawnDepth < aConst.FragMaxChildren && Info.RelativeAge >= aConst.FragStartTime && Info.Frags < aConst.MaxFrags)
                         {

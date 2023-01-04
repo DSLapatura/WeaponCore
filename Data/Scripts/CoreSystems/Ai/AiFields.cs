@@ -110,7 +110,6 @@ namespace CoreSystems.Support
         internal Vector3 TopEntityVel;
         internal Vector3D PlanetClosestPoint;
         internal Vector3D ClosestPlanetCenter;
-        internal Vector3 GravityPoint;
         internal BoundingSphereD TopEntityVolume;
         internal BoundingSphereD ScanVolume;
         internal BoundingSphereD WaterVolume;

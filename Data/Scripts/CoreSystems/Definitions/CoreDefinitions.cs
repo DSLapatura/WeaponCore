@@ -1336,7 +1336,7 @@ namespace CoreSystems.Support
                         MaxTravelRequired,
                         Deadtime,
                         DistanceToTarget,
-                        NextTimeSpawn,
+                        NextTimedSpawn,
                     }
 
                     public enum UpRelativeTo

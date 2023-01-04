@@ -218,8 +218,6 @@ namespace CoreSystems.Support
 
                 if (new BoundingSphereD(planetCenter, MyPlanet.AtmosphereRadius + gridRadius).Intersects(gridVolume) || AiType == AiTypes.Phantom) {
 
-                    float interference;
-                    GravityPoint = Session.Physics.CalculateNaturalGravityAt(gridCenter, out interference);
                     InPlanetGravity = true;
                     PlanetClosestPoint = MyPlanet.GetClosestSurfacePointGlobal(gridCenter);
                     ClosestPlanetCenter = planetCenter;
@@ -238,7 +236,6 @@ namespace CoreSystems.Support
                     ClosestPlanetCenter = planetCenter;
                     double pointDistSqr;
                     Vector3D.DistanceSquared(ref PlanetClosestPoint, ref gridCenter, out pointDistSqr);
-                    GravityPoint = Vector3.Zero;
                     pointDistSqr -= (gridRadius * gridRadius);
                     if (pointDistSqr < 0) pointDistSqr = 0;
                     ClosestPlanetSqr = pointDistSqr;
@@ -248,7 +245,6 @@ namespace CoreSystems.Support
             else {
                 MyPlanet = null;
                 PlanetClosestPoint = Vector3D.Zero;
-                GravityPoint = Vector3.Zero;
                 PlanetSurfaceInRange = false;
                 InPlanetGravity = false;
                 ClosestPlanetSqr = double.MaxValue;
