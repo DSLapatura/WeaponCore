@@ -370,7 +370,7 @@ namespace CoreSystems
         internal uint LastProSyncSendTick;
         internal uint LastPongTick;
         internal uint WeaponSyncId;
-
+        internal uint LosNotifyTick;
         internal int TargetDrawAge;
         internal int WeaponIdCounter;
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO.Ports;
 using System.Runtime.CompilerServices;
 using CoreSystems.Platform;
 using CoreSystems.Support;
@@ -53,7 +54,6 @@ namespace CoreSystems.Projectiles
         internal double MaxSpeed;
         internal bool EnableAv;
         internal bool Intersecting;
-        internal bool FinalizeIntersection;
         internal int DeaccelRate;
         internal int TargetsSeen;
         internal int PruningProxyId = -1;
@@ -291,7 +291,6 @@ namespace CoreSystems.Projectiles
 
             if (Info.IsFragment)
                 Vector3D.Normalize(ref Velocity, out Direction);
-
 
             TravelMagnitude = !Info.IsFragment && aConst.AmmoSkipAccel ? desiredSpeed * DeltaStepConst : Velocity * DeltaStepConst;
             DeaccelRate = aConst.Ewar || aConst.IsMine ? trajectory.DeaccelTime : aConst.IsDrone ? 100: 0;
@@ -643,21 +642,21 @@ namespace CoreSystems.Projectiles
                         var diff = accelMpsMulti * accelMpsMulti - lateralAcceleration.LengthSquared();
                         commandedAccel = diff < 0 ? Vector3D.Normalize(lateralAcceleration) * accelMpsMulti : lateralAcceleration + Math.Sqrt(diff) * missileToTargetNorm;
                     }
+                    var gravity = Gravity * aConst.GravityMultiplier;
 
-                    if (Gravity.LengthSquared() > 1e-3)
+                    if (aConst.FeelsGravity && gravity.LengthSquared() > 1e-3)
                     {
                         if (!Vector3D.IsZero(commandedAccel))
                         {
                             var directionNorm = Vector3D.IsUnit(ref commandedAccel) ? commandedAccel : Vector3D.Normalize(commandedAccel);
                             Vector3D gravityCompensationVec;
-
-                            if (Vector3D.IsZero(Gravity) || Vector3D.IsZero(commandedAccel))
+                            if (Vector3D.IsZero(gravity) || Vector3D.IsZero(commandedAccel))
                                 gravityCompensationVec = Vector3D.Zero;
                             else
-                                gravityCompensationVec = (Gravity - Gravity.Dot(commandedAccel) / commandedAccel.LengthSquared() * commandedAccel);
+                                gravityCompensationVec = (gravity - gravity.Dot(commandedAccel) / commandedAccel.LengthSquared() * commandedAccel);
 
                             var diffSq = accelMpsMulti * accelMpsMulti - gravityCompensationVec.LengthSquared();
-                            commandedAccel = diffSq < 0 ? commandedAccel - Gravity : directionNorm * Math.Sqrt(diffSq) + gravityCompensationVec;
+                            commandedAccel = diffSq < 0 ? commandedAccel - gravity : directionNorm * Math.Sqrt(diffSq) + gravityCompensationVec;
                         }
                     }
                 }
@@ -988,7 +987,7 @@ namespace CoreSystems.Projectiles
                 var heightend = destination + heightOffset;
                 var heightDir = heightend - heightStart;
                 var startToEndDist = heightDir.Normalize();
-                bool start1;
+                bool start1 = false;
                 switch (def.StartCondition1)
                 {
                     case Conditions.DesiredElevation:
@@ -1026,12 +1025,36 @@ namespace CoreSystems.Projectiles
                     case Conditions.Ignore:
                         start1 = true;
                         break;
+                    case Conditions.NextTimeSpawn:
+
+                        if (aConst.TimedFragments && Info.SpawnDepth < aConst.FragMaxChildren && Info.RelativeAge >= aConst.FragStartTime && Info.Frags < aConst.MaxFrags)
+                        {
+                            var longestSpawnDelay = Math.Max(aConst.HasFragGroup || Info.Frags % aConst.FragGroupSize == 0 ? aConst.FragGroupDelay : 0, Info.Frags != 0 ? aConst.FragInterval : 0);
+                            
+                            var pTimeSinceSpawn = Info.PrevRelativeAge - Info.LastFragTime;
+                            var cTimeSinceSpawn = Info.RelativeAge - Info.LastFragTime;
+                            var pNextSpawn = longestSpawnDelay - pTimeSinceSpawn;
+                            var cNextSpawn = longestSpawnDelay - cTimeSinceSpawn;
+
+                            var prevSinceStart = aConst.FragStartTime - Info.PrevRelativeAge;
+                            if (prevSinceStart >= 0)
+                            {
+                                var sinceStart = aConst.FragStartTime - Info.RelativeAge;
+                                if (prevSinceStart <= def.Start1Value && sinceStart >= def.Start1Value)
+                                {
+                                    if (pNextSpawn <= def.Start1Value && cNextSpawn >= def.Start1Value)
+                                        start1 = true;
+                                }
+                            }
+                            else if (pNextSpawn <= def.Start1Value && cNextSpawn >= def.Start1Value)
+                                start1 = true;
+                        }
+                        break;
                     default:
-                        start1 = false;
                         break;
                 }
 
-                bool start2;
+                bool start2 = false;
                 switch (def.StartCondition2)
                 {
                     case Conditions.DesiredElevation:
@@ -1069,8 +1092,32 @@ namespace CoreSystems.Projectiles
                     case Conditions.Ignore:
                         start2 = true;
                         break;
+                    case Conditions.NextTimeSpawn:
+
+                        if (aConst.TimedFragments && Info.SpawnDepth < aConst.FragMaxChildren && Info.RelativeAge >= aConst.FragStartTime && Info.Frags < aConst.MaxFrags)
+                        {
+                            var longestSpawnDelay = Math.Max(aConst.HasFragGroup || Info.Frags % aConst.FragGroupSize == 0 ? aConst.FragGroupDelay : 0, Info.Frags != 0 ? aConst.FragInterval : 0);
+
+                            var pTimeSinceSpawn = Info.PrevRelativeAge - Info.LastFragTime;
+                            var cTimeSinceSpawn = Info.RelativeAge - Info.LastFragTime;
+                            var pNextSpawn = longestSpawnDelay - pTimeSinceSpawn;
+                            var cNextSpawn = longestSpawnDelay - cTimeSinceSpawn;
+
+                            var prevSinceStart = aConst.FragStartTime - Info.PrevRelativeAge;
+                            if (prevSinceStart >= 0)
+                            {
+                                var sinceStart = aConst.FragStartTime - Info.RelativeAge;
+                                if (prevSinceStart <= def.Start2Value && sinceStart >= def.Start2Value)
+                                {
+                                    if (pNextSpawn <= def.Start2Value && cNextSpawn >= def.Start2Value)
+                                        start1 = true;
+                                }
+                            }
+                            else if (pNextSpawn <= def.Start2Value && cNextSpawn >= def.Start2Value)
+                                start1 = true;
+                        }
+                        break;
                     default:
-                        start2 = false;
                         break;
                 }
 
@@ -1211,7 +1258,7 @@ namespace CoreSystems.Projectiles
                     DsDebugDraw.DrawSingleVec(TargetPosition, 10, Color.Red);
                 }
 
-                bool end1;
+                bool end1 = false;
                 switch (def.EndCondition1)
                 {
                     case Conditions.DesiredElevation:
@@ -1255,12 +1302,36 @@ namespace CoreSystems.Projectiles
                     case Conditions.Ignore:
                         end1 = true;
                         break;
+                    case Conditions.NextTimeSpawn:
+
+                        if (aConst.TimedFragments && Info.SpawnDepth < aConst.FragMaxChildren && Info.RelativeAge >= aConst.FragStartTime && Info.Frags < aConst.MaxFrags)
+                        {
+                            var longestSpawnDelay = Math.Max(aConst.HasFragGroup || Info.Frags % aConst.FragGroupSize == 0 ? aConst.FragGroupDelay : 0, Info.Frags != 0 ? aConst.FragInterval : 0);
+
+                            var pTimeSinceSpawn = Info.PrevRelativeAge - Info.LastFragTime;
+                            var cTimeSinceSpawn = Info.RelativeAge - Info.LastFragTime;
+                            var pNextSpawn = longestSpawnDelay - pTimeSinceSpawn;
+                            var cNextSpawn = longestSpawnDelay - cTimeSinceSpawn;
+
+                            var prevSinceStart = aConst.FragStartTime - Info.PrevRelativeAge;
+                            if (prevSinceStart >= 0)
+                            {
+                                var sinceStart = aConst.FragStartTime - Info.RelativeAge;
+                                if (prevSinceStart <= def.End1Value && sinceStart >= def.End1Value)
+                                {
+                                    if (pNextSpawn <= def.End1Value && cNextSpawn >= def.End1Value)
+                                        start1 = true;
+                                }
+                            }
+                            else if (pNextSpawn <= def.End1Value && cNextSpawn >= def.End1Value)
+                                start1 = true;
+                        }
+                        break;
                     default:
-                        end1 = false;
                         break;
                 }
 
-                bool end2;
+                bool end2 = false;
                 switch (def.EndCondition2)
                 {
                     case Conditions.DesiredElevation:
@@ -1304,8 +1375,32 @@ namespace CoreSystems.Projectiles
                     case Conditions.Ignore:
                         end2 = true;
                         break;
+                    case Conditions.NextTimeSpawn:
+
+                        if (aConst.TimedFragments && Info.SpawnDepth < aConst.FragMaxChildren && Info.RelativeAge >= aConst.FragStartTime && Info.Frags < aConst.MaxFrags)
+                        {
+                            var longestSpawnDelay = Math.Max(aConst.HasFragGroup || Info.Frags % aConst.FragGroupSize == 0 ? aConst.FragGroupDelay : 0, Info.Frags != 0 ? aConst.FragInterval : 0);
+
+                            var pTimeSinceSpawn = Info.PrevRelativeAge - Info.LastFragTime;
+                            var cTimeSinceSpawn = Info.RelativeAge - Info.LastFragTime;
+                            var pNextSpawn = longestSpawnDelay - pTimeSinceSpawn;
+                            var cNextSpawn = longestSpawnDelay - cTimeSinceSpawn;
+
+                            var prevSinceStart = aConst.FragStartTime - Info.PrevRelativeAge;
+                            if (prevSinceStart >= 0)
+                            {
+                                var sinceStart = aConst.FragStartTime - Info.RelativeAge;
+                                if (prevSinceStart <= def.End2Value && sinceStart >= def.End2Value)
+                                {
+                                    if (pNextSpawn <= def.End1Value && cNextSpawn >= def.End2Value)
+                                        start1 = true;
+                                }
+                            }
+                            else if (pNextSpawn <= def.End2Value && cNextSpawn >= def.End2Value)
+                                start1 = true;
+                        }
+                        break;
                     default:
-                        end2 = false;
                         break;
                 }
 
@@ -2769,7 +2864,7 @@ namespace CoreSystems.Projectiles
                 if (!fireOnTarget)
                 {
                     pointDir = Direction;
-                    if (aConst.UseAimCone)
+                    if (aConst.UseAimCone && timedSpawn)
                     {
                         var eTarget = Info.Target.TargetObject as MyEntity;
                         var pTarget = Info.Target.TargetObject as Projectile;

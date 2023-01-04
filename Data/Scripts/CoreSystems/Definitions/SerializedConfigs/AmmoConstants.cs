@@ -224,6 +224,7 @@ namespace CoreSystems.Support
         public readonly bool IsTurretSelectable;
         public readonly bool CanZombie;
         public readonly bool FeelsGravity;
+        public readonly bool StoreGravity;
         public readonly bool MaxTrajectoryGrows;
         public readonly bool HasShotFade;
         public readonly bool CustomExplosionSound;
@@ -389,7 +390,7 @@ namespace CoreSystems.Support
             var fragAntiSmart = false;
             var fragTargetOverride = false;
             var fragHasTimedSpawn = false;
-
+            var fragHasGravity = false;
 
             for (int i = 0; i < wDef.Ammos.Length; i++)
             {
@@ -401,6 +402,9 @@ namespace CoreSystems.Support
                     var hasGuidance = ammoType.Trajectory.Guidance != TrajectoryDef.GuidanceType.None;
                     if (hasGuidance)
                         fragGuidedAmmo = true;
+
+                    if (ammoType.Trajectory.GravityMultiplier > 0)
+                        fragHasGravity = true;
 
                     var hasTimed = ammoType.Fragment.TimedSpawns.Enable;
                     if (hasTimed)
@@ -482,6 +486,7 @@ namespace CoreSystems.Support
 
             AmmoSkipAccel = ammo.AmmoDef.Trajectory.AccelPerSec <= 0;
             FeelsGravity = GravityMultiplier > 0;
+            StoreGravity = FeelsGravity || fragHasGravity;
             SmartOffsetSqr = ammo.AmmoDef.Trajectory.Smarts.Inaccuracy * ammo.AmmoDef.Trajectory.Smarts.Inaccuracy;
             BackKickForce = _modifierMap[BackKickForceStr].HasData() ? _modifierMap[BackKickForceStr].GetAsFloat : ammo.AmmoDef.BackKickForce;
             HasBackKickForce = !MathHelper.IsZero(BackKickForce);

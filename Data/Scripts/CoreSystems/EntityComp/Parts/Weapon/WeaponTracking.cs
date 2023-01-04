@@ -529,6 +529,12 @@ namespace CoreSystems.Platform
 
             PauseShoot = losBlocked;
 
+            if (!Comp.Session.DedicatedServer && PauseShoot && Comp.Session.Tick - Comp.Session.LosNotifyTick > 600 && Comp.Session.PlayerId == Comp.Data.Repo.Values.State.PlayerId)
+            {
+                Comp.Session.LosNotifyTick = Comp.Session.Tick;
+                Comp.Session.ShowLocalNotify($"{System.ShortName} is a homing weapon and it has no line of sight", 10000);
+            }
+
             return !PauseShoot;
         }
 

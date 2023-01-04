@@ -206,7 +206,7 @@ namespace CoreSystems.Projectiles
                         }
 
                         if (aConst.FeelsGravity && MyUtils.IsValid(p.Gravity) && !MyUtils.IsZero(ref p.Gravity)) {
-                            p.Velocity += p.Gravity * (float)Session.DeltaStepConst;
+                            p.Velocity += (p.Gravity * aConst.GravityMultiplier) * (float)Session.DeltaStepConst;
                             if (!aConst.IsSmart && !aConst.IsDrone && aConst.AmmoSkipAccel)
                                 Vector3D.Normalize(ref p.Velocity, out p.Direction);
                         }

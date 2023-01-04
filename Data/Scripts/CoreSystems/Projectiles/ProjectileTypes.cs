@@ -516,7 +516,7 @@ namespace CoreSystems.Support
 
                 frag.TargetState = target.TargetState;
                 frag.TargetEntity = target.TargetObject;
-
+                frag.Gravity = p.Gravity;
                 frag.MuzzleId = info.MuzzleId;
                 frag.Radial = aConst.FragRadial;
                 frag.SceneVersion = info.CompSceneVersion;
@@ -582,7 +582,7 @@ namespace CoreSystems.Support
                 p.TargetPosition = frag.PrevTargetPos;
                 p.Direction = frag.Direction;
                 info.ShooterVel = frag.Velocity;
-                p.Gravity = aConst.FeelsGravity && info.Ai.InPlanetGravity ? frag.Weapon.GravityPoint * aConst.GravityMultiplier : Vector3D.Zero;
+                p.Gravity = frag.Gravity;
                 info.AcquiredEntity = frag.AcquiredEntity;
                 info.MaxTrajectory = aConst.MaxTrajectory;
                 info.ShotFade = 0;
@@ -626,6 +626,7 @@ namespace CoreSystems.Support
         public Vector3D Direction;
         public Vector3D Velocity;
         public Vector3D PrevTargetPos;
+        public Vector3 Gravity;
         public int MuzzleId;
         public ushort Depth;
 

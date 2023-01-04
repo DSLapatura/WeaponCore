@@ -105,7 +105,7 @@ namespace CoreSystems.Projectiles
                 else shotFade = 0;
                 info.ShotFade = shotFade;
 
-                var updateGravity = aConst.FeelsGravity && info.Ai.InPlanetGravity;
+                var updateGravity = aConst.StoreGravity && info.Ai.InPlanetGravity;
                 if (updateGravity && Session.Tick - w.GravityTick > 119)
                 {
                     w.GravityTick = Session.Tick;
@@ -115,7 +115,7 @@ namespace CoreSystems.Projectiles
                     w.GravityLength = w.GravityUnitDir.Normalize();
                 }
 
-                p.Gravity = updateGravity ? w.GravityPoint * aConst.GravityMultiplier : Vector3D.Zero;
+                p.Gravity = updateGravity ? w.GravityPoint : Vector3D.Zero;
 
                 if (t != Kind.Virtual)
                 {
