@@ -1741,7 +1741,32 @@ namespace CoreSystems.Support
                     endAnd = true;
                     break;
             }
-        } 
+        }
+
+        public int GetRestartId(ProInfo info)
+        {
+            var array = Definition.RestartList;
+            var selectedId = -1;
+
+            if (array != null)
+            {
+                float highestRoll = float.MinValue;
+                for (int i = 0; i < array.Length; i++)
+                {
+                    var item = array[i];
+                    var rng = info.Random.Range(item.Weight.Start, item.Weight.End);
+                    if (rng >= highestRoll)
+                    {
+                        highestRoll = rng;
+                        selectedId = item.ApproachId;
+                    }
+                }
+            }
+            else
+                selectedId = Definition.OnRestartRevertTo;
+
+            return selectedId;
+        }
 
         public void Clean()
         {

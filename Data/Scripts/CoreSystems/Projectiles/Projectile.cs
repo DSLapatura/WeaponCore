@@ -89,12 +89,12 @@ namespace CoreSystems.Projectiles
         internal void Start()
         {
             var ai = Info.Ai;
-            var session = ai.Session;
             var s = Info.Storage;
             var ammoDef = Info.AmmoDef;
             var aConst = ammoDef.Const;
             var w = Info.Weapon;
             var comp = w.Comp;
+            var session = comp.Session;
 
             if (aConst.ApproachesCount > 0)
             {
@@ -328,8 +328,8 @@ namespace CoreSystems.Projectiles
 
         internal void DestroyProjectile()
         {
-            Info.Hit = new Hit { Entity = null, SurfaceHit = Position, LastHit = Position, HitVelocity = !Vector3D.IsZero(Gravity) ? Velocity * 0.33f : Velocity, HitTick = Info.Ai.Session.Tick };
-            if (EnableAv || Info.AmmoDef.Const.VirtualBeams)
+            Info.Hit = new Hit { Entity = null, SurfaceHit = Position, LastHit = Position, HitVelocity = !Vector3D.IsZero(Gravity) ? Velocity * 0.33f : Velocity, HitTick = Info.Weapon.Comp.Session.Tick };
+            if (Info.AvShot != null)
             {
                 Info.AvShot.ForceHitParticle = true;
                 Info.AvShot.Hit = Info.Hit;
@@ -345,7 +345,7 @@ namespace CoreSystems.Projectiles
 
         internal void AddToDeathSyncMonitor()
         {
-            var s = Info.Ai.Session;
+            var s = Info.Weapon.Comp.Session;
             if (Info.Weapon.ProjectileSyncMonitor.Remove(Info.SyncId))
             {
                 if (s.AdvSyncServer)
@@ -358,7 +358,7 @@ namespace CoreSystems.Projectiles
         internal void ProjectileClose()
         {
             var aConst = Info.AmmoDef.Const;
-            var session = Info.Ai.Session;
+            var session = Info.Weapon.Comp.Session;
             var normalfragSpawn = aConst.FragOnEnd && (aConst.FragIgnoreArming || Info.RelativeAge >= aConst.MinArmingTime);
             var eolFragSpawn = aConst.FragOnEolArmed && Info.ObjectsHit > 0 && Info.RelativeAge >= aConst.MinArmingTime;
             
@@ -473,7 +473,7 @@ namespace CoreSystems.Projectiles
                 s.SmartReady = true;
                 var fake = Info.Target.TargetState == Target.TargetStates.IsFake;
                 var hadTarget = HadTarget != HadTargetState.None;
-                var clientSync = aConst.FullSync && Info.Ai.Session.AdvSyncClient;
+                var clientSync = aConst.FullSync && Info.Weapon.Comp.Session.AdvSyncClient;
 
                 var gaveUpChase = !fake && Info.RelativeAge - s.ChaseAge > aConst.MaxChaseTime && hadTarget && !clientSync;
                 var overMaxTargets = hadTarget && TargetsSeen > aConst.MaxTargets && aConst.MaxTargets != 0;
@@ -774,7 +774,7 @@ namespace CoreSystems.Projectiles
 
             var intersect = aSphere.Contains(proposedPos) != ContainmentType.Disjoint;
 
-            if (!intersect)
+            if (!intersect || aSphere.Contains(TargetPosition) != ContainmentType.Disjoint)
                 return false;
 
             if (SurfaceModifiedCommandAccel(aSphere, Position, TargetPosition, accelMpsMulti, missileToTargetNorm, out moddedAccel)) {
@@ -802,42 +802,44 @@ namespace CoreSystems.Projectiles
 
         private void ProcessStage(ref double accelMpsMulti, ref double speedCapMulti, ref bool disableAvoidance, Vector3D targetPos, int lastActiveStage, bool targetLock, int callDepth)
         {
+            var s = Info.Weapon.Comp.Session;
             if (callDepth-- < 0) {
-                if (Info.Ai.Session.HandlesInput && Info.Ai.Session.DebugMod)
-                    Info.Ai.Session.ShowLocalNotify("Approach is attempting to infinite loop, fix your approach moveNext/restart conditions", 2000);
+                if (s.HandlesInput && s.DebugMod)
+                    s.ShowLocalNotify("Approach is attempting to infinite loop, fix your approach moveNext/restart conditions", 2000);
                 return;
             }
 
-            var s = Info.Storage;
+            var storage = Info.Storage;
             if (targetLock)
-                s.ApproachInfo.TargetPos = targetPos;
+                storage.ApproachInfo.TargetPos = targetPos;
 
-            if (!Vector3D.IsZero(s.ApproachInfo.TargetPos))
+            if (!Vector3D.IsZero(storage.ApproachInfo.TargetPos))
             {
-                if (s.RequestedStage == -1)
+                if (storage.RequestedStage == -1)
                 {
-                    if (Info.Ai.Session.DebugMod)
-                        Log.Line($"StageStart: {Info.AmmoDef.AmmoRound} - last: {s.LastActivatedStage} - age:{Info.RelativeAge}");
-                    s.LastActivatedStage = -1;
-                    s.RequestedStage = 0;
+                    if (s.DebugMod)
+                        Log.Line($"StageStart: {Info.AmmoDef.AmmoRound} - last: {storage.LastActivatedStage} - age:{Info.RelativeAge}");
+                    storage.LastActivatedStage = -1;
+                    storage.RequestedStage = 0;
                 }
 
-                var stageChange = s.RequestedStage != lastActiveStage;
+                var stageChange = storage.RequestedStage != lastActiveStage;
 
                 if (stageChange)
                 {
-                    if (Info.Ai.Session.DebugMod)
-                        Log.Line($"state change: {s.RequestedStage} - age:{Info.RelativeAge}");
-                    s.ApproachInfo.StartDistanceTraveled = Info.DistanceTraveled;
+                    if (s.DebugMod)
+                        Log.Line($"state change: {storage.RequestedStage} - age:{Info.RelativeAge}");
+                    storage.ApproachInfo.StartDistanceTraveled = Info.DistanceTraveled;
+                    storage.ApproachInfo.RelativeAgeStart = Info.RelativeAge;
                 }
 
                 var aConst = Info.AmmoDef.Const;
-                if (s.RequestedStage >= aConst.Approaches.Length)
+                if (storage.RequestedStage >= aConst.Approaches.Length)
                 {
-                    Log.Line($"ProcessStage outside of bounds: {s.RequestedStage > aConst.Approaches.Length - 1} - lastStage:{lastActiveStage} - {Info.Weapon.System.ShortName} - {Info.Weapon.ActiveAmmoDef.AmmoDef.AmmoRound}");
+                    Log.Line($"ProcessStage outside of bounds: {storage.RequestedStage > aConst.Approaches.Length - 1} - lastStage:{lastActiveStage} - {Info.Weapon.System.ShortName} - {Info.Weapon.ActiveAmmoDef.AmmoDef.AmmoRound}");
                     return;
                 }
-                var approach = aConst.Approaches[s.RequestedStage];
+                var approach = aConst.Approaches[storage.RequestedStage];
                 var def = approach.Definition;
 
                 if (def.StartCondition1 == def.StartCondition2 || def.EndCondition1 == def.EndCondition2)
@@ -851,29 +853,29 @@ namespace CoreSystems.Projectiles
                     switch (def.Up)
                     {
                         case UpRelativeTo.RelativeToBlock:
-                            s.ApproachInfo.OffsetDir = Info.OriginUp;
+                            storage.ApproachInfo.OffsetDir = Info.OriginUp;
                             break;
                         case UpRelativeTo.RelativeToGravity:
-                            s.ApproachInfo.OffsetDir = !planetExists ? Info.OriginUp : Vector3D.Normalize(Position - Info.MyPlanet.PositionComp.WorldAABB.Center);
+                            storage.ApproachInfo.OffsetDir = !planetExists ? Info.OriginUp : Vector3D.Normalize(Position - Info.MyPlanet.PositionComp.WorldAABB.Center);
                             break;
                         case UpRelativeTo.TargetDirection:
-                            s.ApproachInfo.OffsetDir = Vector3D.Normalize(s.ApproachInfo.TargetPos - Position);
+                            storage.ApproachInfo.OffsetDir = Vector3D.Normalize(storage.ApproachInfo.TargetPos - Position);
                             break;
                         case UpRelativeTo.TargetVelocity:
-                            s.ApproachInfo.OffsetDir = !Vector3D.IsZero(PrevTargetVel) ? Vector3D.Normalize(PrevTargetVel) : Info.OriginUp;
+                            storage.ApproachInfo.OffsetDir = !Vector3D.IsZero(PrevTargetVel) ? Vector3D.Normalize(PrevTargetVel) : Info.OriginUp;
                             break;
                         case UpRelativeTo.StoredStartDestination:
-                            var storedStartDest = s.ApproachInfo.StoredDestination[s.RequestedStage];
-                            var destStart = storedStartDest != Vector3D.Zero ? storedStartDest : s.ApproachInfo.TargetPos;
-                            s.ApproachInfo.OffsetDir = Vector3D.Normalize(destStart - Position);
+                            var storedStartDest = storage.ApproachInfo.StoredDestination[storage.RequestedStage];
+                            var destStart = storedStartDest != Vector3D.Zero ? storedStartDest : storage.ApproachInfo.TargetPos;
+                            storage.ApproachInfo.OffsetDir = Vector3D.Normalize(destStart - Position);
                             break;
                         case UpRelativeTo.StoredEndDestination:
-                            var storedEndDest = s.ApproachInfo.StoredDestination[s.RequestedStage * 2];
-                            var destEnd = storedEndDest != Vector3D.Zero ? storedEndDest : s.ApproachInfo.TargetPos;
-                            s.ApproachInfo.OffsetDir = Vector3D.Normalize(destEnd - Position);
+                            var storedEndDest = storage.ApproachInfo.StoredDestination[storage.RequestedStage * 2];
+                            var destEnd = storedEndDest != Vector3D.Zero ? storedEndDest : storage.ApproachInfo.TargetPos;
+                            storage.ApproachInfo.OffsetDir = Vector3D.Normalize(destEnd - Position);
                             break;
                         default:
-                            s.ApproachInfo.OffsetDir = Info.OriginUp;
+                            storage.ApproachInfo.OffsetDir = Info.OriginUp;
                             break;
                     }
                 }
@@ -881,9 +883,9 @@ namespace CoreSystems.Projectiles
                 if (!MyUtils.IsZero(def.AngleOffset))
                 {
                     var angle = def.AngleOffset * MathHelper.Pi;
-                    var forward = Vector3D.CalculatePerpendicularVector(s.ApproachInfo.OffsetDir);
-                    var right = Vector3D.Cross(s.ApproachInfo.OffsetDir, forward);
-                    s.ApproachInfo.OffsetDir = Math.Sin(angle) * forward + Math.Cos(angle) * right;
+                    var forward = Vector3D.CalculatePerpendicularVector(storage.ApproachInfo.OffsetDir);
+                    var right = Vector3D.Cross(storage.ApproachInfo.OffsetDir, forward);
+                    storage.ApproachInfo.OffsetDir = Math.Sin(angle) * forward + Math.Cos(angle) * right;
                 }
 
                 Vector3D surfacePos = Vector3D.Zero;
@@ -892,95 +894,95 @@ namespace CoreSystems.Projectiles
                     switch (def.Source)
                     {
                         case RelativeTo.Origin:
-                            s.ApproachInfo.LookAtPos = Info.Origin;
+                            storage.ApproachInfo.LookAtPos = Info.Origin;
                             break;
                         case RelativeTo.Shooter:
-                            s.ApproachInfo.LookAtPos = Info.Weapon.MyPivotPos;
+                            storage.ApproachInfo.LookAtPos = Info.Weapon.MyPivotPos;
                            break;
                         case RelativeTo.Target:
-                            s.ApproachInfo.LookAtPos = s.ApproachInfo.TargetPos;
+                            storage.ApproachInfo.LookAtPos = storage.ApproachInfo.TargetPos;
                             break;
                         case RelativeTo.Surface:
                             if (planetExists)
                             {
                                 PlanetSurfaceHeightAdjustment(Position, Direction, approach, out surfacePos);
-                                s.ApproachInfo.LookAtPos = surfacePos;
+                                storage.ApproachInfo.LookAtPos = surfacePos;
                             }
                             else
-                                s.ApproachInfo.LookAtPos = Info.Origin;
+                                storage.ApproachInfo.LookAtPos = Info.Origin;
                             break;
                         case RelativeTo.MidPoint:
-                            s.ApproachInfo.LookAtPos = Vector3D.Lerp(s.ApproachInfo.TargetPos, Position, 0.5);
+                            storage.ApproachInfo.LookAtPos = Vector3D.Lerp(storage.ApproachInfo.TargetPos, Position, 0.5);
                             break;
                         case RelativeTo.Current:
-                            s.ApproachInfo.LookAtPos = Position;
+                            storage.ApproachInfo.LookAtPos = Position;
                             break;
                         case RelativeTo.StoredStartDestination:
-                            var storedStartDest = s.ApproachInfo.StoredDestination[s.RequestedStage];
-                            var destStart = storedStartDest != Vector3D.Zero ? storedStartDest : s.ApproachInfo.TargetPos;
-                            s.ApproachInfo.LookAtPos = destStart;
+                            var storedStartDest = storage.ApproachInfo.StoredDestination[storage.RequestedStage];
+                            var destStart = storedStartDest != Vector3D.Zero ? storedStartDest : storage.ApproachInfo.TargetPos;
+                            storage.ApproachInfo.LookAtPos = destStart;
                             break;
                         case RelativeTo.StoredEndDestination:
-                            var storedEndDest = s.ApproachInfo.StoredDestination[s.RequestedStage * 2];
-                            var destEnd = storedEndDest != Vector3D.Zero ? storedEndDest : s.ApproachInfo.TargetPos;
-                            s.ApproachInfo.LookAtPos = destEnd;
+                            var storedEndDest = storage.ApproachInfo.StoredDestination[storage.RequestedStage * 2];
+                            var destEnd = storedEndDest != Vector3D.Zero ? storedEndDest : storage.ApproachInfo.TargetPos;
+                            storage.ApproachInfo.LookAtPos = destEnd;
                             break;
                     }
                 }
 
-                var heightOffset = s.ApproachInfo.OffsetDir * def.DesiredElevation;
-                var source = s.ApproachInfo.LookAtPos;
+                var heightOffset = storage.ApproachInfo.OffsetDir * def.DesiredElevation;
+                var source = storage.ApproachInfo.LookAtPos;
                 if (stageChange || def.AdjustDestination)
                 {
                     switch (def.Destination)
                     {
                         case RelativeTo.Origin:
-                            s.ApproachInfo.DestinationPos = Info.Origin; 
+                            storage.ApproachInfo.DestinationPos = Info.Origin; 
                             break;
                         case RelativeTo.Shooter:
-                            s.ApproachInfo.DestinationPos = Info.Weapon.MyPivotPos;
+                            storage.ApproachInfo.DestinationPos = Info.Weapon.MyPivotPos;
                             break;
                         case RelativeTo.Target:
-                            s.ApproachInfo.DestinationPos = s.ApproachInfo.TargetPos;
+                            storage.ApproachInfo.DestinationPos = storage.ApproachInfo.TargetPos;
                             break;
                         case RelativeTo.Surface:
                             if (planetExists)
                             {
                                 PlanetSurfaceHeightAdjustment(Position, Direction, approach, out surfacePos);
-                                s.ApproachInfo.DestinationPos = surfacePos;
+                                storage.ApproachInfo.DestinationPos = surfacePos;
                             }
                             else
-                                s.ApproachInfo.DestinationPos = Info.Origin;
+                                storage.ApproachInfo.DestinationPos = Info.Origin;
                             break;
                         case RelativeTo.MidPoint:
-                            s.ApproachInfo.DestinationPos = Vector3D.Lerp(s.ApproachInfo.TargetPos, Position, 0.5);
+                            storage.ApproachInfo.DestinationPos = Vector3D.Lerp(storage.ApproachInfo.TargetPos, Position, 0.5);
                             break;
                         case RelativeTo.Current:
-                            s.ApproachInfo.DestinationPos = Position;
+                            storage.ApproachInfo.DestinationPos = Position;
                             break;
                         case RelativeTo.StoredStartDestination:
-                            var storedStartDest = s.ApproachInfo.StoredDestination[s.RequestedStage];
-                            var destStart = storedStartDest != Vector3D.Zero ? storedStartDest : s.ApproachInfo.TargetPos;
-                            s.ApproachInfo.DestinationPos = destStart;
+                            var storedStartDest = storage.ApproachInfo.StoredDestination[storage.RequestedStage];
+                            var destStart = storedStartDest != Vector3D.Zero ? storedStartDest : storage.ApproachInfo.TargetPos;
+                            storage.ApproachInfo.DestinationPos = destStart;
                             break;
                         case RelativeTo.StoredEndDestination:
-                            var storedEndDest = s.ApproachInfo.StoredDestination[s.RequestedStage * 2];
-                            var destEnd = storedEndDest != Vector3D.Zero ? storedEndDest : s.ApproachInfo.TargetPos;
-                            s.ApproachInfo.DestinationPos = destEnd;
+                            var storedEndDest = storage.ApproachInfo.StoredDestination[storage.RequestedStage * 2];
+                            var destEnd = storedEndDest != Vector3D.Zero ? storedEndDest : storage.ApproachInfo.TargetPos;
+                            storage.ApproachInfo.DestinationPos = destEnd;
                             break;
                         case RelativeTo.Nothing:
-                            s.ApproachInfo.DestinationPos = Info.Target.TargetPos;
+                            storage.ApproachInfo.DestinationPos = Info.Target.TargetPos;
                             break;
                     }
                 }
-                var destination = s.ApproachInfo.DestinationPos;
+                var destination = storage.ApproachInfo.DestinationPos;
                 if (def.OffsetMinRadius > 0 && def.OffsetTime > 0)
                 {
                     var prevCheck = Info.PrevRelativeAge % def.OffsetTime;
                     var currentCheck = Info.RelativeAge % def.OffsetTime;
                     if (prevCheck < 0 || prevCheck > currentCheck)
                         SetNavTargetOffset(def);
-                    destination += s.ApproachInfo.NavTargetBound.Center;
+                    destination += storage.ApproachInfo.NavTargetBound.Center;
                 }
 
                 var heightStart = source + heightOffset;
@@ -991,7 +993,7 @@ namespace CoreSystems.Projectiles
                 switch (def.StartCondition1)
                 {
                     case Conditions.DesiredElevation:
-                        var plane = new PlaneD(s.ApproachInfo.LookAtPos, s.ApproachInfo.OffsetDir);
+                        var plane = new PlaneD(storage.ApproachInfo.LookAtPos, storage.ApproachInfo.OffsetDir);
                         var distToPlane = plane.DistanceToPoint(Position);
                         var tolernace = def.ElevationTolerance + aConst.CollisionSize;
                         var distFromSurfaceSqr = !Vector3D.IsZero(surfacePos) ? Vector3D.DistanceSquared(Position, surfacePos) : distToPlane * distToPlane;
@@ -1000,12 +1002,12 @@ namespace CoreSystems.Projectiles
                         start1 = distFromSurfaceSqr >= greaterThanTolerance && distFromSurfaceSqr <= lessThanTolerance;
                         break;
                     case Conditions.DistanceFromTarget: // could save a sqrt by inlining and using heightDir
-                        if (Info.Ai.Session.DebugMod && Info.Ai.Session.HandlesInput)
+                        if (s.DebugMod && s.HandlesInput)
                             DsDebugDraw.DrawLine(heightend, destination, Color.Green, 10);
                         start1 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize <= def.Start1Value;
                         break;
                     case Conditions.DistanceToTarget: // could save a sqrt by inlining and using heightDir
-                        if (Info.Ai.Session.DebugMod && Info.Ai.Session.HandlesInput)
+                        if (s.DebugMod && s.HandlesInput)
                             DsDebugDraw.DrawLine(heightend, destination, Color.Green, 10);
                         start1 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize >= def.Start1Value;
                         break;
@@ -1015,11 +1017,17 @@ namespace CoreSystems.Projectiles
                     case Conditions.Deadtime:
                         start1 = Info.RelativeAge <= def.Start1Value;
                         break;
+                    case Conditions.RelativeLifetime:
+                        start1 = Info.RelativeAge - storage.ApproachInfo.RelativeAgeStart >= def.Start1Value;
+                        break;
+                    case Conditions.RelativeDeadtime:
+                        start1 = Info.RelativeAge - storage.ApproachInfo.RelativeAgeStart <= def.Start1Value;
+                        break;
                     case Conditions.MinTravelRequired:
-                        start1 = Info.DistanceTraveled - s.ApproachInfo.StartDistanceTraveled >= def.Start1Value;
+                        start1 = Info.DistanceTraveled - storage.ApproachInfo.StartDistanceTraveled >= def.Start1Value;
                         break;
                     case Conditions.MaxTravelRequired:
-                        start1 = Info.DistanceTraveled - s.ApproachInfo.StartDistanceTraveled <= def.Start1Value;
+                        start1 = Info.DistanceTraveled - storage.ApproachInfo.StartDistanceTraveled <= def.Start1Value;
                         break;
                     case Conditions.Spawn:
                     case Conditions.Ignore:
@@ -1033,22 +1041,16 @@ namespace CoreSystems.Projectiles
                             var notFragZero = Info.Frags != 0;
                             var longestSpawnDelay = Math.Max(groupDelay ? aConst.FragGroupDelay : 0, notFragZero ? aConst.FragInterval : 0);
 
-                            var pTimeSinceSpawn = Info.PrevRelativeAge - Info.LastFragTime;
-                            var cTimeSinceSpawn = Info.RelativeAge - Info.LastFragTime;
-                            var pNextSpawn = longestSpawnDelay - pTimeSinceSpawn;
-                            var cNextSpawn = longestSpawnDelay - cTimeSinceSpawn;
+                            var timeSinceSpawn = Info.RelativeAge - Info.LastFragTime;
+                            var nextSpawn = longestSpawnDelay - timeSinceSpawn;
 
-                            var prevSinceStart = aConst.FragStartTime - Info.PrevRelativeAge;
-                            if (prevSinceStart >= 0)
+                            var timeSinceStart = aConst.FragStartTime - Info.RelativeAge;
+                            if (timeSinceStart >= 0)
                             {
-                                var sinceStart = aConst.FragStartTime - Info.RelativeAge;
-                                if (prevSinceStart <= def.Start1Value && sinceStart >= def.Start1Value)
-                                {
-                                    if (pNextSpawn <= def.Start1Value && cNextSpawn >= def.Start1Value)
-                                        start1 = true;
-                                }
+                                if (timeSinceStart <= def.Start1Value && nextSpawn >= def.Start1Value)
+                                    start1 = true;
                             }
-                            else if (pNextSpawn <= def.Start1Value && cNextSpawn >= def.Start1Value)
+                            else if (nextSpawn >= def.Start1Value)
                                 start1 = true;
                         }
                         break;
@@ -1060,7 +1062,7 @@ namespace CoreSystems.Projectiles
                 switch (def.StartCondition2)
                 {
                     case Conditions.DesiredElevation:
-                        var plane = new PlaneD(s.ApproachInfo.LookAtPos, s.ApproachInfo.OffsetDir);
+                        var plane = new PlaneD(storage.ApproachInfo.LookAtPos, storage.ApproachInfo.OffsetDir);
                         var distToPlane = plane.DistanceToPoint(Position);
                         var tolernace = def.ElevationTolerance + aConst.CollisionSize;
                         var distFromSurfaceSqr = !Vector3D.IsZero(surfacePos) ? Vector3D.DistanceSquared(Position, surfacePos) : distToPlane * distToPlane;
@@ -1069,12 +1071,12 @@ namespace CoreSystems.Projectiles
                         start2 = distFromSurfaceSqr >= greaterThanTolerance && distFromSurfaceSqr <= lessThanTolerance;
                         break;
                     case Conditions.DistanceFromTarget: // could save a sqrt by inlining and using heightDir
-                        if (Info.Ai.Session.DebugMod)
+                        if (s.DebugMod)
                             DsDebugDraw.DrawLine(heightend, destination, Color.Blue, 10);
                         start2 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize <= def.Start2Value;
                         break;
                     case Conditions.DistanceToTarget: 
-                        if (Info.Ai.Session.DebugMod)
+                        if (s.DebugMod)
                             DsDebugDraw.DrawLine(heightend, destination, Color.Green, 10);
                         start2 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize >= def.Start2Value;
                         break;
@@ -1084,11 +1086,17 @@ namespace CoreSystems.Projectiles
                     case Conditions.Deadtime:
                         start2 = Info.RelativeAge <= def.Start2Value;
                         break;
+                    case Conditions.RelativeLifetime:
+                        start2 = Info.RelativeAge - storage.ApproachInfo.RelativeAgeStart >= def.Start1Value;
+                        break;
+                    case Conditions.RelativeDeadtime:
+                        start2 = Info.RelativeAge - storage.ApproachInfo.RelativeAgeStart <= def.Start1Value;
+                        break;
                     case Conditions.MinTravelRequired:
-                        start2 = Info.DistanceTraveled - s.ApproachInfo.StartDistanceTraveled >= def.Start2Value;
+                        start2 = Info.DistanceTraveled - storage.ApproachInfo.StartDistanceTraveled >= def.Start2Value;
                         break;
                     case Conditions.MaxTravelRequired:
-                        start2 = Info.DistanceTraveled - s.ApproachInfo.StartDistanceTraveled <= def.Start2Value;
+                        start2 = Info.DistanceTraveled - storage.ApproachInfo.StartDistanceTraveled <= def.Start2Value;
                         break;
                     case Conditions.Spawn:
                     case Conditions.Ignore:
@@ -1102,22 +1110,16 @@ namespace CoreSystems.Projectiles
                             var notFragZero = Info.Frags != 0;
                             var longestSpawnDelay = Math.Max(groupDelay ? aConst.FragGroupDelay : 0, notFragZero ? aConst.FragInterval : 0);
 
-                            var pTimeSinceSpawn = Info.PrevRelativeAge - Info.LastFragTime;
-                            var cTimeSinceSpawn = Info.RelativeAge - Info.LastFragTime;
-                            var pNextSpawn = longestSpawnDelay - pTimeSinceSpawn;
-                            var cNextSpawn = longestSpawnDelay - cTimeSinceSpawn;
+                            var timeSinceSpawn = Info.RelativeAge - Info.LastFragTime;
+                            var nextSpawn = longestSpawnDelay - timeSinceSpawn;
 
-                            var prevSinceStart = aConst.FragStartTime - Info.PrevRelativeAge;
-                            if (prevSinceStart >= 0)
+                            var timeSinceStart = aConst.FragStartTime - Info.RelativeAge;
+                            if (timeSinceStart >= 0)
                             {
-                                var sinceStart = aConst.FragStartTime - Info.RelativeAge;
-                                if (prevSinceStart <= def.Start2Value && sinceStart >= def.Start2Value)
-                                {
-                                    if (pNextSpawn <= def.Start2Value && cNextSpawn >= def.Start2Value)
-                                        start1 = true;
-                                }
+                                if (timeSinceStart <= def.Start2Value && nextSpawn >= def.Start2Value)
+                                    start1 = true;
                             }
-                            else if (pNextSpawn <= def.Start2Value && cNextSpawn >= def.Start2Value)
+                            else if (nextSpawn >= def.Start2Value)
                                 start1 = true;
                         }
                         break;
@@ -1125,14 +1127,12 @@ namespace CoreSystems.Projectiles
                         break;
                 }
 
-                if (approach.StartAnd && start1 && start2 || !approach.StartAnd && (start1 || start2) || s.LastActivatedStage >= 0 && !def.CanExpireOnceStarted)
+                if (approach.StartAnd && start1 && start2 || !approach.StartAnd && (start1 || start2) || storage.LastActivatedStage >= 0 && !def.CanExpireOnceStarted)
                 {
-
-
                     accelMpsMulti = aConst.AccelInMetersPerSec * def.AccelMulti;
                     speedCapMulti = def.SpeedCapMulti;
 
-                    var travelLead = Info.DistanceTraveled - s.ApproachInfo.StartDistanceTraveled >= def.TrackingDistance ? Info.DistanceTraveled : 0;
+                    var travelLead = Info.DistanceTraveled - storage.ApproachInfo.StartDistanceTraveled >= def.TrackingDistance ? Info.DistanceTraveled : 0;
                     var desiredLead = (def.PushLeadByTravelDistance ? travelLead : 0) + def.LeadDistance;
                     var clampedLead = MathHelperD.Clamp(desiredLead, approach.ModFutureStep, double.MaxValue);
                     var leadPosition = heightStart + heightDir * clampedLead;
@@ -1144,7 +1144,7 @@ namespace CoreSystems.Projectiles
                             if (Info.MyPlanet != null && planetExists && def.Elevation == RelativeTo.Surface)
                             {
                                 Vector3D followSurfacePos;
-                                heightAdjLeadPos = PlanetSurfaceHeightAdjustment(leadPosition, s.ApproachInfo.OffsetDir, approach, out followSurfacePos);
+                                heightAdjLeadPos = PlanetSurfaceHeightAdjustment(leadPosition, storage.ApproachInfo.OffsetDir, approach, out followSurfacePos);
                             }
                             else
                                 heightAdjLeadPos = leadPosition;
@@ -1188,8 +1188,8 @@ namespace CoreSystems.Projectiles
                         }
                         case RelativeTo.StoredStartDestination:
                         {
-                            var storedDest = s.ApproachInfo.StoredDestination[s.RequestedStage];
-                            var dest = storedDest != Vector3D.Zero ? storedDest : s.ApproachInfo.TargetPos;
+                            var storedDest = storage.ApproachInfo.StoredDestination[storage.RequestedStage];
+                            var dest = storedDest != Vector3D.Zero ? storedDest : storage.ApproachInfo.TargetPos;
                             var plane = new PlaneD(dest, heightDir);
                             var distToPlane = plane.DistanceToPoint(leadPosition);
                             heightAdjLeadPos = leadPosition + (heightDir * distToPlane);
@@ -1197,8 +1197,8 @@ namespace CoreSystems.Projectiles
                         }
                         case RelativeTo.StoredEndDestination:
                         {
-                            var storedDest = s.ApproachInfo.StoredDestination[s.RequestedStage * 2];
-                            var dest = storedDest != Vector3D.Zero ? storedDest : s.ApproachInfo.TargetPos;
+                            var storedDest = storage.ApproachInfo.StoredDestination[storage.RequestedStage * 2];
+                            var dest = storedDest != Vector3D.Zero ? storedDest : storage.ApproachInfo.TargetPos;
                             var plane = new PlaneD(dest, heightDir);
                             var distToPlane = plane.DistanceToPoint(leadPosition);
                             heightAdjLeadPos = leadPosition + (heightDir * distToPlane);
@@ -1206,7 +1206,7 @@ namespace CoreSystems.Projectiles
                         }
                         case RelativeTo.Nothing:
                         {
-                            heightAdjLeadPos = s.ApproachInfo.TargetPos;
+                            heightAdjLeadPos = storage.ApproachInfo.TargetPos;
                             break;
                         }
                         default:
@@ -1225,14 +1225,14 @@ namespace CoreSystems.Projectiles
                                 TargetPosition = heightAdjLeadPos;
                         }
                         else
-                            TargetPosition = ApproachOrbits(ref def, s.ApproachInfo.OffsetDir, heightAdjLeadPos, accelMpsMulti, speedCapMulti);
+                            TargetPosition = ApproachOrbits(ref def, storage.ApproachInfo.OffsetDir, heightAdjLeadPos, accelMpsMulti, speedCapMulti);
                     }
 
-                    if (s.LastActivatedStage != s.RequestedStage)
+                    if (storage.LastActivatedStage != storage.RequestedStage)
                     {
-                        if (Info.Ai.Session.DebugMod)
-                            Log.Line($"stage: age:{Info.RelativeAge} - {s.RequestedStage} - CanExpireOnceStarted:{def.CanExpireOnceStarted}");
-                        s.LastActivatedStage = s.RequestedStage;
+                        if (s.DebugMod)
+                            Log.Line($"stage: age:{Info.RelativeAge} - {storage.RequestedStage} - CanExpireOnceStarted:{def.CanExpireOnceStarted}");
+                        storage.LastActivatedStage = storage.RequestedStage;
 
                         switch (def.StartEvent)
                         {
@@ -1243,19 +1243,19 @@ namespace CoreSystems.Projectiles
                             case StageEvents.DoNothing:
                                 break;
                             case StageEvents.StoreDestination:
-                                s.ApproachInfo.StoredDestination[s.RequestedStage] = TargetPosition;
+                                storage.ApproachInfo.StoredDestination[storage.RequestedStage] = TargetPosition;
                                 break;
                         }
                     }
 
-                    if (Info.Ai.Session.DebugMod && Info.Ai.Session.HandlesInput)
+                    if (s.DebugMod && s.HandlesInput)
                     {
                         DsDebugDraw.DrawLine(heightAdjLeadPos, destination, Color.White, 3);
                         DsDebugDraw.DrawSingleVec(destination, 10, Color.LightSkyBlue);
                     }
                 }
 
-                if (Info.Ai.Session.DebugMod && Info.Ai.Session.HandlesInput)
+                if (s.DebugMod && s.HandlesInput)
                 {
                     DsDebugDraw.DrawSingleVec(heightStart, 10, Color.GreenYellow);
                     DsDebugDraw.DrawSingleVec(heightend, 10, Color.LightSkyBlue);
@@ -1266,7 +1266,7 @@ namespace CoreSystems.Projectiles
                 switch (def.EndCondition1)
                 {
                     case Conditions.DesiredElevation:
-                        var plane = new PlaneD(s.ApproachInfo.LookAtPos, s.ApproachInfo.OffsetDir);
+                        var plane = new PlaneD(storage.ApproachInfo.LookAtPos, storage.ApproachInfo.OffsetDir);
                         var distToPlane = plane.DistanceToPoint(Position);
                         var tolernace = def.ElevationTolerance + aConst.CollisionSize;
                         var distFromSurfaceSqr = !Vector3D.IsZero(surfacePos) ? Vector3D.DistanceSquared(Position, surfacePos) : distToPlane * distToPlane;
@@ -1281,13 +1281,13 @@ namespace CoreSystems.Projectiles
                             end1 = start2;
                         else
                         {
-                            if (Info.Ai.Session.DebugMod && Info.Ai.Session.HandlesInput)
+                            if (s.DebugMod && s.HandlesInput)
                                 DsDebugDraw.DrawLine(heightend, destination, Color.Red, 10);
                             end1 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize <= def.End1Value;
                         }
                         break;
                     case Conditions.DistanceToTarget: 
-                        if (Info.Ai.Session.DebugMod && Info.Ai.Session.HandlesInput)
+                        if (s.DebugMod && s.HandlesInput)
                             DsDebugDraw.DrawLine(heightend, destination, Color.Green, 10);
                         end1 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize >= def.End1Value;
                         break;
@@ -1297,11 +1297,17 @@ namespace CoreSystems.Projectiles
                     case Conditions.Deadtime:
                         end1 = Info.RelativeAge <= def.End1Value;
                         break;
+                    case Conditions.RelativeLifetime:
+                        end1 = Info.RelativeAge - storage.ApproachInfo.RelativeAgeStart >= def.Start1Value;
+                        break;
+                    case Conditions.RelativeDeadtime:
+                        end1 = Info.RelativeAge - storage.ApproachInfo.RelativeAgeStart <= def.Start1Value;
+                        break;
                     case Conditions.MinTravelRequired:
-                        end1 = Info.DistanceTraveled - s.ApproachInfo.StartDistanceTraveled >= def.End1Value;
+                        end1 = Info.DistanceTraveled - storage.ApproachInfo.StartDistanceTraveled >= def.End1Value;
                         break;
                     case Conditions.MaxTravelRequired:
-                        end1 = Info.DistanceTraveled - s.ApproachInfo.StartDistanceTraveled <= def.End1Value;
+                        end1 = Info.DistanceTraveled - storage.ApproachInfo.StartDistanceTraveled <= def.End1Value;
                         break;
                     case Conditions.Ignore:
                         end1 = true;
@@ -1314,22 +1320,16 @@ namespace CoreSystems.Projectiles
                             var notFragZero = Info.Frags != 0;
                             var longestSpawnDelay = Math.Max(groupDelay ? aConst.FragGroupDelay : 0, notFragZero ? aConst.FragInterval : 0);
 
-                            var pTimeSinceSpawn = Info.PrevRelativeAge - Info.LastFragTime;
-                            var cTimeSinceSpawn = Info.RelativeAge - Info.LastFragTime;
-                            var pNextSpawn = longestSpawnDelay - pTimeSinceSpawn;
-                            var cNextSpawn = longestSpawnDelay - cTimeSinceSpawn;
+                            var timeSinceSpawn = Info.RelativeAge - Info.LastFragTime;
+                            var nextSpawn = longestSpawnDelay - timeSinceSpawn;
 
-                            var prevSinceStart = aConst.FragStartTime - Info.PrevRelativeAge;
-                            if (prevSinceStart >= 0)
+                            var timeSinceStart = aConst.FragStartTime - Info.RelativeAge;
+                            if (timeSinceStart >= 0)
                             {
-                                var sinceStart = aConst.FragStartTime - Info.RelativeAge;
-                                if (prevSinceStart <= def.End1Value && sinceStart >= def.End1Value)
-                                {
-                                    if (pNextSpawn <= def.End1Value && cNextSpawn >= def.End1Value)
-                                        start1 = true;
-                                }
+                                if (timeSinceStart <= def.End1Value && nextSpawn >= def.End1Value)
+                                    start1 = true;
                             }
-                            else if (pNextSpawn <= def.End1Value && cNextSpawn >= def.End1Value)
+                            else if (nextSpawn >= def.End1Value)
                                 start1 = true;
                         }
                         break;
@@ -1341,7 +1341,7 @@ namespace CoreSystems.Projectiles
                 switch (def.EndCondition2)
                 {
                     case Conditions.DesiredElevation:
-                        var plane = new PlaneD(s.ApproachInfo.LookAtPos, s.ApproachInfo.OffsetDir);
+                        var plane = new PlaneD(storage.ApproachInfo.LookAtPos, storage.ApproachInfo.OffsetDir);
                         var distToPlane = plane.DistanceToPoint(Position);
                         var tolernace = def.ElevationTolerance + aConst.CollisionSize;
                         var distFromSurfaceSqr = !Vector3D.IsZero(surfacePos) ? Vector3D.DistanceSquared(Position, surfacePos) : distToPlane * distToPlane;
@@ -1356,13 +1356,13 @@ namespace CoreSystems.Projectiles
                             end2 = start2;
                         else
                         {
-                            if (Info.Ai.Session.DebugMod && Info.Ai.Session.HandlesInput)
+                            if (s.DebugMod && s.HandlesInput)
                                 DsDebugDraw.DrawLine(heightend, destination, Color.Yellow, 10);
                             end2 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize <= def.End2Value;
                         }
                         break;
                     case Conditions.DistanceToTarget: 
-                        if (Info.Ai.Session.DebugMod && Info.Ai.Session.HandlesInput)
+                        if (s.DebugMod && s.HandlesInput)
                             DsDebugDraw.DrawLine(heightend, destination, Color.Green, 10);
                         end2 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize >= def.End2Value;
                         break;
@@ -1372,11 +1372,17 @@ namespace CoreSystems.Projectiles
                     case Conditions.Deadtime:
                         end2 = Info.RelativeAge <= def.End2Value;
                         break;
+                    case Conditions.RelativeLifetime:
+                        end2 = Info.RelativeAge - storage.ApproachInfo.RelativeAgeStart >= def.Start1Value;
+                        break;
+                    case Conditions.RelativeDeadtime:
+                        end2 = Info.RelativeAge - storage.ApproachInfo.RelativeAgeStart <= def.Start1Value;
+                        break;
                     case Conditions.MinTravelRequired:
-                        end2 = Info.DistanceTraveled - s.ApproachInfo.StartDistanceTraveled >= def.End2Value;
+                        end2 = Info.DistanceTraveled - storage.ApproachInfo.StartDistanceTraveled >= def.End2Value;
                         break;
                     case Conditions.MaxTravelRequired:
-                        end2 = Info.DistanceTraveled - s.ApproachInfo.StartDistanceTraveled <= def.End2Value;
+                        end2 = Info.DistanceTraveled - storage.ApproachInfo.StartDistanceTraveled <= def.End2Value;
                         break;
                     case Conditions.Ignore:
                         end2 = true;
@@ -1389,22 +1395,16 @@ namespace CoreSystems.Projectiles
                             var notFragZero = Info.Frags != 0;
                             var longestSpawnDelay = Math.Max(groupDelay ? aConst.FragGroupDelay : 0, notFragZero ? aConst.FragInterval : 0);
 
-                            var pTimeSinceSpawn = Info.PrevRelativeAge - Info.LastFragTime;
-                            var cTimeSinceSpawn = Info.RelativeAge - Info.LastFragTime;
-                            var pNextSpawn = longestSpawnDelay - pTimeSinceSpawn;
-                            var cNextSpawn = longestSpawnDelay - cTimeSinceSpawn;
+                            var timeSinceSpawn = Info.RelativeAge - Info.LastFragTime;
+                            var nextSpawn = longestSpawnDelay - timeSinceSpawn;
 
-                            var prevSinceStart = aConst.FragStartTime - Info.PrevRelativeAge;
-                            if (prevSinceStart >= 0)
+                            var timeSinceStart = aConst.FragStartTime - Info.RelativeAge;
+                            if (timeSinceStart >= 0)
                             {
-                                var sinceStart = aConst.FragStartTime - Info.RelativeAge;
-                                if (prevSinceStart <= def.End2Value && sinceStart >= def.End2Value)
-                                {
-                                    if (pNextSpawn <= def.End1Value && cNextSpawn >= def.End2Value)
-                                        start1 = true;
-                                }
+                                if (timeSinceStart <= def.End2Value && nextSpawn >= def.End2Value)
+                                    start1 = true;
                             }
-                            else if (pNextSpawn <= def.End2Value && cNextSpawn >= def.End2Value)
+                            else if (nextSpawn >= def.End2Value)
                                 start1 = true;
                         }
                         break;
@@ -1412,23 +1412,22 @@ namespace CoreSystems.Projectiles
                         break;
                 }
 
-                if (Info.Ai.Session.DebugMod)
+                if (s.DebugMod)
                 {
-                    var session = Info.Ai.Session;
-                    if (session.ApproachDebug.ProId == Info.Id || session.Tick != session.ApproachDebug.LastTick)
+                    if (s.ApproachDebug.ProId == Info.Id || s.Tick != s.ApproachDebug.LastTick)
                     {
-                        session.ApproachDebug = new ApproachDebug { 
-                            LastTick = session.Tick, Approach = approach, 
+                        s.ApproachDebug = new ApproachDebug { 
+                            LastTick = s.Tick, Approach = approach, 
                             Start1 = start1, Start2 = start2, End1 = end1, End2 = end2, 
-                            ProId = Info.Id, Stage = s.LastActivatedStage
+                            ProId = Info.Id, Stage = storage.LastActivatedStage
                         };
                     }
                 }
 
                 if (approach.EndAnd && end1 && end2 || !approach.EndAnd && (end1 || end2))
                 {
-                    var hasNextStep = s.RequestedStage + 1 < aConst.ApproachesCount;
-                    var isActive = s.LastActivatedStage >= 0;
+                    var hasNextStep = storage.RequestedStage + 1 < aConst.ApproachesCount;
+                    var isActive = storage.LastActivatedStage >= 0;
                     var activeNext = isActive && !def.ForceRestart && (def.RestartCondition == ReInitCondition.Wait || def.RestartCondition == ReInitCondition.MoveToPrevious || def.RestartCondition == ReInitCondition.MoveToNext);
                     var inActiveNext = !isActive && !def.ForceRestart && def.RestartCondition == ReInitCondition.MoveToNext;
                     var moveForward = hasNextStep && (activeNext || inActiveNext);
@@ -1440,36 +1439,36 @@ namespace CoreSystems.Projectiles
                     }
                     else if (def.EndEvent == StageEvents.StoreDestination)
                     {
-                        s.ApproachInfo.StoredDestination[s.RequestedStage * 2] = TargetPosition;
+                        storage.ApproachInfo.StoredDestination[storage.RequestedStage * 2] = TargetPosition;
                     }
 
                     if (moveForward)
                     {
-                        var oldLast = s.LastActivatedStage;
-                        s.LastActivatedStage = s.RequestedStage;
-                        ++s.RequestedStage;
-                        if (Info.Ai.Session.DebugMod)
-                            Log.Line($"stageEnd: age:{Info.RelativeAge} - next: {s.RequestedStage} - last:{oldLast} - eCon1:{def.EndCondition1} - eCon2:{def.EndCondition2}");
-                        ProcessStage(ref accelMpsMulti, ref speedCapMulti, ref disableAvoidance, targetPos, s.LastActivatedStage, targetLock, callDepth);
+                        var oldLast = storage.LastActivatedStage;
+                        storage.LastActivatedStage = storage.RequestedStage;
+                        ++storage.RequestedStage;
+                        if (s.DebugMod)
+                            Log.Line($"stageEnd: age:{Info.RelativeAge} - next: {storage.RequestedStage} - last:{oldLast} - eCon1:{def.EndCondition1} - eCon2:{def.EndCondition2}");
+                        ProcessStage(ref accelMpsMulti, ref speedCapMulti, ref disableAvoidance, targetPos, storage.LastActivatedStage, targetLock, callDepth);
                     }
                     else if (reStart || def.ForceRestart)
                     {
-                        s.LastActivatedStage = s.RequestedStage;
-                        var prev = s.RequestedStage;
-                        s.RequestedStage = def.RestartCondition == ReInitCondition.MoveToPrevious ? prev : def.OnRestartRevertTo;
-                        if (Info.Ai.Session.DebugMod)
-                            Log.Line($"stageEnd:age:{Info.RelativeAge} - previous:{prev} to {s.RequestedStage} - eCon1:{def.EndCondition1} - eCon2:{def.EndCondition2}");
+                        storage.LastActivatedStage = storage.RequestedStage;
+                        var prev = storage.RequestedStage;
+                        storage.RequestedStage = def.RestartCondition == ReInitCondition.MoveToPrevious ? prev : approach.GetRestartId(Info);
+                        if (s.DebugMod)
+                            Log.Line($"stageEnd:age:{Info.RelativeAge} - previous:{prev} to {storage.RequestedStage} - eCon1:{def.EndCondition1} - eCon2:{def.EndCondition2}");
                     }
                     else if (!hasNextStep)
                     {
-                        if (Info.Ai.Session.DebugMod)
-                            Log.Line($"Approach ended, no more steps - age:{Info.RelativeAge} - strages:[r:{s.RequestedStage} l:{s.LastActivatedStage}] - ec1:{def.EndCondition1} - ec1:{def.End1Value} - ec1:{def.EndCondition2} - ec1:{def.End2Value} - failure:{def.RestartCondition}");
-                        s.LastActivatedStage = aConst.Approaches.Length;
-                        s.RequestedStage = aConst.Approaches.Length;
+                        if (s.DebugMod)
+                            Log.Line($"Approach ended, no more steps - age:{Info.RelativeAge} - strages:[r:{storage.RequestedStage} l:{storage.LastActivatedStage}] - ec1:{def.EndCondition1} - ec1:{def.End1Value} - ec1:{def.EndCondition2} - ec1:{def.End2Value} - failure:{def.RestartCondition}");
+                        storage.LastActivatedStage = aConst.Approaches.Length;
+                        storage.RequestedStage = aConst.Approaches.Length;
                     }
                     else
                     {
-                        if (Info.Ai.Session.DebugMod)
+                        if (s.DebugMod)
                             Log.Line($"end met no valid condition");
                     }
                 }
@@ -1664,7 +1663,7 @@ namespace CoreSystems.Projectiles
             var target = Info.Target;
 
             var tasks = comp.Data.Repo.Values.State.Tasks;
-            var updateTask = tasks.UpdatedTick == Info.Ai.Session.Tick - 1;
+            var updateTask = tasks.UpdatedTick == comp.Session.Tick - 1;
             var tracking = aConst.DeltaVelocityPerTick <= 0 || (s.DroneInfo.DroneStat == DroneInfo.DroneStatus.Dock || Vector3D.DistanceSquared(Info.Origin, Position) >= aConst.SmartsDelayDistSqr);
             var parentPos = Vector3D.Zero;
 
@@ -2321,7 +2320,7 @@ namespace CoreSystems.Projectiles
             if (fake && Info.Storage.DummyTargets != null)
             {
                 var fakeTarget = Info.Storage.DummyTargets.PaintedTarget.EntityId != 0 ? Info.Storage.DummyTargets.PaintedTarget : Info.Storage.DummyTargets.ManualTarget;
-                fakeTargetInfo = fakeTarget.LastInfoTick != Info.Ai.Session.Tick ? fakeTarget.GetFakeTargetInfo(Info.Ai) : fakeTarget.FakeInfo;
+                fakeTargetInfo = fakeTarget.LastInfoTick != Info.Weapon.Comp.Session.Tick ? fakeTarget.GetFakeTargetInfo(Info.Ai) : fakeTarget.FakeInfo;
                 targetPos = fakeTargetInfo.WorldPosition;
                 HadTarget = HadTargetState.Fake;
             }
@@ -2378,7 +2377,7 @@ namespace CoreSystems.Projectiles
         private void SmartTargetLoss(Vector3D targetPos)
         {
 
-            if (Info.Storage.WasTracking && (Info.Ai.Session.Tick20 || Vector3.Dot(Direction, Position - targetPos) > 0) || !Info.Storage.WasTracking)
+            if (Info.Storage.WasTracking && (Info.Weapon.Comp.Session.Tick20 || Vector3.Dot(Direction, Position - targetPos) > 0) || !Info.Storage.WasTracking)
             {
                 var targetDir = -Direction;
                 var refDir = Vector3D.Normalize(Position - targetPos);
@@ -2411,10 +2410,11 @@ namespace CoreSystems.Projectiles
         internal bool NewTarget()
         {
             var aConst = Info.AmmoDef.Const;
-            var s = Info.Storage;
+            var storage = Info.Storage;
+            var s = Info.Weapon.Comp.Session;
             var giveUp = HadTarget != HadTargetState.None && ++TargetsSeen > aConst.MaxTargets && aConst.MaxTargets != 0;
-            s.ChaseAge = (int) Info.RelativeAge;
-            s.PickTarget = false;
+            storage.ChaseAge = (int) Info.RelativeAge;
+            storage.PickTarget = false;
             var eTarget = Info.Target.TargetObject as MyEntity;
             var pTarget = Info.Target.TargetObject as Projectile;
             var newTarget = true;
@@ -2429,12 +2429,12 @@ namespace CoreSystems.Projectiles
                     if (!giveUp && !Info.AcquiredEntity || Info.AcquiredEntity && giveUp || !Info.AmmoDef.Trajectory.Smarts.NoTargetExpire || badEntity)
                     {
                         if (Info.Target.TargetState == Target.TargetStates.IsEntity)
-                            Info.Target.Reset(Info.Ai.Session.Tick, Target.States.ProjectileNewTarget);
+                            Info.Target.Reset(s.Tick, Target.States.ProjectileNewTarget);
                     }
                     newTarget = false;
                 }
 
-                if (Info.Ai.Session.AdvSyncServer && aConst.FullSync) {
+                if (s.AdvSyncServer && aConst.FullSync) {
                     if (Info.Target.TargetObject is MyEntity && eTarget != Info.Target.TargetObject)
                         SyncTargetServerProjectile();
                 }
@@ -2448,14 +2448,14 @@ namespace CoreSystems.Projectiles
                 if (giveUp || !Ai.ReAcquireProjectile(this))
                 {
                     if (Info.Target.TargetState == Target.TargetStates.IsProjectile)
-                        Info.Target.Reset(Info.Ai.Session.Tick, Target.States.ProjectileNewTarget);
+                        Info.Target.Reset(s.Tick, Target.States.ProjectileNewTarget);
 
                     newTarget = false;
                 }
             }
 
             if (newTarget && aConst.Health > 0 && !aConst.IsBeamWeapon && (Info.Target.TargetState == Target.TargetStates.IsFake || Info.Target.TargetObject != null && oldTarget != Info.Target.TargetObject))
-                Info.Ai.Session.Projectiles.AddProjectileTargets(this);
+                s.Projectiles.AddProjectileTargets(this);
 
             return newTarget;
         }
@@ -2775,8 +2775,8 @@ namespace CoreSystems.Projectiles
                 case AntiSmart:
                     var eWarSphere = new BoundingSphereD(Position, Info.AmmoDef.Const.EwarRadius);
 
-                    var s = Info.Ai.Session;
-                    DynTrees.GetAllProjectilesInSphere(Info.Ai.Session, ref eWarSphere, s.EwaredProjectiles, false);
+                    var s = Info.Weapon.Comp.Session;
+                    DynTrees.GetAllProjectilesInSphere(Info.Weapon.Comp.Session, ref eWarSphere, s.EwaredProjectiles, false);
                     for (int j = 0; j < s.EwaredProjectiles.Count; j++)
                     {
                         var netted = s.EwaredProjectiles[j];
@@ -2950,7 +2950,7 @@ namespace CoreSystems.Projectiles
                     newOrigin += advOffSet;
                 }
 
-                var projectiles = Info.Ai.Session.Projectiles;
+                var projectiles = Info.Weapon.Comp.Session.Projectiles;
                 var shrapnel = projectiles.ShrapnelPool.Count > 0 ? projectiles.ShrapnelPool.Pop() : new Fragments();
                 shrapnel.Init(this, projectiles.FragmentPool, fragAmmoDef, ref newOrigin, ref pointDir);
                 projectiles.ShrapnelToSpawn.Add(shrapnel);
@@ -2978,7 +2978,7 @@ namespace CoreSystems.Projectiles
 
         internal void SyncPosServerProjectile(ProtoProPosition.ProSyncState state)
         {
-            var session = Info.Ai.Session;
+            var session = Info.Weapon.Comp.Session;
             var proSync = session.ProtoWeaponProSyncPosPool.Count > 0 ? session.ProtoWeaponProSyncPosPool.Pop() : new ProtoProPosition();
             proSync.Position = Position;
             proSync.State = state;
@@ -2990,7 +2990,7 @@ namespace CoreSystems.Projectiles
 
         internal void SyncTargetServerProjectile()
         {
-            var session = Info.Ai.Session;
+            var session = Info.Weapon.Comp.Session;
             var proSync = session.ProtoWeaponProSyncTargetPool.Count > 0 ? session.ProtoWeaponProSyncTargetPool.Pop() : new ProtoProTarget();
             proSync.ProId = Info.SyncId;
             var targetId = ((MyEntity) Info.Target.TargetObject).EntityId;
@@ -3001,8 +3001,9 @@ namespace CoreSystems.Projectiles
 
         internal void SyncClientProjectile(int posSlot)
         {
-            var s = Info.Ai.Session;
             var w = Info.Weapon;
+            var s = w.Comp.Session;
+
             ClientProSync sync;
             if (w.WeaponProSyncs.TryGetValue(Info.SyncId, out sync))
             {

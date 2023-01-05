@@ -34,7 +34,7 @@ namespace CoreSystems
         private readonly Queue<long> _effectPurge = new Queue<long>();
         internal bool ClientEwarStale;
 
-        private static void ForceFields(HitEntity hitEnt, ProInfo info)
+        private void ForceFields(HitEntity hitEnt, ProInfo info)
         {
             var depletable = info.AmmoDef.Ewar.Depletable;
             var healthPool = depletable && info.BaseHealthPool > 0 ? info.BaseHealthPool : float.MaxValue;
@@ -43,12 +43,12 @@ namespace CoreSystems
             if (hitEnt.Entity.Physics == null || !hitEnt.Entity.Physics.Enabled || hitEnt.Entity.Physics.IsStatic || !hitEnt.HitPos.HasValue)
                 return;
 
-            if (info.Ai.Session.IsServer)
+            if (IsServer)
             {
                 var massMulti = 1f;
 
                 Ai.TargetInfo tInfo;
-                if (info.Ai.Targets.TryGetValue(hitEnt.Entity, out tInfo) && tInfo.TargetAi?.ShieldBlock != null && info.Ai.Session.SApi.IsFortified(tInfo.TargetAi.ShieldBlock))
+                if (info.Ai.Targets.TryGetValue(hitEnt.Entity, out tInfo) && tInfo.TargetAi?.ShieldBlock != null && SApi.IsFortified(tInfo.TargetAi.ShieldBlock))
                     massMulti = 5f;
 
                 var forceDef = info.AmmoDef.Ewar.Force;

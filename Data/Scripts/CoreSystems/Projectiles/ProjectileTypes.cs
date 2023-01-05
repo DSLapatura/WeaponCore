@@ -272,7 +272,7 @@ namespace CoreSystems.Support
 
             ProSyncPosMissCount = 0;
 
-            p.Info.Ai.Session.FullSyncInfoPool.Push(this);
+            p.Info.Weapon.Comp.Session.FullSyncInfoPool.Push(this);
         }
     }
 
@@ -289,7 +289,7 @@ namespace CoreSystems.Support
         internal Vector3D DestinationPos;
         internal Vector3D LookAtPos;
         internal Vector3D OffsetDir;
-
+        internal double RelativeAgeStart;
         internal double StartDistanceTraveled;
 
         internal void Clean(Projectile p)
@@ -302,6 +302,7 @@ namespace CoreSystems.Support
             LookAtPos = Vector3D.Zero;
             OffsetDir = Vector3D.Zero;
             StartDistanceTraveled = 0;
+            RelativeAgeStart = 0;
             NavTargetBound = new BoundingSphereD(Vector3D.Zero, 0);
 
             p.Info.AmmoDef.Const.ApproachInfoPool.Push(this);
@@ -346,7 +347,7 @@ namespace CoreSystems.Support
             DroneStat = DroneStatus.Launch;
             DroneMsn = DroneMission.Attack;
 
-            p.Info.Ai.Session.DroneInfoPool.Push(this);
+            p.Info.Weapon.Comp.Session.DroneInfoPool.Push(this);
         }
     }
 
@@ -493,7 +494,7 @@ namespace CoreSystems.Support
             var aConst = info.AmmoDef.Const;
             var fragCount = p.Info.AmmoDef.Fragment.Fragments;
             var guidance = aConst.IsDrone || aConst.IsSmart;
-            if (info.Ai.Session.IsClient && fragCount > 0 && info.AimedShot && aConst.ClientPredictedAmmo && !info.IsFragment)
+            if (info.Weapon.Comp.Session.IsClient && fragCount > 0 && info.AimedShot && aConst.ClientPredictedAmmo && !info.IsFragment)
             {
                 Projectiles.Projectiles.SendClientHit(p, false);
             }

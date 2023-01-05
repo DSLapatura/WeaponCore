@@ -500,6 +500,7 @@ namespace CoreSystems.Support
             DeadProjectiles.Clear();
             NearByShieldsTmp.Clear();
             NearByFriendlyShields.Clear();
+            NearByFriendlyShieldsCache.Clear();
             StaticsInRangeTmp.Clear();
             TestShields.Clear();
             NewEntities.Clear();

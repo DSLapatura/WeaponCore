@@ -174,6 +174,7 @@ namespace CoreSystems.Support
         internal void NearByShield()
         {
             NearByFriendlyShields.Clear();
+            NearByFriendlyShieldsCache.Clear();
             ShieldFortified = false;
             for (int i = 0; i < NearByShieldsTmp.Count; i++) {
 
@@ -195,6 +196,7 @@ namespace CoreSystems.Support
                         
                         if (friendly) {
                             NearByFriendlyShields.Add(shield.ShieldEnt);
+                            NearByFriendlyShieldsCache.Add(shield.ShieldEnt);
                             FriendlyShieldNear = true;
                         }
                         ShieldNear = true;

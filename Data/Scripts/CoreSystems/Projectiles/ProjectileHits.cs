@@ -80,7 +80,9 @@ namespace CoreSystems.Projectiles
                 if (info.EwarActive && character != null && !genericFields) continue;
 
                 var entSphere = ent.PositionComp.WorldVolume;
-                if (aConst.CheckFutureIntersection)
+                var checkShield = Session.ShieldApiLoaded && Session.ShieldHash == ent.DefinitionId?.SubtypeId;
+                MyTuple<IMyTerminalBlock, MyTuple<bool, bool, float, float, float, int>, MyTuple<MatrixD, MatrixD>>? shieldInfo = null;
+                if (aConst.CheckFutureIntersection && !entIsSelf && (!checkShield || ai.NearByFriendlyShieldsCache.Contains(ent)))
                 {
                     var distSqrToSphere = Vector3D.DistanceSquared(beamFrom, entSphere.Center);
                     if (distSqrToSphere > beamLenSqr)
@@ -105,7 +107,6 @@ namespace CoreSystems.Projectiles
                 var safeZone = ent as MySafeZone;
                 if (safeZone != null && safeZone.Enabled)
                 {
-
                     var action = (Session.SafeZoneAction)safeZone.AllowedActions;
                     if ((action & Session.SafeZoneAction.Damage) == 0 || (action & Session.SafeZoneAction.Shooting) == 0)
                     {
@@ -135,22 +136,13 @@ namespace CoreSystems.Projectiles
 
                 HitEntity hitEntity = null;
                 var poolId = Environment.CurrentManagedThreadId;
-                if (poolId < 0 || poolId > 1024)
-                {
-                    Log.Line($"bad poolId: {poolId}");
-                    Session.SuppressWc = true;
-                    break;
-                }
-
-
                 var pool = HitEntityArrayPool[poolId];
-                var checkShield = Session.ShieldApiLoaded && Session.ShieldHash == ent.DefinitionId?.SubtypeId && ent.Render.Visible;
-                MyTuple<IMyTerminalBlock, MyTuple<bool, bool, float, float, float, int>, MyTuple<MatrixD, MatrixD>>? shieldInfo = null;
 
-                if (checkShield && !info.EwarActive || info.EwarActive && (aConst.EwarType == Dot || aConst.EwarType == Emp))
+                if (checkShield && ent.Render.Visible && !info.EwarActive || info.EwarActive && (aConst.EwarType == Dot || aConst.EwarType == Emp))
                 {
+                    if (shieldInfo == null)
+                        shieldInfo = Session.SApi.MatchEntToShieldFastExt(ent, true);
 
-                    shieldInfo = Session.SApi.MatchEntToShieldFastExt(ent, true);
                     if (shieldInfo != null && (firingCube == null || !firingCube.CubeGrid.IsSameConstructAs(shieldInfo.Value.Item1.CubeGrid) && !goCritical))
                     {
                         if (shieldInfo.Value.Item2.Item1)
@@ -478,8 +470,8 @@ namespace CoreSystems.Projectiles
             {
                 var oGrid = closestFutureEnt as MyCubeGrid;
                 var tGrid = target.TargetObject as MyCubeBlock;
-                var invalid = oGrid != null && (w.Comp.IsBlock && oGrid.IsSameConstructAs(w.Comp.Cube.CubeGrid) || tGrid != null && oGrid.IsSameConstructAs(tGrid.CubeGrid));
-                if (!invalid)
+                var isTarget = oGrid != null &&  tGrid != null && oGrid.IsSameConstructAs(tGrid.CubeGrid);
+                if (!isTarget)
                 {
                     s.Obstacle.Entity = closestFutureEnt;
                     s.Obstacle.LastSeenTick = Session.Tick;
@@ -554,6 +546,8 @@ namespace CoreSystems.Projectiles
         internal static void SendClientHit(Projectile p, bool hit)
         {
             var info = p.Info;
+            var w = info.Weapon;
+            var comp = w.Comp;
             var aConst = p.Info.AmmoDef.Const;
 
             var isBeam = aConst.IsBeamWeapon;
@@ -565,7 +559,7 @@ namespace CoreSystems.Projectiles
 
             var intersectOrigin = isBeam ? new Vector3D(p.Beam.From + (p.Direction * distToTarget)) : p.LastPosition;
 
-            info.Ai.Session.SendFixedGunHitEvent(hit, info.Weapon.Comp.CoreEntity, info.Hit.Entity, intersectOrigin, vel, info.OriginUp, info.MuzzleId, info.Weapon.System.WeaponIdHash, aConst.AmmoIdxPos, (float)(isBeam ? info.MaxTrajectory : distToTarget));
+            comp.Session.SendFixedGunHitEvent(hit, comp.CoreEntity, info.Hit.Entity, intersectOrigin, vel, info.OriginUp, info.MuzzleId, w.System.WeaponIdHash, aConst.AmmoIdxPos, (float)(isBeam ? info.MaxTrajectory : distToTarget));
             info.AimedShot = false; //to prevent hits on another grid from triggering again
         }
 
@@ -925,7 +919,7 @@ namespace CoreSystems.Projectiles
                     else if (p.Beam.Length > 85)
                     {
                         IHitInfo hit;
-                        if (p.Info.Ai.Session.Physics.CastRay(p.Beam.From, p.Beam.To, out hit, CollisionLayers.StaticCollisionLayer, false) && hit != null)
+                        if (s.Physics.CastRay(p.Beam.From, p.Beam.To, out hit, CollisionLayers.StaticCollisionLayer, false) && hit != null)
                             voxelHit = hit.Position;
                     }
                     else

@@ -69,6 +69,8 @@ namespace CoreSystems.Support
         internal readonly List<Ai> TargetAisTmp = new List<Ai>();
         internal readonly List<Shields> NearByShieldsTmp = new List<Shields>();
         internal readonly List<MyEntity> NearByFriendlyShields = new List<MyEntity>();
+        internal readonly List<MyEntity> NearByFriendlyShieldsCache = new List<MyEntity>();
+
         internal readonly List<MyEntity> TestShields = new List<MyEntity>();
         internal readonly List<MyEntity> EntitiesInRange = new List<MyEntity>();
         internal readonly List<DetectInfo> ObstructionsTmp = new List<DetectInfo>();
