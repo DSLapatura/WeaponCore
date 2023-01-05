@@ -2174,14 +2174,17 @@ namespace CoreSystems.Projectiles
                     break;
 
                 case DroneInfo.DroneStatus.Orbit://Orbit & shoot behavior
-                    var insideOrbitSphere = new BoundingSphereD(orbitSphere.Center, orbitSphere.Radius * 0.50);
-                    if (insideOrbitSphere.Contains(Position) != ContainmentType.Disjoint)
+                    var noseOffset = new Vector3D(Position + (Direction * (speedLimitPerTick)));
+                    var insideOrbitSphere = new BoundingSphereD(orbitSphere.Center, orbitSphere.Radius * 0.90);
+                    if (orbitSphereClose.Contains(Position) != ContainmentType.Disjoint)
                     {
-                        droneNavTarget = Position + (Direction + new Vector3D(0, 0.5, 0));//Strafe or too far inside sphere recovery
+                        var metersInSideSphere = MyUtils.GetSmallestDistanceToSphere(ref Position, ref orbitSphere);
+                        var dirToSurface = Vector3D.Normalize(noseOffset - orbitSphere.Center);
+                        var futureSurfacePos = orbitSphere.Center - dirToSurface * metersInSideSphere;
+                        droneNavTarget = Vector3D.Normalize(futureSurfacePos - Position);
                     }
                     else
                     {
-                        var noseOffset = new Vector3D(Position + (Direction * (speedLimitPerTick)));
                         double length;
                         Vector3D.Distance(ref orbitSphere.Center, ref noseOffset, out length);
                         var dir = (noseOffset - orbitSphere.Center) / length;
