@@ -163,7 +163,7 @@ namespace CoreSystems.Projectiles
             }
             var tTarget = Info.Target.TargetObject as Projectile;
             var eTarget = Info.Target.TargetObject as MyEntity;
-
+            Info.LastTarget = Info.Target.TargetObject;
             switch (Info.Target.TargetState)
             {
                 case Target.TargetStates.WasProjectile:
@@ -178,6 +178,8 @@ namespace CoreSystems.Projectiles
                         Log.Line($"ProjectileStart had invalid Projectile target state");
                         break;
                     }
+                    Info.LastTarget = null;
+
                     HadTarget = HadTargetState.Projectile;
                     TargetPosition = tTarget.Position;
                     tTarget.Seekers.Add(this);
@@ -211,7 +213,8 @@ namespace CoreSystems.Projectiles
                     TargetPosition = Info.IsFragment ? TargetPosition : Vector3D.Zero;
                     break;
             }
-
+            if (HadTarget == HadTargetState.None)
+                Log.Line($"{Info.IsFragment} - {Info.Target.TargetObject == null} - {ammoDef.AmmoRound}");
             float variance = 0;
             if (aConst.RangeVariance)
             {
@@ -506,7 +509,6 @@ namespace CoreSystems.Projectiles
                 var isZombie = aConst.CanZombie && hadTarget && !fake && !validTarget && s.ZombieLifeTime > 0 && zombieSlot;
                 var seekNewTarget = timeSlot && hadTarget && !validTarget && !overMaxTargets;
                 var seekFirstTarget = !hadTarget && !validTarget && s.PickTarget && (Info.RelativeAge > 120 && timeSlot || check && Info.IsFragment);
-
                 #region TargetTracking
                 if ((s.PickTarget && timeSlot && !clientSync || seekNewTarget || gaveUpChase && validTarget || isZombie || seekFirstTarget) && NewTarget() || validTarget)
                 {

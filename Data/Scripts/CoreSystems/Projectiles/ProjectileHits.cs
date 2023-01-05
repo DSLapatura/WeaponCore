@@ -82,7 +82,7 @@ namespace CoreSystems.Projectiles
                 var entSphere = ent.PositionComp.WorldVolume;
                 var checkShield = Session.ShieldApiLoaded && Session.ShieldHash == ent.DefinitionId?.SubtypeId;
                 MyTuple<IMyTerminalBlock, MyTuple<bool, bool, float, float, float, int>, MyTuple<MatrixD, MatrixD>>? shieldInfo = null;
-                if (aConst.CheckFutureIntersection && !entIsSelf && (!checkShield || ai.NearByFriendlyShieldsCache.Contains(ent)))
+                if (aConst.CheckFutureIntersection && !entIsSelf && (!checkShield || ai.FriendlyShieldNear && ai.NearByFriendlyShieldsCache.Contains(ent)))
                 {
                     var distSqrToSphere = Vector3D.DistanceSquared(beamFrom, entSphere.Center);
                     if (distSqrToSphere > beamLenSqr)

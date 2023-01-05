@@ -20,7 +20,7 @@ namespace CoreSystems.Support
         internal readonly List<HitEntity> HitList = new List<HitEntity>();
         internal List<MyTuple<Vector3D, object, float>> ProHits;
         internal int[] PatternShuffle;
-
+        internal object LastTarget;
         internal AvShot AvShot;
         internal Weapon Weapon;
         internal Ai Ai;
@@ -139,6 +139,7 @@ namespace CoreSystems.Support
             MyPlanet = null;
             AmmoDef = null;
             VoxelCache = null;
+            LastTarget = null;
             Weapon = null;
             IsFragment = false;
             EwarAreaPulse = false;
@@ -499,6 +500,10 @@ namespace CoreSystems.Support
                 Projectiles.Projectiles.SendClientHit(p, false);
             }
 
+            var targetObj = target.TargetObject ?? info.LastTarget;
+
+            var targetState = targetObj == null ? target.TargetState : targetObj is MyEntity ? Target.TargetStates.IsEntity : Target.TargetStates.IsProjectile;
+
             for (int i = 0; i < fragCount; i++)
             {
                 var frag = fragPool.Count > 0 ? fragPool.Pop() : new Fragment();
@@ -515,8 +520,10 @@ namespace CoreSystems.Support
 
                 frag.Depth = (ushort) (info.SpawnDepth + 1);
 
-                frag.TargetState = target.TargetState;
-                frag.TargetEntity = target.TargetObject;
+                frag.TargetState = targetState;
+                frag.TargetEntity = targetObj;
+                frag.TopEntityId = target.TopEntityId;
+                frag.TargetPos = target.TargetPos;
                 frag.Gravity = p.Gravity;
                 frag.MuzzleId = info.MuzzleId;
                 frag.Radial = aConst.FragRadial;
@@ -566,9 +573,12 @@ namespace CoreSystems.Support
                 var aConst = aDef.Const;
                 info.AmmoDef = aDef;
                 var target = info.Target;
+                
                 target.TargetObject = frag.TargetEntity;
                 target.TargetState = frag.TargetState;
-                target.TargetState = frag.TargetState;
+                target.TopEntityId = frag.TopEntityId;
+                target.TargetPos = frag.TargetPos;
+
                 info.Target.TargetPos = frag.PrevTargetPos;
                 info.IsFragment = true;
                 info.MuzzleId = frag.MuzzleId;
@@ -627,6 +637,7 @@ namespace CoreSystems.Support
         public Vector3D Direction;
         public Vector3D Velocity;
         public Vector3D PrevTargetPos;
+        public Vector3D TargetPos;
         public Vector3 Gravity;
         public int MuzzleId;
         public ushort Depth;
@@ -640,6 +651,8 @@ namespace CoreSystems.Support
         internal int SceneVersion;
         internal ulong SyncId;
         internal ushort SyncedFrags;
+        internal long TopEntityId;
+
     }
 
     public struct ApproachDebug
