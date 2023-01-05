@@ -55,6 +55,12 @@ namespace CoreSystems.Support
             SubtypeId = tDef.Key;
             var map = tDef.Value;
             var numOfParts = wDefList.Count;
+
+            if (modPath == null || numOfParts == 0) {
+                Log.Line($"invalid modpath:{modPath == null} for {SubtypeId} - numOfParts:{numOfParts}");
+                return;
+            }
+
             MultiParts = numOfParts > 1;
             ModPath = modPath;
             MyObjectBuilder_Checkpoint.ModItem modItem;
@@ -85,12 +91,11 @@ namespace CoreSystems.Support
                     }
                 }
 
-                if (weaponDef == null)
+                if (weaponDef?.Ammos == null || weaponDef.Ammos.Length == 0)
                 {
-                    Log.Line("CoreStructure failed to match PartName to typeName");
+                    Log.Line("CoreStructure failed to match PartName to typeName or ammo invalid");
                     return;
                 }
-
                 Session.WeaponValuesMap[weaponDef] = null;
                 var muzzletNameHash = MyStringHash.GetOrCompute(w.Key);
                 muzzleHashes[partId] = muzzletNameHash;
@@ -180,7 +185,10 @@ namespace CoreSystems.Support
                         {
                             List<Session.WeaponMagMap> list2;
                             if (!Session.SubTypeIdToNpcSafeWeaponMagMap.TryGetValue(typeId, out list2))
+                            {
+                                list2 = new List<Session.WeaponMagMap>();
                                 Session.SubTypeIdToNpcSafeWeaponMagMap[typeId] = list2;
+                            }
 
                             list2.Add(new Session.WeaponMagMap {WeaponId = coreSystem.WeaponId, AmmoType = ammo});
                         }
@@ -196,7 +204,6 @@ namespace CoreSystems.Support
 
                 if (coreSystem.Values.HardPoint.Ai.TurretAttached && !TurretAttached)
                     TurretAttached = true;
-                
                 ApproximatePeakPowerCombined += coreSystem.ApproximatePeakPower;
                 CombinedIdlePower += coreSystem.WConst.IdlePower;
 
