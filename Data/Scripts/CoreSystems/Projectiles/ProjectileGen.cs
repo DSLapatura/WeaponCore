@@ -54,6 +54,7 @@ namespace CoreSystems.Projectiles
                 {
                     target.TargetState = wTarget.TargetState;
                     target.TargetPos = wTarget.TargetPos;
+                    target.TopEntityId = wTarget.TopEntityId;
                 }
 
                 p.TargetPosition = wTarget.TargetPos;

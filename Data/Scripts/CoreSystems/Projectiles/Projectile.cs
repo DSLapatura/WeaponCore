@@ -164,6 +164,7 @@ namespace CoreSystems.Projectiles
             var tTarget = Info.Target.TargetObject as Projectile;
             var eTarget = Info.Target.TargetObject as MyEntity;
             Info.LastTarget = Info.Target.TargetObject;
+            Info.LastTopTargetId = Info.Target.TopEntityId;
             switch (Info.Target.TargetState)
             {
                 case Target.TargetStates.WasProjectile:
@@ -486,7 +487,7 @@ namespace CoreSystems.Projectiles
                     validEntity = !targetEnt.MarkedForClose;
                     
                     var targetChange = validEntity && aConst.FocusOnly && Info.Target.TopEntityId != ai.Construct.Data.Repo.FocusData.Target;
-                    if (targetChange && (aConst.FocusEviction || ai.Construct.Data.Repo.FocusData.Target != 0))
+                    if (targetChange && (aConst.FocusEviction || ai.Construct.Data.Repo.FocusData.Target > 0))
                         validEntity = IsFocusTarget(targetEnt);
                 }
 
@@ -2458,6 +2459,12 @@ namespace CoreSystems.Projectiles
 
             if (newTarget && aConst.Health > 0 && !aConst.IsBeamWeapon && (Info.Target.TargetState == Target.TargetStates.IsFake || Info.Target.TargetObject != null && oldTarget != Info.Target.TargetObject))
                 s.Projectiles.AddProjectileTargets(this);
+
+            if (newTarget)
+            {
+                Info.LastTarget = Info.Target.TargetObject;
+                Info.LastTopTargetId = Info.Target.TopEntityId;
+            }
 
             return newTarget;
         }

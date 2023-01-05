@@ -56,7 +56,7 @@ namespace CoreSystems.Support
         internal long DamageDoneAoe;
         internal long DamageDoneShld;
         internal long DamageDoneProj;
-
+        internal long LastTopTargetId;
         internal float BaseDamagePool;
         internal float BaseHealthPool;
         internal float BaseEwarPool;
@@ -155,6 +155,7 @@ namespace CoreSystems.Support
             SpawnDepth = 0;
             Frags = 0;
             MuzzleId = 0;
+            LastTopTargetId = 0;
             Age = -1;
             RelativeAge = -1;
             PrevRelativeAge = -1;
@@ -500,9 +501,9 @@ namespace CoreSystems.Support
                 Projectiles.Projectiles.SendClientHit(p, false);
             }
 
-            var targetObj = target.TargetObject ?? info.LastTarget;
-
-            var targetState = targetObj == null ? target.TargetState : targetObj is MyEntity ? Target.TargetStates.IsEntity : Target.TargetStates.IsProjectile;
+            var targetObjEnt = info.LastTarget as MyEntity;
+            var state = target.TargetState == Target.TargetStates.IsEntity || target.TargetState == Target.TargetStates.IsProjectile || target.TargetState == Target.TargetStates.IsFake ? target.TargetState :  Target.TargetStates.None;
+            var targetState = state == Target.TargetStates.None && info.LastTarget == null ? state : targetObjEnt!= null ? Target.TargetStates.IsEntity : Target.TargetStates.IsProjectile;
 
             for (int i = 0; i < fragCount; i++)
             {
@@ -521,8 +522,8 @@ namespace CoreSystems.Support
                 frag.Depth = (ushort) (info.SpawnDepth + 1);
 
                 frag.TargetState = targetState;
-                frag.TargetEntity = targetObj;
-                frag.TopEntityId = target.TopEntityId;
+                frag.TargetEntity = info.LastTarget;
+                frag.TopEntityId = info.LastTopTargetId;
                 frag.TargetPos = target.TargetPos;
                 frag.Gravity = p.Gravity;
                 frag.MuzzleId = info.MuzzleId;
