@@ -61,7 +61,6 @@ namespace CoreSystems.Projectiles
             WaterData water = null;
             if (Session.WaterApiLoaded && info.MyPlanet != null)
                 Session.WaterMap.TryGetValue(info.MyPlanet.EntityId, out water);
-            Log.Line($"check: {info.AmmoDef.AmmoRound} - {collectionCount}");
             MyEntity closestFutureEnt = null;
             IMyTerminalBlock iShield = null;
             for (int i = 0; i < collectionCount; i++)
@@ -722,7 +721,6 @@ namespace CoreSystems.Projectiles
             var aConst = info.AmmoDef.Const;
             var eWarPulse = aConst.Ewar && aConst.Pulse;
             var triggerEvent = eWarPulse && !info.EwarAreaPulse && aConst.EwarTriggerRange > 0;
-            Log.Line($"hit: {info.AmmoDef.AmmoRound} - {eWarPulse} - {triggerEvent} - {aConst.Ewar} - {info.EwarActive}");
             for (int i = 0; i < count; i++)
             {
                 var isX = i == 0;

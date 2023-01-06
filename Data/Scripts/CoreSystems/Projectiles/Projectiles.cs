@@ -399,7 +399,7 @@ namespace CoreSystems.Projectiles
                 {
                     p.PruneSphere.Center = p.Position;
                     p.PruneSphere.Radius = aConst.CollisionSize;
-                    if (aConst.IsBeamWeapon || info.IsFragment || info.DistanceTraveled > aConst.CollisionSize + 1.35f) {
+                    if (aConst.IsBeamWeapon || info.DistanceTraveled > aConst.CollisionSize + 1.35f) {
 
                         if (aConst.DynamicGuidance && p.PruneQuery == MyEntityQueryType.Dynamic && Session.Tick60)
                             p.CheckForNearVoxel(60);

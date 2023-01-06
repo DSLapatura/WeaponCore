@@ -213,8 +213,6 @@ namespace CoreSystems.Projectiles
                     TargetPosition = Info.IsFragment ? TargetPosition : Vector3D.Zero;
                     break;
             }
-            if (HadTarget == HadTargetState.None)
-                Log.Line($"{Info.IsFragment} - {Info.Target.TargetObject == null} - {Info.Target.TargetState} - {ammoDef.AmmoRound}");
             float variance = 0;
             if (aConst.RangeVariance)
             {
