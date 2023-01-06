@@ -494,15 +494,14 @@ namespace CoreSystems.Projectiles
 
                 var prevSlotAge = (Info.PrevRelativeAge + s.SmartSlot) % checkTime;
                 var currentSlotAge = (Info.RelativeAge + s.SmartSlot) % checkTime;
-                var timeSlot = prevSlotAge < 0 || prevSlotAge >= currentSlotAge;
-
+                var timeSlot = prevSlotAge < 0 || prevSlotAge > currentSlotAge;
                 var prevZombieAge = (s.PrevZombieLifeTime + s.SmartSlot) % checkTime;
                 var currentZombieAge = (s.PrevZombieLifeTime + s.SmartSlot) % checkTime;
-                var zombieSlot = prevZombieAge < 0 || prevZombieAge >= currentZombieAge;
+                var zombieSlot = prevZombieAge < 0 || prevZombieAge > currentZombieAge;
 
                 var prevCheck = Info.PrevRelativeAge % checkTime;
                 var currentCheck = Info.RelativeAge % checkTime;
-                var check = prevCheck < 0 || prevCheck >= currentCheck;
+                var check = prevCheck < 0 || prevCheck > currentCheck;
 
                 var isZombie = aConst.CanZombie && hadTarget && !fake && !validTarget && s.ZombieLifeTime > 0 && zombieSlot;
                 var seekNewTarget = timeSlot && hadTarget && !validTarget && !overMaxTargets;
@@ -668,7 +667,7 @@ namespace CoreSystems.Projectiles
                 {
                     var prevSmartCheck = Info.PrevRelativeAge % aConst.OffsetTime;
                     var currentSmartCheck = Info.RelativeAge % aConst.OffsetTime;
-                    var smartCheck = prevSmartCheck < 0 || prevSmartCheck >= currentSmartCheck;
+                    var smartCheck = prevSmartCheck < 0 || prevSmartCheck > currentSmartCheck;
 
                     if (smartCheck && !Vector3D.IsZero(Direction) && MyUtils.IsValid(Direction))
                     {
@@ -980,7 +979,7 @@ namespace CoreSystems.Projectiles
                 {
                     var prevCheck = Info.PrevRelativeAge % def.OffsetTime;
                     var currentCheck = Info.RelativeAge % def.OffsetTime;
-                    if (prevCheck < 0 || prevCheck >= currentCheck)
+                    if (prevCheck < 0 || prevCheck > currentCheck)
                         SetNavTargetOffset(def);
                     destination += storage.ApproachInfo.NavTargetBound.Center;
                 }
@@ -1940,15 +1939,15 @@ namespace CoreSystems.Projectiles
 
             var prevSlotAge = (Info.PrevRelativeAge + s.SmartSlot) % 30;
             var currentSlotAge = (Info.RelativeAge + s.SmartSlot) % 30;
-            var timeSlot = prevSlotAge < 0 || prevSlotAge >= currentSlotAge;
+            var timeSlot = prevSlotAge < 0 || prevSlotAge > currentSlotAge;
 
             var prevCheck = Info.PrevRelativeAge % 30;
             var currentCheck = Info.RelativeAge % 30;
-            var check = prevCheck < 0 || prevCheck >= currentCheck;
+            var check = prevCheck < 0 || prevCheck > currentCheck;
 
             var prevZombieAge = (s.PrevZombieLifeTime + s.SmartSlot) % 30;
             var currentZombieAge = (s.PrevZombieLifeTime + s.SmartSlot) % 30;
-            var zombieSlot = prevZombieAge < 0 || prevZombieAge >= currentZombieAge;
+            var zombieSlot = prevZombieAge < 0 || prevZombieAge > currentZombieAge;
 
             var hadTarget = HadTarget != HadTargetState.None;
             var overMaxTargets = hadTarget && TargetsSeen > aConst.MaxTargets && aConst.MaxTargets != 0;
@@ -2110,7 +2109,7 @@ namespace CoreSystems.Projectiles
 
             var prevCheck = Info.PrevRelativeAge % offsetTime;
             var currentCheck = Info.RelativeAge % offsetTime;
-            var check = prevCheck < 0 || prevCheck >= currentCheck;
+            var check = prevCheck < 0 || prevCheck > currentCheck;
 
             if (check || revOffsetDir)
             {
@@ -2768,9 +2767,10 @@ namespace CoreSystems.Projectiles
                 }
             }
 
-            var prevCheck = Info.PrevRelativeAge % Info.AmmoDef.Const.PulseInterval;
-            var currentCheck = Info.RelativeAge % Info.AmmoDef.Const.PulseInterval;
-            var check = prevCheck < 0 || prevCheck >= currentCheck;
+            var interval = Info.AmmoDef.Const.PulseInterval;
+            var prevCheck = Info.PrevRelativeAge % interval;
+            var currentCheck = Info.RelativeAge % interval;
+            var check = interval == 1 || prevCheck < 0 || prevCheck >= currentCheck;
             if (!Info.AmmoDef.Const.Pulse || Info.AmmoDef.Const.Pulse && check)
                 EwarEffects();
             else Info.EwarActive = false;
