@@ -1679,7 +1679,39 @@ namespace CoreSystems.Support
         public readonly bool StartAnd;
         public readonly bool NoSpawns;
         public readonly double ModFutureStep;
+        public readonly TrajectoryDef.ApproachDef.UpRelativeTo Up;
+        public readonly TrajectoryDef.ApproachDef.RelativeTo Source;
+        public readonly TrajectoryDef.ApproachDef.RelativeTo Destination;
+        public readonly TrajectoryDef.ApproachDef.RelativeTo Elevation;
+        public readonly TrajectoryDef.ApproachDef.Conditions StartCon1;
+        public readonly TrajectoryDef.ApproachDef.Conditions StartCon2;
+        public readonly TrajectoryDef.ApproachDef.Conditions EndCon1;
+        public readonly TrajectoryDef.ApproachDef.Conditions EndCon2;
+        public readonly bool AdjustUp;
+        public readonly bool DisableAvoidance;
+        public readonly bool AdjustSource;
+        public readonly bool AdjustDestination;
+        public readonly bool Orbit;
+        public readonly bool CanExpireOnceStarted;
+        public readonly bool PushLeadByTravelDistance;
+        public readonly double OrbitRadius;
+        public readonly double AngleOffset;
+        public readonly double DesiredElevation;
+        public readonly double OffsetMinRadius;
+        public readonly double OffsetMaxRadius;
 
+        public readonly double TrackingDistance;
+        public readonly double LeadDistance;
+        public readonly double AccelMulti;
+        public readonly double SpeedCapMulti;
+
+        public readonly double Start1Value;
+        public readonly double Start2Value;
+        public readonly double End1Value;
+        public readonly double End2Value;
+        public readonly double ElevationTolerance;
+
+        public readonly int OffsetTime;
         public ApproachConstants(WeaponSystem.AmmoType ammo, int index, WeaponDefinition wDef)
         {
             var def = ammo.AmmoDef.Trajectory.Approaches[index];
@@ -1690,6 +1722,38 @@ namespace CoreSystems.Support
             StartParticle = !string.IsNullOrEmpty(def.StartParticle.Name);
             AlternateModel = !string.IsNullOrEmpty(def.AlternateModel);
             NoSpawns = def.NoTimedSpawns;
+            Up = def.Up;
+            Source = def.Source;
+            Destination = def.Destination;
+            Elevation = def.Elevation;
+            StartCon1 = def.StartCondition1;
+            StartCon2 = def.StartCondition2;
+            EndCon1 = def.EndCondition1;
+            EndCon2 = def.EndCondition2;
+            AdjustUp = def.AdjustUp;
+            Orbit = def.Orbit;
+            CanExpireOnceStarted = def.CanExpireOnceStarted;
+            PushLeadByTravelDistance = def.PushLeadByTravelDistance;
+            DisableAvoidance = def.DisableAvoidance;
+            AdjustSource = def.AdjustSource;
+            AdjustDestination = def.AdjustDestination;
+            OrbitRadius = def.OrbitRadius;
+            AngleOffset = def.AngleOffset;
+            DesiredElevation = def.DesiredElevation;
+            OffsetMinRadius = def.OffsetMinRadius;
+            OffsetMaxRadius = def.OffsetMaxRadius;
+            OffsetTime = def.OffsetTime;
+            Start1Value = def.Start1Value;
+            Start2Value = def.Start2Value;
+            End1Value = def.End1Value;
+            End2Value = def.End2Value;
+
+            TrackingDistance = def.TrackingDistance;
+            LeadDistance = def.LeadDistance;
+            AccelMulti = def.AccelMulti;
+            SpeedCapMulti = def.SpeedCapMulti;
+
+            ElevationTolerance = def.ElevationTolerance;
             if (AlternateModel)
             {
                 ModelPath = wDef.ModPath + def.AlternateModel;
