@@ -123,7 +123,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Support
             Write(writer, data);
         }
 
-        private void SaveServerCfg()
+        public void SaveServerCfg()
         {
             MyAPIGateway.Utilities.DeleteFileInWorldStorage(Session.ServerCfgName, typeof(CoreSettings.ServerSettings));
             var writer = MyAPIGateway.Utilities.WriteFileInWorldStorage(Session.ServerCfgName, typeof(CoreSettings.ServerSettings));

@@ -588,7 +588,7 @@ namespace CoreSystems
             set { VoxelCachePool.Push(value); } 
         }
 
-        internal int UniquePartId => WeaponIdCounter++;
+        internal int UniquePartId => WeaponIdCounter+=5;
         internal uint SyncWeaponId => WeaponSyncId++;
 
         internal ulong UniquePhantomId => PhantomIdCounter++;

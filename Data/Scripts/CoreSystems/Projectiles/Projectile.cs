@@ -179,7 +179,6 @@ namespace CoreSystems.Projectiles
                         Log.Line($"ProjectileStart had invalid Projectile target state");
                         break;
                     }
-                    Info.LastTarget = null;
 
                     HadTarget = HadTargetState.Projectile;
                     TargetPosition = tTarget.Position;

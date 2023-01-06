@@ -501,9 +501,8 @@ namespace CoreSystems.Support
                 Projectiles.Projectiles.SendClientHit(p, false);
             }
 
-            var targetObjEnt = info.LastTarget as MyEntity;
             var state = target.TargetState == Target.TargetStates.IsEntity || target.TargetState == Target.TargetStates.IsProjectile || target.TargetState == Target.TargetStates.IsFake ? target.TargetState :  Target.TargetStates.None;
-            var targetState = state == Target.TargetStates.None && info.LastTarget == null ? state : targetObjEnt!= null ? Target.TargetStates.IsEntity : Target.TargetStates.IsProjectile;
+            var targetState = state == Target.TargetStates.None && info.LastTarget == null ? state : info.LastTarget is MyEntity ? Target.TargetStates.IsEntity : Target.TargetStates.IsProjectile;
 
             for (int i = 0; i < fragCount; i++)
             {

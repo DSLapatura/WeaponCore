@@ -812,6 +812,20 @@ namespace CoreSystems
                                 }
 
                                 break;
+                            case "unsupportedmode":
+                                if (HandlesInput)
+                                {
+                                    somethingUpdated = true;
+                                    Settings.Enforcement.UnsupportedMode = !Settings.Enforcement.UnsupportedMode;
+                                    Settings.VersionControl.SaveServerCfg();
+                                    if (Settings.Enforcement.UnsupportedMode)
+                                        ShowLocalNotify("WeaponCore is running in [UnsupportedMode], certain features and blocks will not work as intended and may crash or become non-functional", 30000, "White");
+                                    else
+                                        ShowLocalNotify("WeaponCore is now running in [SupportedMode]", 30000, "White");
+
+                                }
+
+                                break;
                         }
                     }
                 }
@@ -833,31 +847,52 @@ namespace CoreSystems
             var cube = o as MyCubeBlock;
             if (cube != null)
             {
-                if (!cube.MarkedForClose)
+                var processCube = !cube.MarkedForClose && !cube.Closed && !cube.CubeGrid.IsPreview && cube.CubeGrid.Physics != null && !cube.CubeGrid.MarkedForClose;
+                if (processCube)
                 {
+                    
                     if (_lastIncompatibleMessageTick == uint.MaxValue || Tick - _lastIncompatibleMessageTick > 600)
                     {
                         _lastIncompatibleMessageTick = Tick;
-                        FutureEvents.Schedule(ReportIncompatibleBlocks, null, 10);
+                        var skipMessage = IsClient && Settings.Enforcement.UnsupportedMode && Tick > 600;
+                        if (!skipMessage)
+                            FutureEvents.Schedule(ReportIncompatibleBlocks, null, 10);
                     }
 
-                    if (!cube.MarkedForClose && !cube.Closed && !cube.CubeGrid.IsPreview && cube.CubeGrid.Physics != null && !cube.CubeGrid.MarkedForClose && IsServer)
-                    {
-                        if (cube.BlockDefinition?.Id.SubtypeName != null)
-                            _badBlocks.Add(cube.BlockDefinition.Id.SubtypeName);
+                    if (cube.BlockDefinition?.Id.SubtypeName != null)
+                        _unsupportedBlockNames.Add(cube.BlockDefinition.Id.SubtypeName);
 
+                    if (DedicatedServer)
+                    {
                         if (!Settings.Enforcement.UnsupportedMode)
                             cube.CubeGrid.RemoveBlock(cube.SlimBlock);
+                    }
+                    else if (!Settings.Enforcement.UnsupportedMode)
+                    {
+                        if (!_removeComplete)
+                            _unsupportedBlocks.Add(cube);
+
+                        if (_removeComplete || DedicatedServer)
+                            cube.CubeGrid.RemoveBlock(cube.SlimBlock);
+
+                        if (!_removeScheduled)
+                        {
+                            _removeScheduled = true;
+                            FutureEvents.Schedule(RemoveIncompatibleBlocks, null, 3600);
+                        }
                     }
                 }
             }
         }
 
-        private readonly HashSet<string> _badBlocks = new HashSet<string>();
+        private readonly HashSet<string> _unsupportedBlockNames = new HashSet<string>();
+        private readonly HashSet<MyCubeBlock> _unsupportedBlocks = new HashSet<MyCubeBlock>();
+        private bool _removeScheduled;
+        private bool _removeComplete;
         private void ReportIncompatibleBlocks(object o)
         {
             string listOfNames = "Incompatible weapons: ";
-            foreach (var s in _badBlocks)
+            foreach (var s in _unsupportedBlockNames)
             {
                 listOfNames += $"{s}, ";
             }
@@ -878,8 +913,11 @@ namespace CoreSystems
                 {
                     ShowLocalNotify("Sadly WeaponCore mods are not compatible with third party weapon mods, you must use one or the other", 30000, "White");
                     ShowLocalNotify(listOfNames, 30000, "White");
-                    if (Tick < 120)
-                        ShowLocalNotify("The incompatible weapons listed above have been [REMOVED FROM THE WORLD], if this is not acceptable quit [WITHOUT SAVING] and either [Enable UnsupportedMode] in the config file or uninstall all WC mods", 30000, "Red");
+                    if (_removeComplete)
+                        ShowLocalNotify("The incompatible weapons listed above have been [REMOVED FROM THE WORLD], if this is not acceptable quit [WITHOUT SAVING] and either [Enable UnsupportedMode] or uninstall all WC related mods", 30000, "Red");
+                    else
+                        ShowLocalNotify("The incompatible weapons listed above have been [SCHEDULED FOR REMOVAL IN 60 SECONDS], if this is not acceptable either type [/wc unsupportedmode] or quit [WITHOUT SAVING] and uninstall all WC related mods", 30000, "Red");
+
                 }
                 else
                 {
@@ -890,7 +928,26 @@ namespace CoreSystems
                 }
 
             }
-            _badBlocks.Clear();
+            _unsupportedBlockNames.Clear();
+        }
+
+        private void RemoveIncompatibleBlocks(object o)
+        {
+            if (Settings.Enforcement.UnsupportedMode)
+            {
+                _unsupportedBlocks.Clear();
+                return;
+            }
+
+            foreach (var cube in _unsupportedBlocks)
+            {
+                if (!cube.MarkedForClose)
+                    cube.CubeGrid.RemoveBlock(cube.SlimBlock);
+            }
+
+            ShowLocalNotify("The incompatible weapons listed above have been [REMOVED FROM THE WORLD], if this is not acceptable quit [WITHOUT SAVING] and either [Enable UnsupportedMode] or uninstall all WC related mods", 30000, "Red");
+            _unsupportedBlocks.Clear();
+            _removeComplete = true;
         }
 
         internal bool KeenFuckery()
@@ -912,7 +969,6 @@ namespace CoreSystems
                     {
                         SuppressWc = true;
                     }
-
 
                     List<IMyPlayer> players = new List<IMyPlayer>();
                     MyAPIGateway.Multiplayer.Players.GetPlayers(players);
