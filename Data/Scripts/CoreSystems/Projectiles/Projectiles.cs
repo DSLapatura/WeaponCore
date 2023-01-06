@@ -340,6 +340,7 @@ namespace CoreSystems.Projectiles
                 var useEwarSphere = (triggerRange > 0 || info.EwarActive) && aConst.Pulse && aConst.EwarType != WeaponDefinition.AmmoDef.EwarDef.EwarType.AntiSmart;
                 p.Beam = useEwarSphere ? new LineD(p.Position + (-p.Direction * aConst.EwarTriggerRange), p.Position + (p.Direction * aConst.EwarTriggerRange)) : new LineD(p.LastPosition, p.Position);
                 var checkBeam = p.Info.AmmoDef.Const.CheckFutureIntersection ? new LineD(p.Beam.From, p.Beam.From + p.Beam.Direction * (p.Beam.Length + aConst.FutureIntersectionRange), p.Beam.Length + aConst.FutureIntersectionRange) : p.Beam;
+                var lineCheck = aConst.CollisionIsLine && !useEwarSphere;
                 if (p.DeaccelRate <= 0 && !aConst.IsBeamWeapon && (info.DistanceTraveled * info.DistanceTraveled >= p.DistanceToTravelSqr || info.RelativeAge > aConst.MaxLifeTime)) {
 
                     p.PruneSphere.Center = p.Position;
@@ -394,12 +395,12 @@ namespace CoreSystems.Projectiles
                         p.PruneSphere = new BoundingSphereD(p.Position, triggerRange);
 
                 }
-                else if (aConst.CollisionIsLine)
+                else if (lineCheck)
                 {
                     p.PruneSphere.Center = p.Position;
                     p.PruneSphere.Radius = aConst.CollisionSize;
-                    if (aConst.IsBeamWeapon || info.DistanceTraveled > aConst.CollisionSize + 1.35f) {
-                        
+                    if (aConst.IsBeamWeapon || info.IsFragment || info.DistanceTraveled > aConst.CollisionSize + 1.35f) {
+
                         if (aConst.DynamicGuidance && p.PruneQuery == MyEntityQueryType.Dynamic && Session.Tick60)
                             p.CheckForNearVoxel(60);
                         MyGamePruningStructure.GetTopmostEntitiesOverlappingRay(ref checkBeam, p.MySegmentList, p.PruneQuery);
@@ -414,8 +415,8 @@ namespace CoreSystems.Projectiles
                         p.PruneSphere.Radius = aConst.CollisionSize;
                     }
                 }
-
-                if (!aConst.CollisionIsLine) {
+                
+                if (!lineCheck) {
 
                     if (aConst.DynamicGuidance && p.PruneQuery == MyEntityQueryType.Dynamic && Session.Tick60)
                         p.CheckForNearVoxel(60);
@@ -425,9 +426,9 @@ namespace CoreSystems.Projectiles
                 info.ShieldBypassed = info.ShieldKeepBypass;
                 info.ShieldKeepBypass = false;
 
-                if (target.TargetState == Target.TargetStates.IsProjectile || aConst.CollisionIsLine && p.MySegmentList.Count > 0 || !aConst.CollisionIsLine && p.MyEntityList.Count > 0)
+                if (target.TargetState == Target.TargetStates.IsProjectile || lineCheck && p.MySegmentList.Count > 0 || !lineCheck && p.MyEntityList.Count > 0)
                 {
-                    InitialHitCheck(p);
+                    InitialHitCheck(p, lineCheck);
                 }
                 else if (aConst.IsMine && storage.LastActivatedStage <= -2 && storage.RequestedStage != -3 && info.RelativeAge - storage.ChaseAge > 600)
                 {

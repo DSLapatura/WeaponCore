@@ -22,7 +22,7 @@ namespace CoreSystems.Projectiles
 {
     public partial class Projectiles
     {
-        internal void InitialHitCheck(Projectile p)
+        internal void InitialHitCheck(Projectile p, bool lineCheck)
         {
             var info = p.Info;
             var s = info.Storage;
@@ -37,14 +37,12 @@ namespace CoreSystems.Projectiles
             var genericFields = info.EwarActive && (aConst.EwarType == Dot || aConst.EwarType == Push || aConst.EwarType == Pull || aConst.EwarType == Tractor);
 
             p.Info.ShieldInLine = false;
-
             var isBeam = aConst.IsBeamWeapon;
-            var lineCheck = aConst.CollisionIsLine && !info.EwarAreaPulse;
             var offensiveEwar = (info.EwarActive && aConst.NonAntiSmartEwar);
             bool projetileInShield = false;
             var tick = Session.Tick;
             var entityCollection = p.MyEntityList;
-            var collectionCount = aConst.CollisionIsLine ? p.MySegmentList.Count : entityCollection.Count;
+            var collectionCount = lineCheck ? p.MySegmentList.Count : entityCollection.Count;
 
             var beamLen = p.Beam.Length;
             var beamFrom = p.Beam.From;
@@ -58,18 +56,17 @@ namespace CoreSystems.Projectiles
             var selfDamage = aConst.SelfDamage;
             var ignoreVoxels = aDef.IgnoreVoxels;
             var isGrid = ai.AiType == Ai.AiTypes.Grid;
-
             var closestFutureDistSqr = double.MaxValue;
             var voxelCheck = aConst.FakeVoxelHitTicks > 0 || ai.PlanetSurfaceInRange && ai.ClosestPlanetSqr <= info.MaxTrajectory * info.MaxTrajectory;
             WaterData water = null;
             if (Session.WaterApiLoaded && info.MyPlanet != null)
                 Session.WaterMap.TryGetValue(info.MyPlanet.EntityId, out water);
-
+            Log.Line($"check: {info.AmmoDef.AmmoRound} - {collectionCount}");
             MyEntity closestFutureEnt = null;
             IMyTerminalBlock iShield = null;
             for (int i = 0; i < collectionCount; i++)
             {
-                var ent = aConst.CollisionIsLine ? p.MySegmentList[i].Element : entityCollection[i];
+                var ent = lineCheck ? p.MySegmentList[i].Element : entityCollection[i];
 
                 var grid = ent as MyCubeGrid;
                 var entIsSelf = grid != null && firingCube != null && (grid == firingCube.CubeGrid || firingCube.CubeGrid.IsSameConstructAs(grid));
@@ -347,7 +344,7 @@ namespace CoreSystems.Projectiles
                     {
                         lock (DeferedVoxels)
                         {
-                            DeferedVoxels.Add(new DeferedVoxels { Projectile = p, Branch = voxelState, Voxel = voxel });
+                            DeferedVoxels.Add(new DeferedVoxels { Projectile = p, Branch = voxelState, Voxel = voxel, LineCheck = lineCheck});
                         }
                     }
                 }
@@ -483,7 +480,7 @@ namespace CoreSystems.Projectiles
             {
                 var detonate = p.State == ProjectileState.Detonate;
                 var hitTolerance = detonate ? aConst.EndOfLifeRadius : aConst.ByBlockHitRadius > aConst.CollisionSize ? aConst.ByBlockHitRadius : aConst.CollisionSize;
-                var useLine = aConst.CollisionIsLine && !detonate && aConst.ByBlockHitRadius <= 0;
+                var useLine = lineCheck && !detonate && aConst.ByBlockHitRadius <= 0;
                 var projectile = (Projectile)target.TargetObject;
                 var sphere = new BoundingSphereD(projectile.Position, aConst.CollisionSize);
                 sphere.Include(new BoundingSphereD(projectile.LastPosition, 1));
@@ -504,8 +501,8 @@ namespace CoreSystems.Projectiles
                     ProjectileHit(p, projectile, lineCheck, ref p.Beam);
                 }
             }
-
-            if (aConst.CollisionIsLine)
+                
+            if (lineCheck)
                 p.MySegmentList.Clear();
             else
                 entityCollection.Clear();
@@ -725,6 +722,7 @@ namespace CoreSystems.Projectiles
             var aConst = info.AmmoDef.Const;
             var eWarPulse = aConst.Ewar && aConst.Pulse;
             var triggerEvent = eWarPulse && !info.EwarAreaPulse && aConst.EwarTriggerRange > 0;
+            Log.Line($"hit: {info.AmmoDef.AmmoRound} - {eWarPulse} - {triggerEvent} - {aConst.Ewar} - {info.EwarActive}");
             for (int i = 0; i < count; i++)
             {
                 var isX = i == 0;
@@ -901,13 +899,15 @@ namespace CoreSystems.Projectiles
         {
             for (int i = 0; i < DeferedVoxels.Count; i++)
             {
-                var p = DeferedVoxels[i].Projectile;
+                var def = DeferedVoxels[i];
+                var p = def.Projectile;
                 var w = p.Info.Weapon;
                 var s = w.Comp.Session;
                 var info = p.Info;
                 var aConst = info.AmmoDef.Const;
-                var branch = DeferedVoxels[i].Branch;
-                var voxel = DeferedVoxels[i].Voxel;
+                var branch = def.Branch;
+                var voxel = def.Voxel;
+                var lineCheck = def.LineCheck;
                 Vector3D? voxelHit = null;
 
                 if (branch == VoxelIntersectBranch.DeferFullCheck)
@@ -977,7 +977,6 @@ namespace CoreSystems.Projectiles
                 var pool = HitEntityArrayPool[Environment.CurrentManagedThreadId];
                 var hitEntity = pool.Count > 0 ? pool.Pop() : new HitEntity();
                 hitEntity.Pool = pool;
-                var lineCheck = aConst.CollisionIsLine && !info.EwarAreaPulse;
                 hitEntity.Info = info;
                 hitEntity.Entity = voxel;
                 hitEntity.Intersection = p.Beam;

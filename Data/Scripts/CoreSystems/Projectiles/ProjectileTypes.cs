@@ -368,6 +368,7 @@ namespace CoreSystems.Support
         internal Projectile Projectile;
         internal MyVoxelBase Voxel;
         internal VoxelIntersectBranch Branch;
+        internal bool LineCheck;
     }
 
     public class HitEntity
@@ -501,8 +502,8 @@ namespace CoreSystems.Support
                 Projectiles.Projectiles.SendClientHit(p, false);
             }
 
-            var state = target.TargetState == Target.TargetStates.IsEntity || target.TargetState == Target.TargetStates.IsProjectile || target.TargetState == Target.TargetStates.IsFake ? target.TargetState :  Target.TargetStates.None;
-            var targetState = state == Target.TargetStates.None && info.LastTarget == null ? state : info.LastTarget is MyEntity ? Target.TargetStates.IsEntity : Target.TargetStates.IsProjectile;
+            var state = target.TargetState == Target.TargetStates.IsFake ? Target.TargetStates.IsFake :  Target.TargetStates.None;
+            var targetState = info.LastTarget == null || state != Target.TargetStates.None ? state : info.LastTarget is MyEntity ? Target.TargetStates.IsEntity : Target.TargetStates.IsProjectile;
 
             for (int i = 0; i < fragCount; i++)
             {
