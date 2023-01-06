@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO.Ports;
-using System.Runtime.CompilerServices;
-using CoreSystems.Platform;
 using CoreSystems.Support;
 using Jakaria.API;
 using Sandbox.Game.Entities;
@@ -929,7 +926,8 @@ namespace CoreSystems.Projectiles
                     }
                 }
 
-                var heightOffset = storage.ApproachInfo.OffsetDir * def.DesiredElevation;
+                var desiredElevation = def.DesiredElevation;
+                var heightOffset = storage.ApproachInfo.OffsetDir * desiredElevation;
                 var source = storage.ApproachInfo.LookAtPos;
                 if (stageChange || def.AdjustDestination)
                 {
@@ -986,8 +984,7 @@ namespace CoreSystems.Projectiles
 
                 var heightStart = source + heightOffset;
                 var heightend = destination + heightOffset;
-                var heightDir = heightend - heightStart;
-                var startToEndDist = heightDir.Normalize();
+                var heightDir = desiredElevation > 0 ? Vector3D.Normalize(heightend - heightStart) : storage.ApproachInfo.OffsetDir;
                 bool start1 = false;
                 switch (def.StartCondition1)
                 {
@@ -1003,12 +1000,18 @@ namespace CoreSystems.Projectiles
                     case Conditions.DistanceFromTarget: // could save a sqrt by inlining and using heightDir
                         if (s.DebugMod && s.HandlesInput)
                             DsDebugDraw.DrawLine(heightend, destination, Color.Green, 10);
-                        start1 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize <= def.Start1Value;
+                        if (desiredElevation > 0)
+                            start1 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize <= def.Start1Value;
+                        else
+                            start1 = Vector3D.Distance(destination, Position) - aConst.CollisionSize <= def.Start1Value;
                         break;
                     case Conditions.DistanceToTarget: // could save a sqrt by inlining and using heightDir
                         if (s.DebugMod && s.HandlesInput)
                             DsDebugDraw.DrawLine(heightend, destination, Color.Green, 10);
-                        start1 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize >= def.Start1Value;
+                        if (desiredElevation > 0)
+                            start1 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize >= def.Start1Value;
+                        else
+                            start1 = Vector3D.Distance(destination, Position) - aConst.CollisionSize >= def.Start1Value;
                         break;
                     case Conditions.Lifetime:
                         start1 = Info.RelativeAge >= def.Start1Value;
@@ -1070,14 +1073,20 @@ namespace CoreSystems.Projectiles
                         start2 = distFromSurfaceSqr >= greaterThanTolerance && distFromSurfaceSqr <= lessThanTolerance;
                         break;
                     case Conditions.DistanceFromTarget: // could save a sqrt by inlining and using heightDir
-                        if (s.DebugMod)
-                            DsDebugDraw.DrawLine(heightend, destination, Color.Blue, 10);
-                        start2 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize <= def.Start2Value;
-                        break;
-                    case Conditions.DistanceToTarget: 
-                        if (s.DebugMod)
+                        if (s.DebugMod && s.HandlesInput)
                             DsDebugDraw.DrawLine(heightend, destination, Color.Green, 10);
-                        start2 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize >= def.Start2Value;
+                        if (desiredElevation > 0)
+                            start2 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize <= def.Start2Value;
+                        else
+                            start2 = Vector3D.Distance(destination, Position) - aConst.CollisionSize <= def.Start2Value;
+                        break;
+                    case Conditions.DistanceToTarget: // could save a sqrt by inlining and using heightDir
+                        if (s.DebugMod && s.HandlesInput)
+                            DsDebugDraw.DrawLine(heightend, destination, Color.Green, 10);
+                        if (desiredElevation > 0)
+                            start2 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize >= def.Start2Value;
+                        else
+                            start2 = Vector3D.Distance(destination, Position) - aConst.CollisionSize >= def.Start2Value;
                         break;
                     case Conditions.Lifetime:
                         start2 = Info.RelativeAge >= def.Start2Value;
@@ -1282,13 +1291,19 @@ namespace CoreSystems.Projectiles
                         {
                             if (s.DebugMod && s.HandlesInput)
                                 DsDebugDraw.DrawLine(heightend, destination, Color.Red, 10);
-                            end1 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize <= def.End1Value;
+                            if (desiredElevation > 0)
+                                end1 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize <= def.End1Value;
+                            else
+                                end1 = Vector3D.Distance(destination, Position) - aConst.CollisionSize <= def.End1Value;
                         }
                         break;
                     case Conditions.DistanceToTarget: 
                         if (s.DebugMod && s.HandlesInput)
                             DsDebugDraw.DrawLine(heightend, destination, Color.Green, 10);
-                        end1 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize >= def.End1Value;
+                        if (desiredElevation > 0)
+                            end1 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize >= def.End1Value;
+                        else
+                            end1 = Vector3D.Distance(destination, Position) - aConst.CollisionSize >= def.End1Value;
                         break;
                     case Conditions.Lifetime:
                         end1 = Info.RelativeAge >= def.End1Value;
@@ -1357,13 +1372,19 @@ namespace CoreSystems.Projectiles
                         {
                             if (s.DebugMod && s.HandlesInput)
                                 DsDebugDraw.DrawLine(heightend, destination, Color.Yellow, 10);
-                            end2 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize <= def.End2Value;
+                            if (desiredElevation > 0)
+                                end2 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize <= def.End2Value;
+                            else
+                                end2 = Vector3D.Distance(destination, Position) - aConst.CollisionSize <= def.End2Value;
                         }
                         break;
                     case Conditions.DistanceToTarget: 
                         if (s.DebugMod && s.HandlesInput)
                             DsDebugDraw.DrawLine(heightend, destination, Color.Green, 10);
-                        end2 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize >= def.End2Value;
+                        if (desiredElevation > 0)
+                            end2 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize >= def.End2Value;
+                        else
+                            end2 = Vector3D.Distance(destination, Position) - aConst.CollisionSize >= def.End2Value;
                         break;
                     case Conditions.Lifetime:
                         end2 = Info.RelativeAge >= def.End2Value;

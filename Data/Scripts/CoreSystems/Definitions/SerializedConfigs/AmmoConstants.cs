@@ -17,7 +17,6 @@ using static CoreSystems.Support.WeaponDefinition.AmmoDef.DamageScaleDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.FragmentDef.TimedSpawnDef;
 using static CoreSystems.Support.ValueProcessors;
 using static CoreSystems.Support.WeaponDefinition.HardPointDef;
-using System.Runtime.CompilerServices;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.GraphicDef.LineDef;
 
 namespace CoreSystems.Support

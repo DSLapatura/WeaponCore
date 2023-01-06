@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using CoreSystems.Support;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
-using VRage.Collections;
 using VRage.Utils;
 using VRageMath;
 using static CoreSystems.Projectiles.Projectile;
