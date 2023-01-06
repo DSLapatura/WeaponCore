@@ -1478,7 +1478,7 @@ namespace CoreSystems.Projectiles
                     {
                         storage.LastActivatedStage = storage.RequestedStage;
                         var prev = storage.RequestedStage;
-                        storage.RequestedStage = def.RestartCondition == ReInitCondition.MoveToPrevious ? prev : approach.GetRestartId(Info);
+                        storage.RequestedStage = def.RestartCondition == ReInitCondition.MoveToPrevious ? prev : approach.GetRestartId(Info, end1, end2);
                         if (s.DebugMod)
                             Log.Line($"stageEnd:age:{Info.RelativeAge} - previous:{prev} to {storage.RequestedStage} - eCon1:{def.EndCondition1} - eCon2:{def.EndCondition2}");
                     }

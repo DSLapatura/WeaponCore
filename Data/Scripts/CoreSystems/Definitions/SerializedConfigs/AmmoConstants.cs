@@ -1806,7 +1806,7 @@ namespace CoreSystems.Support
             }
         }
 
-        public int GetRestartId(ProInfo info)
+        public int GetRestartId(ProInfo info, bool end1, bool end2)
         {
             var array = Definition.RestartList;
             var selectedId = -1;
@@ -1817,7 +1817,22 @@ namespace CoreSystems.Support
                 for (int i = 0; i < array.Length; i++)
                 {
                     var item = array[i];
-                    var rng = info.Random.Range(item.Weight.Start, item.Weight.End);
+                    var mod1Enabled = end1 && !MyUtils.IsZero(item.End1WeightMod);
+                    var mod2Enabled = end2 && !MyUtils.IsZero(item.End2WeightMod);
+                    
+                    float rng;
+                    if (mod1Enabled && mod2Enabled) {
+                        var rng1 = (float)info.Random.Range(item.Weight.Start * item.End1WeightMod, item.Weight.End * item.End1WeightMod);
+                        var rng2 = (float)info.Random.Range(item.Weight.Start * item.End2WeightMod, item.Weight.End * item.End2WeightMod);
+                        rng = rng1 > rng2 ? rng1 : rng2;
+                    }
+                    else if (mod1Enabled)
+                        rng = (float) info.Random.Range(item.Weight.Start * item.End1WeightMod, item.Weight.End * item.End1WeightMod);
+                    else if (mod2Enabled)
+                        rng = (float)info.Random.Range(item.Weight.Start * item.End2WeightMod, item.Weight.End * item.End2WeightMod);
+                    else 
+                        rng = info.Random.Range(item.Weight.Start, item.Weight.End);
+
                     if (rng >= highestRoll)
                     {
                         highestRoll = rng;
