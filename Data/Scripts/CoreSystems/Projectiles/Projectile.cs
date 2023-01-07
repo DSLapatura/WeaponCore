@@ -858,12 +858,12 @@ namespace CoreSystems.Projectiles
                         case UpRelativeTo.TargetVelocity:
                             storage.ApproachInfo.OffsetDir = !Vector3D.IsZero(PrevTargetVel) ? Vector3D.Normalize(PrevTargetVel) : Info.OriginUp;
                             break;
-                        case UpRelativeTo.StoredStartDestination:
+                        case UpRelativeTo.UpStoredStartDestination:
                             var storedStartDest = storage.ApproachInfo.StoredDestination[storage.RequestedStage];
                             var destStart = storedStartDest != Vector3D.Zero ? storedStartDest : storage.ApproachInfo.TargetPos;
                             storage.ApproachInfo.OffsetDir = Vector3D.Normalize(destStart - Position);
                             break;
-                        case UpRelativeTo.StoredEndDestination:
+                        case UpRelativeTo.UpStoredEndDestination:
                             var storedEndDest = storage.ApproachInfo.StoredDestination[storage.RequestedStage * 2];
                             var destEnd = storedEndDest != Vector3D.Zero ? storedEndDest : storage.ApproachInfo.TargetPos;
                             storage.ApproachInfo.OffsetDir = Vector3D.Normalize(destEnd - Position);

@@ -1347,8 +1347,8 @@ namespace CoreSystems.Support
                         RelativeToGravity,
                         TargetDirection,
                         TargetVelocity,
-                        StoredStartDestination,
-                        StoredEndDestination,
+                        UpStoredStartDestination,
+                        UpStoredEndDestination,
                     }
 
                     public enum RelativeTo
