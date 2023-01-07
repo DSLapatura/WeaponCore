@@ -140,7 +140,7 @@ namespace CoreSystems.Support
         public readonly int MaxTargets;
         public readonly int PulseInterval;
         public readonly int PulseChance;
-        public readonly int PulseGrowTime;
+        public readonly int FieldGrowTime;
         public readonly int EnergyMagSize;
         public readonly int FragmentId = -1;
         public readonly int MaxChaseTime;
@@ -171,7 +171,7 @@ namespace CoreSystems.Support
         public readonly bool CheckFutureIntersection;
         public readonly bool OverrideTarget;
         public readonly bool HasEjectEffect;
-        public readonly bool Pulse;
+        public readonly bool EwarField;
         public readonly bool PrimeModel;
         public readonly bool TriggerModel;
         public readonly bool CollisionIsLine;
@@ -194,6 +194,7 @@ namespace CoreSystems.Support
         public readonly bool OneHitParticle;
         public readonly bool DamageScaling;
         public readonly bool ArmorScaling;
+        public readonly bool ExpandingField;
         public readonly bool ArmorCoreActive;
         public readonly bool FallOffScaling;
         public readonly bool CustomDamageScales;
@@ -284,6 +285,7 @@ namespace CoreSystems.Support
         public readonly bool NoSteering;
         public readonly bool Roam;
         public readonly bool NoTargetExpire;
+        public readonly bool EwarFieldTrigger;
         public readonly float OffsetRatio;
         public readonly float PowerPerTick;
         public readonly float DirectAimCone;
@@ -341,7 +343,6 @@ namespace CoreSystems.Support
         public readonly double ByBlockHitRadius;
         public readonly double ShieldModifier;
         public readonly double MaxLateralThrust;
-        public readonly double EwarTriggerRange;
         public readonly double TracerLength;
         public readonly double CollisionSize;
         public readonly double SmartsDelayDistSqr;
@@ -497,8 +498,8 @@ namespace CoreSystems.Support
             DetSoundStr = CustomExplosionSound ? ammo.AmmoDef.AreaOfDamage.EndOfLife.CustomSound : !ammo.IsShrapnel ? "WepSmallMissileExpl" : string.Empty;
             FieldParticle = !string.IsNullOrEmpty(ammo.AmmoDef.Ewar.Field.Particle.Name);
 
-            Fields(ammo.AmmoDef, out PulseInterval, out PulseChance, out Pulse, out PulseGrowTime);
-            AreaEffects(ammo.AmmoDef, out ByBlockHitDepth, out EndOfLifeDepth, out EwarType, out ByBlockHitDamage, out ByBlockHitRadius, out EndOfLifeDamage, out EndOfLifeRadius, out EwarStrength, out LargestHitSize, out EwarRadius, out Ewar, out NonAntiSmartEwar, out EwarTriggerRange, out MinArmingTime, out AoeMaxAbsorb, out DetMaxAbsorb, out EndOfLifeAoe);
+            Fields(ammo.AmmoDef, out PulseInterval, out PulseChance, out EwarField, out FieldGrowTime, out ExpandingField);
+            AreaEffects(ammo.AmmoDef, out ByBlockHitDepth, out EndOfLifeDepth, out EwarType, out ByBlockHitDamage, out ByBlockHitRadius, out EndOfLifeDamage, out EndOfLifeRadius, out EwarStrength, out LargestHitSize, out EwarRadius, out Ewar, out NonAntiSmartEwar, out EwarFieldTrigger, out MinArmingTime, out AoeMaxAbsorb, out DetMaxAbsorb, out EndOfLifeAoe);
             Beams(ammo.AmmoDef, out IsBeamWeapon, out VirtualBeams, out RotateRealBeam, out ConvergeBeams, out OneHitParticle, out OffsetEffect, out FakeVoxelHitTicks);
 
             var givenSpeed = AmmoModsFound && _modifierMap[SpeedStr].HasData() ? _modifierMap[SpeedStr].GetAsFloat : ammo.AmmoDef.Trajectory.DesiredSpeed;
@@ -932,15 +933,16 @@ namespace CoreSystems.Support
             hasTargetOverride = fragTargetOverride || patternTargetOverride || OverrideTarget;
         }
 
-        private void Fields(AmmoDef ammoDef, out int pulseInterval, out int pulseChance, out bool pulse, out int growTime)
+        private void Fields(AmmoDef ammoDef, out int pulseInterval, out int pulseChance, out bool ewarField, out int growTime, out bool expandingField)
         {
-            pulseInterval = ammoDef.Ewar.Mode != EwarMode.Effect ? ammoDef.Ewar.Field.Interval : 0;
-            growTime = ammoDef.Ewar.Field.GrowTime == 0 ? 60 : ammoDef.Ewar.Field.GrowTime;
-            pulseChance = ammoDef.Ewar.Mode != EwarMode.Effect ? ammoDef.Ewar.Field.PulseChance : 0;
-            pulse = ammoDef.Ewar.Mode != EwarMode.Effect && pulseInterval > 0 && pulseChance > 0 && !ammoDef.Beams.Enable;
+            pulseInterval = ammoDef.Ewar.Field.Interval;
+            growTime = ammoDef.Ewar.Field.GrowTime;
+            expandingField = growTime > 0;
+            pulseChance = ammoDef.Ewar.Field.PulseChance;
+            ewarField = ammoDef.Ewar.Mode == EwarMode.Field;
         }
 
-        private void AreaEffects(AmmoDef ammoDef, out float byBlockHitDepth, out float endOfLifeDepth, out EwarType ewarType, out float byBlockHitDamage, out double byBlockHitRadius, out float endOfLifeDamage, out float endOfLifeRadius, out double ewarEffectStrength, out double largestHitSize, out double ewarEffectSize, out bool eWar, out bool nonAntiSmart, out double eWarTriggerRange, out int minArmingTime, out float aoeMaxAbsorb, out float detMaxAbsorb, out bool endOfLifeAoe)
+        private void AreaEffects(AmmoDef ammoDef, out float byBlockHitDepth, out float endOfLifeDepth, out EwarType ewarType, out float byBlockHitDamage, out double byBlockHitRadius, out float endOfLifeDamage, out float endOfLifeRadius, out double ewarEffectStrength, out double largestHitSize, out double ewarEffectSize, out bool eWar, out bool nonAntiSmart, out bool eWarFieldTrigger, out int minArmingTime, out float aoeMaxAbsorb, out float detMaxAbsorb, out bool endOfLifeAoe)
         {
             ewarType = ammoDef.Ewar.Type;
 
@@ -980,7 +982,7 @@ namespace CoreSystems.Support
 
             eWar = ammoDef.Ewar.Enable;
             nonAntiSmart = !eWar || ewarType != EwarType.AntiSmart;
-            eWarTriggerRange = eWar && Pulse && ammoDef.Ewar.Field.TriggerRange > 0 ? ammoDef.Ewar.Field.TriggerRange : 0;
+            eWarFieldTrigger = eWar && EwarField && ammoDef.Ewar.Field.TriggerRange > 0;
             minArmingTime = ammoDef.AreaOfDamage.EndOfLife.MinArmingTime;
             if (ammoDef.AreaOfDamage.ByBlockHit.Enable) byBlockHitDepth = ammoDef.AreaOfDamage.ByBlockHit.Depth <= 0 ? (float)ammoDef.AreaOfDamage.ByBlockHit.Radius : ammoDef.AreaOfDamage.ByBlockHit.Depth;
             else byBlockHitDepth = 0;

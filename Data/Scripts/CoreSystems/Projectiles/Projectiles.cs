@@ -215,7 +215,7 @@ namespace CoreSystems.Projectiles
                             p.RunSmart();
                         else if (aConst.IsDrone)
                             p.RunDrone();
-                        else if (!aConst.AmmoSkipAccel && !info.EwarAreaPulse) {
+                        else if (!aConst.AmmoSkipAccel && !info.ExpandingEwarField) {
 
                             var accel = true;
                             Vector3D newVel;
@@ -335,11 +335,12 @@ namespace CoreSystems.Projectiles
                 if (aConst.IsBeamWeapon)
                     ++_beamCount;
 
-                var triggerRange = aConst.EwarTriggerRange > 0 && !info.EwarAreaPulse ? aConst.EwarTriggerRange : 0;
-                var useEwarSphere = (triggerRange > 0 || info.EwarActive) && aConst.Pulse && aConst.EwarType != WeaponDefinition.AmmoDef.EwarDef.EwarType.AntiSmart;
-                p.Beam = useEwarSphere ? new LineD(p.Position + (-p.Direction * aConst.EwarTriggerRange), p.Position + (p.Direction * aConst.EwarTriggerRange)) : new LineD(p.LastPosition, p.Position);
-                var checkBeam = p.Info.AmmoDef.Const.CheckFutureIntersection ? new LineD(p.Beam.From, p.Beam.From + p.Beam.Direction * (p.Beam.Length + aConst.FutureIntersectionRange), p.Beam.Length + aConst.FutureIntersectionRange) : p.Beam;
-                var lineCheck = aConst.CollisionIsLine && !useEwarSphere;
+                var ewarTriggered = aConst.EwarFieldTrigger && info.ExpandingEwarField;
+                var useEwarFieldSphere = (ewarTriggered || info.EwarActive) && aConst.EwarField && aConst.EwarType != WeaponDefinition.AmmoDef.EwarDef.EwarType.AntiSmart;
+                var ewarRadius = !info.ExpandingEwarField ? aConst.EwarRadius : info.TriggerGrowthSteps < aConst.FieldGrowTime ? info.TriggerMatrix.Scale.AbsMax() : aConst.EwarRadius;
+                p.Beam = useEwarFieldSphere ? new LineD(p.Position + (-p.Direction * ewarRadius), p.Position + (p.Direction * ewarRadius)) : new LineD(p.LastPosition, p.Position);
+                var checkBeam = aConst.CheckFutureIntersection ? new LineD(p.Beam.From, p.Beam.From + p.Beam.Direction * (p.Beam.Length + aConst.FutureIntersectionRange), p.Beam.Length + aConst.FutureIntersectionRange) : p.Beam;
+                var lineCheck = aConst.CollisionIsLine && !useEwarFieldSphere;
                 if (p.DeaccelRate <= 0 && !aConst.IsBeamWeapon && (info.DistanceTraveled * info.DistanceTraveled >= p.DistanceToTravelSqr || info.RelativeAge > aConst.MaxLifeTime)) {
 
                     p.PruneSphere.Center = p.Position;
@@ -376,22 +377,21 @@ namespace CoreSystems.Projectiles
 
                 if (aConst.IsMine && storage.LastActivatedStage <= -2 && storage.RequestedStage != -3)
                     p.SeekEnemy();
-                else if (useEwarSphere)
+                else if (useEwarFieldSphere)
                 {
-                    if (info.EwarActive)
+                    if (info.ExpandingEwarField)
                     {
-                        var currentRadius = info.TriggerGrowthSteps < aConst.PulseGrowTime ? info.TriggerMatrix.Scale.AbsMax() : aConst.EwarRadius;
                         p.PruneSphere.Center = p.Position;
 
-                        if (p.PruneSphere.Radius < currentRadius) {
+                        if (p.PruneSphere.Radius < ewarRadius) {
                             p.PruneSphere.Center = p.Position;
-                            p.PruneSphere.Radius = currentRadius;
+                            p.PruneSphere.Radius = ewarRadius;
                         }
                         else
                             p.PruneSphere.Radius = aConst.EwarRadius;
                     }
                     else
-                        p.PruneSphere = new BoundingSphereD(p.Position, triggerRange);
+                        p.PruneSphere = new BoundingSphereD(p.Position, aConst.EwarRadius);
 
                 }
                 else if (lineCheck)

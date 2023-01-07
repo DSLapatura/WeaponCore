@@ -61,7 +61,7 @@ namespace CoreSystems.Support
         internal float BaseHealthPool;
         internal float BaseEwarPool;
         internal bool IsFragment;
-        internal bool EwarAreaPulse;
+        internal bool ExpandingEwarField;
         internal bool EwarActive;
         internal bool AcquiredEntity;
         internal bool AimedShot;
@@ -142,7 +142,7 @@ namespace CoreSystems.Support
             LastTarget = null;
             Weapon = null;
             IsFragment = false;
-            EwarAreaPulse = false;
+            ExpandingEwarField = false;
             EwarActive = false;
             AcquiredEntity = false;
             AimedShot = false;

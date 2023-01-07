@@ -366,7 +366,7 @@ namespace CoreSystems.Projectiles
                                 }
                             }
 
-                            if (!p.Info.EwarAreaPulse)
+                            if (!p.Info.ExpandingEwarField)
                             {
 
                                 var forwardPos = p.Info.Age != 1 ? beamFrom : beamFrom + (direction * Math.Min(grid.GridSizeHalf, info.DistanceTraveled - info.PrevDistanceTraveled));
@@ -427,7 +427,7 @@ namespace CoreSystems.Projectiles
 
                             hitEntity.EventType = Grid;
                         }
-                        else if (!info.EwarAreaPulse)
+                        else if (!info.ExpandingEwarField)
                             hitEntity.EventType = Effect;
                         else
                             hitEntity.EventType = Field;
@@ -624,11 +624,11 @@ namespace CoreSystems.Projectiles
                     if (pulseTrigger)
                     {
 
-                        info.EwarAreaPulse = true;
+                        info.ExpandingEwarField = true;
                         p.DistanceToTravelSqr = info.DistanceTraveled * info.DistanceTraveled;
                         p.PrevVelocity = p.Velocity;
                         p.Velocity = Vector3D.Zero;
-                        info.Hit.SurfaceHit = p.Position + p.Direction * info.AmmoDef.Const.EwarTriggerRange;
+                        info.Hit.SurfaceHit = p.Position;
                         info.Hit.LastHit = info.Hit.SurfaceHit;
                         info.HitList.Clear();
                         return false;
@@ -719,8 +719,8 @@ namespace CoreSystems.Projectiles
             var beam = x.Intersection;
             var count = y != null ? 2 : 1;
             var aConst = info.AmmoDef.Const;
-            var eWarPulse = aConst.Ewar && aConst.Pulse;
-            var triggerEvent = eWarPulse && !info.EwarAreaPulse && aConst.EwarTriggerRange > 0;
+            var eWarPulse = aConst.Ewar && aConst.EwarField && info.EwarActive;
+            var triggerEvent = aConst.EwarFieldTrigger && !info.ExpandingEwarField;
             for (int i = 0; i < count; i++)
             {
                 var isX = i == 0;
@@ -768,7 +768,7 @@ namespace CoreSystems.Projectiles
                     }
                     else
                     {
-                        if (hitEnt.SphereCheck || info.EwarActive && eWarPulse)
+                        if (hitEnt.SphereCheck || eWarPulse)
                         {
                             var ewarActive = hitEnt.EventType == Field || hitEnt.EventType == Effect;
                             var hitPos = !ewarActive ? hitEnt.PruneSphere.Center + (hitEnt.Intersection.Direction * hitEnt.PruneSphere.Radius) : hitEnt.PruneSphere.Center;
@@ -860,7 +860,7 @@ namespace CoreSystems.Projectiles
                     }
                     else
                     {
-                        if (hitEnt.SphereCheck || info.EwarActive && eWarPulse)
+                        if (hitEnt.SphereCheck || eWarPulse)
                         {
 
                             var ewarActive = hitEnt.EventType == Field || hitEnt.EventType == Effect;
