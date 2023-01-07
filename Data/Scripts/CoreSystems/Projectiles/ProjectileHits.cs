@@ -719,7 +719,7 @@ namespace CoreSystems.Projectiles
             var beam = x.Intersection;
             var count = y != null ? 2 : 1;
             var aConst = info.AmmoDef.Const;
-            var eWarPulse = aConst.Ewar && aConst.EwarField && info.EwarActive;
+            var eWarPulse = aConst.EwarField && info.EwarActive;
             var triggerEvent = aConst.EwarFieldTrigger && !info.ExpandingEwarField;
             for (int i = 0; i < count; i++)
             {

@@ -470,7 +470,7 @@ namespace CoreSystems.Support
                 ammoDef.AreaOfDamage.EndOfLife.NoSound = ammoDef.AreaEffect.Explosions.NoSound;
                 ammoDef.AreaOfDamage.EndOfLife.Falloff = Falloff.Exponential;
             }
-
+            /*
             if (!oldDamageType && oldType != AmmoDef.AreaDamageDef.AreaEffectType.Disabled)
             {
                 ammoDef.Ewar.Enable = true;
@@ -506,6 +506,7 @@ namespace CoreSystems.Support
                 ammoDef.Ewar.Force.Position = (PushPullDef.Force)ammoDef.AreaEffect.EwarFields.Force.Position;
 
             }
+            */
         }
 
         private EwarType PickEwarType(AmmoDef def)

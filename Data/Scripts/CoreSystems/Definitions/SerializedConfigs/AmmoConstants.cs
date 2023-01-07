@@ -937,9 +937,9 @@ namespace CoreSystems.Support
         {
             pulseInterval = ammoDef.Ewar.Field.Interval;
             growTime = ammoDef.Ewar.Field.GrowTime;
-            expandingField = growTime > 0;
+            ewarField = ammoDef.Ewar.Enable && ammoDef.Ewar.Mode == EwarMode.Field;
+            expandingField = growTime > 0 && ewarField;
             pulseChance = ammoDef.Ewar.Field.PulseChance;
-            ewarField = ammoDef.Ewar.Mode == EwarMode.Field;
         }
 
         private void AreaEffects(AmmoDef ammoDef, out float byBlockHitDepth, out float endOfLifeDepth, out EwarType ewarType, out float byBlockHitDamage, out double byBlockHitRadius, out float endOfLifeDamage, out float endOfLifeRadius, out double ewarEffectStrength, out double largestHitSize, out double ewarEffectSize, out bool eWar, out bool nonAntiSmart, out bool eWarFieldTrigger, out int minArmingTime, out float aoeMaxAbsorb, out float detMaxAbsorb, out bool endOfLifeAoe)
