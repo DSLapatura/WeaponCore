@@ -470,75 +470,9 @@ namespace CoreSystems.Support
                 ammoDef.AreaOfDamage.EndOfLife.NoSound = ammoDef.AreaEffect.Explosions.NoSound;
                 ammoDef.AreaOfDamage.EndOfLife.Falloff = Falloff.Exponential;
             }
-            /*
-            if (!oldDamageType && oldType != AmmoDef.AreaDamageDef.AreaEffectType.Disabled)
-            {
-                ammoDef.Ewar.Enable = true;
-
-                ammoDef.Ewar.Radius = ammoDef.AreaEffect.Base.Radius <= 0 ? ammoDef.AreaEffect.AreaEffectDamage : ammoDef.AreaEffect.Base.Radius;
-                ammoDef.Ewar.Strength = ammoDef.AreaEffect.Base.EffectStrength <= 0 ? ammoDef.AreaEffect.AreaEffectDamage : ammoDef.AreaEffect.Base.EffectStrength;
-
-                ammoDef.Ewar.Depletable = ammoDef.AreaEffect.EwarFields.Depletable;
-                ammoDef.Ewar.NoHitParticle = ammoDef.AreaEffect.EwarFields.DisableParticleEffect;
-                ammoDef.Ewar.StackDuration = ammoDef.AreaEffect.EwarFields.StackDuration;
-                ammoDef.Ewar.Duration = ammoDef.AreaEffect.EwarFields.Duration;
-                ammoDef.Ewar.MaxStacks = ammoDef.AreaEffect.EwarFields.MaxStacks;
-
-                var field = ammoDef.AreaEffect.Pulse.PulseChance > 0 && ammoDef.AreaEffect.EwarFields.TriggerRange > 0;
-                ammoDef.Ewar.Mode = field ? EwarMode.Field : EwarMode.Effect;
-                ammoDef.Ewar.Type = PickEwarType(ammoDef);
-
-                ammoDef.Ewar.Field.Particle = ammoDef.AreaEffect.Pulse.Particle;
-
-                ammoDef.Ewar.Field.ShowParticle = ammoDef.AreaEffect.Pulse.ShowParticle;
-                ammoDef.Ewar.Field.HideModel = ammoDef.AreaEffect.Pulse.HideModel;
-                ammoDef.Ewar.Field.GrowTime = ammoDef.AreaEffect.Pulse.GrowTime;
-                ammoDef.Ewar.Field.Interval = ammoDef.AreaEffect.Pulse.Interval;
-                ammoDef.Ewar.Field.PulseChance = ammoDef.AreaEffect.Pulse.PulseChance;
-
-                ammoDef.Ewar.Field.TriggerRange = ammoDef.AreaEffect.EwarFields.TriggerRange;
-
-                ammoDef.Ewar.Force.DisableRelativeMass = ammoDef.AreaEffect.EwarFields.Force.DisableRelativeMass;
-                ammoDef.Ewar.Force.ShooterFeelsForce = ammoDef.AreaEffect.EwarFields.Force.ShooterFeelsForce;
-                ammoDef.Ewar.Force.TractorRange = ammoDef.AreaEffect.EwarFields.Force.TractorRange;
-                ammoDef.Ewar.Force.ForceFrom = (PushPullDef.Force)ammoDef.AreaEffect.EwarFields.Force.ForceFrom;
-                ammoDef.Ewar.Force.ForceTo = (PushPullDef.Force)ammoDef.AreaEffect.EwarFields.Force.ForceTo;
-                ammoDef.Ewar.Force.Position = (PushPullDef.Force)ammoDef.AreaEffect.EwarFields.Force.Position;
-
-            }
-            */
         }
 
-        private EwarType PickEwarType(AmmoDef def)
-        {
-            switch (def.AreaEffect.AreaEffect)
-            {
-                case AmmoDef.AreaDamageDef.AreaEffectType.AntiSmart:
-                    return EwarType.AntiSmart;
-                case AmmoDef.AreaDamageDef.AreaEffectType.AnchorField:
-                    return EwarType.Anchor;
-                case AmmoDef.AreaDamageDef.AreaEffectType.TractorField:
-                    return EwarType.Tractor;
-                case AmmoDef.AreaDamageDef.AreaEffectType.PushField:
-                    return EwarType.Push;
-                case AmmoDef.AreaDamageDef.AreaEffectType.PullField:
-                    return EwarType.Pull;
-                case AmmoDef.AreaDamageDef.AreaEffectType.DotField:
-                    return EwarType.Dot;
-                case AmmoDef.AreaDamageDef.AreaEffectType.EmpField:
-                    return EwarType.Emp;
-                case AmmoDef.AreaDamageDef.AreaEffectType.EnergySinkField:
-                    return EwarType.EnergySink;
-                case AmmoDef.AreaDamageDef.AreaEffectType.NavField:
-                    return EwarType.Nav;
-                case AmmoDef.AreaDamageDef.AreaEffectType.OffenseField:
-                    return EwarType.Offense;
-                case AmmoDef.AreaDamageDef.AreaEffectType.JumpNullField:
-                    return EwarType.JumpNull;
-                default:
-                    return EwarType.Offense;
-            }
-        }
+
 
         private void GetThreats(out HashSet<int> set)
         {
@@ -549,26 +483,6 @@ namespace CoreSystems.Support
             }
         }
 
-        private void CheckForBadAnimations()
-        {
-            uint delay;
-            if (PartAnimationLengths.TryGetValue(EventTriggers.PreFire, out delay) && delay > DelayToFire)
-            {
-                var message1 = $"This mod uses animation PreFire delay ({delay}) instead of DelayToFire ({DelayToFire}), this will break multiplayer... please report to mod author -- Weapon:{PartName}";
-                var message2 = $"ModPath:{Values.ModPath}";
-                Log.Line(message1);
-                Log.Line(message2);
-            }
-
-
-            if (Values.HardPoint.Loading.ShotsInBurst > 0 && PartAnimationLengths.TryGetValue(EventTriggers.Firing, out delay) && delay > Values.HardPoint.Loading.DelayAfterBurst)
-            {
-                var message1 = $"This mod uses animation to delay ({delay}) shooting instead of DelayAfterBurst ({Values.HardPoint.Loading.DelayAfterBurst}), this will break multiplayer... please report to mod author -- Weapon:{PartName}";
-                var message2 = $"ModPath:{Values.ModPath}";
-                Log.Line(message1);
-                Log.Line(message2);
-            }
-        }
         private void Heat(out bool degRof, out int maxHeat, out float wepCoolDown)
         {
             degRof = Values.HardPoint.Loading.DegradeRof;
