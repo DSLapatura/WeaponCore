@@ -16,7 +16,6 @@ namespace CoreSystems.Platform
 
             if (ActiveAmmoDef == ammoType)
                 return;
-
             if (proposed)
             {
                 Reload.AmmoTypeId = ProposedAmmoId;

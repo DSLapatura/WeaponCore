@@ -65,12 +65,9 @@ namespace CoreSystems
                 wr.StartId = 0;
                 wr.EndId = 0;
                 wr.WaitForClient = false;
-                for (int j = 0; j < comp.Collection.Count; j++)
-                {
-                    var we = comp.Collection[j];
-                    if (wr.AmmoTypeId >= we.System.AmmoTypes.Length)
-                        wr.AmmoTypeId = 0;
-                }
+                var we = comp.Collection[i];
+                if (wr.AmmoTypeId >= we.System.AmmoTypes.Length)
+                    wr.AmmoTypeId = 0;
             }
 
             for (int i = 0; i < Values.State.Weapons.Length; i++)

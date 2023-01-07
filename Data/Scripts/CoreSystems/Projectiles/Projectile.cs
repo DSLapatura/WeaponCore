@@ -138,6 +138,9 @@ namespace CoreSystems.Projectiles
             var trajectory = ammoDef.Trajectory;
             var guidance = trajectory.Guidance;
 
+            if (aConst.AntiSmartDetected)
+                ++session.ActiveAntiSmarts;
+
             if (aConst.DynamicGuidance && session.AntiSmartActive) 
                 DynTrees.RegisterProjectile(this);
 
@@ -403,8 +406,12 @@ namespace CoreSystems.Projectiles
                 VrPros.Clear();
             }
 
+
             if (aConst.DynamicGuidance && session.AntiSmartActive)
                 DynTrees.UnregisterProjectile(this);
+
+            if (aConst.AntiSmartDetected)
+                --session.ActiveAntiSmarts;
 
             var dmgTotal = Info.DamageDoneAoe + Info.DamageDonePri + Info.DamageDoneShld + Info.DamageDoneProj;
 

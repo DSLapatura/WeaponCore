@@ -10,9 +10,8 @@ namespace CoreSystems.Support
         {
             if (projectile.PruningProxyId != -1)
                 return;
+
             var s = projectile.Info.Weapon.Comp.Session;
-            if (projectile.Info.AmmoDef.Const.AntiSmartDetected)
-                ++s.ActiveAntiSmarts;
             BoundingSphereD sphere = new BoundingSphereD(projectile.Position, projectile.Info.AmmoDef.Const.LargestHitSize);
             BoundingBoxD result;
             BoundingBoxD.CreateFromSphere(ref sphere, out result);
@@ -26,9 +25,6 @@ namespace CoreSystems.Support
             var s = projectile.Info.Weapon.Comp.Session;
             s.ProjectileTree.RemoveProxy(projectile.PruningProxyId);
             projectile.PruningProxyId = -1;
-
-            if (projectile.Info.AmmoDef.Const.AntiSmartDetected)
-                --s.ActiveAntiSmarts;
         }
 
         internal static void OnProjectileMoved(Projectile projectile, ref Vector3D velocity)
