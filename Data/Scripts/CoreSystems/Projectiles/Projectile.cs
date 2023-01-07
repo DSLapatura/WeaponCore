@@ -841,7 +841,6 @@ namespace CoreSystems.Projectiles
                     return; // bad modder, failed to read coreparts comment, fail silently so they drive themselves nuts
 
                 disableAvoidance = approach.DisableAvoidance;
-                var planetExists = Info.MyPlanet != null;
 
                 if (approach.AdjustUp || stageChange)
                 {
@@ -851,7 +850,7 @@ namespace CoreSystems.Projectiles
                             storage.ApproachInfo.OffsetDir = Info.OriginUp;
                             break;
                         case UpRelativeTo.RelativeToGravity:
-                            storage.ApproachInfo.OffsetDir = !planetExists ? Info.OriginUp : Vector3D.Normalize(Position - Info.MyPlanet.PositionComp.WorldAABB.Center);
+                            storage.ApproachInfo.OffsetDir = Info.MyPlanet == null ? Info.OriginUp : Vector3D.Normalize(Position - Info.MyPlanet.PositionComp.WorldAABB.Center);
                             break;
                         case UpRelativeTo.TargetDirection:
                             storage.ApproachInfo.OffsetDir = Vector3D.Normalize(storage.ApproachInfo.TargetPos - Position);
@@ -892,13 +891,14 @@ namespace CoreSystems.Projectiles
                             storage.ApproachInfo.LookAtPos = Info.Origin;
                             break;
                         case RelativeTo.Shooter:
-                            storage.ApproachInfo.LookAtPos = Info.Weapon.MyPivotPos;
-                           break;
+                            var blockPos = Info.Weapon.Comp.CoreEntity.PositionComp.WorldAABB.Center;
+                            storage.ApproachInfo.DestinationPos = !Vector3D.IsZero(blockPos) ? blockPos : Info.Origin;
+                            break;
                         case RelativeTo.Target:
                             storage.ApproachInfo.LookAtPos = storage.ApproachInfo.TargetPos;
                             break;
                         case RelativeTo.Surface:
-                            if (planetExists)
+                            if (Info.MyPlanet != null)
                             {
                                 PlanetSurfaceHeightAdjustment(Position, Direction, approach, out surfacePos);
                                 storage.ApproachInfo.LookAtPos = surfacePos;
@@ -937,13 +937,14 @@ namespace CoreSystems.Projectiles
                             storage.ApproachInfo.DestinationPos = Info.Origin; 
                             break;
                         case RelativeTo.Shooter:
-                            storage.ApproachInfo.DestinationPos = Info.Weapon.MyPivotPos;
+                            var blockPos = Info.Weapon.Comp.CoreEntity.PositionComp.WorldAABB.Center;
+                            storage.ApproachInfo.DestinationPos = !Vector3D.IsZero(blockPos) ? blockPos : Info.Origin;
                             break;
                         case RelativeTo.Target:
                             storage.ApproachInfo.DestinationPos = storage.ApproachInfo.TargetPos;
                             break;
                         case RelativeTo.Surface:
-                            if (planetExists)
+                            if (Info.MyPlanet != null)
                             {
                                 PlanetSurfaceHeightAdjustment(Position, Direction, approach, out surfacePos);
                                 storage.ApproachInfo.DestinationPos = surfacePos;
@@ -1151,7 +1152,7 @@ namespace CoreSystems.Projectiles
                     {
                         case RelativeTo.Surface:
                         {
-                            if (Info.MyPlanet != null && planetExists && approach.Elevation == RelativeTo.Surface)
+                            if (Info.MyPlanet != null && approach.Elevation == RelativeTo.Surface)
                             {
                                 Vector3D followSurfacePos;
                                 heightAdjLeadPos = PlanetSurfaceHeightAdjustment(leadPosition, storage.ApproachInfo.OffsetDir, approach, out followSurfacePos);
@@ -1177,7 +1178,9 @@ namespace CoreSystems.Projectiles
                         }
                         case RelativeTo.Shooter:
                         {
-                            var plane = new PlaneD(Info.Weapon.MyPivotPos, heightDir);
+                            var blockPos = Info.Weapon.Comp.CoreEntity.PositionComp.WorldAABB.Center;
+                            blockPos = !Vector3D.IsZero(blockPos) ? blockPos : Info.Origin;
+                            var plane = new PlaneD(blockPos, heightDir);
                             var distToPlane = plane.DistanceToPoint(leadPosition);
                             heightAdjLeadPos = leadPosition + (heightDir * distToPlane);
                             break;
@@ -1216,8 +1219,42 @@ namespace CoreSystems.Projectiles
                         }
                         case RelativeTo.Nothing:
                         {
-                            heightAdjLeadPos = storage.ApproachInfo.TargetPos;
-                            break;
+                            switch (approach.Destination)
+                            {
+                                case RelativeTo.Origin:
+                                    heightAdjLeadPos = Info.Origin;
+                                    break;
+                                    case RelativeTo.Target:
+                                    heightAdjLeadPos = storage.ApproachInfo.TargetPos;
+                                    break;
+                                case RelativeTo.Shooter:
+                                    var blockPos = Info.Weapon.Comp.CoreEntity.PositionComp.WorldAABB.Center;
+                                    blockPos = !Vector3D.IsZero(blockPos) ? blockPos : Info.Origin;
+                                    heightAdjLeadPos = blockPos;
+                                    break;
+                                case RelativeTo.Current:
+                                    heightAdjLeadPos = Position;
+                                    break;
+                                case RelativeTo.MidPoint:
+                                    heightAdjLeadPos = Vector3D.Lerp(destination, source, 0.5);
+                                    break;
+                                case RelativeTo.StoredStartDestination:
+                                {
+                                    var storedDest = storage.ApproachInfo.StoredDestination[storage.RequestedStage];
+                                    heightAdjLeadPos = storedDest != Vector3D.Zero ? storedDest : storage.ApproachInfo.TargetPos;
+                                    break;
+                                }
+                                case RelativeTo.StoredEndDestination:
+                                {
+                                    var storedDest = storage.ApproachInfo.StoredDestination[storage.RequestedStage * 2];
+                                    heightAdjLeadPos = storedDest != Vector3D.Zero ? storedDest : storage.ApproachInfo.TargetPos;
+                                    break;
+                                }
+                                default:
+                                    heightAdjLeadPos = storage.ApproachInfo.TargetPos;
+                                    break;
+                                }
+                                break;
                         }
                         default:
                             heightAdjLeadPos = leadPosition;

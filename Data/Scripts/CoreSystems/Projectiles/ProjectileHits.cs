@@ -139,7 +139,7 @@ namespace CoreSystems.Projectiles
                     if (shieldInfo == null)
                         shieldInfo = Session.SApi.MatchEntToShieldFastExt(ent, true);
 
-                    if (shieldInfo != null && (firingCube == null || !firingCube.CubeGrid.IsSameConstructAs(shieldInfo.Value.Item1.CubeGrid) && !goCritical))
+                    if (shieldInfo != null && (firingCube == null || (selfDamage || !firingCube.CubeGrid.IsSameConstructAs(shieldInfo.Value.Item1.CubeGrid)) && !goCritical))
                     {
                         if (shieldInfo.Value.Item2.Item1)
                         {
