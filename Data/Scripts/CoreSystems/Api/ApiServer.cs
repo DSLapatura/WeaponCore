@@ -8,9 +8,6 @@ namespace CoreSystems.Api
     public class ApiServer
     {
         private const long Channel = 67549756549;
-        internal ApiServer ()
-        {
-        }
 
         /// <summary>
         /// Is the API ready to be serve

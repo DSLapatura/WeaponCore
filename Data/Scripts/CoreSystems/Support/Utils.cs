@@ -1282,9 +1282,6 @@ namespace CoreSystems.Support
 
     internal class DSUtils
     {
-        internal DSUtils()
-        {
-        }
         internal struct Results
         {
             public double Min;
@@ -1384,7 +1381,7 @@ namespace CoreSystems.Support
                     if (ms > timings.Max)
                     {
                         timings.Max = ms;
-                        timings.MaxTick = Session.Tick;
+                        timings.MaxTick = Session.I.Tick;
                     }
                     if (ms < timings.Min || timings.Min <= 0) timings.Min = ms;
                 }
@@ -1396,7 +1393,7 @@ namespace CoreSystems.Support
                     timings.Events++;
                     timings.Average = ms;
                     timings.Max = ms;
-                    timings.MaxTick = Session.Tick;
+                    timings.MaxTick = Session.I.Tick;
                     timings.Min = ms;
                     _timings[name] = timings;
                 }

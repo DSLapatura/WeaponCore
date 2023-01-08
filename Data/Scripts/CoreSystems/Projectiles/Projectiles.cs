@@ -135,7 +135,7 @@ namespace CoreSystems.Projectiles
                 var ai = p.Info.Ai;
                 ++info.Age;
                 info.PrevRelativeAge = info.RelativeAge;
-                info.RelativeAge += Session.DeltaTimeRatio;
+                info.RelativeAge += Session.I.DeltaTimeRatio;
                 ++ai.MyProjectiles;
                 ai.ProjectileTicker = Session.I.Tick;
 
@@ -203,7 +203,7 @@ namespace CoreSystems.Projectiles
                         }
 
                         if (aConst.FeelsGravity && MyUtils.IsValid(p.Gravity) && !MyUtils.IsZero(ref p.Gravity)) {
-                            p.Velocity += (p.Gravity * aConst.GravityMultiplier) * (float)Session.DeltaStepConst;
+                            p.Velocity += (p.Gravity * aConst.GravityMultiplier) * (float)Session.I.DeltaStepConst;
                             if (!aConst.IsSmart && !aConst.IsDrone && aConst.AmmoSkipAccel)
                                 Vector3D.Normalize(ref p.Velocity, out p.Direction);
                         }
@@ -217,7 +217,7 @@ namespace CoreSystems.Projectiles
 
                             var accel = true;
                             Vector3D newVel;
-                            var accelThisTick = p.Direction * (aConst.DeltaVelocityPerTick * Session.DeltaTimeRatio);
+                            var accelThisTick = p.Direction * (aConst.DeltaVelocityPerTick * Session.I.DeltaTimeRatio);
 
                             var maxSpeedSqr = p.MaxSpeed * p.MaxSpeed;
                             if (p.DeaccelRate > 0) {
@@ -258,7 +258,7 @@ namespace CoreSystems.Projectiles
                         if (aConst.AmmoSkipAccel || p.VelocityLengthSqr > 0)
                             p.LastPosition = p.Position;
 
-                        p.TravelMagnitude = info.Age != 0 ? p.Velocity * Session.DeltaStepConst : p.TravelMagnitude;
+                        p.TravelMagnitude = info.Age != 0 ? p.Velocity * Session.I.DeltaStepConst : p.TravelMagnitude;
                         p.Position += p.TravelMagnitude;
 
                         info.PrevDistanceTraveled = info.DistanceTraveled;
@@ -454,7 +454,7 @@ namespace CoreSystems.Projectiles
                         var vs = vp.AvShot;
 
                         vp.TracerLength = info.TracerLength;
-                        vs.Init(vp, (aConst.DeltaVelocityPerTick * Session.DeltaTimeRatio), p.MaxSpeed, ref p.Direction);
+                        vs.Init(vp, (aConst.DeltaVelocityPerTick * Session.I.DeltaTimeRatio), p.MaxSpeed, ref p.Direction);
 
                         if (info.BaseDamagePool <= 0 || p.State == ProjectileState.Depleted)
                             vs.ProEnded = true;
@@ -545,7 +545,7 @@ namespace CoreSystems.Projectiles
                     }
                     else
                     {
-                        var dir = (p.Velocity - info.ShooterVel) * Session.DeltaStepConst;
+                        var dir = (p.Velocity - info.ShooterVel) * Session.I.DeltaStepConst;
                         double distChanged;
                         Vector3D.Dot(ref p.Direction, ref dir, out distChanged);
 

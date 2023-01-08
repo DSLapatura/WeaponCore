@@ -74,8 +74,8 @@ namespace CoreSystems.Platform
                     Elevation = Comp.VanillaTurretBase.Elevation;
                 }
 
-                var azStep = System.AzStep * Session.DeltaTimeRatio;
-                var elStep = System.ElStep * Session.DeltaTimeRatio;
+                var azStep = System.AzStep * Session.I.DeltaTimeRatio;
+                var elStep = System.ElStep * Session.I.DeltaTimeRatio;
 
                 var oldAz = Azimuth;
                 var oldEl = Elevation;

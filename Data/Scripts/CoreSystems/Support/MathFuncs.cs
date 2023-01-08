@@ -539,8 +539,8 @@ namespace CoreSystems.Support
                     azToTraverse = desiredAzimuth;
 
                 // Clamp step within limits.
-                var simAzStep = system.AzStep * Session.DeltaTimeRatio;
-                var simElStep = system.ElStep * Session.DeltaTimeRatio;
+                var simAzStep = system.AzStep * Session.I.DeltaTimeRatio;
+                var simElStep = system.ElStep * Session.I.DeltaTimeRatio;
 
                 var azStep = MathHelperD.Clamp(azToTraverse, -simAzStep, simAzStep);
                 var elStep = MathHelperD.Clamp(desiredElevation - weapon.Elevation, -simElStep, simElStep);

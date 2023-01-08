@@ -417,6 +417,7 @@ namespace CoreSystems
                 {
                     MyAPIGateway.Multiplayer.UnregisterMessageHandler(ClientPacketId, ClientReceivedPacket);
                     MyAPIGateway.Multiplayer.UnregisterMessageHandler(StringPacketId, StringReceived);
+                    MyAPIGateway.Multiplayer.UnregisterMessageHandler(ClientPdPacketId, ClientReceivedDeathPacket);
                 }
 
                 if (HandlesInput)

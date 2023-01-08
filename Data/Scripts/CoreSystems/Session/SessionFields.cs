@@ -49,6 +49,7 @@ namespace CoreSystems
         internal const int ClientCfgVersion = 9;
         internal const string ServerCfgName = "CoreSystemsServer.cfg";
         internal const string ClientCfgName = "CoreSystemsClient.cfg";
+        internal static Session I;
         internal volatile bool Inited;
         internal volatile bool TurretControls;
         internal volatile bool FixedMissileControls;
@@ -56,15 +57,12 @@ namespace CoreSystems
         internal volatile bool FixedGunControls;
         internal volatile bool TurretControllerControls;
         internal volatile bool SorterControls;
-        internal volatile bool BaseControlsActions;
         internal volatile uint LastDeform;
         internal volatile bool DecoyControls;
-        internal volatile bool EarlyInitOver;
-        internal static Session I;
-        internal static double DeltaStepConst;
-        internal static double RelativeTime;
-        internal static double DeltaTimeRatio;
-        internal static readonly HashSet<ulong> AuthorIds = new HashSet<ulong> { 76561197969691953 };
+
+        internal double DeltaStepConst;
+        internal double RelativeTime;
+        internal double DeltaTimeRatio;
 
         internal readonly TargetCompare TargetCompare = new TargetCompare();
         internal readonly WaterModAPI WApi = new WaterModAPI();
@@ -121,6 +119,7 @@ namespace CoreSystems
         internal readonly Stack<FullSyncInfo> FullSyncInfoPool = new Stack<FullSyncInfo>(32);
 
         internal readonly HashSet<MyCubeGrid> DirtyGridInfos = new HashSet<MyCubeGrid>();
+        internal readonly HashSet<ulong> AuthorIds = new HashSet<ulong> { 76561197969691953 };
 
         internal readonly ConcurrentDictionary<Weapon, byte> PartToPullConsumable = new ConcurrentDictionary<Weapon, byte>();
 
@@ -437,7 +436,8 @@ namespace CoreSystems
         internal bool AdvSyncServer;
         internal bool AdvSync;
         internal bool IsServer;
-
+        internal bool BaseControlsActions;
+        internal bool EarlyInitOver;
         internal bool IsHost;
         internal bool MpServer;
         internal bool DedicatedServer;

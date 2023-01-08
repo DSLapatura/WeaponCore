@@ -333,6 +333,7 @@ namespace CoreSystems
             PlayerHandWeapon = null;
             ControlledEntity = null;
             TmpStorage = null;
+            ApiServer = null;
         }
     }
 }
