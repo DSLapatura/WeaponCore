@@ -13,11 +13,8 @@ using VRage.Game.ModAPI;
 using VRageMath;
 using static CoreSystems.Support.WeaponDefinition;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.EwarDef;
-using static CoreSystems.Support.WeaponDefinition.AmmoDef.EwarDef.FieldDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.EwarDef.PushPullDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.EwarDef.EwarType;
-using static CoreSystems.Support.WeaponDefinition.AmmoDef.EwarDef.EwarMode;
-using static CoreSystems.Support.WeaponDefinition.AmmoDef.DamageScaleDef;
 using static CoreSystems.Projectiles.Projectiles;
 
 namespace CoreSystems
@@ -39,7 +36,7 @@ namespace CoreSystems
             var depletable = info.AmmoDef.Ewar.Depletable;
             var healthPool = depletable && info.BaseHealthPool > 0 ? info.BaseHealthPool : float.MaxValue;
             if (healthPool <= 0) return;
-
+            var aConst = info.AmmoDef.Const;
             if (hitEnt.Entity.Physics == null || !hitEnt.Entity.Physics.Enabled || hitEnt.Entity.Physics.IsStatic || !hitEnt.HitPos.HasValue)
                 return;
 
@@ -57,42 +54,41 @@ namespace CoreSystems
                 Vector3D forceTo = Vector3D.Zero;
                 Vector3D forcePosition = Vector3D.Zero;
                 Vector3D normHitDir;
-                Vector3D hitDir;
 
-                if (forceDef.ForceFrom == Force.ProjectileLastPosition) forceFrom = hitEnt.Intersection.From;
+                if (forceDef.ForceFrom == Force.ProjectileLastPosition) forceFrom = hitEnt.PruneSphere.Center;
                 else if (forceDef.ForceFrom == Force.ProjectileOrigin) forceFrom = info.Origin;
                 else if (forceDef.ForceFrom == Force.HitPosition) forceFrom = hitEnt.HitPos.Value;
                 else if (forceDef.ForceFrom == Force.TargetCenter) forceFrom = hitEnt.Entity.PositionComp.WorldAABB.Center;
                 else if (forceDef.ForceFrom == Force.TargetCenterOfMass) forceFrom = hitEnt.Entity.Physics.CenterOfMassWorld;
 
-                if (forceDef.ForceTo == Force.ProjectileLastPosition) forceTo = hitEnt.Intersection.From;
+                if (forceDef.ForceTo == Force.ProjectileLastPosition) forceTo = hitEnt.PruneSphere.Center;
                 else if (forceDef.ForceTo == Force.ProjectileOrigin) forceTo = info.Origin;
                 else if (forceDef.ForceTo == Force.HitPosition) forceTo = hitEnt.HitPos.Value;
                 else if (forceDef.ForceTo == Force.TargetCenter) forceTo = hitEnt.Entity.PositionComp.WorldAABB.Center;
                 else if (forceDef.ForceTo == Force.TargetCenterOfMass) forceTo = hitEnt.Entity.Physics.CenterOfMassWorld;
 
-                if (forceDef.Position == Force.ProjectileLastPosition) forcePosition = hitEnt.Intersection.From;
+                if (forceDef.Position == Force.ProjectileLastPosition) forcePosition = hitEnt.PruneSphere.Center;
                 else if (forceDef.Position == Force.ProjectileOrigin) forcePosition = info.Origin;
                 else if (forceDef.Position == Force.HitPosition) forcePosition = hitEnt.HitPos.Value;
                 else if (forceDef.Position == Force.TargetCenter) forcePosition = hitEnt.Entity.PositionComp.WorldAABB.Center;
                 else if (forceDef.Position == Force.TargetCenterOfMass) forcePosition = hitEnt.Entity.Physics.CenterOfMassWorld;
 
-                hitDir = forceTo - forceFrom;
+                var hitDir = forceTo - forceFrom;
 
                 Vector3D.Normalize(ref hitDir, out normHitDir);
 
                 double force;
                 if (info.AmmoDef.Const.EwarType != Tractor)
                 {
-                    normHitDir = info.AmmoDef.Const.EwarType == Push ? normHitDir : -normHitDir;
-                    force = info.AmmoDef.Const.EwarStrength;
+                    normHitDir = aConst.EwarType == Push ? normHitDir : -normHitDir;
+                    force = aConst.EwarStrength;
                 }
                 else
                 {
                     var distFromFocalPoint = forceDef.TractorRange - hitEnt.HitDist ?? info.ProjectileDisplacement;
                     var positive = distFromFocalPoint > 0;
                     normHitDir = positive ? normHitDir : -normHitDir;
-                    force = positive ?MathHelper.Lerp(distFromFocalPoint, forceDef.TractorRange, info.AmmoDef.Const.EwarStrength) : MathHelper.Lerp(Math.Abs(distFromFocalPoint), forceDef.TractorRange, info.AmmoDef.Const.EwarStrength);
+                    force = positive ?MathHelper.Lerp(distFromFocalPoint, forceDef.TractorRange, aConst.EwarStrength) : MathHelper.Lerp(Math.Abs(distFromFocalPoint), forceDef.TractorRange, info.AmmoDef.Const.EwarStrength);
                 }
                 var massMod = !forceDef.DisableRelativeMass ? hitEnt.Entity.Physics.Mass : 1;
                 
@@ -107,8 +103,8 @@ namespace CoreSystems
                     hitDir = forceFrom - forceTo;
                     Vector3D.Normalize(ref hitDir, out normHitDir);
 
-                    if (info.AmmoDef.Const.EwarType != Tractor)
-                        normHitDir = info.AmmoDef.Const.EwarType == Push ? normHitDir : -normHitDir;
+                    if (aConst.EwarType != Tractor)
+                        normHitDir = aConst.EwarType == Push ? normHitDir : -normHitDir;
                     else {
                         var distFromFocalPoint = forceDef.TractorRange - info.ProjectileDisplacement;
                         var positive = distFromFocalPoint > 0;

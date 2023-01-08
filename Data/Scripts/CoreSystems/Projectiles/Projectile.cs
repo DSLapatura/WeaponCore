@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using CoreSystems.Support;
 using Jakaria.API;
 using Sandbox.Game.Entities;
@@ -2838,6 +2839,7 @@ namespace CoreSystems.Projectiles
             var prevCheck = Info.PrevRelativeAge % interval;
             var currentCheck = Info.RelativeAge % interval;
             var check = interval == 1 || prevCheck < 0 || prevCheck >= currentCheck;
+
             if (!Info.AmmoDef.Const.EwarField || Info.AmmoDef.Const.EwarField && check)
                 EwarEffects();
             else Info.EwarActive = false;
@@ -2845,10 +2847,12 @@ namespace CoreSystems.Projectiles
 
         internal void EwarEffects()
         {
-            switch (Info.AmmoDef.Const.EwarType)
+            var aConst = Info.AmmoDef.Const;
+            var offensiveEwarReady = (!aConst.EwarFieldTrigger || Info.ExpandingEwarField);
+            switch (aConst.EwarType)
             {
                 case AntiSmart:
-                    var eWarSphere = new BoundingSphereD(Position, Info.AmmoDef.Const.EwarRadius);
+                    var eWarSphere = new BoundingSphereD(Position, aConst.EwarRadius);
 
                     var s = Session.I;
                     DynTrees.GetAllProjectilesInSphere(Session.I, ref eWarSphere, s.EwaredProjectiles, false);
@@ -2859,7 +2863,7 @@ namespace CoreSystems.Projectiles
                         if (eWarSphere.Intersects(new BoundingSphereD(netted.Position, netted.Info.AmmoDef.Const.CollisionSize)))
                         {
                             if (netted.Info.Ai.TopEntityMap.GroupMap.Construct.ContainsKey(Info.Weapon.Comp.TopEntity) || netted.Info.Target.TargetState == Target.TargetStates.IsProjectile) continue;
-                            if (Info.Random.NextDouble() * 100f < Info.AmmoDef.Const.PulseChance || !Info.AmmoDef.Const.EwarField)
+                            if (Info.Random.NextDouble() * 100f < aConst.PulseChance || !aConst.EwarField)
                             {
                                 Info.BaseEwarPool -= (float)netted.Info.AmmoDef.Const.HealthHitModifier;
                                 if (Info.BaseEwarPool <= 0 && Info.BaseHealthPool-- > 0)
@@ -2875,43 +2879,43 @@ namespace CoreSystems.Projectiles
                     s.EwaredProjectiles.Clear();
                     return;
                 case Push:
-                    if (Info.ExpandingEwarField && Info.Random.NextDouble() * 100f <= Info.AmmoDef.Const.PulseChance || !Info.AmmoDef.Const.EwarField)
+                    if (offensiveEwarReady && Info.Random.NextDouble() * 100f <= aConst.PulseChance || !aConst.EwarField)
                         Info.EwarActive = true;
                     break;
                 case Pull:
-                    if (Info.ExpandingEwarField && Info.Random.NextDouble() * 100f <= Info.AmmoDef.Const.PulseChance || !Info.AmmoDef.Const.EwarField)
+                    if (offensiveEwarReady && Info.Random.NextDouble() * 100f <= aConst.PulseChance || !aConst.EwarField)
                         Info.EwarActive = true;
                     break;
                 case Tractor:
-                    if (Info.ExpandingEwarField && Info.Random.NextDouble() * 100f <= Info.AmmoDef.Const.PulseChance || !Info.AmmoDef.Const.EwarField)
+                    if (offensiveEwarReady && Info.Random.NextDouble() * 100f <= aConst.PulseChance || !aConst.EwarField)
                         Info.EwarActive = true;
                     break;
                 case JumpNull:
-                    if (Info.ExpandingEwarField && Info.Random.NextDouble() * 100f <= Info.AmmoDef.Const.PulseChance || !Info.AmmoDef.Const.EwarField)
+                    if (offensiveEwarReady && Info.Random.NextDouble() * 100f <= aConst.PulseChance || !aConst.EwarField)
                         Info.EwarActive = true;
                     break;
                 case Anchor:
-                    if (Info.ExpandingEwarField && Info.Random.NextDouble() * 100f <= Info.AmmoDef.Const.PulseChance || !Info.AmmoDef.Const.EwarField)
+                    if (offensiveEwarReady && Info.Random.NextDouble() * 100f <= aConst.PulseChance || !aConst.EwarField)
                         Info.EwarActive = true;
                     break;
                 case EnergySink:
-                    if (Info.ExpandingEwarField && Info.Random.NextDouble() * 100f <= Info.AmmoDef.Const.PulseChance || !Info.AmmoDef.Const.EwarField)
+                    if (offensiveEwarReady && Info.Random.NextDouble() * 100f <= aConst.PulseChance || !aConst.EwarField)
                         Info.EwarActive = true;
                     break;
                 case Emp:
-                    if (Info.ExpandingEwarField && Info.Random.NextDouble() * 100f <= Info.AmmoDef.Const.PulseChance || !Info.AmmoDef.Const.EwarField)
+                    if (offensiveEwarReady && Info.Random.NextDouble() * 100f <= aConst.PulseChance || !aConst.EwarField)
                         Info.EwarActive = true;
                     break;
                 case Offense:
-                    if (Info.ExpandingEwarField && Info.Random.NextDouble() * 100f <= Info.AmmoDef.Const.PulseChance || !Info.AmmoDef.Const.EwarField)
+                    if (offensiveEwarReady && Info.Random.NextDouble() * 100f <= aConst.PulseChance || !aConst.EwarField)
                         Info.EwarActive = true;
                     break;
                 case Nav:
-                    if (!Info.AmmoDef.Const.EwarField || Info.ExpandingEwarField && Info.Random.NextDouble() * 100f <= Info.AmmoDef.Const.PulseChance)
+                    if (offensiveEwarReady && Info.Random.NextDouble() * 100f <= aConst.PulseChance || !aConst.EwarField)
                         Info.EwarActive = true;
                     break;
                 case Dot:
-                    if (Info.ExpandingEwarField && Info.Random.NextDouble() * 100f <= Info.AmmoDef.Const.PulseChance || !Info.AmmoDef.Const.EwarField)
+                    if (offensiveEwarReady && Info.Random.NextDouble() * 100f <= aConst.PulseChance || !aConst.EwarField)
                     {
                         Info.EwarActive = true;
                     }

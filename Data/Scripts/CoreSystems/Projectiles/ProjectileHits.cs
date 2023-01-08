@@ -35,7 +35,7 @@ namespace CoreSystems.Projectiles
             var aConst = info.AmmoDef.Const;
             var shieldByPass = aConst.ShieldDamageBypassMod > 0;
             var genericFields = info.EwarActive && (aConst.EwarType == Dot || aConst.EwarType == Push || aConst.EwarType == Pull || aConst.EwarType == Tractor);
-
+            var fieldActive = aConst.EwarField && (!aConst.EwarFieldTrigger || info.ExpandingEwarField);
             p.Info.ShieldInLine = false;
             var isBeam = aConst.IsBeamWeapon;
             var offensiveEwar = (info.EwarActive && aConst.NonAntiSmartEwar);
@@ -366,7 +366,7 @@ namespace CoreSystems.Projectiles
                                 }
                             }
 
-                            if (!p.Info.ExpandingEwarField)
+                            if (!fieldActive)
                             {
 
                                 var forwardPos = p.Info.Age != 1 ? beamFrom : beamFrom + (direction * Math.Min(grid.GridSizeHalf, info.DistanceTraveled - info.PrevDistanceTraveled));
@@ -427,7 +427,7 @@ namespace CoreSystems.Projectiles
 
                             hitEntity.EventType = Grid;
                         }
-                        else if (!info.ExpandingEwarField)
+                        else if (!fieldActive)
                             hitEntity.EventType = Effect;
                         else
                             hitEntity.EventType = Field;

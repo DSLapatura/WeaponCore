@@ -339,6 +339,7 @@ namespace CoreSystems.Projectiles
                 p.Beam = useEwarFieldSphere ? new LineD(p.Position + (-p.Direction * ewarRadius), p.Position + (p.Direction * ewarRadius)) : new LineD(p.LastPosition, p.Position);
                 var checkBeam = aConst.CheckFutureIntersection ? new LineD(p.Beam.From, p.Beam.From + p.Beam.Direction * (p.Beam.Length + aConst.FutureIntersectionRange), p.Beam.Length + aConst.FutureIntersectionRange) : p.Beam;
                 var lineCheck = aConst.CollisionIsLine && !useEwarFieldSphere;
+
                 if (p.DeaccelRate <= 0 && !aConst.IsBeamWeapon && (info.DistanceTraveled * info.DistanceTraveled >= p.DistanceToTravelSqr || info.RelativeAge > aConst.MaxLifeTime)) {
 
                     p.PruneSphere.Center = p.Position;
@@ -386,10 +387,15 @@ namespace CoreSystems.Projectiles
                             p.PruneSphere.Radius = ewarRadius;
                         }
                         else
+                        {
+                            p.PruneSphere.Center = p.Position;
                             p.PruneSphere.Radius = aConst.EwarRadius;
+                        }
                     }
                     else
+                    {
                         p.PruneSphere = new BoundingSphereD(p.Position, aConst.EwarRadius);
+                    }
 
                 }
                 else if (lineCheck)
