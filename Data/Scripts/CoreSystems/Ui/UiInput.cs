@@ -68,7 +68,6 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
         internal bool MouseShootWasOn;
         internal bool MouseShootOn;
         internal LineD AimRay;
-        private readonly Session _session;
         private uint _lastInputUpdate;
         internal readonly InputStateData ClientInputState;
         internal MyKeys ControlKey;
@@ -80,15 +79,14 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
 
         internal MyMouseButtonsEnum MouseButtonMenu;
 
-        internal UiInput(Session session)
+        internal UiInput()
         {
-            _session = session;
             ClientInputState = new InputStateData();
         }
 
         internal void UpdateInputState()
         {
-            var s = _session;
+            var s = Session.I;
             WheelForward = false;
             WheelBackward = false;
             IronSights = false;
@@ -118,7 +116,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
                 WasInMenu = ClientInputState.InMenu;
 
 
-                ClientInputState.InMenu = _session.InMenu;
+                ClientInputState.InMenu = s.InMenu;
                 PlayerWeapon = ai.AiType == Ai.AiTypes.Player;
 
                 IronSights = PlayerWeapon && ai.OnlyWeaponComp.Rifle.GunBase.HasIronSightsActive;
@@ -162,7 +160,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
                     ClientInputState.MouseButtonRight = false;
                 }
 
-                if (_session.MpActive)
+                if (s.MpActive)
                 {
                     var shootButtonActive = ClientInputState.MouseButtonLeft || ClientInputState.MouseButtonRight;
 
@@ -241,48 +239,48 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
                     if (!BlackListActive1)
                         BlackList1(true);
 
-                    if (ActionKeyPressed && _session.CanChangeHud)
+                    if (ActionKeyPressed && s.CanChangeHud)
                     {
-                        var evenTicks = _session.Tick % 2 == 0;
+                        var evenTicks = s.Tick % 2 == 0;
                         if (evenTicks)
                         {
 
                             if (MyAPIGateway.Input.IsKeyPress(MyKeys.Up))
                             {
-                                _session.Settings.ClientConfig.HudPos.Y += 0.01f;
-                                _session.Settings.VersionControl.UpdateClientCfgFile();
+                                s.Settings.ClientConfig.HudPos.Y += 0.01f;
+                                s.Settings.VersionControl.UpdateClientCfgFile();
                             }
                             else if (MyAPIGateway.Input.IsKeyPress(MyKeys.Down))
                             {
-                                _session.Settings.ClientConfig.HudPos.Y -= 0.01f;
-                                _session.Settings.VersionControl.UpdateClientCfgFile();
+                                s.Settings.ClientConfig.HudPos.Y -= 0.01f;
+                                s.Settings.VersionControl.UpdateClientCfgFile();
                             }
                             else if (MyAPIGateway.Input.IsKeyPress(MyKeys.Left))
                             {
-                                _session.Settings.ClientConfig.HudPos.X -= 0.01f;
-                                _session.Settings.VersionControl.UpdateClientCfgFile();
+                                s.Settings.ClientConfig.HudPos.X -= 0.01f;
+                                s.Settings.VersionControl.UpdateClientCfgFile();
                             }
                             else if (MyAPIGateway.Input.IsKeyPress(MyKeys.Right))
                             {
-                                _session.Settings.ClientConfig.HudPos.X += 0.01f;
-                                _session.Settings.VersionControl.UpdateClientCfgFile();
+                                s.Settings.ClientConfig.HudPos.X += 0.01f;
+                                s.Settings.VersionControl.UpdateClientCfgFile();
                             }
 
                         }
 
-                        if (_session.Tick10)
+                        if (s.Tick10)
                         {
                             if (MyAPIGateway.Input.IsKeyPress(MyKeys.Add))
                             {
-                                _session.HudUi.NeedsUpdate = true;
-                                _session.Settings.ClientConfig.HudScale = MathHelper.Clamp(_session.Settings.ClientConfig.HudScale + 0.01f, 0.1f, 10f);
-                                _session.Settings.VersionControl.UpdateClientCfgFile();
+                                s.HudUi.NeedsUpdate = true;
+                                s.Settings.ClientConfig.HudScale = MathHelper.Clamp(s.Settings.ClientConfig.HudScale + 0.01f, 0.1f, 10f);
+                                s.Settings.VersionControl.UpdateClientCfgFile();
                             }
                             else if (MyAPIGateway.Input.IsKeyPress(MyKeys.Subtract))
                             {
-                                _session.HudUi.NeedsUpdate = true;
-                                _session.Settings.ClientConfig.HudScale = MathHelper.Clamp(_session.Settings.ClientConfig.HudScale - 0.01f, 0.1f, 10f);
-                                _session.Settings.VersionControl.UpdateClientCfgFile();
+                                s.HudUi.NeedsUpdate = true;
+                                s.Settings.ClientConfig.HudScale = MathHelper.Clamp(s.Settings.ClientConfig.HudScale - 0.01f, 0.1f, 10f);
+                                s.Settings.VersionControl.UpdateClientCfgFile();
                             }
                         }
                     }
@@ -312,7 +310,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
                 InfoKeyReleased = false;
             }
 
-            if (_session.MpActive && !s.InGridAiBlock)
+            if (s.MpActive && !s.InGridAiBlock)
             {
                 if (ClientInputState.InMenu || ClientInputState.MouseButtonRight || ClientInputState.MouseButtonMenu || ClientInputState.MouseButtonRight)
                 {
@@ -375,42 +373,42 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
 
                 if (upKey != null)
                 {
-                    _session.CustomBlackListRequestBecauseKeenIsBrainDead(upKey.GetGameControlEnum().String, _session.PlayerId, !activate);
+                    Session.I.CustomBlackListRequestBecauseKeenIsBrainDead(upKey.GetGameControlEnum().String, Session.I.PlayerId, !activate);
                 }
                 if (downKey != null)
                 {
-                    _session.CustomBlackListRequestBecauseKeenIsBrainDead(downKey.GetGameControlEnum().String, _session.PlayerId, !activate);
+                    Session.I.CustomBlackListRequestBecauseKeenIsBrainDead(downKey.GetGameControlEnum().String, Session.I.PlayerId, !activate);
                 }
                 if (leftKey != null)
                 {
-                    _session.CustomBlackListRequestBecauseKeenIsBrainDead(leftKey.GetGameControlEnum().String, _session.PlayerId, !activate);
+                    Session.I.CustomBlackListRequestBecauseKeenIsBrainDead(leftKey.GetGameControlEnum().String, Session.I.PlayerId, !activate);
                 }
                 if (rightkey != null)
                 {
-                    _session.CustomBlackListRequestBecauseKeenIsBrainDead(rightkey.GetGameControlEnum().String, _session.PlayerId, !activate);
+                    Session.I.CustomBlackListRequestBecauseKeenIsBrainDead(rightkey.GetGameControlEnum().String, Session.I.PlayerId, !activate);
                 }
                 if (addKey != null)
                 {
-                    _session.CustomBlackListRequestBecauseKeenIsBrainDead(addKey.GetGameControlEnum().String, _session.PlayerId, !activate);
+                    Session.I.CustomBlackListRequestBecauseKeenIsBrainDead(addKey.GetGameControlEnum().String, Session.I.PlayerId, !activate);
                 }
                 if (subKey != null)
                 {
-                    _session.CustomBlackListRequestBecauseKeenIsBrainDead(subKey.GetGameControlEnum().String, _session.PlayerId, !activate);
+                    Session.I.CustomBlackListRequestBecauseKeenIsBrainDead(subKey.GetGameControlEnum().String, Session.I.PlayerId, !activate);
                 }
 
                 if (actionKey != null)
                 {
-                    _session.CustomBlackListRequestBecauseKeenIsBrainDead(actionKey.GetGameControlEnum().String, _session.PlayerId, !activate);
+                    Session.I.CustomBlackListRequestBecauseKeenIsBrainDead(actionKey.GetGameControlEnum().String, Session.I.PlayerId, !activate);
                 }
 
                 if (controlKey != null)
                 {
-                    _session.CustomBlackListRequestBecauseKeenIsBrainDead(controlKey.GetGameControlEnum().String, _session.PlayerId, !activate);
+                    Session.I.CustomBlackListRequestBecauseKeenIsBrainDead(controlKey.GetGameControlEnum().String, Session.I.PlayerId, !activate);
                 }
 
                 if (detailKey != null)
                 {
-                    _session.CustomBlackListRequestBecauseKeenIsBrainDead(detailKey.GetGameControlEnum().String, _session.PlayerId, !activate);
+                    Session.I.CustomBlackListRequestBecauseKeenIsBrainDead(detailKey.GetGameControlEnum().String, Session.I.PlayerId, !activate);
                 }
                 BlackListActive1 = activate;
             }
@@ -422,7 +420,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
             var notPainter = ai.OnlyWeaponComp.Data.Repo.Values.Set.Overrides.Control != ProtoWeaponOverrides.ControlModes.Painter;
             var newValue = notPainter ? 2 : 0;
 
-            Weapon.WeaponComponent.RequestSetValue(ai.OnlyWeaponComp, "ControlModes", newValue, _session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(ai.OnlyWeaponComp, "ControlModes", newValue, Session.I.PlayerId);
         }
     }
 }

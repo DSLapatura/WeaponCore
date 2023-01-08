@@ -24,7 +24,7 @@ namespace CoreSystems.Platform
                 ProtoSupportRepo load = null;
                 string rawData;
                 bool validData = false;
-                if (Comp.CoreEntity.Storage.TryGetValue(Comp.Session.CompDataGuid, out rawData))
+                if (Comp.CoreEntity.Storage.TryGetValue(Session.I.CompDataGuid, out rawData))
                 {
                     try
                     {
@@ -48,10 +48,6 @@ namespace CoreSystems.Platform
                         var p = Comp.Platform.Support[i];
 
                         p.PartState = Repo.Values.State.Support[i];
-
-                        if (Comp.Session.IsServer)
-                        {
-                        }
                     }
                 }
                 else

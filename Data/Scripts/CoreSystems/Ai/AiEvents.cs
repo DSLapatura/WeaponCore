@@ -9,7 +9,6 @@ using VRage.Collections;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRageMath;
-using static CoreSystems.Session;
 
 namespace CoreSystems.Support
 {
@@ -62,7 +61,7 @@ namespace CoreSystems.Support
 
 
                 }
-                else if (!force) Log.Line($"NotRegistered:- Aimarked:{MarkedForClose} - aiClosed:{Closed} - Ticks:{Session?.Tick - AiCloseTick} - NullSession:{Session == null} - topMarked:{TopEntity.MarkedForClose}");
+                else if (!force) Log.Line($"NotRegistered:- Aimarked:{MarkedForClose} - aiClosed:{Closed} - Ticks:{Session.I.Tick - AiCloseTick} - topMarked:{TopEntity.MarkedForClose}");
             }
         }
 
@@ -76,7 +75,7 @@ namespace CoreSystems.Support
                     GridEntity.OnBlockAdded += OnBlockAdded;
                     GridEntity.OnBlockRemoved += OnBlockRemoved;
                     GridEntity.OnBlockIntegrityChanged += OnBlockIntegrityChanged;
-                    LastBlockChangeTick = Session.Tick > 0 ? Session.Tick : 1;
+                    LastBlockChangeTick = Session.I.Tick > 0 ? Session.I.Tick : 1;
 
                 }
                 else if (!register && Registered)
@@ -100,7 +99,7 @@ namespace CoreSystems.Support
             BlockChangeArea.Max = Vector3.Max(BlockChangeArea.Max, slim.Max);
             AddedBlockPositions[slim.Position] = slim;
 
-            LastBlockChangeTick = Session.Tick;
+            LastBlockChangeTick = Session.I.Tick;
         }
 
         internal void OnBlockRemoved(IMySlimBlock slim)
@@ -110,7 +109,7 @@ namespace CoreSystems.Support
             BlockChangeArea.Max = Vector3.Max(BlockChangeArea.Max, slim.Max);
             RemovedBlockPositions[slim.Position] = slim;
 
-            LastBlockChangeTick = Session.Tick;
+            LastBlockChangeTick = Session.I.Tick;
         }
 
         internal void OnBlockIntegrityChanged(IMySlimBlock mySlimBlock)
@@ -136,7 +135,7 @@ namespace CoreSystems.Support
 
                 var battery = cube as MyBatteryBlock;
                 var weaponType = (cube is MyConveyorSorter || cube is IMyUserControllableGun);
-                var isWeaponBase = weaponType && cube.BlockDefinition != null && (Session.VanillaIds.ContainsKey(cube.BlockDefinition.Id) || Session.PartPlatforms.ContainsKey(cube.BlockDefinition.Id));
+                var isWeaponBase = weaponType && cube.BlockDefinition != null && (Session.I.VanillaIds.ContainsKey(cube.BlockDefinition.Id) || Session.I.PartPlatforms.ContainsKey(cube.BlockDefinition.Id));
 
                 if (!isWeaponBase && (cube is MyConveyor || cube is IMyConveyorTube || cube is MyConveyorSorter || cube is MyCargoContainer || cube is MyCockpit || cube is IMyAssembler || cube is IMyShipConnector) && cube.CubeGrid.IsSameConstructAs(GridEntity)) { 
                     
@@ -153,15 +152,15 @@ namespace CoreSystems.Support
                             Construct.RootAi.Construct.NewInventoryDetected = true;
 
                             int monitors;
-                            if (!Session.InventoryMonitors.TryGetValue(inventory, out monitors))
+                            if (!Session.I.InventoryMonitors.TryGetValue(inventory, out monitors))
                             {
 
-                                Session.InventoryMonitors[inventory] = 0;
-                                Session.InventoryItems[inventory] = Session.PhysicalItemListPool.Get();
-                                Session.ConsumableItemList[inventory] = Session.BetterItemsListPool.Get();
+                                Session.I.InventoryMonitors[inventory] = 0;
+                                Session.I.InventoryItems[inventory] = Session.I.PhysicalItemListPool.Get();
+                                Session.I.ConsumableItemList[inventory] = Session.I.BetterItemsListPool.Get();
                             }
                             else
-                                Session.InventoryMonitors[inventory] = monitors + 1;
+                                Session.I.InventoryMonitors[inventory] = monitors + 1;
                         }
                     }
                 }
@@ -175,9 +174,9 @@ namespace CoreSystems.Support
                     BoundingSphereD s;
                     MyOrientedBoundingBoxD blockBox;
                     SUtils.GetBlockOrientedBoundingBox(cube, out blockBox);
-                    if (!ModOverride && Session.IsPartAreaRestricted(cube.BlockDefinition.Id.SubtypeId, blockBox, cube.CubeGrid, cube.EntityId, null, out b, out s))
+                    if (!ModOverride && Session.I.IsPartAreaRestricted(cube.BlockDefinition.Id.SubtypeId, blockBox, cube.CubeGrid, cube.EntityId, null, out b, out s))
                     {
-                        if (Session.IsServer)
+                        if (Session.I.IsServer)
                         {
                             cube.CubeGrid.RemoveBlock(cube.SlimBlock);
                         }
@@ -196,7 +195,7 @@ namespace CoreSystems.Support
 
                 if (stator != null || tool != null )
                 {
-                    LastAddToRotorTick = Session.Tick;
+                    LastAddToRotorTick = Session.I.Tick;
 
                     if (stator != null)
                         Stators.Remove(stator);
@@ -208,7 +207,7 @@ namespace CoreSystems.Support
 
                 var weaponType = (cube is MyConveyorSorter || cube is IMyUserControllableGun);
                 var cubeDef = cube.BlockDefinition;
-                var isWeaponBase = weaponType && cubeDef != null && (Session.VanillaIds.ContainsKey(cubeDef.Id) || Session.PartPlatforms.ContainsKey(cubeDef.Id));
+                var isWeaponBase = weaponType && cubeDef != null && (Session.I.VanillaIds.ContainsKey(cubeDef.Id) || Session.I.PartPlatforms.ContainsKey(cubeDef.Id));
                 var battery = cube as MyBatteryBlock;
                 MyInventory inventory;
 
@@ -245,22 +244,22 @@ namespace CoreSystems.Support
                     inventory.InventoryContentChanged -= CheckAmmoInventory;
 
                     int monitors;
-                    if (Session.InventoryMonitors.TryGetValue(inventory, out monitors)) {
+                    if (Session.I.InventoryMonitors.TryGetValue(inventory, out monitors)) {
 
                         if (--monitors < 0) {
 
                             MyConcurrentList<MyPhysicalInventoryItem> removedPhysical;
-                            MyConcurrentList<BetterInventoryItem> removedBetter;
+                            MyConcurrentList<Session.BetterInventoryItem> removedBetter;
 
-                            if (Session.InventoryItems.TryRemove(inventory, out removedPhysical))
-                                Session.PhysicalItemListPool.Return(removedPhysical);
+                            if (Session.I.InventoryItems.TryRemove(inventory, out removedPhysical))
+                                Session.I.PhysicalItemListPool.Return(removedPhysical);
 
-                            if (Session.ConsumableItemList.TryRemove(inventory, out removedBetter))
-                                Session.BetterItemsListPool.Return(removedBetter);
-                            
-                            Session.InventoryMonitors.Remove(inventory);
+                            if (Session.I.ConsumableItemList.TryRemove(inventory, out removedBetter))
+                                Session.I.BetterItemsListPool.Return(removedBetter);
+
+                            Session.I.InventoryMonitors.Remove(inventory);
                         }
-                        else Session.InventoryMonitors[inventory] = monitors;
+                        else Session.I.InventoryMonitors[inventory] = monitors;
                     }
                     else return false;
                 }
@@ -275,32 +274,32 @@ namespace CoreSystems.Support
             {
                 if (amount <= 0 || item.Content == null || inventory == null) return;
                 var itemDef = item.Content.GetObjectId();
-                if (Session.AmmoDefIds.ContainsKey(itemDef))
+                if (Session.I.AmmoDefIds.ContainsKey(itemDef))
                 {
                     Construct.RootAi?.Construct.RecentItems.Add(itemDef);
                 }
             }
-            catch (Exception ex) { Log.Line($"Exception in CheckAmmoInventory: {ex} - BlockName:{((MyEntity)inventory?.Entity)?.DebugName} - BlockMarked:{((MyEntity)inventory?.Entity)?.MarkedForClose} - aiMarked:{MarkedForClose} - Session:{Session != null} - item:{item.Content?.SubtypeName} - RootConstruct:{Construct?.RootAi?.Construct != null}", null, true); }
+            catch (Exception ex) { Log.Line($"Exception in CheckAmmoInventory: {ex} - BlockName:{((MyEntity)inventory?.Entity)?.DebugName} - BlockMarked:{((MyEntity)inventory?.Entity)?.MarkedForClose} - aiMarked:{MarkedForClose}  - item:{item.Content?.SubtypeName} - RootConstruct:{Construct?.RootAi?.Construct != null}", null, true); }
         }
 
         internal void GridClose(MyEntity myEntity)
         {
-            if (Session == null || TopEntity == null || Closed)
+            if (TopEntity == null || Closed)
             {
-                Log.Line($"[GridClose] Session: {Session != null} - MyGrid:{TopEntity != null} - Closed:{Closed} - myEntity:{myEntity != null}");
+                Log.Line($"[GridClose]  MyGrid:{TopEntity != null} - Closed:{Closed} - myEntity:{myEntity != null}");
                 return;
             }
 
             MarkedForClose = true;
-            AiMarkedTick = Session.Tick;
+            AiMarkedTick = Session.I.Tick;
 
             RegisterMyGridEvents(false);
 
             CleanSubGrids();
             ForceCloseAiInventories();
-            
-            Session.DelayedAiClean.Add(this);
-            Session.DelayedAiClean.ApplyAdditions();
+
+            Session.I.DelayedAiClean.Add(this);
+            Session.I.DelayedAiClean.ApplyAdditions();
         }
     }
 }

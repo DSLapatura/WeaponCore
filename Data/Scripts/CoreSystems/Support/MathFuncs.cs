@@ -478,9 +478,9 @@ namespace CoreSystems.Support
 
                 if (!MyUtils.IsValid(localTargetVector))
                 {
-                    if (weapon.Comp.Session.Tick - weapon.LastNanTick > 60)
+                    if (Session.I.Tick - weapon.LastNanTick > 60)
                     {
-                        weapon.LastNanTick = weapon.Comp.Session.Tick;
+                        weapon.LastNanTick = Session.I.Tick;
                         Log.Line($"WeaponLookAt:{weapon.System.ShortName} - ammo:{weapon.ActiveAmmoDef.AmmoDef.AmmoRound} - caller:{caller} - targetDir:{targetDir} - MyPivotPos:{weapon.MyPivotPos} - transPoseMatrix:{transposeMatrix} - up:{up} - left:{left} - forward:{forward} - currentVector:{currentVector}");
                     }
                     return false;
@@ -546,7 +546,7 @@ namespace CoreSystems.Support
                 var elStep = MathHelperD.Clamp(desiredElevation - weapon.Elevation, -simElStep, simElStep);
 
                 // epsilon based on target type and distance
-                var epsilon = target.TargetState == Target.TargetStates.IsProjectile || system.Session.Tick120 ? 1E-06d : targetDistSqr <= 640000 ? 1E-03d : targetDistSqr <= 3240000 ? 1E-04d : 1E-05d;
+                var epsilon = target.TargetState == Target.TargetStates.IsProjectile || Session.I.Tick120 ? 1E-06d : targetDistSqr <= 640000 ? 1E-03d : targetDistSqr <= 3240000 ? 1E-04d : 1E-05d;
 
                 // check if step is within epsilon of zero;
                 var azLocked = MyUtils.IsZero(azStep, (float)epsilon);
@@ -603,13 +603,13 @@ namespace CoreSystems.Support
                     if (!azLocked)
                     {
                         weapon.Azimuth = az;
-                        weapon.AzimuthTick = system.Session.Tick;
+                        weapon.AzimuthTick = Session.I.Tick;
                     }
 
                     if (!elLocked)
                     {
                         weapon.Elevation = el;
-                        weapon.ElevationTick = system.Session.Tick;
+                        weapon.ElevationTick = Session.I.Tick;
                     }
                 }
                 return !locked;

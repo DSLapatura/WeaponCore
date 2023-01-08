@@ -65,7 +65,7 @@ namespace CoreSystems
 
                         if (!animation.SubpartId.Equals("None"))
                         {
-                            var partMatrix = GetPartDummy("subpart_" + animation.SubpartId, part.Parent.Model, system.Session.DummyList)?.Matrix ?? Matrix.Identity;
+                            var partMatrix = GetPartDummy("subpart_" + animation.SubpartId, part.Parent.Model, I.DummyList)?.Matrix ?? Matrix.Identity;
                             var partCenter = partMatrix.Translation;
 
                             for (int j = 0; j < rotations.Length; j++)
@@ -82,7 +82,7 @@ namespace CoreSystems
                             {
                                 if (rotCenters[j] != Matrix.Zero && rotCenterNames != null)
                                 {
-                                    var dummyMatrix = GetPartDummy(rotCenterNames[j], part.Model, system.Session.DummyList)?.Matrix ?? Matrix.Identity;
+                                    var dummyMatrix = GetPartDummy(rotCenterNames[j], part.Model, I.DummyList)?.Matrix ?? Matrix.Identity;
                                     rotCenters[j] = Matrix.CreateTranslation(-(partCenter + dummyMatrix.Translation)) * rotCenters[j] * Matrix.CreateTranslation((partCenter + dummyMatrix.Translation));
 
 
@@ -149,7 +149,7 @@ namespace CoreSystems
                     string partName;
                     if (CreateParticleDummy(parts.Entity, systemParticle.EmptyNames, out particleDummy, out partName))
                     {
-                        Vector3 pos = GetPartLocation(systemParticle.EmptyNames, particleDummy.Entity.Model, system.Session.DummyList);
+                        Vector3 pos = GetPartLocation(systemParticle.EmptyNames, particleDummy.Entity.Model, I.DummyList);
                         particles[particleDef.Key][i] = new ParticleEvent(systemParticle, particleDummy, partName, pos);
                     }
                 }

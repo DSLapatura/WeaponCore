@@ -67,7 +67,6 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
         private readonly List<MyEntity> _sortedMasterList = new List<MyEntity>(64);
 
         private readonly Dictionary<MyEntity, MyTuple<float, TargetControl, MyRelationsBetweenPlayerAndBlock>> _masterTargets = new Dictionary<MyEntity, MyTuple<float, TargetControl, MyRelationsBetweenPlayerAndBlock>>(64);
-        private readonly Session _session;
         private Vector2 _pointerPosition = new Vector2(0, 0.0f);
         private Vector2 _3RdPersonPos = new Vector2(0, 0.5f);
         private Color _reticleColor = Color.White;
@@ -107,10 +106,9 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             None
         }
 
-        internal TargetUi(Session session)
+        internal TargetUi()
         {
-            _session = session;
-            var cm = session.HudUi.CharacterMap;
+            var cm = Session.I.HudUi.CharacterMap;
             Dictionary<char, Hud.Hud.TextureMap> monoText;
             if (cm.TryGetValue(Hud.Hud.FontType.Shadow, out monoText))
             {

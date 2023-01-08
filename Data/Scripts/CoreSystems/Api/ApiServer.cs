@@ -8,10 +8,8 @@ namespace CoreSystems.Api
     public class ApiServer
     {
         private const long Channel = 67549756549;
-        private readonly Session _session;
-        internal ApiServer (Session session)
+        internal ApiServer ()
         {
-            _session = session;
         }
 
         /// <summary>
@@ -22,7 +20,7 @@ namespace CoreSystems.Api
         private void HandleMessage(object o)
         {
             if ((o as string) == "ApiEndpointRequest")
-                MyAPIGateway.Utilities.SendModMessage(Channel, _session.Api.ModApiMethods);
+                MyAPIGateway.Utilities.SendModMessage(Channel, Session.I.Api.ModApiMethods);
         }
 
         private bool _isRegistered;
@@ -40,7 +38,7 @@ namespace CoreSystems.Api
             IsReady = true;
             try
             {
-                MyAPIGateway.Utilities.SendModMessage(Channel, _session.Api.ModApiMethods);
+                MyAPIGateway.Utilities.SendModMessage(Channel, Session.I.Api.ModApiMethods);
 
             }
             catch (Exception ex) { Log.Line($"Exception in Api Load: {ex}", null, true); }

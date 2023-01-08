@@ -99,15 +99,15 @@ namespace CoreSystems.Support
                 for (int i = 0; i < monitor.Count; i++)
                     monitor[i].Invoke(Weapon.Comp.CoreEntity.EntityId, Weapon.PartId, Id, Target.TargetId, Hit.LastHit, false);
 
-                Weapon.System.Session.MonitoredProjectiles.Remove(Id);
+                Session.I.MonitoredProjectiles.Remove(Id);
             }
 
             if (ProHits != null) {
                 ProHits.Clear();
-                Weapon.System.Session.ProHitPool.Push(ProHits);
+                Session.I.ProHitPool.Push(ProHits);
             }
 
-            Target.Reset(Weapon.System.Session.Tick, Target.States.ProjectileClean);
+            Target.Reset(Session.I.Tick, Target.States.ProjectileClean);
             HitList.Clear();
             
             if (aConst.IsSmart || aConst.IsDrone)
@@ -119,9 +119,9 @@ namespace CoreSystems.Support
 
             if (IsFragment)
             {
-                if (VoxelCache != null && Weapon.System.Session != null)
+                if (VoxelCache != null)
                 {
-                    Weapon.System.Session.UniqueMuzzleId = VoxelCache;
+                    Session.I.UniqueMuzzleId = VoxelCache;
                 }
             }
 
@@ -274,7 +274,7 @@ namespace CoreSystems.Support
 
             ProSyncPosMissCount = 0;
 
-            p.Info.Weapon.Comp.Session.FullSyncInfoPool.Push(this);
+            Session.I.FullSyncInfoPool.Push(this);
         }
     }
 
@@ -349,7 +349,7 @@ namespace CoreSystems.Support
             DroneStat = DroneStatus.Launch;
             DroneMsn = DroneMission.Attack;
 
-            p.Info.Weapon.Comp.Session.DroneInfoPool.Push(this);
+            Session.I.DroneInfoPool.Push(this);
         }
     }
 
@@ -497,7 +497,7 @@ namespace CoreSystems.Support
             var aConst = info.AmmoDef.Const;
             var fragCount = p.Info.AmmoDef.Fragment.Fragments;
             var guidance = aConst.IsDrone || aConst.IsSmart;
-            if (info.Weapon.Comp.Session.IsClient && fragCount > 0 && info.AimedShot && aConst.ClientPredictedAmmo && !info.IsFragment)
+            if (Session.I.IsClient && fragCount > 0 && info.AimedShot && aConst.ClientPredictedAmmo && !info.IsFragment)
             {
                 Projectiles.Projectiles.SendClientHit(p, false);
             }
@@ -562,7 +562,7 @@ namespace CoreSystems.Support
             for (int i = 0; i < spawned; i++)
             {
                 var frag = Sharpnel[i];
-                session = frag.Ai.Session;
+                session = Session.I;
                 var p = session.Projectiles.ProjectilePool.Count > 0 ? session.Projectiles.ProjectilePool.Pop() : new Projectile();
                 var info = p.Info;
                 info.Weapon = frag.Weapon;

@@ -11,7 +11,7 @@ namespace CoreSystems.Platform
     {
         internal void RefreshBlocks()
         {
-            Comp.Session.DsUtil2.Start("");
+            Session.I.DsUtil2.Start("");
             if (Box.Intersects(ref Comp.Ai.BlockChangeArea) && CubesInRange(true, System.Values.Effect.Affected))
             {
                 ProcessBlockChanges(false, true);
@@ -25,8 +25,8 @@ namespace CoreSystems.Platform
                 DetectBlockChanges();
             }
 
-            LastBlockRefreshTick = CoreSystem.Session.Tick;
-            Comp.Session.DsUtil2.Complete("", false, true);
+            LastBlockRefreshTick = Session.I.Tick;
+            Session.I.DsUtil2.Complete("", false, true);
         }
 
         public void DetectBlockChanges()
@@ -87,7 +87,7 @@ namespace CoreSystems.Platform
             }
             if (ShowAffectedBlocks && BlockColorBackup.Count == 0)
             {
-                CoreSystem.Session.DisplayAffectedArmor.Remove(this);
+                Session.I.DisplayAffectedArmor.Remove(this);
                 ShowAffectedBlocks = false;
             }
 

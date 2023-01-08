@@ -8,6 +8,7 @@ using VRageMath;
 using static CoreSystems.Support.CoreComponent.Start;
 using static CoreSystems.Support.CoreComponent.CompTypeSpecific;
 using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetDef;
+using Sandbox.Game.World;
 
 namespace CoreSystems.Platform
 {
@@ -49,12 +50,12 @@ namespace CoreSystems.Platform
 
         internal void Setup(CoreComponent comp)
         {
-            if (!comp.Session.PartPlatforms.ContainsKey(comp.Id))
+            if (!Session.I.PartPlatforms.ContainsKey(comp.Id))
             {
                 PlatformCrash(comp, true, true, $"Your block subTypeId ({comp.SubtypeName}) was not found in platform setup, I am crashing now Dave.");
                 return;
             }
-            Structure = comp.Session.PartPlatforms[comp.Id];
+            Structure = Session.I.PartPlatforms[comp.Id];
             Comp = comp;
         }
 
@@ -87,18 +88,18 @@ namespace CoreSystems.Platform
 
             //Get or init Ai
             var newAi = false;
-            if (!Comp.Session.EntityAIs.TryGetValue(Comp.TopEntity, out Comp.Ai)) {
+            if (!Session.I.EntityAIs.TryGetValue(Comp.TopEntity, out Comp.Ai)) {
                 newAi = true;
 
-                Comp.Ai = Comp.Session.AiPool.Count > 0 ? Comp.Session.AiPool.Pop() : new Ai(Comp.Session);
+                Comp.Ai = Session.I.AiPool.Count > 0 ? Session.I.AiPool.Pop() : new Ai();
 
-                Comp.Ai.Init(Comp.TopEntity, Comp.Session, Comp.TypeSpecific);
-                Comp.Session.EntityAIs.TryAdd(Comp.TopEntity, Comp.Ai);
+                Comp.Ai.Init(Comp.TopEntity, Comp.TypeSpecific);
+                Session.I.EntityAIs.TryAdd(Comp.TopEntity, Comp.Ai);
             }
 
             var blockDef = Comp.SubTypeId; 
             if (!Comp.Ai.PartCounting.ContainsKey(blockDef)) 
-                Comp.Ai.PartCounting[blockDef] = Comp.Session.PartCountPool.Get();
+                Comp.Ai.PartCounting[blockDef] = Session.I.PartCountPool.Get();
 
             var wCounter = Comp.Ai.PartCounting[blockDef];
             wCounter.Max = Structure.ConstructPartCap;
@@ -188,7 +189,7 @@ namespace CoreSystems.Platform
                 var partHashId = Structure.PartHashes[index];
                 CoreSystem coreSystem;
                 if (!Structure.PartSystems.TryGetValue(partHashId, out coreSystem) || !(coreSystem is WeaponSystem))
-                    return PlatformCrash(Comp, true, true, $"Your block subTypeId ({Comp.SubtypeName}) Invalid weapon system - id:{partHashId} - partCount:{Structure.PartHashes.Length} - modContext:{Comp.Session.ModContext.ModId}[{Comp.Session.ModContext.ModName}], check to make sure you don't have duplicate partnames in your mod, I am crashing now Dave.");
+                    return PlatformCrash(Comp, true, true, $"Your block subTypeId ({Comp.SubtypeName}) Invalid weapon system - id:{partHashId} - partCount:{Structure.PartHashes.Length} - modContext:{Session.I.ModContext.ModId}[{Session.I.ModContext.ModName}], check to make sure you don't have duplicate partnames in your mod, I am crashing now Dave.");
 
                 var system = (WeaponSystem)coreSystem;
                 var muzzlePartName = system.MuzzlePartName.String != "Designator" ? system.MuzzlePartName.String : system.ElevationPartName.String;
@@ -329,7 +330,7 @@ namespace CoreSystems.Platform
 
                 if (mPartName != "None" && muzzlePart != null)
                 {
-                    var muzzlePartLocation = Session.GetPartLocation("subpart_" + mPartName, muzzlePart.Parent.Model, Comp.Session.DummyList);
+                    var muzzlePartLocation = Session.GetPartLocation("subpart_" + mPartName, muzzlePart.Parent.Model, Session.I.DummyList);
 
                     var muzzlePartPosTo = MatrixD.CreateTranslation(-muzzlePartLocation);
                     var muzzlePartPosFrom = MatrixD.CreateTranslation(muzzlePartLocation);
@@ -351,7 +352,7 @@ namespace CoreSystems.Platform
                     }
                     else
                     {
-                        var spinPartLocation = Session.GetPartLocation("subpart_" + mPartName, weapon.SpinPart.Entity.Parent.Model, Comp.Session.DummyList);
+                        var spinPartLocation = Session.GetPartLocation("subpart_" + mPartName, weapon.SpinPart.Entity.Parent.Model, Session.I.DummyList);
 
                         var spinPartPosTo = MatrixD.CreateTranslation(-spinPartLocation);
                         var spinPartPosFrom = MatrixD.CreateTranslation(spinPartLocation);
@@ -370,8 +371,8 @@ namespace CoreSystems.Platform
                     if (azimuthPart != null && azimuthPartName != "None" && weapon.System.TurretMovement != WeaponSystem.TurretType.ElevationOnly)
                     {
 
-                        var azimuthPartLocation = Session.GetPartLocation("subpart_" + azimuthPartName, azimuthPart.Parent.Model, Comp.Session.DummyList);
-                        var partDummy = Session.GetPartDummy("subpart_" + azimuthPartName, azimuthPart.Parent.Model, Comp.Session.DummyList);
+                        var azimuthPartLocation = Session.GetPartLocation("subpart_" + azimuthPartName, azimuthPart.Parent.Model, Session.I.DummyList);
+                        var partDummy = Session.GetPartDummy("subpart_" + azimuthPartName, azimuthPart.Parent.Model, Session.I.DummyList);
                         if (partDummy == null)
                         {
                             PlatformCrash(Comp, true, true, $"partDummy null: name:{azimuthPartName} - azimuthPartParentNull:{azimuthPart.Parent == null}, I am crashing now Dave.");
@@ -408,8 +409,8 @@ namespace CoreSystems.Platform
 
                     if (elevationPart != null && elevationPartName != "None" && weapon.System.TurretMovement != WeaponSystem.TurretType.AzimuthOnly)
                     {
-                        var elevationPartLocation = Session.GetPartLocation("subpart_" + elevationPartName, elevationPart.Parent.Model, Comp.Session.DummyList);
-                        var partDummy = Session.GetPartDummy("subpart_" + elevationPartName, elevationPart.Parent.Model, Comp.Session.DummyList);
+                        var elevationPartLocation = Session.GetPartLocation("subpart_" + elevationPartName, elevationPart.Parent.Model, Session.I.DummyList);
+                        var partDummy = Session.GetPartDummy("subpart_" + elevationPartName, elevationPart.Parent.Model, Session.I.DummyList);
                         if (partDummy == null)
                         {
                             PlatformCrash(Comp, true, true, $"partDummy null: name:{elevationPartName} - azimuthPartParentNull:{elevationPart.Parent == null}, I am crashing now Dave.");
@@ -470,7 +471,7 @@ namespace CoreSystems.Platform
                     if (weapon.Muzzles[i] == null)
                     {
                         weapon.Dummies[i] = new Dummy(weapon.MuzzlePart.Entity, weapon, muzzleName);
-                        var muzzle = new Weapon.Muzzle(weapon, i, Comp.Session); ;
+                        var muzzle = new Weapon.Muzzle(weapon, i); 
                         weapon.Muzzles[i] = muzzle;
                         weapon.MuzzleIdToName.Add(i, muzzleName);
                     }
@@ -514,10 +515,10 @@ namespace CoreSystems.Platform
 
                 if (Comp.IsBlock && weapon.Comp.FunctionalBlock.Enabled)
                     if (weapon.AnimationsSet.ContainsKey(EventTriggers.TurnOn))
-                        weapon.Comp.Session.FutureEvents.Schedule(weapon.TurnOnAV, null, 4);
+                        Session.I.FutureEvents.Schedule(weapon.TurnOnAV, null, 4);
                     else
                     if (weapon.AnimationsSet.ContainsKey(EventTriggers.TurnOff))
-                        weapon.Comp.Session.FutureEvents.Schedule(weapon.TurnOffAv, null, 4);
+                        Session.I.FutureEvents.Schedule(weapon.TurnOffAv, null, 4);
 
             }
 
@@ -686,10 +687,10 @@ namespace CoreSystems.Platform
 
                     if (Comp.IsBlock && weapon.Comp.IsWorking)
                         if (weapon.AnimationsSet.ContainsKey(EventTriggers.TurnOn))
-                            weapon.Comp.Session.FutureEvents.Schedule(weapon.TurnOnAV, null, 4);
+                            Session.I.FutureEvents.Schedule(weapon.TurnOnAV, null, 4);
                         else
                         if (weapon.AnimationsSet.ContainsKey(EventTriggers.TurnOff))
-                            weapon.Comp.Session.FutureEvents.Schedule(weapon.TurnOffAv, null, 4);
+                            Session.I.FutureEvents.Schedule(weapon.TurnOffAv, null, 4);
                 }
                 weapon.UpdatePivotPos();
             }
@@ -762,12 +763,12 @@ namespace CoreSystems.Platform
         internal PlatformState PlatformCrash(CoreComponent comp, bool markInvalid, bool suppress, string message)
         {
             if (suppress)
-                comp.Session.SuppressWc = true;
+                Session.I.SuppressWc = true;
             
             if (markInvalid)
                 State = PlatformState.Invalid;
             
-            if (Comp.Session.HandlesInput) {
+            if (Session.I.HandlesInput) {
                 if (suppress)
                     MyAPIGateway.Utilities.ShowNotification($"CoreSystems hard crashed during block init, shutting down\n Send log files to server admin or submit a bug report to mod author:\n {comp.Platform?.Structure?.ModPath} - {comp.SubtypeName}", 10000);
             }

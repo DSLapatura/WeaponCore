@@ -50,7 +50,7 @@ namespace CoreSystems.Support
                             int weaponIdx;
                             if (!WeaponIdx.TryGetValue(wComp, out weaponIdx))
                             {
-                                Log.Line($"CompRemoveFailed: <{wComp.CoreEntity.EntityId}> - {WeaponComps.Count}[{WeaponIdx.Count}]({CompBase.Count}) - {WeaponComps.Contains(wComp)}[{WeaponComps.Count}] - {Session.EntityAIs[wComp.TopEntity].CompBase.ContainsKey(wComp.CoreEntity)} - {Session.EntityAIs[wComp.TopEntity].CompBase.Count} ");
+                                Log.Line($"CompRemoveFailed: <{wComp.CoreEntity.EntityId}> - {WeaponComps.Count}[{WeaponIdx.Count}]({CompBase.Count}) - {WeaponComps.Contains(wComp)}[{WeaponComps.Count}] - {Session.I.EntityAIs[wComp.TopEntity].CompBase.ContainsKey(wComp.CoreEntity)} - {Session.I.EntityAIs[wComp.TopEntity].CompBase.Count} ");
                                 return;
                             }
 
@@ -65,7 +65,7 @@ namespace CoreSystems.Support
                             int weaponTrackIdx;
                             if (!WeaponTrackIdx.TryGetValue(wComp, out weaponTrackIdx))
                             {
-                                Log.Line($"CompRemoveFailed: <{wComp.CoreEntity.EntityId}> - {WeaponComps.Count}[{WeaponIdx.Count}]({CompBase.Count}) - {WeaponComps.Contains(wComp)}[{WeaponComps.Count}] - {Session.EntityAIs[wComp.TopEntity].CompBase.ContainsKey(wComp.CoreEntity)} - {Session.EntityAIs[wComp.TopEntity].CompBase.Count} ");
+                                Log.Line($"CompRemoveFailed: <{wComp.CoreEntity.EntityId}> - {WeaponComps.Count}[{WeaponIdx.Count}]({CompBase.Count}) - {WeaponComps.Contains(wComp)}[{WeaponComps.Count}] - {Session.I.EntityAIs[wComp.TopEntity].CompBase.ContainsKey(wComp.CoreEntity)} - {Session.I.EntityAIs[wComp.TopEntity].CompBase.Count} ");
                                 return;
                             }
 
@@ -92,7 +92,7 @@ namespace CoreSystems.Support
                         {
                             if (!PhantomIdx.TryGetValue(wComp, out idx))
                             {
-                                Log.Line($"CompRemoveFailed: <{wComp.CoreEntity.EntityId}> - {WeaponComps.Count}[{PhantomIdx.Count}]({CompBase.Count}) - {PhantomComps.Contains(wComp)}[{PhantomComps.Count}] - {Session.EntityAIs[wComp.TopEntity].CompBase.ContainsKey(wComp.CoreEntity)} - {Session.EntityAIs[wComp.TopEntity].CompBase.Count} ");
+                                Log.Line($"CompRemoveFailed: <{wComp.CoreEntity.EntityId}> - {WeaponComps.Count}[{PhantomIdx.Count}]({CompBase.Count}) - {PhantomComps.Contains(wComp)}[{PhantomComps.Count}] - {Session.I.EntityAIs[wComp.TopEntity].CompBase.ContainsKey(wComp.CoreEntity)} - {Session.I.EntityAIs[wComp.TopEntity].CompBase.Count} ");
                                 return;
                             }
 
@@ -123,7 +123,7 @@ namespace CoreSystems.Support
                     {
                         if (!UpgradeIdx.TryGetValue(uComp, out idx))
                         {
-                            Log.Line($"CompRemoveFailed: <{uComp.CoreEntity.EntityId}> - {WeaponComps.Count}[{UpgradeIdx.Count}]({CompBase.Count}) - {UpgradeComps.Contains(uComp)}[{WeaponComps.Count}] - {Session.EntityAIs[uComp.TopEntity].CompBase.ContainsKey(uComp.CoreEntity)} - {Session.EntityAIs[uComp.TopEntity].CompBase.Count} ");
+                            Log.Line($"CompRemoveFailed: <{uComp.CoreEntity.EntityId}> - {WeaponComps.Count}[{UpgradeIdx.Count}]({CompBase.Count}) - {UpgradeComps.Contains(uComp)}[{WeaponComps.Count}] - {Session.I.EntityAIs[uComp.TopEntity].CompBase.ContainsKey(uComp.CoreEntity)} - {Session.I.EntityAIs[uComp.TopEntity].CompBase.Count} ");
                             return;
                         }
 
@@ -152,7 +152,7 @@ namespace CoreSystems.Support
                     {
                         if (!SupportIdx.TryGetValue(sComp, out idx))
                         {
-                            Log.Line($"CompRemoveFailed: <{sComp.CoreEntity.EntityId}> - {WeaponComps.Count}[{SupportIdx.Count}]({CompBase.Count}) - {SupportComps.Contains(sComp)}[{SupportComps.Count}] - {Session.EntityAIs[sComp.TopEntity].CompBase.ContainsKey(sComp.CoreEntity)} - {Session.EntityAIs[sComp.TopEntity].CompBase.Count} ");
+                            Log.Line($"CompRemoveFailed: <{sComp.CoreEntity.EntityId}> - {WeaponComps.Count}[{SupportIdx.Count}]({CompBase.Count}) - {SupportComps.Contains(sComp)}[{SupportComps.Count}] - {Session.I.EntityAIs[sComp.TopEntity].CompBase.ContainsKey(sComp.CoreEntity)} - {Session.I.EntityAIs[sComp.TopEntity].CompBase.Count} ");
                             return;
                         }
 
@@ -179,7 +179,7 @@ namespace CoreSystems.Support
                     {
                         if (!ControlIdx.TryGetValue(cComp, out idx))
                         {
-                            Log.Line($"CompRemoveFailed: <{cComp.CoreEntity.EntityId}> - {WeaponComps.Count}[{ControlIdx.Count}]({CompBase.Count}) - {ControlComps.Contains(cComp)}[{ControlComps.Count}] - {Session.EntityAIs[cComp.TopEntity].CompBase.ContainsKey(cComp.CoreEntity)} - {Session.EntityAIs[cComp.TopEntity].CompBase.Count} ");
+                            Log.Line($"CompRemoveFailed: <{cComp.CoreEntity.EntityId}> - {WeaponComps.Count}[{ControlIdx.Count}]({CompBase.Count}) - {ControlComps.Contains(cComp)}[{ControlComps.Count}] - {Session.I.EntityAIs[cComp.TopEntity].CompBase.ContainsKey(cComp.CoreEntity)} - {Session.I.EntityAIs[cComp.TopEntity].CompBase.Count} ");
                             return;
                         }
 
@@ -243,7 +243,7 @@ namespace CoreSystems.Support
 
         internal void ProcessQueuedSounds()
         {
-            if (Session.HandlesInput && Environment.CurrentManagedThreadId == Session.MainThreadId)
+            if (Session.I.HandlesInput && Environment.CurrentManagedThreadId == Session.I.MainThreadId)
             {
                 for (int i = 0; i < QueuedSounds.Count; i++)
                 {
@@ -294,9 +294,9 @@ namespace CoreSystems.Support
                 {
                     GridMaxPower = powerDist.MaxAvailableResourceByType(GId, GridEntity);
                     GridCurrentPower = powerDist.TotalRequiredInputByType(GId, GridEntity);
-                    if (Session.ShieldApiLoaded && ShieldBlock != null)
+                    if (Session.I.ShieldApiLoaded && ShieldBlock != null)
                     {
-                        var shieldPower = Session.SApi.GetPowerUsed(ShieldBlock);
+                        var shieldPower = Session.I.SApi.GetPowerUsed(ShieldBlock);
                         GridCurrentPower -= shieldPower;
                     }
                     powered = true;
@@ -317,7 +317,7 @@ namespace CoreSystems.Support
                     return;
                 }
 
-                if (Session.Tick60) {
+                if (Session.I.Tick60) {
 
                     BatteryMaxPower = 0;
                     BatteryCurrentOutput = 0;
@@ -349,13 +349,13 @@ namespace CoreSystems.Support
                 HadPower = HasPower;
                 HasPower = GridMaxPower > 0;
 
-                if (Session.Tick60 && HasPower) {
+                if (Session.I.Tick60 && HasPower) {
                     var nearMax = GridMaxPower * 0.97;
                     var halfMax = GridMaxPower * 0.5f;
                     if (GridCurrentPower > nearMax && GridAssignedPower > halfMax)
                         Charger.Rebalance = true;
                 }
-                if (Session.Tick20 && HasPower)
+                if (Session.I.Tick20 && HasPower)
                 {
                     if (Charger.TotalDesired > GridAssignedPower && GridAvailablePower > GridMaxPower * 0.1f)
                         Charger.Rebalance = true;
@@ -365,7 +365,7 @@ namespace CoreSystems.Support
                 if (HadPower)
                     WeaponShootOff();
             }
-            catch (Exception ex) { Log.Line($"Exception in UpdateGridPower: {ex} - SessionNull{Session == null}  - MyGridNull{TopEntity == null}", null, true); }
+            catch (Exception ex) { Log.Line($"Exception in UpdateGridPower: {ex}  - MyGridNull{TopEntity == null}", null, true); }
         }
 
         private void ForceCloseAiInventories()
@@ -383,11 +383,11 @@ namespace CoreSystems.Support
         internal void AiDelayedClose()
         {
             if (TopEntity == null || Closed) {
-                Log.Line($"AiDelayedClose: Session is null {Session == null} - Grid is null {TopEntity == null}  - Closed: {Closed}");
+                Log.Line($"AiDelayedClose: Grid is null {TopEntity == null}  - Closed: {Closed}");
                 return;
             }
 
-            if (!ScanInProgress && Session.Tick - ProjectileTicker > 29 && AiMarkedTick != uint.MaxValue && Session.Tick - AiMarkedTick > 29) {
+            if (!ScanInProgress && Session.I.Tick - ProjectileTicker > 29 && AiMarkedTick != uint.MaxValue && Session.I.Tick - AiMarkedTick > 29) {
 
                 using (DbLock.AcquireExclusiveUsing())
                 {
@@ -395,7 +395,7 @@ namespace CoreSystems.Support
                         return;
 
                     CleanUp();
-                    Session.AiPool.Push(this);
+                    Session.I.AiPool.Push(this);
                 }
             }
         }
@@ -403,14 +403,14 @@ namespace CoreSystems.Support
         internal void AiForceClose()
         {
             if (TopEntity == null || Closed) {
-                Log.Line($"AiDelayedClose: Session is null {Session == null} - Grid is null {TopEntity == null} - Closed: {Closed}");
+                Log.Line($"AiDelayedClose: - Grid is null {TopEntity == null} - Closed: {Closed}");
                 return;
             }
 
             RegisterMyGridEvents(false, true);
             
             CleanUp();
-            Session.AiPool.Push(this);
+            Session.I.AiPool.Push(this);
         }
 
         internal void CleanSortedTargets()
@@ -421,7 +421,7 @@ namespace CoreSystems.Support
                 tInfo.Target = null;
                 tInfo.MyAi = null;
                 tInfo.TargetAi = null;
-                Session.TargetInfoPool.Return(tInfo);
+                Session.I.TargetInfoPool.Return(tInfo);
             }
             SortedTargets.Clear();
         }
@@ -455,12 +455,12 @@ namespace CoreSystems.Support
 
         internal void CleanUp()
         {
-            AiCloseTick = Session.Tick;
+            AiCloseTick = Session.I.Tick;
 
             TopEntity.Components.Remove<AiComponent>();
 
-            if (Session.IsClient)
-                Session.SendUpdateRequest(TopEntity.EntityId, PacketType.ClientAiRemove);
+            if (Session.I.IsClient)
+                Session.I.SendUpdateRequest(TopEntity.EntityId, PacketType.ClientAiRemove);
 
             Data.Repo.ActiveTerminal = 0;
             Charger.Clean();

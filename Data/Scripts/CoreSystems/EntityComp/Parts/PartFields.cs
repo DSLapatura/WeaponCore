@@ -34,12 +34,12 @@ namespace CoreSystems.Platform
             CoreSystem = system;
             StayCharged = system.StayCharged;
             BaseComp = comp;
-            PartCreatedTick = comp.Session.Tick;
+            PartCreatedTick = Session.I.Tick;
             PartId = partId;
             IsPrime = partId == comp.Platform.Structure.PrimaryPart;
             Acquire = new PartAcquire(this);
-            UniquePartId = comp.Session.UniquePartId;
-            ShortLoadId = comp.Session.ShortLoadAssigner();
+            UniquePartId = Session.I.UniquePartId;
+            ShortLoadId = Session.I.ShortLoadAssigner();
             //for (int i = 0; i < BaseComp.Monitors[PartId].Count; i++)
             //    Monitors.Add(BaseComp.Monitors[PartId][i]);
         }

@@ -18,7 +18,7 @@ namespace CoreSystems.Platform
         {
             try
             {
-                var s = Comp.Session;
+                var s = Session.I;
                 var tick = s.Tick;
                 #region Prefire
                 var aConst = ActiveAmmoDef.AmmoDef.Const;
@@ -44,7 +44,7 @@ namespace CoreSystems.Platform
                 if (System.HasBarrelRotation && !SpinBarrel() || notReadyToShoot)
                     return;
 
-                if (PosChangedTick != Comp.Session.SimulationCount)
+                if (PosChangedTick != Session.I.SimulationCount)
                     UpdatePivotPos();
 
                 ShootTime = TicksPerShot * Session.StepConst + Session.RelativeTime;
@@ -74,8 +74,8 @@ namespace CoreSystems.Platform
                 FireCounter++;
                 List<NewVirtual> vProList = null;
                 var selfDamage = 0f;
-                LastShootTick = Comp.Session.Tick;
-                Comp.ShootManager.LastShootTick = Comp.Session.Tick;
+                LastShootTick = Session.I.Tick;
+                Comp.ShootManager.LastShootTick = Session.I.Tick;
 
                 for (int i = 0; i < loading.BarrelsPerShot; i++) {
 
@@ -351,16 +351,16 @@ namespace CoreSystems.Platform
 
         private void GiveUpTarget()
         {
-            if (System.Session.IsServer)
+            if (Session.I.IsServer)
             {
-                Target.Reset(System.Session.Tick, Target.States.FiredBurst);
-                FastTargetResetTick = System.Session.Tick + 1;
+                Target.Reset(Session.I.Tick, Target.States.FiredBurst);
+                FastTargetResetTick = Session.I.Tick + 1;
             }
         }
 
         private void OverHeat()
         {
-            if (!System.Session.IsClient && Comp.Data.Repo.Values.Set.Overload > 1)
+            if (!Session.I.IsClient && Comp.Data.Repo.Values.Set.Overload > 1)
             {
                 var dmg = .02f * Comp.MaxIntegrity;
                 Comp.Slim.DoDamage(dmg, MyDamageType.Environment, true, null, Comp.TopEntity.EntityId);
@@ -370,15 +370,15 @@ namespace CoreSystems.Platform
             Comp.ShootManager.EndShootMode(ShootManager.EndReason.Overheat, true);
 
 
-            if (System.Session.IsServer)
+            if (Session.I.IsServer)
             {
                 var wasOver = PartState.Overheated;
                 if (!wasOver)
                     OverHeatCountDown = 15;
 
                 PartState.Overheated = true;
-                if (System.Session.MpActive && !wasOver)
-                    System.Session.SendState(Comp);
+                if (Session.I.MpActive && !wasOver)
+                    Session.I.SendState(Comp);
             }
 
         }
@@ -412,15 +412,15 @@ namespace CoreSystems.Platform
         {
             var eInfo = Ejector.Info;
             var ejectDef = ActiveAmmoDef.AmmoDef.Ejection;
-            if (ejectDef.Type == WeaponDefinition.AmmoDef.EjectionDef.SpawnType.Item && System.Session.IsServer)
+            if (ejectDef.Type == WeaponDefinition.AmmoDef.EjectionDef.SpawnType.Item && Session.I.IsServer)
             {
                 var delay = (uint)ejectDef.CompDef.Delay;
                 if (delay <= 0)
                     MyFloatingObjects.Spawn(ActiveAmmoDef.AmmoDef.Const.EjectItem, eInfo.Position, eInfo.Direction, MyPivotUp, Comp.TopEntity.Physics, EjectionSpawnCallback);
                 else 
-                    System.Session.FutureEvents.Schedule(EjectionDelayed, null, delay);
+                    Session.I.FutureEvents.Schedule(EjectionDelayed, null, delay);
             }
-            else if (System.Session.HandlesInput) {
+            else if (Session.I.HandlesInput) {
                 
                 var particle = ActiveAmmoDef.AmmoDef.AmmoGraphics.Particles.Eject;
                 var keenStrikesAgain = particle.Offset == Vector3D.MaxValue;
@@ -452,7 +452,7 @@ namespace CoreSystems.Platform
                     SetSpeed(entity);
 
                 if (itemTtl > 0)
-                    System.Session.FutureEvents.Schedule(RemoveEjection, entity, (uint)itemTtl);
+                    Session.I.FutureEvents.Schedule(RemoveEjection, entity, (uint)itemTtl);
             }
         }
 

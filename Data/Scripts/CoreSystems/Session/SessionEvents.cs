@@ -151,7 +151,7 @@ namespace CoreSystems
             if (groupData.LinkType != GridLinkTypeEnum.Mechanical)
                 return;
 
-            var map = GridGroupMapPool.Count > 0 ? GridGroupMapPool.Pop() : new GridGroupMap(this);
+            var map = GridGroupMapPool.Count > 0 ? GridGroupMapPool.Pop() : new GridGroupMap();
             map.Type = groupData.LinkType;
             map.GroupData = groupData;
             //groupData.OnReleased += map.OnReleased;

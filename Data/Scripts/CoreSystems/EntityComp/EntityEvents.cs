@@ -53,19 +53,19 @@ namespace CoreSystems.Support
                     else
                     {
                         CoreInventory.InventoryContentChanged += OnContentsChanged;
-                        Session.CoreInventoryItems[CoreInventory] = new ConcurrentDictionary<uint, BetterInventoryItem>();
-                        Session.ConsumableItemList[CoreInventory] = Session.BetterItemsListPool.Get();
+                        Session.I.CoreInventoryItems[CoreInventory] = new ConcurrentDictionary<uint, BetterInventoryItem>();
+                        Session.I.ConsumableItemList[CoreInventory] = Session.I.BetterItemsListPool.Get();
 
                         var items = CoreInventory.GetItems();
                         for (int i = 0; i < items.Count; i++)
                         {
-                            var bItem = Session.BetterInventoryItems.Get();
+                            var bItem = Session.I.BetterInventoryItems.Get();
                             var item = items[i];
                             bItem.Amount = (int)item.Amount;
                             bItem.Item = item;
                             bItem.Content = item.Content;
 
-                            Session.CoreInventoryItems[CoreInventory][items[i].ItemId] = bItem;
+                            Session.I.CoreInventoryItems[CoreInventory][items[i].ItemId] = bItem;
                         }
                     }
                 }
@@ -104,16 +104,16 @@ namespace CoreSystems.Support
                             ConcurrentDictionary<uint, BetterInventoryItem> removedItems;
                             MyConcurrentList<BetterInventoryItem> removedList;
 
-                            if (Session.CoreInventoryItems.TryRemove(CoreInventory, out removedItems))
+                            if (Session.I.CoreInventoryItems.TryRemove(CoreInventory, out removedItems))
                             {
                                 foreach (var inventoryItems in removedItems)
-                                    Session.BetterInventoryItems.Return(inventoryItems.Value);
+                                    Session.I.BetterInventoryItems.Return(inventoryItems.Value);
 
                                 removedItems.Clear();
                             }
 
-                            if (Session.ConsumableItemList.TryRemove(CoreInventory, out removedList))
-                                Session.BetterItemsListPool.Return(removedList);
+                            if (Session.I.ConsumableItemList.TryRemove(CoreInventory, out removedList))
+                                Session.I.BetterItemsListPool.Return(removedList);
                         }
                     }
                 }
@@ -124,13 +124,13 @@ namespace CoreSystems.Support
         private void OnContentsChanged(MyInventoryBase inv, MyPhysicalInventoryItem item, MyFixedPoint amount)
         {
             BetterInventoryItem cachedItem;
-            if (!Session.CoreInventoryItems[CoreInventory].TryGetValue(item.ItemId, out cachedItem))
+            if (!Session.I.CoreInventoryItems[CoreInventory].TryGetValue(item.ItemId, out cachedItem))
             {
-                cachedItem = Session.BetterInventoryItems.Get();
+                cachedItem = Session.I.BetterInventoryItems.Get();
                 cachedItem.Amount = (int)amount;
                 cachedItem.Content = item.Content;
                 cachedItem.Item = item;
-                Session.CoreInventoryItems[CoreInventory].TryAdd(item.ItemId, cachedItem);
+                Session.I.CoreInventoryItems[CoreInventory].TryAdd(item.ItemId, cachedItem);
             }
             else if (cachedItem.Amount + amount > 0)
             {
@@ -139,11 +139,11 @@ namespace CoreSystems.Support
             else if (cachedItem.Amount + amount <= 0)
             {
                 BetterInventoryItem removedItem;
-                if (Session.CoreInventoryItems[CoreInventory].TryRemove(item.ItemId, out removedItem))
-                    Session.BetterInventoryItems.Return(removedItem);
+                if (Session.I.CoreInventoryItems[CoreInventory].TryRemove(item.ItemId, out removedItem))
+                    Session.I.BetterInventoryItems.Return(removedItem);
             }
             var collection = TypeSpecific != CompTypeSpecific.Phantom ? Platform.Weapons : Platform.Phantoms;
-            if (Session.IsServer && amount <= 0) {
+            if (Session.I.IsServer && amount <= 0) {
                 for (int i = 0; i < collection.Count; i++)
                     collection[i].CheckInventorySystem = true;
             }
@@ -179,9 +179,9 @@ namespace CoreSystems.Support
                     {
                         var wComp = (Weapon.WeaponComponent)this;
                         if (IsWorking)
-                            Session.FutureEvents.Schedule(wComp.ActivateWhileOn, null, 30);
+                            Session.I.FutureEvents.Schedule(wComp.ActivateWhileOn, null, 30);
                         else if (!IsWorking)
-                            Session.FutureEvents.Schedule(wComp.DeActivateWhileOn, null, 30);
+                            Session.I.FutureEvents.Schedule(wComp.DeActivateWhileOn, null, 30);
 
                     }
                     if (Cube.ResourceSink.CurrentInputByType(GId) < 0) Log.Line($"IsWorking:{IsWorking}(was:{wasFunctional}) - Func:{IsFunctional} - GridAvailPow:{Ai.GridAvailablePower} - SinkPow:{SinkPower} - SinkReq:{Cube.ResourceSink.RequiredInputByType(GId)} - SinkCur:{Cube.ResourceSink.CurrentInputByType(GId)}");
@@ -192,7 +192,7 @@ namespace CoreSystems.Support
                         foreach (var w in collection)
                                 w.StopShooting();
                     }
-                    IsWorkingChangedTick = Session.Tick;
+                    IsWorkingChangedTick = Session.I.Tick;
 
                 }
                 if (Platform.State == PlatformState.Ready) {
@@ -209,7 +209,7 @@ namespace CoreSystems.Support
                     }
                 }
                 
-                if (Session.MpActive && Session.IsServer) {
+                if (Session.I.MpActive && Session.I.IsServer) {
 
                     if (Type == CompType.Weapon)
                         ((Weapon.WeaponComponent)this).PowerLoss();
@@ -237,7 +237,7 @@ namespace CoreSystems.Support
 
                 var status = GetSystemStatus();
                 var debug = Debug || comp.Data.Repo.Values.Set.Overrides.Debug;
-                var advanced = (comp.Session.Settings.ClientConfig.AdvancedMode || debug) && !comp.HasAlternateUi;
+                var advanced = (Session.I.Settings.ClientConfig.AdvancedMode || debug) && !comp.HasAlternateUi;
                 
                 if (!comp.HasAlternateUi)
                     stringBuilder.Append(advanced ? $"{status}\n" : $"{status}");
@@ -356,29 +356,29 @@ namespace CoreSystems.Support
         {
             var collection = TypeSpecific != CompTypeSpecific.Phantom ? Platform.Weapons : Platform.Phantoms;
 
-            Session.TmpWeaponEventSortingList.Clear();
+            Session.I.TmpWeaponEventSortingList.Clear();
             foreach (var w in collection)
             {
                 if (!w.Target.HasTarget)
                     continue;
 
                 w.Target.CurrentState = GetTargetState(w);
-                Session.TmpWeaponEventSortingList.Add(w);
+                Session.I.TmpWeaponEventSortingList.Add(w);
             }
-            var n = Session.TmpWeaponEventSortingList.Count;
+            var n = Session.I.TmpWeaponEventSortingList.Count;
             for (int i = 1; i < n; ++i)
             {
-                var key = Session.TmpWeaponEventSortingList[i];
+                var key = Session.I.TmpWeaponEventSortingList[i];
                 var j = i - 1;
 
-                while (j >= 0 && Session.TmpWeaponEventSortingList[j].Target.CurrentState != key.Target.CurrentState)
+                while (j >= 0 && Session.I.TmpWeaponEventSortingList[j].Target.CurrentState != key.Target.CurrentState)
                 {
-                    Session.TmpWeaponEventSortingList[j + 1] = Session.TmpWeaponEventSortingList[j];
+                    Session.I.TmpWeaponEventSortingList[j + 1] = Session.I.TmpWeaponEventSortingList[j];
                     j -= 1;
                 }
-                Session.TmpWeaponEventSortingList[j + 1] = key;
+                Session.I.TmpWeaponEventSortingList[j + 1] = key;
             }
-            return Session.TmpWeaponEventSortingList;
+            return Session.I.TmpWeaponEventSortingList;
         }
 
         private Target.States GetTargetState(Weapon w)

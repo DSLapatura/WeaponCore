@@ -448,6 +448,7 @@ namespace CoreSystems
 
                 Log.Line("Logging stopped.");
                 Log.Close();
+                I = null;
             }
             catch (Exception ex) { Log.Line($"Exception in UnloadData: {ex}", null, true); }
         }

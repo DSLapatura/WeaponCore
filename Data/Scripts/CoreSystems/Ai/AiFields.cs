@@ -89,7 +89,6 @@ namespace CoreSystems.Support
         internal readonly TargetStatus TargetState = new TargetStatus();
         internal readonly AiComponent AiComp;
         internal readonly AiCharger Charger;
-        internal readonly Session Session;
         
         internal MyCubeGrid.MyCubeGridHitInfo GridHitInfo = new MyCubeGrid.MyCubeGridHitInfo();
 
@@ -204,15 +203,14 @@ namespace CoreSystems.Support
         private readonly List<MyEntity> _possibleTargets = new List<MyEntity>();
         private uint _pCacheTick;
 
-        public Ai(Session session)
+        public Ai()
         {
-            Session = session;
             AiComp = new AiComponent(this);
             Charger = new AiCharger(this);
             Construct = new Constructs(this);
         }
 
-        internal void Init(MyEntity topEntity, Session session, CoreComponent.CompTypeSpecific type)
+        internal void Init(MyEntity topEntity, CoreComponent.CompTypeSpecific type)
         {
             try
             {
@@ -222,11 +220,11 @@ namespace CoreSystems.Support
                 AiType = GridEntity != null ? AiTypes.Grid : type == CoreComponent.CompTypeSpecific.Rifle ? AiTypes.Player : AiTypes.Phantom;
                 IsGrid = AiType == AiTypes.Grid;
                 DeadSphereRadius = GridEntity?.GridSizeHalf + 0.1 ?? 1.35;
-                AcquireTargets = !session.IsClient && !session.Settings.Enforcement.DisableAi;
+                AcquireTargets = !Session.I.IsClient && !Session.I.Settings.Enforcement.DisableAi;
 
                 if (AiType != AiTypes.Phantom)
                 {
-                    if (session.TopEntityToInfoMap.TryGetValue(topEntity, out TopEntityMap))
+                    if (Session.I.TopEntityToInfoMap.TryGetValue(topEntity, out TopEntityMap))
                         TopEntityMap.GroupMap.Construct[TopEntity] = this;
                 }
 
@@ -234,15 +232,15 @@ namespace CoreSystems.Support
                 Closed = false;
                 MarkedForClose = false;
 
-                MaxTargetingRange = session.Settings.Enforcement.MinHudFocusDistance;
+                MaxTargetingRange = Session.I.Settings.Enforcement.MinHudFocusDistance;
                 MaxTargetingRangeSqr = MaxTargetingRange * MaxTargetingRange;
 
                 if (CreatedTick == 0)
-                    CreatedTick = session.Tick;
+                    CreatedTick = Session.I.Tick;
 
                 AiMarkedTick = uint.MaxValue;
                 RegisterMyGridEvents(true);
-                AiSpawnTick = Session.Tick;
+                AiSpawnTick = Session.I.Tick;
 
                 topEntity.Components.Add(AiComp);
 
@@ -250,10 +248,10 @@ namespace CoreSystems.Support
                 Data.Init(this);
                 Construct.Init(this);
 
-                if (Session.IsClient)
-                    Session.SendUpdateRequest(TopEntity.EntityId, PacketType.ClientAiAdd);
+                if (Session.I.IsClient)
+                    Session.I.SendUpdateRequest(TopEntity.EntityId, PacketType.ClientAiAdd);
             }
-            catch (Exception ex) { Log.Line($"Exception in AiInit - TopEntityNull:{topEntity == null} - enforcementNull:{session?.Settings?.Enforcement == null} - sessionNull: {session == null} - GridEntityNull:{GridEntity == null} - AiType:{AiType}: {ex}", null, true); }
+            catch (Exception ex) { Log.Line($"Exception in AiInit - TopEntityNull:{topEntity == null} - enforcementNull:{Session.I.Settings?.Enforcement == null}  - GridEntityNull:{GridEntity == null} - AiType:{AiType}: {ex}", null, true); }
         }
     }
 }

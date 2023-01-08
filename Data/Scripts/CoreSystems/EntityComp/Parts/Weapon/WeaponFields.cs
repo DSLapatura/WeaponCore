@@ -255,7 +255,7 @@ namespace CoreSystems.Platform
             System = system;
             Init(comp, system, partId);
             MyStringHash subtype;
-            if (comp.Session.VanillaIds.TryGetValue(comp.Id, out subtype)) {
+            if (Session.I.VanillaIds.TryGetValue(comp.Id, out subtype)) {
                 if (subtype.String.Contains("Gatling"))
                     _numModelBarrels = 6;
                 else
@@ -277,18 +277,18 @@ namespace CoreSystems.Platform
 
             comp.HasEnergyWeapon = comp.HasEnergyWeapon || CanUseEnergyAmmo || CanUseHybridAmmo;
 
-            AvCapable = (System.HasBarrelShootAv || hitParticle) && !Comp.Session.DedicatedServer;
+            AvCapable = (System.HasBarrelShootAv || hitParticle) && !Session.I.DedicatedServer;
 
             if (AvCapable && system.FiringSound == WeaponSystem.FiringSoundState.WhenDone)
             {
-                FiringEmitter = System.Session.Emitters.Count > 0 ? System.Session.Emitters.Pop() : new MyEntity3DSoundEmitter(null);
+                FiringEmitter = Session.I.Emitters.Count > 0 ? Session.I.Emitters.Pop() : new MyEntity3DSoundEmitter(null);
                 FiringEmitter.CanPlayLoopSounds = true;
                 FiringEmitter.Entity = Comp.CoreEntity;
             }
 
             if (AvCapable && system.PreFireSound)
             {
-                PreFiringEmitter = System.Session.Emitters.Count > 0 ? System.Session.Emitters.Pop() : new MyEntity3DSoundEmitter(null);
+                PreFiringEmitter = Session.I.Emitters.Count > 0 ? Session.I.Emitters.Pop() : new MyEntity3DSoundEmitter(null);
                 PreFiringEmitter.CanPlayLoopSounds = true;
 
                 PreFiringEmitter.Entity = Comp.CoreEntity;
@@ -296,7 +296,7 @@ namespace CoreSystems.Platform
 
             if (AvCapable && system.WeaponReloadSound)
             {
-                ReloadEmitter = System.Session.Emitters.Count > 0 ? System.Session.Emitters.Pop() : new MyEntity3DSoundEmitter(null);
+                ReloadEmitter = Session.I.Emitters.Count > 0 ? Session.I.Emitters.Pop() : new MyEntity3DSoundEmitter(null);
                 ReloadEmitter.CanPlayLoopSounds = true;
 
                 ReloadEmitter.Entity = Comp.CoreEntity;
@@ -304,7 +304,7 @@ namespace CoreSystems.Platform
 
             if (AvCapable && system.BarrelRotateSound)
             {
-                BarrelRotateEmitter = System.Session.Emitters.Count > 0 ? System.Session.Emitters.Pop() : new MyEntity3DSoundEmitter(null);
+                BarrelRotateEmitter = Session.I.Emitters.Count > 0 ? Session.I.Emitters.Pop() : new MyEntity3DSoundEmitter(null);
                 BarrelRotateEmitter.CanPlayLoopSounds = true;
 
                 BarrelRotateEmitter.Entity = Comp.CoreEntity;
@@ -372,7 +372,7 @@ namespace CoreSystems.Platform
                         if (modifiesCore && (pa.HasMovement || pa.MovesPivotPos))
                         {
                             Comp.AnimationsModifyCoreParts = true;
-                            if (!System.Session.DedicatedServer && System.Session.PerformanceWarning.Add(Comp.SubTypeId))
+                            if (!Session.I.DedicatedServer && Session.I.PerformanceWarning.Add(Comp.SubTypeId))
                                 Log.Line($"{Comp.SubtypeName} - {System.PartName} - Animation modifies core subparts, performance impact");
                         }
 
@@ -388,7 +388,7 @@ namespace CoreSystems.Platform
             ParticleEvents = CreateWeaponParticleEvents(system, parts);
 
             var burstDelay = System.Values.HardPoint.Loading.DelayAfterBurst;
-            ShowReload = Comp.Session.HandlesInput && (System.WConst.ReloadTime >= 60 || System.Values.HardPoint.Loading.ShotsInBurst > 0 && burstDelay >= 60);
+            ShowReload = Session.I.HandlesInput && (System.WConst.ReloadTime >= 60 || System.Values.HardPoint.Loading.ShotsInBurst > 0 && burstDelay >= 60);
 
             ParentIsSubpart = azimuthPart.Parent is MyEntitySubpart;
             AzimuthInitFwdDir = azimuthPart.PositionComp.LocalMatrixRef.Forward;
@@ -425,7 +425,7 @@ namespace CoreSystems.Platform
                 if (AvCapable && System.HardPointRotationSound && (comp.PrimaryWeapon == this || !System.Values.HardPoint.Ai.PrimaryTracking))
                 {
                     hasHardPointSound = true;
-                    HardPointEmitter = System.Session.Emitters.Count > 0 ? System.Session.Emitters.Pop() : new MyEntity3DSoundEmitter(null);
+                    HardPointEmitter = Session.I.Emitters.Count > 0 ? Session.I.Emitters.Pop() : new MyEntity3DSoundEmitter(null);
                     HardPointEmitter.CanPlayLoopSounds = true;
 
                     HardPointEmitter.Entity = Comp.CoreEntity;
@@ -435,9 +435,9 @@ namespace CoreSystems.Platform
             HasHardPointSound = hasHardPointSound;
 
             if (System.HasAntiSmart)
-                System.Session.AntiSmartActive = true;
+                Session.I.AntiSmartActive = true;
 
-            if (System.Session.HandlesInput && Comp.IsBlock)
+            if (Session.I.HandlesInput && Comp.IsBlock)
             {
                 //InitLight(Color.Red, 99, 1, out Light);
             }

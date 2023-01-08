@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using CoreSystems;
 using CoreSystems.Support;
 using VRage.Game;
 using VRage.Utils;
@@ -10,7 +11,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
     {
         internal void DrawText()
         {
-            _cameraWorldMatrix = _session.Camera.WorldMatrix;
+            _cameraWorldMatrix = Session.I.Camera.WorldMatrix;
 
             if (NeedsUpdate)
                 UpdateHudSettings();
@@ -108,7 +109,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
                     if (textData.UvDraw)
                     {
 
-                        var width = (textData.ScaledWidth * widthScaler) * _session.AspectRatioInv;
+                        var width = (textData.ScaledWidth * widthScaler) * Session.I.AspectRatioInv;
                         MyQuadD quad;
                         MyUtils.GetBillboardQuadOriented(out quad, ref textPos, width, height, ref left, ref up);
 

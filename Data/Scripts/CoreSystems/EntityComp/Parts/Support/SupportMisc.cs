@@ -14,11 +14,11 @@ namespace CoreSystems.Platform
                 case EnergeticProt:
                 case KineticProt:
                 case GenericProt:
-                    return System.Session.ProtSupports;
+                    return Session.I.ProtSupports;
                 case Regenerate:
-                    return System.Session.RegenSupports;
+                    return Session.I.RegenSupports;
                 case Structural:
-                    return System.Session.StructalSupports;
+                    return Session.I.StructalSupports;
             }
             return null;
         }

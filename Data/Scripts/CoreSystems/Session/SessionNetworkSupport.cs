@@ -487,7 +487,7 @@ namespace CoreSystems
             if (IsServer)
             {
 
-                if (!comp.Session.PrunedPacketsToClient.ContainsKey(comp.Data.Repo.Values))
+                if (!PrunedPacketsToClient.ContainsKey(comp.Data.Repo.Values))
                 {
 
                     const PacketType type = PacketType.WeaponState;
@@ -528,7 +528,7 @@ namespace CoreSystems
             if (IsServer)
             {
 
-                if (!comp.Session.PrunedPacketsToClient.ContainsKey(comp.Data.Repo.Values))
+                if (!PrunedPacketsToClient.ContainsKey(comp.Data.Repo.Values))
                 {
 
                     const PacketType type = PacketType.SupportState;
@@ -569,7 +569,7 @@ namespace CoreSystems
             if (IsServer)
             {
 
-                if (!comp.Session.PrunedPacketsToClient.ContainsKey(comp.Data.Repo.Values))
+                if (!PrunedPacketsToClient.ContainsKey(comp.Data.Repo.Values))
                 {
 
                     const PacketType type = PacketType.UpgradeState;
@@ -610,7 +610,7 @@ namespace CoreSystems
             if (IsServer)
             {
 
-                if (!comp.Session.PrunedPacketsToClient.ContainsKey(comp.Data.Repo.Values))
+                if (!PrunedPacketsToClient.ContainsKey(comp.Data.Repo.Values))
                 {
 
                     const PacketType type = PacketType.ControlState;
@@ -650,7 +650,7 @@ namespace CoreSystems
         {
             if (IsServer)
             {
-                if (!comp.Session.PrunedPacketsToClient.ContainsKey(comp.Data.Repo.Values))
+                if (!PrunedPacketsToClient.ContainsKey(comp.Data.Repo.Values))
                 {
                     const PacketType type = PacketType.TargetChange;
                     comp.Data.Repo.Values.UpdateCompPacketInfo(comp, true, false, partId);
@@ -995,10 +995,10 @@ namespace CoreSystems
         {
             if (IsClient)
             {
-                comp.Session.PacketsToServer.Add(new ShootStatePacket
+                PacketsToServer.Add(new ShootStatePacket
                 {
                     EntityId = comp.CoreEntity.EntityId,
-                    SenderId = comp.Session.MultiplayerId,
+                    SenderId = MultiplayerId,
                     PType = PacketType.RequestShootUpdate,
                     Action = action,
                     PlayerId = PlayerId,
@@ -1012,7 +1012,7 @@ namespace CoreSystems
                     Packet = new ShootStatePacket
                     {
                         EntityId = comp.CoreEntity.EntityId,
-                        SenderId = comp.Session.MultiplayerId,
+                        SenderId = MultiplayerId,
                         PType = PacketType.RequestShootUpdate,
                         Action = action,
                         PlayerId = PlayerId,
@@ -1058,7 +1058,7 @@ namespace CoreSystems
                 PacketsToServer.Add(new FakeTargetPacket
                 {
                     EntityId = ai.TopEntity.EntityId,
-                    SenderId = ai.Session.MultiplayerId,
+                    SenderId = MultiplayerId,
                     PType = PacketType.AimTargetUpdate,
                     Pos = fake.EntityId != 0 ? fake.LocalPosition : fake.FakeInfo.WorldPosition,
                     TargetId = fake.EntityId,
@@ -1072,7 +1072,7 @@ namespace CoreSystems
                     Packet = new FakeTargetPacket
                     {
                         EntityId = ai.TopEntity.EntityId,
-                        SenderId = ai.Session.MultiplayerId,
+                        SenderId = MultiplayerId,
                         PType = PacketType.AimTargetUpdate,
                         Pos = fake.EntityId != 0 ? fake.LocalPosition : fake.FakeInfo.WorldPosition,
                         TargetId = fake.EntityId,
@@ -1089,7 +1089,7 @@ namespace CoreSystems
                 PacketsToServer.Add(new PaintedTargetPacket
                 {
                     EntityId = ai.TopEntity.EntityId,
-                    SenderId = ai.Session.MultiplayerId,
+                    SenderId = MultiplayerId,
                     PType = PacketType.PaintedTargetUpdate,
                     Pos = fake.EntityId != 0 ? fake.LocalPosition : fake.FakeInfo.WorldPosition,
                     TargetId = fake.EntityId,
@@ -1103,7 +1103,7 @@ namespace CoreSystems
                     Packet = new PaintedTargetPacket
                     {
                         EntityId = ai.TopEntity.EntityId,
-                        SenderId = ai.Session.MultiplayerId,
+                        SenderId = MultiplayerId,
                         PType = PacketType.PaintedTargetUpdate,
                         Pos = fake.EntityId != 0 ? fake.LocalPosition : fake.FakeInfo.WorldPosition,
                         TargetId = fake.EntityId,
@@ -1366,7 +1366,7 @@ namespace CoreSystems
 
                 comp.ManualMode = wValues.State.TrackingReticle && wValues.Set.Overrides.Control == ProtoWeaponOverrides.ControlModes.Manual; // needs to be set everywhere dedicated and non-tracking clients receive TrackingReticle or Control updates.
 
-                if (comp.Session.MpActive)
+                if (MpActive)
                     SendComp(comp);
             }
         }
@@ -1390,7 +1390,7 @@ namespace CoreSystems
                 var wValues = comp.Data.Repo.Values;
 
                 comp.ManualMode = wValues.State.TrackingReticle && wValues.Set.Overrides.Control == ProtoWeaponOverrides.ControlModes.Manual; // needs to be set everywhere dedicated and non-tracking clients receive TrackingReticle or Control updates.
-                if (comp.Session.MpActive)
+                if (MpActive)
                     SendComp(comp);
             }
         }

@@ -20,7 +20,7 @@ namespace CoreSystems
         {
             if (BaseComp.CoreEntity.Storage == null) 
             {
-                BaseComp.CoreEntity.Storage = new MyModStorageComponent { [BaseComp.Session.CompDataGuid] = "" };
+                BaseComp.CoreEntity.Storage = new MyModStorageComponent { [Session.I.CompDataGuid] = "" };
             }
         }
 
@@ -32,16 +32,16 @@ namespace CoreSystems
                 switch (BaseComp.Type)
                 {
                     case CoreComponent.CompType.Weapon:
-                        BaseComp.CoreEntity.Storage[BaseComp.Session.CompDataGuid] = Convert.ToBase64String(MyAPIGateway.Utilities.SerializeToBinary((ProtoWeaponRepo)ProtoRepoBase));
+                        BaseComp.CoreEntity.Storage[Session.I.CompDataGuid] = Convert.ToBase64String(MyAPIGateway.Utilities.SerializeToBinary((ProtoWeaponRepo)ProtoRepoBase));
                         break;
                     case CoreComponent.CompType.Upgrade:
-                        BaseComp.CoreEntity.Storage[BaseComp.Session.CompDataGuid] = Convert.ToBase64String(MyAPIGateway.Utilities.SerializeToBinary((ProtoUpgradeRepo)ProtoRepoBase));
+                        BaseComp.CoreEntity.Storage[Session.I.CompDataGuid] = Convert.ToBase64String(MyAPIGateway.Utilities.SerializeToBinary((ProtoUpgradeRepo)ProtoRepoBase));
                         break;
                     case CoreComponent.CompType.Support:
-                        BaseComp.CoreEntity.Storage[BaseComp.Session.CompDataGuid] = Convert.ToBase64String(MyAPIGateway.Utilities.SerializeToBinary((ProtoSupportRepo)ProtoRepoBase));
+                        BaseComp.CoreEntity.Storage[Session.I.CompDataGuid] = Convert.ToBase64String(MyAPIGateway.Utilities.SerializeToBinary((ProtoSupportRepo)ProtoRepoBase));
                         break;
                     case CoreComponent.CompType.Control:
-                        BaseComp.CoreEntity.Storage[BaseComp.Session.CompDataGuid] = Convert.ToBase64String(MyAPIGateway.Utilities.SerializeToBinary((ProtoControlRepo)ProtoRepoBase));
+                        BaseComp.CoreEntity.Storage[Session.I.CompDataGuid] = Convert.ToBase64String(MyAPIGateway.Utilities.SerializeToBinary((ProtoControlRepo)ProtoRepoBase));
                         break;
                 }
             }

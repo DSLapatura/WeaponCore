@@ -23,7 +23,7 @@ namespace CoreSystems.Platform
                 ProtoUpgradeRepo load = null;
                 string rawData;
                 bool validData = false;
-                if (Comp.CoreEntity.Storage.TryGetValue(Comp.Session.CompDataGuid, out rawData))
+                if (Comp.CoreEntity.Storage.TryGetValue(Session.I.CompDataGuid, out rawData))
                 {
                     try
                     {
@@ -46,10 +46,6 @@ namespace CoreSystems.Platform
                         var p = Comp.Platform.Upgrades[i];
 
                         p.PartState = Repo.Values.State.Upgrades[i];
-
-                        if (Comp.Session.IsServer)
-                        {
-                        }
                     }
                 }
                 else

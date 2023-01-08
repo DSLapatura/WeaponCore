@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using CoreSystems.Platform;
 using Sandbox.Game.Entities;
+using Sandbox.Game.World;
 using Sandbox.ModAPI;
 using Sandbox.ModAPI.Ingame;
 using VRage.Collections;
@@ -50,8 +51,8 @@ namespace CoreSystems.Support
             {
                 part.InCharger = true;
                 if (ChargeGroup0.Count == 0 && ChargeGroup1.Count == 0 && ChargeGroup2.Count == 0) {
-                    Ai.Session.ChargingParts.Add(this);
-                    Ai.Session.ChargingParts.ApplyAdditions();
+                    Session.I.ChargingParts.Add(this);
+                    Session.I.ChargingParts.ApplyAdditions();
                 }
 
                 switch (part.BaseComp.PowerGroupId)
@@ -107,7 +108,7 @@ namespace CoreSystems.Support
 
                 if (ChargeGroup0.Count == 0 && ChargeGroup1.Count == 0 && ChargeGroup2.Count == 0) {
 
-                    Ai.Session.ChargingParts.Remove(this);
+                    Session.I.ChargingParts.Remove(this);
                     GroupRequested0 = 0;
                     GroupRequested1 = 0;
                     GroupRequested2 = 0;
@@ -232,7 +233,7 @@ namespace CoreSystems.Support
 
                 LastInfoTick = 0;
                 MissCount = 0;
-                LastUpdateTick = ai.Session.Tick;
+                LastUpdateTick = Session.I.Tick;
             }
 
             internal void Sync(PaintedTargetPacket packet, Ai ai)
@@ -253,16 +254,16 @@ namespace CoreSystems.Support
                 }
                 LastInfoTick = 0;
                 MissCount = 0;
-                LastUpdateTick = ai.Session.Tick;
+                LastUpdateTick = Session.I.Tick;
             }
 
             internal FakeWorldTargetInfo GetFakeTargetInfo(Ai ai)
             {
                 if (TmpEntity != null && EntityId == TmpEntity.EntityId && TmpEntity.Physics != null && !TmpEntity.MarkedForClose && !TmpEntity.Closed)
                 {
-                    if (ai.Session.Tick != LastInfoTick)
+                    if (Session.I.Tick != LastInfoTick)
                     {
-                        LastInfoTick = ai.Session.Tick;
+                        LastInfoTick = Session.I.Tick;
                         if (Type != FakeType.Painted || ai.Targets.ContainsKey(TmpEntity))
                         {
                             FakeInfo.WorldPosition = Vector3D.Transform(LocalPosition, TmpEntity.PositionComp.WorldMatrixRef);
@@ -271,13 +272,13 @@ namespace CoreSystems.Support
                         }
                         else if (Type == FakeType.Painted && EntityId != 0)
                         {
-                            ClearMark(ai.Session.Tick, MarkClearResons.PaintSwitchOrNoTargetInDb);
+                            ClearMark(Session.I.Tick, MarkClearResons.PaintSwitchOrNoTargetInDb);
                         }
                     }
                 }
                 else if (Type == FakeType.Painted && EntityId != 0)
                 {
-                    ClearMark(ai.Session.Tick, MarkClearResons.NoTarget);
+                    ClearMark(Session.I.Tick, MarkClearResons.NoTarget);
                 }
 
                 return FakeInfo;
@@ -342,7 +343,7 @@ namespace CoreSystems.Support
                 if (DroneCount > rootConstruct.DroneCount)
                 {
                     rootConstruct.DroneCount = DroneCount;
-                    rootConstruct.LastDroneTick = ai.Session.Tick + 1;
+                    rootConstruct.LastDroneTick = Session.I.Tick + 1;
                 }
 
                 if (info.DistSqr < 36000000)
@@ -362,7 +363,7 @@ namespace CoreSystems.Support
                 DroneCount = 0;
 
                 var rootConstruct = ai.Construct.RootAi.Construct;
-                if (rootConstruct.DroneCount != 0 && ai.Session.Tick - rootConstruct.LastDroneTick > 30) //Was 200, dropped for faster updates on current threats
+                if (rootConstruct.DroneCount != 0 && Session.I.Tick - rootConstruct.LastDroneTick > 30) //Was 200, dropped for faster updates on current threats
                     rootConstruct.DroneCleanup();
             }
         }
@@ -379,7 +380,7 @@ namespace CoreSystems.Support
             internal readonly bool LargeGrid;
             internal readonly bool SuspectedDrone;
 
-            public DetectInfo(Session session, MyEntity target, MyDetectedEntityInfo entInfo, int partCount, int fatCount, bool suspectedDrone, bool loneWarhead)
+            public DetectInfo(MyEntity target, MyDetectedEntityInfo entInfo, int partCount, int fatCount, bool suspectedDrone, bool loneWarhead)
             {
                 Target = target;
                 EntInfo = entInfo;
@@ -395,7 +396,7 @@ namespace CoreSystems.Support
                     isGrid = true;
                     largeGrid = grid.GridSizeEnum == MyCubeSize.Large;
                     ConcurrentDictionary<WeaponDefinition.TargetingDef.BlockTypes, ConcurrentCachingList<MyCubeBlock>> blockTypeMap;
-                    if (session.GridToBlockTypeMap.TryGetValue((MyCubeGrid)Target, out blockTypeMap))
+                    if (Session.I.GridToBlockTypeMap.TryGetValue((MyCubeGrid)Target, out blockTypeMap))
                     {
                         ConcurrentCachingList<MyCubeBlock> weaponBlocks;
                         if (blockTypeMap.TryGetValue(WeaponDefinition.TargetingDef.BlockTypes.Offense, out weaponBlocks) && weaponBlocks.Count > 0)
@@ -483,7 +484,7 @@ namespace CoreSystems.Support
                 if (!MyUtils.IsZero(Velocity, 1E-01F))
                 {
                     var targetMag = myCenter - TargetPos;
-                    Approaching = MathFuncs.IsDotProductWithinTolerance(ref Velocity, ref targetMag, myAi.Session.ApproachDegrees);
+                    Approaching = MathFuncs.IsDotProductWithinTolerance(ref Velocity, ref targetMag, Session.I.ApproachDegrees);
                 }
                 else
                 {
@@ -530,16 +531,16 @@ namespace CoreSystems.Support
             internal int SequenceStep;
             internal int WeaponsFinished;
 
-            public void Clean(Session session)
+            public void Clean()
             {
                 foreach (var s in Sequences.Values)
-                   s.Clean(session);
+                   s.Clean();
 
                 OrderSequencesIds.Clear();
                 Sequences.Clear();
                 WeaponsFinished = 0;
                 SequenceStep = 0;
-                session.GroupPool.Push(this);
+                Session.I.GroupPool.Push(this);
             }
         }
 
@@ -556,13 +557,13 @@ namespace CoreSystems.Support
                 TotalWeapons = Weapons.Count;
             }
 
-            public void Clean(Session session)
+            public void Clean()
             {
                 WeaponsFinished = 0;
                 TotalWeapons = 0;
                 ShotsFired = 0;
                 Weapons.Clear();
-                session.SequencePool.Push(this);
+                Session.I.SequencePool.Push(this);
             }
         }
 

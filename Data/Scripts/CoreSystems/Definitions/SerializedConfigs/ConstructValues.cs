@@ -34,7 +34,7 @@ namespace CoreSystems
 
         public bool Sync(Ai ai, FocusData sync, bool localCall = false)
         {
-            if (ai.Session.IsServer || sync.Revision > Revision)
+            if (Session.I.IsServer || sync.Revision > Revision)
             {
                 Revision = sync.Revision;
                 HasFocus = sync.HasFocus;

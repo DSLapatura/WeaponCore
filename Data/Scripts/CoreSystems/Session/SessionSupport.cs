@@ -1413,7 +1413,7 @@ namespace CoreSystems
                 int retries;
                 if (DeferredPlayerLock.TryGetValue(p.Key, out retries) && retries > 1)
                 {
-                    if (!Ai.Constructs.UpdatePlayerLockState(this, p.Key))
+                    if (!Ai.Constructs.UpdatePlayerLockState(p.Key))
                         DeferredPlayerLock[p.Key] = retries - 1;
                     else
                         DeferredPlayerLock.TryRemove(p.Key, out retries);
@@ -1714,7 +1714,7 @@ namespace CoreSystems
                     Dictionary<string, string> weaponModifer;
                     if (WeaponValuesMap.TryGetValue(part.Values, out weaponModifer) && weaponModifer != null)
                     {
-                        part.WConst = new WeaponConstants(part.Session, part.Values);
+                        part.WConst = new WeaponConstants(part.Values);
                     }
 
                     for (int i = 0; i < part.AmmoTypes.Length; i++)
@@ -1724,7 +1724,7 @@ namespace CoreSystems
                         Dictionary<string, string> ammoModifer;
                         if (AmmoValuesMap.TryGetValue(ammo.AmmoDef, out ammoModifer) && ammoModifer != null)
                         {
-                            ammo.AmmoDef.Const = new AmmoConstants(ammo, part.Values, part.Session, part, i);
+                            ammo.AmmoDef.Const = new AmmoConstants(ammo, part.Values, part, i);
                             part.WConst.HasServerOverrides = true;
                         }
                     }

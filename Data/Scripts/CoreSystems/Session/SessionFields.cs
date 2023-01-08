@@ -60,7 +60,7 @@ namespace CoreSystems
         internal volatile uint LastDeform;
         internal volatile bool DecoyControls;
         internal volatile bool EarlyInitOver;
-
+        internal static Session I;
         internal static double DeltaStepConst;
         internal static double RelativeTime;
         internal static double DeltaTimeRatio;
@@ -597,24 +597,26 @@ namespace CoreSystems
 
         public Session()
         {
+            I = this;
+
             XorRnd = new XorShiftRandomStruct(235211389686413);
-            UiInput = new UiInput(this);
-            HudUi = new WeaponCore.Data.Scripts.CoreSystems.Ui.Hud.Hud(this);
-            TargetUi = new WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting.TargetUi(this);
-            DsUtil = new DSUtils(this);
-            DsUtil2 = new DSUtils(this);
+            UiInput = new UiInput();
+            HudUi = new WeaponCore.Data.Scripts.CoreSystems.Ui.Hud.Hud();
+            TargetUi = new WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting.TargetUi();
+            DsUtil = new DSUtils();
+            DsUtil2 = new DSUtils();
             StallReporter = new StallReporter();
             InnerStallReporter = new StallReporter();
-            Av = new RunAv(this);
-            Api = new ApiBackend(this);
-            ApiServer = new ApiServer(this);
-            Projectiles = new Projectiles.Projectiles(this);
-            AcqManager = new AcquireManager(this);
-            TerminalMon = new TerminalMonitor(this);
-            Spectrum = new Spectrum(this);
+            Av = new RunAv();
+            Api = new ApiBackend();
+            ApiServer = new ApiServer();
+            Projectiles = new Projectiles.Projectiles();
+            AcqManager = new AcquireManager();
+            TerminalMon = new TerminalMonitor();
+            Spectrum = new Spectrum();
             _cachedEwarPacket.Data = new List<EwarValues>(32);
 
-            ProblemRep = new ProblemReport(this);
+            ProblemRep = new ProblemReport();
             VisDirToleranceCosine = Math.Cos(MathHelper.ToRadians(VisDirToleranceAngle));
             AimDirToleranceCosine = Math.Cos(MathHelper.ToRadians(AimDirToleranceAngle));
 

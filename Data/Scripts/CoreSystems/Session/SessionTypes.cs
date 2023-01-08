@@ -96,7 +96,6 @@ namespace CoreSystems
             internal readonly Dictionary<string, Func<string>> PlatformFields;
             internal readonly Dictionary<string, Func<string>> WeaponFields;
 
-            internal Session Session;
             internal bool Generating;
             internal MyEntity TargetEntity;
             internal MyEntity TargetTopEntity;
@@ -107,9 +106,8 @@ namespace CoreSystems
             internal uint RequestTime = 1800;
             internal uint LastRequestTick = uint.MaxValue - 7200;
 
-            internal ProblemReport(Session session)
+            internal ProblemReport()
             {
-                Session = session;
                 SessionFields = InitSessionFields();
                 AiFields = InitAiFields();
                 CompFields = InitCompFields();
@@ -131,32 +129,32 @@ namespace CoreSystems
                 var subName = cube != null ? cube.BlockDefinition.Id.SubtypeName : rifle != null ? rifle.DefinitionId.SubtypeName : "Unknown";
 
                 Ai ai;
-                if (Generating || Session.Tick - LastRequestTick < RequestTime || topMost == null)
+                if (Generating || I.Tick - LastRequestTick < RequestTime || topMost == null)
                 {
                     return;
                 }
 
-                if (!Session.EntityAIs.TryGetValue(topMost, out ai) || !ai.CompBase.ContainsKey(targetEntity))
+                if (!I.EntityAIs.TryGetValue(topMost, out ai) || !ai.CompBase.ContainsKey(targetEntity))
                     Log.Line("Failed to generate user report, either grid does not have Weaponcore or this block this wc block is not initialized.");
 
                 Log.Line("Generate User Weapon Report");
                 Generating = true;
-                LastRequestTick = Session.Tick;
+                LastRequestTick = I.Tick;
                 TargetEntity = targetEntity;
                 TargetTopEntity = topMost;
                 
                 MyData = new DataReport();
 
-                if (!Session.DedicatedServer)
+                if (!I.DedicatedServer)
                     MyAPIGateway.Utilities.ShowNotification($"Generating a error report for WC Block: {subName} - with id: {TargetEntity.EntityId}", 7000, "Red");
 
-                if (Session.IsServer)
+                if (I.IsServer)
                 {
 
                     Compile();
-                    if (Session.MpActive)
+                    if (I.MpActive)
                     {
-                        foreach (var player in Session.Players)
+                        foreach (var player in I.Players)
                             NetworkTransfer(false, player.Value.Player.SteamUserId);
                     }
                 }
@@ -165,7 +163,7 @@ namespace CoreSystems
                     Compile();
                     NetworkTransfer(true);
                 }
-                Session.FutureEvents.Schedule(CompleteReport, null, 300);
+                I.FutureEvents.Schedule(CompleteReport, null, 300);
             }
 
             internal DataReport PullData(MyEntity targetEntity)
@@ -225,9 +223,9 @@ namespace CoreSystems
             {
                 if (toServer)
                 {
-                    Session.PacketsToServer.Add(new ProblemReportPacket
+                    I.PacketsToServer.Add(new ProblemReportPacket
                     {
-                        SenderId = Session.MultiplayerId,
+                        SenderId = I.MultiplayerId,
                         PType = PacketType.ProblemReport,
                         EntityId = TargetEntity.EntityId,
                         Type = ProblemReportPacket.RequestType.RequestServerReport,
@@ -235,7 +233,7 @@ namespace CoreSystems
                 }
                 else
                 {
-                    Session.PacketsToClient.Add(new PacketInfo
+                    I.PacketsToClient.Add(new PacketInfo
                     {
                         Packet = new ProblemReportPacket
                         {
@@ -252,7 +250,7 @@ namespace CoreSystems
 
             internal void CompleteReport(object o)
             {
-                if (Session.MpActive && (RemoteData == null || MyData == null))
+                if (I.MpActive && (RemoteData == null || MyData == null))
                 {
                     Log.Line($"RemoteData:{RemoteData != null} - MyData:{MyData != null}, null data detected, waiting 10 second");
                     Clean();
@@ -268,9 +266,9 @@ namespace CoreSystems
             internal void CompileReport()
             {
                 Report = string.Empty;
-                var myRole = !Session.MpActive ? "" : Session.IsClient ? "Client:" : "Server:";
-                var otherRole = !Session.MpActive ? "" : Session.IsClient ? "Server:" : "Client:";
-                var loopCnt = Session.MpActive ? 2 : 1;
+                var myRole = !I.MpActive ? "" : I.IsClient ? "Client:" : "Server:";
+                var otherRole = !I.MpActive ? "" : I.IsClient ? "Server:" : "Client:";
+                var loopCnt = I.MpActive ? 2 : 1;
                 var lastLoop = loopCnt > 1 ? 1 : 0;
 
                 for (int x = 0; x < loopCnt; x++)
@@ -285,7 +283,7 @@ namespace CoreSystems
                     {
                         var indexString = IndexToString[i];
                         var myStorage = GetStorage(MyData, indexString);
-                        var storageCnt = Session.MpActive ? 2 : 1;
+                        var storageCnt = I.MpActive ? 2 : 1;
                         Report += $"Class: {indexString}\n";
 
                         foreach (var p in myStorage)
@@ -312,8 +310,8 @@ namespace CoreSystems
             {
                 var sessionFields = new Dictionary<string, Func<string>>
                 {
-                    {"HasGridMap", () => (GetComp() != null && Session.TopEntityToInfoMap.ContainsKey(GetComp().TopEntity)).ToString()},
-                    {"HasGridAi", () => (GetComp() != null && Session.EntityAIs.ContainsKey(GetComp().TopEntity)).ToString()},
+                    {"HasGridMap", () => (GetComp() != null && I.TopEntityToInfoMap.ContainsKey(GetComp().TopEntity)).ToString()},
+                    {"HasGridAi", () => (GetComp() != null && I.EntityAIs.ContainsKey(GetComp().TopEntity)).ToString()},
                 };
 
                 return sessionFields;
@@ -456,7 +454,7 @@ namespace CoreSystems
                     },
                     {"WeaponReadyTick", () => {
                             var message = string.Empty;
-                            return !TryGetValidPlatform(out TmpPlatform) ? string.Empty : TmpPlatform.Weapons.Aggregate(message, (current, w) => current + $"{w.System.Session.Tick - w.PartReadyTick}"); }
+                            return !TryGetValidPlatform(out TmpPlatform) ? string.Empty : TmpPlatform.Weapons.Aggregate(message, (current, w) => current + $"{I.Tick - w.PartReadyTick}"); }
                     },
                     {"AmmoTypeId", () => {
                             var message = string.Empty;
@@ -492,7 +490,7 @@ namespace CoreSystems
                     },
                     {"ReloadEndTick", () => {
                             var message = string.Empty;
-                            return !TryGetValidPlatform(out TmpPlatform) ? string.Empty : TmpPlatform.Weapons.Aggregate(message, (current, w) => current + $"{w.ReloadEndTick - w.BaseComp.Session.Tick}"); }
+                            return !TryGetValidPlatform(out TmpPlatform) ? string.Empty : TmpPlatform.Weapons.Aggregate(message, (current, w) => current + $"{w.ReloadEndTick - I.Tick}"); }
                     },
                     {"CurrentlyDegrading", () => {
                             var message = string.Empty;
@@ -508,7 +506,7 @@ namespace CoreSystems
                     },
                     {"LastLoadedTick", () => {
                             var message = string.Empty;
-                            return !TryGetValidPlatform(out TmpPlatform) ? string.Empty : TmpPlatform.Weapons.Aggregate(message, (current, w) => current + $"{w.BaseComp.Session.Tick - w.LastLoadedTick}"); }
+                            return !TryGetValidPlatform(out TmpPlatform) ? string.Empty : TmpPlatform.Weapons.Aggregate(message, (current, w) => current + $"{I.Tick - w.LastLoadedTick}"); }
                     },
                 };
 
@@ -519,7 +517,7 @@ namespace CoreSystems
             internal Ai GetAi()
             {
                 Ai ai;
-                if (Session.EntityAIs.TryGetValue(TargetTopEntity, out ai))
+                if (I.EntityAIs.TryGetValue(TargetTopEntity, out ai))
                 {
                     return ai;
                 }
@@ -530,7 +528,7 @@ namespace CoreSystems
             internal CoreComponent GetComp()
             {
                 Ai ai;
-                if (Session.EntityAIs.TryGetValue(TargetTopEntity, out ai))
+                if (I.EntityAIs.TryGetValue(TargetTopEntity, out ai))
                 {
                     CoreComponent comp;
                     if (ai.CompBase.TryGetValue(TargetEntity, out comp))
@@ -545,7 +543,7 @@ namespace CoreSystems
             internal CorePlatform GetPlatform()
             {
                 Ai ai;
-                if (Session.EntityAIs.TryGetValue(TargetTopEntity, out ai))
+                if (I.EntityAIs.TryGetValue(TargetTopEntity, out ai))
                 {
                     CoreComponent comp;
                     if (ai.CompBase.TryGetValue(TargetEntity, out comp))
@@ -575,20 +573,15 @@ namespace CoreSystems
         internal class TerminalMonitor
         {
             internal readonly Dictionary<CoreComponent, long> ServerTerminalMaps = new Dictionary<CoreComponent, long>();
-            internal Session Session;
             internal CoreComponent Comp;
             internal int OriginalAiVersion;
             internal bool Active;
 
-            internal TerminalMonitor(Session session)
-            {
-                Session = session;
-            }
             internal void Monitor()
             {
                 if (IsActive())
                 {
-                    if (Comp.IsBlock && Session.Tick20)
+                    if (Comp.IsBlock && I.Tick20)
                         Comp.TerminalRefresh();
                 }
                 else if (Active)
@@ -601,9 +594,9 @@ namespace CoreSystems
                 var sameVersion = Comp.Ai.Version == OriginalAiVersion;
                 var nothingMarked = !Comp.CoreEntity.MarkedForClose && !Comp.Ai.TopEntity.MarkedForClose && !Comp.Ai.TopEntity.MarkedForClose;
                 var sameGrid = Comp.TopEntity == Comp.Ai.TopEntity;
-                var inTerminalWindow = Session.InMenu && MyAPIGateway.Gui.GetCurrentScreen == MyTerminalPageEnum.ControlPanel;
+                var inTerminalWindow = I.InMenu && MyAPIGateway.Gui.GetCurrentScreen == MyTerminalPageEnum.ControlPanel;
                 var compReady = Comp.Platform.State == CorePlatform.PlatformState.Ready;
-                var sameTerminalBlock = Comp.Ai.LastTerminal != null && (Comp.Ai.LastTerminal.EntityId == Comp.Ai.Data.Repo.ActiveTerminal || Session.IsClient && (Comp.Ai.Data.Repo.ActiveTerminal == 0 || Comp.Ai.Data.Repo.ActiveTerminal == Comp.CoreEntity.EntityId));
+                var sameTerminalBlock = Comp.Ai.LastTerminal != null && (Comp.Ai.LastTerminal.EntityId == Comp.Ai.Data.Repo.ActiveTerminal || I.IsClient && (Comp.Ai.Data.Repo.ActiveTerminal == 0 || Comp.Ai.Data.Repo.ActiveTerminal == Comp.CoreEntity.EntityId));
                 var isActive = (sameVersion && nothingMarked && sameGrid && compReady && inTerminalWindow && sameTerminalBlock);
                 return isActive;
             }
@@ -620,9 +613,9 @@ namespace CoreSystems
                 if (comp.IsAsleep)
                     comp.WakeupComp();
 
-                if (Session.IsClient && !Active)
-                    Session.SendActiveTerminal(comp);
-                else if (Session.IsServer)
+                if (I.IsClient && !Active)
+                    I.SendActiveTerminal(comp);
+                else if (I.IsServer)
                     ServerUpdate(Comp);
 
                 Active = true;
@@ -630,18 +623,18 @@ namespace CoreSystems
 
             internal void Clean(bool purge = false)
             {
-                if (Session.MpActive && Session.IsClient && Comp != null && !purge)
+                if (I.MpActive && I.IsClient && Comp != null && !purge)
                 {
-                    Session.PacketsToServer.Add(new TerminalMonitorPacket
+                    I.PacketsToServer.Add(new TerminalMonitorPacket
                     {
-                        SenderId = Session.MultiplayerId,
+                        SenderId = I.MultiplayerId,
                         PType = PacketType.TerminalMonitor,
                         EntityId = Comp.CoreEntity.EntityId,
                         State = TerminalMonitorPacket.Change.Clean,
                     });
                 }
 
-                if (!purge && Session.IsServer)
+                if (!purge && I.IsServer)
                     ServerClean(Comp);
 
                 Comp = null;
@@ -672,8 +665,8 @@ namespace CoreSystems
                 if (comp.IsAsleep)
                     comp.WakeupComp();
 
-                if (Session.MpActive)
-                    Session.SendAiData(comp.Ai);
+                if (I.MpActive)
+                    I.SendAiData(comp.Ai);
             }
 
             internal void ServerClean(CoreComponent comp)
@@ -683,8 +676,8 @@ namespace CoreSystems
                     ServerTerminalMaps[comp] = 0;
                     comp.Ai.Data.Repo.ActiveTerminal = 0;
 
-                    if (Session.MpActive)
-                        Session.SendAiData(comp.Ai);
+                    if (I.MpActive)
+                        I.SendAiData(comp.Ai);
                 }
                 else
                     Log.Line("ServerClean failed ");
@@ -693,13 +686,11 @@ namespace CoreSystems
             internal void Purge()
             {
                 Clean(true);
-                Session = null;
             }
         }
 
         internal class AcquireManager
         {
-            internal Session Session;
             internal readonly HashSet<PartAcquire> MonitorState = new HashSet<PartAcquire>();
             internal readonly HashSet<PartAcquire> Asleep = new HashSet<PartAcquire>();
 
@@ -711,14 +702,10 @@ namespace CoreSystems
             internal int WasAwake;
             internal int WasAsleep;
 
-            internal AcquireManager(Session session)
-            {
-                Session = session;
-            }
 
             internal void Refresh(PartAcquire wa)
             {
-                wa.CreatedTick = Session.Tick;
+                wa.CreatedTick = I.Tick;
 
                 if (!wa.IsSleeping)
                     return;
@@ -730,7 +717,7 @@ namespace CoreSystems
             {
                 wa.Monitoring = true;
                 wa.IsSleeping = false;
-                wa.CreatedTick = Session.Tick;
+                wa.CreatedTick = I.Tick;
 
                 if (LastAwakeSlot < AwakeBuckets - 1)
                     wa.SlotId = ++LastAwakeSlot;
@@ -754,7 +741,7 @@ namespace CoreSystems
                         continue;
                     }
 
-                    if (Session.Tick - wa.CreatedTick > 599)
+                    if (I.Tick - wa.CreatedTick > 599)
                     {
 
                         if (LastSleepSlot < AsleepBuckets - 1)
@@ -853,7 +840,6 @@ namespace CoreSystems
                 Asleep.Clear();
                 Collector.Clear();
                 ToRemove.Clear();
-                Session = null;
             }
 
         }
@@ -975,33 +961,31 @@ namespace CoreSystems
         public readonly List<Ai> Ais = new List<Ai>();
         public readonly Dictionary<long, Ai.PlayerController> ControlPlayerRequest = new Dictionary<long, Ai.PlayerController>();
 
-        public readonly Session Session;
         public bool Dirty;
         public GridLinkTypeEnum Type;
         public IMyGridGroupData GroupData;
         public uint LastChangeTick;
         public uint LastControllerTick;
 
-        public GridGroupMap(Session s)
+        public GridGroupMap()
         {
-            Session = s;
-            if (s.MpActive && s.IsClient)
-                LastControllerTick = s.Tick + 1;
+            if (Session.I.MpActive && Session.I.IsClient)
+                LastControllerTick = Session.I.Tick + 1;
         }
 
         public void OnTopEntityAdded(IMyGridGroupData group1, IMyCubeGrid topEntity, IMyGridGroupData group2) => OnTopEntityAdded(group1, (MyEntity)topEntity, group2);
 
         public void OnTopEntityAdded(IMyGridGroupData group1, MyEntity topEntity, IMyGridGroupData group2)
         {
-            LastChangeTick = Session.Tick;
+            LastChangeTick = Session.I.Tick;
             TopMap topMap;
-            if (Session.TopEntityToInfoMap.TryGetValue(topEntity, out topMap))
+            if (Session.I.TopEntityToInfoMap.TryGetValue(topEntity, out topMap))
             {
                 topMap.GroupMap = this;
                 Construct.TryAdd(topEntity, null);
                 if (!Dirty)
                 {
-                    Session.GridGroupUpdates.Add(this);
+                    Session.I.GridGroupUpdates.Add(this);
                     Dirty = true;
                 }
             }
@@ -1014,16 +998,16 @@ namespace CoreSystems
 
         public void OnTopEntityRemoved(IMyGridGroupData group1, MyEntity topEntity, IMyGridGroupData group2)
         {
-            LastChangeTick = Session.Tick;
+            LastChangeTick = Session.I.Tick;
 
             TopMap topMap;
-            if (Session.TopEntityToInfoMap.TryGetValue(topEntity, out topMap))
+            if (Session.I.TopEntityToInfoMap.TryGetValue(topEntity, out topMap))
             {
                 topMap.GroupMap = this;
                 Construct.Remove(topEntity);
                 if (!Dirty)
                 {
-                    Session.GridGroupUpdates.Add(this);
+                    Session.I.GridGroupUpdates.Add(this);
                     Dirty = true;
                 }
             }
@@ -1037,7 +1021,7 @@ namespace CoreSystems
             Ais.Clear();
             foreach (var g in Construct) {
                 Ai ai;
-                if (Session.EntityAIs.TryGetValue(g.Key, out ai))
+                if (Session.I.EntityAIs.TryGetValue(g.Key, out ai))
                     Ais.Add(ai);
             }
 

@@ -18,7 +18,7 @@ namespace CoreSystems
             StorageInit();
             Load();
 
-            if (Ai.Session.IsServer)
+            if (Session.I.IsServer)
             {
                 Repo.FocusData = new FocusData();
             }
@@ -34,16 +34,16 @@ namespace CoreSystems
         public void StorageInit()
         {
             if (Ai.TopEntity.Storage == null)
-                Ai.TopEntity.Storage = new MyModStorageComponent { [Ai.Session.ConstructDataGuid] = "" };
-            else if (!Ai.TopEntity.Storage.ContainsKey(Ai.Session.ConstructDataGuid))
-                Ai.TopEntity.Storage[Ai.Session.ConstructDataGuid] = "";
+                Ai.TopEntity.Storage = new MyModStorageComponent { [Session.I.ConstructDataGuid] = "" };
+            else if (!Ai.TopEntity.Storage.ContainsKey(Session.I.ConstructDataGuid))
+                Ai.TopEntity.Storage[Session.I.ConstructDataGuid] = "";
         }
 
         public void Save()
         {
             if (Ai.TopEntity.Storage == null)  return;
             var binary = MyAPIGateway.Utilities.SerializeToBinary(Repo);
-            Ai.TopEntity.Storage[Ai.Session.ConstructDataGuid] = Convert.ToBase64String(binary);
+            Ai.TopEntity.Storage[Session.I.ConstructDataGuid] = Convert.ToBase64String(binary);
         }
 
         public void Load()
@@ -54,7 +54,7 @@ namespace CoreSystems
             string rawData;
             bool validData = false;
 
-            if (Ai.TopEntity.Storage.TryGetValue(Ai.Session.ConstructDataGuid, out rawData))
+            if (Ai.TopEntity.Storage.TryGetValue(Session.I.ConstructDataGuid, out rawData))
             {
                 try
                 {

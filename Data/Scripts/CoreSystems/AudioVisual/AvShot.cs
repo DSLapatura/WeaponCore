@@ -228,8 +228,9 @@ namespace CoreSystems.Support
                 UpdateCache(infoCache);
         }
 
-        internal static void DeferedAvStateUpdates(Session s)
+        internal static void DeferedAvStateUpdates()
         {
+            var s = Session.I;
             var drawCnt = s.Projectiles.DeferedAvDraw.Count;
             for (int x = 0; x < drawCnt; x++)
             {
@@ -257,7 +258,7 @@ namespace CoreSystems.Support
                 }
 
                 if (aConst.TriggerModel && a.TriggerEntity == null) {
-                    a.TriggerEntity = a.Weapon.System.Session.TriggerEntityPool.Get();
+                    a.TriggerEntity = Session.I.TriggerEntityPool.Get();
                     if (a.TriggerEntity.PositionComp.WorldVolume.Radius * 2 > a.ModelSphereCurrent.Radius)
                         a.ModelSphereCurrent.Radius = a.TriggerEntity.PositionComp.WorldVolume.Radius * 2;
                 }
@@ -1000,7 +1001,7 @@ namespace CoreSystems.Support
                         hitEmitter.SetPosition(pos);
                         hitEmitter.PlaySound(pair);
 
-                        Session.SoundsToClean.Add(new Session.CleanSound { DelayedReturn = true, Emitter = hitEmitter, Pair = pair, EmitterPool = Weapon.System.Session.Av.PersistentEmitters, SpawnTick = Weapon.System.Session.Tick });
+                        Session.SoundsToClean.Add(new Session.CleanSound { DelayedReturn = true, Emitter = hitEmitter, Pair = pair, EmitterPool = Session.I.Av.PersistentEmitters, SpawnTick = Session.I.Tick });
 
                         HitSoundInitted = true;
                     }
@@ -1236,7 +1237,7 @@ namespace CoreSystems.Support
                         detEmitter.Entity = Hit.Entity;
                         detEmitter.SetPosition(pos);
                         detEmitter.PlaySound(a.Const.DetSoundPair);
-                        Session.SoundsToClean.Add(new Session.CleanSound { DelayedReturn = true, Emitter = detEmitter, EmitterPool = Session.Av.PersistentEmitters, SpawnTick = Weapon.System.Session.Tick });
+                        Session.SoundsToClean.Add(new Session.CleanSound { DelayedReturn = true, Emitter = detEmitter, EmitterPool = Session.Av.PersistentEmitters, SpawnTick = Session.I.Tick });
                     }
 
                     if (a.Const.CustomDetParticle || Session.Av.ExplosionReady)

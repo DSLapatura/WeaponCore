@@ -557,7 +557,7 @@ namespace CoreSystems
         private static ConcurrentCachingList<MyCubeBlock> QueryBlockCaches(Ai ai, MyCubeGrid targetGrid, EwarType effectType)
         {
             ConcurrentDictionary<TargetingDef.BlockTypes, ConcurrentCachingList<MyCubeBlock>> blockTypeMap;
-            if (!ai.Session.GridToBlockTypeMap.TryGetValue(targetGrid, out blockTypeMap)) return null;
+            if (!I.GridToBlockTypeMap.TryGetValue(targetGrid, out blockTypeMap)) return null;
 
             ConcurrentCachingList<MyCubeBlock> cubes;
             switch (effectType)
@@ -585,7 +585,7 @@ namespace CoreSystems
                 case Emp:
                 case Dot:
                     TopMap topMap;
-                    if (ai.Session.TopEntityToInfoMap.TryGetValue(targetGrid, out topMap))
+                    if (I.TopEntityToInfoMap.TryGetValue(targetGrid, out topMap))
                         return topMap.MyCubeBocks;
                     break;
             }

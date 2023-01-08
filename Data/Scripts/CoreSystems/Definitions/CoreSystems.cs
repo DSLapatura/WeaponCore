@@ -25,7 +25,6 @@ namespace CoreSystems.Support
         public int PartId;
         public bool StayCharged;
         public string PartName;
-        public Session Session;
 
         public Dictionary<EventTriggers, PartAnimation[]> WeaponAnimationSet;
         public Dictionary<EventTriggers, uint> PartAnimationLengths;
@@ -45,9 +44,8 @@ namespace CoreSystems.Support
 
         public bool AnimationsInited;
 
-        public UpgradeSystem(Session session, MyStringHash partNameIdHash, UpgradeDefinition values, string partName, int partIdHash, int partId)
+        public UpgradeSystem(MyStringHash partNameIdHash, UpgradeDefinition values, string partName, int partIdHash, int partId)
         {
-            Session = session;
 
             PartNameIdHash = partNameIdHash;
 
@@ -72,10 +70,8 @@ namespace CoreSystems.Support
 
         public bool AnimationsInited;
 
-        public SupportSystem(Session session, MyStringHash partNameIdHash, SupportDefinition values, string partName, int partIdHash, int partId)
+        public SupportSystem(MyStringHash partNameIdHash, SupportDefinition values, string partName, int partIdHash, int partId)
         {
-            Session = session;
-
             PartNameIdHash = partNameIdHash;
 
             Values = values;
@@ -92,9 +88,9 @@ namespace CoreSystems.Support
 
     internal class ControlSystem : CoreSystem
     {
-        public ControlSystem(Session session)
+        public ControlSystem()
         {
-            Session = session;
+            
         }
     }
 
@@ -258,11 +254,9 @@ namespace CoreSystems.Support
             Fixed //not used yet
         }
 
-        public WeaponSystem(Session session, WeaponStructure structure, MyStringHash partNameIdHash, MyStringHash muzzlePartName, MyStringHash azimuthPartName, MyStringHash elevationPartName, MyStringHash spinPartName, WeaponDefinition values, string partName, AmmoType[] weaponAmmoTypes, int weaponIdHash, int weaponId)
+        public WeaponSystem(WeaponStructure structure, MyStringHash partNameIdHash, MyStringHash muzzlePartName, MyStringHash azimuthPartName, MyStringHash elevationPartName, MyStringHash spinPartName, WeaponDefinition values, string partName, AmmoType[] weaponAmmoTypes, int weaponIdHash, int weaponId)
         {
-            Session = session;
-
-            WConst = new WeaponConstants(session, values);
+            WConst = new WeaponConstants(values);
 
             DisableLosCheck = values.HardPoint.Other.DisableLosCheck;
             DebugMode = values.HardPoint.Other.Debug;
@@ -388,7 +382,7 @@ namespace CoreSystems.Support
             {
 
                 var ammo = AmmoTypes[i];
-                ammo.AmmoDef.Const = new AmmoConstants(ammo, Values, Session, this, i);
+                ammo.AmmoDef.Const = new AmmoConstants(ammo, Values, this, i);
 
                 var aConst = ammo.AmmoDef.Const;
                 if (aConst.GuidedAmmoDetected)
@@ -668,7 +662,7 @@ namespace CoreSystems.Support
             noAmmoSoundDistSqr = 0f;
             hardPointAvMaxDistSqr = HardPointAvMaxDistSqr;
 
-            foreach (var def in Session.SoundDefinitions)
+            foreach (var def in Session.I.SoundDefinitions)
             {
                 var id = def.Id.SubtypeId.String;
 
@@ -775,7 +769,7 @@ namespace CoreSystems.Support
         internal bool FireSoundNoBurst;
         internal bool HasDrone;
 
-        internal WeaponConstants(Session session, WeaponDefinition values)
+        internal WeaponConstants(WeaponDefinition values)
         {
             FireSoundNoBurst = values.HardPoint.Audio.FireSoundNoBurst;
             FireSoundEndDelay = values.HardPoint.Audio.FireSoundEndDelay;
@@ -783,15 +777,15 @@ namespace CoreSystems.Support
             GiveUpAfter = values.HardPoint.Loading.GiveUpAfter;
 
             SpinFree = values.HardPoint.Loading.SpinFree;
-            LoadModifiers(session, values, out HasServerOverrides);
+            LoadModifiers(values, out HasServerOverrides);
             GetModifiableValues(values, out MaxTargetDistance, out MinTargetDistance, out RateOfFire, out ReloadTime, out DeviateShotAngleRads, out AimingToleranceRads, out IdlePower, out HeatSinkRate, out HeatPerShot, out DebugMode);
         }
 
-        private void LoadModifiers(Session session, WeaponDefinition weaponDef, out bool modsFound)
+        private void LoadModifiers(WeaponDefinition weaponDef, out bool modsFound)
         {
             modsFound = false;
             Dictionary<string, string> weaponMods;
-            if (session.WeaponValuesMap.TryGetValue(weaponDef, out weaponMods) && weaponMods != null)
+            if (Session.I.WeaponValuesMap.TryGetValue(weaponDef, out weaponMods) && weaponMods != null)
             {
                 foreach (var mod in weaponMods)
                 {

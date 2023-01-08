@@ -20,7 +20,7 @@ namespace CoreSystems.Platform
                     }
                 }
 
-                CoreSystem.Session.DisplayAffectedArmor.Add(this);
+                Session.I.DisplayAffectedArmor.Add(this);
             }
             else {
 
@@ -31,7 +31,7 @@ namespace CoreSystems.Platform
                 }
 
                 BlockColorBackup.Clear();
-                CoreSystem.Session.DisplayAffectedArmor.Remove(this);
+                Session.I.DisplayAffectedArmor.Remove(this);
                 ShowAffectedBlocks = false;
             }
         }

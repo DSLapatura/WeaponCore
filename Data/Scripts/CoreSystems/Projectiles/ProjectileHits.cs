@@ -40,7 +40,7 @@ namespace CoreSystems.Projectiles
             var isBeam = aConst.IsBeamWeapon;
             var offensiveEwar = (info.EwarActive && aConst.NonAntiSmartEwar);
             bool projetileInShield = false;
-            var tick = Session.Tick;
+            var tick = Session.I.Tick;
             var entityCollection = p.MyEntityList;
             var collectionCount = lineCheck ? p.MySegmentList.Count : entityCollection.Count;
 
@@ -59,8 +59,8 @@ namespace CoreSystems.Projectiles
             var closestFutureDistSqr = double.MaxValue;
             var voxelCheck = aConst.FakeVoxelHitTicks > 0 || ai.PlanetSurfaceInRange && ai.ClosestPlanetSqr <= info.MaxTrajectory * info.MaxTrajectory;
             WaterData water = null;
-            if (Session.WaterApiLoaded && info.MyPlanet != null)
-                Session.WaterMap.TryGetValue(info.MyPlanet.EntityId, out water);
+            if (Session.I.WaterApiLoaded && info.MyPlanet != null)
+                Session.I.WaterMap.TryGetValue(info.MyPlanet.EntityId, out water);
             MyEntity closestFutureEnt = null;
             IMyTerminalBlock iShield = null;
             for (int i = 0; i < collectionCount; i++)
@@ -76,7 +76,7 @@ namespace CoreSystems.Projectiles
                 if (info.EwarActive && character != null && !genericFields) continue;
 
                 var entSphere = ent.PositionComp.WorldVolume;
-                var checkShield = Session.ShieldApiLoaded && Session.ShieldHash == ent.DefinitionId?.SubtypeId;
+                var checkShield = Session.I.ShieldApiLoaded && Session.I.ShieldHash == ent.DefinitionId?.SubtypeId;
                 MyTuple<IMyTerminalBlock, MyTuple<bool, bool, float, float, float, int>, MyTuple<MatrixD, MatrixD>>? shieldInfo = null;
                 if (aConst.CheckFutureIntersection && !entIsSelf && (!checkShield || ai.FriendlyShieldNear && ai.NearByFriendlyShieldsCache.Contains(ent)))
                 {
@@ -137,7 +137,7 @@ namespace CoreSystems.Projectiles
                 if (checkShield && ent.Render.Visible && !info.EwarActive || info.EwarActive && (aConst.EwarType == Dot || aConst.EwarType == Emp))
                 {
                     if (shieldInfo == null)
-                        shieldInfo = Session.SApi.MatchEntToShieldFastExt(ent, true);
+                        shieldInfo = Session.I.SApi.MatchEntToShieldFastExt(ent, true);
 
                     if (shieldInfo != null && (firingCube == null || (selfDamage || !firingCube.CubeGrid.IsSameConstructAs(shieldInfo.Value.Item1.CubeGrid)) && !goCritical))
                     {
@@ -167,7 +167,7 @@ namespace CoreSystems.Projectiles
                                     if (shieldInfo.Value.Item2.Item2)
                                     {
 
-                                        var faceInfo = Session.SApi.GetFaceInfo(shieldInfo.Value.Item1, hitPos);
+                                        var faceInfo = Session.I.SApi.GetFaceInfo(shieldInfo.Value.Item1, hitPos);
                                         var modifiedBypassMod = ((1 - aConst.ShieldDamageBypassMod) + faceInfo.Item5);
                                         var validRange = modifiedBypassMod >= 0 && modifiedBypassMod <= 1 || faceInfo.Item1;
                                         var notSupressed = validRange && modifiedBypassMod < 1 && faceInfo.Item5 < 1;
@@ -401,7 +401,7 @@ namespace CoreSystems.Projectiles
                                     if (!goCritical)
                                     {
 
-                                        Session.Physics.CastRay(forwardPos, beamTo, out hitInfo, 15);
+                                        Session.I.Physics.CastRay(forwardPos, beamTo, out hitInfo, 15);
                                         var hitGrid = hitInfo?.HitEntity?.GetTopMostParent() as MyCubeGrid;
                                         if (hitGrid == null || firingCube == null || !firingCube.CubeGrid.IsSameConstructAs(hitGrid))
                                         {
@@ -470,7 +470,7 @@ namespace CoreSystems.Projectiles
                 if (!isTarget)
                 {
                     s.Obstacle.Entity = closestFutureEnt;
-                    s.Obstacle.LastSeenTick = Session.Tick;
+                    s.Obstacle.LastSeenTick = Session.I.Tick;
                     s.Obstacle.AvoidSphere = new BoundingSphereD(closestFutureEnt.PositionComp.WorldAABB.Center, closestFutureEnt.PositionComp.LocalVolume.Radius + aConst.FutureIntersectionRange);
                 }
             }
@@ -525,13 +525,13 @@ namespace CoreSystems.Projectiles
                     info.Weapon.WeaponCache.HitDistance = Vector3D.Distance(p.LastPosition, info.Hit.SurfaceHit);
                 }
 
-                lock (Session.Hits)
+                lock (Session.I.Hits)
                 {
-                    if (Session.IsClient && info.AimedShot && aConst.ClientPredictedAmmo && !info.IsFragment)
+                    if (Session.I.IsClient && info.AimedShot && aConst.ClientPredictedAmmo && !info.IsFragment)
                     {
                         SendClientHit(p, true);
                     }
-                    Session.Hits.Add(p);
+                    Session.I.Hits.Add(p);
                 }
                 return;
             }
@@ -555,7 +555,7 @@ namespace CoreSystems.Projectiles
 
             var intersectOrigin = isBeam ? new Vector3D(p.Beam.From + (p.Direction * distToTarget)) : p.LastPosition;
 
-            comp.Session.SendFixedGunHitEvent(hit, comp.CoreEntity, info.Hit.Entity, intersectOrigin, vel, info.OriginUp, info.MuzzleId, w.System.WeaponIdHash, aConst.AmmoIdxPos, (float)(isBeam ? info.MaxTrajectory : distToTarget));
+            Session.I.SendFixedGunHitEvent(hit, comp.CoreEntity, info.Hit.Entity, intersectOrigin, vel, info.OriginUp, info.MuzzleId, w.System.WeaponIdHash, aConst.AmmoIdxPos, (float)(isBeam ? info.MaxTrajectory : distToTarget));
             info.AimedShot = false; //to prevent hits on another grid from triggering again
         }
 
@@ -678,24 +678,24 @@ namespace CoreSystems.Projectiles
                             if (grid != null)
                             {
                                 IHitInfo hitInfo = null;
-                                if (Session.HandlesInput && hitEntity.HitPos.HasValue && Vector3D.DistanceSquared(hitEntity.HitPos.Value, Session.CameraPos) < 22500 && Session.CameraFrustrum.Contains(hitEntity.HitPos.Value) != ContainmentType.Disjoint)
+                                if (Session.I.HandlesInput && hitEntity.HitPos.HasValue && Vector3D.DistanceSquared(hitEntity.HitPos.Value, Session.I.CameraPos) < 22500 && Session.I.CameraFrustrum.Contains(hitEntity.HitPos.Value) != ContainmentType.Disjoint)
                                 {
                                     var entSphere = hitEntity.Entity.PositionComp.WorldVolume;
                                     var from = hitEntity.Intersection.From + (hitEntity.Intersection.Direction * MyUtils.GetSmallestDistanceToSphereAlwaysPositive(ref hitEntity.Intersection.From, ref entSphere));
                                     var to = hitEntity.HitPos.Value + (hitEntity.Intersection.Direction * 3f);
-                                    Session.Physics.CastRay(from, to, out hitInfo, CollisionLayers.NoVoxelCollisionLayer);
+                                    Session.I.Physics.CastRay(from, to, out hitInfo, CollisionLayers.NoVoxelCollisionLayer);
                                 }
                                 visualHitPos = hitInfo?.HitEntity != null ? hitInfo.Position : hitEntity.HitPos;
                             }
                             else visualHitPos = hitEntity.HitPos;
-                            info.Hit = new Hit { Entity = hitEntity.Entity, EventType = hitEntity.EventType, LastHit = visualHitPos ?? Vector3D.Zero, SurfaceHit = visualHitPos ?? Vector3D.Zero, HitVelocity = lastHitVel ?? Vector3D.Zero, HitTick = Session.Tick };
+                            info.Hit = new Hit { Entity = hitEntity.Entity, EventType = hitEntity.EventType, LastHit = visualHitPos ?? Vector3D.Zero, SurfaceHit = visualHitPos ?? Vector3D.Zero, HitVelocity = lastHitVel ?? Vector3D.Zero, HitTick = Session.I.Tick };
 
                             if (p.EnableAv)
                             {
                                 info.AvShot.LastHitShield = hitEntity.EventType == Shield;
                                 info.AvShot.Hit = info.Hit;
-                                if (info.AimedShot && Session.TrackingAi != null && Session.TargetUi.HitIncrease < 0.1d && info.Ai.ControlComp == null && (aConst.FixedFireAmmo || info.Weapon.Comp.Data.Repo.Values.Set.Overrides.Control != ProtoWeaponOverrides.ControlModes.Auto))
-                                    Session.TargetUi.SetHit(info);
+                                if (info.AimedShot && Session.I.TrackingAi != null && Session.I.TargetUi.HitIncrease < 0.1d && info.Ai.ControlComp == null && (aConst.FixedFireAmmo || info.Weapon.Comp.Data.Repo.Values.Set.Overrides.Control != ProtoWeaponOverrides.ControlModes.Auto))
+                                    Session.I.TargetUi.SetHit(info);
                             }
 
                             return true;
@@ -900,7 +900,7 @@ namespace CoreSystems.Projectiles
                 var def = DeferedVoxels[i];
                 var p = def.Projectile;
                 var w = p.Info.Weapon;
-                var s = w.Comp.Session;
+                var s = Session.I;
                 var info = p.Info;
                 var aConst = info.AmmoDef.Const;
                 var branch = def.Branch;
@@ -967,7 +967,7 @@ namespace CoreSystems.Projectiles
                     continue;
                 }
 
-                info.VoxelCache.Update(voxel, ref voxelHit, Session.Tick);
+                info.VoxelCache.Update(voxel, ref voxelHit, Session.I.Tick);
 
                 if (voxelHit == null)
                     continue;
@@ -1011,7 +1011,7 @@ namespace CoreSystems.Projectiles
             if (fatOnly)
             {
                 TopMap map;
-                if (system.Session.TopEntityToInfoMap.TryGetValue(grid, out map))
+                if (Session.I.TopEntityToInfoMap.TryGetValue(grid, out map))
                 {
                     foreach (var cube in map.MyCubeBocks)
                     {
@@ -1030,12 +1030,12 @@ namespace CoreSystems.Projectiles
                                 if (!(cube is MyGyro)) continue;
                                 break;
                             case Offense:
-                                var valid = cube is IMyGunBaseUser || cube is MyConveyorSorter && system.Session.PartPlatforms.ContainsKey(cube.BlockDefinition.Id);
+                                var valid = cube is IMyGunBaseUser || cube is MyConveyorSorter && Session.I.PartPlatforms.ContainsKey(cube.BlockDefinition.Id);
                                 if (!valid) continue;
                                 break;
                             case Emp:
                             case Dot:
-                                if (fieldType == Emp && cube is IMyUpgradeModule && system.Session.CoreShieldBlockTypes.Contains(cube.BlockDefinition))
+                                if (fieldType == Emp && cube is IMyUpgradeModule && Session.I.CoreShieldBlockTypes.Contains(cube.BlockDefinition))
                                     continue;
                                 break;
                             default: continue;
@@ -1051,7 +1051,7 @@ namespace CoreSystems.Projectiles
             {
                 //usage:
                 //var dict = (Dictionary<Vector3I, IMySlimBlock>)GetHackDict((IMySlimBlock) null);
-                var tmpList = system.Session.SlimPool.Get();
+                var tmpList = Session.I.SlimPool.Get();
                 Session.GetBlocksInsideSphereFast(grid, ref sphere, true, tmpList);
 
                 for (int i = 0; i < tmpList.Count; i++)
@@ -1060,7 +1060,7 @@ namespace CoreSystems.Projectiles
                     blocks.Add(new HitEntity.RootBlocks { Block = block, QueryPos = block.Position});
                 }
 
-                system.Session.SlimPool.Return(tmpList);
+                Session.I.SlimPool.Return(tmpList);
             }
 
             blocks.Sort((a, b) =>

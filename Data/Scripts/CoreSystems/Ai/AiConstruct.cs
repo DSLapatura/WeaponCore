@@ -50,7 +50,7 @@ namespace CoreSystems.Support
 
             Construct.ControllingPlayers.Clear();
             if (Construct.WeaponGroups.Count > 0)
-                Construct.CleanWeaponGroups(Session);
+                Construct.CleanWeaponGroups();
         }
 
         public void RegisterSubGrid(MyCubeGrid grid)
@@ -93,8 +93,8 @@ namespace CoreSystems.Support
             }
 
             Ai removeAi;
-            if (!Session.EntityAIs.ContainsKey(grid))
-                Session.EntityToMasterAi.TryRemove(grid, out removeAi);
+            if (!Session.I.EntityAIs.ContainsKey(grid))
+                Session.I.EntityToMasterAi.TryRemove(grid, out removeAi);
         }
 
         public void CleanSubGrids()
@@ -176,12 +176,12 @@ namespace CoreSystems.Support
             internal void Refresh()
             {
                 
-                if (Ai.Session.IsServer && RootAi.Construct.RecentItems.Count > 0) 
+                if (Session.I.IsServer && RootAi.Construct.RecentItems.Count > 0) 
                     CheckEmptyWeapons();
 
                 OptimalDps = 0;
                 BlockCount = 0;
-                LastRefreshTick = Ai.Session.Tick;
+                LastRefreshTick = Session.I.Tick;
                 if (Ai.TopEntity != null) {
                     Ai leadingAi = null;
                     Ai largestAi = null;
@@ -190,7 +190,7 @@ namespace CoreSystems.Support
                     foreach (var grid in Ai.SubGridCache) {
 
                         Ai subAi;
-                        if (Ai.Session.EntityAIs.TryGetValue(grid, out subAi)) {
+                        if (Session.I.EntityAIs.TryGetValue(grid, out subAi)) {
                             
                             if (leadingAi == null)
                                 leadingAi = subAi;
@@ -199,8 +199,8 @@ namespace CoreSystems.Support
                                     leadingAi = subAi;
                             }
                         }
-                        if (Ai.Session.TopEntityToInfoMap.ContainsKey(grid)) {
-                            var blockCount = Ai.Session.TopEntityToInfoMap[grid].MostBlocks;
+                        if (Session.I.TopEntityToInfoMap.ContainsKey(grid)) {
+                            var blockCount = Session.I.TopEntityToInfoMap[grid].MostBlocks;
                             if (blockCount > leadingBlocks)
                             {
                                 leadingBlocks = blockCount;
@@ -238,7 +238,7 @@ namespace CoreSystems.Support
                     {
                         RootAi = Ai;
                         LargestAi = Ai;
-                        Ai.Session.EntityToMasterAi[RootAi.TopEntity] = RootAi;
+                        Session.I.EntityToMasterAi[RootAi.TopEntity] = RootAi;
 
                     }
                     else
@@ -253,12 +253,12 @@ namespace CoreSystems.Support
                     if (RootAi.AiType != AiTypes.Grid)
                     {
                         foreach (var ai in Ai.TopEntityMap.GroupMap.Ais)
-                            RootAi.Session.EntityToMasterAi[ai.TopEntity] = RootAi;
+                            Session.I.EntityToMasterAi[ai.TopEntity] = RootAi;
                     }
                     else
                     {
                         foreach (var sub in Ai.SubGridCache)
-                            RootAi.Session.EntityToMasterAi[sub] = RootAi;
+                            Session.I.EntityToMasterAi[sub] = RootAi;
                     }
                 }
             }
@@ -285,15 +285,15 @@ namespace CoreSystems.Support
                     case UpdateType.Full:
                     {
                         UpdateLeafs();
-                        if (RootAi.Session.MpActive && RootAi.Session.IsServer && sync)
-                            RootAi.Session.SendConstruct(RootAi);
+                        if (Session.I.MpActive && Session.I.IsServer && sync)
+                            Session.I.SendConstruct(RootAi);
                         break;
                     }
                     case UpdateType.Focus:
                     {
                         UpdateLeafFoci();
-                        if (RootAi.Session.MpActive && RootAi.Session.IsServer && sync)
-                            RootAi.Session.SendConstructFoci(RootAi);
+                        if (Session.I.MpActive && Session.I.IsServer && sync)
+                            Session.I.SendConstructFoci(RootAi);
                         break;
                     }
                 }
@@ -306,20 +306,20 @@ namespace CoreSystems.Support
                     foreach (var sub in RootAi.SubGridCache) {
 
                         Ai ai;
-                        if (RootAi.Session.EntityAIs.TryGetValue(sub, out ai))
+                        if (Session.I.EntityAIs.TryGetValue(sub, out ai))
                         {
                             ai.AiSleep = false;
 
-                            if (ai.Session.MpActive)
-                                ai.Session.SendAiData(ai);
+                            if (Session.I.MpActive)
+                                Session.I.SendAiData(ai);
                         }
                     }
                 }
                 else {
                     RootAi.AiSleep = false;
 
-                    if (RootAi.Session.MpActive)
-                        RootAi.Session.SendAiData(RootAi);
+                    if (Session.I.MpActive)
+                        Session.I.SendAiData(RootAi);
                 }
             }
 
@@ -343,14 +343,14 @@ namespace CoreSystems.Support
                     Log.Line($"RebuildWeaponGroups gridgroup had no AIs");
                     return;
                 }
-                var s = map.Session;
+                var s = Session.I;
                 var rootAi = map.Ais[0].Construct.RootAi;
                 var rootConstruct = rootAi.Construct;
 
                 rootConstruct.DirtyWeaponGroups = false;
 
                 if (rootConstruct.WeaponGroups.Count > 0)
-                    rootConstruct.CleanWeaponGroups(s);
+                    rootConstruct.CleanWeaponGroups();
 
                 foreach (var ai in map.Ais)
                 {
@@ -392,7 +392,7 @@ namespace CoreSystems.Support
                 var rootAi = map.Ais[0].Construct.RootAi;
 
                 var rootConstruct = rootAi.Construct;
-                var s = rootAi.Session;
+                var s = Session.I;
                 rootConstruct.ControllingPlayers.Clear();
 
 
@@ -412,7 +412,7 @@ namespace CoreSystems.Support
                         foreach (var c in topMap.PlayerControllers)
                         {
                             rootConstruct.ControllingPlayers[c.Key] = c.Value;
-                            UpdatePlayerLockState(rootAi.Session, c.Key);
+                            UpdatePlayerLockState(c.Key);
                         }
                     }
                     else 
@@ -420,8 +420,9 @@ namespace CoreSystems.Support
                 }
             }
 
-            internal static bool UpdatePlayerLockState(Session s, long playerId)
+            internal static bool UpdatePlayerLockState(long playerId)
             {
+                var s = Session.I;
                 PlayerMap playerMap;
                 if (!s.Players.TryGetValue(playerId, out playerMap))
                 {
@@ -484,12 +485,12 @@ namespace CoreSystems.Support
                     var ai = Ai.TopEntityMap.GroupMap.Ais[i];
                     if (ai.TargetsUpdatedTick > LastTargetInfoTick)
                     {
-                        LastTargetInfoTick = Ai.Session.Tick;
+                        LastTargetInfoTick = Session.I.Tick;
                         break;
                     }
                 }
 
-                if (LastTargetInfoTick == Ai.Session.Tick)
+                if (LastTargetInfoTick == Session.I.Tick)
                 {
                     ConstructTargetInfoCache.Clear();
                     for (int i = 0; i < Ai.TopEntityMap.GroupMap.Ais.Count; i++)
@@ -526,7 +527,7 @@ namespace CoreSystems.Support
                         continue;
 
                     Ai ai;
-                    if (RootAi.Session.EntityAIs.TryGetValue(sub, out ai))
+                    if (Session.I.EntityAIs.TryGetValue(sub, out ai))
                     {
                         ai.Construct.Data.Repo.Sync(ai.Construct, RootAi.Construct.Data.Repo, true);
                     }
@@ -541,7 +542,7 @@ namespace CoreSystems.Support
                         continue;
 
                     Ai ai;
-                    if (RootAi.Session.EntityAIs.TryGetValue(sub, out ai))
+                    if (Session.I.EntityAIs.TryGetValue(sub, out ai))
                         ai.Construct.Data.Repo.FocusData.Sync(ai, RootAi.Construct.Data.Repo.FocusData);
                 }
             }
@@ -574,7 +575,7 @@ namespace CoreSystems.Support
                 Dictionary<object, Weapon> dict;
                 if (!TrackedTargets.TryGetValue(w.System.StorageLocation, out dict))
                 {
-                    dict = Ai.Session.TrackingDictPool.Count > 0 ? Ai.Session.TrackingDictPool.Pop() : new Dictionary<object, Weapon>();
+                    dict = Session.I.TrackingDictPool.Count > 0 ? Session.I.TrackingDictPool.Pop() : new Dictionary<object, Weapon>();
                     TrackedTargets[w.System.StorageLocation] = dict;
                 }
 
@@ -630,7 +631,7 @@ namespace CoreSystems.Support
             {
                 foreach (var dict in TrackedTargets.Values)
                 {
-                    Ai.Session.TrackingDictPool.Push(dict);
+                    Session.I.TrackingDictPool.Push(dict);
                     dict.Clear();
                 }
                 TrackedTargets.Clear();
@@ -692,12 +693,12 @@ namespace CoreSystems.Support
                 Data.Init(ai);
             }
 
-            internal void CleanWeaponGroups(Session session)
+            internal void CleanWeaponGroups()
             {
                 foreach (var pair in WeaponGroups)
                 {
                     var group = pair.Value;
-                    group.Clean(session);
+                    group.Clean();
                 }
                 WeaponGroups.Clear();
                 DirtyWeaponGroups = false;
@@ -710,14 +711,14 @@ namespace CoreSystems.Support
                     try
                     {
                         PlayerMap player;
-                        var playerName = Ai.Session.Players.TryGetValue(Ai.AiOwner, out player) ? player.Player.DisplayName ?? string.Empty : string.Empty;
+                        var playerName = Session.I.Players.TryGetValue(Ai.AiOwner, out player) ? player.Player.DisplayName ?? string.Empty : string.Empty;
                         Log.Stats($"{Ai.TopEntity?.DisplayName}, {playerName}, {(long)TotalEffect}, {TotalPrimaryEffect}, {TotalAoeEffect}, {TotalShieldEffect}, {TotalProjectileEffect}", "griddmgstats");
                     }
                     catch (Exception ex) { Log.Line($"Exception in ConstructClean: {ex}", null, true); }
                 }
 
                 if (WeaponGroups.Count > 0)
-                    CleanWeaponGroups(RootAi.Session);
+                    CleanWeaponGroups();
 
                 Data.Clean();
                 OptimalDps = 0;
@@ -790,7 +791,7 @@ namespace CoreSystems.Support
         public bool ChangeDetected(Ai ai)
         {
             var fd = ai.Construct.Data.Repo.FocusData;
-            var forceUpdate = LastUpdateTick == 0 || ai.Session.Tick - LastUpdateTick > 600;
+            var forceUpdate = LastUpdateTick == 0 || Session.I.Tick - LastUpdateTick > 600;
             if (forceUpdate || fd.Target != OldTarget || fd.Locked != OldLocked || fd.HasFocus != OldHasFocus || Math.Abs(fd.DistToNearestFocusSqr - OldDistToNearestFocusSqr) > 0)
             {
                 if (fd.Target > 0)
@@ -800,7 +801,7 @@ namespace CoreSystems.Support
                 OldLocked = fd.Locked;
                 OldHasFocus = fd.HasFocus;
                 OldDistToNearestFocusSqr = fd.DistToNearestFocusSqr;
-                LastUpdateTick = ai.Session.Tick;
+                LastUpdateTick = Session.I.Tick;
                 return true;
             }
 
@@ -810,7 +811,7 @@ namespace CoreSystems.Support
 
         internal void ServerChangeFocus(MyEntity target, Ai ai, long playerId, ChangeMode mode, bool apiCalled = false)
         {
-            if (!apiCalled && playerId != 0 && ai.Session.TargetFocusHandlers.Count > 0)
+            if (!apiCalled && playerId != 0 && Session.I.TargetFocusHandlers.Count > 0)
             {
                 if (RestrictedTargetFocusHandlers(target, ai, playerId, mode))
                     return;
@@ -834,7 +835,7 @@ namespace CoreSystems.Support
 
         internal void ServerAddFocus(MyEntity target, Ai ai)
         {
-            var session = ai.Session;
+            var session = Session.I;
             var fd = ai.Construct.Data.Repo.FocusData;
             if (fd.Target != target.EntityId)
             {
@@ -848,15 +849,15 @@ namespace CoreSystems.Support
 
         internal void RequestAddFocus(MyEntity target, Ai ai, long playerId)
         {
-            if (ai.Session.IsServer)
+            if (Session.I.IsServer)
                 ServerChangeFocus(target, ai, playerId, ChangeMode.Add);
             else
-                ai.Session.SendFocusTargetUpdate(ai, target.EntityId);
+                Session.I.SendFocusTargetUpdate(ai, target.EntityId);
         }
 
         internal void ServerCycleLock(Ai ai)
         {
-            var session = ai.Session;
+            var session = Session.I;
             var fd = ai.Construct.Data.Repo.FocusData;
             var modeCount = Enum.GetNames(typeof(LockModes)).Length;
 
@@ -870,10 +871,10 @@ namespace CoreSystems.Support
 
         internal void RequestAddLock(Ai ai, long playerId)
         {
-            if (ai.Session.IsServer)
+            if (Session.I.IsServer)
                 ServerChangeFocus(null, ai, playerId, ChangeMode.Lock);
             else
-                ai.Session.SendFocusLockUpdate(ai);
+                Session.I.SendFocusLockUpdate(ai);
         }
 
         internal void ServerReleaseActive(Ai ai)
@@ -890,10 +891,10 @@ namespace CoreSystems.Support
 
         internal void RequestReleaseActive(Ai ai, long sPlayerId)
         {
-            if (ai.Session.IsServer)
+            if (Session.I.IsServer)
                 ServerReleaseActive(ai);
             else
-                ai.Session.SendReleaseActiveUpdate(ai);
+                Session.I.SendReleaseActiveUpdate(ai);
 
         }
 
@@ -917,7 +918,7 @@ namespace CoreSystems.Support
         {
             var fd = ai.Construct.Data.Repo.FocusData;
 
-            if (ai.Session.IsServer)
+            if (Session.I.IsServer)
                 return ServerIsFocused(ai);
 
             return fd.Target > 0 && MyEntities.GetEntityById(fd.Target) != null;
@@ -970,7 +971,7 @@ namespace CoreSystems.Support
             var focusTargetId = Ai.Construct.Data.Repo.FocusData?.Target;
 
             var existingTarget = w.Target.TargetObject;
-            if (w.PosChangedTick != w.Comp.Session.SimulationCount)
+            if (w.PosChangedTick != Session.I.SimulationCount)
                 w.UpdatePivotPos();
 
             if (focusTargetId != null && existingTarget != null)
@@ -1018,7 +1019,7 @@ namespace CoreSystems.Support
 
         private bool RestrictedTargetFocusHandlers(MyEntity target, Ai ai, long playerId, ChangeMode mode)
         {
-            foreach (var handler in ai.Session.TargetFocusHandlers)
+            foreach (var handler in Session.I.TargetFocusHandlers)
             {
                 var handledTopEntityId = handler.Key;
                 MyEntity handledTopEntity;

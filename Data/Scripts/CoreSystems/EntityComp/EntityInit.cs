@@ -27,7 +27,7 @@ namespace CoreSystems.Support
 
                 BaseData.DataManager(DataState.Load);
 
-                if (Session.IsServer)
+                if (Session.I.IsServer)
                     BaseData.DataManager(DataState.Reset);
             }
             catch (Exception ex) { Log.Line($"Exception in StorageSetup: {ex} - StateNull:{BaseData.ProtoRepoBase == null} - cubeMarked:{CoreEntity.MarkedForClose} - WeaponsNull:{Platform.Weapons == null} - FirstWeaponNull:{Platform.Weapons?[0] == null}", null, true); }

@@ -26,21 +26,21 @@ namespace CoreSystems.Projectiles
                 var aConst = a.Const;
                 var t = gen.Type;
                 var virts = gen.NewVirts;
-                var aimed = repo.Values.State.PlayerId == Session.PlayerId && comp.ActivePlayer || comp.TypeSpecific == CoreComponent.CompTypeSpecific.Phantom;
+                var aimed = repo.Values.State.PlayerId == Session.I.PlayerId && comp.ActivePlayer || comp.TypeSpecific == CoreComponent.CompTypeSpecific.Phantom;
 
                 var patternCycle = gen.PatternCycle;
                 var targetable = weaponAmmoDef.Const.Health > 0 && !weaponAmmoDef.Const.IsBeamWeapon;
-                var p = Session.Projectiles.ProjectilePool.Count > 0 ? Session.Projectiles.ProjectilePool.Pop() : new Projectile();
+                var p = Session.I.Projectiles.ProjectilePool.Count > 0 ? Session.I.Projectiles.ProjectilePool.Pop() : new Projectile();
                 var info = p.Info;
                 var storage = info.Storage;
                 var target = info.Target;
-                info.Id = Session.Projectiles.CurrentProjectileId++;
+                info.Id = Session.I.Projectiles.CurrentProjectileId++;
                 info.Weapon = w;
                 info.CompSceneVersion = comp.SceneVersion;
                 info.Ai = ai;
                 info.AimedShot = aimed;
                 info.AmmoDef = a;
-                info.DoDamage = Session.IsServer && (!aConst.ClientPredictedAmmo || t == Kind.Client || !comp.ActivePlayer ); // shrapnel do not run this loop, but do inherit DoDamage from parent.
+                info.DoDamage = Session.I.IsServer && (!aConst.ClientPredictedAmmo || t == Kind.Client || !comp.ActivePlayer ); // shrapnel do not run this loop, but do inherit DoDamage from parent.
 
                 target.TargetObject = t != Kind.Client ? wTarget.TargetObject : gen.TargetEnt;
 
@@ -67,10 +67,10 @@ namespace CoreSystems.Projectiles
                 {
 
                     if (comp.FakeMode)
-                        Session.PlayerDummyTargets.TryGetValue(repo.Values.State.PlayerId, out storage.DummyTargets);
+                        Session.I.PlayerDummyTargets.TryGetValue(repo.Values.State.PlayerId, out storage.DummyTargets);
                 }
 
-                if (Session.AdvSync) {
+                if (Session.I.AdvSync) {
                     info.SyncId = ((ulong)w.Reload.EndId << 48) | ((ulong)w.ProjectileCounter << 32) | ((ulong)info.SyncedFrags << 16) | info.SpawnDepth;
 
                     if (aConst.PdDeathSync || aConst.OnHitDeathSync || aConst.FullSync)
@@ -99,19 +99,19 @@ namespace CoreSystems.Projectiles
                 {
                     if (patternCycle > a.AmmoGraphics.Lines.Tracer.VisualFadeStart)
                         shotFade = MathHelper.Clamp(((patternCycle - a.AmmoGraphics.Lines.Tracer.VisualFadeStart)) * aConst.ShotFadeStep, 0, 1);
-                    else if (w.System.DelayCeaseFire && w.CeaseFireDelayTick != Session.Tick)
-                        shotFade = MathHelper.Clamp(((Session.Tick - w.CeaseFireDelayTick) - a.AmmoGraphics.Lines.Tracer.VisualFadeStart) * aConst.ShotFadeStep, 0, 1);
+                    else if (w.System.DelayCeaseFire && w.CeaseFireDelayTick != Session.I.Tick)
+                        shotFade = MathHelper.Clamp(((Session.I.Tick - w.CeaseFireDelayTick) - a.AmmoGraphics.Lines.Tracer.VisualFadeStart) * aConst.ShotFadeStep, 0, 1);
                     else shotFade = 0;
                 }
                 else shotFade = 0;
                 info.ShotFade = shotFade;
 
                 var updateGravity = aConst.StoreGravity && info.Ai.InPlanetGravity;
-                if (updateGravity && Session.Tick - w.GravityTick > 119)
+                if (updateGravity && Session.I.Tick - w.GravityTick > 119)
                 {
-                    w.GravityTick = Session.Tick;
+                    w.GravityTick = Session.I.Tick;
                     float interference;
-                    w.GravityPoint = Session.Physics.CalculateNaturalGravityAt(w.MyPivotPos, out interference);
+                    w.GravityPoint = Session.I.Physics.CalculateNaturalGravityAt(w.MyPivotPos, out interference);
                     w.GravityUnitDir = w.GravityPoint;
                     w.GravityLength = w.GravityUnitDir.Normalize();
                 }
@@ -121,7 +121,7 @@ namespace CoreSystems.Projectiles
                 if (t != Kind.Virtual)
                 {
                     if (targetable)
-                        Session.Projectiles.AddTargets.Add(p);
+                        Session.I.Projectiles.AddTargets.Add(p);
                 }
                 else
                 {
@@ -144,7 +144,7 @@ namespace CoreSystems.Projectiles
                     virts.Clear();
                     VirtInfoPools.Push(virts);
                 }
-                Session.Projectiles.ActiveProjetiles.Add(p);
+                Session.I.Projectiles.ActiveProjetiles.Add(p);
                 p.Start();
             }
             NewProjectiles.Clear();
@@ -227,8 +227,8 @@ namespace CoreSystems.Projectiles
                         {
                             targetAi.DeadProjectiles.Remove(p);
                             targetAi.LiveProjectile.Add(p);
-                            targetAi.LiveProjectileTick = Session.Tick;
-                            targetAi.NewProjectileTick = Session.Tick;
+                            targetAi.LiveProjectileTick = Session.I.Tick;
+                            targetAi.NewProjectileTick = Session.I.Tick;
                             p.Watchers.Add(targetAi);
                         }
                     }

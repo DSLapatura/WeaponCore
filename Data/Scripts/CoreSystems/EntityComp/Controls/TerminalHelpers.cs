@@ -258,7 +258,7 @@ namespace CoreSystems.Control
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
 
             var valid = comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Type == CoreComponent.CompType.Weapon && comp.Data?.Repo != null;
-            if (!valid || comp.Session.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
+            if (!valid || Session.I.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
                 return false;
 
             return comp.ConsumableSelectionPartIds.Count > 0;
@@ -269,7 +269,7 @@ namespace CoreSystems.Control
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
 
             var valid = comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Data?.Repo != null;
-            if (!valid || comp.Session.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
+            if (!valid || Session.I.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
                 return false;
 
             return !comp.HasDisabledBurst;
@@ -285,7 +285,7 @@ namespace CoreSystems.Control
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
 
             var valid = comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Data?.Repo != null;
-            if (!valid || comp.Session.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
+            if (!valid || Session.I.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
                 return false;
 
             return comp.HasArming;
@@ -296,7 +296,7 @@ namespace CoreSystems.Control
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
 
             var valid = comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Data?.Repo != null;
-            if (!valid || comp.Session.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
+            if (!valid || Session.I.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
                 return false;
 
             return comp.Data.Repo.Values.State.CountingDown;
@@ -307,7 +307,7 @@ namespace CoreSystems.Control
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
 
             var valid = comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Data?.Repo != null;
-            if (!valid || comp.Session.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
+            if (!valid || Session.I.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
                 return false;
 
             return !comp.Data.Repo.Values.State.CountingDown;
@@ -318,7 +318,7 @@ namespace CoreSystems.Control
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
 
             var valid = comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Type == CoreComponent.CompType.Weapon && comp.Data?.Repo != null;
-            if (!valid || comp.Session.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
+            if (!valid || Session.I.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
                 return false;
 
             return comp.HasTurret && !comp.HasAlternateUi;
@@ -330,7 +330,7 @@ namespace CoreSystems.Control
 
 
             var valid = comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Type == CoreComponent.CompType.Weapon && comp.Data?.Repo != null;
-            if (!valid || comp.Session.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
+            if (!valid || Session.I.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
                 return false;
 
             return !comp.HasTurret;
@@ -351,7 +351,7 @@ namespace CoreSystems.Control
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             var valid = comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Type == CoreComponent.CompType.Weapon && comp.TypeSpecific == CoreComponent.CompTypeSpecific.SorterWeapon && comp.Data?.Repo != null;
-            if (!valid || comp.Session.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
+            if (!valid || Session.I.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
                 return false;
 
             return true;
@@ -362,7 +362,7 @@ namespace CoreSystems.Control
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             var valid = comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Data?.Repo != null;
-            if (!valid || comp.Session.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
+            if (!valid || Session.I.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
                 return false;
 
             return true;
@@ -372,7 +372,7 @@ namespace CoreSystems.Control
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             var valid = comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Data?.Repo != null;
-            if (!valid || comp.Session.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
+            if (!valid || Session.I.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
                 return false;
 
             return !comp.HasAlternateUi;
@@ -382,7 +382,7 @@ namespace CoreSystems.Control
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             var valid = comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Data?.Repo != null;
-            if (!valid || comp.Session.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
+            if (!valid || Session.I.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
                 return false;
 
             return comp.HasDrone;
@@ -392,7 +392,7 @@ namespace CoreSystems.Control
         {
             var comp = block?.Components?.Get<CoreComponent>() as ControlSys.ControlComponent;
             var valid = comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Data?.Repo != null;
-            if (!valid || comp.Session.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
+            if (!valid || Session.I.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
                 return false;
 
             return true;
@@ -404,7 +404,7 @@ namespace CoreSystems.Control
 
             var valid = comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Data?.Repo != null;
 
-            if (!valid || comp.Session.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
+            if (!valid || Session.I.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
                 return false;
 
             return (comp.HasTracking || comp.HasGuidance) && !comp.HasAlternateUi;
@@ -417,7 +417,7 @@ namespace CoreSystems.Control
 
             var valid = comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Data?.Repo != null;
 
-            if (!valid || comp.Session.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
+            if (!valid || Session.I.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
                 return false;
 
             return (comp.HasTracking || comp.HasGuidance) && !comp.HasAlternateUi;
@@ -429,7 +429,7 @@ namespace CoreSystems.Control
 
             var valid = comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Data?.Repo != null;
 
-            if (!valid || comp.Session.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
+            if (!valid || Session.I.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
                 return false;
 
             return (comp.HasTracking || comp.HasGuidance) && !comp.HasAlternateUi;
@@ -440,7 +440,7 @@ namespace CoreSystems.Control
 
             var valid = comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Data?.Repo != null;
 
-            if (!valid || comp.Session.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
+            if (!valid || Session.I.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
                 return false;
 
             return (comp.HasTracking || comp.HasGuidance || comp.HasAlternateUi);
@@ -451,7 +451,7 @@ namespace CoreSystems.Control
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
 
             var valid = comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Data?.Repo != null;
-            if (!valid || comp.Session.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
+            if (!valid || Session.I.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
                 return false;
 
             return comp.Data.Repo.Values.Set.Overrides.Armed;
@@ -462,7 +462,7 @@ namespace CoreSystems.Control
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             var valid = comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Data?.Repo != null;
-            if (!valid || comp.Session.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
+            if (!valid || Session.I.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
                 return false;
 
             return comp.HasGuidance && !comp.HasAlternateUi;
@@ -474,7 +474,7 @@ namespace CoreSystems.Control
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
 
             var valid = comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Data?.Repo != null;
-            if (!valid || comp.Session.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
+            if (!valid || Session.I.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
                 return false;
 
             return comp.HasRequireTarget && !comp.HasAlternateUi;
@@ -484,7 +484,7 @@ namespace CoreSystems.Control
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             var valid = comp != null && comp.Platform.State == CorePlatform.PlatformState.Ready && comp.Data?.Repo != null;
-            if (!valid || comp.Session.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
+            if (!valid || Session.I.PlayerId != comp.Data.Repo.Values.State.PlayerId && !comp.TakeOwnerShip())
                 return false;
 
             return !comp.IsBomb && !comp.HasAlternateUi;

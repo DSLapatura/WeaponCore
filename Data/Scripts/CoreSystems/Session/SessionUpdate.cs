@@ -661,7 +661,7 @@ namespace CoreSystems
                         }
                         else if (eTarget != null && eTarget.MarkedForClose || w.Target.HasTarget && w.Target.TargetObject == null && w.TargetData.EntityId >= 0 || w.DelayedTargetResetTick == Tick && w.TargetData.EntityId == 0 && w.Target.TargetObject != null)
                         {
-                            w.Target.Reset(w.System.Session.Tick, States.ServerReset);
+                            w.Target.Reset(Tick, States.ServerReset);
                         }
 
                         w.ProjectilesNear = ai.EnemyProjectiles && (w.System.TrackProjectile || ai.ControlComp != null) && !w.System.FocusOnly && projectiles && w.Target.TargetState != TargetStates.IsProjectile && (w.Target.TargetChanged || QCount == w.ShortLoadId);

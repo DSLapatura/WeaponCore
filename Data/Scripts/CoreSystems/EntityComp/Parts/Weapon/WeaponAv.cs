@@ -56,7 +56,7 @@ namespace CoreSystems.Platform
         {
             var stopSounds = !burst || !System.WConst.FireSoundNoBurst;
             if (System.WConst.FireSoundEndDelay > 0 && stopSounds)
-                Comp.Session.FutureEvents.Schedule(StopFiringSound, null, System.WConst.FireSoundEndDelay);
+                Session.I.FutureEvents.Schedule(StopFiringSound, null, System.WConst.FireSoundEndDelay);
             else if (stopSounds) StopFiringSound(false);
 
             if (stopSounds)
@@ -71,14 +71,14 @@ namespace CoreSystems.Platform
 
             StopPreFiringSound();
 
-            StopBarrelAvTick = Comp.Session.Tick;
+            StopBarrelAvTick = Session.I.Tick;
 
             for (int i = 0; i < Muzzles.Length; i++) {
                 var muzzle = Muzzles[i];
                 MyParticleEffect effect;
-                if (System.Session.Av.BeamEffects.TryGetValue(muzzle.UniqueId, out effect)) {
+                if (Session.I.Av.BeamEffects.TryGetValue(muzzle.UniqueId, out effect)) {
                     effect.Stop();
-                    System.Session.Av.BeamEffects.Remove(muzzle.UniqueId);
+                    Session.I.Av.BeamEffects.Remove(muzzle.UniqueId);
                 }
             }
         }
@@ -108,8 +108,8 @@ namespace CoreSystems.Platform
 
                     if (active && !particle.Playing && distance <= particle.Distance)
                     {
-                        particle.PlayTick = Comp.Session.Tick + particle.StartDelay;
-                        Comp.Session.Av.ParticlesToProcess.Add(particle);
+                        particle.PlayTick = Session.I.Tick + particle.StartDelay;
+                        Session.I.Av.ParticlesToProcess.Add(particle);
                         particle.Playing = true;
                         particle.Triggered = true;
                     }
@@ -137,7 +137,7 @@ namespace CoreSystems.Platform
             if (Comp.Data.Repo == null || Comp.CoreEntity == null || Comp.CoreEntity.MarkedForClose || Comp.Ai == null || Comp.Platform.State != CorePlatform.PlatformState.Ready && Comp.Platform.State != CorePlatform.PlatformState.Inited) return;
             try
             {
-                var session = Comp.Session;
+                var session = Session.I;
                 var distance = Vector3D.DistanceSquared(session.CameraPos, Comp.CoreEntity.PositionComp.WorldAABB.Center);
                 var canPlay = !session.DedicatedServer && 64000000 >= distance; //8km max range, will play regardless of range if it moves PivotPos and is loaded
                 switch (state)
@@ -149,7 +149,7 @@ namespace CoreSystems.Platform
                     case EventTriggers.Reloading:
                     case EventTriggers.NoMagsToLoad:
                     case EventTriggers.EmptyOnGameLoad:
-                        if (Comp.TypeSpecific == CoreComponent.CompTypeSpecific.Rifle && (!Comp.Session.IsCreative || state == EventTriggers.Reloading))
+                        if (Comp.TypeSpecific == CoreComponent.CompTypeSpecific.Rifle && (!Session.I.IsCreative || state == EventTriggers.Reloading))
                         {
                             Comp.HandheldReload(this, state, active);
                         }
@@ -161,7 +161,7 @@ namespace CoreSystems.Platform
 
                 //  Vector3D scopePos, Vector3D scopeDirection, int requestState, bool hasLos, object target, int currentAmmo, int remainingMags, int requestStage
                 Func<Vector3D, Vector3D, int, bool, object, int, int, int, bool> shootHandler;
-                if (Comp.Session.ShootHandlers.Count > 0 && (Comp.Session.ShootHandlers.TryGetValue(Comp.CoreEntity.EntityId, out shootHandler) || Comp.Session.ShootHandlers.TryGetValue(Comp.TopEntity.EntityId, out shootHandler)))
+                if (Session.I.ShootHandlers.Count > 0 && (Session.I.ShootHandlers.TryGetValue(Comp.CoreEntity.EntityId, out shootHandler) || Session.I.ShootHandlers.TryGetValue(Comp.TopEntity.EntityId, out shootHandler)))
                 {
                     var scope = GetScope.Info;
                     var proceed = shootHandler.Invoke(scope.Position, scope.Direction, active ? 0 : 1, true, ShootRequest.RawTarget ?? Target.TargetObject, ProtoWeaponAmmo.CurrentAmmo, Reload.CurrentMags, (int) state);
@@ -207,8 +207,8 @@ namespace CoreSystems.Platform
                 }
 
                 if (!AnimationsSet.ContainsKey(state)) return;
-                if (AnimationDelayTick < Comp.Session.Tick)
-                    AnimationDelayTick = Comp.Session.Tick;
+                if (AnimationDelayTick < Session.I.Tick)
+                    AnimationDelayTick = Session.I.Tick;
 
                 var set = false;
                 uint startDelay = 0;
@@ -286,7 +286,7 @@ namespace CoreSystems.Platform
                                         animation.StartTick += startDelay;
                                     }
 
-                                    Comp.Session.AnimationsToProcess.Add(animation);
+                                    Session.I.AnimationsToProcess.Add(animation);
                                     animation.Running = true;
                                     animation.CanPlay = canPlay;
 
@@ -330,7 +330,7 @@ namespace CoreSystems.Platform
                                         else
                                             animation.PlayTicks.Add(session.Tick + animation.MotionDelay + startDelay);
 
-                                        Comp.Session.AnimationsToProcess.Add(animation);
+                                        Session.I.AnimationsToProcess.Add(animation);
                                         animation.Running = true;
 
                                         if (animation.DoesLoop)
@@ -474,7 +474,7 @@ namespace CoreSystems.Platform
 
             if (HardPointEmitter == null)
                 return;
-            if (Environment.CurrentManagedThreadId != Comp.Session.MainThreadId)
+            if (Environment.CurrentManagedThreadId != Session.I.MainThreadId)
             {
                 Comp.Ai.QueuedSounds.Add(new Ai.QueuedSoundEvent {Type = Ai.QueuedSoundEvent.SoundTypes.HardPointStart, Weapon = this});
                 return;
@@ -491,7 +491,7 @@ namespace CoreSystems.Platform
             if (HardPointEmitter == null)
                 return;
 
-            if (Environment.CurrentManagedThreadId != Comp.Session.MainThreadId)
+            if (Environment.CurrentManagedThreadId != Session.I.MainThreadId)
             {
                 Comp.Ai.QueuedSounds.Add(new Ai.QueuedSoundEvent { Type = Ai.QueuedSoundEvent.SoundTypes.HardPointStop, Weapon = this });
                 return;

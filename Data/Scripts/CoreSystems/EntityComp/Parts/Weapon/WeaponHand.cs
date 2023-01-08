@@ -19,7 +19,7 @@ namespace CoreSystems.Platform
     {
         public partial class WeaponComponent 
         {
-            private void HandInit(Session session, IMyAutomaticRifleGun gun, out IMyAutomaticRifleGun rifle, out MyCharacterWeaponPositionComponent characterPosComp, out IMyHandheldGunObject<MyGunBase> gunBase, out MyEntity topEntity)
+            private void HandInit(IMyAutomaticRifleGun gun, out IMyAutomaticRifleGun rifle, out MyCharacterWeaponPositionComponent characterPosComp, out IMyHandheldGunObject<MyGunBase> gunBase, out MyEntity topEntity)
             {
                 rifle = gun;
                 gunBase = gun;
@@ -32,7 +32,7 @@ namespace CoreSystems.Platform
                 var character = topEntity as IMyCharacter;
                 if (character != null)
                 {
-                    if (!session.Players.ContainsKey(gun.OwnerIdentityId))
+                    if (!Session.I.Players.ContainsKey(gun.OwnerIdentityId))
                     {
                         IsBot = true;
                     }
@@ -41,7 +41,7 @@ namespace CoreSystems.Platform
 
             private void KeenGiveModdersSomeMoreLove()
             {
-                Session.FutureEvents.Schedule(ForceAmmoValues, null, 0);
+                Session.I.FutureEvents.Schedule(ForceAmmoValues, null, 0);
             }
 
             private void ForceAmmoValues(object o)
@@ -75,12 +75,12 @@ namespace CoreSystems.Platform
             {
                 if (active && state == EventTriggers.Reloading)
                 {
-                    if (Session.IsServer)
+                    if (Session.I.IsServer)
                         Rifle.Reload();
                 }
                 else
                 {
-                    Session.FutureEvents.Schedule(ForceAmmoValues, null, 15);
+                    Session.I.FutureEvents.Schedule(ForceAmmoValues, null, 15);
                 }
             }
 
@@ -95,7 +95,7 @@ namespace CoreSystems.Platform
             internal void AmmoStorage(bool load = false)
             {
 
-                if (Session.IsCreative)
+                if (Session.I.IsCreative)
                 {
                     if (load)
                         PrimaryWeapon.ProtoWeaponAmmo.CurrentAmmo = Rifle.CurrentMagazineAmmunition;
@@ -106,7 +106,7 @@ namespace CoreSystems.Platform
                 {
                     var physGunOb = item.Content as MyObjectBuilder_PhysicalGunObject;
 
-                    if (physGunOb?.GunEntity is MyObjectBuilder_AutomaticRifle && Session.CoreSystemsDefs.ContainsKey(physGunOb.SubtypeId.String))
+                    if (physGunOb?.GunEntity is MyObjectBuilder_AutomaticRifle && Session.I.CoreSystemsDefs.ContainsKey(physGunOb.SubtypeId.String))
                     {
 
                         WeaponObStorage storage;
@@ -161,8 +161,8 @@ namespace CoreSystems.Platform
 
             internal void HandReloadNotify(Weapon w)
             {
-                if (w.Comp.Data.Repo.Values.State.PlayerId == Session.PlayerId)
-                    Session.ShowLocalNotify($"Ammo type swapped to: {w.ActiveAmmoDef.AmmoDef.AmmoRound}", 1500, "White", true);
+                if (w.Comp.Data.Repo.Values.State.PlayerId == Session.I.PlayerId)
+                    Session.I.ShowLocalNotify($"Ammo type swapped to: {w.ActiveAmmoDef.AmmoDef.AmmoRound}", 1500, "White", true);
             }
 
             internal Matrix GetHandWeaponApproximateWorldMatrix(bool offset)

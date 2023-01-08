@@ -49,7 +49,6 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
 
         private readonly ConcurrentDictionary<long, AgingTextRequest> _agingTextRequests = new ConcurrentDictionary<long, AgingTextRequest>();
 
-        private readonly Session _session;
         private readonly MyStringId _monoEnglishFontAtlas1 = MyStringId.GetOrCompute("EnglishFontMono");
         private readonly MyStringId _shadowEnglishFontAtlas1 = MyStringId.GetOrCompute("EnglishFontShadow");
 
@@ -125,11 +124,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
             Right,
         }
 
-        internal Hud(Session session)
+        internal Hud()
         {
-            _session = session;
-
-
             LoadTextMaps("EN", out CharacterMap); // possible translations in future
 
             BuildMap(MyStringId.GetOrCompute("WeaponStatWindow"), 0, 0, 0, 128, 768, 128, 768, 384, ref InfoBackground);

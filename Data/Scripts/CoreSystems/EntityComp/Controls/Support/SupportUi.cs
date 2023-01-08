@@ -20,7 +20,7 @@ namespace CoreSystems
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
             var value = newValue ? 1 : 0;
-            SupportSys.SupportComponent.RequestSetValue(comp, "ArmorShowArea", value, comp.Session.PlayerId);
+            SupportSys.SupportComponent.RequestSetValue(comp, "ArmorShowArea", value, Session.I.PlayerId);
         }
     }
 }

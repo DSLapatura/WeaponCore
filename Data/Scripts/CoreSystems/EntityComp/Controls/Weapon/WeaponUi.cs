@@ -24,13 +24,13 @@ namespace CoreSystems
             if (!MyUtils.IsEqual(newValue, comp.Data.Repo.Values.Set.RofModifier))
             {
 
-                if (comp.Session.IsServer)
+                if (Session.I.IsServer)
                 {
                     comp.Data.Repo.Values.Set.RofModifier = newValue;
                     Weapon.WeaponComponent.SetRof(comp);
                 }
                 else
-                    comp.Session.SendSetCompFloatRequest(comp, newValue, PacketType.RequestSetRof);
+                    Session.I.SendSetCompFloatRequest(comp, newValue, PacketType.RequestSetRof);
             }
         }
 
@@ -43,16 +43,16 @@ namespace CoreSystems
             if (!MyUtils.IsEqual(newValue, comp.Data.Repo.Values.Set.Range))
             {
 
-                if (comp.Session.IsServer)
+                if (Session.I.IsServer)
                 {
 
                     comp.Data.Repo.Values.Set.Range = newValue;
                     Weapon.WeaponComponent.SetRange(comp);
-                    if (comp.Session.MpActive)
-                        comp.Session.SendComp(comp);
+                    if (Session.I.MpActive)
+                        Session.I.SendComp(comp);
                 }
                 else
-                    comp.Session.SendSetCompFloatRequest(comp, newValue, PacketType.RequestSetRange);
+                    Session.I.SendSetCompFloatRequest(comp, newValue, PacketType.RequestSetRange);
             }
 
         }
@@ -84,7 +84,7 @@ namespace CoreSystems
                     Log.Line($"{item.Text} - {data.DisplayName}");
                 }
             }
-            Weapon.WeaponComponent.RequestDroneSetValue(comp, "Friend", 0, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestDroneSetValue(comp, "Friend", 0, Session.I.PlayerId);
         }
 
         internal static void EnemyFill(IMyTerminalBlock block, List<MyTerminalControlListBoxItem> arg1, List<MyTerminalControlListBoxItem> arg2)
@@ -115,7 +115,7 @@ namespace CoreSystems
                     Log.Line($"{item.Text} - {data.DisplayName}");
                 }
             }
-            Weapon.WeaponComponent.RequestDroneSetValue(comp, "Enemy", 0, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestDroneSetValue(comp, "Enemy", 0, Session.I.PlayerId);
         }
 
         internal static void PositionFill(IMyTerminalBlock block, List<MyTerminalControlListBoxItem> arg1, List<MyTerminalControlListBoxItem> arg2)
@@ -147,15 +147,15 @@ namespace CoreSystems
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
-            if (comp.Session.IsServer)  {
+            if (Session.I.IsServer)  {
 
                 comp.Data.Repo.Values.Set.Overload = newValue ? 2 : 1;
                 Weapon.WeaponComponent.SetRof(comp);
-                if (comp.Session.MpActive)
-                    comp.Session.SendComp(comp);
+                if (Session.I.MpActive)
+                    Session.I.SendComp(comp);
             }
             else
-                comp.Session.SendSetCompBoolRequest(comp, newValue, PacketType.RequestSetOverload);
+                Session.I.SendSetCompBoolRequest(comp, newValue, PacketType.RequestSetOverload);
         }
 
         internal static void RequestSetReportTarget(IMyTerminalBlock block, bool newValue)
@@ -163,14 +163,14 @@ namespace CoreSystems
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
-            if (comp.Session.IsServer)
+            if (Session.I.IsServer)
             {
                 comp.Data.Repo.Values.Set.ReportTarget = newValue;
-                if (comp.Session.MpActive)
-                    comp.Session.SendComp(comp);
+                if (Session.I.MpActive)
+                    Session.I.SendComp(comp);
             }
             else
-                comp.Session.SendSetCompBoolRequest(comp, newValue, PacketType.RequestSetReportTarget);
+                Session.I.SendSetCompBoolRequest(comp, newValue, PacketType.RequestSetReportTarget);
         }
 
         internal static bool GetReportTarget(IMyTerminalBlock block)
@@ -260,21 +260,21 @@ namespace CoreSystems
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
             var value = newValue ? 1 : 0;
-            Weapon.WeaponComponent.RequestSetValue(comp, "Neutrals", value, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "Neutrals", value, Session.I.PlayerId);
         }
 
         internal static bool GetAdvanced(IMyTerminalBlock block)
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready || comp.Session.Settings?.ClientConfig == null) return false;
-            return comp.Session.Settings.ClientConfig.AdvancedMode;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready || Session.I.Settings?.ClientConfig == null) return false;
+            return Session.I.Settings.ClientConfig.AdvancedMode;
         }
 
         internal static void RequestAdvanced(IMyTerminalBlock block, bool newValue)
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready || comp.Session.Settings?.ClientConfig == null || comp.Session.Tick == comp.Session.AdvancedToggleTick) return;
-            var s = comp.Session;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready || Session.I.Settings?.ClientConfig == null || Session.I.Tick == Session.I.AdvancedToggleTick) return;
+            var s = Session.I;
 
             s.AdvancedToggleTick = s.Tick;
             s.Settings.ClientConfig.AdvancedMode = !s.Settings.ClientConfig.AdvancedMode;
@@ -295,7 +295,7 @@ namespace CoreSystems
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
             var value = newValue ? 1 : 0;
-            Weapon.WeaponComponent.RequestSetValue(comp, "Debug", value, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "Debug", value, Session.I.PlayerId);
         }
 
         internal static bool GetOverride(IMyTerminalBlock block)
@@ -311,7 +311,7 @@ namespace CoreSystems
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
             var value = newValue ? 1 : 0;
-            Weapon.WeaponComponent.RequestSetValue(comp, "Override", value, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "Override", value, Session.I.PlayerId);
         }
 
         internal static bool GetUnowned(IMyTerminalBlock block)
@@ -327,7 +327,7 @@ namespace CoreSystems
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
             var value = newValue ? 1 : 0;
-            Weapon.WeaponComponent.RequestSetValue(comp, "Unowned", value, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "Unowned", value, Session.I.PlayerId);
         }
 
         internal static bool GetFriendly(IMyTerminalBlock block)
@@ -343,7 +343,7 @@ namespace CoreSystems
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
             var value = newValue ? 1 : 0;
-            Weapon.WeaponComponent.RequestSetValue(comp, "Friendly", value, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "Friendly", value, Session.I.PlayerId);
         }
 
         internal static bool GetFocusFire(IMyTerminalBlock block)
@@ -358,7 +358,7 @@ namespace CoreSystems
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
             var value = newValue ? 1 : 0;
-            Weapon.WeaponComponent.RequestSetValue(comp, "FocusTargets", value, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "FocusTargets", value, Session.I.PlayerId);
         }
 
         internal static bool GetSubSystems(IMyTerminalBlock block)
@@ -374,7 +374,7 @@ namespace CoreSystems
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
             var value = newValue ? 1 : 0;
 
-            Weapon.WeaponComponent.RequestSetValue(comp, "FocusSubSystem", value, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "FocusSubSystem", value, Session.I.PlayerId);
         }
 
         internal static bool GetBiologicals(IMyTerminalBlock block)
@@ -389,7 +389,7 @@ namespace CoreSystems
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
             var value = newValue ? 1 : 0;
-            Weapon.WeaponComponent.RequestSetValue(comp, "Biologicals", value, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "Biologicals", value, Session.I.PlayerId);
         }
 
         internal static bool GetProjectiles(IMyTerminalBlock block)
@@ -405,7 +405,7 @@ namespace CoreSystems
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
             var value = newValue ? 1 : 0;
-            Weapon.WeaponComponent.RequestSetValue(comp, "Projectiles", value, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "Projectiles", value, Session.I.PlayerId);
         }
 
         internal static bool GetMeteors(IMyTerminalBlock block)
@@ -421,7 +421,7 @@ namespace CoreSystems
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
             var value = newValue ? 1 : 0;
-            Weapon.WeaponComponent.RequestSetValue(comp, "Meteors", value, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "Meteors", value, Session.I.PlayerId);
         }
 
         internal static bool GetGrids(IMyTerminalBlock block)
@@ -437,7 +437,7 @@ namespace CoreSystems
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
             var value = newValue ? 1 : 0;
-            Weapon.WeaponComponent.RequestSetValue(comp, "Grids", value, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "Grids", value, Session.I.PlayerId);
         }
 
         internal static bool GetShareFireControl(IMyTerminalBlock block)
@@ -463,7 +463,7 @@ namespace CoreSystems
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
             var value = newValue ? 1 : 0;
-            Weapon.WeaponComponent.RequestSetValue(comp, "ShareFireControl", value, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "ShareFireControl", value, Session.I.PlayerId);
         }
 
         internal static void RequestSetShoot(IMyTerminalBlock block, bool newValue)
@@ -546,7 +546,7 @@ namespace CoreSystems
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready || !ShootModeChangeReady(comp)) return;
-            Weapon.WeaponComponent.RequestSetValue(comp, "ShootMode", (int)newValue, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "ShootMode", (int)newValue, Session.I.PlayerId);
         }
 
         internal static void ListShootModes(List<MyTerminalControlComboBoxItem> shootModeList)
@@ -577,7 +577,7 @@ namespace CoreSystems
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
-            Weapon.WeaponComponent.RequestSetValue(comp, "SubSystems", (int) newValue, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "SubSystems", (int) newValue, Session.I.PlayerId);
         }
 
         internal static void ListSubSystems(List<MyTerminalControlComboBoxItem> subSystemList)
@@ -609,7 +609,7 @@ namespace CoreSystems
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
-            Weapon.WeaponComponent.RequestSetValue(comp, "MovementModes", (int)newValue, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "MovementModes", (int)newValue, Session.I.PlayerId);
         }
 
         internal static void ListMovementModes(List<MyTerminalControlComboBoxItem> moveList)
@@ -637,7 +637,7 @@ namespace CoreSystems
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
-            Weapon.WeaponComponent.RequestSetValue(comp, "ControlModes", (int)newValue, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "ControlModes", (int)newValue, Session.I.PlayerId);
         }
         internal static long GetDecoySubSystem(IMyTerminalBlock block)
         {
@@ -686,7 +686,7 @@ namespace CoreSystems
             var value = (int)Math.Round(newValue);
             if (value != comp.Data.Repo.Values.Set.Overrides.CameraChannel)
             {
-                Weapon.WeaponComponent.RequestSetValue(comp, "CameraChannel", value, comp.Session.PlayerId);
+                Weapon.WeaponComponent.RequestSetValue(comp, "CameraChannel", value, Session.I.PlayerId);
             }
         }
 
@@ -707,7 +707,7 @@ namespace CoreSystems
 
             if (roundedInt != values.Set.Overrides.BurstCount)
             {
-                Weapon.WeaponComponent.RequestSetValue(comp, "BurstCount", roundedInt, comp.Session.PlayerId);
+                Weapon.WeaponComponent.RequestSetValue(comp, "BurstCount", roundedInt, Session.I.PlayerId);
             }
         }
 
@@ -728,7 +728,7 @@ namespace CoreSystems
 
             if (roundedInt != values.Set.Overrides.BurstDelay)
             {
-                Weapon.WeaponComponent.RequestSetValue(comp, "BurstDelay", roundedInt, comp.Session.PlayerId);
+                Weapon.WeaponComponent.RequestSetValue(comp, "BurstDelay", roundedInt, Session.I.PlayerId);
             }
         }
 
@@ -757,7 +757,7 @@ namespace CoreSystems
 
             if (roundedInt != values.Set.Overrides.SequenceId)
             {
-                Weapon.WeaponComponent.RequestSetValue(comp, "SequenceId", roundedInt, comp.Session.PlayerId);
+                Weapon.WeaponComponent.RequestSetValue(comp, "SequenceId", roundedInt, Session.I.PlayerId);
             }
         }
 
@@ -778,7 +778,7 @@ namespace CoreSystems
 
             if (roundedInt != values.Set.Overrides.WeaponGroupId)
             {
-                Weapon.WeaponComponent.RequestSetValue(comp, "WeaponGroupId", roundedInt, comp.Session.PlayerId);
+                Weapon.WeaponComponent.RequestSetValue(comp, "WeaponGroupId", roundedInt, Session.I.PlayerId);
             }
         }
 
@@ -791,9 +791,9 @@ namespace CoreSystems
             if (!ready)
             {
                 var ammoState = comp.AmmoStatus();
-                Log.Line($"Shoot failed: wait:{comp.ShootManager.WaitingShootResponse} - freeze:{comp.ShootManager.FreezeClientShoot} - lockTime:{comp.Session.Tick - comp.ShootManager.WaitingTick} - shootTime:{comp.Session.Tick - comp.ShootManager.LastShootTick} - cycles:{comp.ShootManager.CompletedCycles} - ammoState:{ammoState} ", Session.InputLog);
-                var overWaitTime = comp.ShootManager.WaitingTick > 0 && comp.Session.Tick - comp.ShootManager.WaitingTick > 180;
-                var overFreezeTime = comp.ShootManager.FreezeTick > 0 && comp.Session.Tick - comp.ShootManager.FreezeTick > 180;
+                Log.Line($"Shoot failed: wait:{comp.ShootManager.WaitingShootResponse} - freeze:{comp.ShootManager.FreezeClientShoot} - lockTime:{Session.I.Tick - comp.ShootManager.WaitingTick} - shootTime:{Session.I.Tick - comp.ShootManager.LastShootTick} - cycles:{comp.ShootManager.CompletedCycles} - ammoState:{ammoState} ", Session.InputLog);
+                var overWaitTime = comp.ShootManager.WaitingTick > 0 && Session.I.Tick - comp.ShootManager.WaitingTick > 180;
+                var overFreezeTime = comp.ShootManager.FreezeTick > 0 && Session.I.Tick - comp.ShootManager.FreezeTick > 180;
 
                 var freezeOver = comp.ShootManager.FreezeClientShoot && overFreezeTime;
                 var waitOver = (comp.ShootManager.WaitingShootResponse || higherClientCount) && overWaitTime;
@@ -833,10 +833,10 @@ namespace CoreSystems
             var value = (int)Math.Round(newValue, 0);
             if (value != comp.Data.Repo.Values.Set.Overrides.LeadGroup)
             {
-                if (comp.Session.HandlesInput)
-                    comp.Session.LeadGroupsDirty = true;
+                if (Session.I.HandlesInput)
+                    Session.I.LeadGroupsDirty = true;
 
-                Weapon.WeaponComponent.RequestSetValue(comp, "LeadGroup", value, comp.Session.PlayerId);
+                Weapon.WeaponComponent.RequestSetValue(comp, "LeadGroup", value, Session.I.PlayerId);
             }
         }
 
@@ -856,7 +856,7 @@ namespace CoreSystems
             var value = (int)Math.Round(newValue, 0);
             if (value != comp.Data.Repo.Values.Set.Overrides.ArmedTimer)
             {
-                Weapon.WeaponComponent.RequestSetValue(comp, "ArmedTimer", value, comp.Session.PlayerId);
+                Weapon.WeaponComponent.RequestSetValue(comp, "ArmedTimer", value, Session.I.PlayerId);
             }
         }
 
@@ -873,8 +873,8 @@ namespace CoreSystems
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
             var value = newValue ? 1 : 0;
-            Weapon.WeaponComponent.RequestSetValue(comp, "Armed", value, comp.Session.PlayerId);
-            if (comp.Session.IsServer) comp.Cube.UpdateTerminal();
+            Weapon.WeaponComponent.RequestSetValue(comp, "Armed", value, Session.I.PlayerId);
+            if (Session.I.IsServer) comp.Cube.UpdateTerminal();
         }
 
         internal static void TriggerCriticalReaction(IMyTerminalBlock block)
@@ -889,7 +889,7 @@ namespace CoreSystems
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
             Weapon.WeaponComponent.RequestCountDown(comp, true);
-            if (comp.Session.IsServer) comp.Cube.UpdateTerminal();
+            if (Session.I.IsServer) comp.Cube.UpdateTerminal();
         }
 
         internal static void StopCountDown(IMyTerminalBlock block)
@@ -897,7 +897,7 @@ namespace CoreSystems
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
             Weapon.WeaponComponent.RequestCountDown(comp, false);
-            if (comp.Session.IsServer) comp.Cube.UpdateTerminal();
+            if (Session.I.IsServer) comp.Cube.UpdateTerminal();
         }
 
         internal static bool ShowCamera(IMyTerminalBlock block)
@@ -1000,7 +1000,7 @@ namespace CoreSystems
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
             var value = newValue ? 1 : 0;
-            Weapon.WeaponComponent.RequestSetValue(comp, "Repel", value, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "Repel", value, Session.I.PlayerId);
         }
 
         internal static bool GetSmallGrid(IMyTerminalBlock block)
@@ -1016,7 +1016,7 @@ namespace CoreSystems
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
             var value = newValue ? 1 : 0;
-            Weapon.WeaponComponent.RequestSetValue(comp, "SmallGrid", value, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "SmallGrid", value, Session.I.PlayerId);
         }
 
         internal static bool GetLargeGrid(IMyTerminalBlock block)
@@ -1032,7 +1032,7 @@ namespace CoreSystems
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
             var value = newValue ? 1 : 0;
-            Weapon.WeaponComponent.RequestSetValue(comp, "LargeGrid", value, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "LargeGrid", value, Session.I.PlayerId);
         }
 
         internal static void ListControlModes(List<MyTerminalControlComboBoxItem> controlList)

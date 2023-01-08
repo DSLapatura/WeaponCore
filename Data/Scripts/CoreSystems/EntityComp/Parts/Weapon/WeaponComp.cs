@@ -62,7 +62,7 @@ namespace CoreSystems.Platform
             internal bool HasDrone;
             internal bool ShootRequestDirty;
 
-            internal WeaponComponent(Session session, MyEntity coreEntity, MyDefinitionId id)
+            internal WeaponComponent(MyEntity coreEntity, MyDefinitionId id)
             {
                 var cube = coreEntity as MyCubeBlock;
 
@@ -77,12 +77,12 @@ namespace CoreSystems.Platform
                 }
                 else if (coreEntity is IMyAutomaticRifleGun)
                 {
-                    HandInit(session, (IMyAutomaticRifleGun)coreEntity, out Rifle, out CharacterPosComp, out GunBase, out TopEntity);
+                    HandInit((IMyAutomaticRifleGun)coreEntity, out Rifle, out CharacterPosComp, out GunBase, out TopEntity);
                 }
                 //Bellow order is important
                 Data = new WeaponCompData(this);
                 ShootManager = new ShootManager(this);
-                Init(session, coreEntity, cube != null, Data, id);
+                Init(coreEntity, cube != null, Data, id);
                 Structure = (WeaponStructure)Platform.Structure;
                 Collection = TypeSpecific != CompTypeSpecific.Phantom ? Platform.Weapons : Platform.Phantoms;
                 TotalWeapons = Structure.HashToId.Count;
@@ -97,7 +97,7 @@ namespace CoreSystems.Platform
                     var w = Collection[i];
                     w.UpdatePivotPos();
 
-                    if (Session.IsClient)
+                    if (Session.I.IsClient)
                     {
                         w.Target.ClientDirty = true;
                         if (triggered)
@@ -155,7 +155,7 @@ namespace CoreSystems.Platform
                     var w = Collection[i];
                     w.RotorTurretTracking = false;
 
-                    if (Session.IsServer)
+                    if (Session.I.IsServer)
                         w.ChangeActiveAmmoServer();
                     else
                     {
@@ -203,8 +203,8 @@ namespace CoreSystems.Platform
                     if (weapon.ProtoWeaponAmmo.CurrentAmmo > weapon.ActiveAmmoDef.AmmoDef.Const.MaxAmmo)
                         weapon.ProtoWeaponAmmo.CurrentAmmo = weapon.ActiveAmmoDef.AmmoDef.Const.MaxAmmo;
 
-                    if (Session.IsServer && weapon.System.HasRequiresTarget)
-                        Session.AcqManager.Monitor(weapon.Acquire);
+                    if (Session.I.IsServer && weapon.System.HasRequiresTarget)
+                        Session.I.AcqManager.Monitor(weapon.Acquire);
                 }
 
 
@@ -279,7 +279,7 @@ namespace CoreSystems.Platform
                     if (sequence.ShotsFired < overrides.BurstCount)
                         return true;
 
-                    if (Session.Tick - ShootManager.PrevShootEventTick > overrides.BurstDelay && ++sequence.WeaponsFinished >= sequence.TotalWeapons)
+                    if (Session.I.Tick - ShootManager.PrevShootEventTick > overrides.BurstDelay && ++sequence.WeaponsFinished >= sequence.TotalWeapons)
                     {
                         if (++group.SequenceStep >= group.Sequences.Count)
                             group.SequenceStep = 0;
@@ -337,7 +337,7 @@ namespace CoreSystems.Platform
                 for (int i = 0; i < comp.Collection.Count; i++)
                 {
                     var w = comp.Collection[i];
-                    comp.Session.FutureEvents.Schedule(w.SetWeaponDps, null, 1);
+                    Session.I.FutureEvents.Schedule(w.SetWeaponDps, null, 1);
                 }
             }
 
@@ -350,8 +350,8 @@ namespace CoreSystems.Platform
                 Data.Repo.Values.State.Trigger = cycleShootOn ? Trigger.Off : action;
                 Data.Repo.Values.State.PlayerId = playerId;
 
-                if (Session.MpActive && Session.IsServer)
-                    Session.SendState(this);
+                if (Session.I.MpActive && Session.I.IsServer)
+                    Session.I.SendState(this);
             }
 
             internal bool DuplicateSequenceId()
@@ -375,15 +375,15 @@ namespace CoreSystems.Platform
                 if (Platform.State != CorePlatform.PlatformState.Ready)
                     return;
 
-                if (Session.Tick - Ai.LastDetectEvent > 59)
+                if (Session.I.Tick - Ai.LastDetectEvent > 59)
                 {
-                    Ai.LastDetectEvent = Session.Tick;
+                    Ai.LastDetectEvent = Session.I.Tick;
                     Ai.SleepingComps = 0;
                     Ai.AwakeComps = 0;
                     Ai.DetectOtherSignals = false;
                 }
 
-                if (ActiveTargets.Count > 0 && Session.Tick180)
+                if (ActiveTargets.Count > 0 && Session.I.Tick180)
                     ActiveTargetCleanUp();
 
                 ActivePlayer = Ai.Construct.RootAi.Construct.ControllingPlayers.ContainsKey(Data.Repo.Values.State.PlayerId);
@@ -408,13 +408,13 @@ namespace CoreSystems.Platform
                 }
                 else IsDisabled = false;
 
-                if (!Ai.Session.IsServer)
+                if (!Session.I.IsServer)
                     return;
 
                 var otherRangeSqr = Ai.DetectionInfo.OtherRangeSqr;
                 var threatRangeSqr = Ai.DetectionInfo.PriorityRangeSqr;
                 var targetInrange = DetectOtherSignals ? otherRangeSqr <= MaxDetectDistanceSqr && otherRangeSqr >= MinDetectDistanceSqr || threatRangeSqr <= MaxDetectDistanceSqr && threatRangeSqr >= MinDetectDistanceSqr : threatRangeSqr <= MaxDetectDistanceSqr && threatRangeSqr >= MinDetectDistanceSqr;
-                if (Ai.Session.Settings.Enforcement.ServerSleepSupport && !targetInrange && PartTracking == 0 && Ai.Construct.RootAi.Construct.ControllingPlayers.Count <= 0 && Session.TerminalMon.Comp != this && Data.Repo.Values.State.Trigger == Trigger.Off)
+                if (Session.I.Settings.Enforcement.ServerSleepSupport && !targetInrange && PartTracking == 0 && Ai.Construct.RootAi.Construct.ControllingPlayers.Count <= 0 && Session.I.TerminalMon.Comp != this && Data.Repo.Values.State.Trigger == Trigger.Off)
                 {
 
                     IsAsleep = true;
@@ -432,7 +432,7 @@ namespace CoreSystems.Platform
             private void ActiveTargetCleanUp()
             {
                 foreach (var at in ActiveTargets) {
-                    if (at.Value.ReleasedTick > 0 && Session.Tick - at.Value.ReleasedTick > 120)
+                    if (at.Value.ReleasedTick > 0 && Session.I.Tick - at.Value.ReleasedTick > 120)
                     {
                         ActiveTargets.Remove(at.Key);
                     }
@@ -443,7 +443,7 @@ namespace CoreSystems.Platform
             {
                 if (value != comp.Data.Repo.Values.State.CountingDown)
                 {
-                    comp.Session.SendCountingDownUpdate(comp, value);
+                    Session.I.SendCountingDownUpdate(comp, value);
                 }
             }
 
@@ -451,22 +451,22 @@ namespace CoreSystems.Platform
             {
                 if (true != comp.Data.Repo.Values.State.CriticalReaction)
                 {
-                    comp.Session.SendTriggerCriticalReaction(comp);
+                    Session.I.SendTriggerCriticalReaction(comp);
                 }
             }
 
 
             internal static void RequestDroneSetValue(WeaponComponent comp, string setting, long value, long playerId)
             {
-                if (comp.Session.IsServer)
+                if (Session.I.IsServer)
                 {
                     Log.Line($"server drone request: setting:{setting} - value:{value}");
                     SetDroneValue(comp, setting, value, playerId);
                 }
-                else if (comp.Session.IsClient)
+                else if (Session.I.IsClient)
                 {
                     Log.Line($"client drone request: setting:{setting} - value:{value}");
-                    comp.Session.SendDroneClientComp(comp, setting, value);
+                    Session.I.SendDroneClientComp(comp, setting, value);
                 }
             }
 
@@ -491,19 +491,19 @@ namespace CoreSystems.Platform
                 ResetCompState(comp, playerId, true);
 
 
-                if (comp.Session.MpActive)
-                    comp.Session.SendState(comp);
+                if (Session.I.MpActive)
+                    Session.I.SendState(comp);
             }
 
             internal static void RequestSetValue(WeaponComponent comp, string setting, int value, long playerId)
             {
-                if (comp.Session.IsServer)
+                if (Session.I.IsServer)
                 {
                     SetValue(comp, setting, value, playerId);
                 }
-                else if (comp.Session.IsClient)
+                else if (Session.I.IsClient)
                 {
-                    comp.Session.SendOverRidesClientComp(comp, setting, value);
+                    Session.I.SendOverRidesClientComp(comp, setting, value);
                 }
             }
 
@@ -533,7 +533,7 @@ namespace CoreSystems.Platform
                     case "ControlModes":
                         o.Control = (ProtoWeaponOverrides.ControlModes)v;
                         if (comp.TypeSpecific == CompTypeSpecific.Rifle)
-                            comp.Session.RequestNotify($"Targeting Mode [{o.Control}]", 3000, "White", playerId, true);
+                            Session.I.RequestNotify($"Targeting Mode [{o.Control}]", 3000, "White", playerId, true);
                         clearTargets = true;
                         break;
                     case "FocusSubSystem":
@@ -631,8 +631,8 @@ namespace CoreSystems.Platform
                 ResetCompState(comp, playerId, clearTargets);
 
 
-                if (comp.Session.MpActive)
-                    comp.Session.SendComp(comp);
+                if (Session.I.MpActive)
+                    Session.I.SendComp(comp);
             }
 
             internal static bool GetThreatValue(WeaponComponent comp, string setting, out bool enabled, out string primaryName)
@@ -701,7 +701,7 @@ namespace CoreSystems.Platform
                 {
                     var weapon = comp.Collection[i];
                     if (weapon.Target.HasTarget)
-                        comp.Collection[i].Target.Reset(comp.Session.Tick, Target.States.ControlReset);
+                        comp.Collection[i].Target.Reset(Session.I.Tick, Target.States.ControlReset);
                 }
             }
 
@@ -738,8 +738,8 @@ namespace CoreSystems.Platform
                         for (int j = 0; j < partArray.Length; j++)
                             w.PlayEmissives(partArray[j]);
                     }
-                    if (!Session.IsClient && !IsWorking)
-                        w.Target.Reset(Session.Tick, Target.States.Offline);
+                    if (!Session.I.IsClient && !IsWorking)
+                        w.Target.Reset(Session.I.Tick, Target.States.Offline);
                 }
             }
 
@@ -772,13 +772,13 @@ namespace CoreSystems.Platform
 
             internal void PowerLoss()
             {
-                Session.SendComp(this);
+                Session.I.SendComp(this);
                 if (IsWorking)
                 {
                     foreach (var w in Collection)
                     {
-                        Session.SendWeaponAmmoData(w);
-                        Session.SendWeaponReload(w);
+                        Session.I.SendWeaponAmmoData(w);
+                        Session.I.SendWeaponReload(w);
                     }
                 }
             }
@@ -786,22 +786,22 @@ namespace CoreSystems.Platform
             internal bool TakeOwnerShip(long playerId = long.MaxValue)
             {
 
-                if (LastOwnerRequestTick > 0 && Session.Tick - LastOwnerRequestTick < 120)
+                if (LastOwnerRequestTick > 0 && Session.I.Tick - LastOwnerRequestTick < 120)
                     return true;
 
-                LastOwnerRequestTick = Session.Tick;
-                if (Session.IsClient)
+                LastOwnerRequestTick = Session.I.Tick;
+                if (Session.I.IsClient)
                 {
-                    Session.SendPlayerControlRequest(this, Session.PlayerId, ProtoWeaponState.ControlMode.Ui);
+                    Session.I.SendPlayerControlRequest(this, Session.I.PlayerId, ProtoWeaponState.ControlMode.Ui);
                     return true;
                 }
                 
                 // Pretty sus that this is allowed by client, will be reset by the results of SendPlayerControlRequest tho... 
                 // possible race condition... but may needed due to player taking client control of weapon
-                Data.Repo.Values.State.PlayerId = playerId != long.MaxValue ? playerId : Session.PlayerId;
+                Data.Repo.Values.State.PlayerId = playerId != long.MaxValue ? playerId : Session.I.PlayerId;
 
-                if (Session.MpActive)
-                    Session.SendState(this);
+                if (Session.I.MpActive)
+                    Session.I.SendState(this);
 
                 return true;
             }
@@ -815,11 +815,11 @@ namespace CoreSystems.Platform
                 {
                     Log.Line($"AssignFriend entity not found");
 
-                    ClearFriend(Session.PlayerId);
+                    ClearFriend(Session.I.PlayerId);
                     return false;
                 }
 
-                if (Session.IsServer)
+                if (Session.I.IsServer)
                 {
                     tasks.FriendId = target.EntityId;
                     tasks.Task = ProtoWeaponCompTasks.Tasks.Defend;
@@ -831,7 +831,7 @@ namespace CoreSystems.Platform
                 Friends.Clear();
                 Friends.Add(target);
 
-                if (Session.PlayerId == callingPlayerId)
+                if (Session.I.PlayerId == callingPlayerId)
                     SendTargetNotice($"Friend {target.DisplayName} assigned to {Collection[0].System.ShortName}");
 
                 return true;
@@ -841,17 +841,17 @@ namespace CoreSystems.Platform
             {
                 var tasks = Data.Repo.Values.State.Tasks;
 
-                if (Session.IsServer)
+                if (Session.I.IsServer)
                 {
                     tasks.FriendId = 0;
                     tasks.Task = ProtoWeaponCompTasks.Tasks.None;
 
-                    if (Session.MpActive)
-                        Session.SendState(this);
+                    if (Session.I.MpActive)
+                        Session.I.SendState(this);
                 }
 
 
-                if (Friends.Count > 0 && Session.PlayerId == callingPlayerId)
+                if (Friends.Count > 0 && Session.I.PlayerId == callingPlayerId)
                     SendTargetNotice($"Friend {Friends[0].DisplayName} unassigned from {Collection[0].System.ShortName}");
 
                 Friends.Clear();
@@ -868,11 +868,11 @@ namespace CoreSystems.Platform
                 if (!MyEntities.TryGetEntityById(entityId, out target) || !Ai.Targets.ContainsKey(target))
                 {
                     Log.Line($"AssignEnemy entity not found");
-                    ClearEnemy(Session.PlayerId);
+                    ClearEnemy(Session.I.PlayerId);
                     return false;
                 }
 
-                if (Session.IsServer)
+                if (Session.I.IsServer)
                 {
                     tasks.EnemyId = target.EntityId;
                     tasks.Task = ProtoWeaponCompTasks.Tasks.Attack;
@@ -884,7 +884,7 @@ namespace CoreSystems.Platform
                 Enemies.Clear();
                 Enemies.Add(target);
 
-                if (Session.PlayerId == callingPlayerId)
+                if (Session.I.PlayerId == callingPlayerId)
                     SendTargetNotice($"Enemy {target.DisplayName} assigned to {Collection[0].System.ShortName}");
 
                 return true;
@@ -894,16 +894,16 @@ namespace CoreSystems.Platform
             internal void ClearEnemy(long callingPlayerId)
             {
                 var tasks = Data.Repo.Values.State.Tasks;
-                if (Session.IsServer)
+                if (Session.I.IsServer)
                 {
                     tasks.EnemyId = 0;
                     tasks.Task = ProtoWeaponCompTasks.Tasks.None;
 
-                    if (Session.MpActive)
-                        Session.SendState(this);
+                    if (Session.I.MpActive)
+                        Session.I.SendState(this);
                 }
 
-                if (Enemies.Count > 0 && Session.PlayerId == callingPlayerId)
+                if (Enemies.Count > 0 && Session.I.PlayerId == callingPlayerId)
                     SendTargetNotice($"Friend {Enemies[0].DisplayName} unassigned from {Collection[0].System.ShortName}");
 
                 Enemies.Clear();
@@ -934,7 +934,7 @@ namespace CoreSystems.Platform
 
             internal void RemoveActiveTarget(Weapon w, object target)
             {
-                ActiveTargets[target] = new TargetOwner { Weapon = w, ReleasedTick = Session.Tick };
+                ActiveTargets[target] = new TargetOwner { Weapon = w, ReleasedTick = Session.I.Tick };
             }
 
             internal void ImmediateRemoveActiveTarget(object target)
@@ -951,20 +951,20 @@ namespace CoreSystems.Platform
                     w.ProtoWeaponAmmo.CurrentCharge = 0;
                     w.ClientMakeUpShots = 0;
 
-                    if (Session.MpActive && Session.IsServer)
-                        Session.SendWeaponAmmoData(w);
+                    if (Session.I.MpActive && Session.I.IsServer)
+                        Session.I.SendWeaponAmmoData(w);
                 }
 
-                if (Session.IsClient)
-                    Session.RequestToggle(this, PacketType.ForceReload);
+                if (Session.I.IsClient)
+                    Session.I.RequestToggle(this, PacketType.ForceReload);
             }
 
             private void SendTargetNotice(string message)
             {
-                if (Session.TargetUi.LastTargetNoticeTick != Session.Tick && Session.Tick - Session.TargetUi.LastTargetNoticeTick > 30)
+                if (Session.I.TargetUi.LastTargetNoticeTick != Session.I.Tick && Session.I.Tick - Session.I.TargetUi.LastTargetNoticeTick > 30)
                 {
-                    Session.ShowLocalNotify(message, 2000, "White");
-                    Session.TargetUi.LastTargetNoticeTick = Session.Tick;
+                    Session.I.ShowLocalNotify(message, 2000, "White");
+                    Session.I.TargetUi.LastTargetNoticeTick = Session.I.Tick;
                 }
             }
 
@@ -1001,8 +1001,8 @@ namespace CoreSystems.Platform
 
                         w.RayCallBackClean();
 
-                        Session.AcqManager.Asleep.Remove(w.Acquire);
-                        Session.AcqManager.MonitorState.Remove(w.Acquire);
+                        Session.I.AcqManager.Asleep.Remove(w.Acquire);
+                        Session.I.AcqManager.MonitorState.Remove(w.Acquire);
                         w.Acquire.Monitoring = false;
                         w.Acquire.IsSleeping = false;
                     }
@@ -1049,21 +1049,21 @@ namespace CoreSystems.Platform
                     {
 
                         if (w.AvCapable && w.System.FiringSound == WeaponSystem.FiringSoundState.WhenDone)
-                            Session.SoundsToClean.Add(new Session.CleanSound { Force = true, Emitter = w.FiringEmitter, EmitterPool = Session.Emitters, SpawnTick = Session.Tick });
+                            Session.I.SoundsToClean.Add(new Session.CleanSound { Force = true, Emitter = w.FiringEmitter, EmitterPool = Session.I.Emitters, SpawnTick = Session.I.Tick });
 
                         if (w.AvCapable && w.System.PreFireSound)
-                            Session.SoundsToClean.Add(new Session.CleanSound { Force = true, Emitter = w.PreFiringEmitter, EmitterPool = Session.Emitters, SpawnTick = Session.Tick });
+                            Session.I.SoundsToClean.Add(new Session.CleanSound { Force = true, Emitter = w.PreFiringEmitter, EmitterPool = Session.I.Emitters, SpawnTick = Session.I.Tick });
 
                         if (w.AvCapable && w.System.WeaponReloadSound)
-                            Session.SoundsToClean.Add(new Session.CleanSound { Force = true, Emitter = w.ReloadEmitter, EmitterPool = Session.Emitters, SpawnTick = Session.Tick });
+                            Session.I.SoundsToClean.Add(new Session.CleanSound { Force = true, Emitter = w.ReloadEmitter, EmitterPool = Session.I.Emitters, SpawnTick = Session.I.Tick });
 
                         if (w.AvCapable && w.System.BarrelRotateSound)
-                            Session.SoundsToClean.Add(new Session.CleanSound { Emitter = w.BarrelRotateEmitter, EmitterPool = Session.Emitters, SpawnTick = Session.Tick });
+                            Session.I.SoundsToClean.Add(new Session.CleanSound { Emitter = w.BarrelRotateEmitter, EmitterPool = Session.I.Emitters, SpawnTick = Session.I.Tick });
                     }
 
-                    if (Session.PurgedAll)
+                    if (Session.I.PurgedAll)
                     {
-                        Session.CleanSounds();
+                        Session.I.CleanSounds();
                         Log.Line("purged already called");
                     }
                 }
@@ -1082,7 +1082,7 @@ namespace CoreSystems.Platform
             internal void TookControl(long playerId)
             {
                 LastControllingPlayerId = playerId;
-                if (Session.IsServer)
+                if (Session.I.IsServer)
                 {
 
                     if (Data.Repo != null)
@@ -1092,37 +1092,37 @@ namespace CoreSystems.Platform
                         if (TypeSpecific != CompTypeSpecific.Rifle)
                             Data.Repo.Values.State.Control = ProtoWeaponState.ControlMode.Camera;
 
-                        if (Session.MpActive)
-                            Session.SendComp(this);
+                        if (Session.I.MpActive)
+                            Session.I.SendComp(this);
                     }
                     else
                         Log.Line($"OnPlayerController enter Repo null");
 
                 }
 
-                if (Session.HandlesInput && playerId == Session.PlayerId)
-                    Session.GunnerAcquire(CoreEntity, playerId);
+                if (Session.I.HandlesInput && playerId == Session.I.PlayerId)
+                    Session.I.GunnerAcquire(CoreEntity, playerId);
             }
 
             internal void ReleaseControl(long playerId)
             {
-                if (Session.IsServer)
+                if (Session.I.IsServer)
                 {
 
                     if (Data.Repo != null)
                     {
                         Data.Repo.Values.State.Control = ProtoWeaponState.ControlMode.Ui;
 
-                        if (Session.MpActive)
-                            Session.SendComp(this);
+                        if (Session.I.MpActive)
+                            Session.I.SendComp(this);
                     }
                     else
                         Log.Line($"OnPlayerController exit Repo null");
                 }
 
-                if (Session.HandlesInput && playerId == Session.PlayerId)
+                if (Session.I.HandlesInput && playerId == Session.I.PlayerId)
                 {
-                    Session.GunnerRelease(playerId);
+                    Session.I.GunnerRelease(playerId);
                 }
                 LastControllingPlayerId = 0;
             }

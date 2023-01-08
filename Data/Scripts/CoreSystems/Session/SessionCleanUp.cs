@@ -230,7 +230,6 @@ namespace CoreSystems
             DsUtil.Purge();
             DsUtil2.Purge();
             ProblemRep.Clean();
-            ProblemRep.Session = null;
 
             PhysicalItemListPool.Clean();
             BetterItemsListPool.Clean();

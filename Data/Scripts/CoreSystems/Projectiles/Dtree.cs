@@ -11,7 +11,7 @@ namespace CoreSystems.Support
             if (projectile.PruningProxyId != -1)
                 return;
 
-            var s = projectile.Info.Weapon.Comp.Session;
+            var s = Session.I;
             BoundingSphereD sphere = new BoundingSphereD(projectile.Position, projectile.Info.AmmoDef.Const.LargestHitSize);
             BoundingBoxD result;
             BoundingBoxD.CreateFromSphere(ref sphere, out result);
@@ -22,7 +22,7 @@ namespace CoreSystems.Support
         {
             if (projectile.PruningProxyId == -1)
                 return;
-            var s = projectile.Info.Weapon.Comp.Session;
+            var s = Session.I;
             s.ProjectileTree.RemoveProxy(projectile.PruningProxyId);
             projectile.PruningProxyId = -1;
         }
@@ -34,7 +34,7 @@ namespace CoreSystems.Support
             BoundingSphereD sphere = new BoundingSphereD(projectile.Position, projectile.Info.AmmoDef.Const.LargestHitSize);
             BoundingBoxD result;
             BoundingBoxD.CreateFromSphere(ref sphere, out result);
-            projectile.Info.Weapon.Comp.Session.ProjectileTree.MoveProxy(projectile.PruningProxyId, ref result, velocity);
+            Session.I.ProjectileTree.MoveProxy(projectile.PruningProxyId, ref result, velocity);
         }
 
         internal static void GetAllProjectilesInSphere(Session session, ref BoundingSphereD sphere, List<Projectile> result, bool clearList = true)

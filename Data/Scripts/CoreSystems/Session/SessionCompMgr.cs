@@ -114,19 +114,19 @@ namespace CoreSystems
                     switch (c.StructureType)
                     {
                         case CoreStructure.StructureTypes.Upgrade:
-                            comp = new Upgrade.UpgradeComponent(this, entity, id.Value);
+                            comp = new Upgrade.UpgradeComponent(entity, id.Value);
                             CompsToStart.Add(comp);
                             break;
                         case CoreStructure.StructureTypes.Support:
-                            comp = new SupportSys.SupportComponent(this, entity, id.Value);
+                            comp = new SupportSys.SupportComponent(entity, id.Value);
                             CompsToStart.Add(comp);
                             break;
                         case CoreStructure.StructureTypes.Weapon:
-                            comp = new Weapon.WeaponComponent(this, entity, id.Value);
+                            comp = new Weapon.WeaponComponent(entity, id.Value);
                             CompsToStart.Add(comp);
                             break;
                         case CoreStructure.StructureTypes.Control:
-                            comp = new ControlSys.ControlComponent(this, entity, id.Value);
+                            comp = new ControlSys.ControlComponent(entity, id.Value);
                             CompsToStart.Add(comp);
                             break;
                     }

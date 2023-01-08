@@ -8,16 +8,10 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Comms
 {
     internal class Spectrum
     {
-        private Session _session;
         internal Dictionary<MyStringHash, Frequency> Channels = new Dictionary<MyStringHash, Frequency>(MyStringHash.Comparer);
         internal Stack<Radios> RadiosPool = new Stack<Radios>(32);
         internal Stack<Radio> RadioPool = new Stack<Radio>(32);
         internal Stack<RadioStation> RadioStationPool = new Stack<RadioStation>(32);
-
-        internal Spectrum(Session session)
-        {
-            _session = session;
-        }
     }
 
     internal class Frequency

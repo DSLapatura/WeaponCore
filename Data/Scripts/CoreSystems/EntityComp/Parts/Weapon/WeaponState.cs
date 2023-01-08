@@ -19,7 +19,7 @@ namespace CoreSystems.Platform
         {
             try
             {
-                if (PosChangedTick != Comp.Session.SimulationCount)
+                if (PosChangedTick != Session.I.SimulationCount)
                     UpdatePivotPos();
 
                 if (Comp.UserControlled) {
@@ -39,12 +39,12 @@ namespace CoreSystems.Platform
                 if (InCharger) 
                     ExitCharger = true;
 
-                if (Comp.Session.MpActive && Comp.Session.IsServer)  {
+                if (Session.I.MpActive && Session.I.IsServer)  {
                     TargetData.ClearTarget();
                     Target.PushTargetToClient(this);
                 } 
             }
-            else if (Comp.Session.IsClient)
+            else if (Session.I.IsClient)
                 EventTriggerStateChanged(EventTriggers.Tracking, true);
 
             Target.TargetChanged = false;
@@ -54,7 +54,7 @@ namespace CoreSystems.Platform
         {
             fakeTargetInfo = null;
             Ai.FakeTargets fakeTargets;
-            if (Comp.Session.PlayerDummyTargets.TryGetValue(playerId, out fakeTargets))
+            if (Session.I.PlayerDummyTargets.TryGetValue(playerId, out fakeTargets))
             {
                 var validManual = Comp.Data.Repo.Values.Set.Overrides.Control == ProtoWeaponOverrides.ControlModes.Manual && Comp.Data.Repo.Values.State.TrackingReticle && fakeTargets.ManualTarget.FakeInfo.WorldPosition != Vector3D.Zero;
                 var validPainter = Comp.Data.Repo.Values.Set.Overrides.Control == ProtoWeaponOverrides.ControlModes.Painter && fakeTargets.PaintedTarget.LocalPosition != Vector3D.Zero;
@@ -64,7 +64,7 @@ namespace CoreSystems.Platform
                     return false;
                 }
 
-                fakeTargetInfo = fakeTarget.LastInfoTick != System.Session.Tick ? fakeTarget.GetFakeTargetInfo(Comp.MasterAi) : fakeTarget.FakeInfo;
+                fakeTargetInfo = fakeTarget.LastInfoTick != Session.I.Tick ? fakeTarget.GetFakeTargetInfo(Comp.MasterAi) : fakeTarget.FakeInfo;
             }
 
             return fakeTargetInfo != null;
@@ -139,7 +139,7 @@ namespace CoreSystems.Platform
                 EventTriggerStateChanged(EventTriggers.StopFiring, true, _muzzlesFiring);
             }
 
-            if (System.Session.HandlesInput)
+            if (Session.I.HandlesInput)
                 StopShootingAv(burst);
 
             ResetShotState();
@@ -208,16 +208,16 @@ namespace CoreSystems.Platform
 
         internal void WakeTargets()
         {
-            LastTargetTick = Comp.Session.Tick;
-            if (System.Session.IsServer && System.HasRequiresTarget)
+            LastTargetTick = Session.I.Tick;
+            if (Session.I.IsServer && System.HasRequiresTarget)
             {
                 if (Acquire.Monitoring)
-                    System.Session.AcqManager.Refresh(Acquire);
+                    Session.I.AcqManager.Refresh(Acquire);
                 else
-                    System.Session.AcqManager.Monitor(Acquire);
+                    Session.I.AcqManager.Monitor(Acquire);
             }
 
-            ShortLoadId = Comp.Session.ShortLoadAssigner();
+            ShortLoadId = Session.I.ShortLoadAssigner();
         }
 
         public void CriticalMonitor()
@@ -242,7 +242,7 @@ namespace CoreSystems.Platform
             {
                 Comp.CloseCondition = true;
                 //Temporarily set Comp.Entity.Parent as a destroyed block does not properly spawn a phantom
-                Comp.Session.CreatePhantomEntity(Comp.SubtypeName, 3600, true, 1, System.Values.HardPoint.HardWare.CriticalReaction.AmmoRound, CoreComponent.Trigger.Once, null, Comp.CoreEntity, false, false, Comp.Ai.AiOwner);
+                Session.I.CreatePhantomEntity(Comp.SubtypeName, 3600, true, 1, System.Values.HardPoint.HardWare.CriticalReaction.AmmoRound, CoreComponent.Trigger.Once, null, Comp.CoreEntity, false, false, Comp.Ai.AiOwner);
             }
         }
 
@@ -258,7 +258,7 @@ namespace CoreSystems.Platform
                 {
                     var grid = targetObj as MyCubeGrid;
                     TopMap map;
-                    if (grid != null && System.Session.TopEntityToInfoMap.TryGetValue(grid, out map)) {
+                    if (grid != null && Session.I.TopEntityToInfoMap.TryGetValue(grid, out map)) {
                         foreach (var target in map.GroupMap.Construct.Keys)
                         {
                             Comp.AddActiveTarget(this, target);
@@ -273,7 +273,7 @@ namespace CoreSystems.Platform
                 {
                     var grid = targetObj as MyCubeGrid;
                     TopMap map;
-                    if (grid != null && System.Session.TopEntityToInfoMap.TryGetValue(grid, out map)) {
+                    if (grid != null && Session.I.TopEntityToInfoMap.TryGetValue(grid, out map)) {
                         foreach (var target in map.GroupMap.Construct.Keys)
                         {
                             Comp.RemoveActiveTarget(this, target);
@@ -300,7 +300,7 @@ namespace CoreSystems.Platform
                 {
                     var grid = targetObj as MyCubeGrid;
                     TopMap map;
-                    if (grid != null && System.Session.TopEntityToInfoMap.TryGetValue(grid, out map))
+                    if (grid != null && Session.I.TopEntityToInfoMap.TryGetValue(grid, out map))
                     {
                         foreach (var target in map.GroupMap.Construct.Keys)
                         {
@@ -334,7 +334,7 @@ namespace CoreSystems.Platform
                 {
                     var grid = targetObj as MyCubeGrid;
                     TopMap map;
-                    if (grid != null && System.Session.TopEntityToInfoMap.TryGetValue(grid, out map))
+                    if (grid != null && Session.I.TopEntityToInfoMap.TryGetValue(grid, out map))
                     {
                         foreach (var target in map.GroupMap.Construct.Keys)
                         {
@@ -386,7 +386,7 @@ namespace CoreSystems.Platform
             const int requestInterval = 60;
             const int tenMetersSec = 100;
             const int oneMetersSec = 1;
-            var s = Comp.Session;
+            var s = Session.I;
             
             var collisionRisk = tInfo.VelLenSqr > tenMetersSec && tInfo.Approaching;
             var highDamage = tInfo.OffenseRating >= 1;
@@ -447,7 +447,7 @@ namespace CoreSystems.Platform
 
             string weaponName;
             var update = LastFriendlyNameTick == 0;
-            LastFriendlyNameTick = Comp.Session.Tick;
+            LastFriendlyNameTick = Session.I.Tick;
 
             if (Comp.Ai.AiType == Ai.AiTypes.Grid && Comp.Collection.Count == 1)
             {

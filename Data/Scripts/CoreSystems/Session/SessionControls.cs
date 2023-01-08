@@ -288,7 +288,7 @@ namespace CoreSystems
                         }
 
                         var on = comp.Data.Repo.Values.State.Trigger == On;
-                        comp.ShootManager.RequestShootSync(comp.Session.PlayerId, on ? Weapon.ShootManager.RequestType.Off : Weapon.ShootManager.RequestType.On, Weapon.ShootManager.Signals.On);
+                        comp.ShootManager.RequestShootSync(I.PlayerId, on ? Weapon.ShootManager.RequestType.Off : Weapon.ShootManager.RequestType.On, Weapon.ShootManager.Signals.On);
                     };
 
                     var oldWriter = a.Writer;
@@ -317,7 +317,7 @@ namespace CoreSystems
                             return;
                         }
                         if (comp.Data.Repo.Values.State.Trigger != On)
-                            comp.ShootManager.RequestShootSync(comp.Session.PlayerId, Weapon.ShootManager.RequestType.On, Weapon.ShootManager.Signals.On);
+                            comp.ShootManager.RequestShootSync(I.PlayerId, Weapon.ShootManager.RequestType.On, Weapon.ShootManager.Signals.On);
                     };
 
                     var oldWriter = a.Writer;
@@ -347,7 +347,7 @@ namespace CoreSystems
                             return;
                         }
                         if (comp.Data.Repo.Values.State.Trigger != Off)
-                            comp.ShootManager.RequestShootSync(comp.Session.PlayerId, Weapon.ShootManager.RequestType.Off);
+                            comp.ShootManager.RequestShootSync(I.PlayerId, Weapon.ShootManager.RequestType.Off);
                     };
 
                     var oldWriter = a.Writer;
@@ -523,7 +523,7 @@ namespace CoreSystems
 
                         w.OffDelay = (uint)(azSteps + elSteps > 0 ? azSteps > elSteps ? azSteps : elSteps : 0);
 
-                        if (!w.BaseComp.Session.IsClient) w.Target.Reset(comp.Session.Tick, Target.States.AnimationOff);
+                        if (!I.IsClient) w.Target.Reset(I.Tick, Target.States.AnimationOff);
                         w.ScheduleWeaponHome(true);
                     }
 
@@ -536,24 +536,24 @@ namespace CoreSystems
 
                     uint delay;
                     if (w.System.PartAnimationLengths.TryGetValue(EventTriggers.TurnOn, out delay))
-                        w.PartReadyTick = comp.Session.Tick + delay;
+                        w.PartReadyTick = I.Tick + delay;
 
-                    if (w.LastEvent == EventTriggers.TurnOff && w.AnimationDelayTick > comp.Session.Tick)
-                        w.PartReadyTick += w.AnimationDelayTick - comp.Session.Tick;
+                    if (w.LastEvent == EventTriggers.TurnOff && w.AnimationDelayTick > I.Tick)
+                        w.PartReadyTick += w.AnimationDelayTick - I.Tick;
                 }
 
-                if (w.AnimationDelayTick < comp.Session.Tick || w.LastEvent == EventTriggers.TurnOn || w.LastEvent == EventTriggers.TurnOff) {
+                if (w.AnimationDelayTick < I.Tick || w.LastEvent == EventTriggers.TurnOn || w.LastEvent == EventTriggers.TurnOff) {
                     w.EventTriggerStateChanged(EventTriggers.TurnOn, on);
                     w.EventTriggerStateChanged(EventTriggers.TurnOff, !on);
                 }
                 else {
 
-                    comp.Session.FutureEvents.Schedule(o => {
+                    I.FutureEvents.Schedule(o => {
                         w.EventTriggerStateChanged(EventTriggers.TurnOn, on);
                         w.EventTriggerStateChanged(EventTriggers.TurnOff, !on);
                     },
                         null,
-                        w.AnimationDelayTick - comp.Session.Tick
+                        w.AnimationDelayTick - I.Tick
                     );
                 }
             }

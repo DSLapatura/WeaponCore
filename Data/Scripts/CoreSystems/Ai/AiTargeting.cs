@@ -26,7 +26,7 @@ namespace CoreSystems.Support
         internal static void AcquireTarget(Weapon w, bool forceFocus, MyEntity targetEntity = null)
         {
             var foundTarget = false;
-            if (w.PosChangedTick != w.Comp.Session.SimulationCount) 
+            if (w.PosChangedTick != Session.I.SimulationCount) 
                 w.UpdatePivotPos();
 
             var comp = w.Comp;
@@ -43,7 +43,7 @@ namespace CoreSystems.Support
                 var pCount = masterAi.LiveProjectile.Count;
                 var shootProjectile = pCount > 0 && (w.System.TrackProjectile || projectileRequest || w.Comp.Ai.ControlComp != null) && mOverrides.Projectiles && !w.System.FocusOnly;
                 var projectilesFirst = !forceFocus && shootProjectile && w.System.Values.Targeting.Threats.Length > 0 && w.System.Values.Targeting.Threats[0] == Threat.Projectiles;
-                var projectilesOnly =  projectileRequest || w.ProjectilesNear && !w.Target.TargetChanged && w.Comp.Session.Count != w.Acquire.SlotId && !forceFocus;
+                var projectilesOnly =  projectileRequest || w.ProjectilesNear && !w.Target.TargetChanged && Session.I.Count != w.Acquire.SlotId && !forceFocus;
                 var checkObstructions = w.System.ScanNonThreats && !w.System.FocusOnly && masterAi.Obstructions.Count > 0;
                 
                 if (!projectilesFirst && w.System.TrackTopMostEntities && !projectilesOnly && !w.System.NonThreatsOnly)
@@ -64,7 +64,7 @@ namespace CoreSystems.Support
                 Vector3D predictedPos;
                 if (Weapon.CanShootTarget(w, ref fakeInfo.WorldPosition, fakeInfo.LinearVelocity, fakeInfo.Acceleration, out predictedPos, false, null, MathFuncs.DebugCaller.CanShootTarget1))
                 {
-                    w.Target.SetFake(w.Comp.Session.Tick, predictedPos, w.MyPivotPos);
+                    w.Target.SetFake(Session.I.Tick, predictedPos, w.MyPivotPos);
                     if (w.ActiveAmmoDef.AmmoDef.Trajectory.Guidance != TrajectoryDef.GuidanceType.None || !w.MuzzleHitSelf())
                         foundTarget = true;
                 }
@@ -72,14 +72,14 @@ namespace CoreSystems.Support
 
             if (!foundTarget)
             {
-                if (w.Target.CurrentState == Target.States.Acquired && w.Acquire.IsSleeping && w.Acquire.Monitoring && w.System.Session.AcqManager.MonitorState.Remove(w.Acquire))
+                if (w.Target.CurrentState == Target.States.Acquired && w.Acquire.IsSleeping && w.Acquire.Monitoring && Session.I.AcqManager.MonitorState.Remove(w.Acquire))
                     w.Acquire.Monitoring = false;
 
                 if (w.NewTarget.CurrentState != Target.States.NoTargetsSeen) 
-                    w.NewTarget.Reset(w.Comp.Session.Tick, Target.States.NoTargetsSeen);
+                    w.NewTarget.Reset(Session.I.Tick, Target.States.NoTargetsSeen);
                 
                 if (w.Target.CurrentState != Target.States.NoTargetsSeen)
-                    w.Target.Reset(w.Comp.Session.Tick, Target.States.NoTargetsSeen, fakeInfo == null);
+                    w.Target.Reset(Session.I.Tick, Target.States.NoTargetsSeen, fakeInfo == null);
 
                 w.LastBlockCount = masterAi.BlockCount;
 
@@ -117,7 +117,7 @@ namespace CoreSystems.Support
             var attackFriends = overRides.Friendly || w.System.ScanTrackOnly;
             var attackNoOwner = overRides.Unowned || w.System.ScanTrackOnly;
             var forceFoci = focusOnly || w.System.ScanTrackOnly;
-            var session = comp.Session;
+            var session = Session.I;
             session.TargetRequests++;
             var weaponPos = w.BarrelOrigin + (w.MyPivotFwd * w.MuzzleDistToBarrelCenter);
             var target = w.NewTarget;
@@ -252,10 +252,10 @@ namespace CoreSystems.Support
                     var origDist = rayDist;
                     var topEntId = info.Target.GetTopMostParent().EntityId;
                     target.Set(info.Target, targetCenter, shortDist, origDist, topEntId);
-                    target.TransferTo(w.Target, comp.Session.Tick);
+                    target.TransferTo(w.Target, Session.I.Tick);
 
                     if (w.Target.TargetState == Target.TargetStates.IsEntity)
-                        ai.Session.NewThreat(w);
+                        Session.I.NewThreat(w);
                     return true;
                 }
 
@@ -293,9 +293,9 @@ namespace CoreSystems.Support
                     if (!AcquireBlock(w, target, info, ref waterSphere, ref w.XorRnd, null, !focusTarget))
                         continue;
 
-                    target.TransferTo(w.Target, comp.Session.Tick);
+                    target.TransferTo(w.Target, Session.I.Tick);
                     if (w.Target.TargetState == Target.TargetStates.IsEntity)
-                        ai.Session.NewThreat(w);
+                        Session.I.NewThreat(w);
 
                     return true;
                 }
@@ -331,12 +331,12 @@ namespace CoreSystems.Support
                         var origDist = rayDist * w.LastHitInfo.Fraction;
                         var topEntId = info.Target.GetTopMostParent().EntityId;
                         target.Set(info.Target, w.LastHitInfo.Position, shortDist, origDist, topEntId);
-                        target.TransferTo(w.Target, comp.Session.Tick);
+                        target.TransferTo(w.Target, Session.I.Tick);
                         
                         w.FoundTopMostTarget = true;
 
                         if (w.Target.TargetState == Target.TargetStates.IsEntity)
-                            ai.Session.NewThreat(w);
+                            Session.I.NewThreat(w);
 
                         return true;
                     }
@@ -349,12 +349,12 @@ namespace CoreSystems.Support
                     var origDist = rayDist;
                     var topEntId = info.Target.GetTopMostParent().EntityId;
                     target.Set(info.Target, targetCenter, shortDist, origDist, topEntId);
-                    target.TransferTo(w.Target, comp.Session.Tick);
+                    target.TransferTo(w.Target, Session.I.Tick);
 
                     w.FoundTopMostTarget = true;
 
                     if (w.Target.TargetState == Target.TargetStates.IsEntity)
-                        ai.Session.NewThreat(w);
+                        Session.I.NewThreat(w);
 
                     return true;
                 }
@@ -371,7 +371,7 @@ namespace CoreSystems.Support
             var ai = comp.MasterAi;
             var ammoDef = w.ActiveAmmoDef.AmmoDef;
             var aConst = ammoDef.Const;
-            var session = comp.Session;
+            var session = Session.I;
             session.TargetRequests++;
 
             var weaponPos = w.BarrelOrigin + (w.MyPivotFwd * w.MuzzleDistToBarrelCenter);
@@ -467,9 +467,9 @@ namespace CoreSystems.Support
                     Vector3D.Distance(ref weaponPos, ref pos, out rayDist);
                     target.Set(grid, pos, rayDist, rayDist, grid.EntityId);
 
-                    target.TransferTo(w.Target, comp.Session.Tick);
+                    target.TransferTo(w.Target, Session.I.Tick);
                     if (w.Target.TargetState == Target.TargetStates.IsEntity)
-                        ai.Session.NewThreat(w);
+                        Session.I.NewThreat(w);
 
                     return true;
                 }
@@ -489,12 +489,12 @@ namespace CoreSystems.Support
                 var origDist = rayDist;
                 var topEntId = info.Target.GetTopMostParent().EntityId;
                 target.Set(info.Target, targetCenter, shortDist, origDist, topEntId);
-                target.TransferTo(w.Target, comp.Session.Tick);
+                target.TransferTo(w.Target, Session.I.Tick);
 
                 w.FoundTopMostTarget = true;
 
                 if (w.Target.TargetState == Target.TargetStates.IsEntity)
-                    ai.Session.NewThreat(w);
+                    Session.I.NewThreat(w);
 
                 return true;
             }
@@ -506,8 +506,8 @@ namespace CoreSystems.Support
         {
             var ai = w.Comp.MasterAi;
             var system = w.System;
-            var s = ai.Session;
-            var physics = system.Session.Physics;
+            var s = Session.I;
+            var physics = Session.I.Physics;
             var target = w.NewTarget;
             var weaponPos = w.BarrelOrigin;
             var aConst = w.ActiveAmmoDef.AmmoDef.Const;
@@ -635,7 +635,7 @@ namespace CoreSystems.Support
                             var shortDist = hitDist;
                             var origDist = hitDist;
                             target.Set(lp, lp.Position, shortDist, origDist, long.MaxValue);
-                            target.TransferTo(w.Target, w.Comp.Session.Tick);
+                            target.TransferTo(w.Target, Session.I.Tick);
                             return true;
                         }
                     }
@@ -650,7 +650,7 @@ namespace CoreSystems.Support
                         var shortDist = hitDist;
                         var origDist = hitDist;
                         target.Set(lp, lp.Position, shortDist, origDist, long.MaxValue);
-                        target.TransferTo(w.Target, w.Comp.Session.Tick);
+                        target.TransferTo(w.Target, Session.I.Tick);
 
                         return true;
                     }
@@ -689,7 +689,7 @@ namespace CoreSystems.Support
             var target = info.Target;
             info.Storage.ChaseAge = (int) info.RelativeAge;
             var ai = info.Ai;
-            var session = ai.Session;
+            var session = Session.I;
 
             var aConst = info.AmmoDef.Const;
             var overRides = w.Comp.Data.Repo.Values.Set.Overrides;
@@ -709,7 +709,7 @@ namespace CoreSystems.Support
             var previousEntity = info.AcquiredEntity;
             BoundingSphereD waterSphere = new BoundingSphereD(Vector3D.Zero, 1f);
             WaterData water = null;
-            if (s.Session.WaterApiLoaded && !info.AmmoDef.IgnoreWater && ai.InPlanetGravity && ai.MyPlanet != null && s.Session.WaterMap.TryGetValue(ai.MyPlanet.EntityId, out water))
+            if (Session.I.WaterApiLoaded && !info.AmmoDef.IgnoreWater && ai.InPlanetGravity && ai.MyPlanet != null && Session.I.WaterMap.TryGetValue(ai.MyPlanet.EntityId, out water))
                 waterSphere = new BoundingSphereD(ai.MyPlanet.PositionComp.WorldAABB.Center, water.MinRadius);
             TargetInfo alphaInfo = null;
             int offset = 0;
@@ -810,7 +810,7 @@ namespace CoreSystems.Support
                 acquired = true;
                 break;
             }
-            if (!acquired && !previousEntity) target.Reset(s.Session.Tick, Target.States.NoTargetsSeen);
+            if (!acquired && !previousEntity) target.Reset(Session.I.Tick, Target.States.NoTargetsSeen);
             return acquired;
         }
 
@@ -827,8 +827,8 @@ namespace CoreSystems.Support
             var target = info.Target;
             info.Storage.ChaseAge = (int) info.RelativeAge;
             var ai = info.Ai;
-            var session = ai.Session;
-            var physics = s.Session.Physics;
+            var session = Session.I;
+            var physics = Session.I.Physics;
             var weaponPos = p.Position;
             var aConst = p.Info.AmmoDef.Const;
             var collection = ai.GetProCache(w);
@@ -968,7 +968,7 @@ namespace CoreSystems.Support
                     var bt = focusSubSystem ? subSystem : blockType;
 
                     ConcurrentDictionary<BlockTypes, ConcurrentCachingList<MyCubeBlock>> blockTypeMap;
-                    system.Session.GridToBlockTypeMap.TryGetValue((MyCubeGrid)info.Target, out blockTypeMap);
+                    Session.I.GridToBlockTypeMap.TryGetValue((MyCubeGrid)info.Target, out blockTypeMap);
                     if (bt != Any && blockTypeMap != null && blockTypeMap[bt].Count > 0)
                     {
                         var subSystemList = blockTypeMap[bt];
@@ -990,7 +990,7 @@ namespace CoreSystems.Support
                 if (system.OnlySubSystems || focusSubSystem && subSystem != Any) return false;
             }
             TopMap topMap;
-            return system.Session.TopEntityToInfoMap.TryGetValue((MyCubeGrid)info.Target, out topMap) && topMap.MyCubeBocks != null && FindRandomBlock(w, target, info, topMap.MyCubeBocks, ref waterSphere, ref xRnd, p, checkPower);
+            return Session.I.TopEntityToInfoMap.TryGetValue((MyCubeGrid)info.Target, out topMap) && topMap.MyCubeBocks != null && FindRandomBlock(w, target, info, topMap.MyCubeBocks, ref waterSphere, ref xRnd, p, checkPower);
         }
 
         private static bool FindRandomBlock(Weapon w, Target target, TargetInfo info, ConcurrentCachingList<MyCubeBlock> subSystemList, ref BoundingSphereD waterSphere, ref XorShiftRandomStruct xRnd, Projectile p, bool checkPower = true)
@@ -998,7 +998,7 @@ namespace CoreSystems.Support
             var totalBlocks = subSystemList.Count;
             var system = w.System;
             var ai = w.Comp.MasterAi;
-            var s = ai.Session;
+            var s = Session.I;
             AmmoConstants aConst;
             Vector3D weaponPos;
             if (p != null)
@@ -1086,7 +1086,7 @@ namespace CoreSystems.Support
                         continue;
 
                     blocksChecked++;
-                    ai.Session.CanShoot++;
+                    Session.I.CanShoot++;
 
                     Vector3D predictedPos;
                     if (!Weapon.CanShootTarget(w, ref blockPos, targetLinVel, targetAccel, out predictedPos, w.RotorTurretTracking, null, MathFuncs.DebugCaller.CanShootTarget6)) continue;
@@ -1311,19 +1311,19 @@ namespace CoreSystems.Support
             }
 
             var ai = w.Comp.MasterAi;
-            var s = ai.Session;
+            var s = Session.I;
             var bestCubePos = Vector3D.Zero;
             var top5Count = w.Top5.Count;
             var top5 = w.Top5;
-            var physics = ai.Session.Physics;
-            var hitTmpList = ai.Session.HitInfoTmpList;
+            var physics = Session.I.Physics;
+            var hitTmpList = Session.I.HitInfoTmpList;
             var weaponCheck = p == null && (!aConst.SkipAimChecks || w.RotorTurretTracking || aConst.SkipRayChecks);
             IHitInfo iHitInfo = null;
 
             for (int i = 0; i < cubes.Count + top5Count; i++)
             {
 
-                ai.Session.BlockChecks++;
+                Session.I.BlockChecks++;
                 var index = i < top5Count ? i : i - top5Count;
                 var cube = i < top5Count ? top5[index] : cubes[index];
 
@@ -1336,7 +1336,7 @@ namespace CoreSystems.Support
                 var range = cubePos - weaponPos;
                 var test = (range.X * range.X) + (range.Y * range.Y) + (range.Z * range.Z);
 
-                if (ai.Session.WaterApiLoaded && waterSphere.Radius > 2 && waterSphere.Contains(cubePos) != ContainmentType.Disjoint)
+                if (Session.I.WaterApiLoaded && waterSphere.Radius > 2 && waterSphere.Contains(cubePos) != ContainmentType.Disjoint)
                     continue;
 
                 if (test < minValue3)
@@ -1351,12 +1351,12 @@ namespace CoreSystems.Support
 
                         if (weaponCheck)
                         {
-                            ai.Session.CanShoot++;
+                            Session.I.CanShoot++;
                             Vector3D predictedPos;
                             if (Weapon.CanShootTarget(w, ref cubePos, targetLinVel, targetAccel, out predictedPos, false, null, MathFuncs.DebugCaller.CanShootTarget7))
                             {
 
-                                ai.Session.ClosestRayCasts++;
+                                Session.I.ClosestRayCasts++;
                                 w.AcquiredBlock = true;
                                 bool acquire = false;
 
@@ -1511,7 +1511,7 @@ namespace CoreSystems.Support
                 target.Set(newEntity, bestCubePos, shortDist, origDist, newEntity.GetTopMostParent().EntityId);
                 top5.Add(newEntity);
             }
-            else target.Reset(ai.Session.Tick, Target.States.NoTargetsSeen, w == null);
+            else target.Reset(Session.I.Tick, Target.States.NoTargetsSeen, w == null);
 
             if (newEntity0 != null) top5.Add(newEntity0);
             if (newEntity1 != null) top5.Add(newEntity1);
@@ -1701,7 +1701,7 @@ namespace CoreSystems.Support
             var overRides = comp.Data.Repo.Values.Set.Overrides;
             var attackNeutrals = overRides.Neutrals;
             var attackNoOwner = overRides.Unowned;
-            var session = w.Comp.Session;
+            var session = Session.I;
             var ai = comp.MasterAi;
             session.TargetRequests++;
             var ammoDef = w.ActiveAmmoDef.AmmoDef;
@@ -1793,16 +1793,16 @@ namespace CoreSystems.Support
                     }
 
                     if (!AcquireBlock(w, target, info, ref waterSphere, ref w.XorRnd, null, true)) continue;
-                    target.TransferTo(w.Target, w.Comp.Session.Tick, true);
+                    target.TransferTo(w.Target, Session.I.Tick, true);
 
                     var validTarget = w.Target.TargetState == Target.TargetStates.IsEntity;
 
                     if (validTarget)
                     {
 
-                        ai.Session.NewThreat(w);
+                        Session.I.NewThreat(w);
 
-                        if (ai.Session.MpActive && ai.Session.IsServer)
+                        if (Session.I.MpActive && Session.I.IsServer)
                             w.Target.PushTargetToClient(w);
                     }
 

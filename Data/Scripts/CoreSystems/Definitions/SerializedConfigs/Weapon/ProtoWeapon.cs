@@ -76,10 +76,10 @@ namespace CoreSystems
                 var ws = Values.State.Weapons[i];
                 ws.Heat = 0;
                 ws.Overheated = false;
-                ws.Id = comp.Session.SyncWeaponId;
+                ws.Id = Session.I.SyncWeaponId;
                 w.ProPositionSync.WeaponSyncId = ws.Id;
                 w.ProTargetSync.WeaponSyncId = ws.Id;
-                comp.Session.WeaponLookUp[ws.Id] = w;
+                Session.I.WeaponLookUp[ws.Id] = w;
             }
 
             ResetCompBaseRevisions();
@@ -196,10 +196,10 @@ namespace CoreSystems
         {
             ++Revision;
             Session.PacketInfo info;
-            if (clean && comp.Session.PrunedPacketsToClient.TryGetValue(comp.Data.Repo.Values.State, out info))
+            if (clean && Session.I.PrunedPacketsToClient.TryGetValue(comp.Data.Repo.Values.State, out info))
             {
-                comp.Session.PrunedPacketsToClient.Remove(comp.Data.Repo.Values.State);
-                comp.Session.PacketWeaponStatePool.Return((WeaponStatePacket)info.Packet);
+                Session.I.PrunedPacketsToClient.Remove(comp.Data.Repo.Values.State);
+                Session.I.PacketWeaponStatePool.Return((WeaponStatePacket)info.Packet);
             }
 
             for (int i = 0; i < Targets.Length; i++)
@@ -211,15 +211,15 @@ namespace CoreSystems
 
                 if (clean && validPart)
                 {
-                    if (comp.Session.PrunedPacketsToClient.TryGetValue(t, out info))
+                    if (Session.I.PrunedPacketsToClient.TryGetValue(t, out info))
                     {
-                        comp.Session.PrunedPacketsToClient.Remove(t);
-                        comp.Session.PacketTargetPool.Return((TargetPacket)info.Packet);
+                        Session.I.PrunedPacketsToClient.Remove(t);
+                        Session.I.PacketTargetPool.Return((TargetPacket)info.Packet);
                     }
-                    if (comp.Session.PrunedPacketsToClient.TryGetValue(wr, out info))
+                    if (Session.I.PrunedPacketsToClient.TryGetValue(wr, out info))
                     {
-                        comp.Session.PrunedPacketsToClient.Remove(wr);
-                        comp.Session.PacketReloadPool.Return((WeaponReloadPacket)info.Packet);
+                        Session.I.PrunedPacketsToClient.Remove(wr);
+                        Session.I.PacketReloadPool.Return((WeaponReloadPacket)info.Packet);
                     }
                 }
                 ++wr.Revision;
@@ -443,7 +443,7 @@ namespace CoreSystems
                 FriendId = 0;
             }
 
-            UpdatedTick = weaponComponent.Session.Tick;
+            UpdatedTick = Session.I.Tick;
         }
 
         public bool GetFriend(Session s, out MyEntity friend, out Ai ai)
@@ -501,7 +501,7 @@ namespace CoreSystems
 
             if (oldId != Id)
             {
-                w.Comp.Session.WeaponLookUp[Id] = w;
+                Session.I.WeaponLookUp[Id] = w;
                 w.ProPositionSync.WeaponSyncId = Id;
                 w.ProTargetSync.WeaponSyncId = Id;
             }
@@ -548,7 +548,7 @@ namespace CoreSystems
             else if (noTarget && target.TargetState == Target.TargetStates.IsProjectile)
             {
                 target.SoftProjetileReset = true;
-                target.ProjectileEndTick = w.System.Session.Tick + 62;
+                target.ProjectileEndTick = Session.I.Tick + 62;
                 target.TargetState = Target.TargetStates.WasProjectile;
             }
             else

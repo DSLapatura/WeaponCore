@@ -1,12 +1,9 @@
 ﻿using System.Collections.Generic;
 using CoreSystems.Platform;
-using CoreSystems.Projectiles;
-using Sandbox.ModAPI.Weapons;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRageMath;
 using static CoreSystems.Support.CoreComponent;
-using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace CoreSystems.Support
 {
@@ -126,7 +123,7 @@ namespace CoreSystems.Support
 
                 var dummyMatrix = _cachedDummyMatrix ?? MatrixD.Identity;
                 var rifle = _part != null && _part.BaseComp.TypeSpecific == CompTypeSpecific.Rifle;
-                var rifleIsDedidcatedOrDebug = rifle && (_part.BaseComp.Session.DedicatedServer || _part.BaseComp.Session.DebugMod);
+                var rifleIsDedidcatedOrDebug = rifle && (Session.I.DedicatedServer || Session.I.DebugMod);
                 var localPos = dummyMatrix.Translation;
                 var localDir = dummyMatrix.Forward;
                 var localUpDir = dummyMatrix.Up;

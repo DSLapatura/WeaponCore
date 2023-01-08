@@ -164,7 +164,7 @@ namespace CoreSystems.Support
 
                 var partHash = (tDef.Key + partNameIdHash + elevationNameHash + muzzletNameHash + azimuthNameHash).GetHashCode();
                 HashToId.Add(partHash, partId);
-                var coreSystem = new WeaponSystem(Session, this, partNameIdHash, muzzletNameHash, azimuthNameHash, elevationNameHash, spinNameHash, weaponDef, typeName, weaponAmmo, partHash, partId);
+                var coreSystem = new WeaponSystem(this, partNameIdHash, muzzletNameHash, azimuthNameHash, elevationNameHash, spinNameHash, weaponDef, typeName, weaponAmmo, partHash, partId);
 
                 MyDefinitionId typeId;
                 if (Session.CoreSystemsDefs.TryGetValue(SubtypeId, out typeId))
@@ -269,7 +269,7 @@ namespace CoreSystems.Support
 
                 var partHash = (tDef.Key + partNameIdHash).GetHashCode();
                 HashToId.Add(partHash, partId);
-                var coreSystem = new UpgradeSystem(Session, partNameIdHash, upgradeDef, typeName, partHash, partId);
+                var coreSystem = new UpgradeSystem(partNameIdHash, upgradeDef, typeName, partHash, partId);
 
                 CombinedIdlePower += coreSystem.IdlePower;
 
@@ -341,7 +341,7 @@ namespace CoreSystems.Support
 
                 var partHash = (tDef.Key + partNameIdHash).GetHashCode();
                 HashToId.Add(partHash, partId);
-                var coreSystem = new SupportSystem(Session, partNameIdHash, supportDef, typeName, partHash, partId);
+                var coreSystem = new SupportSystem(partNameIdHash, supportDef, typeName, partHash, partId);
 
                 CombinedIdlePower += coreSystem.IdlePower;
 
@@ -370,7 +370,7 @@ namespace CoreSystems.Support
             StructureType = StructureTypes.Control;
             EntityType = EnittyTypes.Block;
             PartHashes = new MyStringHash[1] { idHash };
-            var coreSystem = new ControlSystem(session);
+            var coreSystem = new ControlSystem();
             PartSystems = new Dictionary<MyStringHash, CoreSystem>(MyStringHash.Comparer);
             PartSystems.Add(idHash, coreSystem);
         }

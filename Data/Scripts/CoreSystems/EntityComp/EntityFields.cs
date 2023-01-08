@@ -35,7 +35,6 @@ namespace CoreSystems.Support
         internal IMyFunctionalBlock FunctionalBlock;
 
         internal MyCubeBlock Cube;
-        internal Session Session;
         internal bool IsBlock;
         internal MyDefinitionId Id;
         internal MyStringHash SubTypeId;
@@ -162,9 +161,8 @@ namespace CoreSystems.Support
 
         internal bool FakeIsWorking => !IsBlock || IsWorking;
 
-        public void Init(Session session, MyEntity coreEntity, bool isBlock, CompData compData, MyDefinitionId id)
+        public void Init( MyEntity coreEntity, bool isBlock, CompData compData, MyDefinitionId id)
         {
-            Session = session;
             CoreEntity = coreEntity;
             IsBlock = isBlock;
             Id = id;
@@ -187,12 +185,12 @@ namespace CoreSystems.Support
                 }
                 else if (CoreEntity is IMyConveyorSorter)
                 {
-                    if (Session.CoreSystemsSupportDefs.Contains(Cube.BlockDefinition.Id))
+                    if (Session.I.CoreSystemsSupportDefs.Contains(Cube.BlockDefinition.Id))
                     {
                         TypeSpecific = CompTypeSpecific.Support;
                         Type = CompType.Support;
                     }
-                    else if (Session.CoreSystemsUpgradeDefs.Contains(Cube.BlockDefinition.Id))
+                    else if (Session.I.CoreSystemsUpgradeDefs.Contains(Cube.BlockDefinition.Id))
                     {
                         TypeSpecific = CompTypeSpecific.Upgrade;
                         Type = CompType.Upgrade;
@@ -222,14 +220,14 @@ namespace CoreSystems.Support
                 TopEntity = rifle.Owner;
                 
                 TopMap topMap;
-                if (TopEntity != null && !Session.TopEntityToInfoMap.TryGetValue(TopEntity, out topMap))
+                if (TopEntity != null && !Session.I.TopEntityToInfoMap.TryGetValue(TopEntity, out topMap))
                 {
-                    topMap = Session.GridMapPool.Get();
+                    topMap = Session.I.GridMapPool.Get();
                     topMap.Trash = true;
-                    Session.TopEntityToInfoMap.TryAdd(TopEntity, topMap);
-                    var map = Session.GridGroupMapPool.Count > 0 ? Session.GridGroupMapPool.Pop() : new GridGroupMap(Session);
+                    Session.I.TopEntityToInfoMap.TryAdd(TopEntity, topMap);
+                    var map = Session.I.GridGroupMapPool.Count > 0 ? Session.I.GridGroupMapPool.Pop() : new GridGroupMap();
                     map.OnTopEntityAdded(null, TopEntity, null);
-                    TopEntity.OnClose += Session.RemoveOtherFromMap;
+                    TopEntity.OnClose += Session.I.RemoveOtherFromMap;
                 }
 
             }
@@ -243,7 +241,7 @@ namespace CoreSystems.Support
             CoreInventory = (MyInventory)InventoryEntity.GetInventoryBase();
             
             HasInventory = InventoryEntity.HasInventory;
-            Platform = session.PlatFormPool.Get();
+            Platform = Session.I.PlatFormPool.Get();
             Platform.Setup(this);
             IdlePower = Platform.Structure.CombinedIdlePower;
             SinkPower = IdlePower;
@@ -256,8 +254,8 @@ namespace CoreSystems.Support
             for (int i = 0; i < EventMonitors.Length; i++)
                 EventMonitors[i] = new List<Action<int, bool>>();
 
-            PowerGroupId = Session.PowerGroups[Platform.Structure];
-            CoreEntity.OnClose += Session.CloseComps;
+            PowerGroupId = Session.I.PowerGroups[Platform.Structure];
+            CoreEntity.OnClose += Session.I.CloseComps;
             CloseCondition = false;
         }        
     }

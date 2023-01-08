@@ -30,17 +30,17 @@ namespace CoreSystems
         public void StorageInit()
         {
             if (Ai.TopEntity.Storage == null)
-                Ai.TopEntity.Storage = new MyModStorageComponent { [Ai.Session.AiDataGuid] = "" };
-            else if (!Ai.TopEntity.Storage.ContainsKey(Ai.Session.AiDataGuid))
-                Ai.TopEntity.Storage[Ai.Session.AiDataGuid] = "";
+                Ai.TopEntity.Storage = new MyModStorageComponent { [Session.I.AiDataGuid] = "" };
+            else if (!Ai.TopEntity.Storage.ContainsKey(Session.I.AiDataGuid))
+                Ai.TopEntity.Storage[Session.I.AiDataGuid] = "";
         }
 
         public void Save()
         {
             if (Ai.TopEntity.Storage == null) return;
-            Ai.LastAiDataSave = Ai.Session.Tick;
+            Ai.LastAiDataSave = Session.I.Tick;
             var binary = MyAPIGateway.Utilities.SerializeToBinary(Repo);
-            Ai.TopEntity.Storage[Ai.Session.AiDataGuid] = Convert.ToBase64String(binary);
+            Ai.TopEntity.Storage[Session.I.AiDataGuid] = Convert.ToBase64String(binary);
         }
 
         public void Load()
@@ -51,7 +51,7 @@ namespace CoreSystems
             string rawData;
             bool validData = false;
 
-            if (Ai.TopEntity.Storage.TryGetValue(Ai.Session.AiDataGuid, out rawData))
+            if (Ai.TopEntity.Storage.TryGetValue(Session.I.AiDataGuid, out rawData))
             {
                 try
                 {

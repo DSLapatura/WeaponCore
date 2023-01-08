@@ -30,8 +30,8 @@ namespace CoreSystems.Support
                     break;
             }
 
-            if (Session.HandlesInput)
-                Session.LeadGroupsDirty = true;
+            if (Session.I.HandlesInput)
+                Session.I.LeadGroupsDirty = true;
         }
 
         private void Startup()
@@ -88,7 +88,7 @@ namespace CoreSystems.Support
                             if (!FunctionalBlock.Enabled)
                                 w.EventTriggerStateChanged(EventTriggers.TurnOff, true);
                             else if (w.AnimationsSet.ContainsKey(EventTriggers.TurnOn))
-                                Session.FutureEvents.Schedule(w.TurnOnAV, null, 100);
+                                Session.I.FutureEvents.Schedule(w.TurnOnAV, null, 100);
 
                             if (w.ProtoWeaponAmmo.CurrentAmmo == 0)
                             {

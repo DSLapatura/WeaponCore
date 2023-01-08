@@ -17,7 +17,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
         {
             var ticksSinceUpdate = TicksSinceUpdated;
             var reset = false;
-            _cameraWorldMatrix = _session.Camera.WorldMatrix;
+            _cameraWorldMatrix = Session.I.Camera.WorldMatrix;
 
             if (NeedsUpdate)
                 UpdateHudSettings();
@@ -33,7 +33,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
                         _weapontoDraw = SortDisplayedWeapons(WeaponsToDisplay);
                     }
 
-                    _lastHudUpdateTick = _session.Tick;
+                    _lastHudUpdateTick = Session.I.Tick;
                 }
                 else if (ticksSinceUpdate + 1 >= MinUpdateTicks)
                     reset = true;
@@ -57,7 +57,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
         {
             var currWeaponDisplayPos = _currWeaponDisplayPos;
 
-            if (_lastHudUpdateTick == _session.Tick)
+            if (_lastHudUpdateTick == Session.I.Tick)
             {
 
                 var largestName = (_currentLargestName * (_textWidth)) + _stackPadding;
@@ -85,7 +85,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
 
         private void DrawHudOnce()
         {
-            var restrict = _session.HudHandlers.Count > 0 &&  _session.HudUi.RestrictHudHandlers(_session.TrackingAi, _session.PlayerId, HudMode.Reload);
+            var restrict = Session.I.HudHandlers.Count > 0 &&  Session.I.HudUi.RestrictHudHandlers(Session.I.TrackingAi, Session.I.PlayerId, HudMode.Reload);
 
             foreach (var textureToDraw in _drawList)
             {
@@ -127,7 +127,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
                 var textAdd = _textAddList[i];
 
                 var height = textAdd.FontSize * ShadowHeightScaler;
-                var width = textAdd.FontSize * _session.AspectRatioInv;
+                var width = textAdd.FontSize * Session.I.AspectRatioInv;
                 textAdd.Position.Z = _viewPortSize.Z;
                 var textPos = Vector3D.Transform(textAdd.Position, _cameraWorldMatrix);
 
@@ -242,13 +242,13 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
                 var comp = weapon.Comp;
                 if (comp.Ai == null || comp.Ai.MarkedForClose || comp.CoreEntity.MarkedForClose || comp.Data.Repo?.Values == null || weapon.ActiveAmmoDef?.AmmoDef?.Const == null)
                     continue;
-                var s = _session;
+                var s = Session.I;
 
                 var report = weapon.ActiveAmmoDef.AmmoDef.Const.CanReportTargetStatus || comp.Ai.ControlComp != null;
 
                 var delayNoTarget = !weapon.System.WConst.GiveUpAfter || s.Tick - weapon.LastShootTick > weapon.System.WConst.DelayAfterBurst;
                 var notAnyBlock = comp.MasterOverrides.SubSystem != WeaponDefinition.TargetingDef.BlockTypes.Any;
-                var needsTarget =  (!weapon.Target.HasTarget || comp.Session.Tick - weapon.Target.ChangeTick <= 30) && comp.MasterOverrides.Grids && (comp.DetectOtherSignals && comp.MasterAi.DetectionInfo.OtherInRange || comp.MasterAi.DetectionInfo.PriorityInRange) && report && comp.Data.Repo.Values.Set.ReportTarget && delayNoTarget && comp.MasterAi.DetectionInfo.TargetInRange(weapon);
+                var needsTarget =  (!weapon.Target.HasTarget || Session.I.Tick - weapon.Target.ChangeTick <= 30) && comp.MasterOverrides.Grids && (comp.DetectOtherSignals && comp.MasterAi.DetectionInfo.OtherInRange || comp.MasterAi.DetectionInfo.PriorityInRange) && report && comp.Data.Repo.Values.Set.ReportTarget && delayNoTarget && comp.MasterAi.DetectionInfo.TargetInRange(weapon);
                 var showReloadIcon = (weapon.Loading || weapon.Reload.WaitForClient || s.Tick - weapon.LastLoadedTick < 60);
                 
                 string noTagetReason;
@@ -317,7 +317,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
             int heatBarIndex;
             if (weapon.PartState.Overheated)
             {
-                var index = _session.SCount < 30 ? 1 : 2;
+                var index = Session.I.SCount < 30 ? 1 : 2;
                 heatBarIndex = HeatBarTexture.Length - 2;
             }
             else
@@ -365,7 +365,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
                 stackedInfo.CachedReloadTexture.P2 = texture[stackedInfo.ReloadIndex].P2;
                 stackedInfo.CachedReloadTexture.P3 = texture[stackedInfo.ReloadIndex].P3;
 
-                if (!mustCharge && _session.Tick10 && ++stackedInfo.ReloadIndex > texture.Length - 1)
+                if (!mustCharge && Session.I.Tick10 && ++stackedInfo.ReloadIndex > texture.Length - 1)
                     stackedInfo.ReloadIndex = 0;
 
                 if (reset)

@@ -26,7 +26,7 @@ namespace CoreSystems.Platform
                 ProtoControlRepo load = null;
                 string rawData;
                 bool validData = false;
-                if (Comp.CoreEntity.Storage.TryGetValue(Comp.Session.CompDataGuid, out rawData))
+                if (Comp.CoreEntity.Storage.TryGetValue(Session.I.CompDataGuid, out rawData))
                 {
                     try
                     {
@@ -88,7 +88,7 @@ namespace CoreSystems.Platform
         {
             fakeTargetInfo = null;
             Ai.FakeTargets fakeTargets;
-            if (Comp.Session.PlayerDummyTargets.TryGetValue(playerId, out fakeTargets))
+            if (Session.I.PlayerDummyTargets.TryGetValue(playerId, out fakeTargets))
             {
                 var validManual = Comp.Data.Repo.Values.Set.Overrides.Control == ProtoWeaponOverrides.ControlModes.Manual && Comp.Data.Repo.Values.State.TrackingReticle && fakeTargets.ManualTarget.FakeInfo.WorldPosition != Vector3D.Zero;
                 var validPainter = Comp.Data.Repo.Values.Set.Overrides.Control == ProtoWeaponOverrides.ControlModes.Painter && fakeTargets.PaintedTarget.LocalPosition != Vector3D.Zero;
@@ -96,7 +96,7 @@ namespace CoreSystems.Platform
                 if (fakeTarget == null)
                     return false;
 
-                fakeTargetInfo = fakeTarget.LastInfoTick != Comp.Session.Tick ? fakeTarget.GetFakeTargetInfo(Comp.Ai) : fakeTarget.FakeInfo;
+                fakeTargetInfo = fakeTarget.LastInfoTick != Session.I.Tick ? fakeTarget.GetFakeTargetInfo(Comp.Ai) : fakeTarget.FakeInfo;
             }
 
             return fakeTargetInfo != null;

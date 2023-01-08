@@ -33,8 +33,8 @@ namespace CoreSystems.Support
             TopEntityVolume = TopEntity.PositionComp.WorldVolume;
             ScanVolume = TopEntityVolume;
             ScanVolume.Radius = MaxTargetingRange;
-            Session.DbsToUpdate.Add(new DbScan {Ai = this, Version = Version});
-            TargetsUpdatedTick = Session.Tick;
+            Session.I.DbsToUpdate.Add(new DbScan {Ai = this, Version = Version});
+            TargetsUpdatedTick = Session.I.Tick;
         }
 
         internal void Scan()
@@ -62,7 +62,7 @@ namespace CoreSystems.Support
                         if (AiType == AiTypes.Grid && GridEntity.IsSameConstructAs(grid))
                             continue;
 
-                        if (!Session.TopEntityToInfoMap.TryGetValue(grid, out topMap) || topMap.Trash && topMap.GroupMap?.Construct.Count <= 1)
+                        if (!Session.I.TopEntityToInfoMap.TryGetValue(grid, out topMap) || topMap.Trash && topMap.GroupMap?.Construct.Count <= 1)
                             continue;
                     }
 
@@ -89,14 +89,14 @@ namespace CoreSystems.Support
                         if (fatCount <= 0)
                             continue;
 
-                        if (Session.Tick - topMap.PowerCheckTick > 600)
-                            Session.CheckGridPowerState(grid, topMap);
+                        if (Session.I.Tick - topMap.PowerCheckTick > 600)
+                            Session.I.CheckGridPowerState(grid, topMap);
 
                         var loneWarhead = topMap.Warheads && fatCount == 1;
 
                         int partCount;
                         Ai targetAi;
-                        if (Session.EntityAIs.TryGetValue(grid, out targetAi))
+                        if (Session.I.EntityAIs.TryGetValue(grid, out targetAi))
                         {
                             targetAi.TargetAisTmp.Add(this);
                             TargetAisTmp.Add(targetAi);
@@ -105,10 +105,10 @@ namespace CoreSystems.Support
                         else
                             partCount = topMap.MostBlocks;
 
-                        NewEntities.Add(new DetectInfo(Session, ent, entInfo, partCount, !loneWarhead ? fatCount : 2, topMap.SuspectedDrone, loneWarhead));// bump warhead to 2 fatblocks so its not ignored by targeting
+                        NewEntities.Add(new DetectInfo(ent, entInfo, partCount, !loneWarhead ? fatCount : 2, topMap.SuspectedDrone, loneWarhead));// bump warhead to 2 fatblocks so its not ignored by targeting
                         ValidGrids.Add(ent);
                     }
-                    else NewEntities.Add(new DetectInfo(Session, ent, entInfo, 1, 0, false, false));
+                    else NewEntities.Add(new DetectInfo( ent, entInfo, 1, 0, false, false));
                 }
             }
             FinalizeTargetDb();
@@ -128,9 +128,9 @@ namespace CoreSystems.Support
                         if (ent is MyFloatingObject || ent.MarkedForClose || !ent.InScene)
                             continue;
 
-                        if (Session.ShieldApiLoaded && ent.DefinitionId?.SubtypeId == Session.ShieldHash && ent.Render.Visible)
+                        if (Session.I.ShieldApiLoaded && ent.DefinitionId?.SubtypeId == Session.I.ShieldHash && ent.Render.Visible)
                         {
-                            var shieldblock = Session.SApi.MatchEntToShieldFast(ent, false);
+                            var shieldblock = Session.I.SApi.MatchEntToShieldFast(ent, false);
                             if (shieldblock != null)
                                 NearByShieldsTmp.Add(new Shields { Id = ent.Hierarchy.ChildId, ShieldEnt = ent, ShieldBlock = (MyCubeBlock)shieldblock });
                         }
@@ -147,12 +147,12 @@ namespace CoreSystems.Support
                             StaticsInRangeTmp.Add(ent);
 
                         TopMap map;
-                        if (grid != null && AiType != AiTypes.Phantom && (TopEntityMap.GroupMap.Construct.ContainsKey(grid) || ValidGrids.Contains(ent) || grid.PositionComp.LocalVolume.Radius <= 7.5 || Session.TopEntityToInfoMap.TryGetValue(grid, out map) && map.Trash && map.GroupMap?.Construct.Count <= 1)) continue;
+                        if (grid != null && AiType != AiTypes.Phantom && (TopEntityMap.GroupMap.Construct.ContainsKey(grid) || ValidGrids.Contains(ent) || grid.PositionComp.LocalVolume.Radius <= 7.5 || Session.I.TopEntityToInfoMap.TryGetValue(grid, out map) && map.Trash && map.GroupMap?.Construct.Count <= 1)) continue;
 
                         Sandbox.ModAPI.Ingame.MyDetectedEntityInfo entInfo;
                         if (CreateEntInfo(ent, AiOwner, out entInfo))
                         {
-                            ObstructionsTmp.Add(new DetectInfo(Session, ent, entInfo, 2, 2, false, false));
+                            ObstructionsTmp.Add(new DetectInfo(ent, entInfo, 2, 2, false, false));
                         }
                     }
                 }
@@ -163,7 +163,7 @@ namespace CoreSystems.Support
             {
                 Sandbox.ModAPI.Ingame.MyDetectedEntityInfo entInfo;
                 if (CreateEntInfo(MyPlanetTmp, AiOwner, out entInfo))
-                    ObstructionsTmp.Add(new DetectInfo(Session, MyPlanetTmp, entInfo, 2, 2, false, false));
+                    ObstructionsTmp.Add(new DetectInfo(MyPlanetTmp, entInfo, 2, 2, false, false));
             }
 
             ValidGrids.Clear();
@@ -186,7 +186,7 @@ namespace CoreSystems.Support
                     if (shield.Id == TopEntity.EntityId || AiType == AiTypes.Grid && GridEntity.IsSameConstructAs(shieldGrid))  {
                         ShieldBlock = shield.ShieldBlock as IMyTerminalBlock;
                         MyShield = shield.ShieldEnt;
-                        ShieldFortified = Session.SApi.IsFortified(ShieldBlock);
+                        ShieldFortified = Session.I.SApi.IsFortified(ShieldBlock);
                     }
                     else {
                         TargetInfo info;
@@ -230,7 +230,7 @@ namespace CoreSystems.Support
                     if (pointDistSqr < 0) pointDistSqr = 0;
                     ClosestPlanetSqr = pointDistSqr;
                     PlanetSurfaceInRange = pointDistSqr <= MaxTargetingRangeSqr;
-                    TouchingWater = Session.WaterApiLoaded && GridTouchingWater();
+                    TouchingWater = Session.I.WaterApiLoaded && GridTouchingWater();
                 }
                 else {
                     InPlanetGravity = false;
@@ -257,7 +257,7 @@ namespace CoreSystems.Support
         private bool GridTouchingWater()
         {
             WaterData water;
-            if (Session.WaterMap.TryGetValue(MyPlanet.EntityId, out water)) {
+            if (Session.I.WaterMap.TryGetValue(MyPlanet.EntityId, out water)) {
                 WaterVolume = new BoundingSphereD(MyPlanet.PositionComp.WorldAABB.Center, water.Radius + water.WaveHeight);
                 return new MyOrientedBoundingBoxD(TopEntity.PositionComp.LocalAABB, TopEntity.PositionComp.WorldMatrixRef).Intersects(ref WaterVolume);
             }
@@ -384,7 +384,7 @@ namespace CoreSystems.Support
 
                     relationship = topOwner != long.MaxValue ? MyIDModule.GetRelationPlayerBlock(gridOwner, topOwner, MyOwnershipShareModeEnum.Faction) : MyRelationsBetweenPlayerAndBlock.NoOwnership;
                     var type = grid.GridSizeEnum != MyCubeSize.Small ? Sandbox.ModAPI.Ingame.MyDetectedEntityType.LargeGrid : Sandbox.ModAPI.Ingame.MyDetectedEntityType.SmallGrid;
-                    entInfo = new Sandbox.ModAPI.Ingame.MyDetectedEntityInfo(grid.EntityId, string.Empty, type, null, MatrixD.Zero, Vector3.Zero, relationship, new BoundingBoxD(), Session.Tick);
+                    entInfo = new Sandbox.ModAPI.Ingame.MyDetectedEntityInfo(grid.EntityId, string.Empty, type, null, MatrixD.Zero, Vector3.Zero, relationship, new BoundingBoxD(), Session.I.Tick);
                     return true;
                 }
 
@@ -405,7 +405,7 @@ namespace CoreSystems.Support
                     }
                     
                     relationship = MyIDModule.GetRelationPlayerBlock(gridOwner, playerId, MyOwnershipShareModeEnum.Faction);
-                    entInfo = new Sandbox.ModAPI.Ingame.MyDetectedEntityInfo(entity.EntityId, string.Empty, type, null, MatrixD.Zero, Vector3.Zero, relationship, new BoundingBoxD(), Session.Tick);
+                    entInfo = new Sandbox.ModAPI.Ingame.MyDetectedEntityInfo(entity.EntityId, string.Empty, type, null, MatrixD.Zero, Vector3.Zero, relationship, new BoundingBoxD(), Session.I.Tick);
                     
                     return !myCharacter.IsDead && myCharacter.Integrity > 0;
                 }
@@ -415,19 +415,19 @@ namespace CoreSystems.Support
                 if (myPlanet != null)
                 {
                     const Sandbox.ModAPI.Ingame.MyDetectedEntityType type = Sandbox.ModAPI.Ingame.MyDetectedEntityType.Planet;
-                    entInfo = new Sandbox.ModAPI.Ingame.MyDetectedEntityInfo(entity.EntityId, string.Empty, type, null, MatrixD.Zero, Vector3.Zero, relationship, new BoundingBoxD(), Session.Tick);
+                    entInfo = new Sandbox.ModAPI.Ingame.MyDetectedEntityInfo(entity.EntityId, string.Empty, type, null, MatrixD.Zero, Vector3.Zero, relationship, new BoundingBoxD(), Session.I.Tick);
                     return true;
                 }
                 if (entity is MyVoxelMap)
                 {
                     const Sandbox.ModAPI.Ingame.MyDetectedEntityType type = Sandbox.ModAPI.Ingame.MyDetectedEntityType.Asteroid;
-                    entInfo = new Sandbox.ModAPI.Ingame.MyDetectedEntityInfo(entity.EntityId, string.Empty, type, null, MatrixD.Zero, Vector3.Zero, relationship, new BoundingBoxD(), Session.Tick);
+                    entInfo = new Sandbox.ModAPI.Ingame.MyDetectedEntityInfo(entity.EntityId, string.Empty, type, null, MatrixD.Zero, Vector3.Zero, relationship, new BoundingBoxD(), Session.I.Tick);
                     return true;
                 }
                 if (entity is MyMeteor)
                 {
                     const Sandbox.ModAPI.Ingame.MyDetectedEntityType type = Sandbox.ModAPI.Ingame.MyDetectedEntityType.Meteor;
-                    entInfo = new Sandbox.ModAPI.Ingame.MyDetectedEntityInfo(entity.EntityId, string.Empty, type, null, MatrixD.Zero, Vector3.Zero, MyRelationsBetweenPlayerAndBlock.Enemies, new BoundingBoxD(), Session.Tick);
+                    entInfo = new Sandbox.ModAPI.Ingame.MyDetectedEntityInfo(entity.EntityId, string.Empty, type, null, MatrixD.Zero, Vector3.Zero, MyRelationsBetweenPlayerAndBlock.Enemies, new BoundingBoxD(), Session.I.Tick);
                     return true;
                 }
             }

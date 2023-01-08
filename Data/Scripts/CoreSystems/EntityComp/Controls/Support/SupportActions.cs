@@ -16,7 +16,7 @@ namespace CoreSystems.Control
             var newBool = !comp.Data.Repo.Values.Set.Overrides.ArmorShowArea;
             var newValue = newBool ? 1 : 0;
 
-            SupportSys.SupportComponent.RequestSetValue(comp, "ArmorShowArea", newValue, comp.Session.PlayerId);
+            SupportSys.SupportComponent.RequestSetValue(comp, "ArmorShowArea", newValue, Session.I.PlayerId);
         }
 
         #endregion

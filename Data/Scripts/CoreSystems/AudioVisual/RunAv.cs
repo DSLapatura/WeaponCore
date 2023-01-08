@@ -46,8 +46,6 @@ namespace CoreSystems.Support
         internal readonly List<MyBillboard> BillBoardsToAdd = new List<MyBillboard>();
         internal readonly List<MyBillboard> BillBoardsToRemove = new List<MyBillboard>();
 
-        internal Session Session;
-
         internal int ExplosionCounter;
         internal int MaxExplosions = 100;
         internal int NearBillBoardLimit;
@@ -66,9 +64,8 @@ namespace CoreSystems.Support
             }
         }
 
-        internal RunAv(Session session)
+        internal RunAv()
         {
-            Session = session;
             for (int i = 0; i < AvShotCoolDown.Length; i++)
                 AvShotCoolDown[i] = new List<AvShot>();
 
@@ -85,12 +82,12 @@ namespace CoreSystems.Support
         {
             if (Effects1.Count > 0) RunAvEffects1();
             if (Effects2.Count > 0) RunAvEffects2();
-            if (ParticlesToProcess.Count > 0) Session.ProcessParticles();
+            if (ParticlesToProcess.Count > 0) Session.I.ProcessParticles();
 
             for (int i = AvShots.Count - 1; i >= 0; i--)
             {
                 var av = AvShots[i];
-                var refreshed = av.LastTick == Session.Tick && !av.MarkForClose;
+                var refreshed = av.LastTick == Session.I.Tick && !av.MarkForClose;
                 if (refreshed)
                 {
                     if (av.PrimeEntity != null)
@@ -132,7 +129,7 @@ namespace CoreSystems.Support
                         if (!av.TravelSound)
                         {
                             double distSqr;
-                            Vector3D.DistanceSquared(ref av.TracerFront, ref Session.CameraPos, out distSqr);
+                            Vector3D.DistanceSquared(ref av.TracerFront, ref Session.I.CameraPos, out distSqr);
                             if (distSqr <= av.AmmoDef.Const.AmmoTravelSoundDistSqr && av.AccelClearance)
                                 av.TravelSoundStart();
                         }
@@ -144,7 +141,7 @@ namespace CoreSystems.Support
                         av.HitParticle = AvShot.ParticleState.Dirty;
                         if (av.OnScreen != AvShot.Screen.None)
                         {
-                            var pos = Session.Tick - av.Hit.HitTick <= 1 && !MyUtils.IsZero(av.Hit.SurfaceHit) ? av.Hit.SurfaceHit : av.TracerFront;
+                            var pos = Session.I.Tick - av.Hit.HitTick <= 1 && !MyUtils.IsZero(av.Hit.SurfaceHit) ? av.Hit.SurfaceHit : av.TracerFront;
                             var particle = av.AmmoDef.AmmoGraphics.Particles.Hit;
                             var keenStrikesAgain = particle.Offset == Vector3D.MaxValue;
                             var matrix = !keenStrikesAgain ? MatrixD.CreateTranslation(pos) : MatrixD.CreateWorld(pos, av.VisualDir, av.OriginUp);
@@ -231,7 +228,7 @@ namespace CoreSystems.Support
                 if (ActiveBillBoards.Count > 0 || PreAddPersistent.Count > 0)
                 MyTransparentGeometry.ApplyActionOnPersistentBillboards(UpdatePersistentQuads);
 
-                if (Session.Tick10 && Session.DebugMod && false)
+                if (Session.I.Tick10 && Session.I.DebugMod && false)
                 {
                     var os = 0;
                     var m = 0;
@@ -255,16 +252,16 @@ namespace CoreSystems.Support
                         if (a.TrailSteps.Count > 0)
                             t++;
                     }
-                    Session.ShowLocalNotify($"cacheRemaining:{QuadCachePool.Count} - onScreen:{_onScreens}({os})[{p}] - hasTrail:{t} - dirty:{d} - marked:{m}", 160);
+                    Session.I.ShowLocalNotify($"cacheRemaining:{QuadCachePool.Count} - onScreen:{_onScreens}({os})[{p}] - hasTrail:{t} - dirty:{d} - marked:{m}", 160);
 
                 }
         }
 
         internal void Run()
         {
-            if (Session.Tick180)
+            if (Session.I.Tick180)
             {
-                Log.LineShortDate($"(DRAWS) --------------- AvShots:[{AvShots.Count}] OnScreen:[{_onScreens}] Shrinks:[{_shrinks}] Glows:[{_previousTrailCount}] Models:[{_models}] P:[{Session.Projectiles.ActiveProjetiles.Count}] P-Pool:[{Session.Projectiles.ProjectilePool.Count}] AvPool:[{AvShotPool.Count}] (AvBarrels 1:[{Effects1.Count}] 2:[{Effects2.Count}])", "stats");
+                Log.LineShortDate($"(DRAWS) --------------- AvShots:[{AvShots.Count}] OnScreen:[{_onScreens}] Shrinks:[{_shrinks}] Glows:[{_previousTrailCount}] Models:[{_models}] P:[{Session.I.Projectiles.ActiveProjetiles.Count}] P-Pool:[{Session.I.Projectiles.ProjectilePool.Count}] AvPool:[{AvShotPool.Count}] (AvBarrels 1:[{Effects1.Count}] 2:[{Effects2.Count}])", "stats");
                 _previousTrailCount = 0;
                 _shrinks = 0;
             }
@@ -274,7 +271,7 @@ namespace CoreSystems.Support
             {
                 var av = AvShots[i];
                 if (av.OnScreen != AvShot.Screen.None && av.OnScreen != AvShot.Screen.ProxyDraw) _onScreens++;
-                var refreshed = av.LastTick == Session.Tick;
+                var refreshed = av.LastTick == Session.I.Tick;
                 var aConst = av.AmmoDef.Const;
                 var overDrawLimit = PreAddOneFrame.Count > 32000;
                 if (overDrawLimit && av.Offsets?.Count > 0)
@@ -353,7 +350,7 @@ namespace CoreSystems.Support
                                         Vector4 dyncColor;
                                         if (!gap)
                                         {
-                                            rawLen = first ? av.SegmentLenTranserved * Session.ClientAvDivisor : seg.SegmentLength * Session.ClientAvDivisor;
+                                            rawLen = first ? av.SegmentLenTranserved * Session.I.ClientAvDivisor : seg.SegmentLength * Session.I.ClientAvDivisor;
                                             if (rawLen <= 0)
                                                 break;
                                             width = av.SegmentWidth;
@@ -361,7 +358,7 @@ namespace CoreSystems.Support
                                         }
                                         else
                                         {
-                                            rawLen = first ? av.SegmentLenTranserved * Session.ClientAvDivisor : seg.SegmentGap * Session.ClientAvDivisor;
+                                            rawLen = first ? av.SegmentLenTranserved * Session.I.ClientAvDivisor : seg.SegmentGap * Session.I.ClientAvDivisor;
                                             if (rawLen <= 0)
                                                 break;
                                             width = av.TracerWidth;
@@ -529,7 +526,7 @@ namespace CoreSystems.Support
         private void RunShrinks(AvShot av, bool overDrawLimit)
         {
             var s = av.TracerShrinks.Dequeue();
-            if (av.LastTick != Session.Tick)
+            if (av.LastTick != Session.I.Tick)
             {
                 if (av.OnScreen != AvShot.Screen.ProxyDraw && s.Length >= 0.1)
                 {
@@ -596,7 +593,7 @@ namespace CoreSystems.Support
                 var b = q.BillBoard;
                 var a = q.Shot;
 
-                var cameraPosition = Session.CameraPos;
+                var cameraPosition = Session.I.CameraPos;
                 if (Vector3D.IsZero(cameraPosition - q.StartPos, 1E-06))
                     return;
 
@@ -630,7 +627,7 @@ namespace CoreSystems.Support
                 b.BlendType = BlendTypeEnum.Standard;
 
                 --a.ActiveBillBoards;
-                QuadCacheCoolDown[Session.Tick % QuadCacheCoolDown.Length].Add(q);
+                QuadCacheCoolDown[Session.I.Tick % QuadCacheCoolDown.Length].Add(q);
                 q.Shot = null;
                 BillBoardsToAdd.Add(b);
             }
@@ -660,7 +657,7 @@ namespace CoreSystems.Support
 
                 q.Updated = true;
 
-                var cameraPosition = Session.CameraPos;
+                var cameraPosition = Session.I.CameraPos;
                 if (Vector3D.IsZero(cameraPosition - q.StartPos, 1E-06))
                     return;
 
@@ -728,7 +725,7 @@ namespace CoreSystems.Support
                             break;
                         default:
                             q.LifeTime = 0;
-                            QuadPersistentCacheCoolDown[Session.Tick % QuadPersistentCacheCoolDown.Length].Add(q);
+                            QuadPersistentCacheCoolDown[Session.I.Tick % QuadPersistentCacheCoolDown.Length].Add(q);
                             q.LifeTime = int.MaxValue;
                             q.Added = false;
                             q.MarkedForCloseIn = int.MaxValue;
@@ -743,7 +740,7 @@ namespace CoreSystems.Support
                 
                 q.Updated = false;
 
-                var cameraPosition = Session.CameraPos;
+                var cameraPosition = Session.I.CameraPos;
                 if (Vector3D.IsZero(cameraPosition - q.StartPos, 1E-06))
                     return;
 
@@ -792,16 +789,16 @@ namespace CoreSystems.Support
                 var avEffect = Effects1[i];
                 var weapon = avEffect.Weapon;
                 var muzzle = avEffect.Muzzle;
-                var ticksAgo = weapon.Comp.Session.Tick - avEffect.StartTick;
+                var ticksAgo = Session.I.Tick - avEffect.StartTick;
                 var bAv = weapon.System.Values.HardPoint.Graphics.Effect1;
                 var effect = weapon.Effects1[muzzle.MuzzleId];
 
                 var effectExists = effect != null;
-                if (effectExists && avEffect.EndTick == 0 && weapon.StopBarrelAvTick >= Session.Tick - 1)
+                if (effectExists && avEffect.EndTick == 0 && weapon.StopBarrelAvTick >= Session.I.Tick - 1)
                     avEffect.EndTick = weapon.StopBarrelAvTick;
 
                 var info = weapon.Dummies[muzzle.MuzzleId].Info;
-                var somethingEnded = avEffect.EndTick != 0 && avEffect.EndTick <= Session.Tick || !weapon.PlayTurretAv || info.Entity == null || info.Entity.MarkedForClose || weapon.Comp.Ai == null || weapon.MuzzlePart.Entity?.Parent == null && weapon.Comp.GunBase == null || weapon.Comp.CoreEntity.MarkedForClose || weapon.MuzzlePart.Entity == null || weapon.MuzzlePart.Entity.MarkedForClose;
+                var somethingEnded = avEffect.EndTick != 0 && avEffect.EndTick <= Session.I.Tick || !weapon.PlayTurretAv || info.Entity == null || info.Entity.MarkedForClose || weapon.Comp.Ai == null || weapon.MuzzlePart.Entity?.Parent == null && weapon.Comp.GunBase == null || weapon.Comp.CoreEntity.MarkedForClose || weapon.MuzzlePart.Entity == null || weapon.MuzzlePart.Entity.MarkedForClose;
 
                 var effectStale = effectExists && (effect.IsEmittingStopped || effect.IsStopped) || !effectExists && ticksAgo > 0;
                 if (effectStale || somethingEnded || !weapon.Comp.IsWorking)
@@ -818,12 +815,12 @@ namespace CoreSystems.Support
                     continue;
                 }
 
-                if (weapon.Comp.Ai.VelocityUpdateTick != weapon.Comp.Session.Tick)
+                if (weapon.Comp.Ai.VelocityUpdateTick != Session.I.Tick)
                 {
                     weapon.Comp.Ai.TopEntityVolume.Center = weapon.Comp.TopEntity.PositionComp.WorldVolume.Center;
                     weapon.Comp.Ai.TopEntityVel = weapon.Comp.TopEntity.Physics?.LinearVelocity ?? Vector3D.Zero;
                     weapon.Comp.Ai.IsStatic = weapon.Comp.TopEntity.Physics?.IsStatic ?? false;
-                    weapon.Comp.Ai.VelocityUpdateTick = weapon.Comp.Session.Tick;
+                    weapon.Comp.Ai.VelocityUpdateTick = Session.I.Tick;
                 }
 
 
@@ -867,16 +864,16 @@ namespace CoreSystems.Support
                 var av = Effects2[i];
                 var weapon = av.Weapon;
                 var muzzle = av.Muzzle;
-                var ticksAgo = weapon.Comp.Session.Tick - av.StartTick;
+                var ticksAgo = Session.I.Tick - av.StartTick;
                 var bAv = weapon.System.Values.HardPoint.Graphics.Effect2;
 
                 var effect = weapon.Effects2[muzzle.MuzzleId];
                 var effectExists = effect != null;
-                if (effectExists && av.EndTick == 0 && weapon.StopBarrelAvTick >= Session.Tick - 1)
+                if (effectExists && av.EndTick == 0 && weapon.StopBarrelAvTick >= Session.I.Tick - 1)
                     av.EndTick = weapon.StopBarrelAvTick;
 
                 var info = weapon.Dummies[muzzle.MuzzleId].Info;
-                var somethingEnded = av.EndTick != 0 && av.EndTick <= Session.Tick || !weapon.PlayTurretAv || info.Entity == null || info.Entity.MarkedForClose || weapon.Comp.Ai == null || weapon.MuzzlePart.Entity?.Parent == null && weapon.Comp.GunBase == null || weapon.Comp.CoreEntity.MarkedForClose || weapon.MuzzlePart.Entity == null || weapon.MuzzlePart.Entity.MarkedForClose;
+                var somethingEnded = av.EndTick != 0 && av.EndTick <= Session.I.Tick || !weapon.PlayTurretAv || info.Entity == null || info.Entity.MarkedForClose || weapon.Comp.Ai == null || weapon.MuzzlePart.Entity?.Parent == null && weapon.Comp.GunBase == null || weapon.Comp.CoreEntity.MarkedForClose || weapon.MuzzlePart.Entity == null || weapon.MuzzlePart.Entity.MarkedForClose;
 
                 var effectStale = effectExists && (effect.IsEmittingStopped || effect.IsStopped) || !effectExists && ticksAgo > 0;
 
@@ -894,12 +891,12 @@ namespace CoreSystems.Support
                     continue;
                 }
 
-                if (weapon.Comp.Ai.VelocityUpdateTick != weapon.Comp.Session.Tick)
+                if (weapon.Comp.Ai.VelocityUpdateTick != Session.I.Tick)
                 {
                     weapon.Comp.Ai.TopEntityVolume.Center = weapon.Comp.TopEntity.PositionComp.WorldVolume.Center;
                     weapon.Comp.Ai.TopEntityVel = weapon.Comp.TopEntity.Physics?.LinearVelocity ?? Vector3D.Zero;
                     weapon.Comp.Ai.IsStatic = weapon.Comp.TopEntity.Physics?.IsStatic ?? false;
-                    weapon.Comp.Ai.VelocityUpdateTick = weapon.Comp.Session.Tick;
+                    weapon.Comp.Ai.VelocityUpdateTick = Session.I.Tick;
                 }
 
                 var particles = weapon.System.Values.HardPoint.Graphics.Effect2;
@@ -940,13 +937,13 @@ namespace CoreSystems.Support
 
         internal void AvShotCleanUp()
         {
-            var avShotCollection = AvShotCoolDown[Session.Tick % AvShotCoolDown.Length];
+            var avShotCollection = AvShotCoolDown[Session.I.Tick % AvShotCoolDown.Length];
 
             for (int i = 0; i < avShotCollection.Count; i++)
                 AvShotPool.Push(avShotCollection[i]);
             avShotCollection.Clear();
 
-            var quadCacheCollection = QuadCacheCoolDown[Session.Tick % QuadCacheCoolDown.Length];
+            var quadCacheCollection = QuadCacheCoolDown[Session.I.Tick % QuadCacheCoolDown.Length];
 
             for (int i = 0; i < quadCacheCollection.Count; i++)
                 QuadCachePool.Push(quadCacheCollection[i]);
@@ -955,7 +952,7 @@ namespace CoreSystems.Support
 
         internal void Clean()
         {
-            foreach (var p in Session.Projectiles.ProjectilePool)
+            foreach (var p in Session.I.Projectiles.ProjectilePool)
                 p.Info?.AvShot?.AmmoEffect?.Stop();
 
             foreach (var av in AvShots)

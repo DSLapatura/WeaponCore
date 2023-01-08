@@ -18,7 +18,7 @@ namespace CoreSystems.Support
                 ++SceneVersion;
                 base.OnAddedToContainer();
                 if (Container.Entity.InScene) {
-                    LastAddToScene = Session.Tick;
+                    LastAddToScene = Session.I.Tick;
                     if (Platform.State == CorePlatform.PlatformState.Fresh)
                         PlatformInit();
                 }
@@ -68,7 +68,7 @@ namespace CoreSystems.Support
                     Platform.PlatformCrash(this, false, true, $"Something went wrong with Platform PreInit: {SubtypeName}");
                     break;
                 case CorePlatform.PlatformState.Delay:
-                    Session.CompsDelayedInit.Add(this);
+                    Session.I.CompsDelayedInit.Add(this);
                     break;
                 case CorePlatform.PlatformState.Inited:
                     Init();
@@ -96,10 +96,10 @@ namespace CoreSystems.Support
                     Entity.NeedsWorldMatrix = NeedsWorldMatrix;
                     WorldMatrixEnabled = NeedsWorldMatrix;
 
-                    if (IsBlock && !Ai.Session.TopEntityToInfoMap.ContainsKey(Ai.TopEntity))
+                    if (IsBlock && !Session.I.TopEntityToInfoMap.ContainsKey(Ai.TopEntity))
                     {
                         Log.Line($"WeaponComp Init did not have GridToInfoMap");
-                        Session.CompReAdds.Add(new CompReAdd { Ai = Ai, AiVersion = Ai.Version, AddTick = Ai.Session.Tick, Comp = this });
+                        Session.I.CompReAdds.Add(new CompReAdd { Ai = Ai, AiVersion = Ai.Version, AddTick = Session.I.Tick, Comp = this });
                     }
                     else OnAddedToSceneTasks(true);
 
@@ -122,12 +122,12 @@ namespace CoreSystems.Support
                     {
                         TopEntity = GetTopEntity();
                         TopMap topMap;
-                        if (checkMap && (!Session.TopEntityToInfoMap.TryGetValue(TopEntity, out topMap) || topMap.GroupMap == null)) {
+                        if (checkMap && (!Session.I.TopEntityToInfoMap.TryGetValue(TopEntity, out topMap) || topMap.GroupMap == null)) {
                             
                             if (!InReInit)
-                                Session.CompsDelayedReInit.Add(this);
-                            
-                            Session.ReInitTick = Session.Tick;
+                                Session.I.CompsDelayedReInit.Add(this);
+
+                            Session.I.ReInitTick = Session.I.Tick;
                             InReInit = true;
                             return;
                         }
@@ -137,11 +137,11 @@ namespace CoreSystems.Support
                     }
 
                     Ai ai;
-                    if (!Session.EntityAIs.TryGetValue(TopEntity, out ai)) {
+                    if (!Session.I.EntityAIs.TryGetValue(TopEntity, out ai)) {
 
-                        var newAi = Session.AiPool.Count > 0 ? Session.AiPool.Pop() : new Ai(Session);
-                        newAi.Init(TopEntity, Session, TypeSpecific);
-                        Session.EntityAIs[TopEntity] = newAi;
+                        var newAi = Session.I.AiPool.Count > 0 ? Session.I.AiPool.Pop() : new Ai();
+                        newAi.Init(TopEntity, TypeSpecific);
+                        Session.I.EntityAIs[TopEntity] = newAi;
                         Ai = newAi;
                     }
                     else {
@@ -159,7 +159,7 @@ namespace CoreSystems.Support
 
                         // ReInit Counters
                         if (!Ai.PartCounting.ContainsKey(SubTypeId)) // Need to account for reinit case
-                            Ai.PartCounting[SubTypeId] = Session.PartCountPool.Get();
+                            Ai.PartCounting[SubTypeId] = Session.I.PartCountPool.Get();
 
                         var pCounter = Ai.PartCounting[SubTypeId];
                         pCounter.Max = Platform.Structure.ConstructPartCap;
@@ -176,7 +176,7 @@ namespace CoreSystems.Support
                     }
                 }
                 else {
-                    Log.Line($"BaseComp ReInit() failed stage1! - marked:{CoreEntity.MarkedForClose} - Entity:{Entity != null} - hasAi:{Session.EntityAIs.ContainsKey(TopEntity)}");
+                    Log.Line($"BaseComp ReInit() failed stage1! - marked:{CoreEntity.MarkedForClose} - Entity:{Entity != null} - hasAi:{Session.I.EntityAIs.ContainsKey(TopEntity)}");
                 }
             }
         }
@@ -186,7 +186,7 @@ namespace CoreSystems.Support
             try {
 
                 if (Ai.MarkedForClose || CoreEntity.MarkedForClose)
-                    Log.Line($"OnAddedToSceneTasks and AI/CoreEntity MarkedForClose - Subtype:{SubtypeName} - grid:{TopEntity.DebugName} - CubeMarked:{CoreEntity.MarkedForClose} - CubeClosed:{CoreEntity.Closed} - CubeInScene:{CoreEntity.InScene} - GridMarked:{TopEntity.MarkedForClose}({CoreEntity.GetTopMostParent()?.MarkedForClose ?? true}) - GridMatch:{TopEntity == Ai.TopEntity} - AiContainsMe:{Ai.CompBase.ContainsKey(CoreEntity)} - MyGridInAi:{Ai.Session.EntityToMasterAi.ContainsKey(TopEntity)}[{Ai.Session.EntityAIs.ContainsKey(TopEntity)}]");
+                    Log.Line($"OnAddedToSceneTasks and AI/CoreEntity MarkedForClose - Subtype:{SubtypeName} - grid:{TopEntity.DebugName} - CubeMarked:{CoreEntity.MarkedForClose} - CubeClosed:{CoreEntity.Closed} - CubeInScene:{CoreEntity.InScene} - GridMarked:{TopEntity.MarkedForClose}({CoreEntity.GetTopMostParent()?.MarkedForClose ?? true}) - GridMatch:{TopEntity == Ai.TopEntity} - AiContainsMe:{Ai.CompBase.ContainsKey(CoreEntity)} - MyGridInAi:{Session.I.EntityToMasterAi.ContainsKey(TopEntity)}[{Session.I.EntityAIs.ContainsKey(TopEntity)}]");
                 
                 Ai.UpdatePowerSources = true;
                 RegisterEvents();
@@ -195,7 +195,7 @@ namespace CoreSystems.Support
                     Ai.AiInit = true;
                     if (IsBlock)
                     {
-                        var fatList = Session.TopEntityToInfoMap[TopEntity].MyCubeBocks;
+                        var fatList = Session.I.TopEntityToInfoMap[TopEntity].MyCubeBocks;
 
                         for (int i = 0; i < fatList.Count; i++)
                         {
@@ -242,7 +242,7 @@ namespace CoreSystems.Support
                                 var rayBack = new RayD(scopeInfo.Position, -scopeInfo.Direction);
                                 weapon.ScopeDistToCheckPos = obb.Intersects(ref rayBack) ?? 0;
                             }
-                            Session.FutureEvents.Schedule(weapon.DelayedStart, FunctionalBlock.Enabled, 1);
+                            Session.I.FutureEvents.Schedule(weapon.DelayedStart, FunctionalBlock.Enabled, 1);
                         }
                     }
 
@@ -252,12 +252,12 @@ namespace CoreSystems.Support
                 else if (TypeSpecific == CompTypeSpecific.Rifle)
                 {
                     Ai.TopEntityMap.GroupMap.UpdateAis();
-                    Session.OnPlayerControl(null, CoreEntity);
+                    Session.I.OnPlayerControl(null, CoreEntity);
                 }
                 Status = !IsWorking ? Start.Starting : Start.ReInit;
             }
 
-            catch (Exception ex) { Log.Line($"Exception in OnAddedToSceneTasks: {ex} AiNull:{Ai == null} - SessionNull:{Session == null} EntNull{Entity == null} MyCubeNull:{TopEntity == null}", null, true); }
+            catch (Exception ex) { Log.Line($"Exception in OnAddedToSceneTasks: {ex} AiNull:{Ai == null}  EntNull{Entity == null} MyCubeNull:{TopEntity == null}", null, true); }
         }
 
         public override void OnRemovedFromScene()

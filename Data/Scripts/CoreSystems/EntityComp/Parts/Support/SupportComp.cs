@@ -13,11 +13,11 @@ namespace CoreSystems.Platform
             internal readonly SupportCompData Data;
             internal readonly SupportStructure Structure;
 
-            internal SupportComponent(Session session, MyEntity coreEntity, MyDefinitionId id)
+            internal SupportComponent(MyEntity coreEntity, MyDefinitionId id)
             {
                 //Bellow order is important
                 Data = new SupportCompData(this);
-                Init(session, coreEntity, true, Data, id);
+                Init(coreEntity, true, Data, id);
                 Structure = (SupportStructure)Platform.Structure;
             }
 
@@ -26,9 +26,9 @@ namespace CoreSystems.Platform
                 if (Platform.State != CorePlatform.PlatformState.Ready)
                     return;
 
-                if (Session.Tick - Ai.LastDetectEvent > 59)
+                if (Session.I.Tick - Ai.LastDetectEvent > 59)
                 {
-                    Ai.LastDetectEvent = Session.Tick;
+                    Ai.LastDetectEvent = Session.I.Tick;
                     Ai.SleepingComps = 0;
                     Ai.AwakeComps = 0;
                     Ai.DetectOtherSignals = false;
@@ -45,14 +45,14 @@ namespace CoreSystems.Platform
                 IsAsleep = false;
                 IsDisabled = false;
 
-                if (!Ai.Session.IsServer)
+                if (!Session.I.IsServer)
                     return;
 
                 var otherRangeSqr = Ai.DetectionInfo.OtherRangeSqr;
                 var priorityRangeSqr = Ai.DetectionInfo.PriorityRangeSqr;
                 var somethingInRange = DetectOtherSignals ? otherRangeSqr <= MaxDetectDistanceSqr && otherRangeSqr >= MinDetectDistanceSqr || priorityRangeSqr <= MaxDetectDistanceSqr && priorityRangeSqr >= MinDetectDistanceSqr : priorityRangeSqr <= MaxDetectDistanceSqr && priorityRangeSqr >= MinDetectDistanceSqr;
 
-                if (Ai.Session.Settings.Enforcement.ServerSleepSupport && !somethingInRange && PartTracking == 0 && Ai.Construct.RootAi.Construct.ControllingPlayers.Count <= 0 && Session.TerminalMon.Comp != this && Data.Repo.Values.State.Terminal == Trigger.Off)
+                if (Session.I.Settings.Enforcement.ServerSleepSupport && !somethingInRange && PartTracking == 0 && Ai.Construct.RootAi.Construct.ControllingPlayers.Count <= 0 && Session.I.TerminalMon.Comp != this && Data.Repo.Values.State.Terminal == Trigger.Off)
                 {
 
                     IsAsleep = true;
@@ -70,13 +70,13 @@ namespace CoreSystems.Platform
 
             internal static void RequestSetValue(SupportComponent comp, string setting, int value, long playerId)
             {
-                if (comp.Session.IsServer)
+                if (Session.I.IsServer)
                 {
                     SetValue(comp, setting, value, playerId);
                 }
-                else if (comp.Session.IsClient)
+                else if (Session.I.IsClient)
                 {
-                    comp.Session.SendOverRidesClientComp(comp, setting, value);
+                    Session.I.SendOverRidesClientComp(comp, setting, value);
                 }
             }
 
@@ -144,8 +144,8 @@ namespace CoreSystems.Platform
 
                 ResetCompState(comp, playerId, clearTargets);
 
-                if (comp.Session.MpActive)
-                    comp.Session.SendComp(comp);
+                if (Session.I.MpActive)
+                    Session.I.SendComp(comp);
             }
 
             internal static void ResetCompState(SupportComponent comp, long playerId, bool resetTarget, Dictionary<string, int> settings = null)

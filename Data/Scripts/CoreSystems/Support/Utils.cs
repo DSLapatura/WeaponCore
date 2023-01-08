@@ -1282,9 +1282,8 @@ namespace CoreSystems.Support
 
     internal class DSUtils
     {
-        internal DSUtils(Session session)
+        internal DSUtils()
         {
-            Session = session;
         }
         internal struct Results
         {

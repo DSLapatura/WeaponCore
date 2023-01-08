@@ -24,7 +24,7 @@ namespace CoreSystems.Platform
                 ProtoWeaponRepo load = null;
                 string rawData;
                 bool validData = false;
-                if (Comp.CoreEntity.Storage.TryGetValue(Comp.Session.CompDataGuid, out rawData))
+                if (Comp.CoreEntity.Storage.TryGetValue(Session.I.CompDataGuid, out rawData))
                 {
                     try
                     {
@@ -41,7 +41,7 @@ namespace CoreSystems.Platform
                 if (validData && load.Version == Session.VersionControl)
                 {
                     Repo = load;
-                    if (Comp.Session.IsServer)
+                    if (Session.I.IsServer)
                         Repo.Values.Targets = new ProtoWeaponTransferTarget[collection.Count];
                     
                     for (int i = 0; i < collection.Count; i++)
@@ -58,7 +58,7 @@ namespace CoreSystems.Platform
 
                         if (w.ProtoWeaponAmmo.CurrentAmmo > 0 && w.Reload.LifetimeLoads == 0) w.Reload.LifetimeLoads++; //If weapon is loaded on world init, start counter at 1
 
-                        if (Comp.Session.IsServer)
+                        if (Session.I.IsServer)
                         {
                             Repo.Values.Targets[i] = new ProtoWeaponTransferTarget();
                             w.TargetData = Repo.Values.Targets[i];
@@ -100,9 +100,9 @@ namespace CoreSystems.Platform
 
                     };
 
-                    if (Comp.Session.IsServer) {
+                    if (Session.I.IsServer) {
 
-                        if (Comp.Session.IsCreative) {
+                        if (Session.I.IsCreative) {
                             Repo.Values.Set.Overrides.Neutrals = true;
                             Repo.Values.Set.Overrides.Biologicals = false;
                         }
@@ -143,7 +143,7 @@ namespace CoreSystems.Platform
 
                     Repo.Values.Set.Range = -1;
 
-                    if (Comp.Session.IsClient)
+                    if (Session.I.IsClient)
                         Comp.ShootManager.ClientToggleCount = Repo.Values.State.ToggleCount;
                 }
 

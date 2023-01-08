@@ -361,7 +361,7 @@ namespace CoreSystems.Support
         public readonly double OffsetMinRangeSqr;
         public readonly double FutureIntersectionRange;
 
-        internal AmmoConstants(WeaponSystem.AmmoType ammo, WeaponDefinition wDef, Session session, WeaponSystem system, int ammoIndex)
+        internal AmmoConstants(WeaponSystem.AmmoType ammo, WeaponDefinition wDef, WeaponSystem system, int ammoIndex)
         {
             AmmoIdxPos = ammoIndex;
             MyInventory.GetItemVolumeAndMass(ammo.AmmoDefinitionId, out MagMass, out MagVolume);
@@ -383,8 +383,8 @@ namespace CoreSystems.Support
             else if (ammo.AmmoDef.Ejection.Type == AmmoDef.EjectionDef.SpawnType.Particle && !string.IsNullOrEmpty(ammo.AmmoDef.AmmoGraphics.Particles.Eject.Name))
                 HasEjectEffect = true;
 
-            if (AmmoItem.Content != null && !session.AmmoItems.ContainsKey(AmmoItem.ItemId))
-                session.AmmoItems[AmmoItem.ItemId] = AmmoItem;
+            if (AmmoItem.Content != null && !Session.I.AmmoItems.ContainsKey(AmmoItem.ItemId))
+                Session.I.AmmoItems[AmmoItem.ItemId] = AmmoItem;
 
             var fragGuidedAmmo = false;
             var fragAntiSmart = false;
@@ -422,7 +422,7 @@ namespace CoreSystems.Support
 
             HasFragment = FragmentId > -1;
 
-            LoadModifiers(session, ammo, out AmmoModsFound);
+            LoadModifiers(ammo, out AmmoModsFound);
             float shieldBypassRaw;
             GetModifiableValues(ammo.AmmoDef, out BaseDamage, out Health, out GravityMultiplier, out MaxTrajectory, out MaxTrajectorySqr, out EnergyBaseDmg, out EnergyAreaDmg, out EnergyDetDmg, out EnergyShieldDmg, out ShieldModifier, out FallOffDistance, out FallOffMinMultiplier, out Mass, out shieldBypassRaw);
 
@@ -482,7 +482,7 @@ namespace CoreSystems.Support
 
             FallOffDistance = AmmoModsFound && _modifierMap[FallOffDistanceStr].HasData() ? _modifierMap[FallOffDistanceStr].GetAsFloat : ammo.AmmoDef.DamageScales.FallOff.Distance;
 
-            ArmorCoreActive = session.ArmorCoreActive;
+            ArmorCoreActive = Session.I.ArmorCoreActive;
 
             AmmoSkipAccel = ammo.AmmoDef.Trajectory.AccelPerSec <= 0;
             FeelsGravity = GravityMultiplier > 0;
@@ -521,7 +521,7 @@ namespace CoreSystems.Support
             FutureIntersectionRange = ammo.AmmoDef.Trajectory.Smarts.FutureIntersectionRange > 0 ? ammo.AmmoDef.Trajectory.Smarts.FutureIntersectionRange + CollisionSize : DesiredProjectileSpeed + CollisionSize;
 
             Energy(ammo, system, wDef, out EnergyAmmo, out MustCharge, out Reloadable, out EnergyCost, out EnergyMagSize, out ChargSize, out BurstMode, out HasShotReloadDelay, out PowerPerTick);
-            Sound(ammo, system, session, out HitSound, out HitSoundPair, out AmmoTravelSound, out TravelSoundPair, out ShotSound, out ShotSoundPair, out DetonationSound, out DetSoundPair, out HitSoundDistSqr, out AmmoTravelSoundDistSqr, out AmmoSoundMaxDistSqr,
+            Sound(ammo, system,out HitSound, out HitSoundPair, out AmmoTravelSound, out TravelSoundPair, out ShotSound, out ShotSoundPair, out DetonationSound, out DetSoundPair, out HitSoundDistSqr, out AmmoTravelSoundDistSqr, out AmmoSoundMaxDistSqr,
                 out ShotSoundDistSqr, out DetonationSoundDistSqr, out ShotSoundStr, out VoxelSound, out VoxelSoundPair, out FloatingSound, out FloatingSoundPair, out PlayerSound, out PlayerSoundPair, out ShieldSound, out ShieldSoundPair);
 
             MagazineSize = EnergyAmmo ? EnergyMagSize : MagazineDef.Capacity;
@@ -530,7 +530,7 @@ namespace CoreSystems.Support
 
             GetPeakDps(ammo, system, wDef, out PeakDps, out EffectiveDps, out PerfectDps, out ShotsPerSec, out RealShotsPerSec, out BaseDps, out AreaDps, out DetDps, out RealShotsPerMin);
             var clientPredictedAmmoDisabled = AmmoModsFound && _modifierMap[ClientPredAmmoStr].HasData() && _modifierMap[ClientPredAmmoStr].GetAsBool;
-            var predictionEligible = session.IsClient || session.DedicatedServer;
+            var predictionEligible = Session.I.IsClient || Session.I.DedicatedServer;
 
 
             var predictedShotLimit = system.PartType != HardwareDef.HardwareType.HandWeapon ? 120 : 450;
@@ -568,16 +568,16 @@ namespace CoreSystems.Support
             CanReportTargetStatus = RequiresTarget && system.TrackGrids && !system.DesignatorWeapon && PeakDps > 0;
             DynamicGuidance = ammo.AmmoDef.Trajectory.Guidance != TrajectoryDef.GuidanceType.None && ammo.AmmoDef.Trajectory.Guidance != TrajectoryDef.GuidanceType.TravelTo && !IsBeamWeapon;
 
-            if (CollisionSize > 5 && !session.LocalVersion) Log.Line($"{ammo.AmmoDef.AmmoRound} has large largeCollisionSize: {CollisionSize} meters");
+            if (CollisionSize > 5 && !Session.I.LocalVersion) Log.Line($"{ammo.AmmoDef.AmmoRound} has large largeCollisionSize: {CollisionSize} meters");
             if (FeelsGravity && !IsSmart && system.TrackTargets && (system.Prediction == Prediction.Off || system.Prediction == Prediction.Basic) && ammo.AmmoDef.Trajectory.MaxTrajectory / ammo.AmmoDef.Trajectory.DesiredSpeed > 0.5f)
             {
                 var flightTime = ammo.AmmoDef.Trajectory.MaxTrajectory / ammo.AmmoDef.Trajectory.DesiredSpeed;
                 Log.Line($"{ammo.AmmoDef.AmmoRound} has {(int)(0.5 * 9.8 * flightTime * flightTime)}m grav drop at 1g.  {system.PartName} needs Accurate/Advanced aim prediction to account for gravity.");
             }
 
-            FullSync = ammo.AmmoDef.Sync.Full && session.MpActive && (IsDrone || IsSmart);
-            PdDeathSync = !FullSync && ammo.AmmoDef.Sync.PointDefense && session.MpActive && Health > 0 && !IsBeamWeapon && !Ewar;
-            OnHitDeathSync = !FullSync && ammo.AmmoDef.Sync.OnHitDeath && session.MpActive && !IsBeamWeapon && !Ewar;
+            FullSync = ammo.AmmoDef.Sync.Full && Session.I.MpActive && (IsDrone || IsSmart);
+            PdDeathSync = !FullSync && ammo.AmmoDef.Sync.PointDefense && Session.I.MpActive && Health > 0 && !IsBeamWeapon && !Ewar;
+            OnHitDeathSync = !FullSync && ammo.AmmoDef.Sync.OnHitDeath && Session.I.MpActive && !IsBeamWeapon && !Ewar;
 
             PreComputedMath = new PreComputedMath(ammo, this);
         }
@@ -1100,7 +1100,7 @@ namespace CoreSystems.Support
             requiredPowerPerTick = 0;
         }
 
-        private void Sound(WeaponSystem.AmmoType ammo, WeaponSystem system, Session session, out bool hitSound, out MySoundPair hitSoundPair, out bool ammoTravelSound, out MySoundPair travelSoundPair, out bool shotSound, out MySoundPair shotSoundPair, 
+        private void Sound(WeaponSystem.AmmoType ammo, WeaponSystem system, out bool hitSound, out MySoundPair hitSoundPair, out bool ammoTravelSound, out MySoundPair travelSoundPair, out bool shotSound, out MySoundPair shotSoundPair, 
             out bool detSound, out MySoundPair detSoundPair, out float hitSoundDistSqr, out float ammoTravelSoundDistSqr, out float ammoSoundMaxDistSqr, out float shotSoundDistSqr, out float detSoundDistSqr, out string rawShotSoundStr, 
             out bool voxelSound, out MySoundPair voxelSoundPair, out bool floatingSound, out MySoundPair floatingSoundPair, out bool playerSound, out MySoundPair playerSoundPair, out bool shieldSound, out MySoundPair shieldSoundPair)
         {
@@ -1137,7 +1137,7 @@ namespace CoreSystems.Support
             shotSoundDistSqr = 0;
             detSoundDistSqr = 0;
 
-            foreach (var def in session.SoundDefinitions)
+            foreach (var def in Session.I.SoundDefinitions)
             {
                 var id = def.Id.SubtypeId.String;
                 if (hitSound && (id == hitSoundStr || id == ammoDef.AmmoAudio.HitSound))
@@ -1200,11 +1200,11 @@ namespace CoreSystems.Support
             myEntity.Render.RemoveRenderObjects();
         }
 
-        private void LoadModifiers(Session session, WeaponSystem.AmmoType ammo, out bool modsFound)
+        private void LoadModifiers( WeaponSystem.AmmoType ammo, out bool modsFound)
         {
             modsFound = false;
             Dictionary<string, string> ammoMods;
-            if (session.AmmoValuesMap.TryGetValue(ammo.AmmoDef, out ammoMods) && ammoMods != null)
+            if (Session.I.AmmoValuesMap.TryGetValue(ammo.AmmoDef, out ammoMods) && ammoMods != null)
             {
                 foreach (var mod in ammoMods)
                 {

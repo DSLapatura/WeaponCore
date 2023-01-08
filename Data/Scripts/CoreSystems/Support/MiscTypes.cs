@@ -100,12 +100,12 @@ namespace CoreSystems.Support
             if (!w.ActiveAmmoDef.AmmoDef.Const.Reloadable && w.Target.TargetId != 0)
                 w.ProjectileCounter = 0;
 
-            w.System.Session.SendTargetChange(w.Comp, w.PartId);
+            Session.I.SendTargetChange(w.Comp, w.PartId);
         }
 
         internal void ClientUpdate(Weapon w, ProtoWeaponTransferTarget tData)
         {
-            if (w.System.Session.Tick < w.Target.ProjectileEndTick)
+            if (Session.I.Tick < w.Target.ProjectileEndTick)
             {
                 var first = w.Target.SoftProjetileReset;
                 if (first)
@@ -115,15 +115,15 @@ namespace CoreSystems.Support
                 }
 
 
-                if (first || w.System.Session.Tick20)
+                if (first || Session.I.Tick20)
                 {
                     if (Ai.AcquireProjectile(w))
                     {
                         if (w.NewTarget.CurrentState != States.NoTargetsSeen)
-                            w.NewTarget.Reset(w.Comp.Session.Tick, States.NoTargetsSeen);
+                            w.NewTarget.Reset(Session.I.Tick, States.NoTargetsSeen);
 
                         if (w.Target.CurrentState != States.NoTargetsSeen)
-                            w.Target.Reset(w.Comp.Session.Tick, States.NoTargetsSeen, !w.Comp.Data.Repo.Values.State.TrackingReticle && w.Comp.Data.Repo.Values.Set.Overrides.Control != ProtoWeaponOverrides.ControlModes.Painter);
+                            w.Target.Reset(Session.I.Tick, States.NoTargetsSeen, !w.Comp.Data.Repo.Values.State.TrackingReticle && w.Comp.Data.Repo.Values.Set.Overrides.Control != ProtoWeaponOverrides.ControlModes.Painter);
                     }
                 }
                 return;
@@ -137,9 +137,9 @@ namespace CoreSystems.Support
                 if (tData.EntityId == 0)
                 {
                     if (w.Target.TargetState == TargetStates.IsFake || w.Target.TargetState == TargetStates.WasFake)
-                        w.Target.Reset(w.System.Session.Tick, States.ServerReset);
+                        w.Target.Reset(Session.I.Tick, States.ServerReset);
                     else
-                        w.DelayedTargetResetTick = w.System.Session.Tick + 30;
+                        w.DelayedTargetResetTick = Session.I.Tick + 30;
                 }
                 else
                 {
@@ -152,23 +152,23 @@ namespace CoreSystems.Support
                         if (!Ai.AcquireProjectile(w))
                         {
                             if (w.NewTarget.CurrentState != States.NoTargetsSeen)
-                                w.NewTarget.Reset(w.Comp.Session.Tick, States.NoTargetsSeen);
+                                w.NewTarget.Reset(Session.I.Tick, States.NoTargetsSeen);
 
                             if (w.Target.CurrentState != States.NoTargetsSeen)
                             {
-                                w.Target.Reset(w.Comp.Session.Tick, States.NoTargetsSeen, !w.Comp.Data.Repo.Values.State.TrackingReticle && w.Comp.Data.Repo.Values.Set.Overrides.Control != ProtoWeaponOverrides.ControlModes.Painter);
+                                w.Target.Reset(Session.I.Tick, States.NoTargetsSeen, !w.Comp.Data.Repo.Values.State.TrackingReticle && w.Comp.Data.Repo.Values.Set.Overrides.Control != ProtoWeaponOverrides.ControlModes.Painter);
                             }
                         }
                     }
                 }
 
-                if (w.System.Session.Tick != w.Target.ProjectileEndTick)
+                if (Session.I.Tick != w.Target.ProjectileEndTick)
                     w.TargetData.WeaponRandom.AcquireRandom = new XorShiftRandomStruct((ulong)w.TargetData.WeaponRandom.CurrentSeed);
 
                 ClientDirty = false;
             }
 
-            w.Target.ChangeTick = w.System.Session.Tick;
+            w.Target.ChangeTick = Session.I.Tick;
         }
 
         internal void TransferTo(Target target, uint expireTick, bool drone = false)
@@ -267,7 +267,7 @@ namespace CoreSystems.Support
 
             if (TargetChanged && Weapon != null)
             {
-                ChangeTick = Weapon.System.Session.Tick;
+                ChangeTick = Session.I.Tick;
 
                 if (setTarget) {
                     

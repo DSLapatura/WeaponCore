@@ -18,7 +18,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
     {
         internal void DrawTargetUi()
         {
-            var s = _session;
+            var s = Session.I;
 
             SelectedEntity = null;
             DrawReticle = false;
@@ -47,7 +47,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
 
         private void DrawSelector(bool enableActivator)
         {
-            var s = _session;
+            var s = Session.I;
             if (!_cachedPointerPos) InitPointerOffset(0.05);
 
             var offetPosition = Vector3D.Transform(PointerOffset, s.CameraMatrix);
@@ -114,7 +114,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                     var screenPos = s.Camera.WorldToScreen(ref targetCenter);
                     var dotpos = new Vector2D(MathHelper.Clamp(screenPos.X, -0.98, 0.98), MathHelper.Clamp(screenPos.Y, -0.98, 0.98));
                     var screenScale = 0.1 * s.ScaleFov;
-                    dotpos.X *= (float)(screenScale * _session.AspectRatio);
+                    dotpos.X *= (float)(screenScale * Session.I.AspectRatio);
                     dotpos.Y *= (float)screenScale;
                     screenPos = Vector3D.Transform(new Vector3D(dotpos.X, dotpos.Y, -0.1), s.CameraMatrix);
                     var radius = (float)(screenScale * MarkerSize());
@@ -142,7 +142,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
 
         private void DrawDroneNotice()
         {
-            var s = _session;
+            var s = Session.I;
             Vector3D offset;
             Vector2 localOffset;
 
@@ -151,7 +151,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             float fontScale;
             MyStringId textureName;
 
-            var hudOpacity = MathHelper.Clamp(_session.UiHudOpacity, 0.25f, 1f);
+            var hudOpacity = MathHelper.Clamp(Session.I.UiHudOpacity, 0.25f, 1f);
             var color = new Vector4(1, 1, 1, hudOpacity);
 
             _alertHudInfo.GetTextureInfo(s, out textureName, out scale, out screenScale, out fontScale, out offset, out localOffset);
@@ -179,7 +179,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
 
         private void DrawActiveMarks()
         {
-            var s = _session;
+            var s = Session.I;
 
             var time = s.Tick % 20; // forward and backward total time
             var increase = time < 10;
@@ -233,7 +233,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                 }
 
                 var dotpos = new Vector2D(MathHelper.Clamp(drawPos.X, -0.98, 0.98), MathHelper.Clamp(drawPos.Y, -0.98, 0.98));
-                dotpos.X *= (float)(screenScale * _session.AspectRatio);
+                dotpos.X *= (float)(screenScale * Session.I.AspectRatio);
                 dotpos.Y *= (float)screenScale;
                 drawPos = Vector3D.Transform(new Vector3D(dotpos.X, dotpos.Y, -0.1), s.CameraMatrix);
 
@@ -257,7 +257,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
 
         private void DrawActiveLeads()
         {
-            var s = _session;
+            var s = Session.I;
             var focus = s.TrackingAi.Construct.Data.Repo.FocusData;
 
             MyEntity target;
@@ -294,7 +294,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             var lineScale = (float)(0.1 * s.ScaleFov);
 
             var startScreenPos = s.Camera.WorldToScreen(ref lineStart);
-            var scaledAspect = lineScale * _session.AspectRatio;
+            var scaledAspect = lineScale * Session.I.AspectRatio;
 
             var scale = s.Settings.ClientConfig.HudScale;
             var fontScale = scale * s.ScaleFov;
@@ -380,7 +380,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
 
         private void DrawTarget()
         {
-            var s = _session;
+            var s = Session.I;
 
             var ai = s.TrackingAi;
             var focus = ai.Construct.Data.Repo.FocusData;
@@ -399,7 +399,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             var dumbHandHeld = s.UiInput.PlayerWeapon && !ai.SmartHandheld && s.LeadGroupActive;
 
             var handheldHud = (s.UiInput.IronLock || dumbHandHeld);
-            var showHud = !s.Settings.Enforcement.DisableHudTargetInfo && (!s.UiInput.PlayerWeapon || handheldHud) && !(s.HudHandlers.Count > 0 && s.HudUi.RestrictHudHandlers(ai, _session.PlayerId, Hud.Hud.HudMode.TargetInfo));
+            var showHud = !s.Settings.Enforcement.DisableHudTargetInfo && (!s.UiInput.PlayerWeapon || handheldHud) && !(s.HudHandlers.Count > 0 && s.HudUi.RestrictHudHandlers(ai, Session.I.PlayerId, Hud.Hud.HudMode.TargetInfo));
 
             if (showHud)
             {
@@ -480,7 +480,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
 
                 var dotpos = new Vector2D(MathHelper.Clamp(screenPos.X, -0.98, 0.98), MathHelper.Clamp(screenPos.Y, -0.98, 0.98));
                 var screenScale = 0.1 * s.ScaleFov;
-                dotpos.X *= (float)(screenScale * _session.AspectRatio);
+                dotpos.X *= (float)(screenScale * Session.I.AspectRatio);
                 dotpos.Y *= (float)screenScale;
                 screenPos = Vector3D.Transform(new Vector3D(dotpos.X, dotpos.Y, -0.1), s.CameraMatrix);
 
@@ -491,7 +491,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
 
         private bool UpdateKeyInfo(bool detailedHud)
         {
-            var s = _session;
+            var s = Session.I;
             var drawAge = s.Tick - s.TargetLastDrawTick;
             var infoExpire = 420;
 
@@ -504,14 +504,14 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
 
         internal void SetHit(ProInfo info)
         {
-            if (_session.TrackingAi.AiType == Ai.AiTypes.Player)
+            if (Session.I.TrackingAi.AiType == Ai.AiTypes.Player)
             {
-                if (_session.UiInput.FirstPersonView)
+                if (Session.I.UiInput.FirstPersonView)
                     CheckHandWeaponEntityHit(info);
                 return;
             }
 
-            var focus = _session.TrackingAi.Construct.Data.Repo.FocusData;
+            var focus = Session.I.TrackingAi.Construct.Data.Repo.FocusData;
             MyEntity target;
             if (focus.Target > 0 && MyEntities.TryGetEntityById(focus.Target, out target) && CheckBlockWeaponEntityHit(target, info))
                     return;
@@ -533,7 +533,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
 
                 if (!check && hitEnt.EventType == HitEntity.Type.Shield && bothGrids)
                 {
-                    var shield = _session.SApi.MatchEntToShieldFast(hitGrid, true); 
+                    var shield = Session.I.SApi.MatchEntToShieldFast(hitGrid, true); 
                     if (shield != null)
                         check = grid.IsSameConstructAs(shield.CubeGrid);
                 }
@@ -551,7 +551,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
         {
             foreach (var hitEnt in info.HitList)
             {
-                if (info.Weapon.Comp.Ai.Construct.RootAi != _session.TrackingAi || hitEnt.Entity is MyVoxelBase)
+                if (info.Weapon.Comp.Ai.Construct.RootAi != Session.I.TrackingAi || hitEnt.Entity is MyVoxelBase)
                     continue;
 
                 HandHitIncrease = HandFullPulseSize - HandCircleSize;
@@ -562,7 +562,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
 
         private void HandWeaponMarker()
         {
-            var s = _session;
+            var s = Session.I;
             var offetPosition = Vector3D.Transform(HandPointerOffset, s.CameraMatrix);
             var screenScale = (s.UiInput.IronSights ? 0.0375 : 0.025) * s.ScaleFov;
             var radius = (float)(screenScale * HandMarkerSize());
@@ -618,7 +618,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
 
             textOffset = localOffset;
 
-            var aspectScale = (2.37037f / _session.AspectRatio);
+            var aspectScale = (2.37037f / Session.I.AspectRatio);
 
             var xOdd = 0.3755f * scale;
             var xEven = 0.07f * scale;
@@ -723,7 +723,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
 
         private bool DroneText(Vector2 localOffset, float scale, out string text1, out string text2, out Vector2 offset1, out Vector2 offset2, out Vector4 color1, out Vector4 color2)
         {
-            var aspectScale = (2.37037f / _session.AspectRatio);
+            var aspectScale = (2.37037f / Session.I.AspectRatio);
             var xCenter = 0.22f * scale;
             var yStart = 0.885f * scale;
             var yStep = 0.12f * scale;
@@ -735,10 +735,10 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             offset2.Y = offset1.Y - yStep;
 
             text1 = $"Incoming drones detected!";
-            text2 = $"              Threats: {_session.TrackingAi.Construct.RootAi.Construct.DroneCount}";
+            text2 = $"              Threats: {Session.I.TrackingAi.Construct.RootAi.Construct.DroneCount}";
 
             color1 = new Vector4(1, 1, 1, 1);
-            color2 = _session.Count < 60 ? new Vector4(1, 1, 1, 1) : new Vector4(1, 0, 0, 1);
+            color2 = Session.I.Count < 60 ? new Vector4(1, 1, 1, 1) : new Vector4(1, 0, 0, 1);
             return true;
         }
 
@@ -805,10 +805,10 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
             _leadInfos.Clear();
             maxLeadLength = 0;
             fullAveragePos = Vector3D.Zero;
-            for (var gId = 0; gId < _session.LeadGroups.Length; gId++)
+            for (var gId = 0; gId < Session.I.LeadGroups.Length; gId++)
             {
 
-                var group = _session.LeadGroups[gId];
+                var group = Session.I.LeadGroups[gId];
                 var leadAvg = Vector3D.Zero;
                 var somethingWillHit = false;
                 var addLead = 0;

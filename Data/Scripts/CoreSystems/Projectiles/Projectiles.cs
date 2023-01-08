@@ -12,7 +12,6 @@ namespace CoreSystems.Projectiles
 {
     public partial class Projectiles
     {
-        internal readonly Session Session;
         internal readonly Stack<List<NewVirtual>> VirtInfoPools = new Stack<List<NewVirtual>>(32);
         internal readonly Stack<ProInfo> VirtInfoPool = new Stack<ProInfo>(128);
         internal readonly Stack<HitEntity>[] HitEntityArrayPool = new Stack<HitEntity>[1025];
@@ -27,9 +26,8 @@ namespace CoreSystems.Projectiles
         internal readonly Stack<Fragment> FragmentPool = new Stack<Fragment>(128);
 
         internal ulong CurrentProjectileId;
-        internal Projectiles(Session session)
+        internal Projectiles()
         {
-            Session = session;
             for (int i = 0; i < HitEntityArrayPool.Length; i++)
                 HitEntityArrayPool[i] = new Stack<HitEntity>();
         }
@@ -53,75 +51,75 @@ namespace CoreSystems.Projectiles
 
         internal void SpawnAndMove() // Methods highly inlined due to keen's mod profiler
         {
-            Session.StallReporter.Start("GenProjectiles", 11);
+            Session.I.StallReporter.Start("GenProjectiles", 11);
             if (NewProjectiles.Count > 0) GenProjectiles();
-            Session.StallReporter.End();
+            Session.I.StallReporter.End();
 
-            Session.StallReporter.Start("AddTargets", 11);
+            Session.I.StallReporter.Start("AddTargets", 11);
             if (AddTargets.Count > 0)
                 AddProjectileTargets();
-            Session.StallReporter.End();
+            Session.I.StallReporter.End();
 
-            Session.StallReporter.Start($"UpdateState: {ActiveProjetiles.Count}", 11);
+            Session.I.StallReporter.Start($"UpdateState: {ActiveProjetiles.Count}", 11);
             if (ActiveProjetiles.Count > 0) 
                 UpdateState();
-            Session.StallReporter.End();
+            Session.I.StallReporter.End();
 
-            Session.StallReporter.Start($"Spawn: {ShrapnelToSpawn.Count}", 11);
+            Session.I.StallReporter.Start($"Spawn: {ShrapnelToSpawn.Count}", 11);
             if (ShrapnelToSpawn.Count > 0)
                 SpawnFragments();
-            Session.StallReporter.End();
+            Session.I.StallReporter.End();
         }
 
         internal void Intersect() // Methods highly inlined due to keen's mod profiler
         {
-            Session.StallReporter.Start($"CheckHits: {ActiveProjetiles.Count}", 11);
+            Session.I.StallReporter.Start($"CheckHits: {ActiveProjetiles.Count}", 11);
             if (ActiveProjetiles.Count > 0)
                 CheckHits();
-            Session.StallReporter.End();
+            Session.I.StallReporter.End();
 
             if (DeferedVoxels.Count > 0) {
 
-                Session.StallReporter.Start($"DeferedVoxelCheck: {DeferedVoxels.Count} - beamCount:{_beamCount} ", 11);
+                Session.I.StallReporter.Start($"DeferedVoxelCheck: {DeferedVoxels.Count} - beamCount:{_beamCount} ", 11);
                 DeferedVoxelCheck();
-                Session.StallReporter.End();
+                Session.I.StallReporter.End();
             }
         }
 
         internal void Damage()
         {
-            if (Session.EffectedCubes.Count > 0)
-                Session.ApplyGridEffect();
+            if (Session.I.EffectedCubes.Count > 0)
+                Session.I.ApplyGridEffect();
 
-            if (Session.Tick60)
-                Session.GridEffects();
+            if (Session.I.Tick60)
+                Session.I.GridEffects();
 
-            if (Session.IsClient && (Session.CurrentClientEwaredCubes.Count > 0 || Session.ActiveEwarCubes.Count > 0) && (Session.ClientEwarStale || Session.Tick120))
-                Session.SyncClientEwarBlocks();
+            if (Session.I.IsClient && (Session.I.CurrentClientEwaredCubes.Count > 0 || Session.I.ActiveEwarCubes.Count > 0) && (Session.I.ClientEwarStale || Session.I.Tick120))
+                Session.I.SyncClientEwarBlocks();
 
-            if (Session.Hits.Count > 0)
+            if (Session.I.Hits.Count > 0)
             {
-                Session.Api.ProjectileDamageEvents.Clear();
+                Session.I.Api.ProjectileDamageEvents.Clear();
 
-                Session.ProcessHits();
+                Session.I.ProcessHits();
 
-                if (Session.Api.ProjectileDamageEvents.Count > 0)
-                    Session.ProcessDamageHandlerRequests();
+                if (Session.I.Api.ProjectileDamageEvents.Count > 0)
+                    Session.I.ProcessDamageHandlerRequests();
             }
-            if (Session.DeferredDestroy.Count > 0)
+            if (Session.I.DeferredDestroy.Count > 0)
             {
-                Session.DefferedDestroy();
+                Session.I.DefferedDestroy();
             }
         }
 
         internal void AvUpdate()
         {
-            if (!Session.DedicatedServer)
+            if (!Session.I.DedicatedServer)
             {
-                Session.StallReporter.Start($"AvUpdate: {ActiveProjetiles.Count}", 11);
+                Session.I.StallReporter.Start($"AvUpdate: {ActiveProjetiles.Count}", 11);
                 UpdateAv();
-                DeferedAvStateUpdates(Session);
-                Session.StallReporter.End();
+                DeferedAvStateUpdates();
+                Session.I.StallReporter.End();
             }
         }
 
@@ -139,11 +137,11 @@ namespace CoreSystems.Projectiles
                 info.PrevRelativeAge = info.RelativeAge;
                 info.RelativeAge += Session.DeltaTimeRatio;
                 ++ai.MyProjectiles;
-                ai.ProjectileTicker = Session.Tick;
+                ai.ProjectileTicker = Session.I.Tick;
 
-                if (Session.AdvSync && aConst.FullSync)
+                if (Session.I.AdvSync && aConst.FullSync)
                 {
-                    if (Session.IsClient) 
+                    if (Session.I.IsClient) 
                     {
                         var posSlot = (int)Math.Round(info.RelativeAge) % 30;
                         storage.FullSyncInfo.PastProInfos[posSlot] =  p.Position;
@@ -201,7 +199,7 @@ namespace CoreSystems.Projectiles
                         var pTarget = target.TargetObject as Projectile;
                         if (pTarget != null && pTarget.State != ProjectileState.Alive) {
                             pTarget.Seekers.Remove(p);
-                            target.Reset(Session.Tick, Target.States.ProjetileIntercept);
+                            target.Reset(Session.I.Tick, Target.States.ProjetileIntercept);
                         }
 
                         if (aConst.FeelsGravity && MyUtils.IsValid(p.Gravity) && !MyUtils.IsZero(ref p.Gravity)) {
@@ -302,7 +300,7 @@ namespace CoreSystems.Projectiles
         {
             _beamCount = 0;
             var apCount = ActiveProjetiles.Count;
-            var minCount = Session.Settings.Enforcement.BaseOptimizations ? 96 : 99999;
+            var minCount = Session.I.Settings.Enforcement.BaseOptimizations ? 96 : 99999;
             var targetStride = apCount / 20;
             var stride = apCount < minCount ? 100000 : targetStride > 48 ? targetStride : 48;
 
@@ -400,7 +398,7 @@ namespace CoreSystems.Projectiles
                     p.PruneSphere.Radius = aConst.CollisionSize;
                     if (aConst.IsBeamWeapon || info.DistanceTraveled > aConst.CollisionSize + 1.35f) {
 
-                        if (aConst.DynamicGuidance && p.PruneQuery == MyEntityQueryType.Dynamic && Session.Tick60)
+                        if (aConst.DynamicGuidance && p.PruneQuery == MyEntityQueryType.Dynamic && Session.I.Tick60)
                             p.CheckForNearVoxel(60);
                         MyGamePruningStructure.GetTopmostEntitiesOverlappingRay(ref checkBeam, p.MySegmentList, p.PruneQuery);
                     }
@@ -417,7 +415,7 @@ namespace CoreSystems.Projectiles
                 
                 if (!lineCheck) {
 
-                    if (aConst.DynamicGuidance && p.PruneQuery == MyEntityQueryType.Dynamic && Session.Tick60)
+                    if (aConst.DynamicGuidance && p.PruneQuery == MyEntityQueryType.Dynamic && Session.I.Tick60)
                         p.CheckForNearVoxel(60);
                     MyGamePruningStructure.GetAllTopMostEntitiesInSphere(ref p.PruneSphere, p.MyEntityList, p.PruneQuery);
                 }
@@ -476,7 +474,7 @@ namespace CoreSystems.Projectiles
 
                             vs.VisualLength = beam.Length;
 
-                            Session.Projectiles.DeferedAvDraw.Add(new DeferedAv { AvShot = vs, Info = info, TracerFront = beam.To, Hit = p.Intersecting, Direction = beam.Direction });
+                            Session.I.Projectiles.DeferedAvDraw.Add(new DeferedAv { AvShot = vs, Info = info, TracerFront = beam.To, Hit = p.Intersecting, Direction = beam.Direction });
                         }
                         else {
                             Vector3D beamEnd;
@@ -492,10 +490,10 @@ namespace CoreSystems.Projectiles
 
                             if (p.Intersecting && hitPos.HasValue) {
                                 vs.ShortStepSize = line.Length;
-                                Session.Projectiles.DeferedAvDraw.Add(new DeferedAv { AvShot = vs, Info = info, TracerFront = line.To, Hit = true, Direction = line.Direction });
+                                Session.I.Projectiles.DeferedAvDraw.Add(new DeferedAv { AvShot = vs, Info = info, TracerFront = line.To, Hit = true, Direction = line.Direction });
                             }
                             else
-                                Session.Projectiles.DeferedAvDraw.Add(new DeferedAv { AvShot = vs, Info = info, TracerFront = line.To, Hit = false,  Direction = line.Direction});
+                                Session.I.Projectiles.DeferedAvDraw.Add(new DeferedAv { AvShot = vs, Info = info, TracerFront = line.To, Hit = false,  Direction = line.Direction});
                         }
                     }
                     continue;

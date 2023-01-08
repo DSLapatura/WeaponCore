@@ -25,13 +25,13 @@ namespace CoreSystems.Platform
             internal uint LastOwnerRequestTick;
             internal uint LastAddTick;
 
-            internal ControlComponent(Session session, MyEntity coreEntity, MyDefinitionId id)
+            internal ControlComponent(MyEntity coreEntity, MyDefinitionId id)
             {
                 Controller = (IMyTurretControlBlock)coreEntity;
                 Controller.AIEnabled = false;
                 //Bellow order is important
                 Data = new ControlCompData(this);
-                Init(session, coreEntity, true, Data, id);
+                Init(coreEntity, true, Data, id);
                 Structure = (ControlStructure)Platform.Structure;
             }
 
@@ -40,12 +40,12 @@ namespace CoreSystems.Platform
                 if (Platform.State != CorePlatform.PlatformState.Ready)
                     return;
 
-                if (Session.Tick - Ai.LastDetectEvent > 59)
+                if (Session.I.Tick - Ai.LastDetectEvent > 59)
                 {
                     if (Data.Repo.Values.Set.Overrides.Projectiles)
                         Ai.PointDefense = true;
 
-                    Ai.LastDetectEvent = Session.Tick;
+                    Ai.LastDetectEvent = Session.I.Tick;
                     Ai.SleepingComps = 0;
                     Ai.AwakeComps = 0;
                     Ai.DetectOtherSignals = false;
@@ -61,14 +61,14 @@ namespace CoreSystems.Platform
                 IsAsleep = false;
                 IsDisabled = false;
 
-                if (!Ai.Session.IsServer)
+                if (!Session.I.IsServer)
                     return;
 
                 var otherRangeSqr = Ai.DetectionInfo.OtherRangeSqr;
                 var priorityRangeSqr = Ai.DetectionInfo.PriorityRangeSqr;
                 var somethingInRange = DetectOtherSignals ? otherRangeSqr <= MaxDetectDistanceSqr && otherRangeSqr >= MinDetectDistanceSqr || priorityRangeSqr <= MaxDetectDistanceSqr && priorityRangeSqr >= MinDetectDistanceSqr : priorityRangeSqr <= MaxDetectDistanceSqr && priorityRangeSqr >= MinDetectDistanceSqr;
 
-                if (Ai.Session.Settings.Enforcement.ServerSleepSupport && !somethingInRange && PartTracking == 0 && Ai.Construct.RootAi.Construct.ControllingPlayers.Count <= 0 && Session.TerminalMon.Comp != this && Data.Repo.Values.State.Terminal == Trigger.Off)
+                if (Session.I.Settings.Enforcement.ServerSleepSupport && !somethingInRange && PartTracking == 0 && Ai.Construct.RootAi.Construct.ControllingPlayers.Count <= 0 && Session.I.TerminalMon.Comp != this && Data.Repo.Values.State.Terminal == Trigger.Off)
                 {
 
                     IsAsleep = true;
@@ -95,13 +95,13 @@ namespace CoreSystems.Platform
 
             internal static void RequestSetValue(ControlComponent comp, string setting, int value, long playerId)
             {
-                if (comp.Session.IsServer)
+                if (Session.I.IsServer)
                 {
                     SetValue(comp, setting, value, playerId);
                 }
-                else if (comp.Session.IsClient)
+                else if (Session.I.IsClient)
                 {
-                    comp.Session.SendOverRidesClientComp(comp, setting, value);
+                    Session.I.SendOverRidesClientComp(comp, setting, value);
                 }
             }
 
@@ -182,8 +182,8 @@ namespace CoreSystems.Platform
 
                 ResetCompState(comp, playerId, clearTargets);
 
-                if (comp.Session.MpActive)
-                    comp.Session.SendComp(comp);
+                if (Session.I.MpActive)
+                    Session.I.SendComp(comp);
             }
 
             internal static void ResetCompState(ControlComponent comp, long playerId, bool resetTarget, Dictionary<string, int> settings = null)
@@ -220,7 +220,7 @@ namespace CoreSystems.Platform
             {
                 LastControllingPlayerId = playerId;
 
-                if (Session.IsServer)
+                if (Session.I.IsServer)
                 {
 
                     if (Data.Repo != null)
@@ -228,22 +228,22 @@ namespace CoreSystems.Platform
                         Data.Repo.Values.State.PlayerId = playerId;
                         Data.Repo.Values.State.Mode = ProtoControlState.ControlMode.Camera;
 
-                        if (Session.MpActive)
-                            Session.SendComp(this);
+                        if (Session.I.MpActive)
+                            Session.I.SendComp(this);
                     }
                     else
                         Log.Line($"OnPlayerController enter Repo null");
 
                 }
 
-                if (Session.HandlesInput && playerId == Session.PlayerId)
-                    Session.GunnerAcquire(Cube, playerId);
+                if (Session.I.HandlesInput && playerId == Session.I.PlayerId)
+                    Session.I.GunnerAcquire(Cube, playerId);
             }
 
             internal void ReleaseControl(long playerId)
             {
                 LastControllingPlayerId = playerId;
-                if (Session.IsServer)
+                if (Session.I.IsServer)
                 {
 
                     if (Data.Repo != null)
@@ -252,34 +252,34 @@ namespace CoreSystems.Platform
                         //Data.Repo.Values.State.PlayerId = -1;
                         Data.Repo.Values.State.Mode = ProtoControlState.ControlMode.Camera;
 
-                        if (Session.MpActive)
-                            Session.SendComp(this);
+                        if (Session.I.MpActive)
+                            Session.I.SendComp(this);
                     }
                     else
                         Log.Line($"OnPlayerController exit Repo null");
                 }
 
-                if (Session.HandlesInput && playerId == Session.PlayerId)
+                if (Session.I.HandlesInput && playerId == Session.I.PlayerId)
                 {
-                    Session.GunnerRelease(playerId);
+                    Session.I.GunnerRelease(playerId);
                 }
             }
 
             internal bool TakeOwnerShip()
             {
-                if (LastOwnerRequestTick > 0 && Session.Tick - LastOwnerRequestTick < 120)
+                if (LastOwnerRequestTick > 0 && Session.I.Tick - LastOwnerRequestTick < 120)
                     return true;
 
-                LastOwnerRequestTick = Session.Tick;
-                if (Session.IsClient)
+                LastOwnerRequestTick = Session.I.Tick;
+                if (Session.I.IsClient)
                 {
-                    Session.SendPlayerControlRequest(this, Session.PlayerId, ProtoWeaponState.ControlMode.Ui);
+                    Session.I.SendPlayerControlRequest(this, Session.I.PlayerId, ProtoWeaponState.ControlMode.Ui);
                     return true;
                 }
-                Data.Repo.Values.State.PlayerId = Session.PlayerId;
+                Data.Repo.Values.State.PlayerId = Session.I.PlayerId;
 
-                if (Session.MpActive)
-                    Session.SendState(this);
+                if (Session.I.MpActive)
+                    Session.I.SendState(this);
 
                 return true;
             }
@@ -295,7 +295,7 @@ namespace CoreSystems.Platform
                 var targetPos = topAi.RotorTargetPosition;
                 var targetDistSqr = Vector3D.DistanceSquared(root.PositionComp.WorldAABB.Center, targetPos);
 
-                var epsilon = Session.Tick120 ? 1E-06d : targetDistSqr <= 640000 ? 1E-03d : targetDistSqr <= 3240000 ? 1E-04d : 1E-05d;
+                var epsilon = Session.I.Tick120 ? 1E-06d : targetDistSqr <= 640000 ? 1E-03d : targetDistSqr <= 3240000 ? 1E-04d : 1E-05d;
 
                 var currentDirection = trackingWeapon.GetScope.Info.Direction;
                 var axis = Vector3D.Cross(desiredDirection, currentDirection);
@@ -311,7 +311,7 @@ namespace CoreSystems.Platform
                 var rootOutsideLimits = false;
                 if (MyUtils.IsZero((float) rootAngle, (float)epsilon))
                 {
-                    if (Session.IsServer)
+                    if (Session.I.IsServer)
                         root.TargetVelocityRad = 0;
                 }
                 else
@@ -324,7 +324,7 @@ namespace CoreSystems.Platform
                     if ((desiredAngle < root.LowerLimitRad && desiredAngle + MathHelper.TwoPi < root.UpperLimitRad) || (desiredAngle > root.UpperLimitRad && desiredAngle - MathHelper.TwoPi > root.LowerLimitRad))
                         rootAngle = -Math.Sign(rootAngle) * (MathHelper.TwoPi - Math.Abs(rootAngle));
 
-                    if (Session.IsServer)
+                    if (Session.I.IsServer)
                         root.TargetVelocityRad = rootOutsideLimits ? 0 : Math.Abs(Controller.VelocityMultiplierAzimuthRpm) * (float)rootAngle;
                 }
 
@@ -337,7 +337,7 @@ namespace CoreSystems.Platform
 
                 if (MyUtils.IsZero((float) subAngle, (float)epsilon) || !rootOutsideLimits && Math.Abs(rootAngle) > MathHelper.PiOver2)
                 {
-                    if (Session.IsServer)
+                    if (Session.I.IsServer)
                         other.TargetVelocityRad = 0;
                 }
                 else
@@ -349,7 +349,7 @@ namespace CoreSystems.Platform
                     if ((desiredAngle < other.LowerLimitRad && desiredAngle + MathHelper.TwoPi < other.UpperLimitRad) || (desiredAngle > other.UpperLimitRad && desiredAngle - MathHelper.TwoPi > other.LowerLimitRad))
                         subAngle = -Math.Sign(subAngle) * (MathHelper.TwoPi - Math.Abs(subAngle));
 
-                    if (Session.IsServer)
+                    if (Session.I.IsServer)
                         other.TargetVelocityRad = subOutsideLimits ? 0 : Math.Abs(Controller.VelocityMultiplierElevationRpm) * (float)subAngle;
                 }
                 if (rootAngle * rootAngle + subAngle * subAngle < deviationRads * deviationRads)
@@ -357,7 +357,7 @@ namespace CoreSystems.Platform
                     var scopeInfo = trackingWeapon.GetScope.Info;
                     var targetDir = targetPos - scopeInfo.Position;
 
-                    Platform.Control.IsAimed = MathFuncs.IsDotProductWithinTolerance(ref scopeInfo.Direction, ref targetDir, topAi.Session.ApproachDegrees);
+                    Platform.Control.IsAimed = MathFuncs.IsDotProductWithinTolerance(ref scopeInfo.Direction, ref targetDir, Session.I.ApproachDegrees);
                 }
 
                 return true;

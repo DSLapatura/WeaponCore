@@ -48,7 +48,7 @@ namespace CoreSystems.Support
 
         public override bool IsSerialized()
         {
-            if (Ai.Session != null && Ai.Session.IsServer)
+            if (Session.I.IsServer)
             {
                 Ai.Data.Save();
                 Ai.Construct.Data.Save();

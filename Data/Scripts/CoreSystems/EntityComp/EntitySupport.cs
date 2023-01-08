@@ -40,7 +40,7 @@ namespace CoreSystems.Support
         internal void RemoveFromReInit()
         {
             InReInit = false;
-            Session.CompsDelayedReInit.Remove(this);
+            Session.I.CompsDelayedReInit.Remove(this);
         }
 
         internal void RemoveComp()
@@ -68,7 +68,7 @@ namespace CoreSystems.Support
 
                         if (TypeSpecific == CompTypeSpecific.Rifle)
                         {
-                            Session.OnPlayerControl(CoreEntity, null);
+                            Session.I.OnPlayerControl(CoreEntity, null);
                             wComp.AmmoStorage();
                         }
 
@@ -87,10 +87,10 @@ namespace CoreSystems.Support
                         if (wCount.Current == 0)
                         {
                             Ai.PartCounting.Remove(SubTypeId);
-                            Session.PartCountPool.Return(wCount);
+                            Session.I.PartCountPool.Return(wCount);
                         }
                     }
-                    else if (Session.LocalVersion) Log.Line($"didnt find counter for: {SubTypeId} - MarkedForClose:{Ai.MarkedForClose} - AiAge:{Ai.Session.Tick - Ai.AiSpawnTick} - CubeMarked:{CoreEntity.MarkedForClose} - GridMarked:{TopEntity.MarkedForClose}");
+                    else if (Session.I.LocalVersion) Log.Line($"didnt find counter for: {SubTypeId} - MarkedForClose:{Ai.MarkedForClose} - AiAge:{Session.I.Tick - Ai.AiSpawnTick} - CubeMarked:{CoreEntity.MarkedForClose} - GridMarked:{TopEntity.MarkedForClose}");
 
                     if (Ai.Data.Repo.ActiveTerminal == CoreEntity.EntityId)
                         Ai.Data.Repo.ActiveTerminal = 0;
@@ -107,7 +107,7 @@ namespace CoreSystems.Support
                                 var w = collection[i];
                                 w.StopShooting();
                                 w.TurretActive = false;
-                                if (!Session.IsClient) w.Target.Reset(Session.Tick, Target.States.AiLost);
+                                if (!Session.I.IsClient) w.Target.Reset(Session.I.Tick, Target.States.AiLost);
 
                                 if (w.InCharger)
                                     w.ExitCharger = true;
@@ -123,24 +123,24 @@ namespace CoreSystems.Support
                         if (Ai.TopEntity != null)
                         {
                             Ai ai;
-                            Session.EntityAIs.TryRemove(Ai.TopEntity, out ai);
+                            Session.I.EntityAIs.TryRemove(Ai.TopEntity, out ai);
                         }
                         else 
                             Log.Line($"Ai.TopEntity was Null - marked:{Ai.MarkedForClose} - closed:{Ai.Closed}");
                     }
 
-                    if (Session.TerminalMon.Comp == this)
-                        Session.TerminalMon.Clean(true);
+                    if (Session.I.TerminalMon.Comp == this)
+                        Session.I.TerminalMon.Clean(true);
 
                     Ai = null;
                     MasterAi = null;
                 }
-                catch (Exception ex) { Log.Line($"Exception in RemoveComp Inner: {ex} - Name:{Platform?.Comp?.SubtypeName} - AiNull:{Ai == null} - SessionNull:{Session == null} - CoreEntNull:{CoreEntity == null} - PlatformNull: {Platform == null} - AiTopNull:{Ai?.TopEntity == null} - TopEntityNull:{TopEntity == null}", null, true); }
+                catch (Exception ex) { Log.Line($"Exception in RemoveComp Inner: {ex} - Name:{Platform?.Comp?.SubtypeName} - AiNull:{Ai == null}  - CoreEntNull:{CoreEntity == null} - PlatformNull: {Platform == null} - AiTopNull:{Ai?.TopEntity == null} - TopEntityNull:{TopEntity == null}", null, true); }
 
             }
             else if (Platform.State != CorePlatform.PlatformState.Delay && TypeSpecific != CompTypeSpecific.Rifle) Log.Line($"CompRemove: Ai already null - PartState:{Platform.State} - Status:{Status}");
 
-            LastRemoveFromScene = Session.Tick;
+            LastRemoveFromScene = Session.I.Tick;
         }
 
 
@@ -150,7 +150,7 @@ namespace CoreSystems.Support
             if (expandedMaxTrajectory2 > Ai.MaxTargetingRange)
             {
 
-                Ai.MaxTargetingRange = MathHelperD.Min(expandedMaxTrajectory2, Session.Settings.Enforcement.MaxHudFocusDistance);
+                Ai.MaxTargetingRange = MathHelperD.Min(expandedMaxTrajectory2, Session.I.Settings.Enforcement.MaxHudFocusDistance);
                 Ai.MaxTargetingRangeSqr = Ai.MaxTargetingRange * Ai.MaxTargetingRange;
             }
         }

@@ -91,7 +91,7 @@ namespace CoreSystems.Projectiles
             var aConst = ammoDef.Const;
             var w = Info.Weapon;
             var comp = w.Comp;
-            var session = comp.Session;
+            var session = Session.I;
 
             if (aConst.ApproachesCount > 0)
             {
@@ -152,7 +152,7 @@ namespace CoreSystems.Projectiles
             if (Info.MyPlanet != null)
                 Info.VoxelCache.PlanetSphere.Center = ai.ClosestPlanetCenter;
 
-            ai.ProjectileTicker = ai.Session.Tick;
+            ai.ProjectileTicker = Session.I.Tick;
             Info.ObjectsHit = 0;
             Info.BaseHealthPool = aConst.Health;
             Info.BaseEwarPool = aConst.Health;
@@ -317,7 +317,7 @@ namespace CoreSystems.Projectiles
             var monitor = comp.ProjectileMonitors[w.PartId];
             if (monitor.Count > 0)
             {
-                comp.Session.MonitoredProjectiles[Info.Id] = this;
+                Session.I.MonitoredProjectiles[Info.Id] = this;
                 for (int j = 0; j < monitor.Count; j++)
                     monitor[j].Invoke(comp.CoreEntity.EntityId, w.PartId, Info.Id, Info.Target.TargetId, Position, true);
             }
@@ -329,7 +329,7 @@ namespace CoreSystems.Projectiles
 
         internal void DestroyProjectile()
         {
-            Info.Hit = new Hit { Entity = null, SurfaceHit = Position, LastHit = Position, HitVelocity = !Vector3D.IsZero(Gravity) ? Velocity * 0.33f : Velocity, HitTick = Info.Weapon.Comp.Session.Tick };
+            Info.Hit = new Hit { Entity = null, SurfaceHit = Position, LastHit = Position, HitVelocity = !Vector3D.IsZero(Gravity) ? Velocity * 0.33f : Velocity, HitTick = Session.I.Tick };
             if (Info.AvShot != null)
             {
                 Info.AvShot.ForceHitParticle = true;
@@ -346,7 +346,7 @@ namespace CoreSystems.Projectiles
 
         internal void AddToDeathSyncMonitor()
         {
-            var s = Info.Weapon.Comp.Session;
+            var s = Session.I;
             if (Info.Weapon.ProjectileSyncMonitor.Remove(Info.SyncId))
             {
                 if (s.AdvSyncServer)
@@ -359,7 +359,7 @@ namespace CoreSystems.Projectiles
         internal void ProjectileClose()
         {
             var aConst = Info.AmmoDef.Const;
-            var session = Info.Weapon.Comp.Session;
+            var session = Session.I;
             var normalfragSpawn = aConst.FragOnEnd && (aConst.FragIgnoreArming || Info.RelativeAge >= aConst.MinArmingTime);
             var eolFragSpawn = aConst.FragOnEolArmed && Info.ObjectsHit > 0 && Info.RelativeAge >= aConst.MinArmingTime;
             
@@ -456,7 +456,7 @@ namespace CoreSystems.Projectiles
             var coreParent = comp.TopEntity;
             var startTrack = s.SmartReady || coreParent.MarkedForClose;
             var ai = Info.Ai;
-            var session = ai.Session;
+            var session = Session.I;
             var speedCapMulti = 1d;
 
             if (aConst.TimedFragments && Info.SpawnDepth < aConst.FragMaxChildren && Info.RelativeAge >= aConst.FragStartTime && Info.RelativeAge - Info.LastFragTime > aConst.FragInterval && Info.Frags < aConst.MaxFrags)
@@ -478,7 +478,7 @@ namespace CoreSystems.Projectiles
                 s.SmartReady = true;
                 var fake = Info.Target.TargetState == Target.TargetStates.IsFake;
                 var hadTarget = HadTarget != HadTargetState.None;
-                var clientSync = aConst.FullSync && Info.Weapon.Comp.Session.AdvSyncClient;
+                var clientSync = aConst.FullSync && Session.I.AdvSyncClient;
 
                 var gaveUpChase = !fake && Info.RelativeAge - s.ChaseAge > aConst.MaxChaseTime && hadTarget && !clientSync;
                 var overMaxTargets = hadTarget && TargetsSeen > aConst.MaxTargets && aConst.MaxTargets != 0;
@@ -805,7 +805,7 @@ namespace CoreSystems.Projectiles
 
         private void ProcessStage(ref double accelMpsMulti, ref double speedCapMulti, ref bool disableAvoidance, Vector3D targetPos, int lastActiveStage, bool targetLock, int callDepth)
         {
-            var s = Info.Weapon.Comp.Session;
+            var s = Session.I;
             if (callDepth-- < 0) {
                 if (s.HandlesInput && s.DebugMod)
                     s.ShowLocalNotify("Approach is attempting to infinite loop, fix your approach moveNext/restart conditions", 2000);
@@ -1550,7 +1550,7 @@ namespace CoreSystems.Projectiles
             double waterSurface = 0;
 
             WaterData water = null;
-            if (Info.Weapon.Comp.Session.WaterApiLoaded && Info.Weapon.Comp.Session.WaterMap.TryGetValue(Info.MyPlanet.EntityId, out water))
+            if (Session.I.WaterApiLoaded && Session.I.WaterMap.TryGetValue(Info.MyPlanet.EntityId, out water))
             {
                 waterSurfacePos = WaterModAPI.GetClosestSurfacePoint(checkPosition, water.Planet);
                 Vector3D.DistanceSquared(ref waterSurfacePos, ref planetCenter, out waterSurface);
@@ -1668,13 +1668,13 @@ namespace CoreSystems.Projectiles
 
             if (aConst.DynamicGuidance)
             {
-                if (PruningProxyId != -1 && comp.Session.ActiveAntiSmarts > 0)
+                if (PruningProxyId != -1 && Session.I.ActiveAntiSmarts > 0)
                 {
                     var sphere = new BoundingSphereD(Position, aConst.LargestHitSize);
                     BoundingBoxD result;
                     BoundingBoxD.CreateFromSphere(ref sphere, out result);
                     var displacement = 0.1 * Velocity;
-                    comp.Session.ProjectileTree.MoveProxy(PruningProxyId, ref result, displacement);
+                    Session.I.ProjectileTree.MoveProxy(PruningProxyId, ref result, displacement);
                 }
             }
         }
@@ -1730,7 +1730,7 @@ namespace CoreSystems.Projectiles
             var target = Info.Target;
 
             var tasks = comp.Data.Repo.Values.State.Tasks;
-            var updateTask = tasks.UpdatedTick == comp.Session.Tick - 1;
+            var updateTask = tasks.UpdatedTick == Session.I.Tick - 1;
             var tracking = aConst.DeltaVelocityPerTick <= 0 || (s.DroneInfo.DroneStat == DroneInfo.DroneStatus.Dock || Vector3D.DistanceSquared(Info.Origin, Position) >= aConst.SmartsDelayDistSqr);
             var parentPos = Vector3D.Zero;
 
@@ -1748,7 +1748,7 @@ namespace CoreSystems.Projectiles
 
             DroneMissions(parentEnt, ref orbitSphere, ref orbitSphereClose, ref targetSphere, aConst, s, ref parentPos);
 
-            if (w.System.WConst.DebugMode && !w.System.Session.DedicatedServer)
+            if (w.System.WConst.DebugMode && !I.DedicatedServer)
                 DroneDebug(ref orbitSphere);
 
             if (tracking && s.DroneInfo.DroneMsn != DroneInfo.DroneMission.Rtb && !DroneTracking(target, s, aConst))
@@ -1766,7 +1766,7 @@ namespace CoreSystems.Projectiles
             var ammo = Info.AmmoDef;
             var speedLimitPerTick = aConst.AmmoSkipAccel ? DesiredSpeed : aConst.AccelInMetersPerSec;
             var fragProx = aConst.FragProximity;
-            var hasObstacle = s.Obstacle.Entity != parentEnt && comp.Session.Tick - 1 == s.Obstacle.LastSeenTick;
+            var hasObstacle = s.Obstacle.Entity != parentEnt && Session.I.Tick - 1 == s.Obstacle.LastSeenTick;
             var hasStrafe = ammo.Fragment.TimedSpawns.PointAtTarget == false;
             var hasKamikaze = ammo.AreaOfDamage.ByBlockHit.Enable || (ammo.AreaOfDamage.EndOfLife.Enable && Info.RelativeAge >= ammo.AreaOfDamage.EndOfLife.MinArmingTime); //check for explosive payload on drone
             var maxLife = aConst.MaxLifeTime;
@@ -2390,7 +2390,7 @@ namespace CoreSystems.Projectiles
             if (fake && Info.Storage.DummyTargets != null)
             {
                 var fakeTarget = Info.Storage.DummyTargets.PaintedTarget.EntityId != 0 ? Info.Storage.DummyTargets.PaintedTarget : Info.Storage.DummyTargets.ManualTarget;
-                fakeTargetInfo = fakeTarget.LastInfoTick != Info.Weapon.Comp.Session.Tick ? fakeTarget.GetFakeTargetInfo(Info.Ai) : fakeTarget.FakeInfo;
+                fakeTargetInfo = fakeTarget.LastInfoTick != Session.I.Tick ? fakeTarget.GetFakeTargetInfo(Info.Ai) : fakeTarget.FakeInfo;
                 targetPos = fakeTargetInfo.WorldPosition;
                 HadTarget = HadTargetState.Fake;
             }
@@ -2447,7 +2447,7 @@ namespace CoreSystems.Projectiles
         private void SmartTargetLoss(Vector3D targetPos)
         {
 
-            if (Info.Storage.WasTracking && (Info.Weapon.Comp.Session.Tick20 || Vector3.Dot(Direction, Position - targetPos) > 0) || !Info.Storage.WasTracking)
+            if (Info.Storage.WasTracking && (Session.I.Tick20 || Vector3.Dot(Direction, Position - targetPos) > 0) || !Info.Storage.WasTracking)
             {
                 var targetDir = -Direction;
                 var refDir = Vector3D.Normalize(Position - targetPos);
@@ -2481,7 +2481,7 @@ namespace CoreSystems.Projectiles
         {
             var aConst = Info.AmmoDef.Const;
             var storage = Info.Storage;
-            var s = Info.Weapon.Comp.Session;
+            var s = Session.I;
             var giveUp = HadTarget != HadTargetState.None && ++TargetsSeen > aConst.MaxTargets && aConst.MaxTargets != 0;
             storage.ChaseAge = (int) Info.RelativeAge;
             storage.PickTarget = false;
@@ -2851,8 +2851,8 @@ namespace CoreSystems.Projectiles
                 case AntiSmart:
                     var eWarSphere = new BoundingSphereD(Position, Info.AmmoDef.Const.EwarRadius);
 
-                    var s = Info.Weapon.Comp.Session;
-                    DynTrees.GetAllProjectilesInSphere(Info.Weapon.Comp.Session, ref eWarSphere, s.EwaredProjectiles, false);
+                    var s = Session.I;
+                    DynTrees.GetAllProjectilesInSphere(Session.I, ref eWarSphere, s.EwaredProjectiles, false);
                     for (int j = 0; j < s.EwaredProjectiles.Count; j++)
                     {
                         var netted = s.EwaredProjectiles[j];
@@ -3026,7 +3026,7 @@ namespace CoreSystems.Projectiles
                     newOrigin += advOffSet;
                 }
 
-                var projectiles = Info.Weapon.Comp.Session.Projectiles;
+                var projectiles = Session.I.Projectiles;
                 var shrapnel = projectiles.ShrapnelPool.Count > 0 ? projectiles.ShrapnelPool.Pop() : new Fragments();
                 shrapnel.Init(this, projectiles.FragmentPool, fragAmmoDef, ref newOrigin, ref pointDir);
                 projectiles.ShrapnelToSpawn.Add(shrapnel);
@@ -3054,7 +3054,7 @@ namespace CoreSystems.Projectiles
 
         internal void SyncPosServerProjectile(ProtoProPosition.ProSyncState state)
         {
-            var session = Info.Weapon.Comp.Session;
+            var session = Session.I;
             var proSync = session.ProtoWeaponProSyncPosPool.Count > 0 ? session.ProtoWeaponProSyncPosPool.Pop() : new ProtoProPosition();
             proSync.Position = Position;
             proSync.State = state;
@@ -3066,7 +3066,7 @@ namespace CoreSystems.Projectiles
 
         internal void SyncTargetServerProjectile()
         {
-            var session = Info.Weapon.Comp.Session;
+            var session = Session.I;
             var proSync = session.ProtoWeaponProSyncTargetPool.Count > 0 ? session.ProtoWeaponProSyncTargetPool.Pop() : new ProtoProTarget();
             proSync.ProId = Info.SyncId;
             var targetId = ((MyEntity) Info.Target.TargetObject).EntityId;
@@ -3078,7 +3078,7 @@ namespace CoreSystems.Projectiles
         internal void SyncClientProjectile(int posSlot)
         {
             var w = Info.Weapon;
-            var s = w.Comp.Session;
+            var s = Session.I;
 
             ClientProSync sync;
             if (w.WeaponProSyncs.TryGetValue(Info.SyncId, out sync))
@@ -3129,10 +3129,10 @@ namespace CoreSystems.Projectiles
                     if (w.System.WConst.DebugMode)
                     {
                         List<ClientProSyncDebugLine> lines;
-                        if (!w.System.Session.ProSyncLineDebug.TryGetValue(Info.SyncId, out lines))
+                        if (!I.ProSyncLineDebug.TryGetValue(Info.SyncId, out lines))
                         {
                             lines = new List<ClientProSyncDebugLine>();
-                            w.System.Session.ProSyncLineDebug[Info.SyncId] = lines;
+                            I.ProSyncLineDebug[Info.SyncId] = lines;
                         }
 
                         var pastServerLine = lines.Count == 0 ? new LineD(pastServerProPos - (proPosSync.Velocity * (float) DeltaStepConst), pastServerProPos) : new LineD(lines[lines.Count - 1].Line.To, pastServerProPos);

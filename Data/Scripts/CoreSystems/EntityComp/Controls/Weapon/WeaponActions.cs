@@ -21,7 +21,7 @@ namespace CoreSystems.Control
             var newBool = !comp.Data.Repo.Values.Set.Overrides.Armed;
             var newValue = newBool ? 1 : 0;
 
-            Weapon.WeaponComponent.RequestSetValue(comp, "Armed", newValue, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "Armed", newValue, Session.I.PlayerId);
         }
 
         internal static void TerminalActionToggleShoot(IMyTerminalBlock blk)
@@ -31,38 +31,38 @@ namespace CoreSystems.Control
                 return;
 
             var on = comp.Data.Repo.Values.State.Trigger == On;
-            comp.ShootManager.RequestShootSync(comp.Session.PlayerId, on ? Weapon.ShootManager.RequestType.Off : Weapon.ShootManager.RequestType.On, Weapon.ShootManager.Signals.On);
+            comp.ShootManager.RequestShootSync(Session.I.PlayerId, on ? Weapon.ShootManager.RequestType.Off : Weapon.ShootManager.RequestType.On, Weapon.ShootManager.Signals.On);
         }
 
         internal static void TerminalActionFriend(IMyTerminalBlock blk)
         {
 
             var comp = blk?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready || comp.Session.DedicatedServer)
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready || Session.I.DedicatedServer)
                 return;
 
-            var targetUi = comp.Session.TargetUi;
+            var targetUi = Session.I.TargetUi;
 
             var targetId = targetUi.SelectedEntity == null || targetUi.SelectedEntity.MarkedForClose ? 0 : targetUi.SelectedEntity.EntityId;
-            Weapon.WeaponComponent.RequestDroneSetValue(comp, "Friend", targetId, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestDroneSetValue(comp, "Friend", targetId, Session.I.PlayerId);
         }
 
         internal static void TerminalActionEnemy(IMyTerminalBlock blk)
         {
             var comp = blk?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready || comp.Session.DedicatedServer)
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready || Session.I.DedicatedServer)
                 return;
 
-            var targetUi = comp.Session.TargetUi;
+            var targetUi = Session.I.TargetUi;
 
             var targetId = targetUi.SelectedEntity == null || targetUi.SelectedEntity.MarkedForClose ? 0 : targetUi.SelectedEntity.EntityId;
-            Weapon.WeaponComponent.RequestDroneSetValue(comp, "Enemy", targetId, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestDroneSetValue(comp, "Enemy", targetId, Session.I.PlayerId);
         }
 
         internal static void TerminalActionPosition(IMyTerminalBlock blk)
         {
             var comp = blk?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
-            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready || comp.Session.DedicatedServer)
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready || Session.I.DedicatedServer)
                 return;
 
             //Weapon.WeaponComponent.RequestDroneSetValue(comp, "Point", comp.Session.TargetUi.SelectedEntity.EntityId, comp.Session.PlayerId);
@@ -80,7 +80,7 @@ namespace CoreSystems.Control
             if (mgr.ClientToggleCount > state.ToggleCount || state.Trigger == On)
                 return;
 
-            comp.ShootManager.RequestShootSync(comp.Session.PlayerId, Weapon.ShootManager.RequestType.On, Weapon.ShootManager.Signals.On);
+            comp.ShootManager.RequestShootSync(Session.I.PlayerId, Weapon.ShootManager.RequestType.On, Weapon.ShootManager.Signals.On);
         }
 
         internal static void TerminalActionShootOff(IMyTerminalBlock blk)
@@ -95,7 +95,7 @@ namespace CoreSystems.Control
             if (mgr.ClientToggleCount <= state.ToggleCount && state.Trigger != On)
                 return;
 
-            comp.ShootManager.RequestShootSync(comp.Session.PlayerId, Weapon.ShootManager.RequestType.Off);
+            comp.ShootManager.RequestShootSync(Session.I.PlayerId, Weapon.ShootManager.RequestType.Off);
         }
 
         internal static void TerminalActionKeyShoot(IMyTerminalBlock blk)
@@ -110,7 +110,7 @@ namespace CoreSystems.Control
                 var signal = keyToggle ? Weapon.ShootManager.Signals.KeyToggle : Weapon.ShootManager.Signals.Once;
                 var on = comp.Data.Repo.Values.State.Trigger == On;
                 var onOff = on ? Weapon.ShootManager.RequestType.Off : Weapon.ShootManager.RequestType.On;
-                comp.ShootManager.RequestShootSync(comp.Session.PlayerId, keyToggle ? onOff : Weapon.ShootManager.RequestType.Once, signal);
+                comp.ShootManager.RequestShootSync(Session.I.PlayerId, keyToggle ? onOff : Weapon.ShootManager.RequestType.Once, signal);
             }
         }
 
@@ -131,7 +131,7 @@ namespace CoreSystems.Control
             var numValue = (int)comp.Data.Repo.Values.Set.Overrides.Control;
             var value = numValue + 1 <= 2 ? numValue + 1 : 0;
 
-            Weapon.WeaponComponent.RequestSetValue(comp, "ControlModes", value, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "ControlModes", value, Session.I.PlayerId);
         }
 
         internal static void TerminalActionMovementMode(IMyTerminalBlock blk)
@@ -143,7 +143,7 @@ namespace CoreSystems.Control
             var numValue = (int)comp.Data.Repo.Values.Set.Overrides.MoveMode;
             var value = numValue + 1 <= 3 ? numValue + 1 : 0;
 
-            Weapon.WeaponComponent.RequestSetValue(comp, "MovementModes", value, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "MovementModes", value, Session.I.PlayerId);
         }
 
 
@@ -156,7 +156,7 @@ namespace CoreSystems.Control
             var numValue = (int)comp.Data.Repo.Values.Set.Overrides.SubSystem;
             var value = numValue + 1 <= 7 ? numValue + 1 : 0;
 
-            Weapon.WeaponComponent.RequestSetValue(comp, "SubSystems", value, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "SubSystems", value, Session.I.PlayerId);
         }
 
         internal static void TerminActionCycleShootMode(IMyTerminalBlock blk)
@@ -168,7 +168,7 @@ namespace CoreSystems.Control
             var numValue = (int)comp.Data.Repo.Values.Set.Overrides.ShootMode;
             var value = numValue + 1 <= 3 ? numValue + 1 : 0;
 
-            Weapon.WeaponComponent.RequestSetValue(comp, "ShootMode", value, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "ShootMode", value, Session.I.PlayerId);
         }
 
 
@@ -181,7 +181,7 @@ namespace CoreSystems.Control
             var numValue = (int)comp.Data.Repo.Values.Set.Overrides.ShootMode;
             var value = numValue == 1 ? 0 : 1;
 
-            Weapon.WeaponComponent.RequestSetValue(comp, "ShootMode", value, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "ShootMode", value, Session.I.PlayerId);
         }
 
         internal static void TerminalActionToggleNeutrals(IMyTerminalBlock blk)
@@ -193,7 +193,7 @@ namespace CoreSystems.Control
             var newBool = !comp.Data.Repo.Values.Set.Overrides.Neutrals;
             var newValue = newBool ? 1 : 0;
 
-            Weapon.WeaponComponent.RequestSetValue(comp, "Neutrals", newValue, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "Neutrals", newValue, Session.I.PlayerId);
         }
 
         internal static void TerminalActionToggleProjectiles(IMyTerminalBlock blk)
@@ -205,7 +205,7 @@ namespace CoreSystems.Control
             var newBool = !comp.Data.Repo.Values.Set.Overrides.Projectiles;
             var newValue = newBool ? 1 : 0;
 
-            Weapon.WeaponComponent.RequestSetValue(comp, "Projectiles", newValue, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "Projectiles", newValue, Session.I.PlayerId);
         }
 
         internal static void TerminalActionToggleBiologicals(IMyTerminalBlock blk)
@@ -217,7 +217,7 @@ namespace CoreSystems.Control
             var newBool = !comp.Data.Repo.Values.Set.Overrides.Biologicals;
             var newValue = newBool ? 1 : 0;
 
-            Weapon.WeaponComponent.RequestSetValue(comp, "Biologicals", newValue, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "Biologicals", newValue, Session.I.PlayerId);
         }
 
         internal static void TerminalActionToggleMeteors(IMyTerminalBlock blk)
@@ -229,7 +229,7 @@ namespace CoreSystems.Control
             var newBool = !comp.Data.Repo.Values.Set.Overrides.Meteors;
             var newValue = newBool ? 1 : 0;
 
-            Weapon.WeaponComponent.RequestSetValue(comp, "Meteors", newValue, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "Meteors", newValue, Session.I.PlayerId);
         }
 
         internal static void TerminalActionToggleGrids(IMyTerminalBlock blk)
@@ -241,7 +241,7 @@ namespace CoreSystems.Control
             var newBool = !comp.Data.Repo.Values.Set.Overrides.Grids;
             var newValue = newBool ? 1 : 0;
 
-            Weapon.WeaponComponent.RequestSetValue(comp, "Grids", newValue, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "Grids", newValue, Session.I.PlayerId);
         }
 
         internal static void TerminalActionToggleFriendly(IMyTerminalBlock blk)
@@ -253,7 +253,7 @@ namespace CoreSystems.Control
             var newBool = !comp.Data.Repo.Values.Set.Overrides.Friendly;
             var newValue = newBool ? 1 : 0;
 
-            Weapon.WeaponComponent.RequestSetValue(comp, "Friendly", newValue, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "Friendly", newValue, Session.I.PlayerId);
         }
 
         internal static void TerminalActionToggleUnowned(IMyTerminalBlock blk)
@@ -265,7 +265,7 @@ namespace CoreSystems.Control
             var newBool = !comp.Data.Repo.Values.Set.Overrides.Unowned;
             var newValue = newBool ? 1 : 0;
 
-            Weapon.WeaponComponent.RequestSetValue(comp, "Unowned", newValue, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "Unowned", newValue, Session.I.PlayerId);
         }
         internal static void TerminalActionToggleLargeGrid(IMyTerminalBlock blk)
         {
@@ -276,7 +276,7 @@ namespace CoreSystems.Control
             var newBool = !comp.Data.Repo.Values.Set.Overrides.LargeGrid;
             var newValue = newBool ? 1 : 0;
 
-            Weapon.WeaponComponent.RequestSetValue(comp, "LargeGrid", newValue, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "LargeGrid", newValue, Session.I.PlayerId);
         }
         internal static void TerminalActionToggleSmallGrid(IMyTerminalBlock blk)
         {
@@ -287,7 +287,7 @@ namespace CoreSystems.Control
             var newBool = !comp.Data.Repo.Values.Set.Overrides.SmallGrid;
             var newValue = newBool ? 1 : 0;
 
-            Weapon.WeaponComponent.RequestSetValue(comp, "SmallGrid", newValue, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "SmallGrid", newValue, Session.I.PlayerId);
         }
 
         internal static void TerminalActionToggleFocusTargets(IMyTerminalBlock blk)
@@ -299,7 +299,7 @@ namespace CoreSystems.Control
             var newBool = !comp.Data.Repo.Values.Set.Overrides.FocusTargets;
             var newValue = newBool ? 1 : 0;
 
-            Weapon.WeaponComponent.RequestSetValue(comp, "FocusTargets", newValue, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "FocusTargets", newValue, Session.I.PlayerId);
         }
 
         internal static void TerminalActionToggleFocusSubSystem(IMyTerminalBlock blk)
@@ -311,7 +311,7 @@ namespace CoreSystems.Control
             var newBool = !comp.Data.Repo.Values.Set.Overrides.FocusSubSystem;
             var newValue = newBool ? 1 : 0;
 
-            Weapon.WeaponComponent.RequestSetValue(comp, "FocusSubSystem", newValue, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "FocusSubSystem", newValue, Session.I.PlayerId);
         }
 
         internal static void TerminalActionMaxSizeIncrease(IMyTerminalBlock blk)
@@ -323,7 +323,7 @@ namespace CoreSystems.Control
             var nextValue = comp.Data.Repo.Values.Set.Overrides.MaxSize * 2;
             var newValue = nextValue > 0 && nextValue < 16384 ? nextValue : 16384;
 
-            Weapon.WeaponComponent.RequestSetValue(comp, "MaxSize", newValue, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "MaxSize", newValue, Session.I.PlayerId);
         }
 
         internal static void TerminalActionMaxSizeDecrease(IMyTerminalBlock blk)
@@ -335,7 +335,7 @@ namespace CoreSystems.Control
             var nextValue = comp.Data.Repo.Values.Set.Overrides.MaxSize / 2;
             var newValue = nextValue > 0 && nextValue < 16384 ? nextValue : 1;
 
-            Weapon.WeaponComponent.RequestSetValue(comp, "MaxSize", newValue, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "MaxSize", newValue, Session.I.PlayerId);
         }
 
         internal static void TerminalActionMinSizeIncrease(IMyTerminalBlock blk)
@@ -347,7 +347,7 @@ namespace CoreSystems.Control
             var nextValue = comp.Data.Repo.Values.Set.Overrides.MinSize == 0 ? 1 : comp.Data.Repo.Values.Set.Overrides.MinSize * 2;
             var newValue = nextValue > 0 && nextValue < 128 ? nextValue : 128;
 
-            Weapon.WeaponComponent.RequestSetValue(comp, "MinSize", newValue, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "MinSize", newValue, Session.I.PlayerId);
         }
 
         internal static void TerminalActionMinSizeDecrease(IMyTerminalBlock blk)
@@ -359,7 +359,7 @@ namespace CoreSystems.Control
             var nextValue = comp.Data.Repo.Values.Set.Overrides.MinSize / 2;
             var newValue = nextValue > 0 && nextValue < 128 ? nextValue : 0;
 
-            Weapon.WeaponComponent.RequestSetValue(comp, "MinSize", newValue, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "MinSize", newValue, Session.I.PlayerId);
         }
 
         internal static void TerminalActionCycleAmmo(IMyTerminalBlock block)
@@ -386,7 +386,7 @@ namespace CoreSystems.Control
             var newBool = !comp.Data.Repo.Values.Set.Overrides.Repel;
             var newValue = newBool ? 1 : 0;
 
-            Weapon.WeaponComponent.RequestSetValue(comp, "Repel", newValue, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "Repel", newValue, Session.I.PlayerId);
         }
 
         internal static void TerminalActionCameraChannelIncrease(IMyTerminalBlock blk)
@@ -398,7 +398,7 @@ namespace CoreSystems.Control
             var value = comp.Data.Repo.Values.Set.Overrides.CameraChannel;
             var nextValue = MathHelper.Clamp(value + 1, 0, 24);
 
-            Weapon.WeaponComponent.RequestSetValue(comp, "CameraChannel", nextValue, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "CameraChannel", nextValue, Session.I.PlayerId);
         }
 
         internal static void TerminalActionCameraChannelDecrease(IMyTerminalBlock blk)
@@ -410,7 +410,7 @@ namespace CoreSystems.Control
             var value = comp.Data.Repo.Values.Set.Overrides.CameraChannel;
             var nextValue = MathHelper.Clamp(value - 1, 0, 24);
 
-            Weapon.WeaponComponent.RequestSetValue(comp, "CameraChannel", nextValue, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "CameraChannel", nextValue, Session.I.PlayerId);
         }
 
         internal static void TerminalActionLeadGroupIncrease(IMyTerminalBlock blk)
@@ -422,7 +422,7 @@ namespace CoreSystems.Control
             var value = Convert.ToInt32(comp.Data.Repo.Values.Set.Overrides.LeadGroup);
             var nextValue = MathHelper.Clamp(value + 1, 0, 5);
 
-            Weapon.WeaponComponent.RequestSetValue(comp, "LeadGroup", nextValue, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "LeadGroup", nextValue, Session.I.PlayerId);
         }
 
         internal static void TerminalActionLeadGroupDecrease(IMyTerminalBlock blk)
@@ -434,7 +434,7 @@ namespace CoreSystems.Control
             var value = Convert.ToInt32(comp.Data.Repo.Values.Set.Overrides.LeadGroup);
             var nextValue = MathHelper.Clamp(value - 1, 0, 5);
 
-            Weapon.WeaponComponent.RequestSetValue(comp, "LeadGroup", nextValue, comp.Session.PlayerId);
+            Weapon.WeaponComponent.RequestSetValue(comp, "LeadGroup", nextValue, Session.I.PlayerId);
         }
         internal static void TerminalActionCameraIncrease(IMyTerminalBlock blk)
         {

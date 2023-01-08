@@ -420,7 +420,7 @@ namespace CoreSystems
             var detActive = false;
             var earlyExit = false;
             var destroyed = 0;
-            var showHits = t.Weapon.System.WConst.DebugMode && !t.Weapon.Comp.Session.MpActive;
+            var showHits = t.Weapon.System.WConst.DebugMode && !I.MpActive;
             DeferredBlockDestroy dInfo = null;
 
             //Main loop (finally)
@@ -1013,7 +1013,7 @@ namespace CoreSystems
                 DetonateProjectile(hitEnt, attacker);
             }
             if (GlobalDamageHandlerActive) {
-                attacker.ProHits = attacker.ProHits != null && attacker.Weapon.System.Session.ProHitPool.Count > 0 ? attacker.Weapon.System.Session.ProHitPool.Pop() : new List<MyTuple<Vector3D, object, float>>();
+                attacker.ProHits = attacker.ProHits != null && ProHitPool.Count > 0 ? ProHitPool.Pop() : new List<MyTuple<Vector3D, object, float>>();
                 attacker.ProHits.Add(new MyTuple<Vector3D, object, float>(hitEnt.Intersection.To, pTarget.Info.Id, scaledDamage));
             }
         }
@@ -1060,7 +1060,7 @@ namespace CoreSystems
                         }
 
                         if (GlobalDamageHandlerActive) {
-                            attacker.ProHits = attacker.ProHits != null && attacker.Weapon.System.Session.ProHitPool.Count > 0 ? attacker.Weapon.System.Session.ProHitPool.Pop() : new List<MyTuple<Vector3D, object, float>>();
+                            attacker.ProHits = attacker.ProHits != null && ProHitPool.Count > 0 ? ProHitPool.Pop() : new List<MyTuple<Vector3D, object, float>>();
                             attacker.ProHits.Add(new MyTuple<Vector3D, object, float>(hitEnt.Intersection.To, hitEnt.Projectile.Info.Id, scaledDamage));
                         }
                     }
@@ -1145,7 +1145,7 @@ namespace CoreSystems
 
                     if (GlobalDamageHandlerActive)
                     {
-                        info.ProHits = info.ProHits != null && info.Weapon.System.Session.ProHitPool.Count > 0 ? info.Weapon.System.Session.ProHitPool.Pop() : new List<MyTuple<Vector3D, object, float>>();
+                        info.ProHits = info.ProHits != null && ProHitPool.Count > 0 ? ProHitPool.Pop() : new List<MyTuple<Vector3D, object, float>>();
                         info.ProHits.Add(new MyTuple<Vector3D, object, float>(hitEnt.Intersection.To, destObj, 0));
                     }
                 }

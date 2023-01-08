@@ -40,7 +40,7 @@ namespace CoreSystems
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
             var value = newValue ? 1 : 0;
-            ControlSys.ControlComponent.RequestSetValue(comp, "ShareFireControl", value, comp.Session.PlayerId);
+            ControlSys.ControlComponent.RequestSetValue(comp, "ShareFireControl", value, Session.I.PlayerId);
         }
 
         internal static void RequestSetAiEnabledControl(IMyTerminalBlock block, bool newValue)
@@ -49,7 +49,7 @@ namespace CoreSystems
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
             var value = newValue ? 1 : 0;
-            ControlSys.ControlComponent.RequestSetValue(comp, "AiEnabled", value, comp.Session.PlayerId);
+            ControlSys.ControlComponent.RequestSetValue(comp, "AiEnabled", value, Session.I.PlayerId);
         }
 
         internal static float GetRangeControl(IMyTerminalBlock block)
@@ -67,15 +67,15 @@ namespace CoreSystems
             if (!MyUtils.IsEqual(newValue, comp.Data.Repo.Values.Set.Range))
             {
 
-                if (comp.Session.IsServer)
+                if (Session.I.IsServer)
                 {
                     comp.Data.Repo.Values.Set.Range = newValue;
                     //ControlSys.ControlComponent.SetRange(comp);
-                    if (comp.Session.MpActive)
-                        comp.Session.SendComp(comp);
+                    if (Session.I.MpActive)
+                        Session.I.SendComp(comp);
                 }
                 else
-                    comp.Session.SendSetCompFloatRequest(comp, newValue, PacketType.RequestSetRange);
+                    Session.I.SendSetCompFloatRequest(comp, newValue, PacketType.RequestSetRange);
             }
 
         }
@@ -91,7 +91,7 @@ namespace CoreSystems
         {
             var comp = block?.Components?.Get<CoreComponent>() as ControlSys.ControlComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
-            ControlSys.ControlComponent.RequestSetValue(comp, "ShootMode", (int)newValue, comp.Session.PlayerId);
+            ControlSys.ControlComponent.RequestSetValue(comp, "ShootMode", (int)newValue, Session.I.PlayerId);
         }
 
         internal static void CtcListShootModes(List<MyTerminalControlComboBoxItem> shootModeList)
@@ -114,15 +114,15 @@ namespace CoreSystems
         internal static bool GetAdvancedControl(IMyTerminalBlock block)
         {
             var comp = block?.Components?.Get<CoreComponent>() as ControlSys.ControlComponent;
-            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready || comp.Session.Settings?.ClientConfig == null) return false;
-            return comp.Session.Settings.ClientConfig.AdvancedMode;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready || Session.I.Settings?.ClientConfig == null) return false;
+            return Session.I.Settings.ClientConfig.AdvancedMode;
         }
 
         internal static void RequestAdvancedControl(IMyTerminalBlock block, bool newValue)
         {
             var comp = block?.Components?.Get<CoreComponent>() as ControlSys.ControlComponent;
-            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready || comp.Session.Settings?.ClientConfig == null || comp.Session.Tick == comp.Session.AdvancedToggleTick) return;
-            var s = comp.Session;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready || Session.I.Settings?.ClientConfig == null || Session.I.Tick == Session.I.AdvancedToggleTick) return;
+            var s = Session.I;
             s.AdvancedToggleTick = s.Tick;
             s.Settings.ClientConfig.AdvancedMode = !s.Settings.ClientConfig.AdvancedMode;
             s.Settings.VersionControl.UpdateClientCfgFile();
@@ -147,14 +147,14 @@ namespace CoreSystems
             var comp = block?.Components?.Get<CoreComponent>() as ControlSys.ControlComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
-            if (comp.Session.IsServer)
+            if (Session.I.IsServer)
             {
                 comp.Data.Repo.Values.Set.ReportTarget = newValue;
-                if (comp.Session.MpActive)
-                    comp.Session.SendComp(comp);
+                if (Session.I.MpActive)
+                    Session.I.SendComp(comp);
             }
             else
-                comp.Session.SendSetCompBoolRequest(comp, newValue, PacketType.RequestSetReportTarget);
+                Session.I.SendSetCompBoolRequest(comp, newValue, PacketType.RequestSetReportTarget);
         }
 
         internal static bool GetReportTargetControl(IMyTerminalBlock block)
@@ -177,7 +177,7 @@ namespace CoreSystems
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
             var value = newValue ? 1 : 0;
-            ControlSys.ControlComponent.RequestSetValue(comp, "Neutrals", value, comp.Session.PlayerId);
+            ControlSys.ControlComponent.RequestSetValue(comp, "Neutrals", value, Session.I.PlayerId);
         }
 
         internal static bool GetUnownedControl(IMyTerminalBlock block)
@@ -193,7 +193,7 @@ namespace CoreSystems
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
             var value = newValue ? 1 : 0;
-            ControlSys.ControlComponent.RequestSetValue(comp, "Unowned", value, comp.Session.PlayerId);
+            ControlSys.ControlComponent.RequestSetValue(comp, "Unowned", value, Session.I.PlayerId);
         }
 
         internal static bool GetFocusFireControl(IMyTerminalBlock block)
@@ -208,7 +208,7 @@ namespace CoreSystems
             var comp = block?.Components?.Get<CoreComponent>() as ControlSys.ControlComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
             var value = newValue ? 1 : 0;
-            ControlSys.ControlComponent.RequestSetValue(comp, "FocusTargets", value, comp.Session.PlayerId);
+            ControlSys.ControlComponent.RequestSetValue(comp, "FocusTargets", value, Session.I.PlayerId);
         }
 
         internal static bool GetSubSystemsControl(IMyTerminalBlock block)
@@ -224,7 +224,7 @@ namespace CoreSystems
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
             var value = newValue ? 1 : 0;
 
-            ControlSys.ControlComponent.RequestSetValue(comp, "FocusSubSystem", value, comp.Session.PlayerId);
+            ControlSys.ControlComponent.RequestSetValue(comp, "FocusSubSystem", value, Session.I.PlayerId);
         }
 
         internal static bool GetBiologicalsControl(IMyTerminalBlock block)
@@ -239,7 +239,7 @@ namespace CoreSystems
             var comp = block?.Components?.Get<CoreComponent>() as ControlSys.ControlComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
             var value = newValue ? 1 : 0;
-            ControlSys.ControlComponent.RequestSetValue(comp, "Biologicals", value, comp.Session.PlayerId);
+            ControlSys.ControlComponent.RequestSetValue(comp, "Biologicals", value, Session.I.PlayerId);
         }
 
         internal static bool GetProjectilesControl(IMyTerminalBlock block)
@@ -255,7 +255,7 @@ namespace CoreSystems
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
             var value = newValue ? 1 : 0;
-            ControlSys.ControlComponent.RequestSetValue(comp, "Projectiles", value, comp.Session.PlayerId);
+            ControlSys.ControlComponent.RequestSetValue(comp, "Projectiles", value, Session.I.PlayerId);
         }
 
         internal static bool GetMeteorsControl(IMyTerminalBlock block)
@@ -271,7 +271,7 @@ namespace CoreSystems
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
             var value = newValue ? 1 : 0;
-            ControlSys.ControlComponent.RequestSetValue(comp, "Meteors", value, comp.Session.PlayerId);
+            ControlSys.ControlComponent.RequestSetValue(comp, "Meteors", value, Session.I.PlayerId);
         }
 
         internal static bool GetGridsControl(IMyTerminalBlock block)
@@ -287,7 +287,7 @@ namespace CoreSystems
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
             var value = newValue ? 1 : 0;
-            ControlSys.ControlComponent.RequestSetValue(comp, "Grids", value, comp.Session.PlayerId);
+            ControlSys.ControlComponent.RequestSetValue(comp, "Grids", value, Session.I.PlayerId);
         }
 
         internal static long GetSubSystemControl(IMyTerminalBlock block)
@@ -302,7 +302,7 @@ namespace CoreSystems
             var comp = block?.Components?.Get<CoreComponent>() as ControlSys.ControlComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
-            ControlSys.ControlComponent.RequestSetValue(comp, "SubSystems", (int) newValue, comp.Session.PlayerId);
+            ControlSys.ControlComponent.RequestSetValue(comp, "SubSystems", (int) newValue, Session.I.PlayerId);
         }
 
         internal static long GetMovementModeControl(IMyTerminalBlock block)
@@ -317,7 +317,7 @@ namespace CoreSystems
             var comp = block?.Components?.Get<CoreComponent>() as ControlSys.ControlComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
-            ControlSys.ControlComponent.RequestSetValue(comp, "MovementModes", (int)newValue, comp.Session.PlayerId);
+            ControlSys.ControlComponent.RequestSetValue(comp, "MovementModes", (int)newValue, Session.I.PlayerId);
         }
 
         internal static long GetControlModeControl(IMyTerminalBlock block)
@@ -332,7 +332,7 @@ namespace CoreSystems
             var comp = block?.Components?.Get<CoreComponent>() as ControlSys.ControlComponent;
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
-            ControlSys.ControlComponent.RequestSetValue(comp, "ControlModes", (int)newValue, comp.Session.PlayerId);
+            ControlSys.ControlComponent.RequestSetValue(comp, "ControlModes", (int)newValue, Session.I.PlayerId);
         }
 
         internal static bool GetRepelControl(IMyTerminalBlock block)
@@ -348,7 +348,7 @@ namespace CoreSystems
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
             var value = newValue ? 1 : 0;
-            ControlSys.ControlComponent.RequestSetValue(comp, "Repel", value, comp.Session.PlayerId);
+            ControlSys.ControlComponent.RequestSetValue(comp, "Repel", value, Session.I.PlayerId);
         }
 
         internal static bool GetSmallGridControl(IMyTerminalBlock block)
@@ -364,7 +364,7 @@ namespace CoreSystems
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
             var value = newValue ? 1 : 0;
-            ControlSys.ControlComponent.RequestSetValue(comp, "SmallGrid", value, comp.Session.PlayerId);
+            ControlSys.ControlComponent.RequestSetValue(comp, "SmallGrid", value, Session.I.PlayerId);
         }
 
         internal static bool GetLargeGridControl(IMyTerminalBlock block)
@@ -380,7 +380,7 @@ namespace CoreSystems
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
             var value = newValue ? 1 : 0;
-            ControlSys.ControlComponent.RequestSetValue(comp, "LargeGrid", value, comp.Session.PlayerId);
+            ControlSys.ControlComponent.RequestSetValue(comp, "LargeGrid", value, Session.I.PlayerId);
         }
 
         internal static void ToolWeaponFill(IMyTerminalBlock block, List<MyTerminalControlListBoxItem> arg1, List<MyTerminalControlListBoxItem> arg2)

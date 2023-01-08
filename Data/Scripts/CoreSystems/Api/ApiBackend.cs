@@ -22,14 +22,12 @@ namespace CoreSystems.Api
 {
     internal class ApiBackend
     {
-        private readonly Session _session;
         internal readonly Dictionary<string, Delegate> ModApiMethods;
         internal readonly Dictionary<string, Delegate> PbApiMethods;
         private readonly ImmutableDictionary<string, Delegate> _safeDictionary;
 
-        internal ApiBackend(Session session)
+        internal ApiBackend()
         {
-            _session = session;
 
             ModApiMethods = new Dictionary<string, Delegate>
             {
@@ -225,7 +223,7 @@ namespace CoreSystems.Api
             var pb = MyAPIGateway.TerminalControls.CreateProperty<IReadOnlyDictionary<string, Delegate>, Sandbox.ModAPI.IMyTerminalBlock>("WcPbAPI");
             pb.Getter = b => _safeDictionary;
             MyAPIGateway.TerminalControls.AddControl<Sandbox.ModAPI.Ingame.IMyProgrammableBlock>(pb);
-            _session.PbApiInited = true;
+            Session.I.PbApiInited = true;
         }
 
         private void GetObstructionsLegacy(IMyEntity shooter, ICollection<IMyEntity> collection) => GetObstructions((MyEntity) shooter, (ICollection<MyEntity>) collection);
@@ -233,7 +231,7 @@ namespace CoreSystems.Api
         {
             var grid = shooter?.GetTopMostParent() as MyCubeGrid;
             Ai gridAi;
-            if (grid != null && collection != null && _session.EntityAIs.TryGetValue(grid, out gridAi))
+            if (grid != null && collection != null && Session.I.EntityAIs.TryGetValue(grid, out gridAi))
             {
                 for (int i = 0; i < gridAi.Obstructions.Count; i++)
                     collection.Add(gridAi.Obstructions[i].Target);
@@ -403,7 +401,7 @@ namespace CoreSystems.Api
             Ai ai;
             Ai.TargetInfo info = null;
 
-            if (shooterGrid != null && topTarget != null && _session.EntityToMasterAi.TryGetValue(shooterGrid, out ai) && ai.Construct.GetConstructTargetInfo(topTarget, out info)) {
+            if (shooterGrid != null && topTarget != null && Session.I.EntityToMasterAi.TryGetValue(shooterGrid, out ai) && ai.Construct.GetConstructTargetInfo(topTarget, out info)) {
                 relation = info.EntInfo.Relationship;
                 type = info.EntInfo.Type;
                 var maxDist = ai.MaxTargetingRange + shooterGrid.PositionComp.WorldAABB.Extents.Max();
@@ -426,7 +424,7 @@ namespace CoreSystems.Api
                     type = MyDetectedEntityType.Missile;
                     entityId = -1;
                 }
-                return new MyDetectedEntityInfo(entityId, name, type, info?.TargetPos, MatrixD.Zero, info != null ? (Vector3)info.Velocity : Vector3.Zero, relation, BoundingBoxD.CreateInvalid(), _session.Tick);
+                return new MyDetectedEntityInfo(entityId, name, type, info?.TargetPos, MatrixD.Zero, info != null ? (Vector3)info.Velocity : Vector3.Zero, relation, BoundingBoxD.CreateInvalid(), Session.I.Tick);
             }
             entityId = e.EntityId;
             var grid = topTarget as MyCubeGrid;
@@ -434,7 +432,7 @@ namespace CoreSystems.Api
             else if (player != null) name = player.GetFriendlyName();
             else name = e.GetFriendlyName();
 
-            return new MyDetectedEntityInfo(entityId, name, type, e.PositionComp.WorldAABB.Center, e.PositionComp.WorldMatrixRef, topTarget.Physics.LinearVelocity, relation, e.PositionComp.WorldAABB, _session.Tick);
+            return new MyDetectedEntityInfo(entityId, name, type, e.PositionComp.WorldAABB.Center, e.PositionComp.WorldMatrixRef, topTarget.Physics.LinearVelocity, relation, e.PositionComp.WorldAABB, Session.I.Tick);
         }
 
         private MyDetectedEntityInfo GetEntityInfo(MyEntity target, MyEntity shooter)
@@ -446,7 +444,7 @@ namespace CoreSystems.Api
             var shooterGrid = shooter.GetTopMostParent();
 
             Ai ai;
-            if (shooterGrid != null && _session.EntityToMasterAi.TryGetValue(shooterGrid, out ai))
+            if (shooterGrid != null && Session.I.EntityToMasterAi.TryGetValue(shooterGrid, out ai))
             {
                 var maxDist = ai.MaxTargetingRange + target.PositionComp.WorldAABB.Extents.Max();
                 if (Vector3D.DistanceSquared(target.PositionComp.WorldMatrixRef.Translation, shooterGrid.PositionComp.WorldMatrixRef.Translation) > (maxDist * maxDist))
@@ -476,7 +474,7 @@ namespace CoreSystems.Api
                 type = MyDetectedEntityType.Unknown;
                 name = e.GetFriendlyName();
             }
-            return new MyDetectedEntityInfo(e.EntityId, name, type, e.PositionComp.WorldAABB.Center, e.PositionComp.WorldMatrixRef, e.Physics.LinearVelocity, relation, e.PositionComp.WorldAABB, _session.Tick);
+            return new MyDetectedEntityInfo(e.EntityId, name, type, e.PositionComp.WorldAABB.Center, e.PositionComp.WorldMatrixRef, e.Physics.LinearVelocity, relation, e.PositionComp.WorldAABB, Session.I.Tick);
         }
 
         private readonly List<MyTuple<MyEntity, float>> _tmpTargetList = new List<MyTuple<MyEntity, float>>();
@@ -560,26 +558,26 @@ namespace CoreSystems.Api
         // Non-PB Methods
         private void GetAllWeaponDefinitions(IList<byte[]> collection)
         {
-            foreach (var wepDef in _session.WeaponDefinitions)
+            foreach (var wepDef in Session.I.WeaponDefinitions)
                 collection.Add(MyAPIGateway.Utilities.SerializeToBinary(wepDef));
         }
 
         private void GetCoreWeapons(ICollection<MyDefinitionId> collection)
         {
-            foreach (var def in _session.CoreSystemsDefs.Values)
+            foreach (var def in Session.I.CoreSystemsDefs.Values)
                 collection.Add(def);
         }
 
         private void NpcSafeWeapons(ICollection<MyDefinitionId> collection)
         {
-            foreach (var def in _session.NpcSafeWeaponDefs.Values)
+            foreach (var def in Session.I.NpcSafeWeaponDefs.Values)
                 collection.Add(def);
         }
 
         private void GetAllWeaponMagazines(IDictionary<MyDefinitionId, List<MyTuple<int, MyTuple<MyDefinitionId, string, string, bool>>>> dictionary)
         {
             dictionary.Clear();
-            foreach (var def in _session.SubTypeIdToWeaponMagMap)
+            foreach (var def in Session.I.SubTypeIdToWeaponMagMap)
             {
                 var list = new List<MyTuple<int, MyTuple<MyDefinitionId, string, string, bool>>>();
                 dictionary[def.Key] = list;
@@ -601,7 +599,7 @@ namespace CoreSystems.Api
         private void GetAllNpcSafeWeaponMagazines(IDictionary<MyDefinitionId, List<MyTuple<int, MyTuple<MyDefinitionId, string, string, bool>>>> dictionary)
         {
             dictionary.Clear();
-            foreach (var def in _session.SubTypeIdToNpcSafeWeaponMagMap)
+            foreach (var def in Session.I.SubTypeIdToNpcSafeWeaponMagMap)
             {
                 var list = new List<MyTuple<int, MyTuple<MyDefinitionId, string, string, bool>>>();
                 dictionary[def.Key] = list;
@@ -624,30 +622,30 @@ namespace CoreSystems.Api
 
         private void GetCoreStaticLaunchers(ICollection<MyDefinitionId> collection)
         {
-            foreach (var def in _session.CoreSystemsFixedBlockDefs)
+            foreach (var def in Session.I.CoreSystemsFixedBlockDefs)
                 collection.Add(def);
         }
 
         private void GetCorePhantoms(ICollection<MyDefinitionId> collection)
         {
-            foreach (var def in _session.CoreSystemsPhantomDefs)
+            foreach (var def in Session.I.CoreSystemsPhantomDefs)
                 collection.Add(def);
         }
 
         private void GetCoreRifles(ICollection<MyDefinitionId> collection)
         {
-            foreach (var def in _session.CoreSystemsRifleDefs)
+            foreach (var def in Session.I.CoreSystemsRifleDefs)
                 collection.Add(def);
         }
 
         private void GetCoreArmors(IList<byte[]> collection)
         {
-            foreach (var def in _session.CoreSystemsArmorDefs)
+            foreach (var def in Session.I.CoreSystemsArmorDefs)
                 collection.Add(MyAPIGateway.Utilities.SerializeToBinary(def));
         }
         private void GetCoreTurrets(ICollection<MyDefinitionId> collection)
         {
-            foreach (var def in _session.CoreSystemsTurretBlockDefs)
+            foreach (var def in Session.I.CoreSystemsTurretBlockDefs)
                 collection.Add(def);
         }
 
@@ -692,14 +690,14 @@ namespace CoreSystems.Api
         private bool ToggleInfiniteResources(MyEntity entity)
         {
             CoreComponent comp;
-            if (_session.IdToCompMap.TryGetValue(entity.EntityId, out comp))
+            if (Session.I.IdToCompMap.TryGetValue(entity.EntityId, out comp))
             {
                 comp.InfiniteResource = !comp.InfiniteResource;
                 return comp.InfiniteResource;
             }
 
             Ai ai;
-            if (_session.EntityToMasterAi.TryGetValue(entity, out ai))
+            if (Session.I.EntityToMasterAi.TryGetValue(entity, out ai))
             {
                 return ai.Construct.GiveAllCompsInfiniteResources();
             }
@@ -713,12 +711,12 @@ namespace CoreSystems.Api
         private bool TargetFocusHandler(long handledEntityId, bool unRegister, Func<MyEntity, IMyCharacter, long, int, bool> callback)
         {
             if (unRegister)
-                return _session.TargetFocusHandlers.Remove(handledEntityId);
+                return Session.I.TargetFocusHandlers.Remove(handledEntityId);
 
-            if (_session.TargetFocusHandlers.ContainsKey(handledEntityId))
+            if (Session.I.TargetFocusHandlers.ContainsKey(handledEntityId))
                 return false;
 
-            _session.TargetFocusHandlers.Add(handledEntityId, callback);
+            Session.I.TargetFocusHandlers.Add(handledEntityId, callback);
             return true;
         }
 
@@ -729,12 +727,12 @@ namespace CoreSystems.Api
         private bool HudHandler(long handledEntityId, bool unRegister, Func<IMyCharacter, long, int, bool> callback)
         {
             if (unRegister)
-                return _session.HudHandlers.Remove(handledEntityId);
+                return Session.I.HudHandlers.Remove(handledEntityId);
 
-            if (_session.HudHandlers.ContainsKey(handledEntityId))
+            if (Session.I.HudHandlers.ContainsKey(handledEntityId))
                 return false;
 
-            _session.HudHandlers.Add(handledEntityId, callback);
+            Session.I.HudHandlers.Add(handledEntityId, callback);
             return true;
         }
 
@@ -745,12 +743,12 @@ namespace CoreSystems.Api
         private bool ShootHandler(long handledEntityId, bool unRegister, Func<Vector3D, Vector3D, int, bool, object, int, int, int, bool> callback)
         {
             if (unRegister)
-                return _session.ShootHandlers.Remove(handledEntityId);
+                return Session.I.ShootHandlers.Remove(handledEntityId);
 
-            if (_session.ShootHandlers.ContainsKey(handledEntityId))
+            if (Session.I.ShootHandlers.ContainsKey(handledEntityId))
                 return false;
 
-            _session.ShootHandlers.Add(handledEntityId, callback);
+            Session.I.ShootHandlers.Add(handledEntityId, callback);
             return true;
         }
 
@@ -785,7 +783,7 @@ namespace CoreSystems.Api
         private bool GetBlockWeaponMap(Sandbox.ModAPI.IMyTerminalBlock weaponBlock, IDictionary<string, int> collection)
         {
             CoreStructure coreStructure;
-            if (_session.PartPlatforms.TryGetValue(weaponBlock.SlimBlock.BlockDefinition.Id, out coreStructure) && (coreStructure is WeaponStructure))
+            if (Session.I.PartPlatforms.TryGetValue(weaponBlock.SlimBlock.BlockDefinition.Id, out coreStructure) && (coreStructure is WeaponStructure))
             {
                 foreach (var weaponSystem in coreStructure.PartSystems.Values)
                 {
@@ -805,10 +803,10 @@ namespace CoreSystems.Api
             var grid = victim.GetTopMostParent();
             Ai ai;
             MyTuple<bool, int, int> tuple;
-            if (grid != null && _session.EntityAIs.TryGetValue(grid, out ai))
+            if (grid != null && Session.I.EntityAIs.TryGetValue(grid, out ai))
             {
                 var count = ai.LiveProjectile.Count;
-                tuple = count > 0 ? new MyTuple<bool, int, int>(true, count, (int) (_session.Tick - ai.LiveProjectileTick)) : new MyTuple<bool, int, int>(false, 0, -1);
+                tuple = count > 0 ? new MyTuple<bool, int, int>(true, count, (int) (Session.I.Tick - ai.LiveProjectileTick)) : new MyTuple<bool, int, int>(false, 0, -1);
             }
             else tuple = new MyTuple<bool, int, int>(false, 0, -1);
             return tuple;
@@ -821,7 +819,7 @@ namespace CoreSystems.Api
         {
             var grid = shooter.GetTopMostParent();
             Ai ai;
-            if (grid != null && _session.EntityAIs.TryGetValue(grid, out ai))
+            if (grid != null && Session.I.EntityAIs.TryGetValue(grid, out ai))
             {
                 for (int i = 0; i < ai.SortedTargets.Count; i++)
                 {
@@ -839,7 +837,7 @@ namespace CoreSystems.Api
             if (shootingGrid != null)
             {
                 Ai ai;
-                if (_session.EntityToMasterAi.TryGetValue(shootingGrid, out ai))
+                if (Session.I.EntityToMasterAi.TryGetValue(shootingGrid, out ai))
                     return MyEntities.GetEntityById(ai.Construct.Data.Repo.FocusData.Target);
             }
             return null;
@@ -853,9 +851,9 @@ namespace CoreSystems.Api
             if (topEntity != null)
             {
                 Ai ai;
-                if (_session.EntityToMasterAi.TryGetValue(topEntity, out ai))
+                if (Session.I.EntityToMasterAi.TryGetValue(topEntity, out ai))
                 {
-                    if (!ai.Session.IsServer)
+                    if (!Session.I.IsServer)
                         return false;
 
                     ai.Construct.Focus.ReassignTarget(target, ai);
@@ -873,9 +871,9 @@ namespace CoreSystems.Api
             if (shootingGrid != null)
             {
                 Ai ai;
-                if (_session.EntityToMasterAi.TryGetValue(shootingGrid, out ai))
+                if (Session.I.EntityToMasterAi.TryGetValue(shootingGrid, out ai))
                 {
-                    if (!ai.Session.IsServer)
+                    if (!Session.I.IsServer)
                         return false;
 
                     ai.Construct.Focus.RequestReleaseActive(ai, playerId);
@@ -893,7 +891,7 @@ namespace CoreSystems.Api
                 var w = comp.Platform.Weapons[weaponId];
                 WeaponSystem.AmmoType ammoType;
                 var ammoDef = w.ActiveAmmoDef;
-                if (ammoDef != null && _session.AmmoDefIds.TryGetValue(ammoDef.AmmoDefinitionId, out ammoType))
+                if (ammoDef != null && Session.I.AmmoDefIds.TryGetValue(ammoDef.AmmoDefinitionId, out ammoType))
                 {
                     var result = new MyTuple<MyDefinitionId, string, string, bool>
                     {
@@ -925,7 +923,7 @@ namespace CoreSystems.Api
         {
             var comp = weaponBlock.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             WeaponSystem.AmmoType ammoType;
-            if (comp?.Platform != null && comp.Platform.State == Ready && comp.Platform.Weapons.Count > weaponId && _session.AmmoDefIds.TryGetValue(id, out ammoType))
+            if (comp?.Platform != null && comp.Platform.State == Ready && comp.Platform.Weapons.Count > weaponId && Session.I.AmmoDefIds.TryGetValue(id, out ammoType))
             {
 
                 var weapon = comp.Platform.Weapons[weaponId];
@@ -976,7 +974,7 @@ namespace CoreSystems.Api
             var comp = weaponBlock.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
             if (comp?.Platform != null && comp.Platform.State == Ready && comp.Platform.Weapons.Count > weaponId)
             {
-                comp.ShootManager.RequestShootSync(comp.Session.PlayerId, Weapon.ShootManager.RequestType.Once, Weapon.ShootManager.Signals.Once);
+                comp.ShootManager.RequestShootSync(Session.I.PlayerId, Weapon.ShootManager.RequestType.Once, Weapon.ShootManager.Signals.Once);
             }
         }
         private static void ToggleWeaponFireLegacy(IMyEntity weaponBlock, bool on, bool allWeapons = true, int weaponId = 0) => ToggleWeaponFire((MyEntity) weaponBlock,on, allWeapons, weaponId);
@@ -1207,7 +1205,7 @@ namespace CoreSystems.Api
         {
             var grid = entity.GetTopMostParent();
 
-            return grid != null && _session.EntityAIs.ContainsKey(grid);
+            return grid != null && Session.I.EntityAIs.ContainsKey(grid);
         }
 
         private static bool HasCoreWeaponLegacy(IMyEntity weaponBlock) => HasCoreWeapon((MyEntity) weaponBlock);
@@ -1230,7 +1228,7 @@ namespace CoreSystems.Api
             {
                 var grid = entity.GetTopMostParent() as MyCubeGrid;
                 Ai ai;
-                if (grid != null && _session.EntityAIs.TryGetValue(grid, out ai))
+                if (grid != null && Session.I.EntityAIs.TryGetValue(grid, out ai))
                     return ai.OptimalDps;
             }
             return 0f;
@@ -1250,7 +1248,7 @@ namespace CoreSystems.Api
         private static void SetActiveAmmo(MyEntity weaponBlock, int weaponId, string ammoTypeStr)
         {
             var comp = weaponBlock.Components.Get<CoreComponent>() as Weapon.WeaponComponent;
-            if (comp?.Platform != null && comp.Session.IsServer && comp.Platform.State == Ready && comp.Platform.Weapons.Count > weaponId)
+            if (comp?.Platform != null && Session.I.IsServer && comp.Platform.State == Ready && comp.Platform.Weapons.Count > weaponId)
             {
                 var w = comp.Platform.Weapons[weaponId];
                 for (int i = 0; i < w.System.AmmoTypes.Length; i++)
@@ -1258,10 +1256,10 @@ namespace CoreSystems.Api
                     var ammoType = w.System.AmmoTypes[i];
                     if (ammoType.AmmoDef.AmmoRound == ammoTypeStr && ammoType.AmmoDef.Const.IsTurretSelectable)
                     {
-                        if (comp.Session.IsServer) {
+                        if (Session.I.IsServer) {
                             w.Reload.AmmoTypeId = i;
-                            if (comp.Session.MpActive)
-                                comp.Session.SendWeaponReload(w);
+                            if (Session.I.MpActive)
+                                Session.I.SendWeaponReload(w);
                         }
 
 
@@ -1273,14 +1271,14 @@ namespace CoreSystems.Api
 
         private void RegisterProjectileAddedCallback(Action<Vector3, float> callback)
         {
-            _session.ProjectileAddedCallback += callback;
+            Session.I.ProjectileAddedCallback += callback;
         }
 
         private void UnRegisterProjectileAddedCallback(Action<Vector3, float> callback)
         {
             try
             {
-                _session.ProjectileAddedCallback -= callback;
+                Session.I.ProjectileAddedCallback -= callback;
             }
             catch (Exception e)
             {
@@ -1320,7 +1318,7 @@ namespace CoreSystems.Api
         private MyTuple<Vector3D, Vector3D, float, float, long, string> GetProjectileState(ulong projectileId)
         {
             Projectile p;
-            if (_session.MonitoredProjectiles.TryGetValue(projectileId, out p))
+            if (Session.I.MonitoredProjectiles.TryGetValue(projectileId, out p))
                 return new MyTuple<Vector3D, Vector3D, float, float, long, string>(p.Position, p.Velocity, p.Info.BaseDamagePool, p.Info.BaseHealthPool, p.Info.Target.TargetId, p.Info.AmmoDef.AmmoRound);
 
             return new MyTuple<Vector3D, Vector3D, float, float, long, string>();
@@ -1330,7 +1328,7 @@ namespace CoreSystems.Api
         private void SetProjectileState(ulong projectileId, MyTuple<bool, Vector3D, Vector3D, float> adjustments)
         {
             Projectile p;
-            if (_session.MonitoredProjectiles.TryGetValue(projectileId, out p))
+            if (Session.I.MonitoredProjectiles.TryGetValue(projectileId, out p))
             {
                 if (adjustments.Item1)
                 {
@@ -1362,7 +1360,7 @@ namespace CoreSystems.Api
         {
             var topEntity = entity.GetTopMostParent();
             Ai ai;
-            if (topEntity != null && _session.EntityToMasterAi.TryGetValue(topEntity, out ai))
+            if (topEntity != null && Session.I.EntityToMasterAi.TryGetValue(topEntity, out ai))
                 return ai.EffectiveDps;
 
             return 0;
@@ -1427,7 +1425,7 @@ namespace CoreSystems.Api
         {
             var grid = entity.GetTopMostParent();
             Ai ai;
-            if (grid != null && _session.EntityAIs.TryGetValue(grid, out ai))
+            if (grid != null && Session.I.EntityAIs.TryGetValue(grid, out ai))
             {
                 return new MyTuple<bool, bool>(ai.DetectionInfo.PriorityInRange, ai.DetectionInfo.OtherInRange);
             }
@@ -1473,9 +1471,9 @@ namespace CoreSystems.Api
         private bool SetPhantomFocusTarget(MyEntity phantom, MyEntity target, int focusId)
         {
             Ai ai;
-            if (target != null && !target.MarkedForClose && _session.EntityToMasterAi.TryGetValue(phantom, out ai))
+            if (target != null && !target.MarkedForClose && Session.I.EntityToMasterAi.TryGetValue(phantom, out ai))
             {
-                if (!ai.Session.IsServer)
+                if (!Session.I.IsServer)
                     return false;
 
                 ai.Construct.Focus.ReassignTarget(target, ai);
@@ -1486,7 +1484,7 @@ namespace CoreSystems.Api
         }
         private MyEntity SpawnPhantom(string phantomType, uint maxAge, bool closeWhenOutOfAmmo, long defaultReloads, string ammoOverideName, int trigger, float? modelScale, MyEntity parnet, bool addToPrunning, bool shadows, long identityId = 0, bool sync = false)
         {
-            var ent = _session.CreatePhantomEntity(phantomType, maxAge, closeWhenOutOfAmmo, defaultReloads, ammoOverideName, (CoreComponent.Trigger)trigger, modelScale, parnet, addToPrunning, shadows, identityId, sync);
+            var ent = Session.I.CreatePhantomEntity(phantomType, maxAge, closeWhenOutOfAmmo, defaultReloads, ammoOverideName, (CoreComponent.Trigger)trigger, modelScale, parnet, addToPrunning, shadows, identityId, sync);
             return ent;
         }
 
@@ -1494,7 +1492,7 @@ namespace CoreSystems.Api
         {
             Ai ai;
             CoreComponent comp;
-            if (_session.EntityAIs.TryGetValue(phantom, out ai) && ai.CompBase.TryGetValue(phantom, out comp) && !comp.CloseCondition)
+            if (Session.I.EntityAIs.TryGetValue(phantom, out ai) && ai.CompBase.TryGetValue(phantom, out comp) && !comp.CloseCondition)
             {
                 comp.ForceClose(comp.SubtypeName);
                 return true;
@@ -1506,7 +1504,7 @@ namespace CoreSystems.Api
         {
             Ai ai;
             CoreComponent comp;
-            if (_session.EntityAIs.TryGetValue(phantom, out ai) && ai.CompBase.TryGetValue(phantom, out comp) && comp is Weapon.WeaponComponent)
+            if (Session.I.EntityAIs.TryGetValue(phantom, out ai) && ai.CompBase.TryGetValue(phantom, out comp) && comp is Weapon.WeaponComponent)
             {
                 var wComp = (Weapon.WeaponComponent)comp;
                 if (weaponId < wComp.Collection.Count)
@@ -1528,7 +1526,7 @@ namespace CoreSystems.Api
         {
             Ai ai;
             CoreComponent comp;
-            if (_session.EntityAIs.TryGetValue(phantom, out ai) && ai.CompBase.TryGetValue(phantom, out comp) && comp is Weapon.WeaponComponent)
+            if (Session.I.EntityAIs.TryGetValue(phantom, out ai) && ai.CompBase.TryGetValue(phantom, out comp) && comp is Weapon.WeaponComponent)
             {
                 var wComp = (Weapon.WeaponComponent)comp;
                 if (weaponId < wComp.Collection.Count)
@@ -1543,13 +1541,13 @@ namespace CoreSystems.Api
         {
             Ai ai;
             CoreComponent comp;
-            if (_session.IsServer && _session.EntityAIs.TryGetValue(phantom, out ai) && ai.CompBase.TryGetValue(phantom, out comp) && comp is Weapon.WeaponComponent)
+            if (Session.I.IsServer && Session.I.EntityAIs.TryGetValue(phantom, out ai) && ai.CompBase.TryGetValue(phantom, out comp) && comp is Weapon.WeaponComponent)
             {
                 var wComp = (Weapon.WeaponComponent)comp;
                 wComp.ResetShootState((CoreComponent.Trigger) trigger, ai.AiOwner);
             }
             else 
-                Log.Line($"failed to set phantom trigger: {(CoreComponent.Trigger)trigger} - isServer:{_session.IsServer}");
+                Log.Line($"failed to set phantom trigger: {(CoreComponent.Trigger)trigger} - isServer:{Session.I.IsServer}");
         }
 
         private void GetPhantomInfo(string phantomSubtypeId, ICollection<MyTuple<MyEntity, long, int, float, uint, long>> collection)
@@ -1614,11 +1612,11 @@ namespace CoreSystems.Api
         private void RegisterForDamageEvents(long modId, int eventType, Action<ListReader<MyTuple<ulong, long, int, MyEntity, MyEntity, ListReader<MyTuple<Vector3D, object, float>>>>> callback)
         {
             DamageHandlerRegistrant oldEventReq;
-            if (_session.DamageHandlerRegistrants.TryGetValue(modId, out oldEventReq))
+            if (Session.I.DamageHandlerRegistrants.TryGetValue(modId, out oldEventReq))
             {
-                _session.DamageHandlerRegistrants.Remove(modId);
-                _session.SystemWideDamageRegistrants.Remove(modId);
-                _session.GlobalDamageHandlerActive = _session.SystemWideDamageRegistrants.Count > 0;
+                Session.I.DamageHandlerRegistrants.Remove(modId);
+                Session.I.SystemWideDamageRegistrants.Remove(modId);
+                Session.I.GlobalDamageHandlerActive = Session.I.SystemWideDamageRegistrants.Count > 0;
             }
 
             if (eventType == (int)EventType.Unregister)
@@ -1626,12 +1624,12 @@ namespace CoreSystems.Api
 
             oldEventReq = oldEventReq ?? new DamageHandlerRegistrant(callback);
 
-            _session.DamageHandlerRegistrants[modId] = oldEventReq;
+            Session.I.DamageHandlerRegistrants[modId] = oldEventReq;
 
             if (eventType == (int)EventType.SystemWideDamageEvents) {
 
-                _session.GlobalDamageHandlerActive = true;
-                _session.SystemWideDamageRegistrants[modId] = oldEventReq;
+                Session.I.GlobalDamageHandlerActive = true;
+                Session.I.SystemWideDamageRegistrants[modId] = oldEventReq;
             }
         }
     }

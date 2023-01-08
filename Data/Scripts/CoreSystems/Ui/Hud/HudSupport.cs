@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using CoreSystems;
 using CoreSystems.Platform;
 using CoreSystems.Support;
 using Sandbox.Game.Entities;
@@ -11,35 +12,35 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
 {
     partial class Hud
     {
-        internal uint TicksSinceUpdated => _session.Tick - _lastHudUpdateTick;
-        internal bool KeepBackground => _session.Tick - _lastHudUpdateTick < MinUpdateTicks;
+        internal uint TicksSinceUpdated => Session.I.Tick - _lastHudUpdateTick;
+        internal bool KeepBackground => Session.I.Tick - _lastHudUpdateTick < MinUpdateTicks;
 
         internal void UpdateHudSettings()
         {
             //runs once on first draw then only again if a menu is closed
-            var fovScale = (float)(0.1 * _session.ScaleFov);
+            var fovScale = (float)(0.1 * Session.I.ScaleFov);
 
-            var fovModifier = (float)((_session.Settings.ClientConfig.HudScale * 1.4) * _session.ScaleFov);
-            var normScaler = (float)(_session.Settings.ClientConfig.HudScale * _session.ScaleFov);
-            var aspectScale = (2.37037f / _session.AspectRatio);
+            var fovModifier = (float)((Session.I.Settings.ClientConfig.HudScale * 1.4) * Session.I.ScaleFov);
+            var normScaler = (float)(Session.I.Settings.ClientConfig.HudScale * Session.I.ScaleFov);
+            var aspectScale = (2.37037f / Session.I.AspectRatio);
 
             NeedsUpdate = false;
             _lastHudUpdateTick = 0;
-            _viewPortSize.X = (fovScale * _session.AspectRatio);
+            _viewPortSize.X = (fovScale * Session.I.AspectRatio);
             _viewPortSize.Y = fovScale;
             _viewPortSize.Z = -0.1f;
 
             _currWeaponDisplayPos.X = _viewPortSize.X * BgWidthPosOffset;
             _currWeaponDisplayPos.Y = _viewPortSize.Y * .6f;
 
-            _padding = PaddingConst * ((float)_session.ScaleFov * _session.AspectRatio);
+            _padding = PaddingConst * ((float)Session.I.ScaleFov * Session.I.AspectRatio);
             _reloadWidth = ReloadWidthConst * fovModifier;
             _reloadHeight = ReloadHeightConst * fovModifier;
             _reloadOffset = _reloadWidth * fovModifier;
 
             _textSize = WeaponHudFontHeight * fovModifier;
             _sTextSize = _textSize * .75f;
-            _textWidth = (WeaponHudFontHeight * _session.AspectRatioInv) * fovScale;
+            _textWidth = (WeaponHudFontHeight * Session.I.AspectRatioInv) * fovScale;
             _stextWidth = (_textWidth * .75f);
             _stackPadding = _stextWidth * 6; // gives max limit of 6 characters (x999)
 
@@ -50,7 +51,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
 
             _infoPaneloffset = InfoPanelOffset * normScaler;
             //_paddingHeat = _session.CurrentFovWithZoom < 1 ? MathHelper.Clamp(_session.CurrentFovWithZoom * 0.0001f, 0.0001f, 0.0003f) : 0;
-            _paddingReload = _session.CurrentFovWithZoom < 1 ? MathHelper.Clamp(_session.CurrentFovWithZoom * 0.002f, 0.0002f, 0.001f) : 0.001f;
+            _paddingReload = Session.I.CurrentFovWithZoom < 1 ? MathHelper.Clamp(Session.I.CurrentFovWithZoom * 0.002f, 0.0002f, 0.001f) : 0.001f;
 
             _symbolWidth = ((_heatWidth + _padding) * aspectScale);
             _bgColor = new Vector4(1f, 1f, 1f, 0f);
@@ -58,7 +59,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
 
         internal bool RestrictHudHandlers(Ai ai, long playerId, HudMode mode)
         {
-            foreach (var handler in ai.Session.HudHandlers)
+            foreach (var handler in Session.I.HudHandlers)
             {
                 var handledTopEntityId = handler.Key;
                 MyEntity handledTopEntity;
@@ -96,10 +97,10 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
 
         internal Vector2 GetScreenSpace(Vector2 offset)
         {
-            var fovScale = (float)(0.1 * _session.ScaleFov);
+            var fovScale = (float)(0.1 * Session.I.ScaleFov);
 
             var position = new Vector2(offset.X, offset.Y);
-            position.X *= fovScale * _session.AspectRatio;
+            position.X *= fovScale * Session.I.AspectRatio;
             position.Y *= fovScale;
             return position;
         }
@@ -348,8 +349,8 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Hud
             var heatCompare = xHeatLevel.CompareTo(yHeatLevel);
             if (hasHeat && heatCompare != 0) return -heatCompare;
 
-            var xReload = (x[0].Loading || x[0].Reload.WaitForClient || x[0].System.Session.Tick - x[0].LastLoadedTick < 60);
-            var yReload = (y[0].Loading || y[0].Reload.WaitForClient || y[0].System.Session.Tick - y[0].LastLoadedTick < 60);
+            var xReload = (x[0].Loading || x[0].Reload.WaitForClient || Session.I.Tick - x[0].LastLoadedTick < 60);
+            var yReload = (y[0].Loading || y[0].Reload.WaitForClient || Session.I.Tick - y[0].LastLoadedTick < 60);
             var reloadCompare = xReload.CompareTo(yReload);
             if (reloadCompare != 0) return -reloadCompare;
 

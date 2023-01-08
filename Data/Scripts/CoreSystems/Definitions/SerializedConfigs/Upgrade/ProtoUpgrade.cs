@@ -63,10 +63,10 @@ namespace CoreSystems
             ++Revision;
             ++State.Revision;
             Session.PacketInfo info;
-            if (clean && comp.Session.PrunedPacketsToClient.TryGetValue(comp.Data.Repo.Values.State, out info))
+            if (clean && Session.I.PrunedPacketsToClient.TryGetValue(comp.Data.Repo.Values.State, out info))
             {
-                comp.Session.PrunedPacketsToClient.Remove(comp.Data.Repo.Values.State);
-                comp.Session.PacketUpgradeStatePool.Return((UpgradeStatePacket)info.Packet);
+                Session.I.PrunedPacketsToClient.Remove(comp.Data.Repo.Values.State);
+                Session.I.PacketUpgradeStatePool.Return((UpgradeStatePacket)info.Packet);
             }
         }
     }
@@ -161,7 +161,7 @@ namespace CoreSystems
             }
 
             if (syncWeapons)
-                comp.Session.SendState(comp);
+                Session.I.SendState(comp);
         }
     }
 

@@ -36,7 +36,7 @@ namespace CoreSystems.Platform
 
             CheckInventorySystem = true;
 
-            if (proposed && Comp.TypeSpecific == CompTypeSpecific.Rifle && Comp.Session.HandlesInput)
+            if (proposed && Comp.TypeSpecific == CompTypeSpecific.Rifle && Session.I.HandlesInput)
                 Comp.HandReloadNotify(this);
 
             UpdateRof();
@@ -73,25 +73,25 @@ namespace CoreSystems.Platform
 
         internal void QueueAmmoChange(int newAmmoId)
         {
-            var serverAccept = System.Session.IsServer && (!Loading || DelayedCycleId < 0);
-            var clientAccept = System.Session.IsClient && ClientMakeUpShots == 0 && !ServerQueuedAmmo && (!ClientReloading || ProtoWeaponAmmo.CurrentAmmo == 0);
+            var serverAccept = Session.I.IsServer && (!Loading || DelayedCycleId < 0);
+            var clientAccept = Session.I.IsClient && ClientMakeUpShots == 0 && !ServerQueuedAmmo && (!ClientReloading || ProtoWeaponAmmo.CurrentAmmo == 0);
             if (clientAccept || serverAccept)
             {
                 DelayedCycleId = newAmmoId;
                 AmmoName = System.AmmoTypes[newAmmoId].AmmoNameQueued;
 
-                if (System.Session.IsClient && !System.DesignatorWeapon)
+                if (Session.I.IsClient && !System.DesignatorWeapon)
                     ChangeAmmo(newAmmoId);
             }
         }
 
         internal void ChangeAmmo(int newAmmoId)
         {
-            if (System.Session.IsServer)
+            if (Session.I.IsServer)
             {
                 DelayedCycleId = -1;
                 ProposedAmmoId = newAmmoId;
-                var instantChange = System.Session.IsCreative || !ActiveAmmoDef.AmmoDef.Const.Reloadable;
+                var instantChange = Session.I.IsCreative || !ActiveAmmoDef.AmmoDef.Const.Reloadable;
                 var canReload = ProtoWeaponAmmo.CurrentAmmo == 0;
 
                 var proposedAmmo = System.AmmoTypes[ProposedAmmoId];
@@ -105,12 +105,12 @@ namespace CoreSystems.Platform
                     ComputeServerStorage(true);
             }
             else 
-                System.Session.SendAmmoCycleRequest(this, newAmmoId);
+                Session.I.SendAmmoCycleRequest(this, newAmmoId);
         }
 
         internal bool HasAmmo()
         {
-            if (Comp.Session.IsCreative || !ActiveAmmoDef.AmmoDef.Const.Reloadable || Comp.InfiniteResource) {
+            if (Session.I.IsCreative || !ActiveAmmoDef.AmmoDef.Const.Reloadable || Comp.InfiniteResource) {
                 NoMagsToLoad = false;
                 return true;
             }
@@ -127,7 +127,7 @@ namespace CoreSystems.Platform
                 EventTriggerStateChanged(EventTriggers.NoMagsToLoad, false);
                 Comp.Ai.Construct.RootAi.Construct.OutOfAmmoWeapons.Remove(this);
                 NoMagsToLoad = false;
-                LastMagSeenTick = System.Session.Tick;
+                LastMagSeenTick = Session.I.Tick;
             }
             else if (nothingToLoad)
             {
@@ -151,7 +151,7 @@ namespace CoreSystems.Platform
                 var energyDrainable = ActiveAmmoDef.AmmoDef.Const.EnergyAmmo && Comp.Ai.HasPower;
                 if (Reload.CurrentMags <= 0 && !energyDrainable && ActiveAmmoDef.AmmoDef.Const.Reloadable && !Loading) {
                     
-                    if (!Comp.Session.IsCreative) {
+                    if (!Session.I.IsCreative) {
 
                         if (!NoMagsToLoad)
                             EventTriggerStateChanged(EventTriggers.NoMagsToLoad, true);
@@ -170,7 +170,7 @@ namespace CoreSystems.Platform
 
             ProtoWeaponAmmo.CurrentAmmo = 0;
 
-            if (!Comp.Session.IsCreative) {
+            if (!Session.I.IsCreative) {
 
                 if (NoMagsToLoad) {
                     EventTriggerStateChanged(EventTriggers.NoMagsToLoad, false);
@@ -186,7 +186,7 @@ namespace CoreSystems.Platform
 
         internal bool ComputeServerStorage(bool calledFromReload = false)
         {
-            var s = Comp.Session;
+            var s = Session.I;
             var isPhantom = Comp.TypeSpecific == CompTypeSpecific.Phantom;
 
             if (!Comp.IsWorking || !ActiveAmmoDef.AmmoDef.Const.Reloadable || !Comp.HasInventory && !isPhantom) return false;
@@ -230,7 +230,7 @@ namespace CoreSystems.Platform
                     ScheduleWeaponHome(true);
 
                 if (System.DropTargetUntilLoaded && Target.HasTarget)
-                    Target.Reset(System.Session.Tick, Target.States.SendingHome);
+                    Target.Reset(Session.I.Tick, Target.States.SendingHome);
             }
 
             var invalidStates = !outOfAmmo || sendHome || Loading || calledFromReload || Reload.WaitForClient || (System.MaxReloads > 0 && Reload.LifetimeLoads >= System.MaxReloads);
@@ -257,9 +257,9 @@ namespace CoreSystems.Platform
             if (!ActiveAmmoDef.AmmoDef.Const.EnergyAmmo) {
 
                 var isPhantom = Comp.TypeSpecific == CompTypeSpecific.Phantom;
-                Reload.MagsLoaded = ActiveAmmoDef.AmmoDef.Const.MagsToLoad <= Reload.CurrentMags || Comp.Session.IsCreative ? ActiveAmmoDef.AmmoDef.Const.MagsToLoad : Reload.CurrentMags;
+                Reload.MagsLoaded = ActiveAmmoDef.AmmoDef.Const.MagsToLoad <= Reload.CurrentMags || Session.I.IsCreative ? ActiveAmmoDef.AmmoDef.Const.MagsToLoad : Reload.CurrentMags;
                 
-                if (!Comp.Session.IsCreative)
+                if (!Session.I.IsCreative)
                 {
                     if (!isPhantom && Comp.CoreInventory.ItemsCanBeRemoved(Reload.MagsLoaded, ActiveAmmoDef.AmmoDef.Const.AmmoItem))
                     {
@@ -304,22 +304,22 @@ namespace CoreSystems.Platform
             
             if (!ActiveAmmoDef.AmmoDef.Const.MustCharge || ActiveAmmoDef.AmmoDef.Const.IsHybrid) {
 
-                var timeSinceShot = LastShootTick > 0 ? System.Session.Tick - LastShootTick : 0;
+                var timeSinceShot = LastShootTick > 0 ? Session.I.Tick - LastShootTick : 0;
                 var delayTime = timeSinceShot <= System.Values.HardPoint.Loading.DelayAfterBurst ? System.Values.HardPoint.Loading.DelayAfterBurst - timeSinceShot : 0;
                 var delay = delayTime > 0 && ShotsFired == 0;
                 if (System.WConst.ReloadTime > 0 || delay)
                 {
-                    ReloadEndTick = (uint)(Comp.Session.Tick + (!delay || System.WConst.ReloadTime > delayTime ? System.WConst.ReloadTime : delayTime));
+                    ReloadEndTick = (uint)(Session.I.Tick + (!delay || System.WConst.ReloadTime > delayTime ? System.WConst.ReloadTime : delayTime));
                 }
                 else Reloaded(3);
             }
 
-            if (System.Session.MpActive && System.Session.IsServer)
+            if (Session.I.MpActive && Session.I.IsServer)
             {
                 if (ActiveAmmoDef.AmmoDef.Const.SlowFireFixedWeapon && Comp.Data.Repo.Values.State.PlayerId > 0)
-                    Reload.WaitForClient = !System.Session.IsHost;
+                    Reload.WaitForClient = !Session.I.IsHost;
 
-                System.Session.SendWeaponReload(this);
+                Session.I.SendWeaponReload(this);
             }
 
             if (ReloadEmitter == null || ReloadEmitter.IsPlaying) return;
@@ -359,7 +359,7 @@ namespace CoreSystems.Platform
                 }
 
                 ProtoWeaponAmmo.CurrentAmmo = Reload.MagsLoaded * ActiveAmmoDef.AmmoDef.Const.MagazineSize;
-                if (System.Session.IsServer) {
+                if (Session.I.IsServer) {
 
                     ++Reload.EndId;
                     ClientEndId = Reload.EndId;
@@ -367,11 +367,11 @@ namespace CoreSystems.Platform
                     if (Comp.TypeSpecific == CompTypeSpecific.Phantom && ActiveAmmoDef.AmmoDef.Const.EnergyAmmo)
                         --Reload.CurrentMags;
 
-                    if (System.Session.MpActive) {
+                    if (Session.I.MpActive) {
 
-                        System.Session.SendWeaponReload(this);
+                        Session.I.SendWeaponReload(this);
                         if (Reload.EndId == 1)
-                            System.Session.SendWeaponAmmoData(this);
+                            Session.I.SendWeaponAmmoData(this);
                     }
                 }
                 else {
@@ -387,13 +387,13 @@ namespace CoreSystems.Platform
                         DelayedCycleId = -1;
                     }
 
-                    if (ActiveAmmoDef.AmmoDef.Const.SlowFireFixedWeapon && System.Session.PlayerId == Comp.Data.Repo.Values.State.PlayerId)
-                        System.Session.SendClientReady(this);
+                    if (ActiveAmmoDef.AmmoDef.Const.SlowFireFixedWeapon && Session.I.PlayerId == Comp.Data.Repo.Values.State.PlayerId)
+                        Session.I.SendClientReady(this);
                 }
 
                 TargetData.WeaponRandom.TurretRandom = new XorShiftRandomStruct((ulong)(TargetData.WeaponRandom.CurrentSeed + (Reload.EndId + 1000000)));
                 EventTriggerStateChanged(EventTriggers.Reloading, false);
-                LastLoadedTick = Comp.Session.Tick;
+                LastLoadedTick = Session.I.Tick;
 
                 if (!ActiveAmmoDef.AmmoDef.Const.HasShotReloadDelay)
                     ShotsFired = 0;
@@ -422,7 +422,7 @@ namespace CoreSystems.Platform
                 return;
             NextMuzzle = 0;
             EventTriggerStateChanged(EventTriggers.Reloading, false);
-            LastLoadedTick = Comp.Session.Tick;
+            LastLoadedTick = Session.I.Tick;
             Loading = false;
             ReloadEndTick = uint.MaxValue;
             ProjectileCounter = 0;

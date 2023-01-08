@@ -12,7 +12,7 @@ namespace CoreSystems.Platform
     {
         public void AimBarrel()
         {
-            LastTrackedTick = Comp.Session.Tick;
+            LastTrackedTick = Session.I.Tick;
             IsHome = false;
 
             if (HasHardPointSound && PlayTurretAv && !PlayingHardPointSound)
@@ -20,7 +20,7 @@ namespace CoreSystems.Platform
 
             if (AiOnlyWeapon) {
 
-                if (AzimuthTick == Comp.Session.Tick && System.TurretMovement == WeaponSystem.TurretType.Full || System.TurretMovement == WeaponSystem.TurretType.AzimuthOnly) {
+                if (AzimuthTick == Session.I.Tick && System.TurretMovement == WeaponSystem.TurretType.Full || System.TurretMovement == WeaponSystem.TurretType.AzimuthOnly) {
                     Matrix azRotMatrix;
                     Matrix.CreateFromAxisAngle(ref AzimuthPart.RotationAxis, (float)Azimuth, out azRotMatrix);
                     var localMatrix = AzimuthPart.OriginalPosition * azRotMatrix;
@@ -28,7 +28,7 @@ namespace CoreSystems.Platform
                     AzimuthPart.Entity.PositionComp.SetLocalMatrix(ref localMatrix);
                 }
 
-                if (ElevationTick == Comp.Session.Tick && (System.TurretMovement == WeaponSystem.TurretType.Full || System.TurretMovement == WeaponSystem.TurretType.ElevationOnly)) {
+                if (ElevationTick == Session.I.Tick && (System.TurretMovement == WeaponSystem.TurretType.Full || System.TurretMovement == WeaponSystem.TurretType.ElevationOnly)) {
                     Matrix elRotMatrix;
                     Matrix.CreateFromAxisAngle(ref ElevationPart.RotationAxis, -(float)Elevation, out elRotMatrix);
                     var localMatrix = ElevationPart.OriginalPosition * elRotMatrix;
@@ -36,7 +36,7 @@ namespace CoreSystems.Platform
                     ElevationPart.Entity.PositionComp.SetLocalMatrix(ref localMatrix);
                 }
             }
-            else if (ElevationTick == Comp.Session.Tick || AzimuthTick == Comp.Session.Tick)
+            else if (ElevationTick == Session.I.Tick || AzimuthTick == Session.I.Tick)
                 Comp.VanillaTurretBase.SetManualAzimuthAndElevation((float)Azimuth, (float)Elevation);
         }
 
@@ -48,13 +48,13 @@ namespace CoreSystems.Platform
             ReturingHome = true;
             if (sendNow)
                 SendTurretHome();
-            else 
-                System.Session.FutureEvents.Schedule(SendTurretHome, null, 300u);
+            else
+                Session.I.FutureEvents.Schedule(SendTurretHome, null, 300u);
         }
 
         public void SendTurretHome(object o = null)
         {
-            System.Session.HomingWeapons.Add(this);
+            Session.I.HomingWeapons.Add(this);
             EventTriggerStateChanged(EventTriggers.Homing, true);
         }
 
@@ -94,10 +94,10 @@ namespace CoreSystems.Platform
                     Elevation = oldEl + elStep < homeEl ? oldEl + elStep : homeEl;
 
                 if (!MyUtils.IsEqual((float)oldAz, (float)Azimuth))
-                    AzimuthTick = Comp.Session.Tick;
+                    AzimuthTick = Session.I.Tick;
 
                 if (!MyUtils.IsEqual((float)oldEl, (float)Elevation))
-                    ElevationTick = Comp.Session.Tick;
+                    ElevationTick = Session.I.Tick;
 
                 AimBarrel();
 
@@ -119,12 +119,12 @@ namespace CoreSystems.Platform
         {
             try
             {
-                if (Comp.Session == null || PosChangedTick == Comp.Session.SimulationCount || Comp.CoreEntity == null || Comp.IsBlock && (AzimuthPart.Parent == null || ElevationPart.Parent == null) || ElevationPart.Entity == null || MuzzlePart.Entity == null || Comp.Platform.State != CorePlatform.PlatformState.Ready) return;
+                if (PosChangedTick == Session.I.SimulationCount || Comp.CoreEntity == null || Comp.IsBlock && (AzimuthPart.Parent == null || ElevationPart.Parent == null) || ElevationPart.Entity == null || MuzzlePart.Entity == null || Comp.Platform.State != CorePlatform.PlatformState.Ready) return;
 
-                PosChangedTick = Comp.Session.SimulationCount;
+                PosChangedTick = Session.I.SimulationCount;
                 
                 var justBlock = AzimuthPart.IsCoreEntity && ElevationPart.IsCoreEntity && MuzzlePart.IsCoreEntity;
-                var requiresRootWorldOffset = Comp.TypeSpecific == CompTypeSpecific.Rifle && (Comp.Session.DedicatedServer || Comp.Session.DebugMod);
+                var requiresRootWorldOffset = Comp.TypeSpecific == CompTypeSpecific.Rifle && (Session.I.DedicatedServer || Session.I.DebugMod);
 
                 MatrixD azimuthMatrix;
                 MatrixD elevationMatrix;
@@ -255,9 +255,9 @@ namespace CoreSystems.Platform
 
                 var set = PartState.Heat - LastHeat > 0.001 || PartState.Heat - LastHeat < 0.001;
 
-                LastHeatUpdateTick = Comp.Session.Tick;
+                LastHeatUpdateTick = Session.I.Tick;
 
-                if (!Comp.Session.DedicatedServer)
+                if (!Session.I.DedicatedServer)
                 {
                     var heatOffset = HeatPerc = PartState.Heat / System.MaxHeat;
 
@@ -269,7 +269,7 @@ namespace CoreSystems.Platform
 
                         var intensity = .7f * heatOffset;
 
-                        var color = Comp.Session.HeatEmissives[(int)(heatOffset * 100)];
+                        var color = Session.I.HeatEmissives[(int)(heatOffset * 100)];
 
                         for(int i = 0; i < HeatingParts.Count; i++)
                             HeatingParts[i]?.SetEmissiveParts("Heating", color, intensity);
@@ -297,25 +297,25 @@ namespace CoreSystems.Platform
                 if (PartState.Overheated && PartState.Heat <= (System.MaxHeat * System.WepCoolDown))
                 {
                     EventTriggerStateChanged(EventTriggers.Overheated, false);
-                    if (System.Session.IsServer)
+                    if (Session.I.IsServer)
                     {
                         PartState.Overheated = false;
                         OverHeatCountDown = 0;
-                        if (System.Session.MpActive)
-                            System.Session.SendState(Comp);
+                        if (Session.I.MpActive)
+                            Session.I.SendState(Comp);
                     }
 
                 }
 
                 if (PartState.Heat > 0)
-                    Comp.Session.FutureEvents.Schedule(UpdateWeaponHeat, null, 20);
+                    Session.I.FutureEvents.Schedule(UpdateWeaponHeat, null, 20);
                 else
                 {
                     HeatLoopRunning = false;
                     LastHeatUpdateTick = 0;
                 }
             }
-            catch (Exception ex) { Log.Line($"Exception in UpdateWeaponHeat: {ex} - {System == null}- BaseComp:{Comp == null} - ProtoRepo:{Comp?.Data.Repo == null}  - Session:{Comp?.Session == null}  - Weapons:{Comp.Data.Repo?.Values.State.Weapons[PartId] == null}", null, true); }
+            catch (Exception ex) { Log.Line($"Exception in UpdateWeaponHeat: {ex} - {System == null}- BaseComp:{Comp == null} - ProtoRepo:{Comp?.Data.Repo == null}  - Weapons:{Comp.Data.Repo?.Values.State.Weapons[PartId] == null}", null, true); }
         }
 
         internal void UpdateRof()
@@ -342,7 +342,7 @@ namespace CoreSystems.Platform
             for (int j = 0; j < AnimationsSet[EventTriggers.TurnOn].Length; j++)
                 PlayEmissives(AnimationsSet[EventTriggers.TurnOn][j]);
 
-            PlayParticleEvent(EventTriggers.TurnOn, true, Vector3D.DistanceSquared(Comp.Session.CameraPos, MyPivotPos), null);
+            PlayParticleEvent(EventTriggers.TurnOn, true, Vector3D.DistanceSquared(Session.I.CameraPos, MyPivotPos), null);
         }
 
         internal void TurnOffAv(object o)
@@ -352,7 +352,7 @@ namespace CoreSystems.Platform
             for (int j = 0; j < AnimationsSet[EventTriggers.TurnOff].Length; j++)
                 PlayEmissives(AnimationsSet[EventTriggers.TurnOff][j]);
 
-            PlayParticleEvent(EventTriggers.TurnOff, true, Vector3D.DistanceSquared(Comp.Session.CameraPos, MyPivotPos), null);
+            PlayParticleEvent(EventTriggers.TurnOff, true, Vector3D.DistanceSquared(Session.I.CameraPos, MyPivotPos), null);
         }
 
         internal void SetWeaponDps(object o = null) // Need to test client sends MP request and receives response
@@ -393,7 +393,7 @@ namespace CoreSystems.Platform
             if (Comp.TypeSpecific == CompTypeSpecific.VanillaFixed)
             {
                 var testSphere = Comp.Cube.PositionComp.WorldVolume;
-                if (Vector3D.DistanceSquared(System.Session.CameraPos, testSphere.Center) < 62500 && System.Session.Camera.IsInFrustum(ref testSphere))
+                if (Vector3D.DistanceSquared(Session.I.CameraPos, testSphere.Center) < 62500 && Session.I.Camera.IsInFrustum(ref testSphere))
                     MuzzlePart.Entity.Render.AddRenderObjects();
             }
 
@@ -402,9 +402,9 @@ namespace CoreSystems.Platform
                 BarrelRotateEmitter.PlaySound(System.BarrelRotateSoundPair, true, false, false, false, false, false);
             }
 
-            if (_spinUpTick <= Comp.Session.Tick && spinDown)
+            if (_spinUpTick <= Session.I.Tick && spinDown)
             {
-                _spinUpTick = Comp.Session.Tick + _ticksBeforeSpinUp;
+                _spinUpTick = Session.I.Tick + _ticksBeforeSpinUp;
                 BarrelRate--;
             }
             if (BarrelRate < 0)
@@ -421,10 +421,10 @@ namespace CoreSystems.Platform
             {
                 if (BarrelRate < 9)
                 {
-                    if (_spinUpTick <= Comp.Session.Tick)
+                    if (_spinUpTick <= Session.I.Tick)
                     {
                         BarrelRate++;
-                        _spinUpTick = Comp.Session.Tick + _ticksBeforeSpinUp;
+                        _spinUpTick = Session.I.Tick + _ticksBeforeSpinUp;
                     }
                     return false;
                 }

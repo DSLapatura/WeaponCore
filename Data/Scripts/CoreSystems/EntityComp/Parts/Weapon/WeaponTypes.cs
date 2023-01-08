@@ -36,12 +36,12 @@ namespace CoreSystems.Platform
                 double rayDist = 0;
 
 
-                if (Weapon.System.Session.DebugLos)
+                if (Session.I.DebugLos)
                 {
                     var hitPos = hitInfo.Position;
                     if (rayDist <= 0) Vector3D.Distance(ref trackingCheckPosition, ref hitPos, out rayDist);
 
-                    Weapon.System.Session.AddLosCheck(new Session.LosDebug { Part = Weapon, HitTick = Weapon.System.Session.Tick, Line = new LineD(trackingCheckPosition, hitPos) });
+                    Session.I.AddLosCheck(new Session.LosDebug { Part = Weapon, HitTick = Session.I.Tick, Line = new LineD(trackingCheckPosition, hitPos) });
                 }
 
                 
@@ -52,8 +52,8 @@ namespace CoreSystems.Platform
                     var targetDir = targetPos - trackingCheckPosition;
                     if (Weapon.HitFriendlyShield(trackingCheckPosition, targetPos, targetDir))
                     {
-                        masterWeapon.Target.Reset(Weapon.Comp.Session.Tick, Target.States.RayCheckFriendly);
-                        if (masterWeapon != Weapon) Weapon.Target.Reset(Weapon.Comp.Session.Tick, Target.States.RayCheckFriendly);
+                        masterWeapon.Target.Reset(Session.I.Tick, Target.States.RayCheckFriendly);
+                        if (masterWeapon != Weapon) Weapon.Target.Reset(Session.I.Tick, Target.States.RayCheckFriendly);
                         return;
                     }
                 }
@@ -63,8 +63,8 @@ namespace CoreSystems.Platform
                 {
                     if (ignoreTargets)
                         return;
-                    masterWeapon.Target.Reset(Weapon.Comp.Session.Tick, Target.States.RayCheckMiss);
-                    if (masterWeapon != Weapon) Weapon.Target.Reset(Weapon.Comp.Session.Tick, Target.States.RayCheckMiss);
+                    masterWeapon.Target.Reset(Session.I.Tick, Target.States.RayCheckMiss);
+                    if (masterWeapon != Weapon) Weapon.Target.Reset(Session.I.Tick, Target.States.RayCheckMiss);
                     return;
                 }
 
@@ -79,8 +79,8 @@ namespace CoreSystems.Platform
                 {
                     if (hitTopEnt is MyVoxelBase && !Weapon.System.ScanNonThreats)
                     {
-                        masterWeapon.Target.Reset(Weapon.Comp.Session.Tick, Target.States.RayCheckVoxel);
-                        if (masterWeapon != Weapon) Weapon.Target.Reset(Weapon.Comp.Session.Tick, Target.States.RayCheckVoxel);
+                        masterWeapon.Target.Reset(Session.I.Tick, Target.States.RayCheckVoxel);
+                        if (masterWeapon != Weapon) Weapon.Target.Reset(Session.I.Tick, Target.States.RayCheckVoxel);
                         return;
                     }
 
@@ -88,15 +88,15 @@ namespace CoreSystems.Platform
                         return;
                     if (Weapon.Comp.Ai.AiType == Ai.AiTypes.Grid && topAsGrid.IsSameConstructAs(Weapon.Comp.Ai.GridEntity))
                     {
-                        masterWeapon.Target.Reset(Weapon.Comp.Session.Tick, Target.States.RayCheckSelfHit);
-                        if (masterWeapon != Weapon) Weapon.Target.Reset(Weapon.Comp.Session.Tick, Target.States.RayCheckSelfHit);
+                        masterWeapon.Target.Reset(Session.I.Tick, Target.States.RayCheckSelfHit);
+                        if (masterWeapon != Weapon) Weapon.Target.Reset(Session.I.Tick, Target.States.RayCheckSelfHit);
                         Weapon.PauseShoot = true;
                         return;
                     }
                     if (!Weapon.System.ScanNonThreats && (!topAsGrid.DestructibleBlocks || topAsGrid.Immune || topAsGrid.GridGeneralDamageModifier <= 0 || !Session.GridEnemy(Weapon.Comp.Ai.AiOwner, topAsGrid)))
                     {
-                        masterWeapon.Target.Reset(Weapon.Comp.Session.Tick, Target.States.RayCheckFriendly);
-                        if (masterWeapon != Weapon) Weapon.Target.Reset(Weapon.Comp.Session.Tick, Target.States.RayCheckFriendly);
+                        masterWeapon.Target.Reset(Session.I.Tick, Target.States.RayCheckFriendly);
+                        if (masterWeapon != Weapon) Weapon.Target.Reset(Session.I.Tick, Target.States.RayCheckFriendly);
                         return;
                     }
                     return;
@@ -117,8 +117,8 @@ namespace CoreSystems.Platform
                     var escapeDistExceed = distanceToTarget - Weapon.Target.OrigDistance > Weapon.Target.OrigDistance;
                     if (shortDistExceed || escapeDistExceed)
                     {
-                        masterWeapon.Target.Reset(Weapon.Comp.Session.Tick, Target.States.RayCheckDistOffset);
-                        if (masterWeapon != Weapon) Weapon.Target.Reset(Weapon.Comp.Session.Tick, Target.States.RayCheckDistOffset);
+                        masterWeapon.Target.Reset(Session.I.Tick, Target.States.RayCheckDistOffset);
+                        if (masterWeapon != Weapon) Weapon.Target.Reset(Session.I.Tick, Target.States.RayCheckDistOffset);
                     }
                 }
             }
@@ -126,10 +126,10 @@ namespace CoreSystems.Platform
 
         internal class Muzzle
         {
-            internal Muzzle(Weapon weapon, int id, Session session)
+            internal Muzzle(Weapon weapon, int id)
             {
                 MuzzleId = id;
-                UniqueId = session.UniqueMuzzleId.Id;
+                UniqueId = Session.I.UniqueMuzzleId.Id;
                 Weapon = weapon;
             }
 
@@ -195,7 +195,7 @@ namespace CoreSystems.Platform
 
                 Dirty = true;
                 Weapon.Comp.ShootRequestDirty = true;
-                RequestTick = Weapon.Comp.Session.Tick + 1;
+                RequestTick = Session.I.Tick + 1;
                 RawTarget = target;
 
                 var entity = target as MyEntity;
@@ -208,7 +208,7 @@ namespace CoreSystems.Platform
                     Type = TargetType.MyEntity;
                     ExtraShotAngle = extraShotAngle;
                     AcquireTarget = Weapon.TurretController;
-                    Weapon.Comp.ShootManager.RequestShootSync(Weapon.Comp.Session.PlayerId, ShootManager.RequestType.Once, ShootManager.Signals.Once);
+                    Weapon.Comp.ShootManager.RequestShootSync(Session.I.PlayerId, ShootManager.RequestType.Once, ShootManager.Signals.Once);
                     return true;
                 }
 
@@ -217,7 +217,7 @@ namespace CoreSystems.Platform
                     Position = position.Value;
                     Type = TargetType.Position;
                     ExtraShotAngle = extraShotAngle;
-                    Weapon.Comp.ShootManager.RequestShootSync(Weapon.Comp.Session.PlayerId, ShootManager.RequestType.Once, ShootManager.Signals.Once);
+                    Weapon.Comp.ShootManager.RequestShootSync(Session.I.PlayerId, ShootManager.RequestType.Once, ShootManager.Signals.Once);
                     return true;
                 }
 
@@ -227,7 +227,7 @@ namespace CoreSystems.Platform
                     Type = TargetType.Projectile;
                     ExtraShotAngle = extraShotAngle;
                     AcquireTarget = Weapon.TurretController;
-                    Weapon.Comp.ShootManager.RequestShootSync(Weapon.Comp.Session.PlayerId, ShootManager.RequestType.Once, ShootManager.Signals.Once);
+                    Weapon.Comp.ShootManager.RequestShootSync(Session.I.PlayerId, ShootManager.RequestType.Once, ShootManager.Signals.Once);
                     return true;
                 }
 
@@ -325,9 +325,9 @@ namespace CoreSystems.Platform
             {
                 var values = Comp.Data.Repo.Values;
                 var state = values.State;
-                var isRequestor = !Comp.Session.IsClient || playerId == Comp.Session.PlayerId;
+                var isRequestor = !Session.I.IsClient || playerId == Session.I.PlayerId;
                 
-                if (isRequestor && Comp.Session.IsClient && request == RequestType.Once && (WaitingShootResponse || FreezeClientShoot || CompletedCycles > 0 || ClientToggleCount > state.ToggleCount || state.Trigger != CoreComponent.Trigger.Off)) 
+                if (isRequestor && Session.I.IsClient && request == RequestType.Once && (WaitingShootResponse || FreezeClientShoot || CompletedCycles > 0 || ClientToggleCount > state.ToggleCount || state.Trigger != CoreComponent.Trigger.Off)) 
                     return false;
 
                 if (isRequestor && !ProcessInput(playerId, request, signal) || !MakeReadyToShoot()) {
@@ -337,27 +337,27 @@ namespace CoreSystems.Platform
 
                 Signal = request != RequestType.Off ? signal : Signals.None;
 
-                if (Comp.IsBlock && Comp.Session.HandlesInput)
-                    Comp.Session.TerminalMon.HandleInputUpdate(Comp);
+                if (Comp.IsBlock && Session.I.HandlesInput)
+                    Session.I.TerminalMon.HandleInputUpdate(Comp);
 
-                var sendRequest = !Comp.Session.IsClient || playerId == Comp.Session.PlayerId; // this method is used both by initiators and by receives. 
+                var sendRequest = !Session.I.IsClient || playerId == Session.I.PlayerId; // this method is used both by initiators and by receives. 
                 
-                if (Comp.Session.MpActive && sendRequest)
+                if (Session.I.MpActive && sendRequest)
                 {
-                    WaitingShootResponse = Comp.Session.IsClient; // this will be set false on the client once the server responds to this packet
+                    WaitingShootResponse = Session.I.IsClient; // this will be set false on the client once the server responds to this packet
                     
                     if (WaitingShootResponse)
                         ClientToggleCount = state.ToggleCount + 1;
 
-                    WaitingTick = Comp.Session.Tick;
+                    WaitingTick = Session.I.Tick;
 
-                    var code = Comp.Session.IsServer ? playerId == 0 ? ShootCodes.ServerRequest : ShootCodes.ServerRelay : ShootCodes.ClientRequest;
+                    var code = Session.I.IsServer ? playerId == 0 ? ShootCodes.ServerRequest : ShootCodes.ServerRelay : ShootCodes.ClientRequest;
                     ulong packagedMessage;
                     EncodeShootState((uint)request, (uint)signal, CompletedCycles, (uint)code, out packagedMessage);
                     if (playerId > 0) // if this is the server responding to a request, rewrite the packet sent to the origin client with a special response code.
-                        Comp.Session.SendShootRequest(Comp, packagedMessage, PacketType.ShootSync, RewriteShootSyncToServerResponse, playerId);
+                        Session.I.SendShootRequest(Comp, packagedMessage, PacketType.ShootSync, RewriteShootSyncToServerResponse, playerId);
                     else
-                        Comp.Session.SendShootRequest(Comp, packagedMessage, PacketType.ShootSync, null, playerId);
+                        Session.I.SendShootRequest(Comp, packagedMessage, PacketType.ShootSync, null, playerId);
                 }
 
                 ChangeState(request, playerId, true);
@@ -374,17 +374,17 @@ namespace CoreSystems.Platform
                 var wasToggled = ClientToggleCount > state.ToggleCount || state.Trigger == CoreComponent.Trigger.On;
                 if (wasToggled && request != RequestType.On && !FreezeClientShoot) // toggle off
                 {
-                    if (Comp.Session.MpActive)
+                    if (Session.I.MpActive)
                     {
-                        FreezeClientShoot = Comp.Session.IsClient; //if the initiators is a client pause future cycles until the server returns which cycle state to terminate on.
-                        FreezeTick = Comp.Session.Tick;
+                        FreezeClientShoot = Session.I.IsClient; //if the initiators is a client pause future cycles until the server returns which cycle state to terminate on.
+                        FreezeTick = Session.I.Tick;
 
                         ulong packagedMessage;
                         EncodeShootState((uint)request, (uint)signal, CompletedCycles, (uint)ShootCodes.ToggleServerOff, out packagedMessage);
-                        Comp.Session.SendShootRequest(Comp, packagedMessage, PacketType.ShootSync, RewriteShootSyncToServerResponse, playerId);
+                        Session.I.SendShootRequest(Comp, packagedMessage, PacketType.ShootSync, RewriteShootSyncToServerResponse, playerId);
                     }
 
-                    if (Comp.Session.IsServer) 
+                    if (Session.I.IsServer) 
                         EndShootMode(EndReason.ServerRequested);
 
                     Signal = request != RequestType.Off ? signal : Signals.None;
@@ -411,7 +411,7 @@ namespace CoreSystems.Platform
 
                 // Pretty sus that this is allowed by client, possible race condition... likely needed by client side prediction
                 state.PlayerId = playerId;
-                if (Comp.Session.IsServer)
+                if (Session.I.IsServer)
                 {
                     switch (request)
                     {
@@ -429,12 +429,12 @@ namespace CoreSystems.Platform
                     if (activated)
                         ++state.ToggleCount;
 
-                    if (Comp.Session.MpActive)
-                        Comp.Session.SendState(Comp);
+                    if (Session.I.MpActive)
+                        Session.I.SendState(Comp);
                 }
 
                 if (activated)
-                    LastCycle = ClientToggleCount > state.ToggleCount && request != RequestType.Once || state.Trigger == CoreComponent.Trigger.On || Comp.Session.IsClient && request == RequestType.On && playerId == 0 ? uint.MaxValue : 1;
+                    LastCycle = ClientToggleCount > state.ToggleCount && request != RequestType.Once || state.Trigger == CoreComponent.Trigger.On || Session.I.IsClient && request == RequestType.On && playerId == 0 ? uint.MaxValue : 1;
 
             }
             #endregion
@@ -488,7 +488,7 @@ namespace CoreSystems.Platform
                 var totalWeapons = Comp.Collection.Count;
                 var overrides = Comp.Data.Repo.Values.Set.Overrides;
                 var burstTarget = overrides.BurstCount;
-                var client = Comp.Session.IsClient;
+                var client = Session.I.IsClient;
                 for (int i = 0; i < totalWeapons; i++)
                 {
                     var w = Comp.Collection[i];
@@ -498,7 +498,7 @@ namespace CoreSystems.Platform
                         var reloading = aConst.Reloadable && w.ClientMakeUpShots == 0 && (w.Loading || w.ProtoWeaponAmmo.CurrentAmmo == 0 || w.Reload.WaitForClient);
 
                         var reloadMinusAmmoCheck = aConst.Reloadable && w.ClientMakeUpShots == 0 && (w.Loading || w.Reload.WaitForClient);
-                        var skipReload = client && reloading && !skipReady && !FreezeClientShoot && !WaitingShootResponse && !reloadMinusAmmoCheck && Comp.Session.Tick - LastShootTick > 30;
+                        var skipReload = client && reloading && !skipReady && !FreezeClientShoot && !WaitingShootResponse && !reloadMinusAmmoCheck && Session.I.Tick - LastShootTick > 30;
                         var overHeat = w.PartState.Overheated && w.OverHeatCountDown == 0;
                         var canShoot = !overHeat && (!reloading || skipReload);
 
@@ -509,7 +509,7 @@ namespace CoreSystems.Platform
 
                         if (!weaponReady && !skipReady)
                         {
-                            if (Comp.Session.IsServer) 
+                            if (Session.I.IsServer) 
                                 Log.Line($"MakeReadyToShoot: canShoot:{canShoot} - alreadyShooting:{w.IsShooting} - reloading:{reloading} - skipReload:{skipReload} - CurrentAmmo:{w.ProtoWeaponAmmo.CurrentAmmo} - wait:{w.Reload.WaitForClient}", Session.InputLog);
                             break;
                         }
@@ -548,7 +548,7 @@ namespace CoreSystems.Platform
                 for (int i = 0; i < Comp.TotalWeapons; i++)
                 {
                     var w = Comp.Collection[i];
-                    if (Comp.Session.MpActive && reason != EndReason.Overheat) 
+                    if (Session.I.MpActive && reason != EndReason.Overheat) 
                         Log.Line($"[clear] Reason:{reason} - ammo:{w.ProtoWeaponAmmo.CurrentAmmo} - Trigger:{wValues.State.Trigger} - Signal:{Signal} - Cycles:{CompletedCycles}[{LastCycle}] - Count:{wValues.State.ToggleCount}[{ClientToggleCount}] - WeaponsFired:{WeaponsFired}", Session.InputLog);
 
                     if (w.ShootRequest.Dirty && reason != EndReason.ShootSync)
@@ -566,12 +566,12 @@ namespace CoreSystems.Platform
                 FreezeClientShoot = false;
                 WaitingShootResponse = false;
                 Signal = Signals.None;
-                if (Comp.Session.IsServer)
+                if (Session.I.IsServer)
                 {
                     wValues.State.Trigger = CoreComponent.Trigger.Off;
-                    if (Comp.Session.MpActive && !skipNetwork)
+                    if (Session.I.MpActive && !skipNetwork)
                     {
-                        Comp.Session.SendState(Comp);
+                        Session.I.SendState(Comp);
                     }
                 }
             }
@@ -585,7 +585,7 @@ namespace CoreSystems.Platform
                 Log.Line($"[server rejecting] Signal:{Signal} - CompletedCycles:{CompletedCycles} requestType:{requestType} - Trigger:{Comp.Data.Repo.Values.State.Trigger}", Session.InputLog);
                 ulong packagedMessage;
                 EncodeShootState(0, (uint)Signals.None, CompletedCycles, (uint)ShootCodes.ClientRequestReject, out packagedMessage);
-                Comp.Session.SendShootReject(Comp, packagedMessage, PacketType.ShootSync, clientId);
+                Session.I.SendShootReject(Comp, packagedMessage, PacketType.ShootSync, clientId);
 
                 EndShootMode(EndReason.Rejected);
             }
@@ -614,7 +614,7 @@ namespace CoreSystems.Platform
 
                 ulong packagedMessage;
                 EncodeShootState(0, (uint)Signals.None, endCycle, (uint)ShootCodes.ToggleClientOff, out packagedMessage);
-                Comp.Session.SendShootRequest(Comp, packagedMessage, PacketType.ShootSync, null, 0);
+                Session.I.SendShootRequest(Comp, packagedMessage, PacketType.ShootSync, null, 0);
 
                 if (!clientMakeupRequest)
                 {
