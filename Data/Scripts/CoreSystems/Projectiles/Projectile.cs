@@ -995,7 +995,10 @@ namespace CoreSystems.Projectiles
                 var heightStart = source + heightOffset;
                 var heightend = destination + heightOffset;
                 var heightDir = desiredElevation > 0 ? Vector3D.Normalize(heightend - heightStart) : storage.ApproachInfo.OffsetDir;
+                
                 bool start1 = false;
+                double timeSinceSpawn = double.MinValue;
+                double nextSpawn = double.MinValue;
                 switch (approach.StartCon1)
                 {
                     case Conditions.DesiredElevation:
@@ -1046,25 +1049,28 @@ namespace CoreSystems.Projectiles
                         start1 = true;
                         break;
                     case Conditions.NextTimedSpawn:
-
+                    case Conditions.SinceTimedSpawn:
                         if (aConst.TimedFragments && Info.SpawnDepth < aConst.FragMaxChildren && Info.Frags < aConst.MaxFrags)
                         {
                             var groupDelay = aConst.HasFragGroup && Info.Frags % aConst.FragGroupSize == 0;
                             var notFragZero = Info.Frags != 0;
                             var longestSpawnDelay = Math.Max(groupDelay ? aConst.FragGroupDelay : 0, notFragZero ? aConst.FragInterval : 0);
 
-                            var timeSinceSpawn = Info.RelativeAge - Info.LastFragTime;
-                            var nextSpawn = longestSpawnDelay - timeSinceSpawn;
+                            timeSinceSpawn = Info.RelativeAge - Info.LastFragTime;
+                            nextSpawn = longestSpawnDelay - timeSinceSpawn;
+                            var trueCondition = approach.StartCon1 == Conditions.NextTimedSpawn ? nextSpawn <= approach.Start1Value : timeSinceSpawn >= approach.Start1Value;
 
                             var timeSinceStart = aConst.FragStartTime - Info.RelativeAge;
                             if (timeSinceStart >= 0)
                             {
-                                if (timeSinceStart <= approach.Start1Value && nextSpawn >= approach.Start1Value)
+                                if (timeSinceStart <= approach.Start1Value && trueCondition)
                                     start1 = true;
                             }
-                            else if (nextSpawn >= approach.Start1Value)
+                            else if (trueCondition)
                                 start1 = true;
                         }
+                        else
+                            start1 = true;
                         break;
                     default:
                         break;
@@ -1121,25 +1127,27 @@ namespace CoreSystems.Projectiles
                         start2 = true;
                         break;
                     case Conditions.NextTimedSpawn:
-
+                    case Conditions.SinceTimedSpawn:
                         if (aConst.TimedFragments && Info.SpawnDepth < aConst.FragMaxChildren && Info.Frags < aConst.MaxFrags)
                         {
                             var groupDelay = aConst.HasFragGroup && Info.Frags % aConst.FragGroupSize == 0;
                             var notFragZero = Info.Frags != 0;
                             var longestSpawnDelay = Math.Max(groupDelay ? aConst.FragGroupDelay : 0, notFragZero ? aConst.FragInterval : 0);
 
-                            var timeSinceSpawn = Info.RelativeAge - Info.LastFragTime;
-                            var nextSpawn = longestSpawnDelay - timeSinceSpawn;
-
+                            timeSinceSpawn = Info.RelativeAge - Info.LastFragTime;
+                            nextSpawn = longestSpawnDelay - timeSinceSpawn;
+                            var trueCondition = approach.StartCon2 == Conditions.NextTimedSpawn ? nextSpawn <= approach.Start2Value : timeSinceSpawn >= approach.Start2Value;
                             var timeSinceStart = aConst.FragStartTime - Info.RelativeAge;
                             if (timeSinceStart >= 0)
                             {
-                                if (timeSinceStart <= approach.Start2Value && nextSpawn >= approach.Start2Value)
-                                    start1 = true;
+                                if (timeSinceStart <= approach.Start2Value && trueCondition)
+                                    start2 = true;
                             }
-                            else if (nextSpawn >= approach.Start2Value)
-                                start1 = true;
+                            else if (trueCondition)
+                                start2 = true;
                         }
+                        else
+                            start2 = true;
                         break;
                     default:
                         break;
@@ -1297,7 +1305,29 @@ namespace CoreSystems.Projectiles
                             case StageEvents.DoNothing:
                                 break;
                             case StageEvents.StoreDestination:
-                                storage.ApproachInfo.StoredDestination[storage.RequestedStage] = TargetPosition;
+                                switch (approach.Definition.StoredStartType)
+                                {
+                                    case RelativeTo.Target:
+                                        storage.ApproachInfo.StoredDestination[storage.RequestedStage] = TargetPosition;
+                                        break;
+                                    case RelativeTo.Current:
+                                        storage.ApproachInfo.StoredDestination[storage.RequestedStage] = Position;
+                                        break;
+                                    case RelativeTo.Shooter:
+                                        var blockPos = Info.Weapon.Comp.CoreEntity.PositionComp.WorldAABB.Center;
+                                        blockPos = !Vector3D.IsZero(blockPos) ? blockPos : Info.Origin;
+                                        storage.ApproachInfo.StoredDestination[storage.RequestedStage] = blockPos;
+                                        break;
+                                    case RelativeTo.Nothing:
+                                        storage.ApproachInfo.StoredDestination[storage.RequestedStage] = destination;
+                                        break;
+                                    case RelativeTo.MidPoint:
+                                        storage.ApproachInfo.StoredDestination[storage.RequestedStage] = Vector3D.Lerp(destination, source, 0.5);
+                                        break;
+                                    default:
+                                        storage.ApproachInfo.StoredDestination[storage.RequestedStage] = targetPos;
+                                        break;
+                                }
                                 break;
                         }
                     }
@@ -1373,25 +1403,30 @@ namespace CoreSystems.Projectiles
                         end1 = true;
                         break;
                     case Conditions.NextTimedSpawn:
-
+                    case Conditions.SinceTimedSpawn:
                         if (aConst.TimedFragments && Info.SpawnDepth < aConst.FragMaxChildren && Info.Frags < aConst.MaxFrags)
                         {
                             var groupDelay = aConst.HasFragGroup && Info.Frags % aConst.FragGroupSize == 0;
                             var notFragZero = Info.Frags != 0;
-                            var longestSpawnDelay = Math.Max(groupDelay ? aConst.FragGroupDelay : 0, notFragZero ? aConst.FragInterval : 0);
+                            var longestSpawnDelay = Math.Max(groupDelay ? aConst.FragGroupDelay : 0,
+                                notFragZero ? aConst.FragInterval : 0);
 
-                            var timeSinceSpawn = Info.RelativeAge - Info.LastFragTime;
-                            var nextSpawn = longestSpawnDelay - timeSinceSpawn;
+                            timeSinceSpawn = Info.RelativeAge - Info.LastFragTime;
+                            nextSpawn = longestSpawnDelay - timeSinceSpawn;
+                            var trueCondition = approach.EndCon1 == Conditions.NextTimedSpawn ? nextSpawn <= approach.End1Value : timeSinceSpawn >= approach.End1Value;
 
                             var timeSinceStart = aConst.FragStartTime - Info.RelativeAge;
                             if (timeSinceStart >= 0)
                             {
-                                if (timeSinceStart <= approach.End1Value && nextSpawn >= approach.End1Value)
-                                    start1 = true;
+                                if (timeSinceStart <= approach.End1Value && trueCondition)
+                                    end1 = true;
                             }
-                            else if (nextSpawn >= approach.End1Value)
-                                start1 = true;
+                            else if (trueCondition)
+                                end1 = true;
                         }
+                        else
+                            end1 = true;
+
                         break;
                     default:
                         break;
@@ -1454,6 +1489,7 @@ namespace CoreSystems.Projectiles
                         end2 = true;
                         break;
                     case Conditions.NextTimedSpawn:
+                    case Conditions.SinceTimedSpawn:
 
                         if (aConst.TimedFragments && Info.SpawnDepth < aConst.FragMaxChildren && Info.Frags < aConst.MaxFrags)
                         {
@@ -1461,18 +1497,21 @@ namespace CoreSystems.Projectiles
                             var notFragZero = Info.Frags != 0;
                             var longestSpawnDelay = Math.Max(groupDelay ? aConst.FragGroupDelay : 0, notFragZero ? aConst.FragInterval : 0);
 
-                            var timeSinceSpawn = Info.RelativeAge - Info.LastFragTime;
-                            var nextSpawn = longestSpawnDelay - timeSinceSpawn;
+                            timeSinceSpawn = Info.RelativeAge - Info.LastFragTime;
+                            nextSpawn = longestSpawnDelay - timeSinceSpawn;
+                            var trueCondition = approach.EndCon2 == Conditions.NextTimedSpawn ? nextSpawn <= approach.End2Value : timeSinceSpawn >= approach.End2Value;
 
                             var timeSinceStart = aConst.FragStartTime - Info.RelativeAge;
                             if (timeSinceStart >= 0)
                             {
-                                if (timeSinceStart <= approach.End2Value && nextSpawn >= approach.End2Value)
-                                    start1 = true;
+                                if (timeSinceStart <= approach.End2Value && trueCondition)
+                                    end2 = true;
                             }
-                            else if (nextSpawn >= approach.End2Value)
-                                start1 = true;
+                            else if (trueCondition)
+                                end2 = true;
                         }
+                        else
+                            end2 = true;
                         break;
                     default:
                         break;
@@ -1485,7 +1524,9 @@ namespace CoreSystems.Projectiles
                         s.ApproachDebug = new ApproachDebug { 
                             LastTick = s.Tick, Approach = approach, 
                             Start1 = start1, Start2 = start2, End1 = end1, End2 = end2, 
-                            ProId = Info.Id, Stage = storage.LastActivatedStage
+                            ProId = Info.Id, Stage = storage.LastActivatedStage,
+                            TimeSinceSpawn = timeSinceSpawn,
+                            NextSpawn = nextSpawn,
                         };
                     }
                 }
@@ -1529,7 +1570,7 @@ namespace CoreSystems.Projectiles
                     else if (!hasNextStep)
                     {
                         if (s.DebugMod)
-                            Log.Line($"Approach ended, no more steps - age:{Info.RelativeAge} - strages:[r:{storage.RequestedStage} l:{storage.LastActivatedStage}] - ec1:{def.EndCondition1} - ec1:{def.End1Value} - ec1:{def.EndCondition2} - ec1:{def.End2Value} - failure:{def.RestartCondition}");
+                            Log.Line($"Approach ended, no more steps - age:{Info.RelativeAge} - stages:[r:{storage.RequestedStage} l:{storage.LastActivatedStage}] - ec1:{def.EndCondition1} - ec1:{def.End1Value} - ec1:{def.EndCondition2} - ec1:{def.End2Value} - failure:{def.RestartCondition}");
                         storage.LastActivatedStage = aConst.Approaches.Length;
                         storage.RequestedStage = aConst.Approaches.Length;
                     }

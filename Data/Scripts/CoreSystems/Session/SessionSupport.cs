@@ -219,12 +219,27 @@ namespace CoreSystems
             {
                 if (Tick10)
                 {
-                    ShowLocalNotify($"[Approach] Stage:{ApproachDebug.Stage} - Start1:{ApproachDebug.Approach.Definition.StartCondition1}:{ApproachDebug.Start1} - Start2:{ApproachDebug.Approach.Definition.StartCondition2}:{ApproachDebug.Start2} - End1:{ApproachDebug.Approach.Definition.EndCondition1}:{ApproachDebug.End1} - End2:{ApproachDebug.Approach.Definition.EndCondition2}:{ApproachDebug.End2}", 160, "White");
-                    ShowLocalNotify($"[AccelMulti:{ApproachDebug.Approach.Definition.AccelMulti} - SpeedCapMulti:{ApproachDebug.Approach.Definition.SpeedCapMulti} - LeadDist:{ApproachDebug.Approach.Definition.LeadDistance} - RestartType:{ApproachDebug.Approach.Definition.RestartCondition}", 160, "White");
+                    if (ApproachDebug.TimeSinceSpawn <= double.MinValue)
+                    {
+                        ShowLocalNotify($"[Approach] Stage:{ApproachDebug.Stage} - Start1:{ApproachDebug.Approach.Definition.StartCondition1}:{ApproachDebug.Start1} - Start2:{ApproachDebug.Approach.Definition.StartCondition2}:{ApproachDebug.Start2} - End1:{ApproachDebug.Approach.Definition.EndCondition1}:{ApproachDebug.End1} - End2:{ApproachDebug.Approach.Definition.EndCondition2}:{ApproachDebug.End2}", 160, "White");
+                        ShowLocalNotify($"[AccelMulti:{ApproachDebug.Approach.Definition.AccelMulti} - SpeedCapMulti:{ApproachDebug.Approach.Definition.SpeedCapMulti} - LeadDist:{ApproachDebug.Approach.Definition.LeadDistance} - RestartType:{ApproachDebug.Approach.Definition.RestartCondition}", 160, "White");
+                    }
+                    else
+                    {
+                        ShowLocalNotify($"[Approach] Stage:{ApproachDebug.Stage} - Start1:{ApproachDebug.Approach.Definition.StartCondition1}:{ApproachDebug.Start1} - Start2:{ApproachDebug.Approach.Definition.StartCondition2}:{ApproachDebug.Start2} - End1:{ApproachDebug.Approach.Definition.EndCondition1}:{ApproachDebug.End1} - End2:{ApproachDebug.Approach.Definition.EndCondition2}:{ApproachDebug.End2}", 160, "White");
+                        ShowLocalNotify($"[AccelMulti:{ApproachDebug.Approach.Definition.AccelMulti} - SpeedCapMulti:{ApproachDebug.Approach.Definition.SpeedCapMulti} - LeadDist:{ApproachDebug.Approach.Definition.LeadDistance} - RestartType:{ApproachDebug.Approach.Definition.RestartCondition}", 160, "White");
+                        ShowLocalNotify($"[TimeSinceSpawn:{ApproachDebug.TimeSinceSpawn} - NextSpawn:{ApproachDebug.NextSpawn}", 160, "White");
+                    }
+
                 }
             }
-            else if (ApproachDebug.LastTick == Tick -1 && Tick != 1)
-                ShowLocalNotify($"[Approach] Completed on stage:{ApproachDebug.Stage} - {ApproachDebug.Start1}:{ApproachDebug.Start2}:{ApproachDebug.End1}:{ApproachDebug.End2}", 2000, "White");
+            else if (ApproachDebug.LastTick == Tick - 1 && Tick != 1)
+            {
+                if (ApproachDebug.TimeSinceSpawn <= double.MinValue)
+                    ShowLocalNotify($"[Approach] Completed on stage:{ApproachDebug.Stage} - {ApproachDebug.Start1}:{ApproachDebug.Start2}:{ApproachDebug.End1}:{ApproachDebug.End2}", 2000, "White");
+                else
+                    ShowLocalNotify($"[Approach] Completed on stage:{ApproachDebug.Stage} - {ApproachDebug.Start1}:{ApproachDebug.Start2}:{ApproachDebug.End1}:{ApproachDebug.End2} - {ApproachDebug.TimeSinceSpawn}:{ApproachDebug.NextSpawn}", 2000, "White");
+            }
 
             /*
             if (Tick - _clientHandDebug.LastHitTick < 1200 || Tick - _clientHandDebug.LastShootTick < 1200)
@@ -918,9 +933,16 @@ namespace CoreSystems
                     ShowLocalNotify("Sadly WeaponCore mods are not compatible with third party weapon mods, you must use one or the other", 30000, "White");
                     ShowLocalNotify(listOfNames, 30000, "White");
                     if (_removeComplete)
-                        ShowLocalNotify("The incompatible weapons listed above have been [REMOVED FROM THE WORLD], if this is not acceptable quit [WITHOUT SAVING] and either [Enable UnsupportedMode] or uninstall all WC related mods", 30000, "Red");
+                    {
+                        ShowLocalNotify("The incompatible weapons listed above have been [REMOVED FROM THE WORLD]", 30000, "Red");
+                        ShowLocalNotify("If this is not acceptable quit [WITHOUT SAVING] and either [Enable UnsupportedMode] or uninstall all WC related mods", 30000, "Red");
+
+                    }
                     else
-                        ShowLocalNotify("The incompatible weapons listed above have been [SCHEDULED FOR REMOVAL IN 60 SECONDS], if this is not acceptable either type [/wc unsupportedmode] or quit [WITHOUT SAVING] and uninstall all WC related mods", 30000, "Red");
+                    {
+                        ShowLocalNotify("The incompatible weapons listed above have been [SCHEDULED FOR REMOVAL IN 60 SECONDS]", 30000, "Red");
+                        ShowLocalNotify("If this is not acceptable either type [/wc unsupportedmode] or quit [WITHOUT SAVING] and uninstall all WC related mods", 30000, "Red");
+                    }
 
                 }
                 else
@@ -949,7 +971,9 @@ namespace CoreSystems
                     cube.CubeGrid.RemoveBlock(cube.SlimBlock);
             }
 
-            ShowLocalNotify("The incompatible weapons listed above have been [REMOVED FROM THE WORLD], if this is not acceptable quit [WITHOUT SAVING] and either [Enable UnsupportedMode] or uninstall all WC related mods", 30000, "Red");
+            ShowLocalNotify("The incompatible weapons have been [REMOVED FROM THE WORLD]", 30000, "Red");
+            ShowLocalNotify("If this is not acceptable quit [WITHOUT SAVING] and either [Enable UnsupportedMode] or uninstall all WC related mods", 30000, "Red");
+
             _unsupportedBlocks.Clear();
             _removeComplete = true;
         }

@@ -1324,6 +1324,7 @@ namespace CoreSystems.Api
                             NextTimedSpawn,
                             RelativeLifetime,
                             RelativeDeadtime,
+                            SinceTimedSpawn,
                         }
 
                         public enum UpRelativeTo
@@ -1422,6 +1423,8 @@ namespace CoreSystems.Api
                         [ProtoMember(44)] internal int StoredStartId;
                         [ProtoMember(45)] internal int StoredEndId;
                         [ProtoMember(46)] internal WeightedIdListDef[] RestartList;
+                        [ProtoMember(47)] internal RelativeTo StoredStartType;
+                        [ProtoMember(48)] internal RelativeTo StoredEndType;
                     }
 
                     [ProtoContract]
