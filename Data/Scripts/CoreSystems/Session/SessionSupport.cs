@@ -23,6 +23,7 @@ using VRageMath;
 using static CoreSystems.Support.Ai;
 using static CoreSystems.Support.CoreComponent;
 using static CoreSystems.Support.CoreComponent.Trigger;
+using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace CoreSystems
 {
@@ -847,10 +848,13 @@ namespace CoreSystems
             var cube = o as MyCubeBlock;
             if (cube != null)
             {
+
                 var processCube = !cube.MarkedForClose && !cube.Closed && !cube.CubeGrid.IsPreview && cube.CubeGrid.Physics != null && !cube.CubeGrid.MarkedForClose;
                 if (processCube)
                 {
-                    
+                    if (BrokenMod(cube))
+                        return;
+
                     if (_lastIncompatibleMessageTick == uint.MaxValue || Tick - _lastIncompatibleMessageTick > 600)
                     {
                         _lastIncompatibleMessageTick = Tick;
@@ -948,6 +952,44 @@ namespace CoreSystems
             ShowLocalNotify("The incompatible weapons listed above have been [REMOVED FROM THE WORLD], if this is not acceptable quit [WITHOUT SAVING] and either [Enable UnsupportedMode] or uninstall all WC related mods", 30000, "Red");
             _unsupportedBlocks.Clear();
             _removeComplete = true;
+        }
+
+        internal bool BrokenMod(MyCubeBlock cube)
+        {
+            if (cube.Storage == null) return false;
+
+            string rawData;
+            if (!cube.Storage.TryGetValue(CompDataGuid, out rawData))
+                return false;
+
+            var base64 = Convert.FromBase64String(rawData);
+            var brokeMod = MyAPIGateway.Utilities.SerializeFromBinary<ProtoWeaponRepo>(base64) != null;
+            if (!brokeMod) return false;
+
+            if (!_reportBrokenMods)
+            {
+                _reportBrokenMods = true;
+                FutureEvents.Schedule(ReportBrokenBlocks, null, 300);
+            }
+
+            _brokenBlocks.Add(cube);
+            return true;
+
+        }
+
+        private readonly HashSet<MyCubeBlock> _brokenBlocks = new HashSet<MyCubeBlock>();
+        private bool _reportBrokenMods;
+        private void ReportBrokenBlocks(object o)
+        {
+            string listOfNames = "The following WeaponCore blocks are orphaned by their mod: ";
+            foreach (var cube in _brokenBlocks)
+            {
+                if (cube.BlockDefinition?.Id.SubtypeName != null)
+                    listOfNames += $"{cube.BlockDefinition.Id.SubtypeName}, ";
+            }
+
+            ShowLocalNotify(listOfNames, 30000, "White");
+            _brokenBlocks.Clear();
         }
 
         internal bool KeenFuckery()
