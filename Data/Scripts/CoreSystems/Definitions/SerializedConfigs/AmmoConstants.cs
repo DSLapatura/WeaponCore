@@ -1714,6 +1714,8 @@ namespace CoreSystems.Support
         public readonly double ElevationTolerance;
 
         public readonly int OffsetTime;
+        public readonly int StoredStartId;
+        public readonly int StoredEndId;
         public ApproachConstants(WeaponSystem.AmmoType ammo, int index, WeaponDefinition wDef)
         {
             var def = ammo.AmmoDef.Trajectory.Approaches[index];
@@ -1744,7 +1746,10 @@ namespace CoreSystems.Support
             DesiredElevation = def.DesiredElevation;
             OffsetMinRadius = def.OffsetMinRadius;
             OffsetMaxRadius = def.OffsetMaxRadius;
+            
             OffsetTime = def.OffsetTime;
+            StoredStartId = def.StoredStartId;
+            StoredEndId = def.StoredEndId;
             Start1Value = def.Start1Value;
             Start2Value = def.Start2Value;
             End1Value = def.End1Value;

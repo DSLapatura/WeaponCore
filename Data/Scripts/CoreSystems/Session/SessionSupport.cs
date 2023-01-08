@@ -974,7 +974,6 @@ namespace CoreSystems
 
             _brokenBlocks.Add(cube);
             return true;
-
         }
 
         private readonly HashSet<MyCubeBlock> _brokenBlocks = new HashSet<MyCubeBlock>();
@@ -988,7 +987,11 @@ namespace CoreSystems
                     listOfNames += $"{cube.BlockDefinition.Id.SubtypeName}, ";
             }
 
-            ShowLocalNotify(listOfNames, 30000, "White");
+            if (HandlesInput)
+                ShowLocalNotify(listOfNames, 30000, "White");
+            else
+                Log.Line($"{listOfNames}");
+
             _brokenBlocks.Clear();
         }
 
