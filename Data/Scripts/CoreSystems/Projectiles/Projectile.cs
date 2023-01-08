@@ -1547,7 +1547,29 @@ namespace CoreSystems.Projectiles
                     }
                     else if (def.EndEvent == StageEvents.StoreDestination)
                     {
-                        storage.ApproachInfo.StoredDestination[storage.RequestedStage * 2] = TargetPosition;
+                        switch (approach.Definition.StoredStartType)
+                        {
+                            case RelativeTo.Target:
+                                storage.ApproachInfo.StoredDestination[storage.RequestedStage * 2] = TargetPosition;
+                                break;
+                            case RelativeTo.Current:
+                                storage.ApproachInfo.StoredDestination[storage.RequestedStage * 2] = Position;
+                                break;
+                            case RelativeTo.Shooter:
+                                var blockPos = Info.Weapon.Comp.CoreEntity.PositionComp.WorldAABB.Center;
+                                blockPos = !Vector3D.IsZero(blockPos) ? blockPos : Info.Origin;
+                                storage.ApproachInfo.StoredDestination[storage.RequestedStage * 2] = blockPos;
+                                break;
+                            case RelativeTo.Nothing:
+                                storage.ApproachInfo.StoredDestination[storage.RequestedStage * 2] = destination;
+                                break;
+                            case RelativeTo.MidPoint:
+                                storage.ApproachInfo.StoredDestination[storage.RequestedStage * 2] = Vector3D.Lerp(destination, source, 0.5);
+                                break;
+                            default:
+                                storage.ApproachInfo.StoredDestination[storage.RequestedStage * 2] = targetPos;
+                                break;
+                        }
                     }
 
                     if (moveForward)
