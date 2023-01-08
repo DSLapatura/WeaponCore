@@ -1363,7 +1363,8 @@ namespace CoreSystems.Support
                         Nothing,
                         StoredStartDestination,
                         StoredEndDestination,
-
+                        StoredStartPosition,
+                        StoredEndPosition,
                     }
 
                     public enum ConditionOperators
@@ -1380,6 +1381,7 @@ namespace CoreSystems.Support
                         EndProjectile,
                         EndProjectileOnRestart,
                         StoreDestination,
+                        StorePosition,
                     }
 
                     [ProtoContract]

@@ -866,12 +866,12 @@ namespace CoreSystems.Projectiles
                             storage.ApproachInfo.OffsetDir = !Vector3D.IsZero(PrevTargetVel) ? Vector3D.Normalize(PrevTargetVel) : Info.OriginUp;
                             break;
                         case UpRelativeTo.UpStoredStartDestination:
-                            var storedStartDest = storage.ApproachInfo.StoredDestination[storage.RequestedStage];
+                            var storedStartDest = storage.ApproachInfo.StoredPosition[storage.RequestedStage];
                             var destStart = storedStartDest != Vector3D.Zero ? storedStartDest : storage.ApproachInfo.TargetPos;
                             storage.ApproachInfo.OffsetDir = Vector3D.Normalize(destStart - Position);
                             break;
                         case UpRelativeTo.UpStoredEndDestination:
-                            var storedEndDest = storage.ApproachInfo.StoredDestination[storage.RequestedStage * 2];
+                            var storedEndDest = storage.ApproachInfo.StoredPosition[storage.RequestedStage * 2];
                             var destEnd = storedEndDest != Vector3D.Zero ? storedEndDest : storage.ApproachInfo.TargetPos;
                             storage.ApproachInfo.OffsetDir = Vector3D.Normalize(destEnd - Position);
                             break;
@@ -920,12 +920,14 @@ namespace CoreSystems.Projectiles
                             storage.ApproachInfo.LookAtPos = Position;
                             break;
                         case RelativeTo.StoredStartDestination:
-                            var storedStartDest = storage.ApproachInfo.StoredDestination[approach.StoredStartId];
+                        case RelativeTo.StoredStartPosition:
+                            var storedStartDest = storage.ApproachInfo.StoredPosition[approach.StoredStartId];
                             var destStart = storedStartDest != Vector3D.Zero ? storedStartDest : storage.ApproachInfo.TargetPos;
                             storage.ApproachInfo.LookAtPos = destStart;
                             break;
                         case RelativeTo.StoredEndDestination:
-                            var storedEndDest = storage.ApproachInfo.StoredDestination[approach.StoredEndId * 2];
+                        case RelativeTo.StoredEndPosition:
+                            var storedEndDest = storage.ApproachInfo.StoredPosition[approach.StoredEndId * 2];
                             var destEnd = storedEndDest != Vector3D.Zero ? storedEndDest : storage.ApproachInfo.TargetPos;
                             storage.ApproachInfo.LookAtPos = destEnd;
                             break;
@@ -966,12 +968,14 @@ namespace CoreSystems.Projectiles
                             storage.ApproachInfo.DestinationPos = Position;
                             break;
                         case RelativeTo.StoredStartDestination:
-                            var storedStartDest = storage.ApproachInfo.StoredDestination[approach.StoredStartId];
+                        case RelativeTo.StoredStartPosition:
+                            var storedStartDest = storage.ApproachInfo.StoredPosition[approach.StoredStartId];
                             var destStart = storedStartDest != Vector3D.Zero ? storedStartDest : storage.ApproachInfo.TargetPos;
                             storage.ApproachInfo.DestinationPos = destStart;
                             break;
                         case RelativeTo.StoredEndDestination:
-                            var storedEndDest = storage.ApproachInfo.StoredDestination[approach.StoredEndId * 2];
+                        case RelativeTo.StoredEndPosition:
+                            var storedEndDest = storage.ApproachInfo.StoredPosition[approach.StoredEndId * 2];
                             var destEnd = storedEndDest != Vector3D.Zero ? storedEndDest : storage.ApproachInfo.TargetPos;
                             storage.ApproachInfo.DestinationPos = destEnd;
                             break;
@@ -1215,8 +1219,9 @@ namespace CoreSystems.Projectiles
                             break;
                         }
                         case RelativeTo.StoredStartDestination:
+                        case RelativeTo.StoredStartPosition:
                         {
-                            var storedDest = storage.ApproachInfo.StoredDestination[approach.StoredStartId];
+                            var storedDest = storage.ApproachInfo.StoredPosition[approach.StoredStartId];
                             var dest = storedDest != Vector3D.Zero ? storedDest : storage.ApproachInfo.TargetPos;
                             var plane = new PlaneD(dest, heightDir);
                             var distToPlane = plane.DistanceToPoint(leadPosition);
@@ -1224,8 +1229,9 @@ namespace CoreSystems.Projectiles
                             break;
                         }
                         case RelativeTo.StoredEndDestination:
+                        case RelativeTo.StoredEndPosition:
                         {
-                            var storedDest = storage.ApproachInfo.StoredDestination[approach.StoredEndId * 2];
+                            var storedDest = storage.ApproachInfo.StoredPosition[approach.StoredEndId * 2];
                             var dest = storedDest != Vector3D.Zero ? storedDest : storage.ApproachInfo.TargetPos;
                             var plane = new PlaneD(dest, heightDir);
                             var distToPlane = plane.DistanceToPoint(leadPosition);
@@ -1254,14 +1260,16 @@ namespace CoreSystems.Projectiles
                                     heightAdjLeadPos = Vector3D.Lerp(destination, source, 0.5);
                                     break;
                                 case RelativeTo.StoredStartDestination:
+                                case RelativeTo.StoredStartPosition:
                                 {
-                                    var storedDest = storage.ApproachInfo.StoredDestination[approach.StoredStartId];
+                                    var storedDest = storage.ApproachInfo.StoredPosition[approach.StoredStartId];
                                     heightAdjLeadPos = storedDest != Vector3D.Zero ? storedDest : storage.ApproachInfo.TargetPos;
                                     break;
                                 }
                                 case RelativeTo.StoredEndDestination:
+                                case RelativeTo.StoredEndPosition:
                                 {
-                                    var storedDest = storage.ApproachInfo.StoredDestination[approach.StoredEndId * 2];
+                                    var storedDest = storage.ApproachInfo.StoredPosition[approach.StoredEndId * 2];
                                     heightAdjLeadPos = storedDest != Vector3D.Zero ? storedDest : storage.ApproachInfo.TargetPos;
                                     break;
                                 }
@@ -1305,27 +1313,28 @@ namespace CoreSystems.Projectiles
                             case StageEvents.DoNothing:
                                 break;
                             case StageEvents.StoreDestination:
+                            case StageEvents.StorePosition:
                                 switch (approach.Definition.StoredStartType)
                                 {
                                     case RelativeTo.Target:
-                                        storage.ApproachInfo.StoredDestination[storage.RequestedStage] = TargetPosition;
+                                        storage.ApproachInfo.StoredPosition[storage.RequestedStage] = TargetPosition;
                                         break;
                                     case RelativeTo.Current:
-                                        storage.ApproachInfo.StoredDestination[storage.RequestedStage] = Position;
+                                        storage.ApproachInfo.StoredPosition[storage.RequestedStage] = Position;
                                         break;
                                     case RelativeTo.Shooter:
                                         var blockPos = Info.Weapon.Comp.CoreEntity.PositionComp.WorldAABB.Center;
                                         blockPos = !Vector3D.IsZero(blockPos) ? blockPos : Info.Origin;
-                                        storage.ApproachInfo.StoredDestination[storage.RequestedStage] = blockPos;
+                                        storage.ApproachInfo.StoredPosition[storage.RequestedStage] = blockPos;
                                         break;
                                     case RelativeTo.Nothing:
-                                        storage.ApproachInfo.StoredDestination[storage.RequestedStage] = destination;
+                                        storage.ApproachInfo.StoredPosition[storage.RequestedStage] = destination;
                                         break;
                                     case RelativeTo.MidPoint:
-                                        storage.ApproachInfo.StoredDestination[storage.RequestedStage] = Vector3D.Lerp(destination, source, 0.5);
+                                        storage.ApproachInfo.StoredPosition[storage.RequestedStage] = Vector3D.Lerp(destination, source, 0.5);
                                         break;
                                     default:
-                                        storage.ApproachInfo.StoredDestination[storage.RequestedStage] = targetPos;
+                                        storage.ApproachInfo.StoredPosition[storage.RequestedStage] = targetPos;
                                         break;
                                 }
                                 break;
@@ -1545,29 +1554,29 @@ namespace CoreSystems.Projectiles
                         EndState = EndStates.EarlyEnd;
                         DistanceToTravelSqr = Info.DistanceTraveled * Info.DistanceTraveled;
                     }
-                    else if (def.EndEvent == StageEvents.StoreDestination)
+                    else if (def.EndEvent == StageEvents.StoreDestination || def.EndEvent == StageEvents.StorePosition)
                     {
                         switch (approach.Definition.StoredStartType)
                         {
                             case RelativeTo.Target:
-                                storage.ApproachInfo.StoredDestination[storage.RequestedStage * 2] = TargetPosition;
+                                storage.ApproachInfo.StoredPosition[storage.RequestedStage * 2] = TargetPosition;
                                 break;
                             case RelativeTo.Current:
-                                storage.ApproachInfo.StoredDestination[storage.RequestedStage * 2] = Position;
+                                storage.ApproachInfo.StoredPosition[storage.RequestedStage * 2] = Position;
                                 break;
                             case RelativeTo.Shooter:
                                 var blockPos = Info.Weapon.Comp.CoreEntity.PositionComp.WorldAABB.Center;
                                 blockPos = !Vector3D.IsZero(blockPos) ? blockPos : Info.Origin;
-                                storage.ApproachInfo.StoredDestination[storage.RequestedStage * 2] = blockPos;
+                                storage.ApproachInfo.StoredPosition[storage.RequestedStage * 2] = blockPos;
                                 break;
                             case RelativeTo.Nothing:
-                                storage.ApproachInfo.StoredDestination[storage.RequestedStage * 2] = destination;
+                                storage.ApproachInfo.StoredPosition[storage.RequestedStage * 2] = destination;
                                 break;
                             case RelativeTo.MidPoint:
-                                storage.ApproachInfo.StoredDestination[storage.RequestedStage * 2] = Vector3D.Lerp(destination, source, 0.5);
+                                storage.ApproachInfo.StoredPosition[storage.RequestedStage * 2] = Vector3D.Lerp(destination, source, 0.5);
                                 break;
                             default:
-                                storage.ApproachInfo.StoredDestination[storage.RequestedStage * 2] = targetPos;
+                                storage.ApproachInfo.StoredPosition[storage.RequestedStage * 2] = targetPos;
                                 break;
                         }
                     }

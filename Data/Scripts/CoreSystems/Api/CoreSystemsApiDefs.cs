@@ -1335,6 +1335,8 @@ namespace CoreSystems.Api
                             TargetVelocity,
                             UpStoredStartDestination,
                             UpStoredEndDestination,
+                            StoredStartPosition,
+                            StoredEndPosition,
                         }
 
                         public enum RelativeTo
@@ -1365,6 +1367,7 @@ namespace CoreSystems.Api
                             EndProjectile,
                             EndProjectileOnRestart,
                             StoreDestination,
+                            StorePosition,
                         }
 
                         [ProtoContract]

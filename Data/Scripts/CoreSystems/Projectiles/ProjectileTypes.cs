@@ -282,10 +282,10 @@ namespace CoreSystems.Support
     {
         internal ApproachInfo(AmmoConstants aConst)
         {
-            StoredDestination = new Vector3D[aConst.ApproachesCount * 2];
+            StoredPosition = new Vector3D[aConst.ApproachesCount * 2];
         }
 
-        internal readonly Vector3D[] StoredDestination;
+        internal readonly Vector3D[] StoredPosition;
         internal BoundingSphereD NavTargetBound;
         internal Vector3D TargetPos;
         internal Vector3D DestinationPos;
@@ -296,8 +296,8 @@ namespace CoreSystems.Support
 
         internal void Clean(Projectile p)
         {
-            for (int i = 0; i < StoredDestination.Length; i++)
-                StoredDestination[i] = Vector3D.Zero;
+            for (int i = 0; i < StoredPosition.Length; i++)
+                StoredPosition[i] = Vector3D.Zero;
 
             TargetPos = Vector3D.Zero;
             DestinationPos = Vector3D.Zero;
