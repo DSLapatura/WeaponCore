@@ -834,6 +834,7 @@ namespace CoreSystems.Projectiles
                         Log.Line($"state change: {storage.RequestedStage} - age:{Info.RelativeAge}");
                     storage.ApproachInfo.StartDistanceTraveled = Info.DistanceTraveled;
                     storage.ApproachInfo.RelativeAgeStart = Info.RelativeAge;
+                    storage.ApproachInfo.RelativeSpawnsStart = Info.Frags;
                 }
 
                 var aConst = Info.AmmoDef.Const;
@@ -1076,6 +1077,9 @@ namespace CoreSystems.Projectiles
                         else
                             start1 = true;
                         break;
+                    case Conditions.RelativeSpawns:
+                        start1 = Info.Frags - storage.ApproachInfo.RelativeSpawnsStart >= approach.Start1Value;
+                        break;
                     default:
                         break;
                 }
@@ -1152,6 +1156,9 @@ namespace CoreSystems.Projectiles
                         }
                         else
                             start2 = true;
+                        break;
+                    case Conditions.RelativeSpawns:
+                        start2 = Info.Frags - storage.ApproachInfo.RelativeSpawnsStart >= approach.Start2Value;
                         break;
                     default:
                         break;
@@ -1437,6 +1444,9 @@ namespace CoreSystems.Projectiles
                             end1 = true;
 
                         break;
+                    case Conditions.RelativeSpawns:
+                        end1 = Info.Frags - storage.ApproachInfo.RelativeSpawnsStart >= approach.End1Value;
+                        break;
                     default:
                         break;
                 }
@@ -1521,6 +1531,9 @@ namespace CoreSystems.Projectiles
                         }
                         else
                             end2 = true;
+                        break;
+                    case Conditions.RelativeSpawns:
+                        end2 = Info.Frags - storage.ApproachInfo.RelativeSpawnsStart >= approach.End2Value;
                         break;
                     default:
                         break;

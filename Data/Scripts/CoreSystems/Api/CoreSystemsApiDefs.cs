@@ -1325,6 +1325,7 @@ namespace CoreSystems.Api
                             RelativeLifetime,
                             RelativeDeadtime,
                             SinceTimedSpawn,
+                            RelativeSpawns,
                         }
 
                         public enum UpRelativeTo

@@ -293,6 +293,7 @@ namespace CoreSystems.Support
         internal Vector3D OffsetDir;
         internal double RelativeAgeStart;
         internal double StartDistanceTraveled;
+        internal int RelativeSpawnsStart;
 
         internal void Clean(Projectile p)
         {
@@ -305,6 +306,7 @@ namespace CoreSystems.Support
             OffsetDir = Vector3D.Zero;
             StartDistanceTraveled = 0;
             RelativeAgeStart = 0;
+            RelativeSpawnsStart = 0;
             NavTargetBound = new BoundingSphereD(Vector3D.Zero, 0);
 
             p.Info.AmmoDef.Const.ApproachInfoPool.Push(this);

@@ -1340,6 +1340,7 @@ namespace CoreSystems.Support
                         RelativeLifetime,
                         RelativeDeadtime,
                         SinceTimedSpawn,
+                        RelativeSpawns,
                     }
 
                     public enum UpRelativeTo
