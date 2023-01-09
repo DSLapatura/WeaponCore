@@ -141,7 +141,7 @@ namespace CoreSystems
                     for (int i = 0; i < collection.Count; i++)
                     {
                         var info = collection[i];
-                        info.Block.DoDamage(info.ScaledDamage, info.DamageType, sync, null, info.AttackerId);
+                        info.Block.DoDamage(info.ScaledDamage, info.DamageType, sync, null, info.AttackerId, 0, info.DetonateAmmo);
                     }
                     collection.Clear();
                 }
@@ -782,7 +782,7 @@ namespace CoreSystems
                                     if (dInfo.DestroyBlocks.Count == 0)
                                         dInfo.DestroyTick = Tick + 10;
 
-                                    dInfo.DestroyBlocks.Add(new BlockDestroyInfo {Block = block, AttackerId = attackerId, DamageType = damageType, ScaledDamage = scaledDamage});
+                                    dInfo.DestroyBlocks.Add(new BlockDestroyInfo {Block = block, AttackerId = attackerId, DamageType = damageType, ScaledDamage = scaledDamage, DetonateAmmo = true});
                                 }
                                 
                                 if (GlobalDamageHandlerActive) {

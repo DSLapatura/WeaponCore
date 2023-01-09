@@ -1090,6 +1090,7 @@ namespace CoreSystems
         public float ScaledDamage;
         public long AttackerId;
         public MyStringHash DamageType;
+        public bool DetonateAmmo;
     }
 
     public class CustomHitInfo

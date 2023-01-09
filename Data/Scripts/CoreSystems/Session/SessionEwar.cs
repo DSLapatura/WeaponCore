@@ -196,7 +196,9 @@ namespace CoreSystems
 
         private void ComputeEffects(MyCubeGrid grid, AmmoDef ammoDef, double damagePool, ref double healthPool, long attackerId, int sysmteId, List<HitEntity.RootBlocks> blocks)
         {
+            DeferredBlockDestroy dInfo = null;
             var largeGrid = grid.GridSizeEnum == MyCubeSize.Large;
+            var gridBlockCount = grid.CubeBlocks.Count;
             var eWarInfo = ammoDef.Ewar;
             var duration = (uint)eWarInfo.Duration;
             var stack = eWarInfo.StackDuration;
@@ -213,7 +215,6 @@ namespace CoreSystems
                 IMyFunctionalBlock funcBlock = null;
                 if (fieldType != Dot)
                 {
-
                     if (cubeBlock == null || cubeBlock is IMyConveyor || cubeBlock.MarkedForClose)
                         continue;
 
@@ -224,12 +225,12 @@ namespace CoreSystems
                     if (funcBlock == null || !cubeBlock.IsWorking && !ewared || ewared && !stack) continue;
                 }
 
-                var blockHp = block.Integrity;
+                var blockHp = block.Integrity - block.AccumulatedDamage;
                 float damageScale = 1;
                 if (ammoDef.Const.DamageScaling)
                 {
                     var d = ammoDef.DamageScales;
-                    if (d.MaxIntegrity > 0 && blockHp > d.MaxIntegrity) continue;
+                    if (d.MaxIntegrity > 0 && blockHp > d.MaxIntegrity || blockHp <= 0) continue;
 
                     if (d.Grids.Large >= 0 && largeGrid) damageScale *= d.Grids.Large;
                     else if (d.Grids.Small >= 0 && !largeGrid) damageScale *= d.Grids.Small;
@@ -265,7 +266,25 @@ namespace CoreSystems
 
                 if (fieldType == Dot && IsServer)
                 {
-                    block.DoDamage((float) scaledDamage, MyDamageType.Explosion, sync, null, attackerId);
+                    if (scaledDamage < blockHp || gridBlockCount < 1000)
+                    {
+                        block.DoDamage((float) scaledDamage, MyDamageType.Explosion, sync, null, attackerId, 0, false);
+                    }
+                    else
+                    {
+                        if (dInfo == null && !DeferredDestroy.TryGetValue(grid, out dInfo))
+                        {
+                            dInfo = DefferedDestroyPool.Count > 0 ? DefferedDestroyPool.Pop() : new DeferredBlockDestroy();
+                            DeferredDestroy[grid] = dInfo;
+                        }
+
+                        if (dInfo.DestroyBlocks.Count == 0)
+                            dInfo.DestroyTick = Tick + 10;
+
+                        dInfo.DestroyBlocks.Add(new BlockDestroyInfo { Block = block, AttackerId = attackerId, DamageType = MyDamageType.Explosion, ScaledDamage = (float) scaledDamage, DetonateAmmo = false });
+                    }
+
+                    //block.DoDamage((float) scaledDamage, MyDamageType.Explosion, sync, null, attackerId);
                     continue;
                 }
 
