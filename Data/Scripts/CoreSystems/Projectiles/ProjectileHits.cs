@@ -419,7 +419,7 @@ namespace CoreSystems.Projectiles
                         else
                             grid.RayCastCells(beamFrom, beamTo, hitEntity.Vector3ICache, null, true, true);
 
-                        if (!offensiveEwar)
+                        if (!offensiveEwar && !fieldActive)
                         {
 
                             if (iShield != null && grid != null && grid.IsSameConstructAs(iShield.CubeGrid))
