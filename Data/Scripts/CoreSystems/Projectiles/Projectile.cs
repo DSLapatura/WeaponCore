@@ -836,10 +836,8 @@ namespace CoreSystems.Projectiles
 
                 var aConst = Info.AmmoDef.Const;
                 if (storage.RequestedStage >= aConst.Approaches.Length)
-                {
-                    Log.Line($"ProcessStage outside of bounds: {storage.RequestedStage > aConst.Approaches.Length - 1} - lastStage:{lastActiveStage} - {Info.Weapon.System.ShortName} - {Info.Weapon.ActiveAmmoDef.AmmoDef.AmmoRound}");
                     return;
-                }
+
                 var approach = aConst.Approaches[storage.RequestedStage];
 
                 if (approach.StartCon1 == approach.StartCon2 || approach.EndCon1 == approach.EndCon2)
@@ -870,13 +868,9 @@ namespace CoreSystems.Projectiles
                             var storedStartDest = storage.ApproachInfo.StoredPosition[storage.RequestedStage];
                             Vector3D destStart;
                             if (approach.Up == UpRelativeTo.UpStoredStartLocalPosition)
-                            {
                                 destStart = Vector3D.Transform(storedStartDest, Info.Weapon.Comp.TopEntity.PositionComp.WorldMatrixRef);
-                            }
                             else
-                            {
                                 destStart = storedStartDest != Vector3D.Zero ? storedStartDest : storage.ApproachInfo.TargetPos;
-                            }
                             storage.ApproachInfo.OffsetDir = Vector3D.Normalize(destStart - Position);
                             break;
                         case UpRelativeTo.UpStoredEndDestination:
@@ -886,13 +880,9 @@ namespace CoreSystems.Projectiles
                             var storedEndDest = storage.ApproachInfo.StoredPosition[approach.StoredStartId * 2];
                             Vector3D destEnd;
                             if (approach.Up == UpRelativeTo.UpStoredEndLocalPosition)
-                            {
                                 destEnd = Vector3D.Transform(storedEndDest, Info.Weapon.Comp.TopEntity.PositionComp.WorldMatrixRef);
-                            }
                             else
-                            {
                                 destEnd = storedEndDest != Vector3D.Zero ? storedEndDest : storage.ApproachInfo.TargetPos;
-                            }
 
                             storage.ApproachInfo.OffsetDir = Vector3D.Normalize(destEnd - Position);
                             break;
@@ -909,7 +899,6 @@ namespace CoreSystems.Projectiles
                     var right = Vector3D.Cross(storage.ApproachInfo.OffsetDir, forward);
                     storage.ApproachInfo.OffsetDir = Math.Sin(angle) * forward + Math.Cos(angle) * right;
                 }
-
 
                 var desiredElevation = approach.DesiredElevation;
                 var heightOffset = storage.ApproachInfo.OffsetDir * desiredElevation;
@@ -954,14 +943,9 @@ namespace CoreSystems.Projectiles
                             var storedDestStart = storage.ApproachInfo.StoredPosition[approach.StoredStartId];
                             Vector3D destStart;
                             if (approach.Source == RelativeTo.StoredStartLocalPosition)
-                            {
                                 destStart = Vector3D.Transform(storedDestStart, Info.Weapon.Comp.TopEntity.PositionComp.WorldMatrixRef);
-                            }
                             else
-                            {
                                 destStart = storedDestStart != Vector3D.Zero ? storedDestStart : storage.ApproachInfo.TargetPos;
-                            }
-
                             storage.ApproachInfo.LookAtPos = destStart;
                             break;
                         case RelativeTo.StoredEndDestination:
@@ -971,17 +955,10 @@ namespace CoreSystems.Projectiles
                             var storedDestEnd = storage.ApproachInfo.StoredPosition[approach.StoredEndId * 2];
                             Vector3D destEnd;
                             if (approach.Source == RelativeTo.StoredEndLocalPosition)
-                            {
                                 destEnd = Vector3D.Transform(storedDestEnd, Info.Weapon.Comp.TopEntity.PositionComp.WorldMatrixRef);
-                            }
                             else
-                            {
                                 destEnd = storedDestEnd != Vector3D.Zero ? storedDestEnd : storage.ApproachInfo.TargetPos;
-                            }
-
                             storage.ApproachInfo.LookAtPos = destEnd;
-                            break;
-                        default:
                             break;
                     }
 
@@ -1030,14 +1007,9 @@ namespace CoreSystems.Projectiles
                             var storedDestStart = storage.ApproachInfo.StoredPosition[approach.StoredStartId];
                             Vector3D destStart;
                             if (approach.Destination == RelativeTo.StoredStartLocalPosition)
-                            {
                                 destStart = Vector3D.Transform(storedDestStart, Info.Weapon.Comp.TopEntity.PositionComp.WorldMatrixRef);
-                            }
                             else
-                            {
                                 destStart = storedDestStart != Vector3D.Zero ? storedDestStart : storage.ApproachInfo.TargetPos;
-                            }
-
                             storage.ApproachInfo.DestinationPos = destStart;
                             break;
                         case RelativeTo.StoredEndDestination:
@@ -1047,13 +1019,9 @@ namespace CoreSystems.Projectiles
                             var storedDestEnd = storage.ApproachInfo.StoredPosition[approach.StoredEndId * 2];
                             Vector3D destEnd;
                             if (approach.Destination == RelativeTo.StoredEndLocalPosition)
-                            {
                                 destEnd = Vector3D.Transform(storedDestEnd, Info.Weapon.Comp.TopEntity.PositionComp.WorldMatrixRef);
-                            }
                             else
-                            {
                                 destEnd = storedDestEnd != Vector3D.Zero ? storedDestEnd : storage.ApproachInfo.TargetPos;
-                            }
 
                             storage.ApproachInfo.DestinationPos = destEnd;
                             break;
@@ -1069,8 +1037,8 @@ namespace CoreSystems.Projectiles
                         storage.ApproachInfo.DestinationPos = rawPos + (storage.ApproachInfo.OffsetDir * clampedLead);
                     }
                 }
+                
                 var destination = storage.ApproachInfo.DestinationPos;
-
 
                 if (approach.OffsetMinRadius > 0 && approach.OffsetTime > 0)
                 {
@@ -1163,8 +1131,6 @@ namespace CoreSystems.Projectiles
                     case Conditions.RelativeSpawns:
                         start1 = Info.Frags - storage.ApproachInfo.RelativeSpawnsStart >= approach.Start1Value;
                         break;
-                    default:
-                        break;
                 }
 
                 bool start2 = false;
@@ -1243,8 +1209,6 @@ namespace CoreSystems.Projectiles
                     case Conditions.RelativeSpawns:
                         start2 = Info.Frags - storage.ApproachInfo.RelativeSpawnsStart >= approach.Start2Value;
                         break;
-                    default:
-                        break;
                 }
 
                 if (approach.StartAnd && start1 && start2 || !approach.StartAnd && (start1 || start2) || storage.LastActivatedStage >= 0 && !approach.CanExpireOnceStarted)
@@ -1252,9 +1216,8 @@ namespace CoreSystems.Projectiles
                     accelMpsMulti = aConst.AccelInMetersPerSec * approach.AccelMulti;
                     speedCapMulti = approach.SpeedCapMulti;
                     var heightDir = desiredElevation > 0 ? Vector3D.Normalize(heightend - heightStart) : storage.ApproachInfo.OffsetDir;
-
-
                     var leadPosition = !approach.NoElevationLead ? heightStart + (heightDir * clampedLead) : heightStart;
+                    
                     Vector3D heightAdjLeadPos;
                     switch (approach.Elevation)
                     {
@@ -1314,13 +1277,9 @@ namespace CoreSystems.Projectiles
                             var storedDest = storage.ApproachInfo.StoredPosition[approach.StoredStartId];
                             Vector3D dest;
                             if (approach.Elevation == RelativeTo.StoredStartLocalPosition)
-                            {
                                 dest = Vector3D.Transform(storedDest, Info.Weapon.Comp.TopEntity.PositionComp.WorldMatrixRef);
-                            }
                             else
-                            {
                                 dest = storedDest != Vector3D.Zero ? storedDest : storage.ApproachInfo.TargetPos;
-                            }
                             var plane = new PlaneD(dest, heightDir);
                             var distToPlane = plane.DistanceToPoint(leadPosition);
                             heightAdjLeadPos = leadPosition + (heightDir * distToPlane);
@@ -1333,14 +1292,9 @@ namespace CoreSystems.Projectiles
                             var storedDest = storage.ApproachInfo.StoredPosition[approach.StoredEndId * 2];
                             Vector3D dest;
                             if (approach.Elevation == RelativeTo.StoredEndLocalPosition)
-                            {
                                 dest = Vector3D.Transform(storedDest, Info.Weapon.Comp.TopEntity.PositionComp.WorldMatrixRef);
-                            }
                             else
-                            {
                                 dest = storedDest != Vector3D.Zero ? storedDest : storage.ApproachInfo.TargetPos;
-                            }
-                                
                             var plane = new PlaneD(dest, heightDir);
                             var distToPlane = plane.DistanceToPoint(leadPosition);
                             heightAdjLeadPos = leadPosition + (heightDir * distToPlane);
@@ -1373,13 +1327,9 @@ namespace CoreSystems.Projectiles
                                 {
                                     var storedDest = storage.ApproachInfo.StoredPosition[approach.StoredStartId];
                                     if (approach.Destination == RelativeTo.StoredStartLocalPosition)
-                                    {
                                         heightAdjLeadPos = Vector3D.Transform(storedDest, Info.Weapon.Comp.TopEntity.PositionComp.WorldMatrixRef);
-                                    }
                                     else
-                                    {
                                         heightAdjLeadPos = storedDest != Vector3D.Zero ? storedDest : storage.ApproachInfo.TargetPos;
-                                    }
                                     break;
                                 }
                                 case RelativeTo.StoredEndDestination:
@@ -1388,13 +1338,9 @@ namespace CoreSystems.Projectiles
                                 {
                                     var storedDest = storage.ApproachInfo.StoredPosition[approach.StoredEndId * 2];
                                     if (approach.Destination == RelativeTo.StoredEndLocalPosition)
-                                    {
                                         heightAdjLeadPos = Vector3D.Transform(storedDest, Info.Weapon.Comp.TopEntity.PositionComp.WorldMatrixRef);
-                                    }
                                     else
-                                    {
                                         heightAdjLeadPos = storedDest != Vector3D.Zero ? storedDest : storage.ApproachInfo.TargetPos;
-                                    }
                                     break;
                                 }
                                 default:
@@ -1464,8 +1410,6 @@ namespace CoreSystems.Projectiles
                                         storage.ApproachInfo.StoredPosition[storage.RequestedStage] = targetPos;
                                         break;
                                 }
-                                break;
-                            default:
                                 break;
                         }
                     }
@@ -1569,8 +1513,6 @@ namespace CoreSystems.Projectiles
                     case Conditions.RelativeSpawns:
                         end1 = Info.Frags - storage.ApproachInfo.RelativeSpawnsStart >= approach.End1Value;
                         break;
-                    default:
-                        break;
                 }
 
                 bool end2 = false;
@@ -1657,8 +1599,6 @@ namespace CoreSystems.Projectiles
                     case Conditions.RelativeSpawns:
                         end2 = Info.Frags - storage.ApproachInfo.RelativeSpawnsStart >= approach.End2Value;
                         break;
-                    default:
-                        break;
                 }
 
                 if (s.DebugMod)
@@ -1724,7 +1664,6 @@ namespace CoreSystems.Projectiles
 
                     if (moveForward)
                     {
-                        var oldLast = storage.LastActivatedStage;
                         storage.LastActivatedStage = storage.RequestedStage;
                         ++storage.RequestedStage;
                         ProcessStage(ref accelMpsMulti, ref speedCapMulti, ref disableAvoidance, targetPos, storage.LastActivatedStage, targetLock, callDepth);
