@@ -1336,8 +1336,10 @@ namespace CoreSystems.Api
                             TargetVelocity,
                             UpStoredStartDestination,
                             UpStoredEndDestination,
-                            StoredStartPosition,
-                            StoredEndPosition,
+                            UpStoredStartPosition,
+                            UpStoredEndPosition,
+                            UpStoredStartLocalPosition,
+                            UpStoredEndLocalPosition,
                         }
 
                         public enum RelativeTo
@@ -1351,7 +1353,6 @@ namespace CoreSystems.Api
                             Nothing,
                             StoredStartDestination,
                             StoredEndDestination,
-
                         }
 
                         public enum ConditionOperators
@@ -1369,6 +1370,7 @@ namespace CoreSystems.Api
                             EndProjectileOnRestart,
                             StoreDestination,
                             StorePosition,
+                            StorePositionLocalToShooter,
                         }
 
                         [ProtoContract]
@@ -1429,6 +1431,10 @@ namespace CoreSystems.Api
                         [ProtoMember(46)] internal WeightedIdListDef[] RestartList;
                         [ProtoMember(47)] internal RelativeTo StoredStartType;
                         [ProtoMember(48)] internal RelativeTo StoredEndType;
+                        [ProtoMember(49)] internal bool LeadAndRotateSource;
+                        [ProtoMember(50)] internal bool LeadAndRotateDestination;
+                        [ProtoMember(51)] internal bool NoElevationLead;
+                        [ProtoMember(52)] internal bool IgnoreAntiSmart;
                     }
 
                     [ProtoContract]

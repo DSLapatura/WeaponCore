@@ -1680,6 +1680,9 @@ namespace CoreSystems.Support
         public readonly bool EndAnd;
         public readonly bool StartAnd;
         public readonly bool NoSpawns;
+        public readonly bool LeadAndRotateSource;
+        public readonly bool LeadAndRotateDestination;
+        public readonly bool NoElevationLead;
         public readonly double ModFutureStep;
         public readonly TrajectoryDef.ApproachDef.UpRelativeTo Up;
         public readonly TrajectoryDef.ApproachDef.RelativeTo Source;
@@ -1696,6 +1699,7 @@ namespace CoreSystems.Support
         public readonly bool Orbit;
         public readonly bool CanExpireOnceStarted;
         public readonly bool PushLeadByTravelDistance;
+        public readonly bool IgnoreAntiSmart;
         public readonly double OrbitRadius;
         public readonly double AngleOffset;
         public readonly double DesiredElevation;
@@ -1726,6 +1730,11 @@ namespace CoreSystems.Support
             StartParticle = !string.IsNullOrEmpty(def.StartParticle.Name);
             AlternateModel = !string.IsNullOrEmpty(def.AlternateModel);
             NoSpawns = def.NoTimedSpawns;
+            
+            LeadAndRotateSource = def.LeadAndRotateSource;
+            LeadAndRotateDestination = def.LeadAndRotateDestination;
+            NoElevationLead = def.NoElevationLead;
+            IgnoreAntiSmart = def.IgnoreAntiSmart;
             Up = def.Up;
             Source = def.Source;
             Destination = def.Destination;
