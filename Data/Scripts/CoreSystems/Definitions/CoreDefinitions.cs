@@ -1341,6 +1341,7 @@ namespace CoreSystems.Support
                         RelativeDeadtime,
                         SinceTimedSpawn,
                         RelativeSpawns,
+                        EnemyTargetLoss,
                     }
 
                     public enum UpRelativeTo
@@ -1389,6 +1390,7 @@ namespace CoreSystems.Support
                         EndProjectileOnRestart,
                         StoreDestination,
                         StorePosition,
+                        RefundHeat,
                     }
 
                     [ProtoContract]
@@ -1453,6 +1455,7 @@ namespace CoreSystems.Support
                     [ProtoMember(50)] internal bool LeadAndRotateDestination;
                     [ProtoMember(51)] internal bool NoElevationLead;
                     [ProtoMember(52)] internal bool IgnoreAntiSmart;
+                    [ProtoMember(53)] internal double HeatRefund;
                 }
 
                 [ProtoContract]

@@ -5,6 +5,7 @@ using VRage.Utils;
 using VRageMath;
 using static CoreSystems.Support.WeaponDefinition.AnimationDef.PartAnimationSetDef;
 using static CoreSystems.Support.CoreComponent;
+using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace CoreSystems.Platform
 {
@@ -250,8 +251,10 @@ namespace CoreSystems.Platform
         {
             try
             {
-                Comp.CurrentHeat = Comp.CurrentHeat >= HsRate ? Comp.CurrentHeat - HsRate : 0;
-                PartState.Heat = PartState.Heat >= HsRate ? PartState.Heat - HsRate : 0;
+                var hsRateMod = HsRate + (float)Comp.HeatLoss;
+                Comp.CurrentHeat = Comp.CurrentHeat >= hsRateMod ? Comp.CurrentHeat - hsRateMod : 0;
+                PartState.Heat = PartState.Heat >= hsRateMod ? PartState.Heat - hsRateMod : 0;
+                Comp.HeatLoss = 0;
 
                 var set = PartState.Heat - LastHeat > 0.001 || PartState.Heat - LastHeat < 0.001;
 

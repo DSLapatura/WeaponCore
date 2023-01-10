@@ -1131,6 +1131,13 @@ namespace CoreSystems.Projectiles
                     case Conditions.RelativeSpawns:
                         start1 = Info.Frags - storage.ApproachInfo.RelativeSpawnsStart >= approach.Start1Value;
                         break;
+                    case Conditions.EnemyTargetLoss:
+                        if (Info.Target.TargetObject == null)
+                            storage.ApproachInfo.TargetLossTime += Session.I.DeltaStepConst;
+                        else
+                            storage.ApproachInfo.TargetLossTime = 0;
+                        start1 = storage.ApproachInfo.TargetLossTime >= approach.Start1Value;
+                        break;
                 }
 
                 bool start2 = false;
@@ -1208,6 +1215,13 @@ namespace CoreSystems.Projectiles
                         break;
                     case Conditions.RelativeSpawns:
                         start2 = Info.Frags - storage.ApproachInfo.RelativeSpawnsStart >= approach.Start2Value;
+                        break;
+                    case Conditions.EnemyTargetLoss:
+                        if (Info.Target.TargetObject == null)
+                            storage.ApproachInfo.TargetLossTime += Session.I.DeltaStepConst;
+                        else
+                            storage.ApproachInfo.TargetLossTime = 0;
+                        start2 = storage.ApproachInfo.TargetLossTime >= approach.Start2Value;
                         break;
                 }
 
@@ -1382,6 +1396,9 @@ namespace CoreSystems.Projectiles
                                 break;
                             case StageEvents.DoNothing:
                                 break;
+                            case StageEvents.RefundHeat:
+                                Info.Weapon.Comp.HeatLoss += approach.Definition.HeatRefund;
+                                break;
                             case StageEvents.StoreDestination:
                             case StageEvents.StorePosition:
                                 switch (approach.Definition.StoredStartType)
@@ -1513,6 +1530,13 @@ namespace CoreSystems.Projectiles
                     case Conditions.RelativeSpawns:
                         end1 = Info.Frags - storage.ApproachInfo.RelativeSpawnsStart >= approach.End1Value;
                         break;
+                    case Conditions.EnemyTargetLoss:
+                        if (Info.Target.TargetObject == null)
+                            storage.ApproachInfo.TargetLossTime += Session.I.DeltaStepConst;
+                        else
+                            storage.ApproachInfo.TargetLossTime = 0;
+                        end1 = storage.ApproachInfo.TargetLossTime >= approach.End1Value;
+                        break;
                 }
 
                 bool end2 = false;
@@ -1599,6 +1623,13 @@ namespace CoreSystems.Projectiles
                     case Conditions.RelativeSpawns:
                         end2 = Info.Frags - storage.ApproachInfo.RelativeSpawnsStart >= approach.End2Value;
                         break;
+                    case Conditions.EnemyTargetLoss:
+                        if (Info.Target.TargetObject == null)
+                            storage.ApproachInfo.TargetLossTime += Session.I.DeltaStepConst;
+                        else
+                            storage.ApproachInfo.TargetLossTime = 0;
+                        end2 = storage.ApproachInfo.TargetLossTime >= approach.End2Value;
+                        break;
                 }
 
                 if (s.DebugMod)
@@ -1624,12 +1655,12 @@ namespace CoreSystems.Projectiles
                     var inActiveNext = !isActive && !def.ForceRestart && def.RestartCondition == ReInitCondition.MoveToNext;
                     var moveForward = hasNextStep && (activeNext || inActiveNext);
                     var reStart = def.RestartCondition == ReInitCondition.MoveToPrevious && !isActive || def.RestartCondition == ReInitCondition.ForceRestart;
-
-                    if (def.EndEvent == StageEvents.EndProjectile || def.EndEvent == StageEvents.EndProjectileOnRestart && (reStart || !moveForward && hasNextStep)) {
+                    var endEvent = def.EndEvent;
+                    if (endEvent == StageEvents.EndProjectile || endEvent == StageEvents.EndProjectileOnRestart && (reStart || !moveForward && hasNextStep)) {
                         EndState = EndStates.EarlyEnd;
                         DistanceToTravelSqr = Info.DistanceTraveled * Info.DistanceTraveled;
                     }
-                    else if (def.EndEvent == StageEvents.StoreDestination || def.EndEvent == StageEvents.StorePosition)
+                    else if (endEvent == StageEvents.StoreDestination || endEvent == StageEvents.StorePosition)
                     {
                         switch (approach.Definition.StoredEndType)
                         {
@@ -1660,6 +1691,11 @@ namespace CoreSystems.Projectiles
                                 storage.ApproachInfo.StoredPosition[storage.RequestedStage * 2] = targetPos;
                                 break;
                         }
+
+                    }
+                    else if (endEvent == StageEvents.RefundHeat)
+                    {
+                        Info.Weapon.Comp.HeatLoss += approach.Definition.HeatRefund;
                     }
 
                     if (moveForward)

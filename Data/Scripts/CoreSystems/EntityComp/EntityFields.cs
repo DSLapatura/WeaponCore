@@ -70,6 +70,7 @@ namespace CoreSystems.Support
         internal double PreviousTotalEffect;
         internal double AverageEffect;
         internal double AddEffect;
+        internal double HeatLoss;
 
         internal float CurrentHeat;
         internal float MaxHeat;

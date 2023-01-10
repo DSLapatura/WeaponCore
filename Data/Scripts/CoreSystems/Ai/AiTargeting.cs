@@ -18,6 +18,9 @@ using static CoreSystems.Support.WeaponDefinition.AmmoDef;
 using static CoreSystems.Platform.Weapon.ApiShootRequest;
 using IMyWarhead = Sandbox.ModAPI.IMyWarhead;
 using CollisionLayers = Sandbox.Engine.Physics.MyPhysics.CollisionLayers;
+using Sandbox.Game.Entities.Character;
+using static Sandbox.Game.Replication.History.MySnapshotHistory;
+using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace CoreSystems.Support
 {
@@ -515,6 +518,13 @@ namespace CoreSystems.Support
 
             var lockedOnly = w.System.Values.Targeting.LockedSmartOnly;
             var smartOnly = w.System.Values.Targeting.IgnoreDumbProjectiles;
+            var comp = w.Comp;
+            var mOverrides = comp.MasterOverrides;
+            var minRadius = mOverrides.MinSize * 0.5f;
+            var maxRadius = mOverrides.MaxSize * 0.5f;
+            var minTargetRadius = minRadius > 0 ? minRadius : system.MinTargetRadius;
+            var maxTargetRadius = maxRadius < system.MaxTargetRadius ? maxRadius : system.MaxTargetRadius;
+
 
             int index = int.MinValue;
             if (id != ulong.MaxValue) {
@@ -576,9 +586,13 @@ namespace CoreSystems.Support
                 if (lp.State != Projectile.ProjectileState.Alive || lp.MaxSpeed > system.MaxTargetSpeed || lp.MaxSpeed <= 0 || distSqr > w.MaxTargetDistanceSqr || distSqr < w.MinTargetDistanceBufferSqr || w.System.UniqueTargetPerWeapon && w.Comp.ActiveTargets.TryGetValue(lp, out tOwner) && tOwner.Weapon != w) continue;
 
                 var lpaConst = lp.Info.AmmoDef.Const;
+
                 var smart = lpaConst.IsDrone || lpaConst.IsSmart;
                 if (smartOnly && !smart || lockedOnly && (!smart || cube != null && w.Comp.IsBlock && cube.CubeGrid.IsSameConstructAs(w.Comp.Ai.GridEntity)))
                     continue;
+
+                var targetRadius = lpaConst.CollisionSize;
+                if (targetRadius < minTargetRadius || targetRadius > maxTargetRadius && maxTargetRadius < 8192) continue;
 
                 var lpAccel = lp.Velocity - lp.PrevVelocity;
 
@@ -827,6 +841,7 @@ namespace CoreSystems.Support
             var target = info.Target;
             info.Storage.ChaseAge = (int) info.RelativeAge;
             var ai = info.Ai;
+            var overRides = comp.Data.Repo.Values.Set.Overrides;
             var session = Session.I;
             var physics = Session.I.Physics;
             var weaponPos = p.Position;
@@ -836,6 +851,11 @@ namespace CoreSystems.Support
             var lockedOnly = s.Values.Targeting.LockedSmartOnly;
             var smartOnly = s.Values.Targeting.IgnoreDumbProjectiles;
             var found = false;
+
+            var minRadius = overRides.MinSize * 0.5f;
+            var maxRadius = overRides.MaxSize * 0.5f;
+            var minTargetRadius = minRadius > 0 ? minRadius : s.MinTargetRadius;
+            var maxTargetRadius = maxRadius < s.MaxTargetRadius ? maxRadius : s.MaxTargetRadius;
 
             if (s.ClosestFirst)
             {
@@ -879,8 +899,12 @@ namespace CoreSystems.Support
                     continue;
                 
                 var lpaConst = lp.Info.AmmoDef.Const;
+
                 if (smartOnly && !(lpaConst.IsDrone || lpaConst.IsSmart) || lockedOnly && !(lpaConst.IsDrone || lpaConst.IsSmart))
                     continue;
+
+                var targetRadius = lpaConst.CollisionSize;
+                if (targetRadius < minTargetRadius || targetRadius > maxTargetRadius && maxTargetRadius < 8192) continue;
 
                 var needsCast = false;
 
