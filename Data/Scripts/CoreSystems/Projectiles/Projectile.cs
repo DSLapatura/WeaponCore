@@ -3063,9 +3063,6 @@ namespace CoreSystems.Projectiles
             {
                 case AntiSmart:
                     var eWarSphere = new BoundingSphereD(Position, aConst.EwarRadius);
-                    if (Info.Storage.RequestedStage >= 0 && Info.Storage.RequestedStage < aConst.ApproachesCount && aConst.Approaches[Info.Storage.RequestedStage].IgnoreAntiSmart)
-                        return;
-
                     var s = Session.I;
                     DynTrees.GetAllProjectilesInSphere(Session.I, ref eWarSphere, s.EwaredProjectiles, false);
                     for (int j = 0; j < s.EwaredProjectiles.Count; j++)
@@ -3074,7 +3071,12 @@ namespace CoreSystems.Projectiles
 
                         if (eWarSphere.Intersects(new BoundingSphereD(netted.Position, netted.Info.AmmoDef.Const.CollisionSize)))
                         {
-                            if (netted.Info.Ai.TopEntityMap.GroupMap.Construct.ContainsKey(Info.Weapon.Comp.TopEntity) || netted.Info.Target.TargetState == Target.TargetStates.IsProjectile) continue;
+                            if (netted.Info.Ai.TopEntityMap.GroupMap.Construct.ContainsKey(Info.Weapon.Comp.TopEntity) || netted.Info.Target.TargetState == Target.TargetStates.IsProjectile || netted.State != ProjectileState.Alive) continue;
+
+                            var nStorage = netted.Info.Storage;
+                            var nAconst = netted.Info.AmmoDef.Const;
+                            if (nStorage.RequestedStage >= 0 && nStorage.RequestedStage < nAconst.ApproachesCount && nAconst.Approaches[nStorage.RequestedStage].IgnoreAntiSmart)
+                                continue;
                             if (Info.Random.NextDouble() * 100f < aConst.PulseChance || !aConst.EwarField)
                             {
                                 Info.BaseEwarPool -= (float)netted.Info.AmmoDef.Const.HealthHitModifier;
