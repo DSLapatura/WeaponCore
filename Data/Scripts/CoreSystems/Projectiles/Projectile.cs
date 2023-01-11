@@ -17,6 +17,7 @@ using static CoreSystems.Support.WeaponDefinition.AmmoDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.EwarDef.EwarType;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.FragmentDef.TimedSpawnDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.TrajectoryDef.ApproachDef;
+using static VRage.Game.MyObjectBuilder_CubeBlockDefinition;
 
 namespace CoreSystems.Projectiles
 {
@@ -847,10 +848,14 @@ namespace CoreSystems.Projectiles
 
                 if (approach.AdjustUp || stageChange)
                 {
+
                     switch (approach.Up)
                     {
                         case UpRelativeTo.RelativeToBlock:
                             storage.ApproachInfo.OffsetDir = Info.OriginUp;
+                            break;
+                        case UpRelativeTo.RelativeToShooter:
+                            storage.ApproachInfo.OffsetDir = Info.Weapon.Comp.CoreEntity.PositionComp.WorldMatrixRef.Up;
                             break;
                         case UpRelativeTo.RelativeToGravity:
                             storage.ApproachInfo.OffsetDir = Info.MyPlanet == null ? Info.OriginUp : Vector3D.Normalize(Position - Info.MyPlanet.PositionComp.WorldAABB.Center);
@@ -892,9 +897,15 @@ namespace CoreSystems.Projectiles
                     }
                 }
 
-                if (!MyUtils.IsZero(approach.AngleOffset))
+                if (approach.HasAngleOffset)
                 {
-                    var angle = approach.AngleOffset * MathHelper.Pi;
+                    if (stageChange && approach.ModAngleOffset)
+                    {
+                        var min = approach.Definition.AngleVariance.Start;
+                        var max = approach.Definition.AngleVariance.End;
+                        storage.ApproachInfo.AngleVariance = Info.Random.NextDouble() * (max - min) + min;
+                    }
+                    var angle = (approach.AngleOffset + storage.ApproachInfo.AngleVariance) * MathHelper.Pi;
                     var forward = Vector3D.CalculatePerpendicularVector(storage.ApproachInfo.OffsetDir);
                     var right = Vector3D.Cross(storage.ApproachInfo.OffsetDir, forward);
                     storage.ApproachInfo.OffsetDir = Math.Sin(angle) * forward + Math.Cos(angle) * right;

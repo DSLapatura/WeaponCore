@@ -1341,6 +1341,7 @@ namespace CoreSystems.Api
                             UpStoredEndPosition,
                             UpStoredStartLocalPosition,
                             UpStoredEndLocalPosition,
+                            RelativeToShooter,
                         }
 
                         public enum RelativeTo
@@ -1438,6 +1439,7 @@ namespace CoreSystems.Api
                         [ProtoMember(51)] internal bool NoElevationLead;
                         [ProtoMember(52)] internal bool IgnoreAntiSmart;
                         [ProtoMember(53)] internal double HeatRefund;
+                        [ProtoMember(54)] internal Randomize AngleVariance;
                     }
 
                     [ProtoContract]

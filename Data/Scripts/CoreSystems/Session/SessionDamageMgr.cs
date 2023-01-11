@@ -370,7 +370,8 @@ namespace CoreSystems
             var gridBlockCount = grid.CubeBlocks.Count;
             IMySlimBlock rootBlock = null;
             var d = t.AmmoDef.DamageScales;
-
+            var armor = t.AmmoDef.DamageScales.Armor;
+            var maxIntegrity = d.MaxIntegrity;
             //Target/targeting Info
             var largeGrid = grid.GridSizeEnum == MyCubeSize.Large;
             var attackerId = t.Weapon.Comp.CoreEntity.EntityId;
@@ -422,7 +423,7 @@ namespace CoreSystems
             var destroyed = 0;
             var showHits = t.Weapon.System.WConst.DebugMode && !I.MpActive;
             DeferredBlockDestroy dInfo = null;
-
+            var aConst = t.AmmoDef.Const;
             //Main loop (finally)
             for (int i = 0; i < blockCount; i++)
             {
@@ -443,21 +444,21 @@ namespace CoreSystems
 
                 if (hasAoe && !detRequested)//load in AOE vars
                 {
-                    aoeDamage = t.AmmoDef.Const.ByBlockHitDamage;
-                    aoeRadius = t.AmmoDef.Const.ByBlockHitRadius; //fix type in definitions to float?
+                    aoeDamage = aConst.ByBlockHitDamage;
+                    aoeRadius = aConst.ByBlockHitRadius; //fix type in definitions to float?
                     aoeFalloff = t.AmmoDef.AreaOfDamage.ByBlockHit.Falloff;
-                    aoeAbsorb = t.AmmoDef.Const.AoeMaxAbsorb;
-                    aoeDepth = t.AmmoDef.Const.ByBlockHitDepth;
+                    aoeAbsorb = aConst.AoeMaxAbsorb;
+                    aoeDepth = aConst.ByBlockHitDepth;
                     aoeShape = t.AmmoDef.AreaOfDamage.ByBlockHit.Shape;
                     aoeIsPool = aoeFalloff == Falloff.Pooled;
                 }
                 else if (hasDet && detRequested)//load in Detonation vars
                 {
-                    aoeDamage = t.AmmoDef.Const.EndOfLifeDamage;
-                    aoeRadius = t.AmmoDef.Const.EndOfLifeRadius;
+                    aoeDamage = aConst.EndOfLifeDamage;
+                    aoeRadius = aConst.EndOfLifeRadius;
                     aoeFalloff = t.AmmoDef.AreaOfDamage.EndOfLife.Falloff;
-                    aoeAbsorb = t.AmmoDef.Const.DetMaxAbsorb;
-                    aoeDepth = t.AmmoDef.Const.EndOfLifeDepth;
+                    aoeAbsorb = aConst.DetMaxAbsorb;
+                    aoeDepth = aConst.EndOfLifeDepth;
                     aoeShape = t.AmmoDef.AreaOfDamage.EndOfLife.Shape;
                     aoeIsPool = aoeFalloff == Falloff.Pooled;
                 }
@@ -565,42 +566,42 @@ namespace CoreSystems
                         double detDamageScale = areaDmgGlobal;
 
                         //Damage scaling for blocktypes
-                        if (t.AmmoDef.Const.DamageScaling || !MyUtils.IsEqual(blockDmgModifier, 1f) || !MyUtils.IsEqual(gridDamageModifier, 1f))
+                        if (aConst.DamageScaling || !MyUtils.IsEqual(blockDmgModifier, 1f) || !MyUtils.IsEqual(gridDamageModifier, 1f))
                         {
                             if (blockDmgModifier < 0.000000001f || gridDamageModifier < 0.000000001f)
                                 blockHp = float.MaxValue;
                             else
                                 blockHp = (blockHp / blockDmgModifier / gridDamageModifier);
 
-                            if (d.MaxIntegrity > 0 && blockHp > d.MaxIntegrity)
+                            if (maxIntegrity > 0 && blockHp > maxIntegrity)
                             {
                                 basePool = 0;
                                 continue;
                             }
 
-                            if (d.Grids.Large >= 0 && largeGrid) damageScale *= d.Grids.Large;
-                            else if (d.Grids.Small >= 0 && !largeGrid) damageScale *= d.Grids.Small;
+                            if (aConst.LargeGridDmgScale >= 0 && largeGrid) damageScale *= aConst.LargeGridDmgScale;
+                            else if (aConst.SmallGridDmgScale >= 0 && !largeGrid) damageScale *= aConst.SmallGridDmgScale;
 
                             MyDefinitionBase blockDef = null;
-                            if (t.AmmoDef.Const.ArmorScaling)
+                            if (aConst.ArmorScaling)
                             {
                                 blockDef = block.BlockDefinition;
                                 var isArmor = AllArmorBaseDefinitions.Contains(blockDef) || CustomArmorSubtypes.Contains(blockDef.Id.SubtypeId);
-                                if (isArmor && d.Armor.Armor >= 0) damageScale *= d.Armor.Armor;
-                                else if (!isArmor && d.Armor.NonArmor >= 0) damageScale *= d.Armor.NonArmor;
-                                if (isArmor && (d.Armor.Light >= 0 || d.Armor.Heavy >= 0))
+                                if (isArmor && armor.Armor >= 0) damageScale *= armor.Armor;
+                                else if (!isArmor && armor.NonArmor >= 0) damageScale *= armor.NonArmor;
+                                if (isArmor && (armor.Light >= 0 || armor.Heavy >= 0))
                                 {
                                     var isHeavy = HeavyArmorBaseDefinitions.Contains(blockDef) || CustomHeavyArmorSubtypes.Contains(blockDef.Id.SubtypeId);
-                                    if (isHeavy && d.Armor.Heavy >= 0) damageScale *= d.Armor.Heavy;
-                                    else if (!isHeavy && d.Armor.Light >= 0) damageScale *= d.Armor.Light;
+                                    if (isHeavy && armor.Heavy >= 0) damageScale *= armor.Heavy;
+                                    else if (!isHeavy && armor.Light >= 0) damageScale *= armor.Light;
                                 }
                             }
 
-                            if (t.AmmoDef.Const.CustomDamageScales)
+                            if (aConst.CustomDamageScales)
                             {
                                 if (blockDef == null) blockDef = block.BlockDefinition;
                                 float modifier;
-                                var found = t.AmmoDef.Const.CustomBlockDefinitionBasesToScales.TryGetValue(blockDef, out modifier);
+                                var found = aConst.CustomBlockDefinitionBasesToScales.TryGetValue(blockDef, out modifier);
                                 if (found) damageScale *= modifier;
                                 else modifier = 1f;
                                 

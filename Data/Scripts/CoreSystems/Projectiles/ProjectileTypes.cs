@@ -295,6 +295,7 @@ namespace CoreSystems.Support
         internal double StartDistanceTraveled;
         internal int RelativeSpawnsStart;
         internal double TargetLossTime;
+        internal double AngleVariance;
 
         internal void Clean(Projectile p)
         {
@@ -309,6 +310,7 @@ namespace CoreSystems.Support
             RelativeAgeStart = 0;
             RelativeSpawnsStart = 0;
             TargetLossTime = 0;
+            AngleVariance = 0;
             NavTargetBound = new BoundingSphereD(Vector3D.Zero, 0);
 
             p.Info.AmmoDef.Const.ApproachInfoPool.Push(this);

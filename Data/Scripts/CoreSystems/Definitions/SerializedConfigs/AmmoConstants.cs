@@ -286,6 +286,8 @@ namespace CoreSystems.Support
         public readonly bool Roam;
         public readonly bool NoTargetExpire;
         public readonly bool EwarFieldTrigger;
+        public readonly float LargeGridDmgScale;
+        public readonly float SmallGridDmgScale;
         public readonly float OffsetRatio;
         public readonly float PowerPerTick;
         public readonly float DirectAimCone;
@@ -511,7 +513,7 @@ namespace CoreSystems.Support
             ComputeApproaches(ammo, wDef, out ApproachesCount, out Approaches, out ApproachInfoPool);
             ComputeAmmoPattern(ammo, system, wDef, fragGuidedAmmo, fragAntiSmart, fragTargetOverride, out AntiSmartDetected, out TargetOverrideDetected, out AmmoPattern, out WeaponPatternCount, out FragPatternCount, out GuidedAmmoDetected, out WeaponPattern, out FragmentPattern);
 
-            DamageScales(ammo.AmmoDef, out DamageScaling, out FallOffScaling, out ArmorScaling, out CustomDamageScales, out CustomBlockDefinitionBasesToScales, out SelfDamage, out VoxelDamage, out HealthHitModifier, out VoxelHitModifier, out DeformDelay);
+            DamageScales(ammo.AmmoDef, out DamageScaling, out FallOffScaling, out ArmorScaling, out CustomDamageScales, out CustomBlockDefinitionBasesToScales, out SelfDamage, out VoxelDamage, out HealthHitModifier, out VoxelHitModifier, out DeformDelay, out LargeGridDmgScale, out SmallGridDmgScale);
             CollisionShape(ammo.AmmoDef, out CollisionIsLine, out CollisionSize, out TracerLength);
             
             SmartsDelayDistSqr = (CollisionSize * ammo.AmmoDef.Trajectory.Smarts.TrackingDelay) * (CollisionSize * ammo.AmmoDef.Trajectory.Smarts.TrackingDelay);
@@ -996,9 +998,9 @@ namespace CoreSystems.Support
         {
             if (ammoDef.Ewar.Type > 0 && IsField) triggerModel = true;
             else triggerModel = false;
-            primeModel = ammoDef.AmmoGraphics.ModelName != string.Empty;
-            var vanillaModel = !ammoDef.AmmoGraphics.ModelName.StartsWith(BackSlash);
-            primeModelPath = primeModel ? vanillaModel ? ammoDef.AmmoGraphics.ModelName : wDef.ModPath + ammoDef.AmmoGraphics.ModelName : string.Empty;
+            primeModel = !string.IsNullOrEmpty(ammoDef.AmmoGraphics.ModelName);
+            var vanillaModel = primeModel && !ammoDef.AmmoGraphics.ModelName.StartsWith(BackSlash);
+            primeModelPath = vanillaModel ? ammoDef.AmmoGraphics.ModelName : primeModel ? wDef.ModPath + ammoDef.AmmoGraphics.ModelName : string.Empty;
             return primeModel ? new MyConcurrentPool<MyEntity>(64, PrimeEntityClear, 6400, PrimeEntityActivator) : null;
         }
 
@@ -1032,7 +1034,7 @@ namespace CoreSystems.Support
             collisionSize = size;
         }
 
-        private void DamageScales(AmmoDef ammoDef, out bool damageScaling, out bool fallOffScaling, out bool armorScaling, out bool customDamageScales, out Dictionary<MyDefinitionBase, float> customBlockDef, out bool selfDamage, out bool voxelDamage, out double healthHitModifer, out double voxelHitModifer, out int deformDelay)
+        private void DamageScales(AmmoDef ammoDef, out bool damageScaling, out bool fallOffScaling, out bool armorScaling, out bool customDamageScales, out Dictionary<MyDefinitionBase, float> customBlockDef, out bool selfDamage, out bool voxelDamage, out double healthHitModifer, out double voxelHitModifer, out int deformDelay, out float largeGridDmgScale, out float smallGridDmgScale)
         {
             armorScaling = false;
             customDamageScales = false;
@@ -1065,6 +1067,8 @@ namespace CoreSystems.Support
             voxelHitModifer = d.VoxelHitModifier > 0 ? d.VoxelHitModifier : 1;
 
             deformDelay = d.Deform.DeformDelay <= 0 ? 30 : d.Deform.DeformDelay;
+            largeGridDmgScale = d.Grids.Large;
+            smallGridDmgScale = d.Grids.Small;
         }
 
         private void Energy(WeaponSystem.AmmoType ammoPair, WeaponSystem system, WeaponDefinition wDef, out bool energyAmmo, out bool mustCharge, out bool reloadable, out float energyCost, out int energyMagSize, out float chargeSize, out bool burstMode, out bool shotReload, out float requiredPowerPerTick)
@@ -1167,7 +1171,7 @@ namespace CoreSystems.Support
             }
 
             voxelSound = !string.IsNullOrEmpty(ammoDef.AmmoAudio.VoxelHitSound);
-            voxelSoundPair = voxelSound ? new MySoundPair(ammoDef.AmmoAudio.VoxelHitSound, false) : null;
+            voxelSoundPair = voxelSound ? new MySoundPair(ammoDef.AmmoAudio.VoxelHitSound, false) : hitSound ? new MySoundPair(ammoDef.AmmoAudio.HitSound, false) : null;
 
             playerSound = !string.IsNullOrEmpty(ammoDef.AmmoAudio.PlayerHitSound);
             playerSoundPair = playerSound ? new MySoundPair(ammoDef.AmmoAudio.PlayerHitSound, false) : null;
@@ -1176,7 +1180,7 @@ namespace CoreSystems.Support
             floatingSoundPair = floatingSound ? new MySoundPair(ammoDef.AmmoAudio.FloatingHitSound, false) : null;
 
             shieldSound = !string.IsNullOrEmpty(ammoDef.AmmoAudio.ShieldHitSound);
-            shieldSoundPair = shieldSound ? new MySoundPair(ammoDef.AmmoAudio.ShieldHitSound, false) : null;
+            shieldSoundPair = shieldSound ? new MySoundPair(ammoDef.AmmoAudio.ShieldHitSound, false) : hitSound ? new MySoundPair(ammoDef.AmmoAudio.HitSound, false) :  null;
         }
 
         private MyEntity PrimeEntityActivator()
@@ -1700,6 +1704,8 @@ namespace CoreSystems.Support
         public readonly bool CanExpireOnceStarted;
         public readonly bool PushLeadByTravelDistance;
         public readonly bool IgnoreAntiSmart;
+        public readonly bool ModAngleOffset;
+        public readonly bool HasAngleOffset;
         public readonly double OrbitRadius;
         public readonly double AngleOffset;
         public readonly double DesiredElevation;
@@ -1730,7 +1736,8 @@ namespace CoreSystems.Support
             StartParticle = !string.IsNullOrEmpty(def.StartParticle.Name);
             AlternateModel = !string.IsNullOrEmpty(def.AlternateModel);
             NoSpawns = def.NoTimedSpawns;
-            
+            ModAngleOffset = !MyUtils.IsZero(def.AngleVariance.Start) || !MyUtils.IsZero(def.AngleVariance.End);
+            HasAngleOffset = ModAngleOffset || !MyUtils.IsZero(def.AngleOffset);
             LeadAndRotateSource = def.LeadAndRotateSource;
             LeadAndRotateDestination = def.LeadAndRotateDestination;
             NoElevationLead = def.NoElevationLead;

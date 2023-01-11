@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
 using CoreSystems.Platform;
 using CoreSystems.Projectiles;
@@ -18,9 +17,6 @@ using static CoreSystems.Support.WeaponDefinition.AmmoDef;
 using static CoreSystems.Platform.Weapon.ApiShootRequest;
 using IMyWarhead = Sandbox.ModAPI.IMyWarhead;
 using CollisionLayers = Sandbox.Engine.Physics.MyPhysics.CollisionLayers;
-using Sandbox.Game.Entities.Character;
-using static Sandbox.Game.Replication.History.MySnapshotHistory;
-using static VRage.Game.ObjectBuilders.Definitions.MyObjectBuilder_GameDefinition;
 
 namespace CoreSystems.Support
 {
