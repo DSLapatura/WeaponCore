@@ -194,6 +194,7 @@ namespace CoreSystems.Support
         public readonly bool OneHitParticle;
         public readonly bool DamageScaling;
         public readonly bool ArmorScaling;
+        public readonly bool GridScaling;
         public readonly bool ExpandingField;
         public readonly bool ArmorCoreActive;
         public readonly bool FallOffScaling;
@@ -513,7 +514,7 @@ namespace CoreSystems.Support
             ComputeApproaches(ammo, wDef, out ApproachesCount, out Approaches, out ApproachInfoPool);
             ComputeAmmoPattern(ammo, system, wDef, fragGuidedAmmo, fragAntiSmart, fragTargetOverride, out AntiSmartDetected, out TargetOverrideDetected, out AmmoPattern, out WeaponPatternCount, out FragPatternCount, out GuidedAmmoDetected, out WeaponPattern, out FragmentPattern);
 
-            DamageScales(ammo.AmmoDef, out DamageScaling, out FallOffScaling, out ArmorScaling, out CustomDamageScales, out CustomBlockDefinitionBasesToScales, out SelfDamage, out VoxelDamage, out HealthHitModifier, out VoxelHitModifier, out DeformDelay, out LargeGridDmgScale, out SmallGridDmgScale);
+            DamageScales(ammo.AmmoDef, out DamageScaling, out FallOffScaling, out ArmorScaling, out GridScaling, out CustomDamageScales, out CustomBlockDefinitionBasesToScales, out SelfDamage, out VoxelDamage, out HealthHitModifier, out VoxelHitModifier, out DeformDelay, out LargeGridDmgScale, out SmallGridDmgScale);
             CollisionShape(ammo.AmmoDef, out CollisionIsLine, out CollisionSize, out TracerLength);
             
             SmartsDelayDistSqr = (CollisionSize * ammo.AmmoDef.Trajectory.Smarts.TrackingDelay) * (CollisionSize * ammo.AmmoDef.Trajectory.Smarts.TrackingDelay);
@@ -1034,13 +1035,17 @@ namespace CoreSystems.Support
             collisionSize = size;
         }
 
-        private void DamageScales(AmmoDef ammoDef, out bool damageScaling, out bool fallOffScaling, out bool armorScaling, out bool customDamageScales, out Dictionary<MyDefinitionBase, float> customBlockDef, out bool selfDamage, out bool voxelDamage, out double healthHitModifer, out double voxelHitModifer, out int deformDelay, out float largeGridDmgScale, out float smallGridDmgScale)
+        private void DamageScales(AmmoDef ammoDef, out bool damageScaling, out bool fallOffScaling, out bool armorScaling, out bool gridScaling, out bool customDamageScales, out Dictionary<MyDefinitionBase, float> customBlockDef, out bool selfDamage, out bool voxelDamage, out double healthHitModifer, out double voxelHitModifer, out int deformDelay, out float largeGridDmgScale, out float smallGridDmgScale)
         {
-            armorScaling = false;
-            customDamageScales = false;
-            fallOffScaling = false;
             var d = ammoDef.DamageScales;
             customBlockDef = null;
+            customDamageScales = false;
+            armorScaling = false;
+            gridScaling = false;
+            fallOffScaling = false;
+            largeGridDmgScale = 0;
+            smallGridDmgScale = 0;
+
             if (d.Custom.Types != null && d.Custom.Types.Length > 0)
             {
                 foreach (var def in MyDefinitionManager.Static.GetAllDefinitions())
@@ -1057,8 +1062,11 @@ namespace CoreSystems.Support
 
             if (damageScaling)
             {
-                armorScaling = d.Armor.Armor >= 0 || d.Armor.NonArmor >= 0 || d.Armor.Heavy >= 0 || d.Armor.Light >= 0;
+                armorScaling = !ammoDef.NoGridOrArmorScaling && (d.Armor.Armor >= 0 || d.Armor.NonArmor >= 0 || d.Armor.Heavy >= 0 || d.Armor.Light >= 0);
                 fallOffScaling = FallOffMinMultiplier > 0 && !MyUtils.IsZero(FallOffMinMultiplier - 1);
+                gridScaling = !ammoDef.NoGridOrArmorScaling && (d.Grids.Large >= 0 || d.Grids.Small >= 0);
+                largeGridDmgScale = d.Grids.Large;
+                smallGridDmgScale = d.Grids.Small;
             }
             selfDamage = d.SelfDamage;
             voxelDamage = d.DamageVoxels;
@@ -1067,8 +1075,6 @@ namespace CoreSystems.Support
             voxelHitModifer = d.VoxelHitModifier > 0 ? d.VoxelHitModifier : 1;
 
             deformDelay = d.Deform.DeformDelay <= 0 ? 30 : d.Deform.DeformDelay;
-            largeGridDmgScale = d.Grids.Large;
-            smallGridDmgScale = d.Grids.Small;
         }
 
         private void Energy(WeaponSystem.AmmoType ammoPair, WeaponSystem system, WeaponDefinition wDef, out bool energyAmmo, out bool mustCharge, out bool reloadable, out float energyCost, out int energyMagSize, out float chargeSize, out bool burstMode, out bool shotReload, out float requiredPowerPerTick)

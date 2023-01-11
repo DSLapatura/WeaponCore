@@ -579,8 +579,11 @@ namespace CoreSystems
                                 continue;
                             }
 
-                            if (aConst.LargeGridDmgScale >= 0 && largeGrid) damageScale *= aConst.LargeGridDmgScale;
-                            else if (aConst.SmallGridDmgScale >= 0 && !largeGrid) damageScale *= aConst.SmallGridDmgScale;
+                            if (aConst.GridScaling)
+                            {
+                                if (aConst.LargeGridDmgScale >= 0 && largeGrid) damageScale *= aConst.LargeGridDmgScale;
+                                else if (aConst.SmallGridDmgScale >= 0 && !largeGrid) damageScale *= aConst.SmallGridDmgScale;
+                            }
 
                             MyDefinitionBase blockDef = null;
                             if (aConst.ArmorScaling)
