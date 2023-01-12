@@ -283,6 +283,8 @@ namespace CoreSystems.Support
         internal ApproachInfo(AmmoConstants aConst)
         {
             Storage = new ApproachStorage[aConst.ApproachesCount * 2];
+            for (int i = 0; i < Storage.Length; i++)
+                Storage[i] = new ApproachStorage();
         }
         
         internal readonly ApproachStorage[] Storage;
