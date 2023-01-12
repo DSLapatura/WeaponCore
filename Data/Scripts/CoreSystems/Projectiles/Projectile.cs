@@ -1407,7 +1407,7 @@ namespace CoreSystems.Projectiles
                                 break;
                             case StageEvents.DoNothing:
                                 break;
-                            case StageEvents.RefundHeat:
+                            case StageEvents.Refund:
                                 Info.Weapon.Comp.HeatLoss += approach.Definition.HeatRefund;
                                 break;
                             case StageEvents.StoreDestination:
@@ -1673,7 +1673,7 @@ namespace CoreSystems.Projectiles
                     }
                     else if (endEvent == StageEvents.StoreDestination || endEvent == StageEvents.StorePosition)
                     {
-                        switch (approach.Definition.StoredEndType)
+                        switch (def.StoredEndType)
                         {
                             case RelativeTo.Target:
                                 storage.ApproachInfo.Storage[storage.RequestedStage * 2].StoredPosition = TargetPosition;
@@ -1704,9 +1704,12 @@ namespace CoreSystems.Projectiles
                         }
 
                     }
-                    else if (endEvent == StageEvents.RefundHeat)
+                    else if (endEvent == StageEvents.Refund)
                     {
-                        Info.Weapon.Comp.HeatLoss += approach.Definition.HeatRefund;
+                        Info.Weapon.Comp.HeatLoss += def.HeatRefund;
+
+                        if (def.ReloadRefund)
+                            --Info.Weapon.Reload.LifetimeLoads;
                     }
 
                     if (moveForward)

@@ -1374,7 +1374,7 @@ namespace CoreSystems.Api
                             StoreDestination,
                             StorePosition,
                             StorePositionLocalToShooter,
-                            RefundHeat,
+                            Refund,
                         }
 
                         [ProtoContract]
@@ -1442,6 +1442,7 @@ namespace CoreSystems.Api
                         [ProtoMember(52)] internal bool IgnoreAntiSmart;
                         [ProtoMember(53)] internal double HeatRefund;
                         [ProtoMember(54)] internal Randomize AngleVariance;
+                        [ProtoMember(55)] internal bool ReloadRefund;
                     }
 
                     [ProtoContract]
