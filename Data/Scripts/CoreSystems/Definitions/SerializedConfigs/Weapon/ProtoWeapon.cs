@@ -53,6 +53,9 @@ namespace CoreSystems
             {
                 var we = comp.Collection[i];
 
+                if (Session.I.IsCreative)
+                    we.Reload.LifetimeLoads = 0;
+
                 if (comp.DefaultReloads != 0)
                 {
                     we.Reload.CurrentMags = comp.DefaultReloads;
