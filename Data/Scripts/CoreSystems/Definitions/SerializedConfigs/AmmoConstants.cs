@@ -1838,11 +1838,15 @@ namespace CoreSystems.Support
         public int GetRestartId(ProInfo info, bool end1, bool end2)
         {
             var array = Definition.RestartList;
-            var selectedId = -1;
+            
+            var rngSelectedId = -1;
+            var lowestRuns = int.MaxValue;
+            var runsSelectedId = -1;
+
+            float highestRoll = float.MinValue;
             var aStorageArray = info.Storage.ApproachInfo.Storage;
             if (array != null)
             {
-                float highestRoll = float.MinValue;
                 for (int i = 0; i < array.Length; i++)
                 {
                     var item = array[i];
@@ -1870,14 +1874,22 @@ namespace CoreSystems.Support
                     if (rng > highestRoll)
                     {
                         highestRoll = rng;
-                        selectedId = item.ApproachId;
+                        rngSelectedId = item.ApproachId;
+                    }
+                    
+                    if (MyUtils.IsZero(rng) && runCount < lowestRuns)
+                    {
+                        lowestRuns = runCount;
+                        runsSelectedId = item.ApproachId;
                     }
                 }
             }
             else
-                selectedId = Definition.OnRestartRevertTo;
+                rngSelectedId = Definition.OnRestartRevertTo;
 
-            return selectedId;
+            var selected = !MyUtils.IsZero(highestRoll) ? rngSelectedId : runsSelectedId;
+
+            return selected;
         }
 
         public void Clean()
