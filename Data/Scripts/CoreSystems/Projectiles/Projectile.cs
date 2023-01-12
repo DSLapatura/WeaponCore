@@ -1409,6 +1409,8 @@ namespace CoreSystems.Projectiles
                                 break;
                             case StageEvents.Refund:
                                 Info.Weapon.Comp.HeatLoss += approach.Definition.HeatRefund;
+                                if (Session.I.IsServer && Info.Weapon.Reload.LifetimeLoads > 0 && approach.Definition.ReloadRefund)
+                                    --Info.Weapon.Reload.LifetimeLoads;
                                 break;
                             case StageEvents.StoreDestination:
                             case StageEvents.StorePosition:
@@ -1708,7 +1710,7 @@ namespace CoreSystems.Projectiles
                     {
                         Info.Weapon.Comp.HeatLoss += def.HeatRefund;
 
-                        if (def.ReloadRefund)
+                        if (Session.I.IsServer && Info.Weapon.Reload.LifetimeLoads > 0 && def.ReloadRefund)
                             --Info.Weapon.Reload.LifetimeLoads;
                     }
 
