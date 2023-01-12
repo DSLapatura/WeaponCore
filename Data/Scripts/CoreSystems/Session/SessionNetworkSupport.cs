@@ -186,8 +186,7 @@ namespace CoreSystems
             packet.PType = PacketType.ProjectileTargetSyncs;
             PrunedPacketsToClient[packet] = new PacketInfo
             {
-                Function = RewriteAddClientLatency,
-                SpecialPlayerId = long.MinValue,
+                Function = null,
                 Packet = packet,
                 Entity = null,
             };
