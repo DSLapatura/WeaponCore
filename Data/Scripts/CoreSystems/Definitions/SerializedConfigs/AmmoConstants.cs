@@ -1839,13 +1839,18 @@ namespace CoreSystems.Support
         {
             var array = Definition.RestartList;
             var selectedId = -1;
-
+            var aStorageArray = info.Storage.ApproachInfo.Storage;
             if (array != null)
             {
                 float highestRoll = float.MinValue;
                 for (int i = 0; i < array.Length; i++)
                 {
                     var item = array[i];
+                    var runCount = aStorageArray[item.ApproachId].RunCount;
+                    
+                    if (runCount >= item.MaxRuns && item.MaxRuns > 0)
+                        continue;
+
                     var mod1Enabled = end1 && !MyUtils.IsZero(item.End1WeightMod);
                     var mod2Enabled = end2 && !MyUtils.IsZero(item.End2WeightMod);
                     

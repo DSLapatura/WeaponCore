@@ -138,7 +138,7 @@ namespace CoreSystems.Support
                 catch (Exception ex) { Log.Line($"Exception in RemoveComp Inner: {ex} - Name:{Platform?.Comp?.SubtypeName} - AiNull:{Ai == null}  - CoreEntNull:{CoreEntity == null} - PlatformNull: {Platform == null} - AiTopNull:{Ai?.TopEntity == null} - TopEntityNull:{TopEntity == null}", null, true); }
 
             }
-            else if (Platform.State != CorePlatform.PlatformState.Delay && TypeSpecific != CompTypeSpecific.Rifle) Log.Line($"CompRemove: Ai already null - PartState:{Platform.State} - Status:{Status}");
+            else if (Platform.State != CorePlatform.PlatformState.Delay && TypeSpecific != CompTypeSpecific.Rifle) Log.Line($"CompRemove: Ai already null - PartState:{Platform.State} - Status:{Status} - LastRemoveFromScene:{Session.I.Tick - LastRemoveFromScene}");
 
             LastRemoveFromScene = Session.I.Tick;
         }

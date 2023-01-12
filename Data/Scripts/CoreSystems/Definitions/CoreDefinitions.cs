@@ -1403,6 +1403,7 @@ namespace CoreSystems.Support
                         [ProtoMember(2)] public Randomize Weight;
                         [ProtoMember(3)] public double End1WeightMod;
                         [ProtoMember(4)] public double End2WeightMod;
+                        [ProtoMember(5)] public int MaxRuns;
                     }
 
                     [ProtoMember(1)] internal ReInitCondition RestartCondition;
