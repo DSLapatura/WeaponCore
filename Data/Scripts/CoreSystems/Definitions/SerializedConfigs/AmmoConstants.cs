@@ -1867,7 +1867,7 @@ namespace CoreSystems.Support
                     else 
                         rng = info.Random.Range(item.Weight.Start, item.Weight.End);
 
-                    if (rng >= highestRoll)
+                    if (rng > highestRoll)
                     {
                         highestRoll = rng;
                         selectedId = item.ApproachId;
