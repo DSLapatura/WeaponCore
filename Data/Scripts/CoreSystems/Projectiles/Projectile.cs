@@ -856,8 +856,8 @@ namespace CoreSystems.Projectiles
 
                 if (approach.AdjustUp || stageChange)
                 {
-
-                    switch (approach.Up)
+                    var test = UpRelativeTo.RelativeToBlock;
+                    switch (test)
                     {
                         case UpRelativeTo.RelativeToBlock:
                             storage.ApproachInfo.OffsetDir = Info.OriginUp;
@@ -905,7 +905,7 @@ namespace CoreSystems.Projectiles
                     }
                 }
 
-                if (approach.HasAngleOffset)
+                if (approach.HasAngleOffset && false)
                 {
                     if (stageChange && approach.ModAngleOffset)
                     {
@@ -1059,7 +1059,7 @@ namespace CoreSystems.Projectiles
                 
                 var destination = storage.ApproachInfo.DestinationPos;
 
-                if (approach.OffsetMinRadius > 0 && approach.OffsetTime > 0)
+                if (approach.OffsetMinRadius > 0 && approach.OffsetTime > 0 && false)
                 {
                     var prevCheck = Info.PrevRelativeAge % approach.OffsetTime;
                     var currentCheck = Info.RelativeAge % approach.OffsetTime;
@@ -1078,7 +1078,7 @@ namespace CoreSystems.Projectiles
                 {
                     case Conditions.DesiredElevation:
                         var plane = new PlaneD(storage.ApproachInfo.LookAtPos, storage.ApproachInfo.OffsetDir);
-                        var distToPlane = plane.DistanceToPoint(Position);
+                        var distToPlane = approach.Elevation != RelativeTo.Surface ? Math.Abs(plane.DistanceToPoint(Position)) : plane.DistanceToPoint(Position);
                         var tolernace = approach.ElevationTolerance + aConst.CollisionSize;
                         var distFromSurfaceSqr = !Vector3D.IsZero(surfacePos) ? Vector3D.DistanceSquared(Position, surfacePos) : distToPlane * distToPlane;
                         var lessThanTolerance = (approach.Start1Value + tolernace) * (approach.Start1Value + tolernace);
@@ -1158,13 +1158,12 @@ namespace CoreSystems.Projectiles
                         start1 = storage.ApproachInfo.TargetLossTime >= approach.Start1Value;
                         break;
                 }
-
                 bool start2 = false;
                 switch (approach.StartCon2)
                 {
                     case Conditions.DesiredElevation:
                         var plane = new PlaneD(storage.ApproachInfo.LookAtPos, storage.ApproachInfo.OffsetDir);
-                        var distToPlane = plane.DistanceToPoint(Position);
+                        var distToPlane = approach.Elevation != RelativeTo.Surface ? Math.Abs(plane.DistanceToPoint(Position)) : plane.DistanceToPoint(Position);
                         var tolernace = approach.ElevationTolerance + aConst.CollisionSize;
                         var distFromSurfaceSqr = !Vector3D.IsZero(surfacePos) ? Vector3D.DistanceSquared(Position, surfacePos) : distToPlane * distToPlane;
                         var lessThanTolerance = (approach.Start2Value + tolernace) * (approach.Start2Value + tolernace);
@@ -1243,14 +1242,12 @@ namespace CoreSystems.Projectiles
                         start2 = storage.ApproachInfo.TargetLossTime >= approach.Start2Value;
                         break;
                 }
-
                 if (approach.StartAnd && start1 && start2 || !approach.StartAnd && (start1 || start2) || storage.LastActivatedStage >= 0 && !approach.CanExpireOnceStarted)
                 {
                     accelMpsMulti = aConst.AccelInMetersPerSec * approach.AccelMulti;
                     speedCapMulti = approach.SpeedCapMulti;
                     var heightDir = desiredElevation > 0 ? Vector3D.Normalize(heightend - heightStart) : storage.ApproachInfo.OffsetDir;
                     var leadPosition = !approach.NoElevationLead ? heightStart + (heightDir * clampedLead) : heightStart;
-                    
                     Vector3D heightAdjLeadPos;
                     switch (approach.Elevation)
                     {
@@ -1268,7 +1265,7 @@ namespace CoreSystems.Projectiles
                         case RelativeTo.Origin:
                         {
                             var plane = new PlaneD(Info.Origin, heightDir);
-                            var distToPlane = plane.DistanceToPoint(leadPosition);
+                            var distToPlane = Math.Abs(plane.DistanceToPoint(leadPosition));
                             heightAdjLeadPos = leadPosition + (heightDir * distToPlane);
                             break;
                         }
@@ -1276,7 +1273,7 @@ namespace CoreSystems.Projectiles
                         {
                             var projetedPos = Vector3D.Lerp(destination, leadPosition, 0.5);
                             var plane = new PlaneD(projetedPos, heightDir);
-                            var distToPlane = plane.DistanceToPoint(leadPosition);
+                            var distToPlane = Math.Abs(plane.DistanceToPoint(leadPosition));
                             heightAdjLeadPos = leadPosition + (heightDir * distToPlane);
                             break;
                         }
@@ -1285,21 +1282,22 @@ namespace CoreSystems.Projectiles
                             var blockPos = Info.Weapon.Comp.CoreEntity.PositionComp.WorldAABB.Center;
                             blockPos = !Vector3D.IsZero(blockPos) ? blockPos : Info.Origin;
                             var plane = new PlaneD(blockPos, heightDir);
-                            var distToPlane = plane.DistanceToPoint(leadPosition);
+                            var distToPlane = Math.Abs(plane.DistanceToPoint(leadPosition));
                             heightAdjLeadPos = leadPosition + (heightDir * distToPlane);
                             break;
                         }
                         case RelativeTo.Target:
                         {
                             var plane = new PlaneD(destination, heightDir);
-                            var distToPlane = plane.DistanceToPoint(leadPosition);
+                            var distToPlane = Math.Abs(plane.DistanceToPoint(leadPosition));
                             heightAdjLeadPos = leadPosition + (heightDir * distToPlane);
+                            Log.Line($"{Vector3D.Distance(heightAdjLeadPos, source)}");
                             break;
                         }
                         case RelativeTo.Current:
                         {
                             var plane = new PlaneD(Position, heightDir);
-                            var distToPlane = plane.DistanceToPoint(leadPosition);
+                            var distToPlane = Math.Abs(plane.DistanceToPoint(leadPosition));
                             heightAdjLeadPos = leadPosition + (heightDir * distToPlane);
                             break;
                         }
@@ -1314,7 +1312,7 @@ namespace CoreSystems.Projectiles
                             else
                                 dest = storedDest != Vector3D.Zero ? storedDest : storage.ApproachInfo.TargetPos;
                             var plane = new PlaneD(dest, heightDir);
-                            var distToPlane = plane.DistanceToPoint(leadPosition);
+                            var distToPlane = Math.Abs(plane.DistanceToPoint(leadPosition));
                             heightAdjLeadPos = leadPosition + (heightDir * distToPlane);
                             break;
                         }
@@ -1329,7 +1327,7 @@ namespace CoreSystems.Projectiles
                             else
                                 dest = storedDest != Vector3D.Zero ? storedDest : storage.ApproachInfo.TargetPos;
                             var plane = new PlaneD(dest, heightDir);
-                            var distToPlane = plane.DistanceToPoint(leadPosition);
+                            var distToPlane = Math.Abs(plane.DistanceToPoint(leadPosition));
                             heightAdjLeadPos = leadPosition + (heightDir * distToPlane);
                             break;
                         }
@@ -1471,7 +1469,7 @@ namespace CoreSystems.Projectiles
                 {
                     case Conditions.DesiredElevation:
                         var plane = new PlaneD(storage.ApproachInfo.LookAtPos, storage.ApproachInfo.OffsetDir);
-                        var distToPlane = plane.DistanceToPoint(Position);
+                        var distToPlane = approach.Elevation != RelativeTo.Surface ? Math.Abs(plane.DistanceToPoint(Position)) : plane.DistanceToPoint(Position);
                         var tolernace = approach.ElevationTolerance + aConst.CollisionSize;
                         var distFromSurfaceSqr = !Vector3D.IsZero(surfacePos) ? Vector3D.DistanceSquared(Position, surfacePos) : distToPlane * distToPlane;
                         var lessThanTolerance = (approach.End1Value + tolernace) * (approach.End1Value + tolernace);
@@ -1565,7 +1563,7 @@ namespace CoreSystems.Projectiles
                 {
                     case Conditions.DesiredElevation:
                         var plane = new PlaneD(storage.ApproachInfo.LookAtPos, storage.ApproachInfo.OffsetDir);
-                        var distToPlane = plane.DistanceToPoint(Position);
+                        var distToPlane = approach.Elevation != RelativeTo.Surface ? Math.Abs(plane.DistanceToPoint(Position)) : plane.DistanceToPoint(Position);
                         var tolernace = approach.ElevationTolerance + aConst.CollisionSize;
                         var distFromSurfaceSqr = !Vector3D.IsZero(surfacePos) ? Vector3D.DistanceSquared(Position, surfacePos) : distToPlane * distToPlane;
                         var lessThanTolerance = (approach.End2Value + tolernace) * (approach.End2Value + tolernace);
