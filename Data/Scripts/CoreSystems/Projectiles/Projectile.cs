@@ -1290,7 +1290,6 @@ namespace CoreSystems.Projectiles
                             var plane = new PlaneD(destination, heightDir);
                             var distToPlane = Math.Abs(plane.DistanceToPoint(leadPosition));
                             heightAdjLeadPos = leadPosition + (heightDir * distToPlane);
-                            Log.Line($"{Vector3D.Distance(heightAdjLeadPos, source)}");
                             break;
                         }
                         case RelativeTo.Current:
