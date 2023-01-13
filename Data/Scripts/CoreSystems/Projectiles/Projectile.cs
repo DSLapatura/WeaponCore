@@ -1382,14 +1382,16 @@ namespace CoreSystems.Projectiles
                             heightAdjLeadPos = leadPosition;
                             break;
                     }
-
                     if (MyUtils.IsValid(heightAdjLeadPos - destination))
                     {
                         var destPerspectiveDir = Vector3D.Normalize(heightAdjLeadPos - destination);
                         if (!approach.Orbit)
                         {
                             if (approach.Elevation != RelativeTo.Nothing && !Vector3D.IsZero(heightDir - destPerspectiveDir))
-                                TargetPosition = MyUtils.LinePlaneIntersection(heightAdjLeadPos, heightDir, destination, destPerspectiveDir);
+                            {
+                                var planeIntersectPos = MyUtils.LinePlaneIntersection(heightAdjLeadPos, heightDir, destination, destPerspectiveDir);
+                                TargetPosition = MyUtils.IsValid(planeIntersectPos) ? planeIntersectPos : heightAdjLeadPos;
+                            }
                             else
                                 TargetPosition = heightAdjLeadPos;
                         }
