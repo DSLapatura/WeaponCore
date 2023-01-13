@@ -856,8 +856,7 @@ namespace CoreSystems.Projectiles
 
                 if (approach.AdjustUp || stageChange)
                 {
-                    var test = UpRelativeTo.RelativeToBlock;
-                    switch (test)
+                    switch (approach.Up)
                     {
                         case UpRelativeTo.RelativeToBlock:
                             storage.ApproachInfo.OffsetDir = Info.OriginUp;
@@ -905,7 +904,7 @@ namespace CoreSystems.Projectiles
                     }
                 }
 
-                if (approach.HasAngleOffset && false)
+                if (approach.HasAngleOffset)
                 {
                     if (stageChange && approach.ModAngleOffset)
                     {
@@ -1059,7 +1058,7 @@ namespace CoreSystems.Projectiles
                 
                 var destination = storage.ApproachInfo.DestinationPos;
 
-                if (approach.OffsetMinRadius > 0 && approach.OffsetTime > 0 && false)
+                if (approach.OffsetMinRadius > 0 && approach.OffsetTime > 0)
                 {
                     var prevCheck = Info.PrevRelativeAge % approach.OffsetTime;
                     var currentCheck = Info.RelativeAge % approach.OffsetTime;
