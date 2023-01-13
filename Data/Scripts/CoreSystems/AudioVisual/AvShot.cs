@@ -264,7 +264,7 @@ namespace CoreSystems.Support
                 }
 
                 var stagesOver = aConst.ApproachesCount == stage && a.StageIdx == -1;
-                if (a.StageIdx != stage && !stagesOver && aConst.ApproachesCount > 0)
+                if (a.StageIdx != stage && !stagesOver && aConst.HasApproaches)
                     a.StageChange(stage, createdPrimeEntity);
 
                 if (!saveHit)

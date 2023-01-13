@@ -193,7 +193,14 @@ namespace CoreSystems
         internal readonly Dictionary<long, Func<MyEntity, IMyCharacter, long, int, bool>> TargetFocusHandlers = new Dictionary<long, Func<MyEntity, IMyCharacter, long, int, bool>>();
         internal readonly Dictionary<long, Func<IMyCharacter, long, int, bool>> HudHandlers = new Dictionary<long, Func<IMyCharacter, long, int, bool>>();
         internal readonly Dictionary<long, Func<Vector3D, Vector3D, int, bool, object, int, int, int, bool>> ShootHandlers = new Dictionary<long, Func<Vector3D, Vector3D, int, bool, object, int, int, int, bool>>();
-        
+        internal readonly Dictionary<MyStringHash, ResistanceValues> ArmorCoreBlockMap = new Dictionary<MyStringHash, ResistanceValues>();
+        internal readonly Dictionary<MyDefinitionId, AmmoType> AmmoDefIds = new Dictionary<MyDefinitionId, AmmoType>(MyDefinitionId.Comparer);
+        internal readonly Dictionary<MyDefinitionId, List<WeaponMagMap>> SubTypeIdToWeaponMagMap = new Dictionary<MyDefinitionId, List<WeaponMagMap>>(MyDefinitionId.Comparer);
+        internal readonly Dictionary<MyDefinitionId, List<WeaponMagMap>> SubTypeIdToNpcSafeWeaponMagMap = new Dictionary<MyDefinitionId, List<WeaponMagMap>>(MyDefinitionId.Comparer);
+        internal readonly Dictionary<MyCubeGrid, DeferredBlockDestroy> DeferredDestroy = new Dictionary<MyCubeGrid, DeferredBlockDestroy>();
+        internal readonly Dictionary<long, DamageHandlerRegistrant> SystemWideDamageRegistrants = new Dictionary<long, DamageHandlerRegistrant>();
+
+
         internal readonly ConcurrentDictionary<long, int> DeferredPlayerLock = new ConcurrentDictionary<long, int>();
         internal readonly HashSet<MyDefinitionId> DefIdsComparer = new HashSet<MyDefinitionId>(MyDefinitionId.Comparer);
         internal readonly HashSet<string> VanillaSubpartNames = new HashSet<string>();
@@ -202,11 +209,7 @@ namespace CoreSystems
         internal readonly HashSet<MyDefinitionBase> CoreShieldBlockTypes = new HashSet<MyDefinitionBase>();
         internal readonly HashSet<MyStringHash> CustomArmorSubtypes = new HashSet<MyStringHash>();
         internal readonly HashSet<MyStringHash> CustomHeavyArmorSubtypes = new HashSet<MyStringHash>();
-        internal readonly Dictionary<MyStringHash, ResistanceValues> ArmorCoreBlockMap = new Dictionary<MyStringHash, ResistanceValues>();
-        internal readonly Dictionary<MyDefinitionId, AmmoType> AmmoDefIds = new Dictionary<MyDefinitionId, AmmoType>(MyDefinitionId.Comparer);
-        internal readonly Dictionary<MyDefinitionId, List<WeaponMagMap>> SubTypeIdToWeaponMagMap = new Dictionary<MyDefinitionId, List<WeaponMagMap>>(MyDefinitionId.Comparer);
-        internal readonly Dictionary<MyDefinitionId, List<WeaponMagMap>> SubTypeIdToNpcSafeWeaponMagMap = new Dictionary<MyDefinitionId, List<WeaponMagMap>>(MyDefinitionId.Comparer);
-        internal readonly Dictionary<MyCubeGrid, DeferredBlockDestroy> DeferredDestroy = new Dictionary<MyCubeGrid, DeferredBlockDestroy>();
+
 
         internal readonly HashSet<MyCubeGrid> DeformProtection = new HashSet<MyCubeGrid>();
         internal readonly HashSet<IMyTerminalAction> CustomActions = new HashSet<IMyTerminalAction>();
@@ -232,7 +235,6 @@ namespace CoreSystems
         internal readonly List<Weapon> HomingWeapons = new List<Weapon>(128);
         internal readonly List<Ai> AimingAi = new List<Ai>(128);
         internal readonly List<IHitInfo> HitInfoTmpList = new List<IHitInfo>();
-        internal readonly Dictionary<long, DamageHandlerRegistrant> SystemWideDamageRegistrants = new Dictionary<long, DamageHandlerRegistrant>();
         internal readonly HashSet<MyDefinitionId> CoreSystemsFixedBlockDefs = new HashSet<MyDefinitionId>();
         internal readonly HashSet<MyDefinitionId> CoreSystemsTurretBlockDefs = new HashSet<MyDefinitionId>();
         internal readonly HashSet<MyDefinitionId> CoreSystemsSupportDefs = new HashSet<MyDefinitionId>();

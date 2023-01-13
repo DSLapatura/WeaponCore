@@ -320,11 +320,27 @@ namespace CoreSystems.Projectiles
                 var primeModelUpdate = aConst.PrimeModel && p.EnableAv;
                 if (primeModelUpdate || aConst.TriggerModel)
                 {
-                    MatrixD matrix;
-                    MatrixD.CreateWorld(ref p.Position, ref p.Direction, ref info.OriginUp, out matrix);
+                    if (primeModelUpdate) {
 
-                    if (primeModelUpdate)
+                        Vector3D modelDir;
+                        if (storage.ApproachInfo != null && storage.ApproachInfo.ModelRotateAge > 0 && storage.RequestedStage >= 0 && storage.RequestedStage < aConst.ApproachesCount && !MyUtils.IsZero(storage.ApproachInfo.TargetPos)) {
+                            
+                            var approach = aConst.Approaches[storage.RequestedStage];
+                            var targetDir = Vector3D.Normalize(storage.ApproachInfo.TargetPos - p.Position);
+                            if (approach.ModelRotateTime > storage.ApproachInfo.ModelRotateAge) {
+                                var rotAmount = storage.ApproachInfo.ModelRotateAge / (double)approach.ModelRotateTime;
+                                modelDir = Vector3D.Lerp(p.Direction, targetDir, rotAmount);
+                            }
+                            else 
+                                modelDir = targetDir;
+                        }
+                        else
+                            modelDir = p.Direction;
+
+                        MatrixD matrix;
+                        MatrixD.CreateWorld(ref p.Position, ref modelDir, ref info.OriginUp, out matrix);
                         info.AvShot.PrimeMatrix = matrix;
+                    }
 
                     if (aConst.TriggerModel)
                         info.TriggerMatrix.Translation = p.Position;

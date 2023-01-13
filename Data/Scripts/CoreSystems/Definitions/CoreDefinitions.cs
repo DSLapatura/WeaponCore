@@ -1313,6 +1313,7 @@ namespace CoreSystems.Support
                     [ProtoMember(21)] internal bool NoSteering;
                     [ProtoMember(22)] internal double FutureIntersectionRange;
                     [ProtoMember(23)] internal double MinTurnSpeed;
+                    [ProtoMember(24)] internal bool NoTargetApproach;
                 }
 
                 [ProtoContract]
@@ -1461,6 +1462,7 @@ namespace CoreSystems.Support
                     [ProtoMember(53)] internal double HeatRefund;
                     [ProtoMember(54)] internal Randomize AngleVariance;
                     [ProtoMember(55)] internal bool ReloadRefund;
+                    [ProtoMember(56)] internal int ModelRotateTime;
                 }
 
                 [ProtoContract]

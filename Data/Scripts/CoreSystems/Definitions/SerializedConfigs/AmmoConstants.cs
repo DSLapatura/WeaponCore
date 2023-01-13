@@ -160,6 +160,7 @@ namespace CoreSystems.Support
         public readonly int DeformDelay;
         public readonly int OffsetTime;
         public readonly uint FakeVoxelHitTicks;
+        public readonly bool HasApproaches;
         public readonly bool KeepAliveAfterTargetLoss;
         public readonly bool ArmedWhenHit;
         public readonly bool UseAimCone;
@@ -280,6 +281,7 @@ namespace CoreSystems.Support
         public readonly bool IsDrone;
         public readonly bool IsSmart;
         public readonly bool AccelClearance;
+        public readonly bool NoTargetApproach;
         public readonly bool DynamicGuidance;
         public readonly bool TravelTo;
         public readonly bool AdvancedSmartSteering;
@@ -437,7 +439,7 @@ namespace CoreSystems.Support
             TravelTo = ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.TravelTo;
             IsTurretSelectable = !ammo.IsShrapnel && ammo.AmmoDef.HardPointUsable;
 
-            ComputeSmarts(ammo, out IsSmart, out Roam, out AccelClearance, out OverrideTarget, out TargetOffSet,
+            ComputeSmarts(ammo, out IsSmart, out Roam, out NoTargetApproach, out AccelClearance, out OverrideTarget, out TargetOffSet,
                 out FocusOnly, out FocusEviction, out NoSteering, out AdvancedSmartSteering, out KeepAliveAfterTargetLoss, out NoTargetExpire, out ScanRange, out OffsetMinRangeSqr,
                 out Aggressiveness, out NavAcceleration, out MinTurnSpeedSqr, out OffsetRatio, out MaxChaseTime, out MaxTargets, out OffsetTime);
 
@@ -511,7 +513,7 @@ namespace CoreSystems.Support
 
 
             ComputeShieldBypass(shieldBypassRaw, out ShieldDamageBypassMod);
-            ComputeApproaches(ammo, wDef, out ApproachesCount, out Approaches, out ApproachInfoPool);
+            ComputeApproaches(ammo, wDef, out ApproachesCount, out Approaches, out ApproachInfoPool, out HasApproaches);
             ComputeAmmoPattern(ammo, system, wDef, fragGuidedAmmo, fragAntiSmart, fragTargetOverride, out AntiSmartDetected, out TargetOverrideDetected, out AmmoPattern, out WeaponPatternCount, out FragPatternCount, out GuidedAmmoDetected, out WeaponPattern, out FragmentPattern);
 
             DamageScales(ammo.AmmoDef, out DamageScaling, out FallOffScaling, out ArmorScaling, out GridScaling, out CustomDamageScales, out CustomBlockDefinitionBasesToScales, out SelfDamage, out VoxelDamage, out HealthHitModifier, out VoxelHitModifier, out DeformDelay, out LargeGridDmgScale, out SmallGridDmgScale);
@@ -618,7 +620,7 @@ namespace CoreSystems.Support
         }
 
 
-        private void ComputeSmarts(WeaponSystem.AmmoType ammo, out bool isSmart, out bool roam, out bool accelClearance, out bool overrideTarget, out bool targetOffSet,
+        private void ComputeSmarts(WeaponSystem.AmmoType ammo, out bool isSmart, out bool roam, out bool noTargetApproach, out bool accelClearance, out bool overrideTarget, out bool targetOffSet,
             out bool focusOnly, out bool focusEviction, out bool noSteering, out bool advancedSmartSteering, out bool keepAliveAfterTargetLoss, out bool noTargetExpire, out double scanRange, out double offsetMinRangeSqr,
             out double aggressiveness, out double navAcceleration, out double minTurnSpeedSqr, out float offsetRatio, out int maxChaseTime, out int maxTargets, out int offsetTime)
         {
@@ -653,7 +655,7 @@ namespace CoreSystems.Support
             maxChaseTime = ammo.AmmoDef.Trajectory.Smarts.MaxChaseTime > 0 ? ammo.AmmoDef.Trajectory.Smarts.MaxChaseTime : int.MaxValue;
             maxTargets = ammo.AmmoDef.Trajectory.Smarts.MaxTargets;
             offsetTime = ammo.AmmoDef.Trajectory.Smarts.OffsetTime;
-
+            noTargetApproach = ammo.AmmoDef.Trajectory.Smarts.NoTargetApproach;
         }
 
 
@@ -844,7 +846,7 @@ namespace CoreSystems.Support
             directAimCone = MathHelper.ToRadians(Math.Max(ammo.AmmoDef.Fragment.TimedSpawns.DirectAimCone, 1));
         }
 
-        private void ComputeApproaches(WeaponSystem.AmmoType ammo, WeaponDefinition wDef, out int approachesCount, out ApproachConstants[] approaches, out Stack<ApproachInfo> approachInfoPool)
+        private void ComputeApproaches(WeaponSystem.AmmoType ammo, WeaponDefinition wDef, out int approachesCount, out ApproachConstants[] approaches, out Stack<ApproachInfo> approachInfoPool, out bool hasApproaches)
         {
             if (ammo.AmmoDef.Trajectory.Approaches != null && ammo.AmmoDef.Trajectory.Approaches.Length > 0)
             {
@@ -855,12 +857,14 @@ namespace CoreSystems.Support
                     approaches[i] = new ApproachConstants(ammo, i, wDef);
 
                 approachInfoPool = new Stack<ApproachInfo>(approachesCount);
+                hasApproaches = true;
             }
             else
             {
                 approachesCount = 0;
                 approaches = null;
                 approachInfoPool = null;
+                hasApproaches = false;
             }
         }
 
@@ -1712,6 +1716,7 @@ namespace CoreSystems.Support
         public readonly bool IgnoreAntiSmart;
         public readonly bool ModAngleOffset;
         public readonly bool HasAngleOffset;
+        public readonly bool ModelRotate;
         public readonly double OrbitRadius;
         public readonly double AngleOffset;
         public readonly double DesiredElevation;
@@ -1732,6 +1737,7 @@ namespace CoreSystems.Support
         public readonly int OffsetTime;
         public readonly int StoredStartId;
         public readonly int StoredEndId;
+        public readonly int ModelRotateTime;
         public ApproachConstants(WeaponSystem.AmmoType ammo, int index, WeaponDefinition wDef)
         {
             var def = ammo.AmmoDef.Trajectory.Approaches[index];
@@ -1748,6 +1754,8 @@ namespace CoreSystems.Support
             LeadAndRotateDestination = def.LeadAndRotateDestination;
             NoElevationLead = def.NoElevationLead;
             IgnoreAntiSmart = def.IgnoreAntiSmart;
+            ModelRotate = def.ModelRotateTime > 0;
+
             Up = def.Up;
             Source = def.Source;
             Destination = def.Destination;
@@ -1772,6 +1780,7 @@ namespace CoreSystems.Support
             OffsetTime = def.OffsetTime;
             StoredStartId = def.StoredStartId;
             StoredEndId = def.StoredEndId;
+            ModelRotateTime = def.ModelRotateTime;
             Start1Value = def.Start1Value;
             Start2Value = def.Start2Value;
             End1Value = def.End1Value;

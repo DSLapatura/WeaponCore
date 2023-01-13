@@ -95,7 +95,7 @@ namespace CoreSystems.Projectiles
             var comp = w.Comp;
             var session = Session.I;
 
-            if (aConst.ApproachesCount > 0)
+            if (aConst.HasApproaches)
             {
                 s.ApproachInfo = aConst.ApproachInfoPool.Count > 0 ? aConst.ApproachInfoPool.Pop() : new ApproachInfo(aConst);
                 s.ApproachInfo.TargetPos = TargetPosition;
@@ -813,12 +813,13 @@ namespace CoreSystems.Projectiles
                     s.ShowLocalNotify("Approach is attempting to infinite loop, fix your approach moveNext/restart conditions", 2000);
                 return;
             }
+            var aConst = Info.AmmoDef.Const;
 
             var storage = Info.Storage;
             if (targetLock)
                 storage.ApproachInfo.TargetPos = targetPos;
 
-            if (!Vector3D.IsZero(storage.ApproachInfo.TargetPos))
+            if (aConst.NoTargetApproach || !Vector3D.IsZero(storage.ApproachInfo.TargetPos))
             {
                 if (storage.RequestedStage == -1)
                 {
@@ -835,7 +836,6 @@ namespace CoreSystems.Projectiles
                     storage.ApproachInfo.RelativeSpawnsStart = Info.Frags;
                 }
 
-                var aConst = Info.AmmoDef.Const;
                 if (storage.RequestedStage >= aConst.Approaches.Length)
                     return;
 
@@ -845,6 +845,14 @@ namespace CoreSystems.Projectiles
                     return; // bad modder, failed to read coreparts comment, fail silently so they drive themselves nuts
 
                 disableAvoidance = approach.DisableAvoidance;
+
+                if (approach.ModelRotateTime > 0 || storage.ApproachInfo.ModelRotateAge > 0)
+                {
+                    if (targetLock && approach.ModelRotateTime > storage.ApproachInfo.ModelRotateAge)
+                        ++storage.ApproachInfo.ModelRotateAge;
+                    else if (storage.ApproachInfo.ModelRotateAge > 0 && (!targetLock || !approach.ModelRotate))
+                        --storage.ApproachInfo.ModelRotateAge;
+                }
 
                 if (approach.AdjustUp || stageChange)
                 {
@@ -1886,7 +1894,7 @@ namespace CoreSystems.Projectiles
         private void TimedSpawns(AmmoConstants aConst)
         {
             var storage = Info.Storage;
-            var approachSkip = aConst.ApproachesCount > 0 && storage.RequestedStage < aConst.ApproachesCount && storage.RequestedStage >= 0 && aConst.Approaches[storage.RequestedStage].NoSpawns;
+            var approachSkip = aConst.HasApproaches && storage.RequestedStage < aConst.ApproachesCount && storage.RequestedStage >= 0 && aConst.Approaches[storage.RequestedStage].NoSpawns;
             if (!approachSkip)
             {
                 if (!aConst.HasFragProximity)
