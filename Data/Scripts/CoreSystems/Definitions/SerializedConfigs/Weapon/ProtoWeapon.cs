@@ -54,9 +54,9 @@ namespace CoreSystems
                 var we = comp.Collection[i];
                 if (Session.I.IsCreative)
                 {
-                    we.Reload.LifetimeLoads = 0;
-                    we.ProtoWeaponAmmo.CurrentAmmo = 0;
-                    we.ProtoWeaponAmmo.CurrentCharge = 0;
+                    //we.Reload.LifetimeLoads = 0;
+                    //we.ProtoWeaponAmmo.CurrentAmmo = 0;
+                    //we.ProtoWeaponAmmo.CurrentCharge = 0;
                 }
 
                 if (comp.DefaultReloads != 0)

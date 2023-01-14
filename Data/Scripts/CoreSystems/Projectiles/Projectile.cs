@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Runtime.CompilerServices;
-using System.Threading;
 using CoreSystems.Support;
 using Jakaria.API;
 using Sandbox.Game.Entities;
@@ -18,7 +15,6 @@ using static CoreSystems.Support.WeaponDefinition.AmmoDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.EwarDef.EwarType;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.FragmentDef.TimedSpawnDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.TrajectoryDef.ApproachDef;
-using static VRage.Game.MyObjectBuilder_CubeBlockDefinition;
 
 namespace CoreSystems.Projectiles
 {
@@ -1065,9 +1061,7 @@ namespace CoreSystems.Projectiles
                 }
 
                 var heightStart = source + heightOffset;
-                var heightend = destination + heightOffset;
-
-
+                var heightEnd = destination + heightOffset;
                 #endregion
 
                 #region Start Conditions
@@ -1087,17 +1081,17 @@ namespace CoreSystems.Projectiles
                         break;
                     case Conditions.DistanceFromTarget: // could save a sqrt by inlining and using heightDir
                         if (s.DebugMod && s.HandlesInput)
-                            DsDebugDraw.DrawLine(heightend, destination, Color.Green, 10);
+                            DsDebugDraw.DrawLine(heightEnd, destination, Color.Green, 10);
                         if (desiredElevation > 0)
-                            start1 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize <= approach.Start1Value;
+                            start1 = MyUtils.GetPointLineDistance(ref heightEnd, ref destination, ref Position) - aConst.CollisionSize <= approach.Start1Value;
                         else
                             start1 = Vector3D.Distance(destination, Position) - aConst.CollisionSize <= approach.Start1Value;
                         break;
                     case Conditions.DistanceToTarget: // could save a sqrt by inlining and using heightDir
                         if (s.DebugMod && s.HandlesInput)
-                            DsDebugDraw.DrawLine(heightend, destination, Color.Green, 10);
+                            DsDebugDraw.DrawLine(heightEnd, destination, Color.Green, 10);
                         if (desiredElevation > 0)
-                            start1 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize >= approach.Start1Value;
+                            start1 = MyUtils.GetPointLineDistance(ref heightEnd, ref destination, ref Position) - aConst.CollisionSize >= approach.Start1Value;
                         else
                             start1 = Vector3D.Distance(destination, Position) - aConst.CollisionSize >= approach.Start1Value;
                         break;
@@ -1173,17 +1167,17 @@ namespace CoreSystems.Projectiles
                         break;
                     case Conditions.DistanceFromTarget: // could save a sqrt by inlining and using heightDir
                         if (s.DebugMod && s.HandlesInput)
-                            DsDebugDraw.DrawLine(heightend, destination, Color.Green, 10);
+                            DsDebugDraw.DrawLine(heightEnd, destination, Color.Green, 10);
                         if (desiredElevation > 0)
-                            start2 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize <= approach.Start2Value;
+                            start2 = MyUtils.GetPointLineDistance(ref heightEnd, ref destination, ref Position) - aConst.CollisionSize <= approach.Start2Value;
                         else
                             start2 = Vector3D.Distance(destination, Position) - aConst.CollisionSize <= approach.Start2Value;
                         break;
                     case Conditions.DistanceToTarget: // could save a sqrt by inlining and using heightDir
                         if (s.DebugMod && s.HandlesInput)
-                            DsDebugDraw.DrawLine(heightend, destination, Color.Green, 10);
+                            DsDebugDraw.DrawLine(heightEnd, destination, Color.Green, 10);
                         if (desiredElevation > 0)
-                            start2 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize >= approach.Start2Value;
+                            start2 = MyUtils.GetPointLineDistance(ref heightEnd, ref destination, ref Position) - aConst.CollisionSize >= approach.Start2Value;
                         else
                             start2 = Vector3D.Distance(destination, Position) - aConst.CollisionSize >= approach.Start2Value;
                         break;
@@ -1250,7 +1244,7 @@ namespace CoreSystems.Projectiles
                 {
                     accelMpsMulti = aConst.AccelInMetersPerSec * approach.AccelMulti;
                     speedCapMulti = approach.SpeedCapMulti;
-                    var startToEndDir = desiredElevation > 0 ? Vector3D.Normalize(heightend - heightStart) : storage.ApproachInfo.OffsetDir;
+                    var startToEndDir = desiredElevation > 0 ? Vector3D.Normalize(heightEnd - heightStart) : storage.ApproachInfo.OffsetDir;
                     var leadPosition = !approach.NoElevationLead ? heightStart + (startToEndDir * clampedLead) : heightStart;
 
                     Vector3D heightAdjLeadPos;
@@ -1406,51 +1400,7 @@ namespace CoreSystems.Projectiles
 
                     if (storage.LastActivatedStage != storage.RequestedStage)
                     {
-                        storage.LastActivatedStage = storage.RequestedStage;
-
-                        switch (approach.Definition.StartEvent)
-                        {
-                            case StageEvents.EndProjectile:
-                                EndState = EndStates.EarlyEnd;
-                                DistanceToTravelSqr = Info.DistanceTraveled * Info.DistanceTraveled;
-                                break;
-                            case StageEvents.DoNothing:
-                                break;
-                            case StageEvents.Refund:
-                                Info.Weapon.Comp.HeatLoss += approach.Definition.HeatRefund;
-                                if (Session.I.IsServer && Info.Weapon.Reload.LifetimeLoads > 0 && approach.Definition.ReloadRefund)
-                                    --Info.Weapon.Reload.LifetimeLoads;
-                                break;
-                            case StageEvents.StoreDestination:
-                            case StageEvents.StorePosition:
-                                switch (approach.Definition.StoredStartType)
-                                {
-                                    case RelativeTo.Target:
-                                        storage.ApproachInfo.Storage[storage.RequestedStage].StoredPosition = TargetPosition;
-                                        break;
-                                    case RelativeTo.Current:
-                                        storage.ApproachInfo.Storage[storage.RequestedStage].StoredPosition = Position;
-                                        break;
-                                    case RelativeTo.Shooter:
-                                        var blockPos = Info.Weapon.Comp.CoreEntity.PositionComp.WorldAABB.Center;
-                                        blockPos = !Vector3D.IsZero(blockPos) ? blockPos : Info.Origin;
-                                        storage.ApproachInfo.Storage[storage.RequestedStage].StoredPosition = blockPos;
-                                        break;
-                                    case RelativeTo.Nothing:
-                                        storage.ApproachInfo.Storage[storage.RequestedStage].StoredPosition = destination;
-                                        break;
-                                    case RelativeTo.MidPoint:
-                                        storage.ApproachInfo.Storage[storage.RequestedStage].StoredPosition = Vector3D.Lerp(destination, source, 0.5);
-                                        break;
-                                    case RelativeTo.StoredStartLocalPosition:
-                                        storage.ApproachInfo.Storage[storage.RequestedStage].StoredPosition = Vector3D.Transform(source, Info.Weapon.Comp.TopEntity.PositionComp.WorldMatrixNormalizedInv);
-                                        break;
-                                    default:
-                                        storage.ApproachInfo.Storage[storage.RequestedStage].StoredPosition = targetPos;
-                                        break;
-                                }
-                                break;
-                        }
+                        ApproachStartEvent(approach, ref source, ref destination, ref targetPos);
                     }
 
                     if (s.DebugMod && s.HandlesInput)
@@ -1479,14 +1429,14 @@ namespace CoreSystems.Projectiles
                         else
                         {
                             if (desiredElevation > 0)
-                                end1 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize <= approach.End1Value;
+                                end1 = MyUtils.GetPointLineDistance(ref heightEnd, ref destination, ref Position) - aConst.CollisionSize <= approach.End1Value;
                             else
                                 end1 = Vector3D.Distance(destination, Position) - aConst.CollisionSize <= approach.End1Value;
                         }
                         break;
                     case Conditions.DistanceToTarget:
                         if (desiredElevation > 0)
-                            end1 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize >= approach.End1Value;
+                            end1 = MyUtils.GetPointLineDistance(ref heightEnd, ref destination, ref Position) - aConst.CollisionSize >= approach.End1Value;
                         else
                             end1 = Vector3D.Distance(destination, Position) - aConst.CollisionSize >= approach.End1Value;
                         break;
@@ -1569,14 +1519,14 @@ namespace CoreSystems.Projectiles
                         else
                         {
                             if (desiredElevation > 0)
-                                end2 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize <= approach.End2Value;
+                                end2 = MyUtils.GetPointLineDistance(ref heightEnd, ref destination, ref Position) - aConst.CollisionSize <= approach.End2Value;
                             else
                                 end2 = Vector3D.Distance(destination, Position) - aConst.CollisionSize <= approach.End2Value;
                         }
                         break;
                     case Conditions.DistanceToTarget:
                         if (desiredElevation > 0)
-                            end2 = MyUtils.GetPointLineDistance(ref heightend, ref destination, ref Position) - aConst.CollisionSize >= approach.End2Value;
+                            end2 = MyUtils.GetPointLineDistance(ref heightEnd, ref destination, ref Position) - aConst.CollisionSize >= approach.End2Value;
                         else
                             end2 = Vector3D.Distance(destination, Position) - aConst.CollisionSize >= approach.End2Value;
                         break;
@@ -1641,115 +1591,143 @@ namespace CoreSystems.Projectiles
 
                 #endregion
 
-                #region Debug
-                if (s.DebugMod && s.HandlesInput)
-                {
-
-                    if (approach.EndCon1 == Conditions.DistanceFromTarget || approach.EndCon2 == Conditions.DistanceFromTarget || approach.EndCon1 == Conditions.DistanceToTarget || approach.EndCon2 == Conditions.DistanceToTarget)
-                        DsDebugDraw.DrawLine(heightend, destination, Color.Green, 10);
-
-                    DsDebugDraw.DrawSingleVec(heightStart, 10, Color.GreenYellow);
-                    DsDebugDraw.DrawSingleVec(heightend, 10, Color.LightSkyBlue);
-                    DsDebugDraw.DrawSingleVec(TargetPosition, 10, Color.Red);
-                    DsDebugDraw.DrawSingleVec(destination, 10, Color.LightSkyBlue);
-
-                    if (s.ApproachDebug.ProId == Info.Id || s.Tick != s.ApproachDebug.LastTick)
-                    {
-                        s.ApproachDebug = new ApproachDebug
-                        {
-                            LastTick = s.Tick,
-                            Approach = approach,
-                            Start1 = start1,
-                            Start2 = start2,
-                            End1 = end1,
-                            End2 = end2,
-                            ProId = Info.Id,
-                            Stage = storage.LastActivatedStage,
-                            TimeSinceSpawn = timeSinceSpawn,
-                            NextSpawn = nextSpawn,
-                        };
-                    }
-                }
-                #endregion
-
-                #region End
                 if (approach.EndAnd && end1 && end2 || !approach.EndAnd && (end1 || end2))
+                    ApproachEnd(approach, end1, end2, ref source, ref destination, ref targetPos);
+
+                if (s.DebugMod && s.HandlesInput)
+                    ApproachDebug(approach, ref heightStart, ref heightEnd, ref destination, start1, start2, end1, end2, nextSpawn, timeSinceSpawn);
+
+            }
+        }
+
+        private void ApproachStartEvent(ApproachConstants approach, ref Vector3D source, ref Vector3D destination, ref Vector3D targetPos)
+        {
+            var storage = Info.Storage;
+            storage.LastActivatedStage = storage.RequestedStage;
+
+            switch (approach.Definition.StartEvent)
+            {
+                case StageEvents.EndProjectile:
+                    EndState = EndStates.EarlyEnd;
+                    DistanceToTravelSqr = Info.DistanceTraveled * Info.DistanceTraveled;
+                    break;
+                case StageEvents.DoNothing:
+                    break;
+                case StageEvents.Refund:
+                    Info.Weapon.Comp.HeatLoss += approach.Definition.HeatRefund;
+                    if (Session.I.IsServer && Info.Weapon.Reload.LifetimeLoads > 0 && approach.Definition.ReloadRefund)
+                        --Info.Weapon.Reload.LifetimeLoads;
+                    break;
+                case StageEvents.StoreDestination:
+                case StageEvents.StorePosition:
+                    switch (approach.Definition.StoredStartType)
+                    {
+                        case RelativeTo.Target:
+                            storage.ApproachInfo.Storage[storage.RequestedStage].StoredPosition = TargetPosition;
+                            break;
+                        case RelativeTo.Current:
+                            storage.ApproachInfo.Storage[storage.RequestedStage].StoredPosition = Position;
+                            break;
+                        case RelativeTo.Shooter:
+                            var blockPos = Info.Weapon.Comp.CoreEntity.PositionComp.WorldAABB.Center;
+                            blockPos = !Vector3D.IsZero(blockPos) ? blockPos : Info.Origin;
+                            storage.ApproachInfo.Storage[storage.RequestedStage].StoredPosition = blockPos;
+                            break;
+                        case RelativeTo.Nothing:
+                            storage.ApproachInfo.Storage[storage.RequestedStage].StoredPosition = destination;
+                            break;
+                        case RelativeTo.MidPoint:
+                            storage.ApproachInfo.Storage[storage.RequestedStage].StoredPosition = Vector3D.Lerp(destination, source, 0.5);
+                            break;
+                        case RelativeTo.StoredStartLocalPosition:
+                            storage.ApproachInfo.Storage[storage.RequestedStage].StoredPosition = Vector3D.Transform(source, Info.Weapon.Comp.TopEntity.PositionComp.WorldMatrixNormalizedInv);
+                            break;
+                        default:
+                            storage.ApproachInfo.Storage[storage.RequestedStage].StoredPosition = targetPos;
+                            break;
+                    }
+                    break;
+            }
+        }
+
+        private void ApproachEnd(ApproachConstants approach, bool end1, bool end2, ref Vector3D source, ref Vector3D destination, ref Vector3D targetPos)
+        {
+            var aConst = Info.AmmoDef.Const;
+            var storage = Info.Storage;
+
+            var def = approach.Definition;
+            var hasNextStep = storage.RequestedStage + 1 < aConst.ApproachesCount;
+            var isActive = storage.LastActivatedStage >= 0;
+            var activeNext = isActive && !def.ForceRestart && (def.RestartCondition == ReInitCondition.Wait || def.RestartCondition == ReInitCondition.MoveToPrevious || def.RestartCondition == ReInitCondition.MoveToNext);
+            var inActiveNext = !isActive && !def.ForceRestart && def.RestartCondition == ReInitCondition.MoveToNext;
+            var moveForward = hasNextStep && (activeNext || inActiveNext);
+            var reStart = def.RestartCondition == ReInitCondition.MoveToPrevious && !isActive || def.RestartCondition == ReInitCondition.ForceRestart;
+            var endEvent = def.EndEvent;
+
+            if (endEvent == StageEvents.EndProjectile || endEvent == StageEvents.EndProjectileOnRestart && (reStart || !moveForward && hasNextStep))
+            {
+                EndState = EndStates.EarlyEnd;
+                DistanceToTravelSqr = Info.DistanceTraveled * Info.DistanceTraveled;
+            }
+            else if (endEvent == StageEvents.StoreDestination || endEvent == StageEvents.StorePosition)
+            {
+                switch (def.StoredEndType)
                 {
-                    var def = approach.Definition;
-                    var hasNextStep = storage.RequestedStage + 1 < aConst.ApproachesCount;
-                    var isActive = storage.LastActivatedStage >= 0;
-                    var activeNext = isActive && !def.ForceRestart && (def.RestartCondition == ReInitCondition.Wait || def.RestartCondition == ReInitCondition.MoveToPrevious || def.RestartCondition == ReInitCondition.MoveToNext);
-                    var inActiveNext = !isActive && !def.ForceRestart && def.RestartCondition == ReInitCondition.MoveToNext;
-                    var moveForward = hasNextStep && (activeNext || inActiveNext);
-                    var reStart = def.RestartCondition == ReInitCondition.MoveToPrevious && !isActive || def.RestartCondition == ReInitCondition.ForceRestart;
-                    var endEvent = def.EndEvent;
-                    if (endEvent == StageEvents.EndProjectile || endEvent == StageEvents.EndProjectileOnRestart && (reStart || !moveForward && hasNextStep))
-                    {
-                        EndState = EndStates.EarlyEnd;
-                        DistanceToTravelSqr = Info.DistanceTraveled * Info.DistanceTraveled;
-                    }
-                    else if (endEvent == StageEvents.StoreDestination || endEvent == StageEvents.StorePosition)
-                    {
-                        switch (def.StoredEndType)
-                        {
-                            case RelativeTo.Target:
-                                storage.ApproachInfo.Storage[aConst.ApproachesCount + storage.RequestedStage].StoredPosition = TargetPosition;
-                                break;
-                            case RelativeTo.Current:
-                                storage.ApproachInfo.Storage[aConst.ApproachesCount + storage.RequestedStage].StoredPosition = Position;
-                                break;
-                            case RelativeTo.Shooter:
-                                var blockPos = Info.Weapon.Comp.CoreEntity.PositionComp.WorldAABB.Center;
-                                blockPos = !Vector3D.IsZero(blockPos) ? blockPos : Info.Origin;
-                                storage.ApproachInfo.Storage[aConst.ApproachesCount + storage.RequestedStage].StoredPosition = blockPos;
-                                break;
-                            case RelativeTo.Nothing:
-                                storage.ApproachInfo.Storage[aConst.ApproachesCount + storage.RequestedStage].StoredPosition = destination;
-                                break;
-                            case RelativeTo.MidPoint:
-                                storage.ApproachInfo.Storage[aConst.ApproachesCount + storage.RequestedStage].StoredPosition = Vector3D.Lerp(destination, source, 0.5);
-                                break;
-                            case RelativeTo.StoredEndLocalPosition:
-                                var gridLocalMatrix = Info.Weapon.Comp.TopEntity.PositionComp.WorldMatrixNormalizedInv;
-                                Vector3D localPos;
-                                Vector3D.Transform(ref source, ref gridLocalMatrix, out localPos);
-                                storage.ApproachInfo.Storage[aConst.ApproachesCount + storage.RequestedStage].StoredPosition = localPos;
-                                break;
-                            default:
-                                storage.ApproachInfo.Storage[aConst.ApproachesCount + storage.RequestedStage].StoredPosition = targetPos;
-                                break;
-                        }
-
-                    }
-                    else if (endEvent == StageEvents.Refund)
-                    {
-                        Info.Weapon.Comp.HeatLoss += def.HeatRefund;
-
-                        if (Session.I.IsServer && Info.Weapon.Reload.LifetimeLoads > 0 && def.ReloadRefund)
-                            --Info.Weapon.Reload.LifetimeLoads;
-                    }
-
-                    if (moveForward)
-                    {
-                        ++storage.ApproachInfo.Storage[storage.RequestedStage].RunCount;
-                        storage.LastActivatedStage = storage.RequestedStage;
-                        ++storage.RequestedStage;
-                    }
-                    else if (reStart || def.ForceRestart)
-                    {
-                        ++storage.ApproachInfo.Storage[storage.RequestedStage].RunCount;
-                        storage.LastActivatedStage = storage.RequestedStage;
-                        var prev = storage.RequestedStage;
-                        storage.RequestedStage = def.RestartCondition == ReInitCondition.MoveToPrevious ? prev : approach.GetRestartId(Info, end1, end2);
-                    }
-                    else if (!hasNextStep)
-                    {
-                        ++storage.ApproachInfo.Storage[storage.RequestedStage].RunCount;
-                        storage.LastActivatedStage = aConst.Approaches.Length;
-                        storage.RequestedStage = aConst.Approaches.Length;
-                    }
+                    case RelativeTo.Target:
+                        storage.ApproachInfo.Storage[aConst.ApproachesCount + storage.RequestedStage].StoredPosition = TargetPosition;
+                        break;
+                    case RelativeTo.Current:
+                        storage.ApproachInfo.Storage[aConst.ApproachesCount + storage.RequestedStage].StoredPosition = Position;
+                        break;
+                    case RelativeTo.Shooter:
+                        var blockPos = Info.Weapon.Comp.CoreEntity.PositionComp.WorldAABB.Center;
+                        blockPos = !Vector3D.IsZero(blockPos) ? blockPos : Info.Origin;
+                        storage.ApproachInfo.Storage[aConst.ApproachesCount + storage.RequestedStage].StoredPosition = blockPos;
+                        break;
+                    case RelativeTo.Nothing:
+                        storage.ApproachInfo.Storage[aConst.ApproachesCount + storage.RequestedStage].StoredPosition = destination;
+                        break;
+                    case RelativeTo.MidPoint:
+                        storage.ApproachInfo.Storage[aConst.ApproachesCount + storage.RequestedStage].StoredPosition = Vector3D.Lerp(destination, source, 0.5);
+                        break;
+                    case RelativeTo.StoredEndLocalPosition:
+                        var gridLocalMatrix = Info.Weapon.Comp.TopEntity.PositionComp.WorldMatrixNormalizedInv;
+                        Vector3D localPos;
+                        Vector3D.Transform(ref source, ref gridLocalMatrix, out localPos);
+                        storage.ApproachInfo.Storage[aConst.ApproachesCount + storage.RequestedStage].StoredPosition = localPos;
+                        break;
+                    default:
+                        storage.ApproachInfo.Storage[aConst.ApproachesCount + storage.RequestedStage].StoredPosition = targetPos;
+                        break;
                 }
-                #endregion
+
+            }
+            else if (endEvent == StageEvents.Refund)
+            {
+                Info.Weapon.Comp.HeatLoss += def.HeatRefund;
+
+                if (Session.I.IsServer && Info.Weapon.Reload.LifetimeLoads > 0 && def.ReloadRefund)
+                    --Info.Weapon.Reload.LifetimeLoads;
+            }
+
+            if (moveForward)
+            {
+                ++storage.ApproachInfo.Storage[storage.RequestedStage].RunCount;
+                storage.LastActivatedStage = storage.RequestedStage;
+                ++storage.RequestedStage;
+            }
+            else if (reStart || def.ForceRestart)
+            {
+                ++storage.ApproachInfo.Storage[storage.RequestedStage].RunCount;
+                storage.LastActivatedStage = storage.RequestedStage;
+                var prev = storage.RequestedStage;
+                storage.RequestedStage = def.RestartCondition == ReInitCondition.MoveToPrevious ? prev : approach.GetRestartId(Info, end1, end2);
+            }
+            else if (!hasNextStep)
+            {
+                ++storage.ApproachInfo.Storage[storage.RequestedStage].RunCount;
+                storage.LastActivatedStage = aConst.Approaches.Length;
+                storage.RequestedStage = aConst.Approaches.Length;
             }
         }
 
@@ -1775,6 +1753,35 @@ namespace CoreSystems.Projectiles
             surfacePos = surfaceToCenterSqr > waterSurface ? voxelSurfacePos : waterSurfacePos;
 
             return surfacePos + (upDir * approach.Definition.DesiredElevation);
+        }
+        private void ApproachDebug(ApproachConstants approach, ref Vector3D heightend, ref Vector3D heightStart, ref Vector3D destination, bool start1, bool start2, bool end1, bool end2, double nextSpawn, double timeSinceSpawn)
+        {
+            var s = Session.I;
+            var storage = Info.Storage;
+            if (approach.EndCon1 == Conditions.DistanceFromTarget || approach.EndCon2 == Conditions.DistanceFromTarget || approach.EndCon1 == Conditions.DistanceToTarget || approach.EndCon2 == Conditions.DistanceToTarget)
+                DsDebugDraw.DrawLine(heightend, destination, Color.Green, 10);
+
+            DsDebugDraw.DrawSingleVec(heightStart, 10, Color.GreenYellow);
+            DsDebugDraw.DrawSingleVec(heightend, 10, Color.LightSkyBlue);
+            DsDebugDraw.DrawSingleVec(TargetPosition, 10, Color.Red);
+            DsDebugDraw.DrawSingleVec(destination, 10, Color.LightSkyBlue);
+
+            if (s.ApproachDebug.ProId == Info.Id || s.Tick != s.ApproachDebug.LastTick)
+            {
+                s.ApproachDebug = new ApproachDebug
+                {
+                    LastTick = s.Tick,
+                    Approach = approach,
+                    Start1 = start1,
+                    Start2 = start2,
+                    End1 = end1,
+                    End2 = end2,
+                    ProId = Info.Id,
+                    Stage = storage.LastActivatedStage,
+                    TimeSinceSpawn = timeSinceSpawn,
+                    NextSpawn = nextSpawn,
+                };
+            }
         }
 
         private static Vector3D ProNavControl(Vector3D currentDir, Vector3D velocity, Vector3D commandAccel, PreComputedMath preComp, out bool isNormalized)
