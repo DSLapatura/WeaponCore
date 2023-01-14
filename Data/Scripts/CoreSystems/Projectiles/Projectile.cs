@@ -1696,7 +1696,6 @@ namespace CoreSystems.Projectiles
                     }
                     else if (endEvent == StageEvents.StoreDestination || endEvent == StageEvents.StorePosition)
                     {
-                        Log.Line($"{Info.Age} - {approach.EndAnd} - {end1} - {end2} - {approach.EndCon1} - {approach.EndCon2}");
                         switch (def.StoredEndType)
                         {
                             case RelativeTo.Target:
