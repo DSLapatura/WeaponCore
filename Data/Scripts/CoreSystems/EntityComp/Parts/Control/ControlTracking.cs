@@ -1,4 +1,6 @@
 ﻿using CoreSystems.Support;
+using Sandbox.Game.Entities;
+using VRage.Game;
 using VRage.Game.Entity;
 using VRageMath;
 namespace CoreSystems.Platform
@@ -25,8 +27,20 @@ namespace CoreSystems.Platform
             {
                 targetCenter = eTarget.PositionComp.WorldAABB.Center;
                 var topEnt = eTarget.GetTopMostParent();
-                if (topEnt != null)
-                {
+                var grid = topEnt as MyCubeGrid;
+
+                if (grid != null) { 
+
+                    var gridSize = grid.GridSizeEnum;
+                    var invalidType = !cValues.Set.Overrides.Grids || !cValues.Set.Overrides.SmallGrid && gridSize == MyCubeSize.Small || !cValues.Set.Overrides.LargeGrid && gridSize == MyCubeSize.Large;
+
+                    if (invalidType) {
+                        targetDirection = Vector3D.Zero;
+                        return false;
+                    }
+                }
+
+                if (topEnt != null) {
                     targetVel = topEnt.Physics?.LinearVelocity ?? Vector3D.Zero;
                     targetAcc = topEnt.Physics?.LinearAcceleration ?? Vector3D.Zero;
                 }

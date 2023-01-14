@@ -975,7 +975,7 @@ namespace CoreSystems.Platform
             if (Target.TargetState != Target.TargetStates.IsProjectile)
             {
                 var character = Target.TargetObject as IMyCharacter;
-                if ((eTarget == null || eTarget.MarkedForClose) || character != null && (character.IsDead || character.Integrity <= 0 || Session.I.AdminMap.ContainsKey(character) || ((uint)character.Flags & 0x1000000) > 0))
+                if ((eTarget == null || eTarget.MarkedForClose) || character != null && (!overrides.Biologicals || character.IsDead || character.Integrity <= 0 || Session.I.AdminMap.ContainsKey(character) || ((uint)character.Flags & 0x1000000) > 0))
                 {
                     masterWeapon.Target.Reset(Session.I.Tick, Target.States.RayCheckOther);
                     if (masterWeapon != this) Target.Reset(Session.I.Tick, Target.States.RayCheckOther);
@@ -986,11 +986,13 @@ namespace CoreSystems.Platform
                 if (cube != null)
                 {
                     var rootAi = Comp.Ai.Construct.RootAi;
+                    var gridSize = cube.CubeGrid.GridSizeEnum;
+                    var invalidType = !overrides.Grids || !overrides.SmallGrid && gridSize == MyCubeSize.Small || !overrides.LargeGrid && gridSize == MyCubeSize.Large;
                     var focusGrid = rootAi.Construct.LastFocusEntity as MyCubeGrid;
                     var invalidCube = cube.MarkedForClose || !cube.IsWorking && (focusGrid == null || !focusGrid.IsSameConstructAs(cube.CubeGrid));
                     var focusFailed = overrides.FocusTargets && !rootAi.Construct.HadFocus;
                     var checkSubsystem = overrides.FocusSubSystem && overrides.SubSystem != WeaponDefinition.TargetingDef.BlockTypes.Any;
-                    if (invalidCube || focusFailed || ((uint)cube.CubeGrid.Flags & 0x1000000) > 0 || checkSubsystem && !ValidSubSystemTarget(cube, overrides.SubSystem))
+                    if (invalidType || invalidCube || focusFailed || ((uint)cube.CubeGrid.Flags & 0x1000000) > 0 || checkSubsystem && !ValidSubSystemTarget(cube, overrides.SubSystem))
                     {
                         masterWeapon.Target.Reset(Session.I.Tick, Target.States.RayCheckDeadBlock);
                         if (masterWeapon != this) Target.Reset(Session.I.Tick, Target.States.RayCheckDeadBlock);
