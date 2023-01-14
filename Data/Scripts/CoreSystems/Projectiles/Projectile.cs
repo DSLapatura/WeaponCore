@@ -987,8 +987,7 @@ namespace CoreSystems.Projectiles
 
                     if (approach.LeadAndRotateSource)
                     {
-                        var rawPos = storage.ApproachInfo.LookAtPos;
-                        rawPos += heightOffset;
+                        var rawPos = storage.ApproachInfo.LookAtPos + heightOffset;
                         storage.ApproachInfo.LookAtPos = rawPos + (storage.ApproachInfo.OffsetDir * clampedLead);
                     }
                 }
@@ -1054,15 +1053,13 @@ namespace CoreSystems.Projectiles
 
                     if (approach.LeadAndRotateDestination)
                     {
-                        var rawPos = storage.ApproachInfo.DestinationPos;
-                        rawPos += heightOffset;
+                        var rawPos = storage.ApproachInfo.DestinationPos + heightOffset;
                         storage.ApproachInfo.DestinationPos = rawPos + (storage.ApproachInfo.OffsetDir * clampedLead);
                     }
                 }
 
                 var source = storage.ApproachInfo.LookAtPos;
                 var destination = storage.ApproachInfo.DestinationPos;
-
                 if (approach.OffsetMinRadius > 0 && approach.OffsetTime > 0)
                 {
                     var prevCheck = Info.PrevRelativeAge % approach.OffsetTime;
@@ -1074,6 +1071,8 @@ namespace CoreSystems.Projectiles
 
                 var heightStart = source + heightOffset;
                 var heightend = destination + heightOffset;
+
+
                 #endregion
 
                 #region Start Conditions
@@ -1357,7 +1356,7 @@ namespace CoreSystems.Projectiles
                                         heightAdjLeadPos = blockPos;
                                         break;
                                     case RelativeTo.Current:
-                                        heightAdjLeadPos = Position;
+                                        heightAdjLeadPos = Position + startToEndDir;
                                         break;
                                     case RelativeTo.MidPoint:
                                         heightAdjLeadPos = Vector3D.Lerp(destination, source, 0.5);
