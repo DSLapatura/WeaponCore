@@ -323,23 +323,13 @@ namespace CoreSystems.Projectiles
                     if (primeModelUpdate) {
 
                         Vector3D modelDir;
-                        if (storage.ApproachInfo != null && storage.ApproachInfo.ModelRotateAge > 0 && storage.RequestedStage >= 0 && storage.RequestedStage < aConst.ApproachesCount && !MyUtils.IsZero(storage.ApproachInfo.TargetPos)) {
-                            
-                            var approach = aConst.Approaches[storage.RequestedStage];
-                            var targetDir = Vector3D.Normalize(storage.ApproachInfo.TargetPos - p.Position);
-                            if (approach.ModelRotateTime > storage.ApproachInfo.ModelRotateAge) {
-                                var rotAmount = storage.ApproachInfo.ModelRotateAge / (double)approach.ModelRotateTime;
-                                modelDir = Vector3D.Lerp(p.Direction, targetDir, rotAmount);
-                            }
-                            else 
-                                modelDir = targetDir;
-                        }
+                        var aInfo = storage.ApproachInfo;
+                        if (aConst.HasApproaches && aInfo.Active && aInfo.ModelRotateMaxAge > 0 && aInfo.ModelRotateAge > 0 && !MyUtils.IsZero(aInfo.TargetPos)) 
+                            modelDir =  Vector3D.Lerp(p.Direction, Vector3D.Normalize(aInfo.TargetPos - p.Position), aInfo.ModelRotateAge / (double)aInfo.ModelRotateMaxAge);
                         else
                             modelDir = p.Direction;
 
-                        MatrixD matrix;
-                        MatrixD.CreateWorld(ref p.Position, ref modelDir, ref info.OriginUp, out matrix);
-                        info.AvShot.PrimeMatrix = matrix;
+                        MatrixD.CreateWorld(ref p.Position, ref modelDir, ref info.OriginUp, out info.AvShot.PrimeMatrix);
                     }
 
                     if (aConst.TriggerModel)

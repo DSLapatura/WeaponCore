@@ -299,6 +299,8 @@ namespace CoreSystems.Support
         internal double TargetLossTime;
         internal double AngleVariance;
         internal int ModelRotateAge;
+        internal int ModelRotateMaxAge;
+        internal bool Active;
         internal void Clean(Projectile p)
         {
             for (int i = 0; i < Storage.Length; i++)
@@ -317,7 +319,9 @@ namespace CoreSystems.Support
             RelativeSpawnsStart = 0;
             TargetLossTime = 0;
             AngleVariance = 0;
+            ModelRotateMaxAge = 0;
             ModelRotateAge = 0;
+            Active = false;
             NavTargetBound = new BoundingSphereD(Vector3D.Zero, 0);
 
             p.Info.AmmoDef.Const.ApproachInfoPool.Push(this);

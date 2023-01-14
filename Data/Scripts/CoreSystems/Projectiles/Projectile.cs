@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using CoreSystems.Support;
 using Jakaria.API;
 using Sandbox.Game.Entities;
@@ -609,12 +610,12 @@ namespace CoreSystems.Projectiles
                 #endregion
 
                 var accelMpsMulti = speedLimitPerTick;
-                var aCount = aConst.ApproachesCount;
                 bool disableAvoidance = false;
-                if (aCount > 0 && s.RequestedStage < aCount && s.RequestedStage >= -1)
+
+                if (aConst.HasApproaches && (s.ApproachInfo.Active || s.RequestedStage == -1))
                 {
-                    var callDepth = aCount;
-                    ProcessStage(ref accelMpsMulti, ref speedCapMulti, ref disableAvoidance, TargetPosition, s.RequestedStage, targetLock, callDepth);
+                    ProcessStage(ref accelMpsMulti, ref speedCapMulti, ref disableAvoidance, TargetPosition, s.RequestedStage, targetLock, aConst.ApproachesCount);
+                    s.ApproachInfo.Active = s.RequestedStage < aConst.ApproachesCount && s.RequestedStage >= 0;
                 }
 
                 #region Navigation
@@ -839,8 +840,9 @@ namespace CoreSystems.Projectiles
                 if (storage.RequestedStage >= aConst.Approaches.Length)
                     return;
 
+                storage.ApproachInfo.Active = true;
                 var approach = aConst.Approaches[storage.RequestedStage];
-
+                
                 if (approach.StartCon1 == approach.StartCon2 || approach.EndCon1 == approach.EndCon2)
                     return; // bad modder, failed to read coreparts comment, fail silently so they drive themselves nuts
 
@@ -848,10 +850,12 @@ namespace CoreSystems.Projectiles
 
                 if (approach.ModelRotateTime > 0 || storage.ApproachInfo.ModelRotateAge > 0)
                 {
-                    if (targetLock && approach.ModelRotateTime > storage.ApproachInfo.ModelRotateAge)
+                    if (targetLock && approach.ModelRotateTime > storage.ApproachInfo.ModelRotateAge) {
+                        storage.ApproachInfo.ModelRotateMaxAge = approach.ModelRotateTime;
                         ++storage.ApproachInfo.ModelRotateAge;
-                    else if (storage.ApproachInfo.ModelRotateAge > 0 && (!targetLock || !approach.ModelRotate))
-                        --storage.ApproachInfo.ModelRotateAge;
+                    }
+                    else if (storage.ApproachInfo.ModelRotateAge > 0 && (!targetLock || !approach.ModelRotate) && --storage.ApproachInfo.ModelRotateAge == 0) 
+                            storage.ApproachInfo.ModelRotateMaxAge = 0;
                 }
 
                 if (approach.AdjustUp || stageChange)
@@ -1245,8 +1249,9 @@ namespace CoreSystems.Projectiles
                 {
                     accelMpsMulti = aConst.AccelInMetersPerSec * approach.AccelMulti;
                     speedCapMulti = approach.SpeedCapMulti;
-                    var heightDir = desiredElevation > 0 ? Vector3D.Normalize(heightend - heightStart) : storage.ApproachInfo.OffsetDir;
-                    var leadPosition = !approach.NoElevationLead ? heightStart + (heightDir * clampedLead) : heightStart;
+                    var startToEndDir = desiredElevation > 0 ? Vector3D.Normalize(heightend - heightStart) : storage.ApproachInfo.OffsetDir;
+                    var leadPosition = !approach.NoElevationLead ? heightStart + (startToEndDir * clampedLead) : heightStart;
+
                     Vector3D heightAdjLeadPos;
                     switch (approach.Elevation)
                     {
@@ -1263,40 +1268,40 @@ namespace CoreSystems.Projectiles
                         }
                         case RelativeTo.Origin:
                         {
-                            var plane = new PlaneD(Info.Origin, heightDir);
+                            var plane = new PlaneD(Info.Origin, startToEndDir);
                             var distToPlane = Math.Abs(plane.DistanceToPoint(leadPosition));
-                            heightAdjLeadPos = leadPosition + (heightDir * distToPlane);
+                            heightAdjLeadPos = leadPosition + (startToEndDir * distToPlane);
                             break;
                         }
                         case RelativeTo.MidPoint:
                         {
                             var projetedPos = Vector3D.Lerp(destination, leadPosition, 0.5);
-                            var plane = new PlaneD(projetedPos, heightDir);
+                            var plane = new PlaneD(projetedPos, startToEndDir);
                             var distToPlane = Math.Abs(plane.DistanceToPoint(leadPosition));
-                            heightAdjLeadPos = leadPosition + (heightDir * distToPlane);
+                            heightAdjLeadPos = leadPosition + (startToEndDir * distToPlane);
                             break;
                         }
                         case RelativeTo.Shooter:
                         {
                             var blockPos = Info.Weapon.Comp.CoreEntity.PositionComp.WorldAABB.Center;
                             blockPos = !Vector3D.IsZero(blockPos) ? blockPos : Info.Origin;
-                            var plane = new PlaneD(blockPos, heightDir);
+                            var plane = new PlaneD(blockPos, startToEndDir);
                             var distToPlane = Math.Abs(plane.DistanceToPoint(leadPosition));
-                            heightAdjLeadPos = leadPosition + (heightDir * distToPlane);
+                            heightAdjLeadPos = leadPosition + (startToEndDir * distToPlane);
                             break;
                         }
                         case RelativeTo.Target:
                         {
-                            var plane = new PlaneD(destination, heightDir);
+                            var plane = new PlaneD(destination, startToEndDir);
                             var distToPlane = Math.Abs(plane.DistanceToPoint(leadPosition));
-                            heightAdjLeadPos = leadPosition + (heightDir * distToPlane);
+                            heightAdjLeadPos = leadPosition + (startToEndDir * distToPlane);
                             break;
                         }
                         case RelativeTo.Current:
                         {
-                            var plane = new PlaneD(Position, heightDir);
+                            var plane = new PlaneD(Position, startToEndDir);
                             var distToPlane = Math.Abs(plane.DistanceToPoint(leadPosition));
-                            heightAdjLeadPos = leadPosition + (heightDir * distToPlane);
+                            heightAdjLeadPos = leadPosition + (startToEndDir * distToPlane);
                             break;
                         }
                         case RelativeTo.StoredStartDestination:
@@ -1309,9 +1314,9 @@ namespace CoreSystems.Projectiles
                                 dest = Vector3D.Transform(storedDest, Info.Weapon.Comp.TopEntity.PositionComp.WorldMatrixRef);
                             else
                                 dest = storedDest != Vector3D.Zero ? storedDest : storage.ApproachInfo.TargetPos;
-                            var plane = new PlaneD(dest, heightDir);
+                            var plane = new PlaneD(dest, startToEndDir);
                             var distToPlane = Math.Abs(plane.DistanceToPoint(leadPosition));
-                            heightAdjLeadPos = leadPosition + (heightDir * distToPlane);
+                            heightAdjLeadPos = leadPosition + (startToEndDir * distToPlane);
                             break;
                         }
                         case RelativeTo.StoredEndDestination:
@@ -1324,9 +1329,9 @@ namespace CoreSystems.Projectiles
                                 dest = Vector3D.Transform(storedDest, Info.Weapon.Comp.TopEntity.PositionComp.WorldMatrixRef);
                             else
                                 dest = storedDest != Vector3D.Zero ? storedDest : storage.ApproachInfo.TargetPos;
-                            var plane = new PlaneD(dest, heightDir);
+                            var plane = new PlaneD(dest, startToEndDir);
                             var distToPlane = Math.Abs(plane.DistanceToPoint(leadPosition));
-                            heightAdjLeadPos = leadPosition + (heightDir * distToPlane);
+                            heightAdjLeadPos = leadPosition + (startToEndDir * distToPlane);
                             break;
                         }
                         case RelativeTo.Nothing:
@@ -1382,24 +1387,21 @@ namespace CoreSystems.Projectiles
                             heightAdjLeadPos = leadPosition;
                             break;
                     }
-                    if (MyUtils.IsValid(heightAdjLeadPos - destination))
+
+                    if (approach.Orbit)
+                    {
+                        TargetPosition = ApproachOrbits(approach, storage.ApproachInfo.OffsetDir, heightAdjLeadPos, accelMpsMulti, speedCapMulti);
+                    }
+                    else 
                     {
                         var destPerspectiveDir = Vector3D.Normalize(heightAdjLeadPos - destination);
-                        if (!approach.Orbit)
+                        if (approach.Elevation != RelativeTo.Nothing && MyUtils.IsValid(heightAdjLeadPos - destination) && !MyUtils.IsZero(Vector3.Dot(startToEndDir, destPerspectiveDir)))
                         {
-                            if (approach.Elevation != RelativeTo.Nothing && !Vector3D.IsZero(heightDir - destPerspectiveDir))
-                            {
-                                var planeIntersectPos = MyUtils.LinePlaneIntersection(heightAdjLeadPos, heightDir, destination, destPerspectiveDir);
-                                TargetPosition = MyUtils.IsValid(planeIntersectPos) ? planeIntersectPos : heightAdjLeadPos;
-                            }
-                            else
-                                TargetPosition = heightAdjLeadPos;
+                            TargetPosition = MyUtils.LinePlaneIntersection(heightAdjLeadPos, startToEndDir, destination, destPerspectiveDir);
                         }
                         else
-                            TargetPosition = ApproachOrbits(approach, storage.ApproachInfo.OffsetDir, heightAdjLeadPos, accelMpsMulti, speedCapMulti);
+                            TargetPosition = heightAdjLeadPos;
                     }
-                    else if (approach.Orbit)
-                        TargetPosition = ApproachOrbits(approach, storage.ApproachInfo.OffsetDir, destination, accelMpsMulti, speedCapMulti);
 
                     if (storage.LastActivatedStage != storage.RequestedStage)
                     {

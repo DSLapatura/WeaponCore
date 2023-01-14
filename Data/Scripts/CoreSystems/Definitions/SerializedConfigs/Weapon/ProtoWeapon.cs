@@ -52,9 +52,12 @@ namespace CoreSystems
             for (int i = 0; i < comp.Collection.Count; i++)
             {
                 var we = comp.Collection[i];
-
                 if (Session.I.IsCreative)
+                {
                     we.Reload.LifetimeLoads = 0;
+                    we.ProtoWeaponAmmo.CurrentAmmo = 0;
+                    we.ProtoWeaponAmmo.CurrentCharge = 0;
+                }
 
                 if (comp.DefaultReloads != 0)
                 {
@@ -65,9 +68,11 @@ namespace CoreSystems
             for (int i = 0; i < Values.Reloads.Length; i++)
             {
                 var wr = Values.Reloads[i];
+                
                 wr.StartId = 0;
                 wr.EndId = 0;
                 wr.WaitForClient = false;
+
                 var we = comp.Collection[i];
                 if (wr.AmmoTypeId >= we.System.AmmoTypes.Length)
                     wr.AmmoTypeId = 0;

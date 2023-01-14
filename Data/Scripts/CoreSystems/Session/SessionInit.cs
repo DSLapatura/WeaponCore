@@ -139,7 +139,8 @@ namespace CoreSystems
             MpActive = MyAPIGateway.Multiplayer.MultiplayerActive;
             IsServer = MyAPIGateway.Multiplayer.IsServer;
             DedicatedServer = MyAPIGateway.Utilities.IsDedicated;
-            IsCreative = MyAPIGateway.Session.CreativeMode;
+
+            IsCreative = MyAPIGateway.Session.CreativeMode || MyAPIGateway.Session.SessionSettings != null && MyAPIGateway.Session.SessionSettings.InfiniteAmmo; 
             IsClient = !IsServer && !DedicatedServer && MpActive;
             HandlesInput = !IsServer || IsServer && !DedicatedServer;
             IsHost = IsServer && !DedicatedServer && MpActive;
