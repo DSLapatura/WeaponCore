@@ -614,7 +614,7 @@ namespace CoreSystems.Projectiles
 
                 if (aConst.HasApproaches && (s.ApproachInfo.Active || s.RequestedStage == -1))
                 {
-                    ProcessApproach(ref accelMpsMulti, ref speedCapMulti, ref disableAvoidance, TargetPosition, s.RequestedStage, targetLock, aConst.ApproachesCount);
+                    ProcessApproach(ref accelMpsMulti, ref speedCapMulti, ref disableAvoidance, TargetPosition, s.LastActivatedStage, targetLock, aConst.ApproachesCount);
                     s.ApproachInfo.Active = s.RequestedStage < aConst.ApproachesCount && s.RequestedStage >= 0;
                 }
 
@@ -911,11 +911,12 @@ namespace CoreSystems.Projectiles
 
                 if (approach.HasAngleOffset)
                 {
-                    if (stageChange && approach.ModAngleOffset)
+                    if (stageChange && approach.ModAngleOffset) 
                     {
                         var min = approach.Definition.AngleVariance.Start;
                         var max = approach.Definition.AngleVariance.End;
-                        storage.ApproachInfo.AngleVariance = Info.Random.NextDouble() * (max - min) + min;
+                        var rnd = Info.Random.NextDouble() * (max - min) + min;
+                        storage.ApproachInfo.AngleVariance = rnd;
                     }
                     var angle = (approach.AngleOffset + storage.ApproachInfo.AngleVariance) * MathHelper.Pi;
                     var forward = Vector3D.CalculatePerpendicularVector(storage.ApproachInfo.OffsetDir);
@@ -1356,7 +1357,7 @@ namespace CoreSystems.Projectiles
                                         heightAdjLeadPos = blockPos;
                                         break;
                                     case RelativeTo.Current:
-                                        heightAdjLeadPos = Position + startToEndDir;
+                                        heightAdjLeadPos = Position + Direction;
                                         break;
                                     case RelativeTo.MidPoint:
                                         heightAdjLeadPos = Vector3D.Lerp(destination, source, 0.5);
@@ -1739,7 +1740,7 @@ namespace CoreSystems.Projectiles
                         ++storage.ApproachInfo.Storage[storage.RequestedStage].RunCount;
                         storage.LastActivatedStage = storage.RequestedStage;
                         ++storage.RequestedStage;
-                        ProcessApproach(ref accelMpsMulti, ref speedCapMulti, ref disableAvoidance, targetPos, storage.LastActivatedStage, targetLock, callDepth);
+                        //ProcessApproach(ref accelMpsMulti, ref speedCapMulti, ref disableAvoidance, targetPos, storage.LastActivatedStage, targetLock, callDepth);
                     }
                     else if (reStart || def.ForceRestart)
                     {

@@ -61,7 +61,7 @@ namespace CoreSystems.Projectiles
 
 
                 storage.DummyTargets = null;
-                info.Random = new XorShiftRandomStruct((ulong)(w.TargetData.WeaponRandom.CurrentSeed + (w.Reload.EndId + w.ProjectileCounter)));
+                info.Random = new XorShiftRandomStruct((ulong)(w.TargetData.WeaponRandom.CurrentSeed + ((1 + w.Reload.EndId) * aConst.MagazineSize + w.ProjectileCounter) * 5));
 
                 if (aConst.IsDrone || aConst.IsSmart)
                 {
