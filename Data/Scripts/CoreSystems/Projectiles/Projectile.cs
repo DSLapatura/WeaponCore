@@ -882,7 +882,7 @@ namespace CoreSystems.Projectiles
                         case UpRelativeTo.UpStoredStartPosition:
                         case UpRelativeTo.UpStoredStartLocalPosition:
 
-                            var storedStartDest = storage.ApproachInfo.Storage[storage.RequestedStage].StoredPosition;
+                            var storedStartDest = storage.ApproachInfo.Storage[approach.StoredStartId].StoredPosition;
                             Vector3D destStart;
                             if (approach.Up == UpRelativeTo.UpStoredStartLocalPosition)
                                 destStart = Vector3D.Transform(storedStartDest, Info.Weapon.Comp.TopEntity.PositionComp.WorldMatrixRef);
@@ -894,7 +894,7 @@ namespace CoreSystems.Projectiles
                         case UpRelativeTo.UpStoredEndPosition:
                         case UpRelativeTo.UpStoredEndLocalPosition:
 
-                            var storedEndDest = storage.ApproachInfo.Storage[approach.StoredStartId * 2].StoredPosition;
+                            var storedEndDest = storage.ApproachInfo.Storage[aConst.ApproachesCount + approach.StoredEndId].StoredPosition;
                             Vector3D destEnd;
                             if (approach.Up == UpRelativeTo.UpStoredEndLocalPosition)
                                 destEnd = Vector3D.Transform(storedEndDest, Info.Weapon.Comp.TopEntity.PositionComp.WorldMatrixRef);
@@ -975,7 +975,7 @@ namespace CoreSystems.Projectiles
                         case RelativeTo.StoredEndPosition:
                         case RelativeTo.StoredEndLocalPosition:
 
-                            var storedDestEnd = storage.ApproachInfo.Storage[approach.StoredEndId * 2].StoredPosition;
+                            var storedDestEnd = storage.ApproachInfo.Storage[aConst.ApproachesCount + approach.StoredEndId].StoredPosition;
                             Vector3D destEnd;
                             if (approach.Source == RelativeTo.StoredEndLocalPosition)
                                 destEnd = Vector3D.Transform(storedDestEnd, Info.Weapon.Comp.TopEntity.PositionComp.WorldMatrixRef);
@@ -1038,7 +1038,7 @@ namespace CoreSystems.Projectiles
                         case RelativeTo.StoredEndPosition:
                         case RelativeTo.StoredEndLocalPosition:
 
-                            var storedDestEnd = storage.ApproachInfo.Storage[approach.StoredEndId * 2].StoredPosition;
+                            var storedDestEnd = storage.ApproachInfo.Storage[aConst.ApproachesCount + approach.StoredEndId].StoredPosition;
                             Vector3D destEnd;
                             if (approach.Destination == RelativeTo.StoredEndLocalPosition)
                                 destEnd = Vector3D.Transform(storedDestEnd, Info.Weapon.Comp.TopEntity.PositionComp.WorldMatrixRef);
@@ -1330,7 +1330,7 @@ namespace CoreSystems.Projectiles
                         case RelativeTo.StoredEndPosition:
                         case RelativeTo.StoredEndLocalPosition:
                             {
-                                var storedDest = storage.ApproachInfo.Storage[approach.StoredEndId * 2].StoredPosition;
+                                var storedDest = storage.ApproachInfo.Storage[aConst.ApproachesCount + approach.StoredEndId].StoredPosition;
                                 Vector3D dest;
                                 if (approach.Elevation == RelativeTo.StoredEndLocalPosition)
                                     dest = Vector3D.Transform(storedDest, Info.Weapon.Comp.TopEntity.PositionComp.WorldMatrixRef);
@@ -1377,7 +1377,7 @@ namespace CoreSystems.Projectiles
                                     case RelativeTo.StoredEndPosition:
                                     case RelativeTo.StoredEndLocalPosition:
                                         {
-                                            var storedDest = storage.ApproachInfo.Storage[approach.StoredEndId * 2].StoredPosition;
+                                            var storedDest = storage.ApproachInfo.Storage[aConst.ApproachesCount + approach.StoredEndId].StoredPosition;
                                             if (approach.Destination == RelativeTo.StoredEndLocalPosition)
                                                 heightAdjLeadPos = Vector3D.Transform(storedDest, Info.Weapon.Comp.TopEntity.PositionComp.WorldMatrixRef);
                                             else
@@ -1696,33 +1696,34 @@ namespace CoreSystems.Projectiles
                     }
                     else if (endEvent == StageEvents.StoreDestination || endEvent == StageEvents.StorePosition)
                     {
+                        Log.Line($"{Info.Age} - {approach.EndAnd} - {end1} - {end2} - {approach.EndCon1} - {approach.EndCon2}");
                         switch (def.StoredEndType)
                         {
                             case RelativeTo.Target:
-                                storage.ApproachInfo.Storage[storage.RequestedStage * 2].StoredPosition = TargetPosition;
+                                storage.ApproachInfo.Storage[aConst.ApproachesCount + storage.RequestedStage].StoredPosition = TargetPosition;
                                 break;
                             case RelativeTo.Current:
-                                storage.ApproachInfo.Storage[storage.RequestedStage * 2].StoredPosition = Position;
+                                storage.ApproachInfo.Storage[aConst.ApproachesCount + storage.RequestedStage].StoredPosition = Position;
                                 break;
                             case RelativeTo.Shooter:
                                 var blockPos = Info.Weapon.Comp.CoreEntity.PositionComp.WorldAABB.Center;
                                 blockPos = !Vector3D.IsZero(blockPos) ? blockPos : Info.Origin;
-                                storage.ApproachInfo.Storage[storage.RequestedStage * 2].StoredPosition = blockPos;
+                                storage.ApproachInfo.Storage[aConst.ApproachesCount + storage.RequestedStage].StoredPosition = blockPos;
                                 break;
                             case RelativeTo.Nothing:
-                                storage.ApproachInfo.Storage[storage.RequestedStage * 2].StoredPosition = destination;
+                                storage.ApproachInfo.Storage[aConst.ApproachesCount + storage.RequestedStage].StoredPosition = destination;
                                 break;
                             case RelativeTo.MidPoint:
-                                storage.ApproachInfo.Storage[storage.RequestedStage * 2].StoredPosition = Vector3D.Lerp(destination, source, 0.5);
+                                storage.ApproachInfo.Storage[aConst.ApproachesCount + storage.RequestedStage].StoredPosition = Vector3D.Lerp(destination, source, 0.5);
                                 break;
                             case RelativeTo.StoredEndLocalPosition:
                                 var gridLocalMatrix = Info.Weapon.Comp.TopEntity.PositionComp.WorldMatrixNormalizedInv;
                                 Vector3D localPos;
                                 Vector3D.Transform(ref source, ref gridLocalMatrix, out localPos);
-                                storage.ApproachInfo.Storage[storage.RequestedStage * 2].StoredPosition = localPos;
+                                storage.ApproachInfo.Storage[aConst.ApproachesCount + storage.RequestedStage].StoredPosition = localPos;
                                 break;
                             default:
-                                storage.ApproachInfo.Storage[storage.RequestedStage * 2].StoredPosition = targetPos;
+                                storage.ApproachInfo.Storage[aConst.ApproachesCount + storage.RequestedStage].StoredPosition = targetPos;
                                 break;
                         }
 
