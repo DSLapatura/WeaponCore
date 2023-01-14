@@ -55,10 +55,6 @@ namespace CoreSystems.Platform
                         w.Reload = Repo.Values.Reloads[i];
 
                         w.ProtoWeaponAmmo = Repo.Ammos[i];
-
-                        if (w.ProtoWeaponAmmo.CurrentAmmo > 0 && w.Reload.LifetimeLoads == 0) 
-                            w.Reload.LifetimeLoads++; //If weapon is loaded on world init, start counter at 1
-
                         if (Session.I.IsServer)
                         {
                             Repo.Values.Targets[i] = new ProtoWeaponTransferTarget();
