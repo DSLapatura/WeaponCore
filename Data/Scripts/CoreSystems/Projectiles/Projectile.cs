@@ -614,7 +614,7 @@ namespace CoreSystems.Projectiles
 
                 if (aConst.HasApproaches && (s.ApproachInfo.Active || s.RequestedStage == -1))
                 {
-                    ProcessApproach(ref accelMpsMulti, ref speedCapMulti, ref disableAvoidance, TargetPosition, s.LastActivatedStage, targetLock, aConst.ApproachesCount);
+                    ProcessApproach(ref accelMpsMulti, ref speedCapMulti, ref disableAvoidance, TargetPosition, s.LastActivatedStage, targetLock);
                     s.ApproachInfo.Active = s.RequestedStage < aConst.ApproachesCount && s.RequestedStage >= 0;
                 }
 
@@ -806,18 +806,12 @@ namespace CoreSystems.Projectiles
             return true;
         }
 
-        private void ProcessApproach(ref double accelMpsMulti, ref double speedCapMulti, ref bool disableAvoidance, Vector3D targetPos, int lastActiveStage, bool targetLock, int callDepth)
+        private void ProcessApproach(ref double accelMpsMulti, ref double speedCapMulti, ref bool disableAvoidance, Vector3D targetPos, int lastActiveStage, bool targetLock)
         {
             var s = Session.I;
             var aConst = Info.AmmoDef.Const;
             var storage = Info.Storage;
 
-            if (callDepth-- < 0) {
-                if (s.HandlesInput && s.DebugMod)
-                    s.ShowLocalNotify("Approach is attempting to infinite loop, fix your approach moveNext/restart conditions", 2000);
-                return;
-            }
-            
             if (targetLock)
                 storage.ApproachInfo.TargetPos = targetPos;
 
@@ -915,9 +909,9 @@ namespace CoreSystems.Projectiles
                     {
                         var min = approach.Definition.AngleVariance.Start;
                         var max = approach.Definition.AngleVariance.End;
-                        var rnd = Info.Random.NextDouble() * (max - min) + min;
-                        storage.ApproachInfo.AngleVariance = rnd;
+                        storage.ApproachInfo.AngleVariance = Info.Random.NextDouble() * (max - min) + min;
                     }
+
                     var angle = (approach.AngleOffset + storage.ApproachInfo.AngleVariance) * MathHelper.Pi;
                     var forward = Vector3D.CalculatePerpendicularVector(storage.ApproachInfo.OffsetDir);
                     var right = Vector3D.Cross(storage.ApproachInfo.OffsetDir, forward);
@@ -1740,7 +1734,6 @@ namespace CoreSystems.Projectiles
                         ++storage.ApproachInfo.Storage[storage.RequestedStage].RunCount;
                         storage.LastActivatedStage = storage.RequestedStage;
                         ++storage.RequestedStage;
-                        //ProcessApproach(ref accelMpsMulti, ref speedCapMulti, ref disableAvoidance, targetPos, storage.LastActivatedStage, targetLock, callDepth);
                     }
                     else if (reStart || def.ForceRestart)
                     {
