@@ -473,7 +473,7 @@ namespace CoreSystems.Projectiles
             if (!startTrack && Info.DistanceTraveled * Info.DistanceTraveled >= aConst.SmartsDelayDistSqr)
             {
                 var lineCheck = new LineD(Position, TargetPosition);
-                startTrack = !new MyOrientedBoundingBoxD(coreParent.PositionComp.LocalAABB, coreParent.PositionComp.WorldMatrixRef).Intersects(ref lineCheck).HasValue;
+                startTrack = aConst.NoTargetApproach || !new MyOrientedBoundingBoxD(coreParent.PositionComp.LocalAABB, coreParent.PositionComp.WorldMatrixRef).Intersects(ref lineCheck).HasValue;
             }
 
             if (startTrack)
@@ -614,7 +614,7 @@ namespace CoreSystems.Projectiles
 
                 if (aConst.HasApproaches && (s.ApproachInfo.Active || s.RequestedStage == -1))
                 {
-                    ProcessStage(ref accelMpsMulti, ref speedCapMulti, ref disableAvoidance, TargetPosition, s.RequestedStage, targetLock, aConst.ApproachesCount);
+                    ProcessApproach(ref accelMpsMulti, ref speedCapMulti, ref disableAvoidance, TargetPosition, s.RequestedStage, targetLock, aConst.ApproachesCount);
                     s.ApproachInfo.Active = s.RequestedStage < aConst.ApproachesCount && s.RequestedStage >= 0;
                 }
 
@@ -806,22 +806,24 @@ namespace CoreSystems.Projectiles
             return true;
         }
 
-        private void ProcessStage(ref double accelMpsMulti, ref double speedCapMulti, ref bool disableAvoidance, Vector3D targetPos, int lastActiveStage, bool targetLock, int callDepth)
+        private void ProcessApproach(ref double accelMpsMulti, ref double speedCapMulti, ref bool disableAvoidance, Vector3D targetPos, int lastActiveStage, bool targetLock, int callDepth)
         {
             var s = Session.I;
+            var aConst = Info.AmmoDef.Const;
+            var storage = Info.Storage;
+
             if (callDepth-- < 0) {
                 if (s.HandlesInput && s.DebugMod)
                     s.ShowLocalNotify("Approach is attempting to infinite loop, fix your approach moveNext/restart conditions", 2000);
                 return;
             }
-            var aConst = Info.AmmoDef.Const;
-
-            var storage = Info.Storage;
+            
             if (targetLock)
                 storage.ApproachInfo.TargetPos = targetPos;
 
             if (aConst.NoTargetApproach || !Vector3D.IsZero(storage.ApproachInfo.TargetPos))
             {
+                #region Setup
                 if (storage.RequestedStage == -1)
                 {
                     storage.LastActivatedStage = -1;
@@ -838,7 +840,7 @@ namespace CoreSystems.Projectiles
                 }
 
                 var approach = aConst.Approaches[storage.RequestedStage];
-                
+
                 if (approach.StartCon1 == approach.StartCon2 || approach.EndCon1 == approach.EndCon2)
                     return; // bad modder, failed to read coreparts comment, fail silently so they drive themselves nuts
 
@@ -846,13 +848,15 @@ namespace CoreSystems.Projectiles
 
                 if (approach.ModelRotateTime > 0 || storage.ApproachInfo.ModelRotateAge > 0)
                 {
-                    if (targetLock && approach.ModelRotateTime > storage.ApproachInfo.ModelRotateAge) {
+                    if (targetLock && approach.ModelRotateTime > storage.ApproachInfo.ModelRotateAge)
+                    {
                         storage.ApproachInfo.ModelRotateMaxAge = approach.ModelRotateTime;
                         ++storage.ApproachInfo.ModelRotateAge;
                     }
-                    else if (storage.ApproachInfo.ModelRotateAge > 0 && (!targetLock || !approach.ModelRotate) && --storage.ApproachInfo.ModelRotateAge == 0) 
-                            storage.ApproachInfo.ModelRotateMaxAge = 0;
+                    else if (storage.ApproachInfo.ModelRotateAge > 0 && (!targetLock || !approach.ModelRotate) && --storage.ApproachInfo.ModelRotateAge == 0)
+                        storage.ApproachInfo.ModelRotateMaxAge = 0;
                 }
+                #endregion
 
                 #region VantagePoints
                 if (approach.AdjustUp || stageChange)
@@ -1736,7 +1740,7 @@ namespace CoreSystems.Projectiles
                         ++storage.ApproachInfo.Storage[storage.RequestedStage].RunCount;
                         storage.LastActivatedStage = storage.RequestedStage;
                         ++storage.RequestedStage;
-                        ProcessStage(ref accelMpsMulti, ref speedCapMulti, ref disableAvoidance, targetPos, storage.LastActivatedStage, targetLock, callDepth);
+                        ProcessApproach(ref accelMpsMulti, ref speedCapMulti, ref disableAvoidance, targetPos, storage.LastActivatedStage, targetLock, callDepth);
                     }
                     else if (reStart || def.ForceRestart)
                     {

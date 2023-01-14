@@ -655,7 +655,7 @@ namespace CoreSystems.Support
             maxChaseTime = ammo.AmmoDef.Trajectory.Smarts.MaxChaseTime > 0 ? ammo.AmmoDef.Trajectory.Smarts.MaxChaseTime : int.MaxValue;
             maxTargets = ammo.AmmoDef.Trajectory.Smarts.MaxTargets;
             offsetTime = ammo.AmmoDef.Trajectory.Smarts.OffsetTime;
-            noTargetApproach = ammo.AmmoDef.Trajectory.Smarts.NoTargetApproach;
+            noTargetApproach = ammo.AmmoDef.Trajectory.Smarts.NoTargetApproach || true;
         }
 
 
