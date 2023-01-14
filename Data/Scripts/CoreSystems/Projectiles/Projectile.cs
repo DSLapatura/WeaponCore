@@ -1385,7 +1385,7 @@ namespace CoreSystems.Projectiles
 
                     if (approach.Orbit)
                     {
-                        TargetPosition = ApproachOrbits(approach, storage.ApproachInfo.OffsetDir, heightAdjLeadPos, accelMpsMulti, speedCapMulti);
+                        TargetPosition = ApproachOrbits(approach, heightAdjLeadPos, accelMpsMulti, speedCapMulti);
                     }
                     else
                     {
@@ -1730,6 +1730,37 @@ namespace CoreSystems.Projectiles
                 storage.RequestedStage = aConst.Approaches.Length;
             }
         }
+        private Vector3D ApproachOrbits(ApproachConstants approach, Vector3D orbitCenter, double accelMpsMulti, double speedCapMulti)
+        {
+            var storage = Info.Storage;
+            var pTarget = Info.Target.TargetObject as Projectile;
+            var pValid = pTarget != null && pTarget.State == ProjectileState.Alive;
+            var eTarget = Info.Target.TargetObject as MyEntity;
+
+            var tSource = approach.Destination == RelativeTo.StoredStartLocalPosition || approach.Destination == RelativeTo.StoredEndLocalPosition || approach.Destination == RelativeTo.Shooter;
+            var objectRadius = eTarget != null ? eTarget.PositionComp.LocalVolume.Radius : pValid ? pTarget.Info.AmmoDef.Const.CollisionSize : tSource ? Info.Weapon.Comp.TopEntity.PositionComp.LocalVolume.Radius : 0;
+
+            var tangentCoeff = accelMpsMulti / (speedCapMulti * MaxSpeed);
+            var toTargetDir = Vector3D.Normalize(orbitCenter - Position);
+            var defaultUpDir = Info.MyPlanet != null ? approach.Up == UpRelativeTo.RelativeToGravity ? storage.ApproachInfo.OffsetDir : Vector3D.Normalize(Position - Info.MyPlanet.PositionComp.WorldAABB.Center) : toTargetDir;
+
+            Vector3D upDir;
+            if (approach.HasAngleOffset && approach.Up != UpRelativeTo.RelativeToGravity) {
+                var angle = (approach.AngleOffset + storage.ApproachInfo.AngleVariance) * MathHelper.Pi;
+                var forward = Vector3D.CalculatePerpendicularVector(defaultUpDir);
+                var right = Vector3D.Cross(defaultUpDir, forward);
+                upDir = Math.Sin(angle) * forward + Math.Cos(angle) * right;
+            }
+            else
+                upDir = defaultUpDir;
+
+            var orbitPlane = new PlaneD(orbitCenter, upDir);
+
+            var normPerp = Vector3D.CalculatePerpendicularVector(toTargetDir);
+            var navGoal = orbitCenter + normPerp * (approach.OrbitRadius + objectRadius) * (1 + tangentCoeff); //Orbit radius multiplied as a ratio of accel/speed as we're leading with a 90* phasing.  this approximates the tangent           
+            var planeNavGoal = navGoal - upDir * orbitPlane.DistanceToPoint(navGoal); //constrained to plane
+            return planeNavGoal;
+        }
 
         private Vector3D PlanetSurfaceHeightAdjustment(Vector3D checkPosition, Vector3D upDir, ApproachConstants approach, out Vector3D surfacePos)
         {
@@ -1824,25 +1855,6 @@ namespace CoreSystems.Projectiles
             }
 
             return false;
-        }
-
-        private Vector3D ApproachOrbits(ApproachConstants apConst, Vector3D upDir, Vector3D orbitCenter, double accelMpsMulti, double speedCapMulti)
-        {
-            var tSource = apConst.Destination == RelativeTo.StoredStartLocalPosition || apConst.Destination == RelativeTo.StoredEndLocalPosition || apConst.Destination == RelativeTo.Shooter;
-            var pTarget = Info.Target.TargetObject as Projectile;
-            var pValid = pTarget != null && pTarget.State == ProjectileState.Alive;
-            var eTarget = Info.Target.TargetObject as MyEntity;
-
-            var objectRadius = eTarget != null ? eTarget.PositionComp.LocalVolume.Radius : pValid ? pTarget.Info.AmmoDef.Const.CollisionSize : tSource ? Info.Weapon.Comp.TopEntity.PositionComp.LocalVolume.Radius : 0;
-
-            var tangentCoeff = accelMpsMulti / (speedCapMulti * MaxSpeed);
-            var orbitPlane = new PlaneD(orbitCenter, upDir);
-
-
-            var normPerp = Vector3D.CalculatePerpendicularVector(Vector3D.Normalize(orbitCenter - Position));
-            var navGoal = orbitCenter + normPerp * (apConst.OrbitRadius + objectRadius) * (1 + tangentCoeff); //Orbit radius multiplied as a ratio of accel/speed as we're leading with a 90* phasing.  this approximates the tangent           
-            var planeNavGoal = navGoal - upDir * orbitPlane.DistanceToPoint(navGoal); //constrained to plane
-            return planeNavGoal;
         }
 
         private void SetNavTargetOffset(ApproachConstants appConst)
