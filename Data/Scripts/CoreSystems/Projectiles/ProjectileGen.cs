@@ -89,7 +89,7 @@ namespace CoreSystems.Projectiles
                 info.UniqueMuzzleId = muzzle.UniqueId;
                 w.WeaponCache.VirutalId = t != Kind.Virtual ? -1 : w.WeaponCache.VirutalId;
                 info.Origin = t != Kind.Client ? t != Kind.Virtual ? muzzle.Position : w.MyPivotPos : gen.Origin;
-                p.Direction = t != Kind.Client ? t != Kind.Virtual ? gen.Direction : w.MyPivotFwd : gen.Direction;
+                info.OriginFwd = t != Kind.Client ? t != Kind.Virtual ? gen.Direction : w.MyPivotFwd : gen.Direction;
 
                 if (t == Kind.Client && !aConst.IsBeamWeapon) 
                     p.Velocity = gen.Velocity;
@@ -131,13 +131,14 @@ namespace CoreSystems.Projectiles
                         var v = virts[j];
                         p.VrPros.Add(v.Info);
                         if (!v.Rotate)
-                            p.Direction = v.Muzzle.DeviatedDir;
+                            info.OriginFwd  = v.Muzzle.DeviatedDir;
 
-                        if (!a.Const.RotateRealBeam) w.WeaponCache.VirutalId = 0;
+                        if (!a.Const.RotateRealBeam) 
+                            w.WeaponCache.VirutalId = 0;
                         else if (v.Rotate)
                         {
                             info.Origin = v.Muzzle.Position;
-                            p.Direction = v.Muzzle.Direction;
+                            info.OriginFwd = v.Muzzle.Direction;
                             w.WeaponCache.VirutalId = v.VirtualId;
                         }
                     }

@@ -1348,17 +1348,34 @@ namespace CoreSystems.Support
 
                     public enum UpRelativeTo
                     {
-                        RelativeToBlock,
-                        RelativeToGravity,
-                        TargetDirection,
-                        TargetVelocity,
+                        UpRelativeToBlock,
+                        UpRelativeToGravity,
+                        UpTargetDirection,
+                        UpTargetVelocity,
                         UpStoredStartDestination,
                         UpStoredEndDestination,
                         UpStoredStartPosition,
                         UpStoredEndPosition,
                         UpStoredStartLocalPosition,
                         UpStoredEndLocalPosition,
-                        RelativeToShooter,
+                        UpRelativeToShooter,
+                        UpOriginDirection,
+                    }
+
+                    public enum FwdRelativeTo
+                    {
+                        ForwardRelativeToBlock,
+                        ForwardRelativeToGravity,
+                        ForwardTargetDirection,
+                        ForwardTargetVelocity,
+                        ForwardStoredStartDestination,
+                        ForwardStoredEndDestination,
+                        ForwardStoredStartPosition,
+                        ForwardStoredEndPosition,
+                        ForwardStoredStartLocalPosition,
+                        ForwardStoredEndLocalPosition,
+                        ForwardRelativeToShooter,
+                        ForwardOriginDirection,
                     }
 
                     public enum RelativeTo
@@ -1463,6 +1480,8 @@ namespace CoreSystems.Support
                     [ProtoMember(54)] internal Randomize AngleVariance;
                     [ProtoMember(55)] internal bool ReloadRefund;
                     [ProtoMember(56)] internal int ModelRotateTime;
+                    [ProtoMember(57)] internal FwdRelativeTo Forward;
+                    [ProtoMember(58)] internal bool AdjustForward;
                 }
 
                 [ProtoContract]

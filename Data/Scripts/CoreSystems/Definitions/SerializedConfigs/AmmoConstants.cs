@@ -655,7 +655,7 @@ namespace CoreSystems.Support
             maxChaseTime = ammo.AmmoDef.Trajectory.Smarts.MaxChaseTime > 0 ? ammo.AmmoDef.Trajectory.Smarts.MaxChaseTime : int.MaxValue;
             maxTargets = ammo.AmmoDef.Trajectory.Smarts.MaxTargets;
             offsetTime = ammo.AmmoDef.Trajectory.Smarts.OffsetTime;
-            noTargetApproach = ammo.AmmoDef.Trajectory.Smarts.NoTargetApproach || true;
+            noTargetApproach = ammo.AmmoDef.Trajectory.Smarts.NoTargetApproach;
         }
 
 
@@ -1698,6 +1698,7 @@ namespace CoreSystems.Support
         public readonly bool LeadAndRotateDestination;
         public readonly bool NoElevationLead;
         public readonly double ModFutureStep;
+        public readonly TrajectoryDef.ApproachDef.FwdRelativeTo Forward;
         public readonly TrajectoryDef.ApproachDef.UpRelativeTo Up;
         public readonly TrajectoryDef.ApproachDef.RelativeTo Source;
         public readonly TrajectoryDef.ApproachDef.RelativeTo Destination;
@@ -1706,6 +1707,7 @@ namespace CoreSystems.Support
         public readonly TrajectoryDef.ApproachDef.Conditions StartCon2;
         public readonly TrajectoryDef.ApproachDef.Conditions EndCon1;
         public readonly TrajectoryDef.ApproachDef.Conditions EndCon2;
+        public readonly bool AdjustForward;
         public readonly bool AdjustUp;
         public readonly bool DisableAvoidance;
         public readonly bool AdjustSource;
@@ -1756,6 +1758,7 @@ namespace CoreSystems.Support
             IgnoreAntiSmart = def.IgnoreAntiSmart;
             ModelRotate = def.ModelRotateTime > 0;
 
+            Forward = def.Forward;
             Up = def.Up;
             Source = def.Source;
             Destination = def.Destination;
@@ -1764,6 +1767,7 @@ namespace CoreSystems.Support
             StartCon2 = def.StartCondition2;
             EndCon1 = def.EndCondition1;
             EndCon2 = def.EndCondition2;
+            AdjustForward = def.AdjustForward;
             AdjustUp = def.AdjustUp;
             Orbit = def.Orbit;
             CanExpireOnceStarted = def.CanExpireOnceStarted;

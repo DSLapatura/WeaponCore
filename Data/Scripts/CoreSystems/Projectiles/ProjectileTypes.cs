@@ -30,6 +30,7 @@ namespace CoreSystems.Support
         internal Vector3D ShooterVel;
         internal Vector3D Origin;
         internal Vector3D OriginUp;
+        internal Vector3D OriginFwd;
         internal Vector3D TotalAcceleration;
         internal Hit Hit;
         internal XorShiftRandomStruct Random;
@@ -174,6 +175,7 @@ namespace CoreSystems.Support
             ShieldBypassMod = 1f;
             Hit = new Hit();
             Origin = Vector3D.Zero;
+            OriginFwd = Vector3D.Zero;
             ShooterVel = Vector3D.Zero;
             TriggerMatrix = MatrixD.Identity;
             TotalAcceleration = Vector3D.Zero;
@@ -292,7 +294,8 @@ namespace CoreSystems.Support
         internal Vector3D TargetPos;
         internal Vector3D DestinationPos;
         internal Vector3D LookAtPos;
-        internal Vector3D OffsetDir;
+        internal Vector3D OffsetUpDir;
+        internal Vector3D OffsetFwdDir;
         internal double RelativeAgeStart;
         internal double StartDistanceTraveled;
         internal int RelativeSpawnsStart;
@@ -313,7 +316,8 @@ namespace CoreSystems.Support
             TargetPos = Vector3D.Zero;
             DestinationPos = Vector3D.Zero;
             LookAtPos = Vector3D.Zero;
-            OffsetDir = Vector3D.Zero;
+            OffsetUpDir = Vector3D.Zero;
+            OffsetFwdDir = Vector3D.Zero;
             StartDistanceTraveled = 0;
             RelativeAgeStart = 0;
             RelativeSpawnsStart = 0;
@@ -603,26 +607,27 @@ namespace CoreSystems.Support
                 target.TopEntityId = frag.TopEntityId;
                 target.TargetPos = frag.TargetPos;
 
-                info.Target.TargetPos = frag.PrevTargetPos;
+                info.ShotFade = 0;
                 info.IsFragment = true;
+                info.Target.TargetPos = frag.PrevTargetPos;
                 info.MuzzleId = frag.MuzzleId;
                 info.UniqueMuzzleId = session.UniqueMuzzleId.Id;
                 info.Origin = frag.Origin;
                 info.OriginUp = frag.OriginUp;
+                info.OriginFwd = frag.Direction;
+                info.ShooterVel = frag.Velocity;
                 info.Random = frag.Random;
                 info.DoDamage = frag.DoDamage;
                 info.SpawnDepth = frag.Depth;
                 info.SyncedFrags = frag.SyncedFrags;
                 info.BaseDamagePool = aConst.BaseDamage;
-                p.TargetPosition = frag.PrevTargetPos;
-                p.Direction = frag.Direction;
-                info.ShooterVel = frag.Velocity;
-                p.Gravity = frag.Gravity;
                 info.AcquiredEntity = frag.AcquiredEntity;
                 info.MaxTrajectory = aConst.MaxTrajectory;
-                info.ShotFade = 0;
                 info.ShieldBypassed = frag.IgnoreShield;
                 info.CompSceneVersion = frag.SceneVersion;
+
+                p.TargetPosition = frag.PrevTargetPos;
+                p.Gravity = frag.Gravity;
 
                 if (aConst.IsDrone || aConst.IsSmart)
                     info.Storage.DummyTargets = frag.DummyTargets;
