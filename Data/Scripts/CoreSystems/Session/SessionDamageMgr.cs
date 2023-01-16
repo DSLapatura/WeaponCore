@@ -26,6 +26,9 @@ namespace CoreSystems
         private bool _shieldNull;
         internal void ProcessHits()
         {
+            if (DeferredDestroy.Count == 0 && _destroyedSlims.Count > 0)
+                _destroyedSlims.Clear();
+
             _shieldNull = false;
             for (int x = 0; x < Hits.Count; x++)
             {
@@ -123,6 +126,7 @@ namespace CoreSystems
         {
             var sync = MpActive && (DedicatedServer || IsServer);
             Clean.Clear();
+            _destroyedSlims.Clear();
             foreach (var d in DeferredDestroy)
             {
                 var grid = d.Key;
@@ -361,7 +365,6 @@ namespace CoreSystems
 
             //Global & modifiers
             var canDamage = t.DoDamage;
-            _destroyedSlims.Clear();
 
             var directDmgGlobal = Settings.Enforcement.DirectDamageModifer * hitEnt.DamageMulti;
             var areaDmgGlobal = Settings.Enforcement.AreaDamageModifer * hitEnt.DamageMulti;
