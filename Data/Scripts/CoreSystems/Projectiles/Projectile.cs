@@ -1047,7 +1047,7 @@ namespace CoreSystems.Projectiles
                     if (approach.LeadAndRotateSource)
                     {
                         var rawPos = aInfo.LookAtPos + heightOffset;
-                        aInfo.LookAtPos = rawPos + (aInfo.OffsetUpDir * clampedLead);
+                        aInfo.LookAtPos = rawPos + (aInfo.OffsetFwdDir * clampedLead);
                     }
                 }
 
@@ -1113,7 +1113,7 @@ namespace CoreSystems.Projectiles
                     if (approach.LeadAndRotateDestination)
                     {
                         var rawPos = aInfo.DestinationPos + heightOffset;
-                        aInfo.DestinationPos = rawPos + (aInfo.OffsetUpDir * clampedLead);
+                        aInfo.DestinationPos = rawPos + (aInfo.OffsetFwdDir * clampedLead);
                     }
                 }
 
@@ -1127,14 +1127,15 @@ namespace CoreSystems.Projectiles
                         SetNavTargetOffset(approach);
                     destination += aInfo.NavTargetBound.Center;
                 }
-
-                var destElLine = destination + heightOffset;
                 #endregion
 
                 #region Start Conditions
+                var destElStartLine = destination + heightOffset;
                 double timeSinceSpawn = double.MinValue;
                 double nextSpawn = double.MinValue;
                 bool start1 = false;
+                
+
                 switch (approach.StartCon1)
                 {
                     case Conditions.DesiredElevation:
@@ -1147,14 +1148,15 @@ namespace CoreSystems.Projectiles
                         start1 = distFromSurfaceSqr >= greaterThanTolerance && distFromSurfaceSqr <= lessThanTolerance;
                         break;
                     case Conditions.DistanceFromDestination: // could save a sqrt by inlining and using heightDir
+
                         if (desiredElevation > 0)
-                            start1 = MyUtils.GetPointLineDistance(ref destElLine, ref destination, ref Position) - aConst.CollisionSize <= approach.Start1Value;
+                            start1 = MyUtils.GetPointLineDistance(ref destElStartLine, ref destination, ref Position) - aConst.CollisionSize <= approach.Start1Value;
                         else
                             start1 = Vector3D.Distance(destination, Position) - aConst.CollisionSize <= approach.Start1Value;
                         break;
                     case Conditions.DistanceToDestination: // could save a sqrt by inlining and using heightDir
                         if (desiredElevation > 0)
-                            start1 = MyUtils.GetPointLineDistance(ref destElLine, ref destination, ref Position) - aConst.CollisionSize >= approach.Start1Value;
+                            start1 = MyUtils.GetPointLineDistance(ref destElStartLine, ref destination, ref Position) - aConst.CollisionSize >= approach.Start1Value;
                         else
                             start1 = Vector3D.Distance(destination, Position) - aConst.CollisionSize >= approach.Start1Value;
                         break;
@@ -1230,13 +1232,13 @@ namespace CoreSystems.Projectiles
                         break;
                     case Conditions.DistanceFromDestination: // could save a sqrt by inlining and using heightDir
                         if (desiredElevation > 0)
-                            start2 = MyUtils.GetPointLineDistance(ref destElLine, ref destination, ref Position) - aConst.CollisionSize <= approach.Start2Value;
+                            start2 = MyUtils.GetPointLineDistance(ref destElStartLine, ref destination, ref Position) - aConst.CollisionSize <= approach.Start2Value;
                         else
                             start2 = Vector3D.Distance(destination, Position) - aConst.CollisionSize <= approach.Start2Value;
                         break;
                     case Conditions.DistanceToDestination: // could save a sqrt by inlining and using heightDir
                         if (desiredElevation > 0)
-                            start2 = MyUtils.GetPointLineDistance(ref destElLine, ref destination, ref Position) - aConst.CollisionSize >= approach.Start2Value;
+                            start2 = MyUtils.GetPointLineDistance(ref destElStartLine, ref destination, ref Position) - aConst.CollisionSize >= approach.Start2Value;
                         else
                             start2 = Vector3D.Distance(destination, Position) - aConst.CollisionSize >= approach.Start2Value;
                         break;
@@ -1428,15 +1430,15 @@ namespace CoreSystems.Projectiles
                             end1 = start2;
                         else
                         {
-                            if (desiredElevation > 0)
-                                end1 = MyUtils.GetPointLineDistance(ref destElLine, ref destination, ref Position) - aConst.CollisionSize <= approach.End1Value;
+                            if (!MyUtils.IsZero(TargetPosition - destination))
+                                end1 = MyUtils.GetPointLineDistance(ref TargetPosition, ref destination, ref Position) - aConst.CollisionSize <= approach.End1Value;
                             else
                                 end1 = Vector3D.Distance(destination, Position) - aConst.CollisionSize <= approach.End1Value;
                         }
                         break;
                     case Conditions.DistanceToDestination:
-                        if (desiredElevation > 0)
-                            end1 = MyUtils.GetPointLineDistance(ref destElLine, ref destination, ref Position) - aConst.CollisionSize >= approach.End1Value;
+                        if (!MyUtils.IsZero(TargetPosition - destination))
+                            end1 = MyUtils.GetPointLineDistance(ref TargetPosition, ref destination, ref Position) - aConst.CollisionSize >= approach.End1Value;
                         else
                             end1 = Vector3D.Distance(destination, Position) - aConst.CollisionSize >= approach.End1Value;
                         break;
@@ -1518,15 +1520,15 @@ namespace CoreSystems.Projectiles
                             end2 = start2;
                         else
                         {
-                            if (desiredElevation > 0)
-                                end2 = MyUtils.GetPointLineDistance(ref destElLine, ref destination, ref Position) - aConst.CollisionSize <= approach.End2Value;
+                            if (!MyUtils.IsZero(TargetPosition - destination))
+                                end2 = MyUtils.GetPointLineDistance(ref TargetPosition, ref destination, ref Position) - aConst.CollisionSize <= approach.End2Value;
                             else
                                 end2 = Vector3D.Distance(destination, Position) - aConst.CollisionSize <= approach.End2Value;
                         }
                         break;
                     case Conditions.DistanceToDestination:
-                        if (desiredElevation > 0)
-                            end2 = MyUtils.GetPointLineDistance(ref destElLine, ref destination, ref Position) - aConst.CollisionSize >= approach.End2Value;
+                        if (!MyUtils.IsZero(TargetPosition - destination))
+                            end2 = MyUtils.GetPointLineDistance(ref TargetPosition, ref destination, ref Position) - aConst.CollisionSize >= approach.End2Value;
                         else
                             end2 = Vector3D.Distance(destination, Position) - aConst.CollisionSize >= approach.End2Value;
                         break;
