@@ -1146,13 +1146,13 @@ namespace CoreSystems.Projectiles
                         var greaterThanTolerance = (approach.Start1Value - tolernace) * (approach.Start1Value - tolernace);
                         start1 = distFromSurfaceSqr >= greaterThanTolerance && distFromSurfaceSqr <= lessThanTolerance;
                         break;
-                    case Conditions.DistanceFromTarget: // could save a sqrt by inlining and using heightDir
+                    case Conditions.DistanceFromDestination: // could save a sqrt by inlining and using heightDir
                         if (desiredElevation > 0)
                             start1 = MyUtils.GetPointLineDistance(ref destElLine, ref destination, ref Position) - aConst.CollisionSize <= approach.Start1Value;
                         else
                             start1 = Vector3D.Distance(destination, Position) - aConst.CollisionSize <= approach.Start1Value;
                         break;
-                    case Conditions.DistanceToTarget: // could save a sqrt by inlining and using heightDir
+                    case Conditions.DistanceToDestination: // could save a sqrt by inlining and using heightDir
                         if (desiredElevation > 0)
                             start1 = MyUtils.GetPointLineDistance(ref destElLine, ref destination, ref Position) - aConst.CollisionSize >= approach.Start1Value;
                         else
@@ -1228,13 +1228,13 @@ namespace CoreSystems.Projectiles
                         var greaterThanTolerance = (approach.Start2Value - tolernace) * (approach.Start2Value - tolernace);
                         start2 = distFromSurfaceSqr >= greaterThanTolerance && distFromSurfaceSqr <= lessThanTolerance;
                         break;
-                    case Conditions.DistanceFromTarget: // could save a sqrt by inlining and using heightDir
+                    case Conditions.DistanceFromDestination: // could save a sqrt by inlining and using heightDir
                         if (desiredElevation > 0)
                             start2 = MyUtils.GetPointLineDistance(ref destElLine, ref destination, ref Position) - aConst.CollisionSize <= approach.Start2Value;
                         else
                             start2 = Vector3D.Distance(destination, Position) - aConst.CollisionSize <= approach.Start2Value;
                         break;
-                    case Conditions.DistanceToTarget: // could save a sqrt by inlining and using heightDir
+                    case Conditions.DistanceToDestination: // could save a sqrt by inlining and using heightDir
                         if (desiredElevation > 0)
                             start2 = MyUtils.GetPointLineDistance(ref destElLine, ref destination, ref Position) - aConst.CollisionSize >= approach.Start2Value;
                         else
@@ -1421,7 +1421,7 @@ namespace CoreSystems.Projectiles
                         var greaterThanTolerance = (approach.End1Value - tolernace) * (approach.End1Value - tolernace);
                         end1 = distFromSurfaceSqr >= greaterThanTolerance && distFromSurfaceSqr <= lessThanTolerance;
                         break;
-                    case Conditions.DistanceFromTarget:
+                    case Conditions.DistanceFromDestination:
                         if (approach.EndCon1 == approach.StartCon1)
                             end1 = start1;
                         else if (approach.EndCon1 == approach.StartCon2)
@@ -1434,7 +1434,7 @@ namespace CoreSystems.Projectiles
                                 end1 = Vector3D.Distance(destination, Position) - aConst.CollisionSize <= approach.End1Value;
                         }
                         break;
-                    case Conditions.DistanceToTarget:
+                    case Conditions.DistanceToDestination:
                         if (desiredElevation > 0)
                             end1 = MyUtils.GetPointLineDistance(ref destElLine, ref destination, ref Position) - aConst.CollisionSize >= approach.End1Value;
                         else
@@ -1511,7 +1511,7 @@ namespace CoreSystems.Projectiles
                         var greaterThanTolerance = (approach.End2Value - tolernace) * (approach.End2Value - tolernace);
                         end2 = distFromSurfaceSqr >= greaterThanTolerance && distFromSurfaceSqr <= lessThanTolerance;
                         break;
-                    case Conditions.DistanceFromTarget:
+                    case Conditions.DistanceFromDestination:
                         if (approach.EndCon2 == approach.StartCon1)
                             end2 = start1;
                         else if (approach.EndCon2 == approach.StartCon2)
@@ -1524,7 +1524,7 @@ namespace CoreSystems.Projectiles
                                 end2 = Vector3D.Distance(destination, Position) - aConst.CollisionSize <= approach.End2Value;
                         }
                         break;
-                    case Conditions.DistanceToTarget:
+                    case Conditions.DistanceToDestination:
                         if (desiredElevation > 0)
                             end2 = MyUtils.GetPointLineDistance(ref destElLine, ref destination, ref Position) - aConst.CollisionSize >= approach.End2Value;
                         else
