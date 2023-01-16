@@ -219,7 +219,6 @@ namespace CoreSystems.Support
             RandOffsetDir = Vector3D.Zero;
 
             DummyTargets = null;
-            ApproachInfo = null;
             LastVelocity = null;
             SmartReady = false;
             WasTracking = false;
@@ -230,8 +229,7 @@ namespace CoreSystems.Support
             if (!p.Info.AmmoDef.Const.FullSync && p.Info.SyncId != ulong.MaxValue)
                 p.Info.Weapon.ProjectileSyncMonitor.Remove(p.Info.SyncId);
 
-
-            if (ApproachInfo != null )
+            if (ApproachInfo != null)
             {
                 ApproachInfo.Clean(p);
                 ApproachInfo = null;
