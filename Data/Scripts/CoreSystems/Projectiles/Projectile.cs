@@ -2423,6 +2423,7 @@ namespace CoreSystems.Projectiles
                     if (entity != null && !entity.MarkedForClose)
                     {
                         hasTarget = true;
+                        s.DroneInfo.NavTargetBound = s.DroneInfo.NavTargetEnt.PositionComp.WorldVolume;
                     }
                     else
                     {
