@@ -813,6 +813,8 @@ namespace CoreSystems.Projectiles
             var aInfo = storage.ApproachInfo;
             if (targetLock)
                 aInfo.TargetPos = targetPos;
+            if (Info.AmmoDef.AmmoRound.Contains("MK I CAP"))
+                Log.Line($"Running: {Info.Age} - {Info.AmmoDef.AmmoRound} - {storage.RequestedStage} - {aInfo.OffsetFwdDir == Info.OriginFwd}");
 
             if (aConst.NoTargetApproach || !Vector3D.IsZero(aInfo.TargetPos))
             {
@@ -1139,7 +1141,7 @@ namespace CoreSystems.Projectiles
                 switch (approach.StartCon1)
                 {
                     case Conditions.DesiredElevation:
-                        var plane = new PlaneD(storage.ApproachInfo.LookAtPos, storage.ApproachInfo.OffsetUpDir);
+                        var plane = new PlaneD(aInfo.LookAtPos, aInfo.OffsetUpDir);
                         var distToPlane = approach.Elevation != RelativeTo.Surface ? Math.Abs(plane.DistanceToPoint(Position)) : plane.DistanceToPoint(Position);
                         var tolernace = approach.ElevationTolerance + aConst.CollisionSize;
                         var distFromSurfaceSqr = !Vector3D.IsZero(surfacePos) ? Vector3D.DistanceSquared(Position, surfacePos) : distToPlane * distToPlane;
@@ -1167,16 +1169,16 @@ namespace CoreSystems.Projectiles
                         start1 = Info.RelativeAge <= approach.Start1Value;
                         break;
                     case Conditions.RelativeLifetime:
-                        start1 = Info.RelativeAge - storage.ApproachInfo.RelativeAgeStart >= approach.Start1Value;
+                        start1 = Info.RelativeAge - aInfo.RelativeAgeStart >= approach.Start1Value;
                         break;
                     case Conditions.RelativeDeadtime:
-                        start1 = Info.RelativeAge - storage.ApproachInfo.RelativeAgeStart <= approach.Start1Value;
+                        start1 = Info.RelativeAge - aInfo.RelativeAgeStart <= approach.Start1Value;
                         break;
                     case Conditions.MinTravelRequired:
-                        start1 = Info.DistanceTraveled - storage.ApproachInfo.StartDistanceTraveled >= approach.Start1Value;
+                        start1 = Info.DistanceTraveled - aInfo.StartDistanceTraveled >= approach.Start1Value;
                         break;
                     case Conditions.MaxTravelRequired:
-                        start1 = Info.DistanceTraveled - storage.ApproachInfo.StartDistanceTraveled <= approach.Start1Value;
+                        start1 = Info.DistanceTraveled - aInfo.StartDistanceTraveled <= approach.Start1Value;
                         break;
                     case Conditions.Spawn:
                     case Conditions.Ignore:
@@ -1207,14 +1209,14 @@ namespace CoreSystems.Projectiles
                             start1 = true;
                         break;
                     case Conditions.RelativeSpawns:
-                        start1 = Info.Frags - storage.ApproachInfo.RelativeSpawnsStart >= approach.Start1Value;
+                        start1 = Info.Frags - aInfo.RelativeSpawnsStart >= approach.Start1Value;
                         break;
                     case Conditions.EnemyTargetLoss:
                         if (Info.Target.TargetObject == null)
-                            storage.ApproachInfo.TargetLossTime += Session.I.DeltaTimeRatio;
+                            aInfo.TargetLossTime += Session.I.DeltaTimeRatio;
                         else
-                            storage.ApproachInfo.TargetLossTime = 0;
-                        start1 = storage.ApproachInfo.TargetLossTime >= approach.Start1Value;
+                            aInfo.TargetLossTime = 0;
+                        start1 = aInfo.TargetLossTime >= approach.Start1Value;
                         break;
                 }
 
@@ -1330,7 +1332,7 @@ namespace CoreSystems.Projectiles
                             {
                                 var plane = new PlaneD(Info.Origin - heightOffset, upDir);
                                 var distToPlane = plane.DistanceToPoint(source);
-                                elOffset = upDir * distToPlane;
+                                elOffset = plane.Normal * distToPlane;
                                 break;
                             }
                         case RelativeTo.MidPoint:
@@ -1399,7 +1401,7 @@ namespace CoreSystems.Projectiles
 
                     var desiredPos = destination + elOffset;
                     if (desiredPos == Position)
-                        desiredPos += aInfo.OffsetFwdDir;
+                        desiredPos += (aInfo.OffsetFwdDir * 100000);
 
                     TargetPosition = approach.Orbit ? ApproachOrbits(approach, desiredPos, accelMpsMulti, speedCapMulti) : desiredPos;
 
@@ -1415,7 +1417,7 @@ namespace CoreSystems.Projectiles
                 switch (approach.EndCon1)
                 {
                     case Conditions.DesiredElevation:
-                        var plane = new PlaneD(storage.ApproachInfo.LookAtPos, storage.ApproachInfo.OffsetUpDir);
+                        var plane = new PlaneD(aInfo.LookAtPos, aInfo.OffsetUpDir);
                         var distToPlane = approach.Elevation != RelativeTo.Surface ? Math.Abs(plane.DistanceToPoint(Position)) : plane.DistanceToPoint(Position);
                         var tolernace = approach.ElevationTolerance + aConst.CollisionSize;
                         var distFromSurfaceSqr = !Vector3D.IsZero(surfacePos) ? Vector3D.DistanceSquared(Position, surfacePos) : distToPlane * distToPlane;
@@ -1449,16 +1451,16 @@ namespace CoreSystems.Projectiles
                         end1 = Info.RelativeAge <= approach.End1Value;
                         break;
                     case Conditions.RelativeLifetime:
-                        end1 = Info.RelativeAge - storage.ApproachInfo.RelativeAgeStart >= approach.End1Value;
+                        end1 = Info.RelativeAge - aInfo.RelativeAgeStart >= approach.End1Value;
                         break;
                     case Conditions.RelativeDeadtime:
-                        end1 = Info.RelativeAge - storage.ApproachInfo.RelativeAgeStart <= approach.End1Value;
+                        end1 = Info.RelativeAge - aInfo.RelativeAgeStart <= approach.End1Value;
                         break;
                     case Conditions.MinTravelRequired:
-                        end1 = Info.DistanceTraveled - storage.ApproachInfo.StartDistanceTraveled >= approach.End1Value;
+                        end1 = Info.DistanceTraveled - aInfo.StartDistanceTraveled >= approach.End1Value;
                         break;
                     case Conditions.MaxTravelRequired:
-                        end1 = Info.DistanceTraveled - storage.ApproachInfo.StartDistanceTraveled <= approach.End1Value;
+                        end1 = Info.DistanceTraveled - aInfo.StartDistanceTraveled <= approach.End1Value;
                         break;
                     case Conditions.Ignore:
                         end1 = true;
@@ -1490,14 +1492,14 @@ namespace CoreSystems.Projectiles
 
                         break;
                     case Conditions.RelativeSpawns:
-                        end1 = Info.Frags - storage.ApproachInfo.RelativeSpawnsStart >= approach.End1Value;
+                        end1 = Info.Frags - aInfo.RelativeSpawnsStart >= approach.End1Value;
                         break;
                     case Conditions.EnemyTargetLoss:
                         if (Info.Target.TargetObject == null)
-                            storage.ApproachInfo.TargetLossTime += Session.I.DeltaTimeRatio;
+                            aInfo.TargetLossTime += Session.I.DeltaTimeRatio;
                         else
-                            storage.ApproachInfo.TargetLossTime = 0;
-                        end1 = storage.ApproachInfo.TargetLossTime >= approach.End1Value;
+                            aInfo.TargetLossTime = 0;
+                        end1 = aInfo.TargetLossTime >= approach.End1Value;
                         break;
                 }
 
@@ -1505,7 +1507,7 @@ namespace CoreSystems.Projectiles
                 switch (approach.EndCon2)
                 {
                     case Conditions.DesiredElevation:
-                        var plane = new PlaneD(storage.ApproachInfo.LookAtPos, storage.ApproachInfo.OffsetUpDir);
+                        var plane = new PlaneD(aInfo.LookAtPos, aInfo.OffsetUpDir);
                         var distToPlane = approach.Elevation != RelativeTo.Surface ? Math.Abs(plane.DistanceToPoint(Position)) : plane.DistanceToPoint(Position);
                         var tolernace = approach.ElevationTolerance + aConst.CollisionSize;
                         var distFromSurfaceSqr = !Vector3D.IsZero(surfacePos) ? Vector3D.DistanceSquared(Position, surfacePos) : distToPlane * distToPlane;
@@ -1539,16 +1541,16 @@ namespace CoreSystems.Projectiles
                         end2 = Info.RelativeAge <= approach.End2Value;
                         break;
                     case Conditions.RelativeLifetime:
-                        end2 = Info.RelativeAge - storage.ApproachInfo.RelativeAgeStart >= approach.End2Value;
+                        end2 = Info.RelativeAge - aInfo.RelativeAgeStart >= approach.End2Value;
                         break;
                     case Conditions.RelativeDeadtime:
-                        end2 = Info.RelativeAge - storage.ApproachInfo.RelativeAgeStart <= approach.End2Value;
+                        end2 = Info.RelativeAge - aInfo.RelativeAgeStart <= approach.End2Value;
                         break;
                     case Conditions.MinTravelRequired:
-                        end2 = Info.DistanceTraveled - storage.ApproachInfo.StartDistanceTraveled >= approach.End2Value;
+                        end2 = Info.DistanceTraveled - aInfo.StartDistanceTraveled >= approach.End2Value;
                         break;
                     case Conditions.MaxTravelRequired:
-                        end2 = Info.DistanceTraveled - storage.ApproachInfo.StartDistanceTraveled <= approach.End2Value;
+                        end2 = Info.DistanceTraveled - aInfo.StartDistanceTraveled <= approach.End2Value;
                         break;
                     case Conditions.Ignore:
                         end2 = true;
@@ -1579,14 +1581,14 @@ namespace CoreSystems.Projectiles
                             end2 = true;
                         break;
                     case Conditions.RelativeSpawns:
-                        end2 = Info.Frags - storage.ApproachInfo.RelativeSpawnsStart >= approach.End2Value;
+                        end2 = Info.Frags - aInfo.RelativeSpawnsStart >= approach.End2Value;
                         break;
                     case Conditions.EnemyTargetLoss:
                         if (Info.Target.TargetObject == null)
-                            storage.ApproachInfo.TargetLossTime += Session.I.DeltaTimeRatio;
+                            aInfo.TargetLossTime += Session.I.DeltaTimeRatio;
                         else
-                            storage.ApproachInfo.TargetLossTime = 0;
-                        end2 = storage.ApproachInfo.TargetLossTime >= approach.End2Value;
+                            aInfo.TargetLossTime = 0;
+                        end2 = aInfo.TargetLossTime >= approach.End2Value;
                         break;
                 }
 
@@ -1654,6 +1656,8 @@ namespace CoreSystems.Projectiles
 
         private void ApproachEnd(ApproachConstants approach, bool end1, bool end2, ref Vector3D source, ref Vector3D destination, ref Vector3D targetPos)
         {
+            if (Info.AmmoDef.AmmoRound.Contains("MK I CAP"))
+                Log.Line($"End: {Info.Age} - {Info.AmmoDef.AmmoRound} - {Info.Storage.RequestedStage} - {Info.Storage.ApproachInfo.OffsetFwdDir == Info.OriginFwd} - {approach.EndCon1}[{end1}] - {approach.EndCon2}[{end2}] - endAnd:{approach.EndAnd}");
             var aConst = Info.AmmoDef.Const;
             var storage = Info.Storage;
 
