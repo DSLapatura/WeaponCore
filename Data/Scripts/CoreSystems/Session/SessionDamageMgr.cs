@@ -349,6 +349,7 @@ namespace CoreSystems
 
         private void DamageGrid(HitEntity hitEnt, ProInfo t)
         {
+
             var grid = hitEnt.Entity as MyCubeGrid;
             if (grid == null || grid.MarkedForClose || !hitEnt.HitPos.HasValue || hitEnt.Blocks == null)
             {

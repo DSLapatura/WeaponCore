@@ -86,7 +86,7 @@ namespace CoreSystems.Projectiles
                 var grid = ent as MyCubeGrid;
                 var entIsSelf = grid != null && firingCube != null && (grid == firingCube.CubeGrid || firingCube.CubeGrid.IsSameConstructAs(grid));
 
-                if (entIsSelf && aConst.IsSmart && !info.Storage.SmartReady || ent.MarkedForClose || !ent.InScene || !selfDamage && ent == ai.MyShield || !isGrid && ent == topEntity) continue;
+                if (entIsSelf && aConst.IsSmart && (!info.Storage.SmartReady || aPhaseSelf) || ent.MarkedForClose || !ent.InScene || !selfDamage && ent == ai.MyShield || !isGrid && ent == topEntity) continue;
 
                 var character = ent as IMyCharacter;
                 if (info.EwarActive && character != null && !genericFields) continue;
@@ -365,18 +365,16 @@ namespace CoreSystems.Projectiles
                 }
                 else if (ent.Physics != null && !ent.Physics.IsPhantom && !ent.IsPreview && grid != null)
                 {
-
                     if (grid != null)
                     {
                         hitEntity = pool.Count > 0 ? pool.Pop() : new HitEntity();
                         hitEntity.Pool = pool;
-                        if (entIsSelf && !selfDamage && (!info.Storage.SmartReady || aPhaseSelf))
+                        if (entIsSelf && !selfDamage)
                         {
                             if (!isBeam && beamLen <= grid.GridSize * 2 && !goCritical)
                             {
                                 MyCube cube;
-                                if (!(grid.TryGetCube(grid.WorldToGridInteger(p.Position), out cube) && isGrid && cube.CubeBlock != firingCube.SlimBlock || grid.TryGetCube(grid.WorldToGridInteger(p.LastPosition), out cube) && isGrid && cube.CubeBlock != firingCube.SlimBlock))
-                                {
+                                if (!(grid.TryGetCube(grid.WorldToGridInteger(p.Position), out cube) && isGrid && cube.CubeBlock != firingCube.SlimBlock || grid.TryGetCube(grid.WorldToGridInteger(p.LastPosition), out cube) && isGrid && cube.CubeBlock != firingCube.SlimBlock)) {
                                     hitEntity.Clean();
                                     continue;
                                 }
@@ -384,7 +382,6 @@ namespace CoreSystems.Projectiles
 
                             if (!fieldActive)
                             {
-
                                 var forwardPos = p.Info.Age != 1 ? beamFrom : beamFrom + (direction * Math.Min(grid.GridSizeHalf, info.DistanceTraveled - info.PrevDistanceTraveled));
                                 grid.RayCastCells(forwardPos, p.Beam.To, hitEntity.Vector3ICache, null, true, true);
 
@@ -408,19 +405,18 @@ namespace CoreSystems.Projectiles
                                         }
                                     }
 
-                                    if (!hitself)
-                                    {
+                                    if (!hitself) {
                                         hitEntity.Clean();
                                         continue;
                                     }
+
                                     IHitInfo hitInfo = null;
                                     if (!goCritical)
                                     {
 
                                         Session.I.Physics.CastRay(forwardPos, beamTo, out hitInfo, 15);
                                         var hitGrid = hitInfo?.HitEntity?.GetTopMostParent() as MyCubeGrid;
-                                        if (hitGrid == null || firingCube == null || !firingCube.CubeGrid.IsSameConstructAs(hitGrid))
-                                        {
+                                        if (hitGrid == null || firingCube == null || !firingCube.CubeGrid.IsSameConstructAs(hitGrid)) {
                                             hitEntity.Clean();
                                             continue;
                                         }
@@ -428,7 +424,17 @@ namespace CoreSystems.Projectiles
 
                                     hitEntity.HitPos = hitInfo?.Position ?? beamFrom;
                                     var posI = hitEntity.Vector3ICache[0];
-                                    hitEntity.Blocks.Add(new HitEntity.RootBlocks { Block = grid.GetCubeBlock(hitEntity.Vector3ICache[0]), QueryPos = posI });
+                                    var block = grid.GetCubeBlock(hitEntity.Vector3ICache[0]) as IMySlimBlock;
+                                    if (block != null) 
+                                        hitEntity.Blocks.Add(new HitEntity.RootBlocks { Block = block, QueryPos = posI });
+                                    else {
+                                        hitEntity.Clean();
+                                        continue;
+                                    }
+                                }
+                                else {
+                                    hitEntity.Clean();
+                                    continue;
                                 }
                             }
                         }
