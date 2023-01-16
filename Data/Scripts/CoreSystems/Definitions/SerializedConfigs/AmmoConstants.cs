@@ -1719,6 +1719,12 @@ namespace CoreSystems.Support
         public readonly bool ModAngleOffset;
         public readonly bool HasAngleOffset;
         public readonly bool ModelRotate;
+
+        public readonly bool ToggleIngoreVoxels;
+        public readonly bool SelfAvoidance;
+        public readonly bool TargetAvoidance;
+        public readonly bool SelfPhasing;
+        
         public readonly double OrbitRadius;
         public readonly double AngleOffset;
         public readonly double DesiredElevation;
@@ -1757,6 +1763,10 @@ namespace CoreSystems.Support
             NoElevationLead = def.NoElevationLead;
             IgnoreAntiSmart = def.IgnoreAntiSmart;
             ModelRotate = def.ModelRotateTime > 0;
+            ToggleIngoreVoxels = def.ToggleIngoreVoxels;
+            SelfAvoidance = def.SelfAvoidance;
+            TargetAvoidance = def.TargetAvoidance;
+            SelfPhasing = def.SelfPhasing;
 
             Forward = def.Forward;
             Up = def.Up;
@@ -1855,7 +1865,6 @@ namespace CoreSystems.Support
             var rngSelectedId = -1;
             var lowestRuns = int.MaxValue;
             var runsSelectedId = -1;
-
             float highestRoll = float.MinValue;
             var aStorageArray = info.Storage.ApproachInfo.Storage;
             if (array != null)

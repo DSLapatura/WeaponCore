@@ -1484,6 +1484,10 @@ namespace CoreSystems.Support
                     [ProtoMember(56)] internal int ModelRotateTime;
                     [ProtoMember(57)] internal FwdRelativeTo Forward;
                     [ProtoMember(58)] internal bool AdjustForward;
+                    [ProtoMember(59)] internal bool ToggleIngoreVoxels;
+                    [ProtoMember(60)] internal bool SelfAvoidance;
+                    [ProtoMember(61)] internal bool TargetAvoidance;
+                    [ProtoMember(62)] internal bool SelfPhasing;
                 }
 
                 [ProtoContract]

@@ -17,6 +17,7 @@ using static CoreSystems.Support.DeferedVoxels;
 using CollisionLayers = Sandbox.Engine.Physics.MyPhysics.CollisionLayers;
 using Jakaria.API;
 using static CoreSystems.Projectiles.Projectile;
+using System.Security.Cryptography;
 
 namespace CoreSystems.Projectiles
 {
@@ -54,9 +55,24 @@ namespace CoreSystems.Projectiles
             var firingCube = coreEntity as MyCubeBlock;
             var goCritical = aConst.IsCriticalReaction;
             var selfDamage = aConst.SelfDamage;
-            var ignoreVoxels = aDef.IgnoreVoxels;
+
+            var aToggleVoxel = false;
+            var aAvoidSelf = false;
+            var aAvoidTarget = false;
+            var aPhaseSelf = false;
+            if (s.ApproachInfo != null && s.ApproachInfo.Active)
+            {
+                var approach = aConst.Approaches[s.RequestedStage];
+                aToggleVoxel = approach.ToggleIngoreVoxels;
+                aAvoidSelf = approach.SelfAvoidance;
+                aAvoidTarget = approach.TargetAvoidance;
+                aPhaseSelf = approach.SelfPhasing;
+            }
+
+            var ignoreVoxels = aDef.IgnoreVoxels && !aToggleVoxel || aToggleVoxel && !aDef.IgnoreVoxels;
             var isGrid = ai.AiType == Ai.AiTypes.Grid;
             var closestFutureDistSqr = double.MaxValue;
+
             var voxelCheck = aConst.FakeVoxelHitTicks > 0 || ai.PlanetSurfaceInRange && ai.ClosestPlanetSqr <= info.MaxTrajectory * info.MaxTrajectory;
             WaterData water = null;
             if (Session.I.WaterApiLoaded && info.MyPlanet != null)
@@ -354,7 +370,7 @@ namespace CoreSystems.Projectiles
                     {
                         hitEntity = pool.Count > 0 ? pool.Pop() : new HitEntity();
                         hitEntity.Pool = pool;
-                        if (entIsSelf && !selfDamage && !info.Storage.SmartReady)
+                        if (entIsSelf && !selfDamage && (!info.Storage.SmartReady || aPhaseSelf))
                         {
                             if (!isBeam && beamLen <= grid.GridSize * 2 && !goCritical)
                             {
@@ -462,11 +478,11 @@ namespace CoreSystems.Projectiles
                 }
             }
 
-            if (aConst.CheckFutureIntersection && closestFutureEnt != null && closestFutureEnt.EntityId != w.Target.TopEntityId && closestFutureEnt != topEntity)
+            if (aConst.CheckFutureIntersection && closestFutureEnt != null && (aAvoidSelf || closestFutureEnt.EntityId != w.Target.TopEntityId && closestFutureEnt != topEntity))
             {
                 var oGrid = closestFutureEnt as MyCubeGrid;
                 var tGrid = target.TargetObject as MyCubeBlock;
-                var isTarget = oGrid != null &&  tGrid != null && oGrid.IsSameConstructAs(tGrid.CubeGrid);
+                var isTarget = !aAvoidTarget && oGrid != null &&  tGrid != null && oGrid.IsSameConstructAs(tGrid.CubeGrid);
                 if (!isTarget)
                 {
                     s.Obstacle.Entity = closestFutureEnt;
