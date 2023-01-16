@@ -130,9 +130,6 @@ namespace CoreSystems.Projectiles
                     {
                         var v = virts[j];
                         p.VrPros.Add(v.Info);
-                        if (!v.Rotate)
-                            info.OriginFwd  = v.Muzzle.DeviatedDir;
-
                         if (!a.Const.RotateRealBeam) 
                             w.WeaponCache.VirutalId = 0;
                         else if (v.Rotate)

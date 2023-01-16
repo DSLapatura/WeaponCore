@@ -87,6 +87,7 @@ namespace CoreSystems.Support
             MuzzleId = muzzle.MuzzleId;
             UniqueMuzzleId = muzzle.UniqueId;
             Origin = muzzle.Position;
+            OriginFwd = muzzle.DeviatedDir;
             MaxTrajectory = maxTrajectory;
             ShotFade = shotFade;
         }

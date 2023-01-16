@@ -466,7 +466,8 @@ namespace CoreSystems.Projectiles
                         var vs = vp.AvShot;
 
                         vp.TracerLength = info.TracerLength;
-                        vs.Init(vp, (aConst.DeltaVelocityPerTick * Session.I.DeltaTimeRatio), p.MaxSpeed, ref p.Direction);
+                        var visDir = aConst.ConvergeBeams ? p.Direction : vp.OriginFwd;
+                        vs.Init(vp, (aConst.DeltaVelocityPerTick * Session.I.DeltaTimeRatio), p.MaxSpeed, ref visDir);
 
                         if (info.BaseDamagePool <= 0 || p.State == ProjectileState.Depleted)
                             vs.ProEnded = true;
@@ -492,9 +493,9 @@ namespace CoreSystems.Projectiles
                             Vector3D beamEnd;
                             var hit = p.Intersecting && hitPos.HasValue;
                             if (!hit)
-                                beamEnd = vs.Origin + (vs.Direction * info.MaxTrajectory);
+                                beamEnd = vs.Origin + (visDir * info.MaxTrajectory);
                             else
-                                beamEnd = vs.Origin + (vs.Direction * info.Weapon.WeaponCache.HitDistance);
+                                beamEnd = vs.Origin + (visDir * info.Weapon.WeaponCache.HitDistance);
 
                             var line = new LineD(vs.Origin, beamEnd, !hit ? info.MaxTrajectory : info.Weapon.WeaponCache.HitDistance);
 
