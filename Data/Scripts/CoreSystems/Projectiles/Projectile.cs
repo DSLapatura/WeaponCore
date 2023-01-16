@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using CoreSystems.Support;
 using Jakaria.API;
 using Sandbox.Game.Entities;
@@ -809,11 +810,11 @@ namespace CoreSystems.Projectiles
             var s = Session.I;
             var aConst = Info.AmmoDef.Const;
             var storage = Info.Storage;
-
+            var aInfo = storage.ApproachInfo;
             if (targetLock)
-                storage.ApproachInfo.TargetPos = targetPos;
+                aInfo.TargetPos = targetPos;
 
-            if (aConst.NoTargetApproach || !Vector3D.IsZero(storage.ApproachInfo.TargetPos))
+            if (aConst.NoTargetApproach || !Vector3D.IsZero(aInfo.TargetPos))
             {
                 #region Setup
                 if (storage.RequestedStage == -1)
@@ -826,9 +827,9 @@ namespace CoreSystems.Projectiles
 
                 if (stageChange)
                 {
-                    storage.ApproachInfo.StartDistanceTraveled = Info.DistanceTraveled;
-                    storage.ApproachInfo.RelativeAgeStart = Info.RelativeAge;
-                    storage.ApproachInfo.RelativeSpawnsStart = Info.Frags;
+                    aInfo.StartDistanceTraveled = Info.DistanceTraveled;
+                    aInfo.RelativeAgeStart = Info.RelativeAge;
+                    aInfo.RelativeSpawnsStart = Info.Frags;
                 }
 
                 var approach = aConst.Approaches[storage.RequestedStage];
@@ -838,15 +839,15 @@ namespace CoreSystems.Projectiles
 
                 disableAvoidance = approach.DisableAvoidance;
 
-                if (approach.ModelRotateTime > 0 || storage.ApproachInfo.ModelRotateAge > 0)
+                if (approach.ModelRotateTime > 0 || aInfo.ModelRotateAge > 0)
                 {
-                    if (targetLock && approach.ModelRotateTime > storage.ApproachInfo.ModelRotateAge)
+                    if (targetLock && approach.ModelRotateTime > aInfo.ModelRotateAge)
                     {
-                        storage.ApproachInfo.ModelRotateMaxAge = approach.ModelRotateTime;
-                        ++storage.ApproachInfo.ModelRotateAge;
+                        aInfo.ModelRotateMaxAge = approach.ModelRotateTime;
+                        ++aInfo.ModelRotateAge;
                     }
-                    else if (storage.ApproachInfo.ModelRotateAge > 0 && (!targetLock || !approach.ModelRotate) && --storage.ApproachInfo.ModelRotateAge == 0)
-                        storage.ApproachInfo.ModelRotateMaxAge = 0;
+                    else if (aInfo.ModelRotateAge > 0 && (!targetLock || !approach.ModelRotate) && --aInfo.ModelRotateAge == 0)
+                        aInfo.ModelRotateMaxAge = 0;
                 }
                 #endregion
 
@@ -856,50 +857,50 @@ namespace CoreSystems.Projectiles
                     switch (approach.Forward)
                     {
                         case FwdRelativeTo.ForwardRelativeToBlock:
-                            storage.ApproachInfo.OffsetFwdDir = Info.OriginUp;
+                            aInfo.OffsetFwdDir = Info.OriginUp;
                             break;
                         case FwdRelativeTo.ForwardRelativeToShooter:
-                            storage.ApproachInfo.OffsetFwdDir = Info.Weapon.Comp.CoreEntity.PositionComp.WorldMatrixRef.Up;
+                            aInfo.OffsetFwdDir = Info.Weapon.Comp.CoreEntity.PositionComp.WorldMatrixRef.Up;
                             break;
                         case FwdRelativeTo.ForwardRelativeToGravity:
-                            storage.ApproachInfo.OffsetFwdDir = Info.MyPlanet == null ? Info.OriginUp : Vector3D.Normalize(Position - Info.MyPlanet.PositionComp.WorldAABB.Center);
+                            aInfo.OffsetFwdDir = Info.MyPlanet == null ? Info.OriginUp : Vector3D.Normalize(Position - Info.MyPlanet.PositionComp.WorldAABB.Center);
                             break;
                         case FwdRelativeTo.ForwardTargetDirection:
-                            storage.ApproachInfo.OffsetFwdDir = Vector3D.Normalize(storage.ApproachInfo.TargetPos - Position);
+                            aInfo.OffsetFwdDir = Vector3D.Normalize(aInfo.TargetPos - Position);
                             break;
                         case FwdRelativeTo.ForwardTargetVelocity:
-                            storage.ApproachInfo.OffsetFwdDir = !Vector3D.IsZero(PrevTargetVel) ? Vector3D.Normalize(PrevTargetVel) : Info.OriginUp;
+                            aInfo.OffsetFwdDir = !Vector3D.IsZero(PrevTargetVel) ? Vector3D.Normalize(PrevTargetVel) : Info.OriginUp;
                             break;
                         case FwdRelativeTo.ForwardOriginDirection:
-                            storage.ApproachInfo.OffsetFwdDir = Info.OriginFwd;
+                            aInfo.OffsetFwdDir = Info.OriginFwd;
                             break;
                         case FwdRelativeTo.ForwardStoredStartDestination:
                         case FwdRelativeTo.ForwardStoredStartPosition:
                         case FwdRelativeTo.ForwardStoredStartLocalPosition:
 
-                            var storedStartDest = storage.ApproachInfo.Storage[approach.StoredStartId].StoredPosition;
+                            var storedStartDest = aInfo.Storage[approach.StoredStartId].StoredPosition;
                             Vector3D destStart;
                             if (approach.Forward == FwdRelativeTo.ForwardStoredStartLocalPosition)
                                 destStart = Vector3D.Transform(storedStartDest, Info.Weapon.Comp.TopEntity.PositionComp.WorldMatrixRef);
                             else
-                                destStart = storedStartDest != Vector3D.Zero ? storedStartDest : storage.ApproachInfo.TargetPos;
-                            storage.ApproachInfo.OffsetFwdDir = Vector3D.Normalize(destStart - Position);
+                                destStart = storedStartDest != Vector3D.Zero ? storedStartDest : aInfo.TargetPos;
+                            aInfo.OffsetFwdDir = Vector3D.Normalize(destStart - Position);
                             break;
                         case FwdRelativeTo.ForwardStoredEndDestination:
                         case FwdRelativeTo.ForwardStoredEndPosition:
                         case FwdRelativeTo.ForwardStoredEndLocalPosition:
 
-                            var storedEndDest = storage.ApproachInfo.Storage[aConst.ApproachesCount + approach.StoredEndId].StoredPosition;
+                            var storedEndDest = aInfo.Storage[aConst.ApproachesCount + approach.StoredEndId].StoredPosition;
                             Vector3D destEnd;
                             if (approach.Forward == FwdRelativeTo.ForwardStoredEndLocalPosition)
                                 destEnd = Vector3D.Transform(storedEndDest, Info.Weapon.Comp.TopEntity.PositionComp.WorldMatrixRef);
                             else
-                                destEnd = storedEndDest != Vector3D.Zero ? storedEndDest : storage.ApproachInfo.TargetPos;
+                                destEnd = storedEndDest != Vector3D.Zero ? storedEndDest : aInfo.TargetPos;
 
-                            storage.ApproachInfo.OffsetFwdDir = Vector3D.Normalize(destEnd - Position);
+                            aInfo.OffsetFwdDir = Vector3D.Normalize(destEnd - Position);
                             break;
                         default:
-                            storage.ApproachInfo.OffsetFwdDir = Info.OriginUp;
+                            aInfo.OffsetFwdDir = Info.OriginFwd;
                             break;
                     }
                 }
@@ -909,50 +910,50 @@ namespace CoreSystems.Projectiles
                     switch (approach.Up)
                     {
                         case UpRelativeTo.UpRelativeToBlock:
-                            storage.ApproachInfo.OffsetUpDir = Info.OriginUp;
+                            aInfo.OffsetUpDir = Info.OriginUp;
                             break;
                         case UpRelativeTo.UpRelativeToShooter:
-                            storage.ApproachInfo.OffsetUpDir = Info.Weapon.Comp.CoreEntity.PositionComp.WorldMatrixRef.Up;
+                            aInfo.OffsetUpDir = Info.Weapon.Comp.CoreEntity.PositionComp.WorldMatrixRef.Up;
                             break;
                         case UpRelativeTo.UpRelativeToGravity:
-                            storage.ApproachInfo.OffsetUpDir = Info.MyPlanet == null ? Info.OriginUp : Vector3D.Normalize(Position - Info.MyPlanet.PositionComp.WorldAABB.Center);
+                            aInfo.OffsetUpDir = Info.MyPlanet == null ? Info.OriginUp : Vector3D.Normalize(Position - Info.MyPlanet.PositionComp.WorldAABB.Center);
                             break;
                         case UpRelativeTo.UpTargetDirection:
-                            storage.ApproachInfo.OffsetUpDir = Vector3D.Normalize(storage.ApproachInfo.TargetPos - Position);
+                            aInfo.OffsetUpDir = Vector3D.Normalize(aInfo.TargetPos - Position);
                             break;
                         case UpRelativeTo.UpTargetVelocity:
-                            storage.ApproachInfo.OffsetUpDir = !Vector3D.IsZero(PrevTargetVel) ? Vector3D.Normalize(PrevTargetVel) : Info.OriginUp;
+                            aInfo.OffsetUpDir = !Vector3D.IsZero(PrevTargetVel) ? Vector3D.Normalize(PrevTargetVel) : Info.OriginUp;
                             break;
                         case UpRelativeTo.UpOriginDirection:
-                            storage.ApproachInfo.OffsetUpDir = Info.OriginFwd;
+                            aInfo.OffsetUpDir = Info.OriginFwd;
                             break;
                         case UpRelativeTo.UpStoredStartDestination:
                         case UpRelativeTo.UpStoredStartPosition:
                         case UpRelativeTo.UpStoredStartLocalPosition:
 
-                            var storedStartDest = storage.ApproachInfo.Storage[approach.StoredStartId].StoredPosition;
+                            var storedStartDest = aInfo.Storage[approach.StoredStartId].StoredPosition;
                             Vector3D destStart;
                             if (approach.Up == UpRelativeTo.UpStoredStartLocalPosition)
                                 destStart = Vector3D.Transform(storedStartDest, Info.Weapon.Comp.TopEntity.PositionComp.WorldMatrixRef);
                             else
-                                destStart = storedStartDest != Vector3D.Zero ? storedStartDest : storage.ApproachInfo.TargetPos;
-                            storage.ApproachInfo.OffsetUpDir = Vector3D.Normalize(destStart - Position);
+                                destStart = storedStartDest != Vector3D.Zero ? storedStartDest : aInfo.TargetPos;
+                            aInfo.OffsetUpDir = Vector3D.Normalize(destStart - Position);
                             break;
                         case UpRelativeTo.UpStoredEndDestination:
                         case UpRelativeTo.UpStoredEndPosition:
                         case UpRelativeTo.UpStoredEndLocalPosition:
 
-                            var storedEndDest = storage.ApproachInfo.Storage[aConst.ApproachesCount + approach.StoredEndId].StoredPosition;
+                            var storedEndDest = aInfo.Storage[aConst.ApproachesCount + approach.StoredEndId].StoredPosition;
                             Vector3D destEnd;
                             if (approach.Up == UpRelativeTo.UpStoredEndLocalPosition)
                                 destEnd = Vector3D.Transform(storedEndDest, Info.Weapon.Comp.TopEntity.PositionComp.WorldMatrixRef);
                             else
-                                destEnd = storedEndDest != Vector3D.Zero ? storedEndDest : storage.ApproachInfo.TargetPos;
+                                destEnd = storedEndDest != Vector3D.Zero ? storedEndDest : aInfo.TargetPos;
 
-                            storage.ApproachInfo.OffsetUpDir = Vector3D.Normalize(destEnd - Position);
+                            aInfo.OffsetUpDir = Vector3D.Normalize(destEnd - Position);
                             break;
                         default:
-                            storage.ApproachInfo.OffsetUpDir = Info.OriginUp;
+                            aInfo.OffsetUpDir = Info.OriginUp;
                             break;
                     }
                 }
@@ -963,26 +964,27 @@ namespace CoreSystems.Projectiles
                     {
                         var min = approach.Definition.AngleVariance.Start;
                         var max = approach.Definition.AngleVariance.End;
-                        storage.ApproachInfo.AngleVariance = Info.Random.NextDouble() * (max - min) + min;
+                        aInfo.AngleVariance = Info.Random.NextDouble() * (max - min) + min;
                     }
 
-                    var angle = (approach.AngleOffset + storage.ApproachInfo.AngleVariance) * MathHelper.Pi;
+                    var angle = (approach.AngleOffset + aInfo.AngleVariance) * MathHelper.Pi;
                     var sin = Math.Sin(angle);
                     var cos = Math.Cos(angle);
 
-                    var upForward = Vector3D.CalculatePerpendicularVector(storage.ApproachInfo.OffsetUpDir);
-                    var upRight = Vector3D.Cross(storage.ApproachInfo.OffsetUpDir, upForward);
+                    var upForward = Vector3D.CalculatePerpendicularVector(aInfo.OffsetUpDir);
+                    var upRight = Vector3D.Cross(aInfo.OffsetUpDir, upForward);
 
-                    var fwdForward = Vector3D.CalculatePerpendicularVector(storage.ApproachInfo.OffsetFwdDir);
-                    var fwdRight = Vector3D.Cross(storage.ApproachInfo.OffsetFwdDir, upForward);
+                    var fwdForward = Vector3D.CalculatePerpendicularVector(aInfo.OffsetFwdDir);
+                    var fwdRight = Vector3D.Cross(aInfo.OffsetFwdDir, upForward);
 
-                    storage.ApproachInfo.OffsetUpDir = sin * upForward + cos * upRight;
-                    storage.ApproachInfo.OffsetFwdDir = sin * fwdForward + cos * fwdRight;
+                    aInfo.OffsetUpDir = sin * upForward + cos * upRight;
+                    aInfo.OffsetFwdDir = sin * fwdForward + cos * fwdRight;
                 }
 
                 var desiredElevation = approach.DesiredElevation;
-                var heightOffset = storage.ApproachInfo.OffsetUpDir * desiredElevation;
-                var travelLead = Info.DistanceTraveled - storage.ApproachInfo.StartDistanceTraveled >= approach.TrackingDistance ? Info.DistanceTraveled : 0;
+                var heightOffset = aInfo.OffsetUpDir * desiredElevation;
+                var relativeDist = Info.DistanceTraveled - aInfo.StartDistanceTraveled;
+                var travelLead = relativeDist >= approach.TrackingDistance ? relativeDist : 0;
                 var desiredLead = (approach.PushLeadByTravelDistance ? travelLead : 0) + approach.LeadDistance;
                 var clampedLead = MathHelperD.Clamp(desiredLead, approach.ModFutureStep, double.MaxValue);
 
@@ -992,60 +994,60 @@ namespace CoreSystems.Projectiles
                     switch (approach.Source)
                     {
                         case RelativeTo.Origin:
-                            storage.ApproachInfo.LookAtPos = Info.Origin;
+                            aInfo.LookAtPos = Info.Origin;
                             break;
                         case RelativeTo.Shooter:
                             var blockPos = Info.Weapon.Comp.CoreEntity.PositionComp.WorldAABB.Center;
-                            storage.ApproachInfo.DestinationPos = !Vector3D.IsZero(blockPos) ? blockPos : Info.Origin;
+                            aInfo.DestinationPos = !Vector3D.IsZero(blockPos) ? blockPos : Info.Origin;
                             break;
                         case RelativeTo.Target:
-                            storage.ApproachInfo.LookAtPos = storage.ApproachInfo.TargetPos;
+                            aInfo.LookAtPos = aInfo.TargetPos;
                             break;
                         case RelativeTo.Surface:
                             if (Info.MyPlanet != null)
                             {
-                                PlanetSurfaceHeightAdjustment(Position, Direction, approach, out surfacePos);
-                                storage.ApproachInfo.LookAtPos = surfacePos;
+                                PlanetSurfaceHeightAdjustment(Position, aInfo.OffsetUpDir, approach, out surfacePos);
+                                aInfo.LookAtPos = surfacePos;
                             }
                             else
-                                storage.ApproachInfo.LookAtPos = Info.Origin;
+                                aInfo.LookAtPos = Info.Origin;
                             break;
                         case RelativeTo.MidPoint:
-                            storage.ApproachInfo.LookAtPos = Vector3D.Lerp(storage.ApproachInfo.TargetPos, Position, 0.5);
+                            aInfo.LookAtPos = Vector3D.Lerp(aInfo.TargetPos, Position, 0.5);
                             break;
                         case RelativeTo.Current:
-                            storage.ApproachInfo.LookAtPos = Position;
+                            aInfo.LookAtPos = Position;
                             break;
                         case RelativeTo.StoredStartDestination:
                         case RelativeTo.StoredStartPosition:
                         case RelativeTo.StoredStartLocalPosition:
 
-                            var storedDestStart = storage.ApproachInfo.Storage[approach.StoredStartId].StoredPosition;
+                            var storedDestStart = aInfo.Storage[approach.StoredStartId].StoredPosition;
                             Vector3D destStart;
                             if (approach.Source == RelativeTo.StoredStartLocalPosition)
                                 destStart = Vector3D.Transform(storedDestStart, Info.Weapon.Comp.TopEntity.PositionComp.WorldMatrixRef);
                             else
-                                destStart = storedDestStart != Vector3D.Zero ? storedDestStart : storage.ApproachInfo.TargetPos;
-                            storage.ApproachInfo.LookAtPos = destStart;
+                                destStart = storedDestStart != Vector3D.Zero ? storedDestStart : aInfo.TargetPos;
+                            aInfo.LookAtPos = destStart;
                             break;
                         case RelativeTo.StoredEndDestination:
                         case RelativeTo.StoredEndPosition:
                         case RelativeTo.StoredEndLocalPosition:
 
-                            var storedDestEnd = storage.ApproachInfo.Storage[aConst.ApproachesCount + approach.StoredEndId].StoredPosition;
+                            var storedDestEnd = aInfo.Storage[aConst.ApproachesCount + approach.StoredEndId].StoredPosition;
                             Vector3D destEnd;
                             if (approach.Source == RelativeTo.StoredEndLocalPosition)
                                 destEnd = Vector3D.Transform(storedDestEnd, Info.Weapon.Comp.TopEntity.PositionComp.WorldMatrixRef);
                             else
-                                destEnd = storedDestEnd != Vector3D.Zero ? storedDestEnd : storage.ApproachInfo.TargetPos;
-                            storage.ApproachInfo.LookAtPos = destEnd;
+                                destEnd = storedDestEnd != Vector3D.Zero ? storedDestEnd : aInfo.TargetPos;
+                            aInfo.LookAtPos = destEnd;
                             break;
                     }
 
                     if (approach.LeadAndRotateSource)
                     {
-                        var rawPos = storage.ApproachInfo.LookAtPos + heightOffset;
-                        storage.ApproachInfo.LookAtPos = rawPos + (storage.ApproachInfo.OffsetUpDir * clampedLead);
+                        var rawPos = aInfo.LookAtPos + heightOffset;
+                        aInfo.LookAtPos = rawPos + (aInfo.OffsetUpDir * clampedLead);
                     }
                 }
 
@@ -1054,80 +1056,79 @@ namespace CoreSystems.Projectiles
                     switch (approach.Destination)
                     {
                         case RelativeTo.Origin:
-                            storage.ApproachInfo.DestinationPos = Info.Origin;
+                            aInfo.DestinationPos = Info.Origin;
                             break;
                         case RelativeTo.Shooter:
                             var blockPos = Info.Weapon.Comp.CoreEntity.PositionComp.WorldAABB.Center;
-                            storage.ApproachInfo.DestinationPos = !Vector3D.IsZero(blockPos) ? blockPos : Info.Origin;
+                            aInfo.DestinationPos = !Vector3D.IsZero(blockPos) ? blockPos : Info.Origin;
                             break;
                         case RelativeTo.Target:
-                            storage.ApproachInfo.DestinationPos = storage.ApproachInfo.TargetPos;
+                            aInfo.DestinationPos = aInfo.TargetPos;
                             break;
                         case RelativeTo.Surface:
                             if (Info.MyPlanet != null)
                             {
-                                PlanetSurfaceHeightAdjustment(Position, Direction, approach, out surfacePos);
-                                storage.ApproachInfo.DestinationPos = surfacePos;
+                                PlanetSurfaceHeightAdjustment(Position, aInfo.OffsetUpDir, approach, out surfacePos);
+                                aInfo.DestinationPos = surfacePos;
                             }
                             else
-                                storage.ApproachInfo.DestinationPos = Info.Origin;
+                                aInfo.DestinationPos = Info.Origin;
                             break;
                         case RelativeTo.MidPoint:
-                            storage.ApproachInfo.DestinationPos = Vector3D.Lerp(storage.ApproachInfo.TargetPos, Position, 0.5);
+                            aInfo.DestinationPos = Vector3D.Lerp(aInfo.TargetPos, Position, 0.5);
                             break;
                         case RelativeTo.Current:
-                            storage.ApproachInfo.DestinationPos = Position;
+                            aInfo.DestinationPos = Position;
                             break;
                         case RelativeTo.StoredStartDestination:
                         case RelativeTo.StoredStartPosition:
                         case RelativeTo.StoredStartLocalPosition:
 
-                            var storedDestStart = storage.ApproachInfo.Storage[approach.StoredStartId].StoredPosition;
+                            var storedDestStart = aInfo.Storage[approach.StoredStartId].StoredPosition;
                             Vector3D destStart;
                             if (approach.Destination == RelativeTo.StoredStartLocalPosition)
                                 destStart = Vector3D.Transform(storedDestStart, Info.Weapon.Comp.TopEntity.PositionComp.WorldMatrixRef);
                             else
-                                destStart = storedDestStart != Vector3D.Zero ? storedDestStart : storage.ApproachInfo.TargetPos;
-                            storage.ApproachInfo.DestinationPos = destStart;
+                                destStart = storedDestStart != Vector3D.Zero ? storedDestStart : aInfo.TargetPos;
+                            aInfo.DestinationPos = destStart;
                             break;
                         case RelativeTo.StoredEndDestination:
                         case RelativeTo.StoredEndPosition:
                         case RelativeTo.StoredEndLocalPosition:
 
-                            var storedDestEnd = storage.ApproachInfo.Storage[aConst.ApproachesCount + approach.StoredEndId].StoredPosition;
+                            var storedDestEnd = aInfo.Storage[aConst.ApproachesCount + approach.StoredEndId].StoredPosition;
                             Vector3D destEnd;
                             if (approach.Destination == RelativeTo.StoredEndLocalPosition)
                                 destEnd = Vector3D.Transform(storedDestEnd, Info.Weapon.Comp.TopEntity.PositionComp.WorldMatrixRef);
                             else
-                                destEnd = storedDestEnd != Vector3D.Zero ? storedDestEnd : storage.ApproachInfo.TargetPos;
+                                destEnd = storedDestEnd != Vector3D.Zero ? storedDestEnd : aInfo.TargetPos;
 
-                            storage.ApproachInfo.DestinationPos = destEnd;
+                            aInfo.DestinationPos = destEnd;
                             break;
                         case RelativeTo.Nothing:
-                            storage.ApproachInfo.DestinationPos = Info.Target.TargetPos;
+                            aInfo.DestinationPos = Info.Target.TargetPos;
                             break;
                     }
 
                     if (approach.LeadAndRotateDestination)
                     {
-                        var rawPos = storage.ApproachInfo.DestinationPos + heightOffset;
-                        storage.ApproachInfo.DestinationPos = rawPos + (storage.ApproachInfo.OffsetUpDir * clampedLead);
+                        var rawPos = aInfo.DestinationPos + heightOffset;
+                        aInfo.DestinationPos = rawPos + (aInfo.OffsetUpDir * clampedLead);
                     }
                 }
 
-                var source = storage.ApproachInfo.LookAtPos;
-                var destination = storage.ApproachInfo.DestinationPos;
+                var source = aInfo.LookAtPos;
+                var destination = aInfo.DestinationPos;
                 if (approach.OffsetMinRadius > 0 && approach.OffsetTime > 0)
                 {
                     var prevCheck = Info.PrevRelativeAge % approach.OffsetTime;
                     var currentCheck = Info.RelativeAge % approach.OffsetTime;
                     if (prevCheck < 0 || prevCheck > currentCheck)
                         SetNavTargetOffset(approach);
-                    destination += storage.ApproachInfo.NavTargetBound.Center;
+                    destination += aInfo.NavTargetBound.Center;
                 }
 
-                var heightStart = source + heightOffset;
-                var heightEnd = destination + heightOffset;
+                var destElLine = destination + heightOffset;
                 #endregion
 
                 #region Start Conditions
@@ -1146,18 +1147,14 @@ namespace CoreSystems.Projectiles
                         start1 = distFromSurfaceSqr >= greaterThanTolerance && distFromSurfaceSqr <= lessThanTolerance;
                         break;
                     case Conditions.DistanceFromTarget: // could save a sqrt by inlining and using heightDir
-                        if (s.DebugMod && s.HandlesInput)
-                            DsDebugDraw.DrawLine(heightEnd, destination, Color.Green, 10);
                         if (desiredElevation > 0)
-                            start1 = MyUtils.GetPointLineDistance(ref heightEnd, ref destination, ref Position) - aConst.CollisionSize <= approach.Start1Value;
+                            start1 = MyUtils.GetPointLineDistance(ref destElLine, ref destination, ref Position) - aConst.CollisionSize <= approach.Start1Value;
                         else
                             start1 = Vector3D.Distance(destination, Position) - aConst.CollisionSize <= approach.Start1Value;
                         break;
                     case Conditions.DistanceToTarget: // could save a sqrt by inlining and using heightDir
-                        if (s.DebugMod && s.HandlesInput)
-                            DsDebugDraw.DrawLine(heightEnd, destination, Color.Green, 10);
                         if (desiredElevation > 0)
-                            start1 = MyUtils.GetPointLineDistance(ref heightEnd, ref destination, ref Position) - aConst.CollisionSize >= approach.Start1Value;
+                            start1 = MyUtils.GetPointLineDistance(ref destElLine, ref destination, ref Position) - aConst.CollisionSize >= approach.Start1Value;
                         else
                             start1 = Vector3D.Distance(destination, Position) - aConst.CollisionSize >= approach.Start1Value;
                         break;
@@ -1223,7 +1220,7 @@ namespace CoreSystems.Projectiles
                 switch (approach.StartCon2)
                 {
                     case Conditions.DesiredElevation:
-                        var plane = new PlaneD(storage.ApproachInfo.LookAtPos, storage.ApproachInfo.OffsetUpDir);
+                        var plane = new PlaneD(aInfo.LookAtPos, aInfo.OffsetUpDir);
                         var distToPlane = approach.Elevation != RelativeTo.Surface ? Math.Abs(plane.DistanceToPoint(Position)) : plane.DistanceToPoint(Position);
                         var tolernace = approach.ElevationTolerance + aConst.CollisionSize;
                         var distFromSurfaceSqr = !Vector3D.IsZero(surfacePos) ? Vector3D.DistanceSquared(Position, surfacePos) : distToPlane * distToPlane;
@@ -1232,18 +1229,14 @@ namespace CoreSystems.Projectiles
                         start2 = distFromSurfaceSqr >= greaterThanTolerance && distFromSurfaceSqr <= lessThanTolerance;
                         break;
                     case Conditions.DistanceFromTarget: // could save a sqrt by inlining and using heightDir
-                        if (s.DebugMod && s.HandlesInput)
-                            DsDebugDraw.DrawLine(heightEnd, destination, Color.Green, 10);
                         if (desiredElevation > 0)
-                            start2 = MyUtils.GetPointLineDistance(ref heightEnd, ref destination, ref Position) - aConst.CollisionSize <= approach.Start2Value;
+                            start2 = MyUtils.GetPointLineDistance(ref destElLine, ref destination, ref Position) - aConst.CollisionSize <= approach.Start2Value;
                         else
                             start2 = Vector3D.Distance(destination, Position) - aConst.CollisionSize <= approach.Start2Value;
                         break;
                     case Conditions.DistanceToTarget: // could save a sqrt by inlining and using heightDir
-                        if (s.DebugMod && s.HandlesInput)
-                            DsDebugDraw.DrawLine(heightEnd, destination, Color.Green, 10);
                         if (desiredElevation > 0)
-                            start2 = MyUtils.GetPointLineDistance(ref heightEnd, ref destination, ref Position) - aConst.CollisionSize >= approach.Start2Value;
+                            start2 = MyUtils.GetPointLineDistance(ref destElLine, ref destination, ref Position) - aConst.CollisionSize >= approach.Start2Value;
                         else
                             start2 = Vector3D.Distance(destination, Position) - aConst.CollisionSize >= approach.Start2Value;
                         break;
@@ -1254,16 +1247,16 @@ namespace CoreSystems.Projectiles
                         start2 = Info.RelativeAge <= approach.Start2Value;
                         break;
                     case Conditions.RelativeLifetime:
-                        start2 = Info.RelativeAge - storage.ApproachInfo.RelativeAgeStart >= approach.Start2Value;
+                        start2 = Info.RelativeAge - aInfo.RelativeAgeStart >= approach.Start2Value;
                         break;
                     case Conditions.RelativeDeadtime:
-                        start2 = Info.RelativeAge - storage.ApproachInfo.RelativeAgeStart <= approach.Start2Value;
+                        start2 = Info.RelativeAge - aInfo.RelativeAgeStart <= approach.Start2Value;
                         break;
                     case Conditions.MinTravelRequired:
-                        start2 = Info.DistanceTraveled - storage.ApproachInfo.StartDistanceTraveled >= approach.Start2Value;
+                        start2 = Info.DistanceTraveled - aInfo.StartDistanceTraveled >= approach.Start2Value;
                         break;
                     case Conditions.MaxTravelRequired:
-                        start2 = Info.DistanceTraveled - storage.ApproachInfo.StartDistanceTraveled <= approach.Start2Value;
+                        start2 = Info.DistanceTraveled - aInfo.StartDistanceTraveled <= approach.Start2Value;
                         break;
                     case Conditions.Spawn:
                     case Conditions.Ignore:
@@ -1293,27 +1286,31 @@ namespace CoreSystems.Projectiles
                             start2 = true;
                         break;
                     case Conditions.RelativeSpawns:
-                        start2 = Info.Frags - storage.ApproachInfo.RelativeSpawnsStart >= approach.Start2Value;
+                        start2 = Info.Frags - aInfo.RelativeSpawnsStart >= approach.Start2Value;
                         break;
                     case Conditions.EnemyTargetLoss:
                         if (Info.Target.TargetObject == null)
-                            storage.ApproachInfo.TargetLossTime += Session.I.DeltaTimeRatio;
+                            aInfo.TargetLossTime += Session.I.DeltaTimeRatio;
                         else
-                            storage.ApproachInfo.TargetLossTime = 0;
-                        start2 = storage.ApproachInfo.TargetLossTime >= approach.Start2Value;
+                            aInfo.TargetLossTime = 0;
+                        start2 = aInfo.TargetLossTime >= approach.Start2Value;
                         break;
                 }
                 #endregion
 
                 #region Start
+                Vector3D elOffset = Vector3D.Zero;
                 if (approach.StartAnd && start1 && start2 || !approach.StartAnd && (start1 || start2) || storage.LastActivatedStage >= 0 && !approach.CanExpireOnceStarted)
                 {
                     accelMpsMulti = aConst.AccelInMetersPerSec * approach.AccelMulti;
                     speedCapMulti = approach.SpeedCapMulti;
-                    var startToEndDir = desiredElevation > 0 ? Vector3D.Normalize(heightEnd - heightStart) : storage.ApproachInfo.OffsetUpDir;
-                    var leadPosition = !approach.NoElevationLead ? heightStart + (startToEndDir * clampedLead) : heightStart;
+                    var fwdDestDir = approach.Forward == FwdRelativeTo.ForwardDestinationDirection;
+                    var upDestDir = approach.Up == UpRelativeTo.UpDestinationDirection;
 
-                    Vector3D heightAdjLeadPos;
+                    var fwdDir = !fwdDestDir ? aInfo.OffsetFwdDir : Vector3D.Normalize(destination - source);
+                    var upDir = !upDestDir ? aInfo.OffsetUpDir : fwdDestDir ? fwdDir : Vector3D.Normalize(destination - source);
+
+                    #region Elevation Correction
                     switch (approach.Elevation)
                     {
                         case RelativeTo.Surface:
@@ -1321,156 +1318,93 @@ namespace CoreSystems.Projectiles
                                 if (Info.MyPlanet != null && approach.Elevation == RelativeTo.Surface)
                                 {
                                     Vector3D followSurfacePos;
-                                    heightAdjLeadPos = PlanetSurfaceHeightAdjustment(leadPosition, storage.ApproachInfo.OffsetUpDir, approach, out followSurfacePos);
+                                    elOffset = PlanetSurfaceHeightAdjustment(source - heightOffset, upDir, approach, out followSurfacePos);
                                 }
                                 else
-                                    heightAdjLeadPos = leadPosition;
+                                    elOffset = heightOffset;
                                 break;
                             }
                         case RelativeTo.Origin:
                             {
-                                var plane = new PlaneD(Info.Origin, startToEndDir);
-                                var distToPlane = Math.Abs(plane.DistanceToPoint(leadPosition));
-                                heightAdjLeadPos = leadPosition + (startToEndDir * distToPlane);
+                                var plane = new PlaneD(Info.Origin - heightOffset, upDir);
+                                var distToPlane = plane.DistanceToPoint(source);
+                                elOffset = upDir * distToPlane;
                                 break;
                             }
                         case RelativeTo.MidPoint:
                             {
-                                var projetedPos = Vector3D.Lerp(destination, leadPosition, 0.5);
-                                var plane = new PlaneD(projetedPos, startToEndDir);
-                                var distToPlane = Math.Abs(plane.DistanceToPoint(leadPosition));
-                                heightAdjLeadPos = leadPosition + (startToEndDir * distToPlane);
+                                var projetedPos = Vector3D.Lerp(destination, source, 0.5);
+                                var plane = new PlaneD(projetedPos - heightOffset, upDir);
+                                var distToPlane = plane.DistanceToPoint(source);
+                                elOffset = plane.Normal * distToPlane;
                                 break;
                             }
                         case RelativeTo.Shooter:
                             {
                                 var blockPos = Info.Weapon.Comp.CoreEntity.PositionComp.WorldAABB.Center;
                                 blockPos = !Vector3D.IsZero(blockPos) ? blockPos : Info.Origin;
-                                var plane = new PlaneD(blockPos, startToEndDir);
-                                var distToPlane = Math.Abs(plane.DistanceToPoint(leadPosition));
-                                heightAdjLeadPos = leadPosition + (startToEndDir * distToPlane);
+                                var plane = new PlaneD(blockPos - heightOffset, upDir);
+                                var distToPlane = plane.DistanceToPoint(source);
+                                elOffset = plane.Normal * distToPlane;
                                 break;
                             }
                         case RelativeTo.Target:
                             {
-                                var plane = new PlaneD(destination, startToEndDir);
-                                var distToPlane = Math.Abs(plane.DistanceToPoint(leadPosition));
-                                heightAdjLeadPos = leadPosition + (startToEndDir * distToPlane);
+                                var plane = new PlaneD(destination - heightOffset, upDir);
+                                var distToPlane = plane.DistanceToPoint(source);
+                                elOffset = plane.Normal * distToPlane;
                                 break;
                             }
                         case RelativeTo.Current:
                             {
-                                var plane = new PlaneD(Position, startToEndDir);
-                                var distToPlane = Math.Abs(plane.DistanceToPoint(leadPosition));
-                                heightAdjLeadPos = leadPosition + (startToEndDir * distToPlane);
+                                var plane = new PlaneD(Position - heightOffset, upDir);
+                                var distToPlane = plane.DistanceToPoint(source);
+                                elOffset = plane.Normal * distToPlane;
                                 break;
                             }
                         case RelativeTo.StoredStartDestination:
                         case RelativeTo.StoredStartPosition:
                         case RelativeTo.StoredStartLocalPosition:
                             {
-                                var storedDest = storage.ApproachInfo.Storage[approach.StoredStartId].StoredPosition;
+                                var storedDest = aInfo.Storage[approach.StoredStartId].StoredPosition;
                                 Vector3D dest;
                                 if (approach.Elevation == RelativeTo.StoredStartLocalPosition)
                                     dest = Vector3D.Transform(storedDest, Info.Weapon.Comp.TopEntity.PositionComp.WorldMatrixRef);
                                 else
-                                    dest = storedDest != Vector3D.Zero ? storedDest : storage.ApproachInfo.TargetPos;
-                                var plane = new PlaneD(dest, startToEndDir);
-                                var distToPlane = Math.Abs(plane.DistanceToPoint(leadPosition));
-                                heightAdjLeadPos = leadPosition + (startToEndDir * distToPlane);
+                                    dest = storedDest != Vector3D.Zero ? storedDest : aInfo.TargetPos;
+                                var plane = new PlaneD(dest - heightOffset, upDir);
+                                var distToPlane = plane.DistanceToPoint(source);
+                                elOffset = plane.Normal * distToPlane;
                                 break;
                             }
                         case RelativeTo.StoredEndDestination:
                         case RelativeTo.StoredEndPosition:
                         case RelativeTo.StoredEndLocalPosition:
                             {
-                                var storedDest = storage.ApproachInfo.Storage[aConst.ApproachesCount + approach.StoredEndId].StoredPosition;
+                                var storedDest = aInfo.Storage[aConst.ApproachesCount + approach.StoredEndId].StoredPosition;
                                 Vector3D dest;
                                 if (approach.Elevation == RelativeTo.StoredEndLocalPosition)
                                     dest = Vector3D.Transform(storedDest, Info.Weapon.Comp.TopEntity.PositionComp.WorldMatrixRef);
                                 else
-                                    dest = storedDest != Vector3D.Zero ? storedDest : storage.ApproachInfo.TargetPos;
-                                var plane = new PlaneD(dest, startToEndDir);
-                                var distToPlane = Math.Abs(plane.DistanceToPoint(leadPosition));
-                                heightAdjLeadPos = leadPosition + (startToEndDir * distToPlane);
+                                    dest = storedDest != Vector3D.Zero ? storedDest : aInfo.TargetPos;
+                                var plane = new PlaneD(dest - heightOffset, upDir);
+                                var distToPlane = plane.DistanceToPoint(source);
+                                elOffset = plane.Normal * distToPlane;
                                 break;
                             }
-                        case RelativeTo.Nothing:
-                            {
-                                switch (approach.Destination)
-                                {
-                                    case RelativeTo.Origin:
-                                        heightAdjLeadPos = Info.Origin;
-                                        break;
-                                    case RelativeTo.Target:
-                                        heightAdjLeadPos = storage.ApproachInfo.TargetPos;
-                                        break;
-                                    case RelativeTo.Shooter:
-                                        var blockPos = Info.Weapon.Comp.CoreEntity.PositionComp.WorldAABB.Center;
-                                        blockPos = !Vector3D.IsZero(blockPos) ? blockPos : Info.Origin;
-                                        heightAdjLeadPos = blockPos;
-                                        break;
-                                    case RelativeTo.Current:
-                                        heightAdjLeadPos = Position + Direction;
-                                        break;
-                                    case RelativeTo.MidPoint:
-                                        heightAdjLeadPos = Vector3D.Lerp(destination, source, 0.5);
-                                        break;
-                                    case RelativeTo.StoredStartDestination:
-                                    case RelativeTo.StoredStartPosition:
-                                    case RelativeTo.StoredStartLocalPosition:
-                                        {
-                                            var storedDest = storage.ApproachInfo.Storage[approach.StoredStartId].StoredPosition;
-                                            if (approach.Destination == RelativeTo.StoredStartLocalPosition)
-                                                heightAdjLeadPos = Vector3D.Transform(storedDest, Info.Weapon.Comp.TopEntity.PositionComp.WorldMatrixRef);
-                                            else
-                                                heightAdjLeadPos = storedDest != Vector3D.Zero ? storedDest : storage.ApproachInfo.TargetPos;
-                                            break;
-                                        }
-                                    case RelativeTo.StoredEndDestination:
-                                    case RelativeTo.StoredEndPosition:
-                                    case RelativeTo.StoredEndLocalPosition:
-                                        {
-                                            var storedDest = storage.ApproachInfo.Storage[aConst.ApproachesCount + approach.StoredEndId].StoredPosition;
-                                            if (approach.Destination == RelativeTo.StoredEndLocalPosition)
-                                                heightAdjLeadPos = Vector3D.Transform(storedDest, Info.Weapon.Comp.TopEntity.PositionComp.WorldMatrixRef);
-                                            else
-                                                heightAdjLeadPos = storedDest != Vector3D.Zero ? storedDest : storage.ApproachInfo.TargetPos;
-                                            break;
-                                        }
-                                    default:
-                                        heightAdjLeadPos = storage.ApproachInfo.TargetPos;
-                                        break;
-                                }
-                                break;
-                            }
-                        default:
-                            heightAdjLeadPos = leadPosition;
-                            break;
                     }
+                    #endregion
 
-                    if (approach.Orbit)
-                    {
-                        TargetPosition = ApproachOrbits(approach, heightAdjLeadPos, accelMpsMulti, speedCapMulti);
-                    }
-                    else
-                    {
-                        var destPerspectiveDir = Vector3D.Normalize(heightAdjLeadPos - destination);
-                        if (approach.Elevation != RelativeTo.Nothing && MyUtils.IsValid(heightAdjLeadPos - destination) && !MyUtils.IsZero(Vector3.Dot(startToEndDir, destPerspectiveDir)))
-                        {
-                            TargetPosition = MyUtils.LinePlaneIntersection(heightAdjLeadPos, startToEndDir, destination, destPerspectiveDir);
-                        }
-                        else
-                            TargetPosition = heightAdjLeadPos;
-                    }
+                    var desiredPos = destination + elOffset;
+                    if (desiredPos == Position)
+                        desiredPos += aInfo.OffsetFwdDir;
+
+                    TargetPosition = approach.Orbit ? ApproachOrbits(approach, desiredPos, accelMpsMulti, speedCapMulti) : desiredPos;
 
                     if (storage.LastActivatedStage != storage.RequestedStage)
                     {
                         ApproachStartEvent(approach, ref source, ref destination, ref targetPos);
                     }
-
-                    if (s.DebugMod && s.HandlesInput)
-                        DsDebugDraw.DrawLine(heightAdjLeadPos, destination, Color.White, 3);
                 }
                 #endregion
 
@@ -1495,14 +1429,14 @@ namespace CoreSystems.Projectiles
                         else
                         {
                             if (desiredElevation > 0)
-                                end1 = MyUtils.GetPointLineDistance(ref heightEnd, ref destination, ref Position) - aConst.CollisionSize <= approach.End1Value;
+                                end1 = MyUtils.GetPointLineDistance(ref destElLine, ref destination, ref Position) - aConst.CollisionSize <= approach.End1Value;
                             else
                                 end1 = Vector3D.Distance(destination, Position) - aConst.CollisionSize <= approach.End1Value;
                         }
                         break;
                     case Conditions.DistanceToTarget:
                         if (desiredElevation > 0)
-                            end1 = MyUtils.GetPointLineDistance(ref heightEnd, ref destination, ref Position) - aConst.CollisionSize >= approach.End1Value;
+                            end1 = MyUtils.GetPointLineDistance(ref destElLine, ref destination, ref Position) - aConst.CollisionSize >= approach.End1Value;
                         else
                             end1 = Vector3D.Distance(destination, Position) - aConst.CollisionSize >= approach.End1Value;
                         break;
@@ -1585,14 +1519,14 @@ namespace CoreSystems.Projectiles
                         else
                         {
                             if (desiredElevation > 0)
-                                end2 = MyUtils.GetPointLineDistance(ref heightEnd, ref destination, ref Position) - aConst.CollisionSize <= approach.End2Value;
+                                end2 = MyUtils.GetPointLineDistance(ref destElLine, ref destination, ref Position) - aConst.CollisionSize <= approach.End2Value;
                             else
                                 end2 = Vector3D.Distance(destination, Position) - aConst.CollisionSize <= approach.End2Value;
                         }
                         break;
                     case Conditions.DistanceToTarget:
                         if (desiredElevation > 0)
-                            end2 = MyUtils.GetPointLineDistance(ref heightEnd, ref destination, ref Position) - aConst.CollisionSize >= approach.End2Value;
+                            end2 = MyUtils.GetPointLineDistance(ref destElLine, ref destination, ref Position) - aConst.CollisionSize >= approach.End2Value;
                         else
                             end2 = Vector3D.Distance(destination, Position) - aConst.CollisionSize >= approach.End2Value;
                         break;
@@ -1661,7 +1595,7 @@ namespace CoreSystems.Projectiles
                     ApproachEnd(approach, end1, end2, ref source, ref destination, ref targetPos);
 
                 if (s.DebugMod && s.HandlesInput)
-                    ApproachDebug(approach, ref heightStart, ref heightEnd, ref destination, start1, start2, end1, end2, nextSpawn, timeSinceSpawn);
+                    ApproachDebug(approach, ref destination, ref source, ref elOffset, start1, start2, end1, end2, nextSpawn, timeSinceSpawn);
 
             }
         }
@@ -1849,19 +1783,32 @@ namespace CoreSystems.Projectiles
 
             surfacePos = surfaceToCenterSqr > waterSurface ? voxelSurfacePos : waterSurfacePos;
 
-            return surfacePos + (upDir * approach.Definition.DesiredElevation);
+            return surfacePos - checkPosition;
         }
-        private void ApproachDebug(ApproachConstants approach, ref Vector3D heightend, ref Vector3D heightStart, ref Vector3D destination, bool start1, bool start2, bool end1, bool end2, double nextSpawn, double timeSinceSpawn)
+
+        private void ApproachDebug(ApproachConstants approach, ref Vector3D destination, ref Vector3D source, ref Vector3D elOffset, bool start1, bool start2, bool end1, bool end2, double nextSpawn, double timeSinceSpawn)
         {
             var s = Session.I;
             var storage = Info.Storage;
-            if (approach.EndCon1 == Conditions.DistanceFromTarget || approach.EndCon2 == Conditions.DistanceFromTarget || approach.EndCon1 == Conditions.DistanceToTarget || approach.EndCon2 == Conditions.DistanceToTarget)
-                DsDebugDraw.DrawLine(heightend, destination, Color.Green, 10);
 
-            DsDebugDraw.DrawSingleVec(heightStart, 10, Color.GreenYellow);
-            DsDebugDraw.DrawSingleVec(heightend, 10, Color.LightSkyBlue);
+            var offSetSource = source + elOffset;
+
+            if (!MyUtils.IsZero(elOffset) && elOffset != TargetPosition)
+                DsDebugDraw.DrawLine(TargetPosition, offSetSource, Color.Black, 3);
+
+            if (!MyUtils.IsZero(destination - TargetPosition))
+                DsDebugDraw.DrawLine(TargetPosition, destination, Color.Red, 3);
+            else
+                DsDebugDraw.DrawSingleVec(destination, 20, Color.Black);
+
+            if (!MyUtils.IsZero(source - TargetPosition))
+                DsDebugDraw.DrawLine(TargetPosition, source, Color.LightSkyBlue, 3);
+            else
+                DsDebugDraw.DrawSingleVec(source, 20, Color.Purple);
+
+            DsDebugDraw.DrawSingleVec(source, 10, Color.LightSkyBlue);
+            DsDebugDraw.DrawSingleVec(destination, 10, Color.Green);
             DsDebugDraw.DrawSingleVec(TargetPosition, 10, Color.Red);
-            DsDebugDraw.DrawSingleVec(destination, 10, Color.LightSkyBlue);
 
             if (s.ApproachDebug.ProId == Info.Id || s.Tick != s.ApproachDebug.LastTick)
             {

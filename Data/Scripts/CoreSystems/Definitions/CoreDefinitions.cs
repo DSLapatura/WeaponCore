@@ -1360,10 +1360,12 @@ namespace CoreSystems.Support
                         UpStoredEndLocalPosition,
                         UpRelativeToShooter,
                         UpOriginDirection,
+                        UpDestinationDirection,
                     }
 
                     public enum FwdRelativeTo
                     {
+                        ForwardDestinationDirection,
                         ForwardRelativeToBlock,
                         ForwardRelativeToGravity,
                         ForwardTargetDirection,

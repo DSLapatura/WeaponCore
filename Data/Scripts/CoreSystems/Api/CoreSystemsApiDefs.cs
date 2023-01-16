@@ -1344,10 +1344,12 @@ namespace CoreSystems.Api
                             UpStoredEndLocalPosition,
                             UpRelativeToShooter,
                             UpOriginDirection,
+                            UpDestinationDirection,
                         }
 
                         public enum FwdRelativeTo
                         {
+                            ForwardDestinationDirection,
                             ForwardRelativeToBlock,
                             ForwardRelativeToGravity,
                             ForwardTargetDirection,
