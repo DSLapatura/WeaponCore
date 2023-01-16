@@ -813,8 +813,6 @@ namespace CoreSystems.Projectiles
             var aInfo = storage.ApproachInfo;
             if (targetLock)
                 aInfo.TargetPos = targetPos;
-            if (Info.AmmoDef.AmmoRound.Contains("MK I CAP"))
-                Log.Line($"Running: {Info.Age} - {Info.AmmoDef.AmmoRound} - {storage.RequestedStage} - {aInfo.OffsetFwdDir == Info.OriginFwd}");
 
             if (aConst.NoTargetApproach || !Vector3D.IsZero(aInfo.TargetPos))
             {
@@ -1656,8 +1654,6 @@ namespace CoreSystems.Projectiles
 
         private void ApproachEnd(ApproachConstants approach, bool end1, bool end2, ref Vector3D source, ref Vector3D destination, ref Vector3D targetPos)
         {
-            if (Info.AmmoDef.AmmoRound.Contains("MK I CAP"))
-                Log.Line($"End: {Info.Age} - {Info.AmmoDef.AmmoRound} - {Info.Storage.RequestedStage} - {Info.Storage.ApproachInfo.OffsetFwdDir == Info.OriginFwd} - {approach.EndCon1}[{end1}] - {approach.EndCon2}[{end2}] - endAnd:{approach.EndAnd}");
             var aConst = Info.AmmoDef.Const;
             var storage = Info.Storage;
 
