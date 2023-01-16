@@ -1707,6 +1707,7 @@ namespace CoreSystems.Support
         public readonly TrajectoryDef.ApproachDef.Conditions StartCon2;
         public readonly TrajectoryDef.ApproachDef.Conditions EndCon1;
         public readonly TrajectoryDef.ApproachDef.Conditions EndCon2;
+        public readonly TrajectoryDef.ApproachDef.Conditions EndCon3;
         public readonly bool AdjustForward;
         public readonly bool AdjustUp;
         public readonly bool DisableAvoidance;
@@ -1719,7 +1720,7 @@ namespace CoreSystems.Support
         public readonly bool ModAngleOffset;
         public readonly bool HasAngleOffset;
         public readonly bool ModelRotate;
-
+        public readonly bool SourceTrajectory;
         public readonly bool ToggleIngoreVoxels;
         public readonly bool SelfAvoidance;
         public readonly bool TargetAvoidance;
@@ -1740,6 +1741,7 @@ namespace CoreSystems.Support
         public readonly double Start2Value;
         public readonly double End1Value;
         public readonly double End2Value;
+        public readonly double End3Value;
         public readonly double ElevationTolerance;
 
         public readonly int OffsetTime;
@@ -1767,6 +1769,7 @@ namespace CoreSystems.Support
             SelfAvoidance = def.SelfAvoidance;
             TargetAvoidance = def.TargetAvoidance;
             SelfPhasing = def.SelfPhasing;
+            SourceTrajectory = def.SourceTrajectory;
 
             Forward = def.Forward;
             Up = def.Up;
@@ -1777,6 +1780,7 @@ namespace CoreSystems.Support
             StartCon2 = def.StartCondition2;
             EndCon1 = def.EndCondition1;
             EndCon2 = def.EndCondition2;
+            EndCon3 = def.EndCondition3;
             AdjustForward = def.AdjustForward;
             AdjustUp = def.AdjustUp;
             Orbit = def.Orbit;
@@ -1799,7 +1803,7 @@ namespace CoreSystems.Support
             Start2Value = def.Start2Value;
             End1Value = def.End1Value;
             End2Value = def.End2Value;
-
+            End3Value = def.End3Value;
             TrackingDistance = def.TrackingDistance;
             LeadDistance = def.LeadDistance;
             AccelMulti = def.AccelMulti;
@@ -1858,7 +1862,7 @@ namespace CoreSystems.Support
             }
         }
 
-        public int GetRestartId(ProInfo info, bool end1, bool end2)
+        public int GetRestartId(ProInfo info, bool end1, bool end2, bool end3)
         {
             var array = Definition.RestartList;
             
@@ -1879,17 +1883,39 @@ namespace CoreSystems.Support
 
                     var mod1Enabled = end1 && !MyUtils.IsZero(item.End1WeightMod);
                     var mod2Enabled = end2 && !MyUtils.IsZero(item.End2WeightMod);
-                    
+                    var mod3Enabled = end3 && !MyUtils.IsZero(item.End3WeightMod);
+
                     float rng;
-                    if (mod1Enabled && mod2Enabled) {
+                    if (mod1Enabled && mod2Enabled && mod3Enabled)
+                    {
                         var rng1 = (float)info.Random.Range(item.Weight.Start * item.End1WeightMod, item.Weight.End * item.End1WeightMod);
                         var rng2 = (float)info.Random.Range(item.Weight.Start * item.End2WeightMod, item.Weight.End * item.End2WeightMod);
-                        rng = rng1 > rng2 ? rng1 : rng2;
+                        var rng3 = (float)info.Random.Range(item.Weight.Start * item.End3WeightMod, item.Weight.End * item.End3WeightMod);
+                        rng = Math.Max(rng1, Math.Max(rng2, rng3));
+                    }
+                    else if (mod1Enabled && mod3Enabled)
+                    {
+                        var rng1 = (float)info.Random.Range(item.Weight.Start * item.End1WeightMod, item.Weight.End * item.End1WeightMod);
+                        var rng3 = (float)info.Random.Range(item.Weight.Start * item.End3WeightMod, item.Weight.End * item.End3WeightMod);
+                        rng = Math.Max(rng1, rng3);
+                    }
+                    else if (mod2Enabled && mod3Enabled)
+                    {
+                        var rng2 = (float)info.Random.Range(item.Weight.Start * item.End2WeightMod, item.Weight.End * item.End2WeightMod);
+                        var rng3 = (float)info.Random.Range(item.Weight.Start * item.End3WeightMod, item.Weight.End * item.End3WeightMod);
+                        rng = Math.Max(rng2, rng3);
+                    }
+                    else if (mod1Enabled && mod2Enabled) {
+                        var rng1 = (float)info.Random.Range(item.Weight.Start * item.End1WeightMod, item.Weight.End * item.End1WeightMod);
+                        var rng2 = (float)info.Random.Range(item.Weight.Start * item.End2WeightMod, item.Weight.End * item.End2WeightMod);
+                        rng = Math.Max(rng1, rng2);
                     }
                     else if (mod1Enabled)
                         rng = (float) info.Random.Range(item.Weight.Start * item.End1WeightMod, item.Weight.End * item.End1WeightMod);
                     else if (mod2Enabled)
                         rng = (float)info.Random.Range(item.Weight.Start * item.End2WeightMod, item.Weight.End * item.End2WeightMod);
+                    else if (mod3Enabled)
+                        rng = (float)info.Random.Range(item.Weight.Start * item.End3WeightMod, item.Weight.End * item.End3WeightMod);
                     else 
                         rng = info.Random.Range(item.Weight.Start, item.Weight.End);
 

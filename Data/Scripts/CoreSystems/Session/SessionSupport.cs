@@ -187,7 +187,6 @@ namespace CoreSystems
             Log.Line($"{value1} - {endId}");
         }
 
-
         internal void VisualDebuging()
         {
             for (var i = LosDebugList.Count - 1; i >= 0; i--)
@@ -214,6 +213,21 @@ namespace CoreSystems
                     }
                 }
             }
+
+
+            foreach (var p in ApproachStageChangeDebug)
+            {
+                var draw = Tick - p.Value.CreateTick <= 180;
+                ApproachStageDebug old;
+                if (draw)
+                {
+                    DsDebugDraw.DrawX(p.Value.Position, CameraMatrix, 20);
+                }
+                else
+                    ApproachStageChangeDebug.TryRemove(p.Key, out old);
+
+            }
+
 
             if (ApproachDebug.LastTick == Tick && Tick != uint.MaxValue)
             {

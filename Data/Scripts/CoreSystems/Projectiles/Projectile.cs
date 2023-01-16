@@ -827,6 +827,7 @@ namespace CoreSystems.Projectiles
 
                 if (stageChange)
                 {
+                    aInfo.StartHealth = Info.BaseHealthPool;
                     aInfo.StartDistanceTraveled = Info.DistanceTraveled;
                     aInfo.RelativeAgeStart = Info.RelativeAge;
                     aInfo.RelativeSpawnsStart = Info.Frags;
@@ -1166,6 +1167,12 @@ namespace CoreSystems.Projectiles
                     case Conditions.Deadtime:
                         start1 = Info.RelativeAge <= approach.Start1Value;
                         break;
+                    case Conditions.RelativeHealthLost:
+                        start1 = aInfo.StartHealth - Info.BaseHealthPool >= approach.Start1Value;
+                        break;
+                    case Conditions.HealthRemaining:
+                        start1 = Info.BaseHealthPool <= approach.Start1Value;
+                        break;
                     case Conditions.RelativeLifetime:
                         start1 = Info.RelativeAge - aInfo.RelativeAgeStart >= approach.Start1Value;
                         break;
@@ -1247,6 +1254,12 @@ namespace CoreSystems.Projectiles
                         break;
                     case Conditions.Deadtime:
                         start2 = Info.RelativeAge <= approach.Start2Value;
+                        break;
+                    case Conditions.RelativeHealthLost:
+                        start2 = aInfo.StartHealth - Info.BaseHealthPool >= approach.Start2Value;
+                        break;
+                    case Conditions.HealthRemaining:
+                        start2 = Info.BaseHealthPool <= approach.Start2Value;
                         break;
                     case Conditions.RelativeLifetime:
                         start2 = Info.RelativeAge - aInfo.RelativeAgeStart >= approach.Start2Value;
@@ -1397,16 +1410,15 @@ namespace CoreSystems.Projectiles
                     }
                     #endregion
 
-                    var desiredPos = destination + elOffset;
+                    var desiredPos = !approach.SourceTrajectory ? destination + elOffset : source + elOffset;
                     if (desiredPos == Position)
-                        desiredPos += (aInfo.OffsetFwdDir * 100000);
+                        desiredPos += (aInfo.OffsetFwdDir * 10000);
 
                     TargetPosition = approach.Orbit ? ApproachOrbits(approach, desiredPos, accelMpsMulti, speedCapMulti) : desiredPos;
 
                     if (storage.LastActivatedStage != storage.RequestedStage)
-                    {
                         ApproachStartEvent(approach, ref source, ref destination, ref targetPos);
-                    }
+
                 }
                 #endregion
 
@@ -1447,6 +1459,12 @@ namespace CoreSystems.Projectiles
                         break;
                     case Conditions.Deadtime:
                         end1 = Info.RelativeAge <= approach.End1Value;
+                        break;
+                    case Conditions.RelativeHealthLost:
+                        end1 = aInfo.StartHealth - Info.BaseHealthPool >= approach.End1Value;
+                        break;
+                    case Conditions.HealthRemaining:
+                        end1 = Info.BaseHealthPool <= approach.End1Value;
                         break;
                     case Conditions.RelativeLifetime:
                         end1 = Info.RelativeAge - aInfo.RelativeAgeStart >= approach.End1Value;
@@ -1538,6 +1556,12 @@ namespace CoreSystems.Projectiles
                     case Conditions.Deadtime:
                         end2 = Info.RelativeAge <= approach.End2Value;
                         break;
+                    case Conditions.RelativeHealthLost:
+                        end2 = aInfo.StartHealth - Info.BaseHealthPool >= approach.End2Value;
+                        break;
+                    case Conditions.HealthRemaining:
+                        end2 = Info.BaseHealthPool <= approach.End2Value;
+                        break;
                     case Conditions.RelativeLifetime:
                         end2 = Info.RelativeAge - aInfo.RelativeAgeStart >= approach.End2Value;
                         break;
@@ -1590,14 +1614,108 @@ namespace CoreSystems.Projectiles
                         break;
                 }
 
+                bool end3 = false;
+                switch (approach.EndCon3)
+                {
+                    case Conditions.DesiredElevation:
+                        var plane = new PlaneD(aInfo.LookAtPos, aInfo.OffsetUpDir);
+                        var distToPlane = approach.Elevation != RelativeTo.Surface ? Math.Abs(plane.DistanceToPoint(Position)) : plane.DistanceToPoint(Position);
+                        var tolernace = approach.ElevationTolerance + aConst.CollisionSize;
+                        var distFromSurfaceSqr = !Vector3D.IsZero(surfacePos) ? Vector3D.DistanceSquared(Position, surfacePos) : distToPlane * distToPlane;
+                        var lessThanTolerance = (approach.End3Value + tolernace) * (approach.End3Value + tolernace);
+                        var greaterThanTolerance = (approach.End3Value - tolernace) * (approach.End3Value - tolernace);
+                        end3 = distFromSurfaceSqr >= greaterThanTolerance && distFromSurfaceSqr <= lessThanTolerance;
+                        break;
+                    case Conditions.DistanceFromDestination:
+                        if (approach.EndCon3 == approach.StartCon1)
+                            end3 = start1;
+                        else if (approach.EndCon3 == approach.StartCon2)
+                            end3 = start2;
+                        else
+                        {
+                            if (!MyUtils.IsZero(TargetPosition - destination))
+                                end3 = MyUtils.GetPointLineDistance(ref TargetPosition, ref destination, ref Position) - aConst.CollisionSize <= approach.End2Value;
+                            else
+                                end3 = Vector3D.Distance(destination, Position) - aConst.CollisionSize <= approach.End3Value;
+                        }
+                        break;
+                    case Conditions.DistanceToDestination:
+                        if (!MyUtils.IsZero(TargetPosition - destination))
+                            end3 = MyUtils.GetPointLineDistance(ref TargetPosition, ref destination, ref Position) - aConst.CollisionSize >= approach.End2Value;
+                        else
+                            end3 = Vector3D.Distance(destination, Position) - aConst.CollisionSize >= approach.End3Value;
+                        break;
+                    case Conditions.Lifetime:
+                        end3 = Info.RelativeAge >= approach.End3Value;
+                        break;
+                    case Conditions.Deadtime:
+                        end3 = Info.RelativeAge <= approach.End3Value;
+                        break;
+                    case Conditions.RelativeHealthLost:
+                        end3 = aInfo.StartHealth - Info.BaseHealthPool >= approach.End3Value;
+                        break;
+                    case Conditions.HealthRemaining:
+                        end3 = Info.BaseHealthPool <= approach.End3Value;
+                        break;
+                    case Conditions.RelativeLifetime:
+                        end3 = Info.RelativeAge - aInfo.RelativeAgeStart >= approach.End3Value;
+                        break;
+                    case Conditions.RelativeDeadtime:
+                        end3 = Info.RelativeAge - aInfo.RelativeAgeStart <= approach.End3Value;
+                        break;
+                    case Conditions.MinTravelRequired:
+                        end3 = Info.DistanceTraveled - aInfo.StartDistanceTraveled >= approach.End3Value;
+                        break;
+                    case Conditions.MaxTravelRequired:
+                        end3 = Info.DistanceTraveled - aInfo.StartDistanceTraveled <= approach.End3Value;
+                        break;
+                    case Conditions.Ignore:
+                        end3 = true;
+                        break;
+                    case Conditions.NextTimedSpawn:
+                    case Conditions.SinceTimedSpawn:
+
+                        if (aConst.TimedFragments && Info.SpawnDepth < aConst.FragMaxChildren && Info.Frags < aConst.MaxFrags)
+                        {
+                            var groupDelay = aConst.HasFragGroup && Info.Frags % aConst.FragGroupSize == 0;
+                            var notFragZero = Info.Frags != 0;
+                            var longestSpawnDelay = Math.Max(groupDelay ? aConst.FragGroupDelay : 0, notFragZero ? aConst.FragInterval : 0);
+
+                            timeSinceSpawn = Info.RelativeAge - Info.LastFragTime;
+                            nextSpawn = longestSpawnDelay - timeSinceSpawn;
+                            var trueCondition = approach.EndCon3 == Conditions.NextTimedSpawn ? nextSpawn <= approach.End3Value : timeSinceSpawn >= approach.End3Value;
+
+                            var timeSinceStart = aConst.FragStartTime - Info.RelativeAge;
+                            if (timeSinceStart >= 0)
+                            {
+                                if (timeSinceStart <= approach.End3Value && trueCondition)
+                                    end3 = true;
+                            }
+                            else if (trueCondition)
+                                end3 = true;
+                        }
+                        else
+                            end3 = true;
+                        break;
+                    case Conditions.RelativeSpawns:
+                        end3 = Info.Frags - aInfo.RelativeSpawnsStart >= approach.End3Value;
+                        break;
+                    case Conditions.EnemyTargetLoss:
+                        if (Info.Target.TargetObject == null)
+                            aInfo.TargetLossTime += Session.I.DeltaTimeRatio;
+                        else
+                            aInfo.TargetLossTime = 0;
+                        end3 = aInfo.TargetLossTime >= approach.End3Value;
+                        break;
+                }
 
                 #endregion
 
                 if (approach.EndAnd && end1 && end2 || !approach.EndAnd && (end1 || end2))
-                    ApproachEnd(approach, end1, end2, ref source, ref destination, ref targetPos);
+                    ApproachEnd(approach, end1, end2, end3, ref source, ref destination, ref targetPos);
 
                 if (s.DebugMod && s.HandlesInput)
-                    ApproachDebug(approach, ref destination, ref source, ref elOffset, start1, start2, end1, end2, nextSpawn, timeSinceSpawn);
+                    ApproachDebug(approach, ref destination, ref source, ref elOffset, start1, start2, end1, end2, nextSpawn, timeSinceSpawn, stageChange);
 
             }
         }
@@ -1652,7 +1770,7 @@ namespace CoreSystems.Projectiles
             }
         }
 
-        private void ApproachEnd(ApproachConstants approach, bool end1, bool end2, ref Vector3D source, ref Vector3D destination, ref Vector3D targetPos)
+        private void ApproachEnd(ApproachConstants approach, bool end1, bool end2, bool end3, ref Vector3D source, ref Vector3D destination, ref Vector3D targetPos)
         {
             var aConst = Info.AmmoDef.Const;
             var storage = Info.Storage;
@@ -1723,7 +1841,7 @@ namespace CoreSystems.Projectiles
                 ++storage.ApproachInfo.Storage[storage.RequestedStage].RunCount;
                 storage.LastActivatedStage = storage.RequestedStage;
                 var prev = storage.RequestedStage;
-                storage.RequestedStage = def.RestartCondition == ReInitCondition.MoveToPrevious ? prev : approach.GetRestartId(Info, end1, end2);
+                storage.RequestedStage = def.RestartCondition == ReInitCondition.MoveToPrevious ? prev : approach.GetRestartId(Info, end1, end2, end3);
             }
             else if (!hasNextStep)
             {
@@ -1788,7 +1906,7 @@ namespace CoreSystems.Projectiles
             return surfacePos - checkPosition;
         }
 
-        private void ApproachDebug(ApproachConstants approach, ref Vector3D destination, ref Vector3D source, ref Vector3D elOffset, bool start1, bool start2, bool end1, bool end2, double nextSpawn, double timeSinceSpawn)
+        private void ApproachDebug(ApproachConstants approach, ref Vector3D destination, ref Vector3D source, ref Vector3D elOffset, bool start1, bool start2, bool end1, bool end2, double nextSpawn, double timeSinceSpawn, bool stageChange)
         {
             var s = Session.I;
             var storage = Info.Storage;
@@ -1811,6 +1929,9 @@ namespace CoreSystems.Projectiles
             DsDebugDraw.DrawSingleVec(source, 10, Color.LightSkyBlue);
             DsDebugDraw.DrawSingleVec(destination, 10, Color.Green);
             DsDebugDraw.DrawSingleVec(TargetPosition, 10, Color.Red);
+
+            if (stageChange)
+                Session.I.ApproachStageChangeDebug[Info.Id] =  new Session.ApproachStageDebug {CreateTick = Session.I.Tick, Position = Position};
 
             if (s.ApproachDebug.ProId == Info.Id || s.Tick != s.ApproachDebug.LastTick)
             {

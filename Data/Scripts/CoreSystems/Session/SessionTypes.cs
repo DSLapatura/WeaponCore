@@ -876,6 +876,12 @@ namespace CoreSystems
             internal uint CreateTick;
         }
 
+        internal struct ApproachStageDebug
+        {
+            internal Vector3D Position;
+            internal uint CreateTick;
+        }
+
         internal struct TickLatency
         {
             internal float CurrentLatency;

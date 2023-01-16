@@ -1344,6 +1344,8 @@ namespace CoreSystems.Support
                         SinceTimedSpawn,
                         RelativeSpawns,
                         EnemyTargetLoss,
+                        RelativeHealthLost,
+                        HealthRemaining,
                     }
 
                     public enum UpRelativeTo
@@ -1424,6 +1426,7 @@ namespace CoreSystems.Support
                         [ProtoMember(3)] public double End1WeightMod;
                         [ProtoMember(4)] public double End2WeightMod;
                         [ProtoMember(5)] public int MaxRuns;
+                        [ProtoMember(6)] public double End3WeightMod;
                     }
 
                     [ProtoMember(1)] internal ReInitCondition RestartCondition;
@@ -1488,6 +1491,9 @@ namespace CoreSystems.Support
                     [ProtoMember(60)] internal bool SelfAvoidance;
                     [ProtoMember(61)] internal bool TargetAvoidance;
                     [ProtoMember(62)] internal bool SelfPhasing;
+                    [ProtoMember(63)] internal bool SourceTrajectory;
+                    [ProtoMember(64)] internal Conditions EndCondition3;
+                    [ProtoMember(65)] internal double End3Value;
                 }
 
                 [ProtoContract]

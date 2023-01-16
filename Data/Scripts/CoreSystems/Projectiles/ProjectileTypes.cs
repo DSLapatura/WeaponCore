@@ -299,6 +299,7 @@ namespace CoreSystems.Support
         internal Vector3D OffsetFwdDir;
         internal double RelativeAgeStart;
         internal double StartDistanceTraveled;
+        internal double StartHealth;
         internal int RelativeSpawnsStart;
         internal double TargetLossTime;
         internal double AngleVariance;
@@ -326,6 +327,7 @@ namespace CoreSystems.Support
             AngleVariance = 0;
             ModelRotateMaxAge = 0;
             ModelRotateAge = 0;
+            StartHealth = 0;
             Active = false;
             NavTargetBound = new BoundingSphereD(Vector3D.Zero, 0);
 

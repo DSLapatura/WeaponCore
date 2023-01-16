@@ -45,7 +45,7 @@ namespace CoreSystems
         internal const int VersionControl = 33;
         internal const int AwakeBuckets = 60;
         internal const int AsleepBuckets = 180;
-        internal const int ModVersion = 22;
+        internal const int ModVersion = 23;
         internal const int ClientCfgVersion = 9;
         internal const string ServerCfgName = "CoreSystemsServer.cfg";
         internal const string ClientCfgName = "CoreSystemsClient.cfg";
@@ -227,6 +227,7 @@ namespace CoreSystems
         internal readonly List<CoreComponent> CompsDelayedInit = new List<CoreComponent>();
         internal readonly List<CoreComponent> CompsDelayedReInit = new List<CoreComponent>();
         internal readonly Dictionary<ulong, List<ClientProSyncDebugLine>> ProSyncLineDebug = new Dictionary<ulong, List<ClientProSyncDebugLine>>();
+        internal readonly ConcurrentDictionary<ulong, ApproachStageDebug> ApproachStageChangeDebug = new ConcurrentDictionary<ulong, ApproachStageDebug>();
         internal readonly List<CompReAdd> CompReAdds = new List<CompReAdd>();
         internal readonly List<MyLineSegmentOverlapResult<MyEntity>> OverlapResultTmp = new List<MyLineSegmentOverlapResult<MyEntity>>();
         internal readonly List<Projectile> Hits = new List<Projectile>(16);
