@@ -156,12 +156,15 @@ namespace CoreSystems.Platform
                 if (ConsumableSelectionPartIds.Count > 0)
                 {
                     CycleAmmo();
+
+                    if (Data.Repo.Values.State.PlayerId == Session.I.PlayerId)
+                        Session.I.ShowLocalNotify($"Ammo change queued", 1500, "White", true);
                 }
             }
 
             internal void HandReloadNotify(Weapon w)
             {
-                if (w.Comp.Data.Repo.Values.State.PlayerId == Session.I.PlayerId)
+                if (w.Comp.Data.Repo.Values.State.PlayerId == Session.I.PlayerId){}
                     Session.I.ShowLocalNotify($"Ammo type swapped to: {w.ActiveAmmoDef.AmmoDef.AmmoRound}", 1500, "White", true);
             }
 

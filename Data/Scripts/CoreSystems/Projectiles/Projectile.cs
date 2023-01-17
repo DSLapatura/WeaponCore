@@ -1907,15 +1907,15 @@ namespace CoreSystems.Projectiles
             return surfacePos - checkPosition;
         }
 
-        private void ApproachDebug(ApproachConstants approach, ref Vector3D destination, ref Vector3D source, ref Vector3D elOffset, ref Vector3D destEndLine, bool start1, bool start2, bool end1, bool end2, bool end3, double nextSpawn, double timeSinceSpawn, bool stageChange)
+        private void ApproachDebug(ApproachConstants approach, ref Vector3D destination, ref Vector3D source, ref Vector3D elOffset, ref Vector3D heightOffset, bool start1, bool start2, bool end1, bool end2, bool end3, double nextSpawn, double timeSinceSpawn, bool stageChange)
         {
             var s = Session.I;
             var storage = Info.Storage;
 
             var offSetSource = source + elOffset;
 
-            if (!MyUtils.IsZero(destination - destEndLine))
-                DsDebugDraw.DrawLine(destination, destEndLine, Color.Yellow, 3);
+            if (!MyUtils.IsZero(heightOffset) && !MyUtils.IsZero(destination - heightOffset))
+                DsDebugDraw.DrawLine(destination, heightOffset, Color.Yellow, 3);
 
             if (!MyUtils.IsZero(elOffset) && elOffset != TargetPosition)
                 DsDebugDraw.DrawLine(TargetPosition, offSetSource, Color.Black, 3);
