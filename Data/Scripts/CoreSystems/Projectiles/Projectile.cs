@@ -1424,6 +1424,7 @@ namespace CoreSystems.Projectiles
 
                 #region End Conditions
                 bool end1 = false;
+                var destEndLine = destination + heightOffset;
                 switch (approach.EndCon1)
                 {
                     case Conditions.DesiredElevation:
@@ -1442,15 +1443,15 @@ namespace CoreSystems.Projectiles
                             end1 = start2;
                         else
                         {
-                            if (!MyUtils.IsZero(TargetPosition - destination))
-                                end1 = MyUtils.GetPointLineDistance(ref TargetPosition, ref destination, ref Position) - aConst.CollisionSize <= approach.End1Value;
+                            if (!MyUtils.IsZero(destEndLine - destination))
+                                end1 = MyUtils.GetPointLineDistance(ref destEndLine, ref destination, ref Position) - aConst.CollisionSize <= approach.End1Value;
                             else
                                 end1 = Vector3D.Distance(destination, Position) - aConst.CollisionSize <= approach.End1Value;
                         }
                         break;
                     case Conditions.DistanceToDestination:
-                        if (!MyUtils.IsZero(TargetPosition - destination))
-                            end1 = MyUtils.GetPointLineDistance(ref TargetPosition, ref destination, ref Position) - aConst.CollisionSize >= approach.End1Value;
+                        if (!MyUtils.IsZero(destEndLine - destination))
+                            end1 = MyUtils.GetPointLineDistance(ref destEndLine, ref destination, ref Position) - aConst.CollisionSize >= approach.End1Value;
                         else
                             end1 = Vector3D.Distance(destination, Position) - aConst.CollisionSize >= approach.End1Value;
                         break;
@@ -1538,15 +1539,15 @@ namespace CoreSystems.Projectiles
                             end2 = start2;
                         else
                         {
-                            if (!MyUtils.IsZero(TargetPosition - destination))
-                                end2 = MyUtils.GetPointLineDistance(ref TargetPosition, ref destination, ref Position) - aConst.CollisionSize <= approach.End2Value;
+                            if (!MyUtils.IsZero(destEndLine - destination))
+                                end2 = MyUtils.GetPointLineDistance(ref destEndLine, ref destination, ref Position) - aConst.CollisionSize <= approach.End2Value;
                             else
                                 end2 = Vector3D.Distance(destination, Position) - aConst.CollisionSize <= approach.End2Value;
                         }
                         break;
                     case Conditions.DistanceToDestination:
-                        if (!MyUtils.IsZero(TargetPosition - destination))
-                            end2 = MyUtils.GetPointLineDistance(ref TargetPosition, ref destination, ref Position) - aConst.CollisionSize >= approach.End2Value;
+                        if (!MyUtils.IsZero(destEndLine - destination))
+                            end2 = MyUtils.GetPointLineDistance(ref destEndLine, ref destination, ref Position) - aConst.CollisionSize >= approach.End2Value;
                         else
                             end2 = Vector3D.Distance(destination, Position) - aConst.CollisionSize >= approach.End2Value;
                         break;
@@ -1633,15 +1634,15 @@ namespace CoreSystems.Projectiles
                             end3 = start2;
                         else
                         {
-                            if (!MyUtils.IsZero(TargetPosition - destination))
-                                end3 = MyUtils.GetPointLineDistance(ref TargetPosition, ref destination, ref Position) - aConst.CollisionSize <= approach.End2Value;
+                            if (!MyUtils.IsZero(destEndLine - destination))
+                                end3 = MyUtils.GetPointLineDistance(ref destEndLine, ref destination, ref Position) - aConst.CollisionSize <= approach.End2Value;
                             else
                                 end3 = Vector3D.Distance(destination, Position) - aConst.CollisionSize <= approach.End3Value;
                         }
                         break;
                     case Conditions.DistanceToDestination:
-                        if (!MyUtils.IsZero(TargetPosition - destination))
-                            end3 = MyUtils.GetPointLineDistance(ref TargetPosition, ref destination, ref Position) - aConst.CollisionSize >= approach.End2Value;
+                        if (!MyUtils.IsZero(destEndLine - destination))
+                            end3 = MyUtils.GetPointLineDistance(ref destEndLine, ref destination, ref Position) - aConst.CollisionSize >= approach.End2Value;
                         else
                             end3 = Vector3D.Distance(destination, Position) - aConst.CollisionSize >= approach.End3Value;
                         break;
@@ -1715,7 +1716,7 @@ namespace CoreSystems.Projectiles
                     ApproachEnd(approach, end1, end2, end3, ref source, ref destination, ref targetPos);
 
                 if (s.DebugMod && s.HandlesInput)
-                    ApproachDebug(approach, ref destination, ref source, ref elOffset, start1, start2, end1, end2, nextSpawn, timeSinceSpawn, stageChange);
+                    ApproachDebug(approach, ref destination, ref source, ref elOffset, ref heightOffset, start1, start2, end1, end2, end3, nextSpawn, timeSinceSpawn, stageChange);
 
             }
         }
@@ -1906,12 +1907,15 @@ namespace CoreSystems.Projectiles
             return surfacePos - checkPosition;
         }
 
-        private void ApproachDebug(ApproachConstants approach, ref Vector3D destination, ref Vector3D source, ref Vector3D elOffset, bool start1, bool start2, bool end1, bool end2, double nextSpawn, double timeSinceSpawn, bool stageChange)
+        private void ApproachDebug(ApproachConstants approach, ref Vector3D destination, ref Vector3D source, ref Vector3D elOffset, ref Vector3D destEndLine, bool start1, bool start2, bool end1, bool end2, bool end3, double nextSpawn, double timeSinceSpawn, bool stageChange)
         {
             var s = Session.I;
             var storage = Info.Storage;
 
             var offSetSource = source + elOffset;
+
+            if (!MyUtils.IsZero(destination - destEndLine))
+                DsDebugDraw.DrawLine(destination, destEndLine, Color.Yellow, 3);
 
             if (!MyUtils.IsZero(elOffset) && elOffset != TargetPosition)
                 DsDebugDraw.DrawLine(TargetPosition, offSetSource, Color.Black, 3);
@@ -1922,7 +1926,7 @@ namespace CoreSystems.Projectiles
                 DsDebugDraw.DrawSingleVec(destination, 20, Color.Black);
 
             if (!MyUtils.IsZero(source - TargetPosition))
-                DsDebugDraw.DrawLine(TargetPosition, source, Color.LightSkyBlue, 3);
+                DsDebugDraw.DrawLine(TargetPosition, source, Color.Green, 3);
             else
                 DsDebugDraw.DrawSingleVec(source, 20, Color.Purple);
 
@@ -1943,6 +1947,7 @@ namespace CoreSystems.Projectiles
                     Start2 = start2,
                     End1 = end1,
                     End2 = end2,
+                    End3 = end3,
                     ProId = Info.Id,
                     Stage = storage.LastActivatedStage,
                     TimeSinceSpawn = timeSinceSpawn,
