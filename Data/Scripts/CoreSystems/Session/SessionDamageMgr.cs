@@ -1086,6 +1086,7 @@ namespace CoreSystems
             var shieldHeal = info.AmmoDef.DamageScales.Shields.Type == ShieldDef.ShieldType.Heal;
             if (type == HitEntity.Type.Water || !info.AmmoDef.Const.VoxelDamage || shieldHeal)
             {
+                info.ObjectsHit++;
                 if (type != HitEntity.Type.Water || !info.AmmoDef.IgnoreWater)
                     info.BaseDamagePool = 0;
                 return;
