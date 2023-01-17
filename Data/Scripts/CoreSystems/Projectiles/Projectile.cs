@@ -610,15 +610,14 @@ namespace CoreSystems.Projectiles
 
                 var accelMpsMulti = speedLimitPerTick;
                 bool disableAvoidance = false;
-
+                bool zeroEffortNav = aConst.ZeroEffortNav;
                 if (aConst.HasApproaches && (s.ApproachInfo.Active || s.RequestedStage == -1))
                 {
-                    ProcessApproach(ref accelMpsMulti, ref speedCapMulti, ref disableAvoidance, TargetPosition, s.LastActivatedStage, targetLock);
+                    ProcessApproach(ref accelMpsMulti, ref speedCapMulti, ref disableAvoidance, ref zeroEffortNav, TargetPosition, s.LastActivatedStage, targetLock);
                     s.ApproachInfo.Active = s.RequestedStage < aConst.ApproachesCount && s.RequestedStage >= 0;
                 }
 
                 #region Navigation
-
                 Vector3D commandedAccel;
                 Vector3D missileToTargetNorm = Vector3D.Zero;
                 var fastEnoughToTurn = VelocityLengthSqr >= aConst.MinTurnSpeedSqr;
@@ -635,8 +634,20 @@ namespace CoreSystems.Projectiles
                     Vector3D relativeVelocity = PrevTargetVel - Velocity;
                     Vector3D lateralTargetAcceleration = (targetAcceleration - Vector3D.Dot(targetAcceleration, missileToTargetNorm) * missileToTargetNorm);
 
-                    Vector3D omega = Vector3D.Cross(missileToTarget, relativeVelocity) / Math.Max(missileToTarget.LengthSquared(), 1); //to combat instability at close range
-                    var lateralAcceleration = aConst.Aggressiveness * relativeVelocity.Length() * Vector3D.Cross(omega, missileToTargetNorm) + aConst.NavAcceleration * lateralTargetAcceleration;
+                    Vector3D lateralAcceleration;
+                    if (!zeroEffortNav)
+                    {
+                        Vector3D omega = Vector3D.Cross(missileToTarget, relativeVelocity) / Math.Max(missileToTarget.LengthSquared(), 1); //to combat instability at close range
+                        lateralAcceleration = aConst.Aggressiveness * relativeVelocity.Length() * Vector3D.Cross(omega, missileToTargetNorm) + aConst.NavAcceleration * lateralTargetAcceleration;
+                    }
+                    else
+                    {
+                        var distToTarget = Vector3D.Dot(missileToTarget, missileToTargetNorm);
+                        var closingSpeed = Vector3D.Dot(relativeVelocity, missileToTargetNorm);
+                        var tau = distToTarget / Math.Max(1, Math.Abs(closingSpeed));
+                        var z = missileToTarget + relativeVelocity * tau;
+                        lateralAcceleration = aConst.Aggressiveness * z / (tau * tau) + aConst.NavAcceleration * lateralTargetAcceleration;
+                    }
 
                     if (Vector3D.IsZero(lateralAcceleration))
                     {
@@ -805,7 +816,7 @@ namespace CoreSystems.Projectiles
             return true;
         }
 
-        private void ProcessApproach(ref double accelMpsMulti, ref double speedCapMulti, ref bool disableAvoidance, Vector3D targetPos, int lastActiveStage, bool targetLock)
+        private void ProcessApproach(ref double accelMpsMulti, ref double speedCapMulti, ref bool disableAvoidance, ref bool zeroEffortNav, Vector3D targetPos, int lastActiveStage, bool targetLock)
         {
             var s = Session.I;
             var aConst = Info.AmmoDef.Const;
@@ -839,6 +850,9 @@ namespace CoreSystems.Projectiles
                     return; // bad modder, failed to read coreparts comment, fail silently so they drive themselves nuts
 
                 disableAvoidance = approach.DisableAvoidance;
+
+                if (approach.SwapNavigationType)
+                    zeroEffortNav = !zeroEffortNav;
 
                 if (approach.ModelRotateTime > 0 || aInfo.ModelRotateAge > 0)
                 {

@@ -1299,6 +1299,7 @@ namespace CoreSystems.Api
                         [ProtoMember(22)] internal double FutureIntersectionRange;
                         [ProtoMember(23)] internal double MinTurnSpeed;
                         [ProtoMember(24)] internal bool NoTargetApproach;
+                        [ProtoMember(25)] internal bool AltNavigation;
                     }
 
                     [ProtoContract]
@@ -1475,6 +1476,7 @@ namespace CoreSystems.Api
                         [ProtoMember(63)] internal bool SourceTrajectory;
                         [ProtoMember(64)] internal Conditions EndCondition3;
                         [ProtoMember(65)] internal double End3Value;
+                        [ProtoMember(66)] internal bool SwapNavigationType;
                     }
 
                     [ProtoContract]

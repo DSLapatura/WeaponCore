@@ -289,6 +289,7 @@ namespace CoreSystems.Support
         public readonly bool Roam;
         public readonly bool NoTargetExpire;
         public readonly bool EwarFieldTrigger;
+        public readonly bool ZeroEffortNav;
         public readonly float LargeGridDmgScale;
         public readonly float SmallGridDmgScale;
         public readonly float OffsetRatio;
@@ -440,7 +441,7 @@ namespace CoreSystems.Support
             IsTurretSelectable = !ammo.IsShrapnel && ammo.AmmoDef.HardPointUsable;
 
             ComputeSmarts(ammo, out IsSmart, out Roam, out NoTargetApproach, out AccelClearance, out OverrideTarget, out TargetOffSet,
-                out FocusOnly, out FocusEviction, out NoSteering, out AdvancedSmartSteering, out KeepAliveAfterTargetLoss, out NoTargetExpire, out ScanRange, out OffsetMinRangeSqr,
+                out FocusOnly, out FocusEviction, out NoSteering, out AdvancedSmartSteering, out KeepAliveAfterTargetLoss, out NoTargetExpire, out ZeroEffortNav, out ScanRange, out OffsetMinRangeSqr,
                 out Aggressiveness, out NavAcceleration, out MinTurnSpeedSqr, out OffsetRatio, out MaxChaseTime, out MaxTargets, out OffsetTime);
 
             RequiresTarget = ammo.AmmoDef.Trajectory.Guidance != TrajectoryDef.GuidanceType.None && !OverrideTarget || system.TrackTargets;
@@ -621,7 +622,7 @@ namespace CoreSystems.Support
 
 
         private void ComputeSmarts(WeaponSystem.AmmoType ammo, out bool isSmart, out bool roam, out bool noTargetApproach, out bool accelClearance, out bool overrideTarget, out bool targetOffSet,
-            out bool focusOnly, out bool focusEviction, out bool noSteering, out bool advancedSmartSteering, out bool keepAliveAfterTargetLoss, out bool noTargetExpire, out double scanRange, out double offsetMinRangeSqr,
+            out bool focusOnly, out bool focusEviction, out bool noSteering, out bool advancedSmartSteering, out bool keepAliveAfterTargetLoss, out bool noTargetExpire, out bool zeroEffortNav, out double scanRange, out double offsetMinRangeSqr,
             out double aggressiveness, out double navAcceleration, out double minTurnSpeedSqr, out float offsetRatio, out int maxChaseTime, out int maxTargets, out int offsetTime)
         {
             isSmart = ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.Smart || ammo.AmmoDef.Trajectory.Guidance == TrajectoryDef.GuidanceType.DetectSmart;
@@ -656,6 +657,7 @@ namespace CoreSystems.Support
             maxTargets = ammo.AmmoDef.Trajectory.Smarts.MaxTargets;
             offsetTime = ammo.AmmoDef.Trajectory.Smarts.OffsetTime;
             noTargetApproach = ammo.AmmoDef.Trajectory.Smarts.NoTargetApproach;
+            zeroEffortNav = ammo.AmmoDef.Trajectory.Smarts.AltNavigation;
         }
 
 
@@ -1725,7 +1727,7 @@ namespace CoreSystems.Support
         public readonly bool SelfAvoidance;
         public readonly bool TargetAvoidance;
         public readonly bool SelfPhasing;
-        
+        public readonly bool SwapNavigationType;
         public readonly double OrbitRadius;
         public readonly double AngleOffset;
         public readonly double DesiredElevation;
@@ -1769,6 +1771,7 @@ namespace CoreSystems.Support
             SelfAvoidance = def.SelfAvoidance;
             TargetAvoidance = def.TargetAvoidance;
             SelfPhasing = def.SelfPhasing;
+            SwapNavigationType = def.SwapNavigationType;
             SourceTrajectory = def.SourceTrajectory;
 
             Forward = def.Forward;
