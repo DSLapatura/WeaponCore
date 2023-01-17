@@ -672,15 +672,17 @@ namespace CoreSystems
                             basePool = 0;
                             t.BaseDamagePool = basePool;
                             detRequested = hasDet;
-                            objectsHit++;
+                            if (countBlocksAsObjects)
+                                objectsHit++;
                         }
                         else if (primaryDamage)
                         {
                             t.DamageDonePri += (long)scaledDamage;
                             deadBlock = true;
                             var scale = baseScale == 0d ? 0.0000001 : baseScale;
-                            basePool -= (float)(blockHp / scale); 
-                            objectsHit++;
+                            basePool -= (float)(blockHp / scale);
+                            if (countBlocksAsObjects)
+                                objectsHit++;
                         }
 
                         //AOE damage logic applied to aoeDamageFall
