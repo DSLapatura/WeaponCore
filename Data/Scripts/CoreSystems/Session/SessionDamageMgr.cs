@@ -824,7 +824,7 @@ namespace CoreSystems
                             }
                             else if (block.Integrity - realDmg > 0) _slimHealthClient[block] = (float)(blockHp - realDmg);
                         }
-                        var endCycle = (!foundAoeBlocks && basePool <= 0) || (!rootStep && (aoeDmgTally >= aoeAbsorb && aoeAbsorb != 0 || aoeDamage <= 0.5d)) || objectsHit >= maxObjects;
+                        var endCycle = (!foundAoeBlocks && basePool <= 0) || (!rootStep && (aoeDmgTally >= aoeAbsorb && aoeAbsorb != 0 || aoeDamage <= 0.5d)) || objectsHit > maxObjects;
                         if (showHits && primaryDamage) Log.Line($"{t.AmmoDef.AmmoRound} Primary Dmg: RootBlock {rootBlock} hit for {scaledDamage} damage of {blockHp} block HP total");
 
                         //doneskies
