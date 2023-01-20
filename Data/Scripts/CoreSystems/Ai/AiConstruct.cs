@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using CoreSystems.Platform;
 using CoreSystems.Projectiles;
 using Sandbox.Game.Entities;
@@ -11,7 +10,6 @@ using VRage.Game.ModAPI;
 using VRage.ModAPI;
 using VRage.Utils;
 using VRageMath;
-using WeaponCore.Data.Scripts.CoreSystems.Comms;
 using static CoreSystems.FocusData;
 
 namespace CoreSystems.Support
@@ -183,6 +181,7 @@ namespace CoreSystems.Support
                 BlockCount = 0;
                 LastRefreshTick = Session.I.Tick;
                 if (Ai.TopEntity != null) {
+
                     Ai leadingAi = null;
                     Ai largestAi = null;
                     int leadingBlocks = 0;
@@ -201,15 +200,16 @@ namespace CoreSystems.Support
                         }
                         if (Session.I.TopEntityToInfoMap.ContainsKey(grid)) {
                             var blockCount = Session.I.TopEntityToInfoMap[grid].MostBlocks;
-                            if (blockCount > leadingBlocks)
-                            {
-                                leadingBlocks = blockCount;
-                                largestAi = subAi;
-                            }
+
                             BlockCount += blockCount;
 
                             if (subAi != null)
                             {
+                                if (blockCount > leadingBlocks)
+                                {
+                                    leadingBlocks = blockCount;
+                                    largestAi = subAi;
+                                }
                                 OptimalDps += subAi.OptimalDps;
                                 if (subAi.Construct.MaxLockRange > maxLockRange)
                                     maxLockRange = subAi.Construct.MaxLockRange;
@@ -218,7 +218,7 @@ namespace CoreSystems.Support
                         else Log.Line($"ConstructRefresh Failed sub no GridMap, sub is caller:{grid == Ai.TopEntity}");
                     }
                     RootAi = leadingAi;
-                    LargestAi = largestAi;
+                    LargestAi = largestAi ?? leadingAi;
 
                     if (RootAi == null) {
 
@@ -249,7 +249,6 @@ namespace CoreSystems.Support
                 }
 
                 if (RootAi != null) {
-
                     if (RootAi.AiType != AiTypes.Grid)
                     {
                         foreach (var ai in Ai.TopEntityMap.GroupMap.Ais)

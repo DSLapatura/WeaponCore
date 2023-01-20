@@ -4,6 +4,8 @@ using CoreSystems.Projectiles;
 using CoreSystems.Support;
 using Sandbox.Definitions;
 using Sandbox.Game.Entities;
+using Sandbox.Game.Entities.Blocks;
+using Sandbox.Game.Entities.Cube;
 using Sandbox.ModAPI;
 using VRage;
 using VRage.Collections;
@@ -487,9 +489,12 @@ namespace CoreSystems
                         continue;
                     }
                     var fatBlock = rootBlock.FatBlock as MyCubeBlock;
-                    var door = fatBlock as MyDoorBase;
-                    if (door != null && door.Open && !HitDoor(hitEnt, door) || playerAi && !RayAccuracyCheck(hitEnt, rootBlock))
-                        continue;
+
+                    if (fatBlock != null) {
+                        var door = fatBlock as MyDoorBase;
+                        if (door != null && door.Open && !HitDoor(hitEnt, door) || (playerAi || fatBlock is IMyMechanicalConnectionBlock) && !RayAccuracyCheck(hitEnt, rootBlock))
+                            continue;
+                    }
                 }
 
                 var maxAoeDistance = 0;

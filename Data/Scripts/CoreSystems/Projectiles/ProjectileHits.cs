@@ -17,7 +17,6 @@ using static CoreSystems.Support.DeferedVoxels;
 using CollisionLayers = Sandbox.Engine.Physics.MyPhysics.CollisionLayers;
 using Jakaria.API;
 using static CoreSystems.Projectiles.Projectile;
-using System.Security.Cryptography;
 
 namespace CoreSystems.Projectiles
 {
