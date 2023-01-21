@@ -2884,7 +2884,8 @@ namespace CoreSystems.Projectiles
             var newTarget = true;
 
             var oldTarget = Info.Target.TargetObject;
-            if (HadTarget != HadTargetState.Projectile)
+            var projectilePriority = aConst.ProjectilesFirst && Info.Ai.EnemyProjectiles;
+            if (HadTarget != HadTargetState.Projectile && !projectilePriority)
             {
                 if (giveUp || !Ai.ReacquireTarget(this))
                 {

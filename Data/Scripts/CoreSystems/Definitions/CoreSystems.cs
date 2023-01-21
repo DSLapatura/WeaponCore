@@ -14,6 +14,8 @@ using static CoreSystems.Support.WeaponDefinition.TargetingDef.CommunicationDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.EwarDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.AreaOfDamageDef;
 using static WeaponCore.Data.Scripts.CoreSystems.Comms.Radio;
+using static Sandbox.Game.Replication.History.MySnapshotHistory;
+
 namespace CoreSystems.Support
 {
     public class CoreSystem
@@ -161,6 +163,8 @@ namespace CoreSystems.Support
         public readonly int ShotsPerBurst;
         public readonly int MaxAmmoCount;
         public readonly int MaxConnections;
+        public readonly bool ProjectilesFirst;
+        public readonly bool ProjectilesOnly;
         public readonly bool StorageLimitPerBlock;
         public readonly bool MaxTrackingTime;
         public readonly bool HasAntiSmart;
@@ -359,7 +363,7 @@ namespace CoreSystems.Support
             BarrelValues(out BarrelsPerShot, out ShotsPerBurst);
             BarrelsAv(out BarrelEffect1, out BarrelEffect2, out Barrel1AvTicks, out Barrel2AvTicks, out BarrelSpinRate, out HasBarrelRotation);
             Track(out ScanTrackOnly, out NonThreatsOnly, out TrackProjectile, out TrackGrids, out TrackCharacters, out TrackMeteors, out TrackNeutrals, out ScanNonThreats, out ScanThreats, out MaxTrackingTime, out MaxTrackingTicks, out TrackTopMostEntities);
-            GetThreats(out Threats);
+            GetThreats(out Threats, out ProjectilesFirst, out ProjectilesOnly);
             SubSystems(out TargetSubSystems, out OnlySubSystems);
             ValidTargetSize(out MinTargetRadius, out MaxTargetRadius);
             Session.CreateAnimationSets(Values.Animations, this, out WeaponAnimationSet, out PartEmissiveSet, out PartLinearMoveSet, out AnimationIdLookup, out PartAnimationLengths, out HeatingSubparts, out ParticleEvents);
@@ -468,13 +472,16 @@ namespace CoreSystems.Support
 
 
 
-        private void GetThreats(out HashSet<int> set)
+        private void GetThreats(out HashSet<int> set, out bool projectilesFirst, out bool projectilesOnly)
         {
             set = new HashSet<int>(Values.Targeting.Threats.Length);
             foreach (var t in Values.Targeting.Threats)
             {
                 set.Add((int)t);
             }
+
+            projectilesFirst = Values.Targeting.Threats.Length > 0 && Values.Targeting.Threats[0] == TargetingDef.Threat.Projectiles;
+            projectilesOnly = projectilesFirst && Values.Targeting.Threats.Length == 1;
         }
 
         private void Heat(out bool degRof, out int maxHeat, out float wepCoolDown)

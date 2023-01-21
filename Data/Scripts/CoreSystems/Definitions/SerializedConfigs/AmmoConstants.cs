@@ -290,6 +290,7 @@ namespace CoreSystems.Support
         public readonly bool NoTargetExpire;
         public readonly bool EwarFieldTrigger;
         public readonly bool ZeroEffortNav;
+        public readonly bool ProjectilesFirst;
         public readonly float LargeGridDmgScale;
         public readonly float SmallGridDmgScale;
         public readonly float OffsetRatio;
@@ -584,6 +585,8 @@ namespace CoreSystems.Support
             FullSync = ammo.AmmoDef.Sync.Full && Session.I.MpActive && (IsDrone || IsSmart);
             PdDeathSync = !FullSync && ammo.AmmoDef.Sync.PointDefense && Session.I.MpActive && Health > 0 && !IsBeamWeapon && !Ewar;
             OnHitDeathSync = !FullSync && ammo.AmmoDef.Sync.OnHitDeath && Session.I.MpActive && !IsBeamWeapon && !Ewar;
+
+            ProjectilesFirst = system.ProjectilesFirst;
 
             PreComputedMath = new PreComputedMath(ammo, this);
         }

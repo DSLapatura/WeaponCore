@@ -41,8 +41,8 @@ namespace CoreSystems.Support
                 var projectileRequest = request.Type == TargetType.Projectile;
                 var pCount = masterAi.LiveProjectile.Count;
                 var shootProjectile = pCount > 0 && (w.System.TrackProjectile || projectileRequest || w.Comp.Ai.ControlComp != null) && mOverrides.Projectiles && !w.System.FocusOnly;
-                var projectilesFirst = !forceFocus && shootProjectile && w.System.Values.Targeting.Threats.Length > 0 && w.System.Values.Targeting.Threats[0] == Threat.Projectiles;
-                var projectilesOnly =  projectileRequest || w.ProjectilesNear && !w.Target.TargetChanged && Session.I.Count != w.Acquire.SlotId && !forceFocus;
+                var projectilesFirst = !forceFocus && shootProjectile && w.System.ProjectilesFirst;
+                var projectilesOnly =  w.System.ProjectilesOnly || projectileRequest || w.ProjectilesNear && !w.Target.TargetChanged && Session.I.Count != w.Acquire.SlotId && !forceFocus;
                 var checkObstructions = w.System.ScanNonThreats && !w.System.FocusOnly && masterAi.Obstructions.Count > 0;
                 
                 if (!projectilesFirst && w.System.TrackTopMostEntities && !projectilesOnly && !w.System.NonThreatsOnly)
