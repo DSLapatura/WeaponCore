@@ -1405,8 +1405,11 @@ namespace CoreSystems.Api
                             EndProjectile,
                             EndProjectileOnRestart,
                             StoreDontUse,
-                            StorePosition,
+                            StorePositionDontUse,
                             Refund,
+                            StorePositionA,
+                            StorePositionB,
+                            StorePositionC,
                         }
 
                         [ProtoContract]

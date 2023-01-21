@@ -1420,8 +1420,11 @@ namespace CoreSystems.Support
                         EndProjectile,
                         EndProjectileOnRestart,
                         StoreDontUse,
-                        StorePosition,
+                        StorePositionDontUse,
                         Refund,
+                        StorePositionA,
+                        StorePositionB,
+                        StorePositionC,
                     }
 
                     [ProtoContract]

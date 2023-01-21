@@ -1845,8 +1845,9 @@ namespace CoreSystems.Projectiles
         {
             var storage = Info.Storage;
             storage.LastActivatedStage = storage.RequestedStage;
-
-            switch (approach.Definition.StartEvent)
+            var def = approach.Definition;
+            var endEvent = def.StartEvent;
+            switch (endEvent)
             {
                 case StageEvents.EndProjectile:
                     EndState = EndStates.EarlyEnd;
@@ -1855,13 +1856,16 @@ namespace CoreSystems.Projectiles
                 case StageEvents.DoNothing:
                     break;
                 case StageEvents.Refund:
-                    Info.Weapon.Comp.HeatLoss += approach.Definition.HeatRefund;
-                    if (Session.I.IsServer && Info.Weapon.Reload.LifetimeLoads > 0 && approach.Definition.ReloadRefund)
+                    Info.Weapon.Comp.HeatLoss += def.HeatRefund;
+                    if (Session.I.IsServer && Info.Weapon.Reload.LifetimeLoads > 0 && def.ReloadRefund)
                         --Info.Weapon.Reload.LifetimeLoads;
                     break;
                 case StageEvents.StoreDontUse:
-                case StageEvents.StorePosition:
-                    switch (approach.Definition.StoredStartType)
+                case StageEvents.StorePositionDontUse:
+                case StageEvents.StorePositionA:
+                case StageEvents.StorePositionB:
+                case StageEvents.StorePositionC:
+                    switch (def.StoredStartType)
                     {
                         case RelativeTo.Target:
                             storage.ApproachInfo.Storage[storage.RequestedStage].StoredPosition = TargetPosition;
@@ -1875,13 +1879,16 @@ namespace CoreSystems.Projectiles
                             storage.ApproachInfo.Storage[storage.RequestedStage].StoredPosition = blockPos;
                             break;
                         case RelativeTo.Nothing:
-                            storage.ApproachInfo.Storage[storage.RequestedStage].StoredPosition = positionC;
+                            var storeC = endEvent == StageEvents.StoreDontUse || endEvent == StageEvents.StorePositionDontUse || endEvent == StageEvents.StorePositionC;
+                            storage.ApproachInfo.Storage[storage.RequestedStage].StoredPosition = storeC ? positionC : endEvent != StageEvents.StorePositionA ? positionB : Position;
                             break;
                         case RelativeTo.MidPoint:
                             storage.ApproachInfo.Storage[storage.RequestedStage].StoredPosition = Vector3D.Lerp(positionC, positionB, 0.5);
                             break;
                         case RelativeTo.StoredStartLocalPosition:
-                            storage.ApproachInfo.Storage[storage.RequestedStage].StoredPosition = Vector3D.Transform(positionB, Info.Weapon.Comp.TopEntity.PositionComp.WorldMatrixNormalizedInv);
+                            var storeB = endEvent == StageEvents.StoreDontUse || endEvent == StageEvents.StorePositionDontUse || endEvent == StageEvents.StorePositionB;
+                            var storePos = storeB ? positionB : endEvent != StageEvents.StorePositionA ? positionC : Position;
+                            storage.ApproachInfo.Storage[storage.RequestedStage].StoredPosition = Vector3D.Transform(storePos, Info.Weapon.Comp.TopEntity.PositionComp.WorldMatrixNormalizedInv);
                             break;
                         default:
                             storage.ApproachInfo.Storage[storage.RequestedStage].StoredPosition = targetPos;
@@ -1910,8 +1917,9 @@ namespace CoreSystems.Projectiles
                 EndState = EndStates.EarlyEnd;
                 DistanceToTravelSqr = Info.DistanceTraveled * Info.DistanceTraveled;
             }
-            else if (endEvent == StageEvents.StoreDontUse || endEvent == StageEvents.StorePosition)
+            else if (endEvent == StageEvents.StoreDontUse || endEvent == StageEvents.StorePositionDontUse || endEvent == StageEvents.StorePositionA || endEvent == StageEvents.StorePositionB || endEvent == StageEvents.StorePositionC)
             {
+
                 switch (def.StoredEndType)
                 {
                     case RelativeTo.Target:
@@ -1926,15 +1934,18 @@ namespace CoreSystems.Projectiles
                         storage.ApproachInfo.Storage[aConst.ApproachesCount + storage.RequestedStage].StoredPosition = blockPos;
                         break;
                     case RelativeTo.Nothing:
-                        storage.ApproachInfo.Storage[aConst.ApproachesCount + storage.RequestedStage].StoredPosition = positionC;
+                        var storeC = endEvent == StageEvents.StoreDontUse || endEvent == StageEvents.StorePositionDontUse || endEvent == StageEvents.StorePositionC;
+                        storage.ApproachInfo.Storage[aConst.ApproachesCount + storage.RequestedStage].StoredPosition = storeC ? positionC : endEvent != StageEvents.StorePositionA ? positionB : Position;
                         break;
                     case RelativeTo.MidPoint:
                         storage.ApproachInfo.Storage[aConst.ApproachesCount + storage.RequestedStage].StoredPosition = Vector3D.Lerp(positionC, positionB, 0.5);
                         break;
                     case RelativeTo.StoredEndLocalPosition:
                         var gridLocalMatrix = Info.Weapon.Comp.TopEntity.PositionComp.WorldMatrixNormalizedInv;
+                        var storeB = endEvent == StageEvents.StoreDontUse || endEvent == StageEvents.StorePositionDontUse || endEvent == StageEvents.StorePositionB;
+                        var storePos = storeB ? positionB : endEvent != StageEvents.StorePositionA ? positionC : Position;
                         Vector3D localPos;
-                        Vector3D.Transform(ref positionB, ref gridLocalMatrix, out localPos);
+                        Vector3D.Transform(ref storePos, ref gridLocalMatrix, out localPos);
                         storage.ApproachInfo.Storage[aConst.ApproachesCount + storage.RequestedStage].StoredPosition = localPos;
                         break;
                     default:
