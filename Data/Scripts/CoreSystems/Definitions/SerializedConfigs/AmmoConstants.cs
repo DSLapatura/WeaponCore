@@ -1699,14 +1699,14 @@ namespace CoreSystems.Support
         public readonly bool EndAnd;
         public readonly bool StartAnd;
         public readonly bool NoSpawns;
-        public readonly bool LeadAndRotateSource;
-        public readonly bool LeadAndRotateDestination;
+        public readonly bool LeadRotateElevatePositionB;
+        public readonly bool LeadRotateElevatePositionC;
         public readonly bool NoElevationLead;
         public readonly double ModFutureStep;
         public readonly TrajectoryDef.ApproachDef.FwdRelativeTo Forward;
         public readonly TrajectoryDef.ApproachDef.UpRelativeTo Up;
-        public readonly TrajectoryDef.ApproachDef.RelativeTo Source;
-        public readonly TrajectoryDef.ApproachDef.RelativeTo Destination;
+        public readonly TrajectoryDef.ApproachDef.RelativeTo PositionB;
+        public readonly TrajectoryDef.ApproachDef.RelativeTo PositionC;
         public readonly TrajectoryDef.ApproachDef.RelativeTo Elevation;
         public readonly TrajectoryDef.ApproachDef.Conditions StartCon1;
         public readonly TrajectoryDef.ApproachDef.Conditions StartCon2;
@@ -1716,8 +1716,8 @@ namespace CoreSystems.Support
         public readonly bool AdjustForward;
         public readonly bool AdjustUp;
         public readonly bool DisableAvoidance;
-        public readonly bool AdjustSource;
-        public readonly bool AdjustDestination;
+        public readonly bool AdjustPositionB;
+        public readonly bool AdjustPositionC;
         public readonly bool Orbit;
         public readonly bool CanExpireOnceStarted;
         public readonly bool PushLeadByTravelDistance;
@@ -1725,7 +1725,8 @@ namespace CoreSystems.Support
         public readonly bool ModAngleOffset;
         public readonly bool HasAngleOffset;
         public readonly bool ModelRotate;
-        public readonly bool SourceTrajectory;
+        public readonly bool TrajectoryRelativeToB;
+        public readonly bool ElevationRelatveToC;
         public readonly bool ToggleIngoreVoxels;
         public readonly bool SelfAvoidance;
         public readonly bool TargetAvoidance;
@@ -1765,8 +1766,8 @@ namespace CoreSystems.Support
             NoSpawns = def.NoTimedSpawns;
             ModAngleOffset = !MyUtils.IsZero(def.AngleVariance.Start) || !MyUtils.IsZero(def.AngleVariance.End);
             HasAngleOffset = ModAngleOffset || !MyUtils.IsZero(def.AngleOffset);
-            LeadAndRotateSource = def.LeadAndRotateSource;
-            LeadAndRotateDestination = def.LeadAndRotateDestination;
+            LeadRotateElevatePositionB = def.LeadRotateElevatePositionB;
+            LeadRotateElevatePositionC = def.LeadRotateElevatePositionC;
             NoElevationLead = def.NoElevationLead;
             IgnoreAntiSmart = def.IgnoreAntiSmart;
             ModelRotate = def.ModelRotateTime > 0;
@@ -1775,12 +1776,12 @@ namespace CoreSystems.Support
             TargetAvoidance = def.TargetAvoidance;
             SelfPhasing = def.SelfPhasing;
             SwapNavigationType = def.SwapNavigationType;
-            SourceTrajectory = def.SourceTrajectory;
-
+            TrajectoryRelativeToB = def.TrajectoryRelativeToB;
+            ElevationRelatveToC = def.ElevationRelativeToC;
             Forward = def.Forward;
             Up = def.Up;
-            Source = def.Source;
-            Destination = def.Destination;
+            PositionB = def.PositionB;
+            PositionC = def.PositionC;
             Elevation = def.Elevation;
             StartCon1 = def.StartCondition1;
             StartCon2 = def.StartCondition2;
@@ -1793,8 +1794,8 @@ namespace CoreSystems.Support
             CanExpireOnceStarted = def.CanExpireOnceStarted;
             PushLeadByTravelDistance = def.PushLeadByTravelDistance;
             DisableAvoidance = def.DisableAvoidance;
-            AdjustSource = def.AdjustSource;
-            AdjustDestination = def.AdjustDestination;
+            AdjustPositionB = def.AdjustPositionB;
+            AdjustPositionC = def.AdjustPositionC;
             OrbitRadius = def.OrbitRadius;
             AngleOffset = def.AngleOffset;
             DesiredElevation = def.DesiredElevation;

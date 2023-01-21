@@ -292,8 +292,8 @@ namespace CoreSystems.Support
         internal readonly ApproachStorage[] Storage;
         internal BoundingSphereD NavTargetBound;
         internal Vector3D TargetPos;
-        internal Vector3D DestinationPos;
-        internal Vector3D LookAtPos;
+        internal Vector3D PositionC;
+        internal Vector3D PositionB;
         internal Vector3D OffsetUpDir;
         internal Vector3D OffsetFwdDir;
         internal double RelativeAgeStart;
@@ -315,8 +315,8 @@ namespace CoreSystems.Support
             }
 
             TargetPos = Vector3D.Zero;
-            DestinationPos = Vector3D.Zero;
-            LookAtPos = Vector3D.Zero;
+            PositionC = Vector3D.Zero;
+            PositionB = Vector3D.Zero;
             OffsetUpDir = Vector3D.Zero;
             OffsetFwdDir = Vector3D.Zero;
             StartDistanceTraveled = 0;

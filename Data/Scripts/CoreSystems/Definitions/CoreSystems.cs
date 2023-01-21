@@ -14,7 +14,6 @@ using static CoreSystems.Support.WeaponDefinition.TargetingDef.CommunicationDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.EwarDef;
 using static CoreSystems.Support.WeaponDefinition.AmmoDef.AreaOfDamageDef;
 using static WeaponCore.Data.Scripts.CoreSystems.Comms.Radio;
-using static Sandbox.Game.Replication.History.MySnapshotHistory;
 
 namespace CoreSystems.Support
 {
