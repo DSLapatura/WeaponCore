@@ -850,7 +850,7 @@ namespace CoreSystems.Support
 
         private void ComputeApproaches(WeaponSystem.AmmoType ammo, WeaponDefinition wDef, out int approachesCount, out ApproachConstants[] approaches, out Stack<ApproachInfo> approachInfoPool, out bool hasApproaches)
         {
-            if (ammo.AmmoDef.Trajectory.Approaches != null && ammo.AmmoDef.Trajectory.Approaches.Length > 0)
+            if (IsSmart && ammo.AmmoDef.Trajectory.Approaches != null && ammo.AmmoDef.Trajectory.Approaches.Length > 0)
             {
                 approachesCount = ammo.AmmoDef.Trajectory.Approaches.Length;
                 approaches = new ApproachConstants[approachesCount];

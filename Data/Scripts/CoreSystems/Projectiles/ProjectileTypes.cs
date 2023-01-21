@@ -132,7 +132,7 @@ namespace CoreSystems.Support
                 for (int i = 0; i < PatternShuffle.Length; i++)
                     PatternShuffle[i] = i;
 
-                AmmoDef.Const.PatternShuffleArray.Push(PatternShuffle);
+                aConst.PatternShuffleArray.Push(PatternShuffle);
                 PatternShuffle = null;
             }
 
@@ -231,6 +231,7 @@ namespace CoreSystems.Support
 
             if (ApproachInfo != null)
             {
+                Log.Line($"clean: {p.Info.Id} - {p.Info.AmmoDef.AmmoRound}");
                 ApproachInfo.Clean(p);
                 ApproachInfo = null;
             }
@@ -328,7 +329,6 @@ namespace CoreSystems.Support
             StartHealth = 0;
             Active = false;
             NavTargetBound = new BoundingSphereD(Vector3D.Zero, 0);
-
             p.Info.AmmoDef.Const.ApproachInfoPool.Push(this);
         }
 

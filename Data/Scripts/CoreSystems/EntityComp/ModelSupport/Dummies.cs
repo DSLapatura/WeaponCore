@@ -17,7 +17,7 @@ namespace CoreSystems.Support
             get
             {
                 if (_entity == null || _entity.MarkedForClose || _entity.Model == null) {
-                    _part.BaseComp.Platform?.ResetParts();
+                    _part.BaseComp?.Platform?.ResetParts();
                 }
 
                 return _entity;
