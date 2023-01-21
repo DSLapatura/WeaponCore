@@ -1841,7 +1841,7 @@ namespace CoreSystems.Projectiles
             }
         }
 
-        private void ApproachStartEvent(ApproachConstants approach, ref Vector3D source, ref Vector3D destination, ref Vector3D targetPos)
+        private void ApproachStartEvent(ApproachConstants approach, ref Vector3D positionB, ref Vector3D positionC, ref Vector3D targetPos)
         {
             var storage = Info.Storage;
             storage.LastActivatedStage = storage.RequestedStage;
@@ -1875,13 +1875,13 @@ namespace CoreSystems.Projectiles
                             storage.ApproachInfo.Storage[storage.RequestedStage].StoredPosition = blockPos;
                             break;
                         case RelativeTo.Nothing:
-                            storage.ApproachInfo.Storage[storage.RequestedStage].StoredPosition = destination;
+                            storage.ApproachInfo.Storage[storage.RequestedStage].StoredPosition = positionC;
                             break;
                         case RelativeTo.MidPoint:
-                            storage.ApproachInfo.Storage[storage.RequestedStage].StoredPosition = Vector3D.Lerp(destination, source, 0.5);
+                            storage.ApproachInfo.Storage[storage.RequestedStage].StoredPosition = Vector3D.Lerp(positionC, positionB, 0.5);
                             break;
                         case RelativeTo.StoredStartLocalPosition:
-                            storage.ApproachInfo.Storage[storage.RequestedStage].StoredPosition = Vector3D.Transform(source, Info.Weapon.Comp.TopEntity.PositionComp.WorldMatrixNormalizedInv);
+                            storage.ApproachInfo.Storage[storage.RequestedStage].StoredPosition = Vector3D.Transform(positionB, Info.Weapon.Comp.TopEntity.PositionComp.WorldMatrixNormalizedInv);
                             break;
                         default:
                             storage.ApproachInfo.Storage[storage.RequestedStage].StoredPosition = targetPos;
@@ -1891,7 +1891,7 @@ namespace CoreSystems.Projectiles
             }
         }
 
-        private void ApproachEnd(ApproachConstants approach, bool end1, bool end2, bool end3, ref Vector3D source, ref Vector3D destination, ref Vector3D targetPos)
+        private void ApproachEnd(ApproachConstants approach, bool end1, bool end2, bool end3, ref Vector3D positionB, ref Vector3D positionC, ref Vector3D targetPos)
         {
             var aConst = Info.AmmoDef.Const;
             var storage = Info.Storage;
@@ -1926,15 +1926,15 @@ namespace CoreSystems.Projectiles
                         storage.ApproachInfo.Storage[aConst.ApproachesCount + storage.RequestedStage].StoredPosition = blockPos;
                         break;
                     case RelativeTo.Nothing:
-                        storage.ApproachInfo.Storage[aConst.ApproachesCount + storage.RequestedStage].StoredPosition = destination;
+                        storage.ApproachInfo.Storage[aConst.ApproachesCount + storage.RequestedStage].StoredPosition = positionC;
                         break;
                     case RelativeTo.MidPoint:
-                        storage.ApproachInfo.Storage[aConst.ApproachesCount + storage.RequestedStage].StoredPosition = Vector3D.Lerp(destination, source, 0.5);
+                        storage.ApproachInfo.Storage[aConst.ApproachesCount + storage.RequestedStage].StoredPosition = Vector3D.Lerp(positionC, positionB, 0.5);
                         break;
                     case RelativeTo.StoredEndLocalPosition:
                         var gridLocalMatrix = Info.Weapon.Comp.TopEntity.PositionComp.WorldMatrixNormalizedInv;
                         Vector3D localPos;
-                        Vector3D.Transform(ref source, ref gridLocalMatrix, out localPos);
+                        Vector3D.Transform(ref positionB, ref gridLocalMatrix, out localPos);
                         storage.ApproachInfo.Storage[aConst.ApproachesCount + storage.RequestedStage].StoredPosition = localPos;
                         break;
                     default:
