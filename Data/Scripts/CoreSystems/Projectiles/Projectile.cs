@@ -2044,9 +2044,9 @@ namespace CoreSystems.Projectiles
             var storage = Info.Storage;
 
             var offSetSource = positionB + elOffset;
-
-            if (!MyUtils.IsZero(heightOffset) && !MyUtils.IsZero(positionC - heightOffset))
-                DsDebugDraw.DrawLine(positionC, heightOffset, Color.Yellow, 3);
+            var heightRefPos = !approach.TrajectoryRelativeToB ? positionC : positionB;
+            if (!MyUtils.IsZero(heightOffset) && !MyUtils.IsZero(heightRefPos - heightOffset))
+                DsDebugDraw.DrawLine(heightRefPos, heightOffset, Color.Yellow, 3);
 
             if (!MyUtils.IsZero(elOffset) && elOffset != TargetPosition)
                 DsDebugDraw.DrawLine(TargetPosition, offSetSource, Color.Black, 3);
