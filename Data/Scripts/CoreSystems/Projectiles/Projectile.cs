@@ -1013,7 +1013,7 @@ namespace CoreSystems.Projectiles
                             break;
                         case RelativeTo.Shooter:
                             var blockPos = Info.Weapon.Comp.CoreEntity.PositionComp.WorldAABB.Center;
-                            aInfo.PositionC = !Vector3D.IsZero(blockPos) ? blockPos : Info.Origin;
+                            aInfo.PositionB = !Vector3D.IsZero(blockPos) ? blockPos : Info.Origin;
                             break;
                         case RelativeTo.Target:
                             aInfo.PositionB = aInfo.TargetPos;
@@ -1021,7 +1021,7 @@ namespace CoreSystems.Projectiles
                         case RelativeTo.Surface:
                             if (Info.MyPlanet != null)
                             {
-                                PlanetSurfaceHeightAdjustment(Position, aInfo.OffsetUpDir, approach, out surfacePos);
+                                PlanetSurfaceHeightAdjustment(Position, out surfacePos);
                                 aInfo.PositionB = surfacePos;
                             }
                             else
@@ -1083,7 +1083,7 @@ namespace CoreSystems.Projectiles
                         case RelativeTo.Surface:
                             if (Info.MyPlanet != null)
                             {
-                                PlanetSurfaceHeightAdjustment(Position, aInfo.OffsetUpDir, approach, out surfacePos);
+                                PlanetSurfaceHeightAdjustment(Position, out surfacePos);
                                 aInfo.PositionC = surfacePos;
                             }
                             else
@@ -1399,7 +1399,7 @@ namespace CoreSystems.Projectiles
                                 if (Info.MyPlanet != null && approach.Elevation == RelativeTo.Surface)
                                 {
                                     Vector3D followSurfacePos;
-                                    elOffset = PlanetSurfaceHeightAdjustment(surfaceRefPos - heightOffset, upDir, approach, out followSurfacePos);
+                                    elOffset = PlanetSurfaceHeightAdjustment(surfaceRefPos - heightOffset,  out followSurfacePos);
                                 }
                                 else
                                     elOffset = heightOffset;
@@ -1836,7 +1836,7 @@ namespace CoreSystems.Projectiles
                     ApproachEnd(approach, end1, end2, end3, ref positionB, ref positionC, ref targetPos);
 
                 if (s.DebugMod && s.HandlesInput)
-                    ApproachDebug(approach, ref positionC, ref positionB, ref elOffset, ref heightOffset, start1, start2, end1, end2, end3, nextSpawn, timeSinceSpawn, stageChange);
+                    ApproachDebug(approach, ref positionC, ref positionB, ref elOffset, ref heightOffset, ref targetPos, start1, start2, end1, end2, end3, nextSpawn, timeSinceSpawn, stageChange);
 
             }
         }
@@ -2003,7 +2003,7 @@ namespace CoreSystems.Projectiles
             return planeNavGoal;
         }
 
-        private Vector3D PlanetSurfaceHeightAdjustment(Vector3D checkPosition, Vector3D upDir, ApproachConstants approach, out Vector3D surfacePos)
+        private Vector3D PlanetSurfaceHeightAdjustment(Vector3D checkPosition, out Vector3D surfacePos)
         {
             var planetCenter = Info.MyPlanet.PositionComp.WorldAABB.Center;
 
@@ -2027,32 +2027,35 @@ namespace CoreSystems.Projectiles
             return surfacePos - checkPosition;
         }
 
-        private void ApproachDebug(ApproachConstants approach, ref Vector3D destination, ref Vector3D source, ref Vector3D elOffset, ref Vector3D heightOffset, bool start1, bool start2, bool end1, bool end2, bool end3, double nextSpawn, double timeSinceSpawn, bool stageChange)
+        private void ApproachDebug(ApproachConstants approach, ref Vector3D positionC, ref Vector3D positionB, ref Vector3D elOffset, ref Vector3D heightOffset, ref Vector3D targetPos, bool start1, bool start2, bool end1, bool end2, bool end3, double nextSpawn, double timeSinceSpawn, bool stageChange)
         {
             var s = Session.I;
             var storage = Info.Storage;
 
-            var offSetSource = source + elOffset;
+            var offSetSource = positionB + elOffset;
 
-            if (!MyUtils.IsZero(heightOffset) && !MyUtils.IsZero(destination - heightOffset))
-                DsDebugDraw.DrawLine(destination, heightOffset, Color.Yellow, 3);
+            if (!MyUtils.IsZero(heightOffset) && !MyUtils.IsZero(positionC - heightOffset))
+                DsDebugDraw.DrawLine(positionC, heightOffset, Color.Yellow, 3);
 
             if (!MyUtils.IsZero(elOffset) && elOffset != TargetPosition)
                 DsDebugDraw.DrawLine(TargetPosition, offSetSource, Color.Black, 3);
 
-            if (!MyUtils.IsZero(destination - TargetPosition))
-                DsDebugDraw.DrawLine(TargetPosition, destination, Color.Red, 3);
+            if (!MyUtils.IsZero(positionC - TargetPosition))
+                DsDebugDraw.DrawLine(TargetPosition, positionC, Color.Red, 3);
             else
-                DsDebugDraw.DrawSingleVec(destination, 20, Color.Black);
+                DsDebugDraw.DrawSingleVec(positionC, 20, Color.Black);
 
-            if (!MyUtils.IsZero(source - TargetPosition))
-                DsDebugDraw.DrawLine(TargetPosition, source, Color.Green, 3);
+            if (!MyUtils.IsZero(positionB - TargetPosition))
+                DsDebugDraw.DrawLine(TargetPosition, positionB, Color.Green, 3);
             else
-                DsDebugDraw.DrawSingleVec(source, 20, Color.Purple);
+                DsDebugDraw.DrawSingleVec(positionB, 20, Color.Purple);
 
-            DsDebugDraw.DrawSingleVec(source, 10, Color.LightSkyBlue);
-            DsDebugDraw.DrawSingleVec(destination, 10, Color.Green);
+            DsDebugDraw.DrawSingleVec(positionB, 10, Color.LightSkyBlue);
+            DsDebugDraw.DrawSingleVec(positionC, 10, Color.Green);
             DsDebugDraw.DrawSingleVec(TargetPosition, 10, Color.Red);
+
+            if (targetPos != TargetPosition && targetPos != positionB && targetPos != positionC)
+                DsDebugDraw.DrawSingleVec(targetPos, 5, Color.Yellow);
 
             if (stageChange)
                 Session.I.ApproachStageChangeDebug[Info.Id] =  new Session.ApproachStageDebug {CreateTick = Session.I.Tick, Position = Position};
