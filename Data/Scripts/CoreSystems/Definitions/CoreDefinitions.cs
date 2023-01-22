@@ -1396,7 +1396,7 @@ namespace CoreSystems.Support
                         Target,
                         Surface,
                         MidPoint,
-                        Current,
+                        PositionA,
                         Nothing,
                         StoredStartDontUse,
                         StoredEndDontUse,

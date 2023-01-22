@@ -1030,7 +1030,7 @@ namespace CoreSystems.Projectiles
                         case RelativeTo.MidPoint:
                             aInfo.PositionB = Vector3D.Lerp(aInfo.TargetPos, Position, 0.5);
                             break;
-                        case RelativeTo.Current:
+                        case RelativeTo.PositionA:
                             aInfo.PositionB = Position;
                             break;
                         case RelativeTo.StoredStartDontUse:
@@ -1092,7 +1092,7 @@ namespace CoreSystems.Projectiles
                         case RelativeTo.MidPoint:
                             aInfo.PositionC = Vector3D.Lerp(aInfo.TargetPos, Position, 0.5);
                             break;
-                        case RelativeTo.Current:
+                        case RelativeTo.PositionA:
                             aInfo.PositionC = Position;
                             break;
                         case RelativeTo.StoredStartDontUse:
@@ -1439,7 +1439,7 @@ namespace CoreSystems.Projectiles
                                 elOffset = plane.Normal * distToPlane;
                                 break;
                             }
-                        case RelativeTo.Current:
+                        case RelativeTo.PositionA:
                             {
                                 var plane = new PlaneD(Position - heightOffset, upDir);
                                 var distToPlane = plane.DistanceToPoint(surfaceRefPos);
@@ -1871,7 +1871,7 @@ namespace CoreSystems.Projectiles
                         case RelativeTo.Target:
                             storage.ApproachInfo.Storage[storage.RequestedStage].StoredPosition = TargetPosition;
                             break;
-                        case RelativeTo.Current:
+                        case RelativeTo.PositionA:
                             storage.ApproachInfo.Storage[storage.RequestedStage].StoredPosition = Position;
                             break;
                         case RelativeTo.Shooter:
@@ -1926,7 +1926,7 @@ namespace CoreSystems.Projectiles
                     case RelativeTo.Target:
                         storage.ApproachInfo.Storage[aConst.ApproachesCount + storage.RequestedStage].StoredPosition = TargetPosition;
                         break;
-                    case RelativeTo.Current:
+                    case RelativeTo.PositionA:
                         storage.ApproachInfo.Storage[aConst.ApproachesCount + storage.RequestedStage].StoredPosition = Position;
                         break;
                     case RelativeTo.Shooter:

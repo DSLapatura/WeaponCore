@@ -1381,7 +1381,7 @@ namespace CoreSystems.Api
                             Target,
                             Surface,
                             MidPoint,
-                            Current,
+                            PositionA,
                             Nothing,
                             StoredStartDontUse,
                             StoredEndDontUse,
