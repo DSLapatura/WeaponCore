@@ -1383,12 +1383,13 @@ namespace CoreSystems.Projectiles
                 {
                     accelMpsMulti = aConst.AccelInMetersPerSec * approach.AccelMulti;
                     speedCapMulti = approach.SpeedCapMulti;
+                    
                     var fwdDestDir = approach.Forward == FwdRelativeTo.ForwardElevationDirection;
                     var upDestDir = approach.Up == UpRelativeTo.UpElevationDirection;
 
                     var fwdDir = !fwdDestDir ? aInfo.OffsetFwdDir : Vector3D.Normalize(!approach.ElevationRelatveToC ? positionC - positionB : positionB - positionC);
                     var upDir = !upDestDir ? aInfo.OffsetUpDir : fwdDestDir ? fwdDir : Vector3D.Normalize(!approach.ElevationRelatveToC ? positionC - positionB : positionB - positionC);
-
+                    
                     var surfaceRefPos = !approach.ElevationRelatveToC ? positionB : positionC;
 
                     #region Elevation Correction
