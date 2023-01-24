@@ -324,7 +324,6 @@ namespace CoreSystems.Projectiles
                     monitor[j].Invoke(comp.CoreEntity.EntityId, w.PartId, Info.Id, Info.Target.TargetId, Position, true);
             }
         }
-
         #endregion
 
         #region End
@@ -402,7 +401,7 @@ namespace CoreSystems.Projectiles
                         vp.AvShot.Close();
                     else vp.AvShot.EndState = new AvClose { EndPos = Position, Dirty = true, DetonateEffect = detExp };
 
-                    vp.Clean(this);
+                    vp.Clean();
                     session.Projectiles.VirtInfoPool.Push(vp);
                 }
                 VrPros.Clear();
@@ -439,7 +438,7 @@ namespace CoreSystems.Projectiles
             PruningProxyId = -1;
             HadTarget = HadTargetState.None;
             
-            Info.Clean(this);
+            Info.Clean();
 
         }
         #endregion
@@ -2144,7 +2143,6 @@ namespace CoreSystems.Projectiles
             var offsetRadius = appConst.OffsetMaxRadius <= appConst.OffsetMinRadius ? appConst.OffsetMinRadius : Info.Random.NextDouble() * (appConst.OffsetMaxRadius - appConst.OffsetMinRadius) + appConst.OffsetMinRadius;
             Info.Storage.ApproachInfo.NavTargetBound = new BoundingSphereD(Vector3D.Zero + rndDir * Info.Storage.ApproachInfo.NavTargetBound.Radius, offsetRadius);
         }
-
         #endregion
 
         #region Drones
@@ -3133,8 +3131,6 @@ namespace CoreSystems.Projectiles
             targetDirection = Vector3D.Normalize(estimatedPosition - shooterPos);
             return true;
         }
-
-
         #endregion
 
         #region Mines
@@ -3183,7 +3179,6 @@ namespace CoreSystems.Projectiles
 
             TravelMagnitude = Velocity * Session.I.DeltaStepConst;
         }
-
 
         internal void SeekEnemy()
         {
@@ -3306,7 +3301,6 @@ namespace CoreSystems.Projectiles
             TravelMagnitude = Vector3D.Zero;
             VelocityLengthSqr = 0;
         }
-
         #endregion
 
         #region Ewar
@@ -3564,7 +3558,6 @@ namespace CoreSystems.Projectiles
                 DistanceToTravelSqr = Info.DistanceTraveled * Info.DistanceTraveled;
             Info.LastFragTime = (int) Info.RelativeAge;
         }
-
 
         internal void CheckForNearVoxel(uint steps)
         {

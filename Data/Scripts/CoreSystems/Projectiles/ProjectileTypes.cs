@@ -92,7 +92,7 @@ namespace CoreSystems.Support
             ShotFade = shotFade;
         }
 
-        internal void Clean(Projectile p)
+        internal void Clean()
         {
             var aConst = AmmoDef.Const;
 
@@ -113,7 +113,7 @@ namespace CoreSystems.Support
             HitList.Clear();
             
             if (aConst.IsSmart || aConst.IsDrone)
-                Storage.Clean(p);
+                Storage.Clean(this);
 
 
             SyncId = ulong.MaxValue;
@@ -205,7 +205,7 @@ namespace CoreSystems.Support
         internal double ZombieLifeTime;
         internal double PrevZombieLifeTime;
 
-        internal void Clean(Projectile p)
+        internal void Clean(ProInfo info)
         {
             LastActivatedStage = -1;
             RequestedStage = -1;
@@ -226,24 +226,23 @@ namespace CoreSystems.Support
 
             Sleep = false;
 
-            if (!p.Info.AmmoDef.Const.FullSync && p.Info.SyncId != ulong.MaxValue)
-                p.Info.Weapon.ProjectileSyncMonitor.Remove(p.Info.SyncId);
+            if (!info.AmmoDef.Const.FullSync && info.SyncId != ulong.MaxValue)
+                info.Weapon.ProjectileSyncMonitor.Remove(info.SyncId);
 
             if (ApproachInfo != null)
             {
-                Log.Line($"clean: {p.Info.Id} - {p.Info.AmmoDef.AmmoRound}");
-                ApproachInfo.Clean(p);
+                ApproachInfo.Clean(info);
                 ApproachInfo = null;
             }
             else if (DroneInfo != null)
             {
-                DroneInfo.Clean(p);
+                DroneInfo.Clean();
                 DroneInfo = null;
             }
 
             if (FullSyncInfo != null)
             {
-                FullSyncInfo.Clean(p);
+                FullSyncInfo.Clean(info);
                 FullSyncInfo = null;
             }
 
@@ -267,12 +266,12 @@ namespace CoreSystems.Support
         internal readonly Vector3D[] PastProInfos = new Vector3D[30];
         internal int ProSyncPosMissCount;
 
-        internal void Clean(Projectile p)
+        internal void Clean(ProInfo info)
         {
             for (int i = 0; i < PastProInfos.Length; i++)
                 PastProInfos[i] = Vector3D.Zero;
 
-            p.Info.Weapon.ProjectileSyncMonitor.Remove(p.Info.SyncId);
+            info.Weapon.ProjectileSyncMonitor.Remove(info.SyncId);
 
             ProSyncPosMissCount = 0;
 
@@ -305,7 +304,7 @@ namespace CoreSystems.Support
         internal int ModelRotateAge;
         internal int ModelRotateMaxAge;
         internal bool Active;
-        internal void Clean(Projectile p)
+        internal void Clean(ProInfo info)
         {
             for (int i = 0; i < Storage.Length; i++)
             {
@@ -329,7 +328,7 @@ namespace CoreSystems.Support
             StartHealth = 0;
             Active = false;
             NavTargetBound = new BoundingSphereD(Vector3D.Zero, 0);
-            p.Info.AmmoDef.Const.ApproachInfoPool.Push(this);
+            info.AmmoDef.Const.ApproachInfoPool.Push(this);
         }
 
         internal class ApproachStorage
@@ -369,7 +368,7 @@ namespace CoreSystems.Support
         internal DroneStatus DroneStat;
         internal DroneMission DroneMsn;
 
-        internal void Clean(Projectile p)
+        internal void Clean()
         {
             DestinationPos = Vector3D.Zero;
             NavTargetBound = new BoundingSphereD(Vector3D.Zero, 0);
