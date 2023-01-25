@@ -757,18 +757,8 @@ namespace CoreSystems
                         {
                             try
                             {
-                                uint lastDeformTick;
-                                MyCube myCube;
                                 if (Session.IsServer && !appliedImpulse && primaryDamage && hitMass > 0 )
                                 {
-                                    if (deformType == DeformDef.DeformTypes.HitBlock && scaledDamage > 1 && primaryDamage && block.FatBlock == null && (deformDelay == 1 || !_slimLastDeformTick.TryGetValue(block, out lastDeformTick) || Tick - lastDeformTick >= deformDelay) && grid.TryGetCube(block.Position, out myCube))
-                                    {
-                                        grid.ApplyDestructionDeformation(myCube.CubeBlock, 1f, new MyHitInfo(), attackerId);
-                                        scaledDamage -= 1;
-                                        if (deformDelay > 1)
-                                            _slimLastDeformTick[block] = Tick;
-                                    }
-
                                     appliedImpulse = true;
                                     var speed = !t.AmmoDef.Const.IsBeamWeapon && t.AmmoDef.Const.DesiredProjectileSpeed > 0 ? t.AmmoDef.Const.DesiredProjectileSpeed : 1;
                                     ApplyProjectileForce(grid, grid.GridIntegerToWorld(rootBlock.Position), hitEnt.Intersection.Direction, (hitMass * speed));
@@ -782,6 +772,8 @@ namespace CoreSystems
 
                                     if (Session.IsServer && remainingHp >= 1.5 && scaledDamage > 1 && block.FatBlock == null)
                                     {
+                                        uint lastDeformTick;
+                                        MyCube myCube;
                                         if (deformType == DeformDef.DeformTypes.HitBlock && primaryDamage && (deformDelay == 1 || !_slimLastDeformTick.TryGetValue(block, out lastDeformTick) || Tick - lastDeformTick >= deformDelay) && grid.TryGetCube(block.Position, out myCube))
                                         {
                                             grid.ApplyDestructionDeformation(myCube.CubeBlock, 1f, new MyHitInfo(), attackerId);
