@@ -761,9 +761,9 @@ namespace CoreSystems
                                 MyCube myCube;
                                 if (Session.IsServer && !appliedImpulse && primaryDamage && hitMass > 0 )
                                 {
-                                    if (deformType == DeformDef.DeformTypes.HitBlock && scaledDamage > 1 && block.FatBlock == null && (deformDelay == 1 || !_slimLastDeformTick.TryGetValue(block, out lastDeformTick) || Tick - lastDeformTick >= deformDelay) && grid.TryGetCube(block.Position, out myCube))
+                                    if (deformType == DeformDef.DeformTypes.HitBlock && scaledDamage > 1 && primaryDamage && block.FatBlock == null && (deformDelay == 1 || !_slimLastDeformTick.TryGetValue(block, out lastDeformTick) || Tick - lastDeformTick >= deformDelay) && grid.TryGetCube(block.Position, out myCube))
                                     {
-                                        grid.ApplyDestructionDeformation(myCube.CubeBlock, 0f, new MyHitInfo(), attackerId);
+                                        grid.ApplyDestructionDeformation(myCube.CubeBlock, 1f, new MyHitInfo(), attackerId);
                                         scaledDamage -= 1;
                                         if (deformDelay > 1)
                                             _slimLastDeformTick[block] = Tick;
@@ -776,15 +776,27 @@ namespace CoreSystems
 
                                 if (!deadBlock || gridBlockCount < 2500)
                                 {
+                                    block.DoDamage(scaledDamage, damageType, sync, null, attackerId);
 
-                                    if (Session.IsServer && !deadBlock && deformType == DeformDef.DeformTypes.AllDamagedBlocks && scaledDamage > 1 && block.FatBlock == null && (deformDelay == 1 || !_slimLastDeformTick.TryGetValue(block, out lastDeformTick) || Tick - lastDeformTick >= deformDelay) && grid.TryGetCube(block.Position, out myCube)) {
-                                        grid.ApplyDestructionDeformation(myCube.CubeBlock, 0f, new MyHitInfo(), attackerId);
-                                        scaledDamage -= 1;
-                                        if (deformDelay > 1)
-                                            _slimLastDeformTick[block] = Tick;
+                                    var remainingHp = blockHp - scaledDamage;
+
+                                    if (Session.IsServer && remainingHp >= 1.5 && scaledDamage > 1 && block.FatBlock == null)
+                                    {
+                                        if (deformType == DeformDef.DeformTypes.HitBlock && primaryDamage && (deformDelay == 1 || !_slimLastDeformTick.TryGetValue(block, out lastDeformTick) || Tick - lastDeformTick >= deformDelay) && grid.TryGetCube(block.Position, out myCube))
+                                        {
+                                            grid.ApplyDestructionDeformation(myCube.CubeBlock, 1f, new MyHitInfo(), attackerId);
+                                            if (deformDelay > 1)
+                                                _slimLastDeformTick[block] = Tick;
+                                        }
+                                        else if (deformType == DeformDef.DeformTypes.AllDamagedBlocks && (deformDelay == 1 || !_slimLastDeformTick.TryGetValue(block, out lastDeformTick) || Tick - lastDeformTick >= deformDelay) && grid.TryGetCube(block.Position, out myCube))
+                                        {
+                                            grid.ApplyDestructionDeformation(myCube.CubeBlock, 1f, new MyHitInfo(), attackerId);
+                                            if (deformDelay > 1)
+                                                _slimLastDeformTick[block] = Tick;
+                                        }
                                     }
 
-                                    block.DoDamage(scaledDamage, damageType, sync, null, attackerId);
+
                                 }
                                 else
                                 {

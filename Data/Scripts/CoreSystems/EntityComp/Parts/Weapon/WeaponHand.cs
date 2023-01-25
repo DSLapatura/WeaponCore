@@ -164,8 +164,10 @@ namespace CoreSystems.Platform
 
             internal void HandReloadNotify(Weapon w)
             {
-                if (w.Comp.Data.Repo.Values.State.PlayerId == Session.I.PlayerId){}
+                if (w.Comp.Data.Repo.Values.State.PlayerId == Session.I.PlayerId)
+                {
                     Session.I.ShowLocalNotify($"Ammo type swapped to: {w.ActiveAmmoDef.AmmoDef.AmmoRound}", 1500, "White", true);
+                }
             }
 
             internal Matrix GetHandWeaponApproximateWorldMatrix(bool offset)
