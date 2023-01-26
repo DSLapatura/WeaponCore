@@ -128,7 +128,7 @@ namespace CoreSystems.Platform
                         else
                             Log.Line($"retrived storage for: loading:{load} - {physGunOb.GunEntity.EntityId}[{GunBase.PhysicalObject.GunEntity.EntityId}] - {physGunOb.SubtypeName}");
 
-                        if (physGunOb.GunEntity.EntityId != GunBase.PhysicalObject.GunEntity.EntityId)
+                        if (physGunOb.GunEntity.EntityId != GunBase.PhysicalObject.GunEntity.EntityId && (physGunOb.GunEntity.EntityId > 0 || !load || newStorage ))
                         {
                             Log.Line($"ammoStorage skipping: {physGunOb.SubtypeName}[{physGunOb.GunEntity.EntityId}] not active entity: {GunBase.PhysicalObject.SubtypeName}[{GunBase.PhysicalObject.GunEntity.EntityId}]");
                             continue;
