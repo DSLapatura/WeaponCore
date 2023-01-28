@@ -39,7 +39,7 @@ namespace CoreSystems
         {
             InGridAiBlock = false;
             ActiveControlBlock = ControlledEntity as MyCubeBlock;
-            PlayerHandWeapon =  Session.Player?.Character?.EquippedTool as IMyAutomaticRifleGun;
+            PlayerHandWeapon =  LocalCharacter?.EquippedTool as IMyAutomaticRifleGun;
             var cockPit = ControlledEntity as MyCockpit;
             if (cockPit != null && cockPit.EnableShipControl)
                 ActiveCockPit = cockPit;

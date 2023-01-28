@@ -1512,6 +1512,23 @@ namespace CoreSystems
             }
         }
 
+        internal void UpdateLocalCharacterInfo()
+        {
+            LocalCharacter = Session.Player?.Character;
+            if (LocalCharacter != null)
+            {
+                PlayerPos = LocalCharacter.WorldAABB.Center;
+
+                MyTargetFocusComponent tComp;
+                if (Tick10 && LocalCharacter.Components.TryGet(out tComp) && tComp.FocusSearchMaxDistance > 0 && DeferredPlayerLock.TryAdd(PlayerId, 120))
+                    DeferredPlayerLocks();
+                else if (Tick10 && !DeferredPlayerLock.IsEmpty)
+                    DeferredPlayerLocks();
+            }
+            else
+                PlayerPos = Vector3D.Zero;
+        }
+
         public static void GetCubesInRange(MyCubeGrid grid, MyCubeBlock rootBlock, int cubeDistance, HashSet<MyCube> resultSet, out Vector3I min, out Vector3I max, CubeTypes types = CubeTypes.All)
         {
             resultSet.Clear();

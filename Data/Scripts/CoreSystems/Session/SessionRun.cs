@@ -3,6 +3,7 @@ using CoreSystems.Support;
 using Sandbox.Definitions;
 using Sandbox.Game;
 using Sandbox.Game.Entities;
+using Sandbox.Game.EntityComponents;
 using Sandbox.ModAPI;
 using VRage.Collections;
 using VRage.Game;
@@ -61,12 +62,8 @@ namespace CoreSystems
                     DeformProtection.Clear();
 
                 Timings();
-                
 
                 if (IsClient) {
-
-                    if (Tick10 && DeferredPlayerLock.Count > 0)
-                        DeferredPlayerLocks();
 
                     if (Tick - ClientDestroyBlockTick == 30) {
                         _slimHealthClient.Clear();
@@ -162,7 +159,7 @@ namespace CoreSystems
                     EntityControlUpdate();
                     CameraMatrix = Session.Camera.WorldMatrix;
                     CameraPos = CameraMatrix.Translation;
-                    PlayerPos = Session.Player?.Character?.WorldAABB.Center ?? Vector3D.Zero;
+                    UpdateLocalCharacterInfo();
 
                     if (Tick120 && DisplayAffectedArmor.Count > 0)
                         ColorAreas();

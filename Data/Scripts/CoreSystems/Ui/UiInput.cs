@@ -347,10 +347,9 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui
 
         internal bool GetAimRay(Session s, out LineD ray)
         {
-            var character = MyAPIGateway.Session.Player.Character;
-            if (character != null)
+            if (s.LocalCharacter != null)
             {
-                ray = new LineD(s.PlayerPos, s.PlayerPos + (character.WorldMatrix.Forward * 1000000));
+                ray = new LineD(s.PlayerPos, s.PlayerPos + (s.LocalCharacter.WorldMatrix.Forward * 1000000));
                 return true;
             }
             ray = new LineD();

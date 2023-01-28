@@ -551,12 +551,6 @@ namespace CoreSystems
             catch (Exception ex) { Log.Line($"Exception in PlayerDisconnected: {ex}"); }
         }
 
-        private void MovePlayer(object o)
-        {
-            var player = (IMyPlayer) o;
-            player.Character.PositionComp.SetPosition(Vector3D.Zero);
-        }
-
         private bool FindPlayer(IMyPlayer player, long id)
         {
             if (player.IdentityId == id)

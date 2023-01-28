@@ -319,6 +319,7 @@ namespace CoreSystems
         internal IMyGps TargetGps;
         internal IMyBlockPlacerBase Placer;
         internal IMyTerminalBlock LastTerminal;
+        internal IMyCharacter LocalCharacter;
         internal Ai TrackingAi;
 
         internal ApiServer ApiServer;
