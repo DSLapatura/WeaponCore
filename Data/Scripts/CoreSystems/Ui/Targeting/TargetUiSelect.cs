@@ -513,9 +513,10 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
 
                     Ai topAi;
                     MyEntity target;
-                    if (tInfo.IsGrid && Session.I.EntityToMasterAi.TryGetValue(tInfo.Target, out topAi))
+                    if (tInfo.IsGrid && tInfo.TargetAi != null && Session.I.EntityToMasterAi.TryGetValue(tInfo.Target, out topAi))
                     {
-                        if (topAi != tInfo.TargetAi) continue;
+                        if (topAi != tInfo.TargetAi)
+                            continue;
                         target = topAi.Construct.LargestAi?.TopEntity ?? topAi.Construct.RootAi?.TopEntity ?? tInfo.Target;
                     }
                     else
@@ -528,6 +529,7 @@ namespace WeaponCore.Data.Scripts.CoreSystems.Ui.Targeting
                     _toPruneMasterDict[target] = tInfo;
                 }
             }
+
             _sortedMasterList.Clear();
             _toSortMasterList.AddRange(_toPruneMasterDict.Values);
             _toPruneMasterDict.Clear();

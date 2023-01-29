@@ -486,7 +486,7 @@ namespace CoreSystems.Api
             var dict = (IDictionary<MyDetectedEntityInfo, float>) arg2;
             
             foreach (var i in _tmpTargetList)
-                dict[GetDetailedEntityInfo(new MyTuple<bool, bool, bool, MyEntity>(true, false, false , i.Item1), (MyEntity)shooter)] = i.Item2;
+                dict[GetDetailedEntityInfo(new MyTuple<bool, bool, bool, MyEntity>(true, false, false , i.Item1), shooter)] = i.Item2;
 
             _tmpTargetList.Clear();
 

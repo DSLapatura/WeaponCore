@@ -1506,7 +1506,6 @@ namespace CoreSystems
                 }
                 else
                 {
-                    Log.Line($"failed to get PlayerMap");
                     DeferredPlayerLock.TryRemove(p.Key, out retries);
                 }
             }
@@ -1520,9 +1519,7 @@ namespace CoreSystems
                 PlayerPos = LocalCharacter.WorldAABB.Center;
 
                 MyTargetFocusComponent tComp;
-                if (Tick10 && LocalCharacter.Components.TryGet(out tComp) && tComp.FocusSearchMaxDistance > 0 && DeferredPlayerLock.TryAdd(PlayerId, 120))
-                    DeferredPlayerLocks();
-                else if (Tick10 && !DeferredPlayerLock.IsEmpty)
+                if (Tick20 && (!DeferredPlayerLock.IsEmpty || LocalCharacter.Components.TryGet(out tComp) && tComp.FocusSearchMaxDistance > 0 && DeferredPlayerLock.TryAdd(PlayerId, 120)))
                     DeferredPlayerLocks();
             }
             else
