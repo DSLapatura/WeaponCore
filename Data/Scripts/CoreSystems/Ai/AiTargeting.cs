@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Xml;
 using CoreSystems.Platform;
 using CoreSystems.Projectiles;
 using Sandbox.Game.Entities;
@@ -1094,8 +1095,7 @@ namespace CoreSystems.Support
                 if (block.MarkedForClose || checkPower && !(block is IMyWarhead) && !block.IsWorking) continue;
 
                 s.BlockChecks++;
-
-                var blockPos = block.CubeGrid.GridIntegerToWorld(block.Position);
+                var blockPos = block.PositionComp.WorldAABB.Center;
 
                 double rayDist;
                 if (weaponCheck)

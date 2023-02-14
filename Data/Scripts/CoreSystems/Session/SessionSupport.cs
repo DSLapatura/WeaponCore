@@ -936,7 +936,7 @@ namespace CoreSystems
             if (DedicatedServer)
             {
                 if (!Settings.Enforcement.UnsupportedMode)
-                    Log.Line($"Removing incompatible weapon blocks");
+                    Log.Line($"Removing incompatible weapon blocks, if you accept the risk you can modify the mods world config file to override for all clients");
                 else
                     Log.Line($"Running in unsupported mode, certain features and blocks will not work as intended and may crash or become non-functional");
 

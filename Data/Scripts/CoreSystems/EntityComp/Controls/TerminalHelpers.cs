@@ -599,7 +599,7 @@ namespace CoreSystems.Control
 
             var value = (long)Math.Round(BlockUi.GetSequenceId(block), 0);
             var valid = BlockUi.ValidSequenceId(block);
-            var message = value == -1 ? "Disabled" : valid ? value.ToString() : "Duplicate Id";
+            var message = value == -1 ? "Disabled" : valid ? value.ToString() : $"DuplicateId: {value}";
 
             builder.Append(message);
         }
