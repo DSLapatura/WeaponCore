@@ -785,7 +785,7 @@ namespace CoreSystems
                 if (activeTurret)
                     AimingAi.Add(ai);
 
-                if (Tick - VanillaTurretTick < 3 && ai.TopEntityMap.Targeting != null)
+                if (Tick - VanillaTurretTick < 3 && ai.TopEntityMap?.Targeting != null)
                     ai.TopEntityMap.Targeting.AllowScanning = false;
 
             }
