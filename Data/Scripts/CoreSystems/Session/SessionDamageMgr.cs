@@ -1103,7 +1103,11 @@ namespace CoreSystems
             var directDmgGlobal = Settings.Enforcement.DirectDamageModifer;
             IHitInfo hitInfo;
             var fromPos = hitEnt.Intersection.Length >= 85 ? hitEnt.Intersection.To + -(hitEnt.Intersection.Direction * 10) : hitEnt.Intersection.From;
-            if (Physics.CastRay(fromPos, hitEnt.Intersection.To + (hitEnt.Intersection.Direction * 5), out hitInfo, CollisionLayers.CollideWithStaticLayer) && hitInfo.HitEntity is MyVoxelBase)
+            var checkLine = new LineD(fromPos, hitEnt.Intersection.To + (hitEnt.Intersection.Direction * 5));
+            var planet = hitEnt.Entity as MyPlanet;
+            planet?.PrefetchShapeOnRay(ref checkLine);
+
+            if (Physics.CastRay(checkLine.From, checkLine.To, out hitInfo, CollisionLayers.CollideWithStaticLayer) && hitInfo.HitEntity is MyVoxelBase)
             {
                 using (destObj.Pin())
                 {
