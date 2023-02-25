@@ -591,45 +591,46 @@ namespace CoreSystems.Support
             {
                 var q = PreAddOneFrame[i];
                 var b = q.BillBoard;
-                var a = q.Shot;
+
+                if (q.Shot != null) {
+                    --q.Shot.ActiveBillBoards;
+                    q.Shot = null;
+                }
 
                 var cameraPosition = Session.I.CameraPos;
-                if (Vector3D.IsZero(cameraPosition - q.StartPos, 1E-06))
-                    return;
-
-
-                var polyLine = new MyPolyLineD
+                if (!Vector3D.IsZero(cameraPosition - q.StartPos, 1E-06))
                 {
-                    LineDirectionNormalized = q.Direction,
-                    Point0 = q.StartPos,
-                    Point1 = q.StartPos + q.Direction * q.Length,
-                    Thickness = q.Width
-                };
+                    var polyLine = new MyPolyLineD {
+                        LineDirectionNormalized = q.Direction,
+                        Point0 = q.StartPos,
+                        Point1 = q.StartPos + q.Direction * q.Length,
+                        Thickness = q.Width
+                    };
 
-                MyQuadD retQuad;
-                MyUtils.GetPolyLineQuad(out retQuad, ref polyLine, cameraPosition);
+                    MyQuadD retQuad;
+                    MyUtils.GetPolyLineQuad(out retQuad, ref polyLine, cameraPosition);
 
-                b.Material = q.Material;
-                b.LocalType = LocalTypeEnum.Custom;
-                b.Position0 = retQuad.Point0;
-                b.Position1 = retQuad.Point1;
-                b.Position2 = retQuad.Point2;
-                b.Position3 = retQuad.Point3;
-                b.UVOffset = Vector2.Zero;
-                b.UVSize = Vector2.One;
-                b.DistanceSquared = (float)Vector3D.DistanceSquared(cameraPosition, q.StartPos);
-                b.Color = q.Color;
-                b.Reflectivity = 0;
-                b.CustomViewProjection = -1;
-                b.ParentID = uint.MaxValue;
-                b.ColorIntensity = 1f;
-                b.SoftParticleDistanceScale = 1f;
-                b.BlendType = BlendTypeEnum.Standard;
+                    b.Material = q.Material;
+                    b.LocalType = LocalTypeEnum.Custom;
+                    b.Position0 = retQuad.Point0;
+                    b.Position1 = retQuad.Point1;
+                    b.Position2 = retQuad.Point2;
+                    b.Position3 = retQuad.Point3;
+                    b.UVOffset = Vector2.Zero;
+                    b.UVSize = Vector2.One;
+                    b.DistanceSquared = (float)Vector3D.DistanceSquared(cameraPosition, q.StartPos);
+                    b.Color = q.Color;
+                    b.Reflectivity = 0;
+                    b.CustomViewProjection = -1;
+                    b.ParentID = uint.MaxValue;
+                    b.ColorIntensity = 1f;
+                    b.SoftParticleDistanceScale = 1f;
+                    b.BlendType = BlendTypeEnum.Standard;
+                    
+                    BillBoardsToAdd.Add(b);
+                }
 
-                --a.ActiveBillBoards;
                 QuadCacheCoolDown[Session.I.Tick % QuadCacheCoolDown.Length].Add(q);
-                q.Shot = null;
-                BillBoardsToAdd.Add(b);
             }
 
             MyTransparentGeometry.AddBillboards(BillBoardsToAdd, false);
