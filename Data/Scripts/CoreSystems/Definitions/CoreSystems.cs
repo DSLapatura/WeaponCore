@@ -761,6 +761,7 @@ namespace CoreSystems.Support
         internal readonly float DeviateShotAngleRads;
         internal readonly float IdlePower;
         internal readonly float HeatSinkRate;
+        internal readonly float MinRateOfFire;
         internal readonly int ReloadTime;
         internal readonly int RateOfFire;
         internal readonly int HeatPerShot;
@@ -783,6 +784,7 @@ namespace CoreSystems.Support
             GiveUpAfter = values.HardPoint.Loading.GiveUpAfter;
 
             SpinFree = values.HardPoint.Loading.SpinFree;
+            MinRateOfFire = values.HardPoint.Ui.RateOfFireMin > 1 || values.HardPoint.Ui.RateOfFireMin < 0 ? 0 : values.HardPoint.Ui.RateOfFireMin;
             LoadModifiers(values, out HasServerOverrides);
             GetModifiableValues(values, out MaxTargetDistance, out MinTargetDistance, out RateOfFire, out ReloadTime, out DeviateShotAngleRads, out AimingToleranceRads, out IdlePower, out HeatSinkRate, out HeatPerShot, out DebugMode);
         }

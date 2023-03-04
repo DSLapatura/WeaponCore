@@ -201,6 +201,29 @@ namespace CoreSystems
             if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return 0;
             return comp.Data.Repo.Values.Set.RofModifier;
         }
+        internal static float GetMinRof(IMyTerminalBlock block)
+        {
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return 0;
+
+            var minROF = 0f;
+            for (int i = 0; i < comp.Collection.Count; i++)
+            {
+                var w = comp.Collection[i];
+                if (w.ActiveAmmoDef == null)
+                    return 0;
+
+                var curMin = w.System.WConst.MinRateOfFire;
+                if (curMin > minROF)
+                    minROF = (float)curMin;
+            }
+            return minROF;
+        }
+
+        internal static float GetMaxRof(IMyTerminalBlock block)
+        {
+            return 1;
+        }
         internal static bool GetOverload(IMyTerminalBlock block)
         {
             var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
@@ -225,7 +248,20 @@ namespace CoreSystems
 
         internal static float GetMinRange(IMyTerminalBlock block)
         {
-            return 0;
+            var comp = block?.Components?.Get<CoreComponent>() as Weapon.WeaponComponent;
+            if (comp == null || comp.Platform.State != CorePlatform.PlatformState.Ready) return 0;
+            var minTrajectory = float.MaxValue;
+            for (int i = 0; i < comp.Collection.Count; i++)
+            {
+                var w = comp.Collection[i];
+                if (w.ActiveAmmoDef == null)
+                    return 0;
+
+                var curMin = w.System.WConst.MinTargetDistance;
+                if (curMin < minTrajectory)
+                    minTrajectory = (float)curMin;
+            }
+            return minTrajectory;
         }
 
         internal static float GetMaxRange(IMyTerminalBlock block)
