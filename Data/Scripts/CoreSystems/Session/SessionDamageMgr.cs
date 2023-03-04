@@ -776,13 +776,13 @@ namespace CoreSystems
                                         MyCube myCube;
                                         if (deformType == DeformDef.DeformTypes.HitBlock && primaryDamage && (deformDelay == 1 || !_slimLastDeformTick.TryGetValue(block, out lastDeformTick) || Tick - lastDeformTick >= deformDelay) && grid.TryGetCube(block.Position, out myCube))
                                         {
-                                            grid.ApplyDestructionDeformation(myCube.CubeBlock, 1f, new MyHitInfo(), attackerId);
+                                            grid.ApplyDestructionDeformation(myCube.CubeBlock, 0f, new MyHitInfo(), attackerId);
                                             if (deformDelay > 1)
                                                 _slimLastDeformTick[block] = Tick;
                                         }
                                         else if (deformType == DeformDef.DeformTypes.AllDamagedBlocks && (deformDelay == 1 || !_slimLastDeformTick.TryGetValue(block, out lastDeformTick) || Tick - lastDeformTick >= deformDelay) && grid.TryGetCube(block.Position, out myCube))
                                         {
-                                            grid.ApplyDestructionDeformation(myCube.CubeBlock, 1f, new MyHitInfo(), attackerId);
+                                            grid.ApplyDestructionDeformation(myCube.CubeBlock, 0f, new MyHitInfo(), attackerId);
                                             if (deformDelay > 1)
                                                 _slimLastDeformTick[block] = Tick;
                                         }

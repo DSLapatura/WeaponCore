@@ -587,9 +587,12 @@ namespace CoreSystems.Support
 
         internal void BillBoardOneFrameQuads()
         {
+            var coolDown = QuadCacheCoolDown[Session.I.Tick % QuadCacheCoolDown.Length];
             for (int i = PreAddOneFrame.Count - 1; i >= 0; i--)
             {
                 var q = PreAddOneFrame[i];
+                coolDown.Add(q);
+
                 var b = q.BillBoard;
 
                 if (q.Shot != null) {
@@ -629,8 +632,6 @@ namespace CoreSystems.Support
                     
                     BillBoardsToAdd.Add(b);
                 }
-
-                QuadCacheCoolDown[Session.I.Tick % QuadCacheCoolDown.Length].Add(q);
             }
 
             MyTransparentGeometry.AddBillboards(BillBoardsToAdd, false);
