@@ -1,4 +1,5 @@
-﻿using CoreSystems.Support;
+﻿using CoreSystems.Projectiles;
+using CoreSystems.Support;
 using Sandbox.Game.Entities;
 using VRage.Game;
 using VRage.Game.Entity;
@@ -17,6 +18,7 @@ namespace CoreSystems.Platform
             Vector3D targetAcc = Vector3D.Zero;
             var eTarget = weapon.Target.TargetObject as MyEntity;
             Ai.FakeTarget.FakeWorldTargetInfo fakeTargetInfo = null;
+            var pTarget = weapon.Target.TargetObject as Projectile;
             if (cValues.Set.Overrides.Control != ProtoWeaponOverrides.ControlModes.Auto && control.ValidFakeTargetInfo(cValues.State.PlayerId, out fakeTargetInfo))
             {
                 targetCenter = fakeTargetInfo.WorldPosition;
@@ -44,6 +46,12 @@ namespace CoreSystems.Platform
                     targetVel = topEnt.Physics?.LinearVelocity ?? Vector3D.Zero;
                     targetAcc = topEnt.Physics?.LinearAcceleration ?? Vector3D.Zero;
                 }
+            }
+            else if (pTarget != null)
+            {
+                targetCenter = pTarget.Position;
+                targetVel = pTarget.Velocity;
+                targetAcc = pTarget.TravelMagnitude;
             }
             else 
             {

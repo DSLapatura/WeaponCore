@@ -375,7 +375,7 @@ namespace CoreSystems
                         if (IsServer && cValues.Set.Range < 0 && primaryWeapon.MaxTargetDistance > 0)
                             BlockUi.RequestSetRangeControl(cComp.TerminalBlock, (float) primaryWeapon.MaxTargetDistance);
 
-                        var validTarget = primaryWeapon.Target.TargetState == TargetStates.IsEntity || primaryWeapon.Target.TargetState == TargetStates.IsFake;
+                        var validTarget = primaryWeapon.Target.TargetState == TargetStates.IsEntity || primaryWeapon.Target.TargetState == TargetStates.IsFake || primaryWeapon.Target.TargetState == TargetStates.IsProjectile;
 
                         var noTarget = false;
                         var desiredDirection = Vector3D.Zero;
