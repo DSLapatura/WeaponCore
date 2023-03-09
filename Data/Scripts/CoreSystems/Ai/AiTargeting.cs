@@ -976,7 +976,7 @@ namespace CoreSystems.Support
             var system = w.System;
             if (system.TargetSubSystems)
             {
-                var overRides = w.Comp.Data.Repo.Values.Set.Overrides;
+                var overRides = w.RotorTurretTracking ? w.Comp.MasterOverrides : w.Comp.Data.Repo.Values.Set.Overrides;
                 var subSystems = system.Values.Targeting.SubSystems;
                 var focusSubSystem = overRides.FocusSubSystem || overRides.FocusSubSystem;
 
