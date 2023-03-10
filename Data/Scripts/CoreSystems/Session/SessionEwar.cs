@@ -117,7 +117,7 @@ namespace CoreSystems
             }
 
             if (depletable)
-                info.BaseHealthPool = healthPool;
+                info.BaseHealthPool = healthPool >= info.BaseHealthPool ? info.BaseHealthPool - healthPool : 0;
         }
 
         private void UpdateField(HitEntity hitEnt, ProInfo info)
@@ -136,8 +136,9 @@ namespace CoreSystems
             var depletable = info.AmmoDef.Ewar.Depletable;
             var healthPool = depletable && info.BaseHealthPool > 0 ? info.BaseHealthPool : double.MaxValue;
             ComputeEffects(grid, info.AmmoDef, info.AmmoDef.Const.EwarStrength, ref healthPool, attackerId, info.Weapon.System.WeaponIdHash, hitEnt.Blocks);
+            
             if (depletable)
-                info.BaseHealthPool = (float)healthPool;
+                info.BaseHealthPool = healthPool >= info.BaseHealthPool ? info.BaseHealthPool - (float)healthPool : 0f;
 
         }
 

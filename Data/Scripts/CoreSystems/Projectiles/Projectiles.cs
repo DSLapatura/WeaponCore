@@ -346,7 +346,7 @@ namespace CoreSystems.Projectiles
                 var checkBeam = aConst.CheckFutureIntersection ? new LineD(p.Beam.From, p.Beam.From + p.Beam.Direction * (p.Beam.Length + aConst.FutureIntersectionRange), p.Beam.Length + aConst.FutureIntersectionRange) : p.Beam;
                 var lineCheck = aConst.CollisionIsLine && !useEwarFieldSphere;
 
-                if (p.DeaccelRate <= 0 && !aConst.IsBeamWeapon && (info.DistanceTraveled * info.DistanceTraveled >= p.DistanceToTravelSqr || info.RelativeAge > aConst.MaxLifeTime)) {
+                if (p.DeaccelRate <= 0 && !aConst.IsBeamWeapon && (info.DistanceTraveled * info.DistanceTraveled >= p.DistanceToTravelSqr && !ewarTriggered || info.RelativeAge > aConst.MaxLifeTime)) {
 
                     p.PruneSphere.Center = p.Position;
                     p.PruneSphere.Radius = aConst.EndOfLifeRadius;

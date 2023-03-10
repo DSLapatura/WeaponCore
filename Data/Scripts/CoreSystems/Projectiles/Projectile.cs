@@ -3312,6 +3312,7 @@ namespace CoreSystems.Projectiles
                 PrevVelocity = Velocity;
                 Velocity = Vector3D.Zero;
                 DistanceToTravelSqr = Info.DistanceTraveled * Info.DistanceTraveled;
+                DeaccelRate = 0;
             }
 
             if (Info.ExpandingEwarField)
